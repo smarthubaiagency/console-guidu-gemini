@@ -4,8 +4,10 @@
 
 **Recomendação única: pg-boss 12.37.0**, executado por processo de worker
 separado, com polling quando conectado ao Supavisor em modo transação. O schema
-é instalado somente por migration versionada e o worker opera como
-`app_runtime` (`NOSUPERUSER`, `NOBYPASSRLS`).
+é instalado somente por migration versionada. A prova usa o papel restrito
+`app_runtime` (`NOSUPERUSER`, `NOBYPASSRLS`) herdado do SMA-92; o desenho de
+produto exige um papel dedicado `app_worker`, também `NOBYPASSRLS`, sem os
+grants de fila no runtime web.
 
 O pgmq 1.5.1 é um núcleo de fila sólido e a prova confirmou visibility timeout,
 redelivery e archive. Porém, para cumprir o contrato do produto, seria preciso
@@ -39,7 +41,7 @@ API operacional coerente, reduzindo código crítico próprio.
 | 3. Idempotência | Dois jobs com mesma chave produziram exatamente um efeito; `UNIQUE(idempotency_key)` é a última barreira transacional | Exige chave/índice/tabela de efeitos próprios | **pg-boss**, mantendo idempotência de domínio no banco |
 | 4. Concorrência por workspace | Quatro jobs do mesmo `group.id=workspaceId`, `localConcurrency=4` e `localGroupConcurrency=1` tiveram máximo observado 1 | Exige coordenação própria (advisory lock ou tabela de leases) | **pg-boss**. A prova não certifica limite global multi-processo; habilitar/testar `groupConcurrency` antes de escalar horizontalmente |
 | 5. Agendamento | Cron `*/5 * * * *` foi criado e lido pela API | Requer pg_cron ou scheduler externo; `pg_cron` estava disponível mas não instalado | **pg-boss** |
-| 6. Privilégios/RLS | Worker operou como `app_runtime`, reavaliou vínculo atual via `spike_private.is_current_member` imediatamente antes do efeito, e negou usuário do tenant B | Funções são security-invoker e exigiram grants nas tabelas da fila; autorização de domínio continuaria sendo código próprio | **pg-boss**, com separação entre fila de infraestrutura e tabela de efeito com RLS |
+| 6. Privilégios/RLS | Na prova, o worker operou como `app_runtime`, reavaliou vínculo atual via `spike_private.is_current_member` imediatamente antes do efeito, e negou usuário do tenant B | Funções são security-invoker e exigiram grants nas tabelas da fila; autorização de domínio continuaria sendo código próprio | **pg-boss**, com papel `app_worker` dedicado na implementação e separação entre fila de infraestrutura e tabela de efeito com RLS |
 | 7. Pooler transacional | Prova completa passou na porta 6543. `LISTEN/NOTIFY` não é compatível com transaction pooling; usar polling. Conexão direta também passou | Operações SQL passaram; não depende de sessão longa | Ambos passam; pg-boss em polling |
 | 8. Observabilidade | `findJobs`, `getQueue`, `getQueueStats`, estados, `retryCount`, output, dead-letter e registry de instâncias | `metrics`, `metrics_all`, `read_ct` e tabelas archive; tentativas/erros de handler precisam de modelo próprio | **pg-boss** |
 
@@ -91,7 +93,7 @@ Execução final do probe pgmq:
 ## Desenho proposto
 
 1. API grava o job no Postgres antes de responder ao chamador.
-2. Worker separado consome com polling e identidade técnica sem BYPASSRLS.
+2. Worker separado consome com polling como `app_worker`, papel técnico sem BYPASSRLS. O runtime web `app_runtime` não recebe USAGE nem DML no schema de fila.
 3. Payload carrega referências e chave de idempotência, nunca credenciais.
 4. Antes do efeito, o worker abre transação, define contexto local e consulta
    vínculo/autorização atual. Revogação ocorrida após o enqueue impede o efeito.
@@ -126,7 +128,8 @@ Substituir “motor a decidir entre pg-boss e pgmq” por:
 
 > Jobs persistentes usam pg-boss no Postgres, em schema de infraestrutura
 > instalado por migration. O worker roda em processo separado sob papel técnico
-> NOSUPERUSER/NOBYPASSRLS, usa polling através do Supavisor transaction pooler e
+> dedicado `app_worker`, NOSUPERUSER/NOBYPASSRLS; o papel web `app_runtime`
+> não acessa o schema da fila. O worker usa polling através do Supavisor transaction pooler e
 > reavalia autorização dentro da transação do efeito. Payloads não carregam
 > bearer tokens. Idempotência é garantida por chave única no domínio, e
 > concorrência é agrupada por workspace. LISTEN/NOTIFY só pode ser habilitado
@@ -137,8 +140,9 @@ Substituir “motor a decidir entre pg-boss e pgmq” por:
 - O limite global entre múltiplos processos não foi certificado; apenas o limite
   por workspace em uma instância do worker. Isso deve virar teste de integração
   antes do primeiro scale-out.
+- A migration de prova já aplicada concede o schema de fila a `app_runtime`; isso mede NOBYPASSRLS, mas não é o grant de produção. A implementação deve criar `app_worker` em migration nova e deixar `app_runtime` sem acesso à fila.
 - O ambiente não forneceu senha própria de `app_runtime`. `SET LOCAL ROLE` prova
   privilégios e RLS, mas produção deve autenticar diretamente como o papel
   técnico, sem iniciar sessão como `postgres`.
-- `20261007235959_remove_sma94_jobs_spike.sql` está pronto e não foi aplicado.
+- `scripts/jobs/sql/cleanup.sql` é um script manual, está pronto e não foi aplicado; fica fora de `supabase/migrations` para nunca ser executado por um runner normal.
   A extensão pgmq não é removida porque é um recurso compartilhável do projeto.

@@ -84,6 +84,7 @@ async function run(connectionName: 'direct' | 'pooler', connectionString: string
     localGroupConcurrency: 1,
     pollingIntervalSeconds: 0.5,
   }, async ([job]) => {
+    assert.ok(job, 'pg-boss worker callback requires one job')
     const payload = job.data
     if (payload.mode === 'retry') {
       retryAttempts += 1
