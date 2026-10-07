@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model SpikeNote {
+  id              String @id @db.Uuid
+  workspaceId     String @map("workspace_id") @db.Uuid
+  organizationId  String @map("organization_id") @db.Uuid
+  body            String
+
+  @@map("spike_notes")
+}
+
