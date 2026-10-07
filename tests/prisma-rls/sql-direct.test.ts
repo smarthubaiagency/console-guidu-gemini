@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { contextA, ids } from "./fixtures.js";
 
 const directUrl = process.env.DIRECT_DATABASE_URL;
@@ -7,6 +7,11 @@ const describeDatabase = directUrl ? describe : describe.skip;
 
 describeDatabase("SQL-level RLS and constraints", () => {
   const prisma = new PrismaClient({ datasourceUrl: directUrl! });
+
+  beforeAll(async () => {
+    const identity = await prisma.$queryRaw<Array<{ current_user: string }>>`select current_user`;
+    expect(identity[0]?.current_user).toBe("app_runtime");
+  });
 
   afterAll(() => prisma.$disconnect());
 

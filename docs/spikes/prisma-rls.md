@@ -1,7 +1,8 @@
 # Prisma + RLS + Supavisor spike (SMA-92)
 
-Status: **partially proven; Prisma connection validation is blocked on a missing
-`app_runtime` password/connection secrets**.
+Status: **SQL-level isolation proven; external Prisma validation failed because
+the injected connection secrets authenticate as the hosted `postgres` role,
+not `app_runtime`**.
 
 ## Environment and versions
 
@@ -34,8 +35,9 @@ as `set local role app_runtime` proved:
 
 The TypeScript helper uses an interactive Prisma transaction and parameterized
 `set_config(..., true)` calls. Static generation and strict typecheck pass.
-Vitest discovers 10 integration checks, but correctly skips them without the
-three connection/API environment variables.
+Vitest discovers 10 integration checks. The suite now asserts `current_user =
+'app_runtime'` before exercising RLS so an administrative connection cannot
+produce misleading isolation results.
 
 ## Hosted Supabase differences discovered
 
@@ -54,6 +56,19 @@ has LOGIN but no committed password. A strong password must be provisioned and
 stored as Paperclip secrets for `DATABASE_URL` and `DIRECT_DATABASE_URL` before
 the remaining suite can run.
 
+## External validation attempt (2026-10-07)
+
+The registered secrets were injected and the suite ran against the dev project.
+Sanitized inspection showed that both URLs authenticate as
+`postgres.mmwmhlafzewdyqsgfkzk` through the pooler. `DATABASE_URL` uses port
+6543 without `pgbouncer=true`; `DIRECT_DATABASE_URL` uses the pooler host on
+port 5432. Both returned both tenants because the hosted `postgres` role has
+`BYPASSRLS`, and the concurrency run also reached SQLSTATE `26000` from prepared
+statements in transaction pooling. `SUPABASE_URL` and `SUPABASE_ANON_KEY` were
+not present, so Data API stayed skipped. This is a credential/configuration
+failure, not proof of an `app_runtime` policy leak. No JWT alternative was
+implemented.
+
 ## Remaining validation / explicit blocker
 
 The following claims are **not yet proven** and must not be inferred from the
@@ -67,11 +82,11 @@ passing SQL checks:
 5. Transaction overhead (baseline transaction versus five `set_config` calls)
    has not been measured.
 
-Required unblock: provision an `app_runtime` password without committing it,
-then register `DATABASE_URL`, `DIRECT_DATABASE_URL`, `SUPABASE_URL`, and
-`SUPABASE_ANON_KEY` for the assigned agent/CI. An authenticated test token or a
-safe test-user sign-in flow is also required for the authenticated PostgREST
-request. Run `npm run test:spike` afterward and record latency samples here.
+Required unblock: replace both URLs with `app_runtime` credentials. The pool URL
+must use `app_runtime.mmwmhlafzewdyqsgfkzk`, port 6543, and `pgbouncer=true`;
+the direct URL must authenticate as `app_runtime` against the direct database
+endpoint. Also register `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and an authenticated
+test flow. Then rerun the suite and measure transaction overhead.
 
 ## Cleanup
 
