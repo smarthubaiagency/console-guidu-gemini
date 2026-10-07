@@ -1,8 +1,8 @@
 # Prisma + RLS + Supavisor spike (SMA-92)
 
-Status: **SQL-level isolation proven; external Prisma validation failed because
-the injected connection secrets authenticate as the hosted `postgres` role,
-not `app_runtime`**.
+Status: **SQL-level isolation and Prisma runtime identity proven; external
+Supavisor validation remains blocked because the port 6543 secret omits
+`pgbouncer=true` and Prisma receives SQLSTATE `26000`**.
 
 ## Environment and versions
 
@@ -35,9 +35,10 @@ as `set local role app_runtime` proved:
 
 The TypeScript helper uses an interactive Prisma transaction and parameterized
 `set_config(..., true)` calls. Static generation and strict typecheck pass.
-Vitest discovers 10 integration checks. The suite now asserts `current_user =
-'app_runtime'` before exercising RLS so an administrative connection cannot
-produce misleading isolation results.
+Vitest discovers 11 integration checks. The suite now asserts both `current_user =
+'app_runtime'` and `rolbypassrls = false` on the pool and port 5432 connection
+before exercising RLS, so an administrative connection cannot produce misleading
+isolation results.
 
 ## Hosted Supabase differences discovered
 
@@ -56,37 +57,42 @@ has LOGIN but no committed password. A strong password must be provisioned and
 stored as Paperclip secrets for `DATABASE_URL` and `DIRECT_DATABASE_URL` before
 the remaining suite can run.
 
-## External validation attempt (2026-10-07)
+## External validation attempts (2026-10-07)
 
-The registered secrets were injected and the suite ran against the dev project.
-Sanitized inspection showed that both URLs authenticate as
-`postgres.mmwmhlafzewdyqsgfkzk` through the pooler. `DATABASE_URL` uses port
-6543 without `pgbouncer=true`; `DIRECT_DATABASE_URL` uses the pooler host on
-port 5432. Both returned both tenants because the hosted `postgres` role has
-`BYPASSRLS`, and the concurrency run also reached SQLSTATE `26000` from prepared
-statements in transaction pooling. `SUPABASE_URL` and `SUPABASE_ANON_KEY` were
-not present, so Data API stayed skipped. This is a credential/configuration
-failure, not proof of an `app_runtime` policy leak. No JWT alternative was
+The first registered secret version authenticated as the hosted `postgres` role
+and was rejected as invalid evidence. After credentials v2 were registered, the
+mandatory preflight passed on both URLs: `current_user = app_runtime` and
+`rolbypassrls = false`. Basic pooled and port 5432 reads, cross-workspace denial,
+missing/malformed context, and the composite FK checks passed.
+
+The resumed run found 6 passing, 4 failing, and 1 skipped test. The failures were
+all on the port 6543 Supavisor path: pool reuse, rollback cleanup, 60 concurrent
+alternating requests, and overhead measurement reached SQLSTATE `26000`
+(`prepared statement ... does not exist`). Sanitized URL inspection confirmed
+that `DATABASE_URL` uses port 6543 but has no `pgbouncer=true`; per operator
+direction, the run stopped without modifying or overriding the secret. The
+provided `DIRECT_DATABASE_URL` uses the Supavisor host on port 5432 rather than
+the direct database hostname, although its runtime identity preflight and direct
+test cases passed.
+
+`SUPABASE_URL` and `SUPABASE_ANON_KEY` remain absent, so the PostgREST test is
+explicitly skipped. Those are the exact names expected by
+`tests/prisma-rls/data-api.test.ts`; the second may contain a compatible anon
+or publishable key used as the `apikey` header. No JWT alternative was
 implemented.
 
 ## Remaining validation / explicit blocker
 
-The following claims are **not yet proven** and must not be inferred from the
-passing SQL checks:
+Marcelo must update `GUIDU_DEV_DATABASE_URL` so the injected `DATABASE_URL` on
+port 6543 includes `pgbouncer=true`. Then rerun the four currently failing pool
+checks and capture the overhead measurement. For a literal direct-Postgres proof,
+`GUIDU_DEV_DIRECT_DATABASE_URL` must use the project direct database endpoint
+rather than the Supavisor host on port 5432.
 
-1. Prisma connects as `app_runtime` through direct Postgres and through
-   Supavisor transaction mode.
-2. Sixty alternating parallel Prisma transactions do not leak context.
-3. A forced rollback and subsequent pooled request do not retain context.
-4. PostgREST HTTP calls for both `anon` and an authenticated user are denied.
-5. Transaction overhead (baseline transaction versus five `set_config` calls)
-   has not been measured.
-
-Required unblock: replace both URLs with `app_runtime` credentials. The pool URL
-must use `app_runtime.mmwmhlafzewdyqsgfkzk`, port 6543, and `pgbouncer=true`;
-the direct URL must authenticate as `app_runtime` against the direct database
-endpoint. Also register `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and an authenticated
-test flow. Then rerun the suite and measure transaction overhead.
+The Data API check remains pending until `SUPABASE_URL` and
+`SUPABASE_ANON_KEY` are registered. The current HTTP test proves anonymous
+access is denied; an authenticated-user HTTP scenario still requires an
+authorized synthetic auth flow or token and remains outside this run.
 
 ## Cleanup
 
