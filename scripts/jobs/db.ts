@@ -16,7 +16,7 @@ export class RuntimeDatabase implements IDatabase {
     this.pool = new pg.Pool({ connectionString, ssl, max: 6 })
   }
 
-  async executeSql(text: string, values?: unknown[]): Promise<{ rows: any[] }> {
+  async executeSql(text: string, values?: unknown[]): Promise<{ rows: pg.QueryResultRow[] }> {
     const client = await this.pool.connect()
     try {
       await client.query('begin')

@@ -23,15 +23,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.10.1
+          run_install: false
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
-      - run: npm run generate
-      - run: npm run typecheck
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm generate
+      - run: pnpm typecheck
+      - run: pnpm lint
       - name: Unit tests (database suites skip without URLs)
-        run: npm test
+        run: pnpm test
+      - run: pnpm build
 
   db:
     name: db
@@ -39,12 +45,16 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.10.1
+          run_install: false
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
-      - run: npm run generate
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm generate
 
       - name: Install pinned Supabase CLI
         run: |
@@ -107,7 +117,7 @@ jobs:
         run: psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/prisma-rls/rls.sql
 
       - name: Prisma and Data API isolation suite
-        run: npm run test:spike
+        run: pnpm test:spike
 
       - name: Supabase logs on failure
         if: failure()
