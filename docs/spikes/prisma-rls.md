@@ -2,6 +2,17 @@
 
 Status: **Spike concluído: isolamento SQL e Prisma comprovado nas conexões Supavisor Transaction (6543) e Session (5432); 11/11 testes automatizados passaram**.
 
+## Continuous integration (SMA-113)
+
+`.github/workflows/ci.yml` runs on every pull request and push to `main`, using fixed Node 24.10.0 and Supabase CLI 2.110.0 versions.
+
+- `quality` restores the npm cache, generates Prisma Client, typechecks, and runs tests that do not require database URLs. There is no lint step because this repository has no lint script or configuration yet.
+- `db` starts Supabase locally with its transaction-mode pooler, runs `supabase db reset`, creates an ephemeral password for `app_runtime`, and derives local API and database values from `supabase status`. It never reads a hosted Supabase secret.
+- The database job loads two-workspace synthetic fixtures, executes `tests/prisma-rls/rls.sql`, then runs the Prisma and Data API suite. Its preflight requires `current_user = app_runtime` and `rolbypassrls = false`; coverage includes cross-workspace access, invalid context, pool reuse, rollback, concurrency, composite FK, and closed Data API access.
+- The local pool username is `app_runtime.pooler-dev`: Supabase CLI 2.110.0 provisions the local Supavisor tenant with the fixed external id `pooler-dev`, independently of this repository's `project_id`. The pool URL carries `pgbouncer=true`, matching the prepared-statement constraint of hosted Supavisor.
+
+Playwright and deployment remain outside this workflow. Hosted Supavisor validation remains documented below and manual; the CI gate uses only runner-local Supabase and never falls back to `guidu`.
+
 ## Environment and versions
 
 - Supabase dev project: `guidu` (`mmwmhlafzewdyqsgfkzk`, sa-east-1).
@@ -77,7 +88,4 @@ Por decisão de infraestrutura, a conexão chamada de “direta” neste spike �
 
 ## Cleanup
 
-`20261007225959_remove_prisma_rls_spike.sql` is ready but deliberately not
-applied. It removes only the `spike_%` tables and `spike_private` schema; roles
-remain because role removal needs a separate ownership/membership audit.
-
+`docs/spikes/sql/remove-prisma-rls-spike.sql` permanece preparado, mas não foi aplicado. Sua remoção de `supabase/migrations` foi autorizada por Marcelo como exceção à imutabilidade: a consulta a `supabase_migrations.schema_migrations` no projeto de desenvolvimento mostrou somente as três migrations do spike RLS e as três migrations de jobs da SMA-94, sem `20261007225959`; não existe ambiente de produção. Como o timestamp do cleanup antecede as migrations da SMA-94 já aplicadas, mantê-lo no histórico faria um futuro `db push` tratá-lo como pendente fora de ordem e apagar o schema que a suíte precisa validar. O SQL permanece como artefato histórico em `docs/spikes/sql`; ele remove apenas as tabelas `spike_%` e o schema `spike_private`, enquanto os roles permanecem porque removê-los exige auditoria separada de ownership e memberships.

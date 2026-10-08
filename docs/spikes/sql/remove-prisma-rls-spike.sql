@@ -1,4 +1,5 @@
--- Cleanup only: keep ready, but DO NOT APPLY as part of SMA-92 validation.
+-- Manual cleanup only: deliberately kept outside supabase/migrations so a
+-- clean `supabase db reset` retains the spike schema for its validation suite.
 drop table if exists public.spike_notes;
 drop table if exists public.spike_workspace_members;
 drop table if exists public.spike_workspaces;

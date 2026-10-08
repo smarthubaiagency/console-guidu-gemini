@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 24.10.0
+  SUPABASE_CLI_VERSION: 2.110.0
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run generate
+      - run: npm run typecheck
+      - name: Unit tests (database suites skip without URLs)
+        run: npm test
+
+  db:
+    name: db
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run generate
+
+      - name: Install pinned Supabase CLI
+        run: |
+          curl --fail --silent --show-error --location \
+            "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_linux_amd64.tar.gz" \
+            | sudo tar --extract --gzip --directory /usr/local/bin supabase supabase-go
+          supabase --version
+
+      - name: Seed ephemeral app_runtime before pooler bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$runtime_password"
+          echo "RUNTIME_PASSWORD=$runtime_password" >> "$GITHUB_ENV"
+          printf "do \$\$ begin if not exists (select 1 from pg_roles where rolname = 'app_runtime') then create role app_runtime login nosuperuser nocreatedb nocreaterole noinherit nobypassrls password '%s'; else alter role app_runtime password '%s'; end if; end \$\$;\n" "$runtime_password" "$runtime_password" > supabase/roles.sql
+
+      - name: Start isolated local Supabase
+        run: supabase start --exclude studio,inbucket,storage-api,imgproxy,realtime,postgres-meta,edge-runtime,logflare,vector
+
+      - name: Rebuild database from every migration
+        run: supabase db reset
+
+      - name: Provision ephemeral app_runtime password and local URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          status_json="$(supabase status -o json)"
+          api_url="$(jq -r '.API_URL' <<<"$status_json")"
+          anon_key="$(jq -r '.ANON_KEY' <<<"$status_json")"
+          admin_url="$(jq -r '.DB_URL' <<<"$status_json")"
+
+
+          for attempt in {1..30}; do
+            if PGPASSWORD="$RUNTIME_PASSWORD" psql \
+              --host=127.0.0.1 --port=54329 --username=app_runtime.pooler-dev --dbname=postgres \
+              --command="select 1" >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" == 30 ]]; then
+              echo "Local transaction pooler did not become ready" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+
+          {
+            echo "DATABASE_URL=postgresql://app_runtime.pooler-dev:${RUNTIME_PASSWORD}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
+            echo "DIRECT_DATABASE_URL=postgresql://app_runtime:${RUNTIME_PASSWORD}@127.0.0.1:54322/postgres"
+            echo "SUPABASE_URL=$api_url"
+            echo "SUPABASE_ANON_KEY=$anon_key"
+            echo "ADMIN_URL=$admin_url"
+          } >> "$GITHUB_ENV"
+
+      - name: Load synthetic two-workspace fixtures
+        run: psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/prisma-rls/seed.sql
+
+      - name: SQL policy tests
+        run: psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/prisma-rls/rls.sql
+
+      - name: Prisma and Data API isolation suite
+        run: npm run test:spike
+
+      - name: Supabase logs on failure
+        if: failure()
+        run: supabase status && docker ps --all
