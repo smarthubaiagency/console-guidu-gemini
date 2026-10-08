@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
+import { requiredDatabaseSuite } from "./database-suite.js";
 
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
-const describeApi = url && anonKey ? describe : describe.skip;
+const describeApi = requiredDatabaseSuite(
+  "Data API remains closed for domain tables",
+  ["SUPABASE_URL", "SUPABASE_ANON_KEY"],
+);
 
 describeApi("Data API remains closed for domain tables", () => {
   it("does not allow anon to read spike_notes", async () => {
@@ -13,4 +17,3 @@ describeApi("Data API remains closed for domain tables", () => {
     expect([401, 403]).toContain(response.status);
   });
 });
-
