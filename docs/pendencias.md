@@ -8,7 +8,7 @@ Atualizado em 08/10/2026 a partir da seção 26 da Especificação v1.0, das dec
 | Planos, preços e cotas | Comercial define números, política de vagas e limites. |
 | Escopo de dados sensíveis | Produto e avaliação jurídica definem. |
 | Infraestrutura e recuperação | Operação valida RPO/RTO e cobertura de backup. |
-| Herança de variáveis de ambiente do Paperclip | Revisar a herança de variáveis de ambiente do Paperclip para os agentes (exposição do banco de controle). Responsável: Marcelo, com a operação do Paperclip. |
+| Herança de variáveis de ambiente do Paperclip | Revisar a herança de variáveis de ambiente do Paperclip para os agentes (exposição do banco de controle). |
 | Clientes e ferramentas MCP | Começar com núcleo e clientes aprovados; catálogo definitivo continua aberto. |
 | Provedores e cobrança | Selecionar com contratos e requisitos de privacidade. |
 | Retenção e privacidade | Definir por categoria com responsabilidades. |
