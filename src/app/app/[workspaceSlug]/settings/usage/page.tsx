@@ -13,65 +13,79 @@ interface UsagePageProps {
 
 export default async function UsagePage({ params }: UsagePageProps) {
   const { workspaceSlug } = await params;
-  const identity = await requireUserPage(`/app/${workspaceSlug}/settings/usage`);
-  const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
+  const identity = await requireUserPage(
+    `/app/${workspaceSlug}/settings/usage`,
+  );
+  const context = await resolveWorkspaceContext(
+    prisma,
+    identity.userId,
+    workspaceSlug,
+  );
 
-  const { organization, memberCount } = await withContext(prisma, context, async (tx) => {
-    const org = await tx.organization.findUnique({ where: { id: context.organizationId } });
-    const count = await tx.organizationMember.count({
-      where: { organizationId: context.organizationId, status: "active" },
-    });
-    return { organization: org, memberCount: count };
-  });
+  const { organization, memberCount } = await withContext(
+    prisma,
+    context,
+    async (tx) => {
+      const org = await tx.organization.findUnique({
+        where: { id: context.organizationId },
+      });
+      const count = await tx.organizationMember.count({
+        where: { organizationId: context.organizationId, status: "active" },
+      });
+      return { organization: org, memberCount: count };
+    },
+  );
 
   const maxSeats = organization?.maxSeats ?? 5;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="border-b border-neutral-200 pb-5">
-        <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 mb-1">
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="border-border border-b pb-5">
+        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
           <span>Configurações</span>
           <span>/</span>
           <span>Consumo & Limites</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-neutral-100 text-neutral-700">
+          <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
             <Gauge className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-20 text-text font-bold tracking-tight">
               Consumo, Cotas e Capacidade
             </h1>
-            <p className="text-xs text-neutral-500">
-              Métricas reais de consumo contratual da organização e do workspace.
+            <p className="text-12 text-text-secondary">
+              Métricas reais de consumo contratual da organização e do
+              workspace.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs">
-          <div className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
+          <div className="text-12 text-text-tertiary font-semibold tracking-wider uppercase">
             Membros & Assentos
           </div>
-          <div className="mt-2 text-2xl font-bold text-neutral-900">
+          <div className="text-24 text-text mt-2 font-bold">
             {memberCount} / {maxSeats}
           </div>
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="text-12 text-text-secondary mt-1">
             Assentos da organização utilizados por usuários ativos.
           </p>
         </div>
 
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs">
-          <div className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+        <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
+          <div className="text-12 text-text-tertiary font-semibold tracking-wider uppercase">
             Cotas de Execução IA
           </div>
-          <div className="mt-2 text-2xl font-bold text-neutral-900 flex items-center gap-2">
+          <div className="text-24 text-text mt-2 flex items-center gap-2 font-bold">
             <span>BYOK</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <CheckCircle2 className="text-success-solid h-4 w-4" />
           </div>
-          <p className="mt-1 text-xs text-neutral-500">
-            Consumo faturado diretamente no provedor do cliente através de chave própria.
+          <p className="text-12 text-text-secondary mt-1">
+            Consumo faturado diretamente no provedor do cliente através de chave
+            própria.
           </p>
         </div>
       </div>

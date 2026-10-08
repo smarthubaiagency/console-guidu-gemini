@@ -23,10 +23,7 @@ interface ApiKeysClientProps {
   apiKeys: ApiKeyItem[];
 }
 
-export function ApiKeysClient({
-  workspaceSlug,
-  apiKeys,
-}: ApiKeysClientProps) {
+export function ApiKeysClient({ workspaceSlug, apiKeys }: ApiKeysClientProps) {
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<ApiKeyActionState | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -38,10 +35,26 @@ export function ApiKeysClient({
   const [expiresInDays, setExpiresInDays] = useState(90);
 
   const availableScopes = [
-    { id: "read", label: "Leitura Geral (read)", desc: "Consulta a recursos e metadados do workspace" },
-    { id: "write", label: "Escrita (write)", desc: "Criação e mutação de recursos operacionais" },
-    { id: "mcp:read", label: "MCP Leitura (mcp:read)", desc: "Acesso a ferramentas de leitura em assistentes de IA" },
-    { id: "mcp:write", label: "MCP Escrita (mcp:write)", desc: "Aprovação e submissão de alterações via MCP" },
+    {
+      id: "read",
+      label: "Leitura Geral (read)",
+      desc: "Consulta a recursos e metadados do workspace",
+    },
+    {
+      id: "write",
+      label: "Escrita (write)",
+      desc: "Criação e mutação de recursos operacionais",
+    },
+    {
+      id: "mcp:read",
+      label: "MCP Leitura (mcp:read)",
+      desc: "Acesso a ferramentas de leitura em assistentes de IA",
+    },
+    {
+      id: "mcp:write",
+      label: "MCP Escrita (mcp:write)",
+      desc: "Aprovação e submissão de alterações via MCP",
+    },
   ];
 
   const handleCopy = (key: string) => {
@@ -79,7 +92,11 @@ export function ApiKeysClient({
   };
 
   const handleRevoke = (apiKeyId: string, keyName: string) => {
-    if (!confirm(`Revogar a chave "${keyName}"? Todas as conexões e assistentes ativos usando esta chave perderão o acesso imediatamente.`)) {
+    if (
+      !confirm(
+        `Revogar a chave "${keyName}"? Todas as conexões e assistentes ativos usando esta chave perderão o acesso imediatamente.`,
+      )
+    ) {
       return;
     }
 
@@ -97,13 +114,13 @@ export function ApiKeysClient({
     <div className="space-y-6">
       {/* Feedback banner */}
       {feedback?.error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 animate-in fade-in">
-          <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+        <div className="border-danger-border bg-danger-bg text-12 text-danger-text flex items-center gap-3 rounded-lg border p-4 font-medium">
+          <AlertCircle className="text-danger-text h-4 w-4 shrink-0" />
           <span>{feedback.error}</span>
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="ml-auto text-red-500 hover:text-red-700"
+            className="text-danger-text hover:text-danger-text ml-auto"
           >
             ×
           </button>
@@ -111,32 +128,34 @@ export function ApiKeysClient({
       )}
 
       {feedback?.success && (
-        <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-xs text-emerald-900 animate-in fade-in">
+        <div className="border-success-border bg-success-bg text-12 text-success-text space-y-3 rounded-xl border p-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-bold text-sm">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <div className="text-14 flex items-center gap-2 font-bold">
+              <CheckCircle2 className="text-success-solid h-4 w-4" />
               <span>Chave de API emitida com sucesso</span>
             </div>
             <button
               type="button"
               onClick={() => setFeedback(null)}
-              className="text-emerald-700 hover:text-emerald-900 font-bold"
+              className="text-success-text hover:text-success-text font-bold"
             >
               ×
             </button>
           </div>
-          <p className="text-neutral-600">
-            Copie o token abaixo e armazene-o com segurança. Por motivos de conformidade, ele nunca mais poderá ser visualizado após fechar esta mensagem.
+          <p className="text-text-subtle">
+            Copie o token abaixo e armazene-o com segurança. Por motivos de
+            conformidade, ele nunca mais poderá ser visualizado após fechar esta
+            mensagem.
           </p>
           {feedback.rawKey && (
-            <div className="mt-2 rounded-lg bg-white border border-emerald-300 p-3 flex items-center justify-between gap-3 shadow-xs">
-              <div className="font-mono text-xs truncate select-all text-neutral-900 font-semibold">
+            <div className="bg-surface-card border-success-border mt-2 flex items-center justify-between gap-3 rounded-lg border p-3 shadow-xs">
+              <div className="text-12 text-text truncate font-mono font-semibold select-all">
                 {feedback.rawKey}
               </div>
               <button
                 type="button"
                 onClick={() => handleCopy(feedback.rawKey!)}
-                className="flex items-center gap-1.5 shrink-0 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-semibold transition"
+                className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 font-semibold transition"
               >
                 {copiedKey === feedback.rawKey ? (
                   <>
@@ -156,21 +175,22 @@ export function ApiKeysClient({
       )}
 
       {/* Top Banner & Action */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="border-card-border bg-surface-card flex flex-col justify-between gap-4 rounded-xl border p-5 shadow-xs md:flex-row md:items-center">
         <div>
-          <h2 className="text-base font-semibold text-neutral-900 flex items-center gap-2">
-            <Key className="h-4 w-4 text-neutral-500" />
+          <h2 className="text-16 text-text flex items-center gap-2 font-semibold">
+            <Key className="text-text-secondary h-4 w-4" />
             <span>Tokens de API & Autenticação MCP</span>
           </h2>
-          <p className="mt-0.5 text-xs text-neutral-500">
-            Conforme ADR 0009: chaves emitidas pela plataforma com expiração obrigatória e hash seguro SHA-256.
+          <p className="text-12 text-text-secondary mt-0.5">
+            Conforme ADR 0009: chaves emitidas pela plataforma com expiração
+            obrigatória e hash seguro SHA-256.
           </p>
         </div>
 
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white px-3.5 py-2 text-xs font-semibold shadow-xs transition shrink-0"
+          className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
         >
           <Plus className="h-4 w-4" />
           <span>Emitir Nova Chave</span>
@@ -179,17 +199,17 @@ export function ApiKeysClient({
 
       {/* Modal / Create Key Form */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-              <div className="flex items-center gap-2 font-semibold text-neutral-900 text-sm">
-                <Key className="h-4 w-4 text-neutral-600" />
+        <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="border-card-border bg-surface-card w-full max-w-lg rounded-2xl border p-6 shadow-xl">
+            <div className="border-border flex items-center justify-between border-b pb-4">
+              <div className="text-text text-14 flex items-center gap-2 font-semibold">
+                <Key className="text-text-subtle h-4 w-4" />
                 <span>Emitir Nova Chave de API</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 text-lg leading-none"
+                className="text-text-tertiary hover:text-text-subtle text-18 leading-none"
               >
                 ×
               </button>
@@ -197,7 +217,7 @@ export function ApiKeysClient({
 
             <form onSubmit={handleCreateKey} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
                   Nome da Chave / Aplicação
                 </label>
                 <input
@@ -206,12 +226,12 @@ export function ApiKeysClient({
                   placeholder="Ex: Conector Cursor / Claude Code"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs focus:border-neutral-900 focus:outline-none"
+                  className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                <label className="text-12 text-text-subtle mb-1.5 block font-medium">
                   Escopos de Acesso (ADR 0009)
                 </label>
                 <div className="space-y-2">
@@ -220,23 +240,23 @@ export function ApiKeysClient({
                     return (
                       <label
                         key={scope.id}
-                        className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition ${
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-2.5 transition ${
                           isChecked
-                            ? "border-neutral-900 bg-neutral-50/50"
-                            : "border-neutral-200 hover:bg-neutral-50/30"
+                            ? "border-focus-ring bg-surface-sidebar"
+                            : "border-border hover:bg-surface-hover"
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => handleScopeToggle(scope.id)}
-                          className="mt-0.5 rounded text-neutral-900 focus:ring-neutral-900"
+                          className="text-text focus:ring-focus-ring mt-0.5 rounded-sm"
                         />
-                        <div className="text-xs">
-                          <div className="font-semibold text-neutral-900">
+                        <div className="text-12">
+                          <div className="text-text font-semibold">
                             {scope.label}
                           </div>
-                          <div className="text-[11px] text-neutral-500">
+                          <div className="text-11 text-text-secondary">
                             {scope.desc}
                           </div>
                         </div>
@@ -247,13 +267,13 @@ export function ApiKeysClient({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
                   Validade / Expiração Obrigatória
                 </label>
                 <select
                   value={expiresInDays}
                   onChange={(e) => setExpiresInDays(Number(e.target.value))}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs focus:border-neutral-900 focus:outline-none bg-white"
+                  className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
                 >
                   <option value={30}>30 dias</option>
                   <option value={60}>60 dias</option>
@@ -263,25 +283,27 @@ export function ApiKeysClient({
                 </select>
               </div>
 
-              <div className="rounded-lg bg-neutral-50 p-3 border border-neutral-200 flex items-start gap-2 text-[11px] text-neutral-600">
-                <Shield className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+              <div className="bg-surface-raised border-border text-11 text-text-subtle flex items-start gap-2 rounded-lg border p-3">
+                <Shield className="text-success-solid mt-0.5 h-4 w-4 shrink-0" />
                 <span>
-                  O hash <strong>SHA-256</strong> é armazenado no banco. Tokens de API não são tokens do Supabase e operam estritamente sob o contexto do workspace.
+                  O hash <strong>SHA-256</strong> é armazenado no banco. Tokens
+                  de API não são tokens do Supabase e operam estritamente sob o
+                  contexto do workspace.
                 </span>
               </div>
 
-              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-neutral-100">
+              <div className="border-border mt-6 flex items-center justify-end gap-3 border-t pt-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                  className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending || scopes.length === 0}
-                  className="rounded-lg bg-neutral-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
+                  className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
                 >
                   {isPending ? "Emitindo..." : "Emitir Chave"}
                 </button>
@@ -292,24 +314,25 @@ export function ApiKeysClient({
       )}
 
       {/* Keys Table */}
-      <div className="rounded-xl border border-neutral-200 bg-white shadow-xs overflow-hidden">
-        <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between">
-          <h3 className="font-semibold text-sm text-neutral-900">
+      <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
+        <div className="border-border flex items-center justify-between border-b px-5 py-4">
+          <h3 className="text-14 text-text font-semibold">
             Chaves de API Emitidas ({apiKeys.length})
           </h3>
-          <span className="text-xs text-neutral-400">
+          <span className="text-12 text-text-tertiary">
             Identificação por prefixo e auditoria de uso
           </span>
         </div>
 
         {apiKeys.length === 0 ? (
-          <div className="p-8 text-center text-xs text-neutral-400">
-            Nenhuma chave emitida para este workspace. Crie uma chave para conectar assistentes MCP ou integrações REST.
+          <div className="text-12 text-text-tertiary p-8 text-center">
+            Nenhuma chave emitida para este workspace. Crie uma chave para
+            conectar assistentes MCP ou integrações REST.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-neutral-50 text-neutral-500 uppercase tracking-wider font-semibold border-b border-neutral-200">
+            <table className="text-12 w-full text-left">
+              <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
                 <tr>
                   <th className="px-5 py-3">Nome</th>
                   <th className="px-5 py-3">Prefixo</th>
@@ -320,13 +343,13 @@ export function ApiKeysClient({
                   <th className="px-5 py-3 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-border divide-y">
                 {apiKeys.map((item) => (
-                  <tr key={item.id} className="hover:bg-neutral-50/50">
-                    <td className="px-5 py-3.5 font-semibold text-neutral-900">
+                  <tr key={item.id} className="hover:bg-surface-hover">
+                    <td className="text-text px-5 py-3.5 font-semibold">
                       {item.name}
                     </td>
-                    <td className="px-5 py-3.5 font-mono text-neutral-600 bg-neutral-50/50 rounded">
+                    <td className="text-text-subtle bg-surface-sidebar rounded-sm px-5 py-3.5 font-mono">
                       {item.prefix}
                     </td>
                     <td className="px-5 py-3.5">
@@ -334,19 +357,19 @@ export function ApiKeysClient({
                         {item.scopes.map((sc) => (
                           <span
                             key={sc}
-                            className="rounded-xs bg-neutral-100 px-1.5 py-0.5 text-[10px] font-mono text-neutral-700"
+                            className="bg-surface-hover text-10 text-text-subtle rounded-xs px-1.5 py-0.5 font-mono"
                           >
                             {sc}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-neutral-500">
-                      {new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(
-                        new Date(item.expiresAt),
-                      )}
+                    <td className="text-text-secondary px-5 py-3.5">
+                      {new Intl.DateTimeFormat("pt-BR", {
+                        dateStyle: "short",
+                      }).format(new Date(item.expiresAt))}
                     </td>
-                    <td className="px-5 py-3.5 text-neutral-500">
+                    <td className="text-text-secondary px-5 py-3.5">
                       {item.lastUsedAt
                         ? new Intl.DateTimeFormat("pt-BR", {
                             dateStyle: "short",
@@ -356,14 +379,14 @@ export function ApiKeysClient({
                     </td>
                     <td className="px-5 py-3.5">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        className={`text-10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${
                           item.status === "active"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-neutral-100 text-neutral-500"
+                            ? "bg-success-bg text-success-text border-success-border border"
+                            : "bg-surface-hover text-text-secondary"
                         }`}
                       >
                         {item.status === "active" && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                         )}
                         {item.status === "active" ? "Ativa" : "Revogada"}
                       </span>
@@ -374,7 +397,7 @@ export function ApiKeysClient({
                           type="button"
                           disabled={isPending}
                           onClick={() => handleRevoke(item.id, item.name)}
-                          className="text-neutral-400 hover:text-red-600 transition p-1 rounded hover:bg-red-50"
+                          className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
                           title="Revogar chave"
                         >
                           <Trash2 className="h-4 w-4" />

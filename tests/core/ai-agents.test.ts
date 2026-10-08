@@ -13,9 +13,8 @@
  * ============================================================================
  */
 
-import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { describe, expect, it, beforeEach } from "vitest";
+import { expect, it, beforeEach } from "vitest";
 
 import { registerCredential } from "@/core/credentials/vault";
 import {
@@ -31,8 +30,13 @@ import {
 import type { ExecutionParams, ExecutionResult } from "@/core/agents/providers/executor";
 import { withContext } from "@/lib/prisma/with-context";
 import { contextA, contextB } from "./fixtures";
+import { describeDatabase } from "../prisma-rls/describe-database.js";
 
-describe("Task 07: AI Agent Engine, Fallback Resilience & Interaction History", () => {
+const databaseUrl =
+  process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
+const requiredVars = { DATABASE_URL: databaseUrl };
+
+describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction History", requiredVars, () => {
   const prisma = new PrismaClient({
     datasources: {
       db: {

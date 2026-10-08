@@ -21,7 +21,7 @@ export function Field({
 
   return (
     <div>
-      <label htmlFor={name} className="text-sm font-medium">
+      <label htmlFor={name} className="text-14 font-medium">
         {label}
       </label>
       <input
@@ -29,10 +29,10 @@ export function Field({
         id={name}
         name={name}
         {...(hint ? { "aria-describedby": hintId } : {})}
-        className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+        className="border-border-strong bg-surface-input text-14 text-text placeholder:text-text-secondary focus:border-focus-ring mt-1 w-full rounded-md border px-3 py-2 outline-none"
       />
       {hint ? (
-        <p id={hintId} className="text-muted-foreground mt-1 text-xs">
+        <p id={hintId} className="text-text-secondary text-12 mt-1">
           {hint}
         </p>
       ) : null}
@@ -48,7 +48,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+      className="bg-primary text-14 text-on-primary w-full rounded-md px-3 py-2 font-medium disabled:opacity-60"
     >
       {pending ? "Enviando…" : children}
     </button>

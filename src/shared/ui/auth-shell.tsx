@@ -16,13 +16,13 @@ export function AuthShell({
 }>) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-12">
-      <p className="text-muted-foreground text-sm font-medium">{appName}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight">{title}</h1>
+      <p className="text-text-secondary text-14 font-medium">{appName}</p>
+      <h1 className="text-30 mt-2 font-semibold tracking-tight">{title}</h1>
       {description ? (
-        <p className="text-muted-foreground mt-3 text-sm">{description}</p>
+        <p className="text-text-secondary text-14 mt-3">{description}</p>
       ) : null}
       <div className="mt-8">{children}</div>
-      {footer ? <div className="mt-8 text-sm">{footer}</div> : null}
+      {footer ? <div className="text-14 mt-8">{footer}</div> : null}
     </main>
   );
 }
@@ -36,7 +36,7 @@ export function ErrorNotice({
     <p
       role="alert"
       data-testid={testId}
-      className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900"
+      className="border-danger-border bg-danger-bg text-14 text-danger-text rounded-md border px-3 py-2"
     >
       {children}
     </p>
@@ -52,7 +52,7 @@ export function SuccessNotice({
     <p
       role="status"
       data-testid={testId}
-      className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+      className="border-success-border bg-success-bg text-14 text-success-text rounded-md border px-3 py-2"
     >
       {children}
     </p>

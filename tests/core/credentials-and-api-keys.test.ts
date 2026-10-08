@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { describe, expect, it, beforeEach } from "vitest";
 
@@ -20,8 +19,13 @@ import {
 } from "@/core/credentials/api-keys";
 import { withContext } from "@/lib/prisma/with-context";
 import { contextA, contextB } from "./fixtures";
+import { describeDatabase } from "../prisma-rls/describe-database.js";
 
-describe("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 0009, Spec §16)", () => {
+const databaseUrl =
+  process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
+const requiredVars = { DATABASE_URL: databaseUrl };
+
+describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 0009, Spec §16)", requiredVars, () => {
   const prisma = new PrismaClient({
     datasources: {
       db: {

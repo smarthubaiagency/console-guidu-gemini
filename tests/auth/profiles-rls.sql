@@ -148,7 +148,7 @@ begin
 end
 $$;
 
--- Exactly one policy per action: two differently-named permissive policies
+-- Exactly one policy per action for app_runtime: two differently-named permissive policies
 -- for the same command combine with OR and silently undo the status gate.
 do $$
 declare
@@ -158,10 +158,11 @@ begin
     select cmd, count(*) as policy_count
     from pg_policies
     where schemaname = 'public' and tablename = 'profiles'
+      and 'app_runtime' = any(roles)
     group by cmd
   loop
     if per_action.policy_count <> 1 then
-      raise exception 'profiles: % command has % policies, expected exactly 1',
+      raise exception 'profiles: % command has % policies for app_runtime, expected exactly 1',
         per_action.cmd, per_action.policy_count;
     end if;
   end loop;
@@ -169,8 +170,18 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'public' and tablename = 'profiles' and cmd = 'SELECT'
+      and 'app_runtime' = any(roles)
   ) then
-    raise exception 'profiles: missing the select policy';
+    raise exception 'profiles: missing the select policy for app_runtime';
+  end if;
+
+  if (
+    select count(*)
+    from pg_policies
+    where schemaname = 'public' and tablename = 'profiles'
+      and 'app_rls_helper' = any(roles)
+  ) > 1 then
+    raise exception 'profiles: app_rls_helper has multiple policies';
   end if;
 end
 $$;

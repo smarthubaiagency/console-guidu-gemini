@@ -22,7 +22,9 @@ export function WorkspaceSwitcher({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const activeWorkspace = workspaces.find((w) => w.workspaceSlug === currentSlug);
+  const activeWorkspace = workspaces.find(
+    (w) => w.workspaceSlug === currentSlug,
+  );
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -42,26 +44,26 @@ export function WorkspaceSwitcher({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-left text-sm font-medium shadow-xs transition hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+        className="border-border bg-surface-card text-14 hover:bg-surface-hover focus:ring-focus-ring flex items-center gap-2 rounded-lg border px-3 py-1.5 text-left font-medium shadow-xs transition focus:ring-2 focus:outline-none"
         aria-expanded={isOpen}
       >
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-neutral-900 text-white">
+        <div className="bg-primary text-on-primary flex h-6 w-6 items-center justify-center rounded-md">
           <Layers className="h-3.5 w-3.5" />
         </div>
         <div className="flex flex-col text-left leading-tight">
-          <span className="font-semibold text-neutral-900">
+          <span className="text-text font-semibold">
             {activeWorkspace?.workspaceName ?? currentSlug}
           </span>
-          <span className="text-[11px] text-neutral-500">
+          <span className="text-11 text-text-secondary">
             {activeWorkspace?.organizationName ?? "Organização"}
           </span>
         </div>
-        <ChevronDown className="ml-1 h-3.5 w-3.5 text-neutral-400" />
+        <ChevronDown className="text-text-tertiary ml-1 h-3.5 w-3.5" />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-1.5 w-64 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg z-50 animate-in fade-in-50 zoom-in-95">
-          <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+        <div className="border-card-border bg-surface-card absolute left-0 z-50 mt-1.5 w-64 rounded-xl border p-1.5 shadow-lg">
+          <div className="text-12 text-text-secondary px-2 py-1.5 font-semibold tracking-wider uppercase">
             Seus Workspaces
           </div>
           <div className="mt-1 space-y-0.5">
@@ -77,26 +79,24 @@ export function WorkspaceSwitcher({
                       router.push(`/app/${ws.workspaceSlug}`);
                     }
                   }}
-                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs transition ${
+                  className={`text-12 flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left transition ${
                     isSelected
-                      ? "bg-neutral-100 font-medium text-neutral-900"
-                      : "text-neutral-700 hover:bg-neutral-50"
+                      ? "bg-surface-hover text-text font-medium"
+                      : "text-text-subtle hover:bg-surface-hover"
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <Building2 className="h-3.5 w-3.5 text-neutral-400" />
+                    <Building2 className="text-text-tertiary h-3.5 w-3.5" />
                     <div>
-                      <div className="font-medium text-neutral-900">
+                      <div className="text-text font-medium">
                         {ws.workspaceName}
                       </div>
-                      <div className="text-[11px] text-neutral-500">
+                      <div className="text-11 text-text-secondary">
                         {ws.organizationName} • {ws.workspaceRole}
                       </div>
                     </div>
                   </div>
-                  {isSelected && (
-                    <Check className="h-3.5 w-3.5 text-neutral-900" />
-                  )}
+                  {isSelected && <Check className="text-text h-3.5 w-3.5" />}
                 </button>
               );
             })}

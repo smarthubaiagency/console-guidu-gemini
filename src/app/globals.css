@@ -1,25 +1,225 @@
+/*
+ * GUIDU design tokens — generated from the GUIDU design system (v2).
+ * P0: components use ONLY these tokens. No Tailwind palette (neutral-*, red-*…),
+ * no arbitrary values (text-[11px], w-[…]) and no inline style. ESLint enforces it.
+ * Colour utilities: bg-<token>, text-<token>, border-<token> (e.g. bg-surface-card,
+ * text-text-secondary, border-card-border). Dark theme: <html data-theme="dark">.
+ */
 @import "tailwindcss";
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --border: oklch(0.922 0 0);
-  --radius: 0.625rem;
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme static {
+  /* Reset Tailwind defaults so only GUIDU tokens exist */
+  --color-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+
+  /* Colour — light (first theme) */
+  --color-surface: #ffffff;
+  --color-surface-sidebar: oklch(98.5% 0 0);
+  --color-surface-card: #ffffff;
+  --color-card-border: oklch(92.2% 0 0);
+  --color-surface-hover: oklch(97% 0 0);
+  --color-surface-raised: oklch(98.5% 0 0);
+  --color-surface-input: #ffffff;
+  --color-text: oklch(14.5% 0 0);
+  --color-text-secondary: oklch(55.6% 0 0);
+  --color-text-tertiary: oklch(70.8% 0 0);
+  --color-text-subtle: oklch(37.1% 0 0);
+  --color-border: oklch(92.2% 0 0);
+  --color-border-strong: oklch(87% 0 0);
+  --color-primary: #1976d2;
+  --color-primary-hover: #1565c0;
+  --color-on-primary: #ffffff;
+  --color-primary-text: #1976d2;
+  --color-primary-subtle: #e3f2fd;
+  --color-focus-ring: var(--color-primary);
+  --color-success-bg: oklch(97.9% 0.021 166.113);
+  --color-success-border: oklch(84.5% 0.143 164.978);
+  --color-success-text: oklch(37.8% 0.077 168.94);
+  --color-success-solid: oklch(69.6% 0.17 162.48);
+  --color-danger-bg: oklch(97.1% 0.013 17.38);
+  --color-danger-border: oklch(80.8% 0.114 19.571);
+  --color-danger-text: oklch(39.6% 0.141 25.723);
+  --color-warning-bg: oklch(98.7% 0.022 95.277);
+  --color-warning-border: oklch(92.4% 0.12 95.746);
+  --color-warning-text: oklch(55.5% 0.163 48.998);
+  --color-warning-solid: oklch(76.9% 0.188 70.08);
+  --color-on-warning: oklch(14.5% 0 0);
+  --color-surface-strong: oklch(92.2% 0 0);
+  --color-surface-inverse: oklch(20.5% 0 0);
+  --color-surface-inverse-hover: oklch(26.9% 0 0);
+  --color-border-inverse: oklch(26.9% 0 0);
+  --color-text-inverse: #ffffff;
+  --color-text-inverse-secondary: oklch(70.8% 0 0);
+  --color-overlay: rgba(0, 0, 0, 0.4);
+  --color-danger-solid: oklch(63.7% 0.237 25.331);
+  --color-info-bg: var(--color-primary-subtle);
+  --color-info-border: oklch(88.2% 0.059 254.128);
+  --color-info-text: oklch(48.8% 0.243 264.376);
+  --color-ai-bg: oklch(97.7% 0.014 308.299);
+  --color-ai-border: oklch(90.2% 0.063 306.703);
+  --color-ai-text: oklch(49.6% 0.265 301.924);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* shadcn/ui aliases (only for generated shadcn components) */
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-text);
+  --color-card: var(--color-surface-card);
+  --color-card-foreground: var(--color-text);
+  --color-popover: var(--color-surface-card);
+  --color-popover-foreground: var(--color-text);
+  --color-primary-foreground: var(--color-on-primary);
+  --color-secondary: var(--color-surface-hover);
+  --color-secondary-foreground: var(--color-text);
+  --color-muted: var(--color-surface-hover);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent: var(--color-surface-hover);
+  --color-accent-foreground: var(--color-text);
+  --color-destructive: var(--color-danger-text);
+  --color-input: var(--color-border-strong);
+  --color-ring: var(--color-focus-ring);
+
+  /* Type — Outfit (next/font/local, see layout.tsx) */
+  --font-sans:
+    var(--font-outfit), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-outfit), system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --text-10: 10px;
+  --text-10--line-height: 14px;
+  --text-11: 11px;
+  --text-11--line-height: 16px;
+  --text-12: 12px;
+  --text-12--line-height: 16px;
+  --text-14: 14px;
+  --text-14--line-height: 20px;
+  --text-16: 16px;
+  --text-16--line-height: 24px;
+  --text-18: 18px;
+  --text-18--line-height: 28px;
+  --text-20: 20px;
+  --text-20--line-height: 28px;
+  --text-24: 24px;
+  --text-24--line-height: 32px;
+  --text-30: 30px;
+  --text-30--line-height: 36px;
+  --text-48: 48px;
+  --text-48--line-height: 48px;
+
+  /* Radius — radius-md is 10px (the original --radius) */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  /* Elevation (dark overrides below) */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Fixed sizes */
+  --container-email: 140px;
 }
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
-  --radius-md: var(--radius);
+
+[data-theme="dark"] {
+  --color-surface: #191919;
+  --color-surface-sidebar: #202020;
+  --color-surface-card: #252525;
+  --color-card-border: var(--color-surface-card);
+  --color-surface-hover: #2c2c2c;
+  --color-surface-raised: #2c2c2c;
+  --color-surface-input: #252525;
+  --color-text: #d4d4d4;
+  --color-text-secondary: #9b9b9b;
+  --color-text-tertiary: #7f7f7f;
+  --color-text-subtle: #b4b4b4;
+  --color-border: #2f2f2f;
+  --color-border-strong: #3a3a3a;
+  --color-primary-hover: #1e88e5;
+  --color-primary-text: #529cca;
+  --color-primary-subtle: #1a3247;
+  --color-success-bg: #243d30;
+  --color-success-border: var(--color-success-bg);
+  --color-success-text: #6fcf97;
+  --color-danger-bg: #522e2a;
+  --color-danger-border: var(--color-danger-bg);
+  --color-danger-text: #ff9b8f;
+  --color-warning-bg: #564328;
+  --color-warning-border: var(--color-warning-bg);
+  --color-warning-text: #ffcf70;
+  --color-on-warning: #191919;
+  --color-surface-strong: #373737;
+  --color-surface-inverse: #202020;
+  --color-surface-inverse-hover: #2c2c2c;
+  --color-border-inverse: #2f2f2f;
+  --color-text-inverse: #d4d4d4;
+  --color-text-inverse-secondary: #9b9b9b;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-info-border: var(--color-info-bg);
+  --color-info-text: #64b5f6;
+  --color-ai-bg: #3c2d49;
+  --color-ai-border: var(--color-ai-bg);
+  --color-ai-text: #c9a8ee;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
 }
-* {
-  border-color: var(--border);
+
+/* Tailwind inlines shadow values into utilities, so flat dark cards need this override. */
+[data-theme="dark"] :is(.shadow-xs, .shadow-sm) {
+  --tw-shadow: 0 0 #0000;
 }
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+
+/* Viewport-height panel (agent chat). */
+@utility h-panel {
+  height: calc(100dvh - --spacing(48));
+}
+
+/* Native progress bar styled with tokens (replaces an inline width style). */
+@utility progress-bar {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: --spacing(1.5);
+  border: 0;
+  border-radius: calc(infinity* 1px);
+  overflow: hidden;
+  background-color: var(--color-surface-hover);
+  color: var(--color-primary);
+  &::-webkit-progress-bar {
+    background-color: var(--color-surface-hover);
+  }
+  &::-webkit-progress-value {
+    background-color: currentColor;
+    border-radius: calc(infinity* 1px);
+  }
+  &::-moz-progress-bar {
+    background-color: currentColor;
+    border-radius: calc(infinity* 1px);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+  }
 }

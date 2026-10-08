@@ -31,8 +31,8 @@ export default async function AccountSecurityPage({
     <main className="mx-auto w-full max-w-2xl px-6 py-12">
       <header className="flex items-start justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Segurança</h1>
-          <p className="text-muted-foreground mt-2 text-sm">
+          <h1 className="text-30 font-semibold tracking-tight">Segurança</h1>
+          <p className="text-text-secondary text-14 mt-2">
             {identity.email ?? identity.userId}
           </p>
         </div>
@@ -49,8 +49,8 @@ export default async function AccountSecurityPage({
       ) : null}
 
       <section className="mt-10">
-        <h2 className="text-lg font-medium">Verificação em duas etapas</h2>
-        <p className="text-muted-foreground mt-2 text-sm">
+        <h2 className="text-18 font-medium">Verificação em duas etapas</h2>
+        <p className="text-text-secondary text-14 mt-2">
           Aplicativo autenticador (TOTP). Obrigatório para a administração
           interna da plataforma.
         </p>
@@ -61,7 +61,7 @@ export default async function AccountSecurityPage({
               {verified.map((factor) => (
                 <li
                   key={factor.id}
-                  className="flex items-center justify-between rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="border-border-strong text-14 flex items-center justify-between rounded-md border px-3 py-2"
                 >
                   <span>
                     {factor.friendly_name ?? "Aplicativo autenticador"}

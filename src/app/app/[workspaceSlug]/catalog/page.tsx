@@ -5,37 +5,38 @@ export const metadata: Metadata = { title: "Catálogo de Produtos" };
 
 export default async function CatalogPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="border-b border-neutral-200 pb-5">
-        <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 mb-1">
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="border-border border-b pb-5">
+        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
           <span>Módulos</span>
           <span>/</span>
           <span>Catálogo</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+          <div className="bg-info-bg text-info-text border-info-border rounded-lg border p-2">
             <ShoppingBag className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-20 text-text font-bold tracking-tight">
               Catálogo de Produtos e Itens
             </h1>
-            <p className="text-xs text-neutral-500">
+            <p className="text-12 text-text-secondary">
               Gestão centralizada de sortimento, preços e estoque sincronizado.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-neutral-200 bg-neutral-50/50 p-8 text-center">
-        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+      <div className="border-border bg-surface-sidebar rounded-2xl border p-8 text-center">
+        <div className="bg-info-bg text-info-text mx-auto flex h-10 w-10 items-center justify-center rounded-xl">
           <Clock className="h-5 w-5" />
         </div>
-        <h2 className="mt-4 text-sm font-semibold text-neutral-900">
+        <h2 className="text-14 text-text mt-4 font-semibold">
           Módulo em Fase de Ativação (Fase 5)
         </h2>
-        <p className="mt-2 text-xs text-neutral-500 max-w-md mx-auto leading-relaxed">
-          Conforme ADR 0003, o módulo de Catálogo será implementado após a consolidação da infraestrutura operacional, credenciais BYOK e MCP.
+        <p className="text-12 text-text-secondary mx-auto mt-2 max-w-md leading-relaxed">
+          Conforme ADR 0003, o módulo de Catálogo será implementado após a
+          consolidação da infraestrutura operacional, credenciais BYOK e MCP.
         </p>
       </div>
     </div>

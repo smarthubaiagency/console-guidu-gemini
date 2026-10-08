@@ -34,7 +34,7 @@ export function TotpEnrolment() {
           onClick={() =>
             startEnrolment(async () => setStarted(await startTotpEnrolment()))
           }
-          className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="bg-primary text-14 text-on-primary rounded-md px-3 py-2 font-medium disabled:opacity-60"
         >
           Ativar verificação em duas etapas
         </button>
@@ -46,14 +46,14 @@ export function TotpEnrolment() {
   return (
     <form action={action} className="space-y-4" noValidate>
       <input type="hidden" name="factorId" value={factorId} />
-      <div className="rounded-md border border-neutral-300 p-3 text-sm">
+      <div className="border-border-strong text-14 rounded-md border p-3">
         <p className="font-medium">Chave para o aplicativo autenticador</p>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-text-secondary mt-1">
           Cadastre esta chave e informe o código gerado.
         </p>
         <code
           data-testid="totp-secret"
-          className="mt-2 block font-mono text-xs break-all"
+          className="text-12 mt-2 block font-mono break-all"
         >
           {secret}
         </code>

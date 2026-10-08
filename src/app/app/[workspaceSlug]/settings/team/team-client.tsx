@@ -63,13 +63,20 @@ export function TeamClient({
 
   // Invite Form state
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "member" | "owner">("member");
+  const [inviteRole, setInviteRole] = useState<"admin" | "member" | "owner">(
+    "member",
+  );
 
-  const canManageTeam = currentUserRole === "owner" || currentUserRole === "admin";
+  const canManageTeam =
+    currentUserRole === "owner" || currentUserRole === "admin";
   const isOwner = currentUserRole === "owner";
 
-  const activeMembersCount = members.filter((m) => m.status === "active").length;
-  const pendingInvitesCount = invitations.filter((i) => i.status === "pending").length;
+  const activeMembersCount = members.filter(
+    (m) => m.status === "active",
+  ).length;
+  const pendingInvitesCount = invitations.filter(
+    (i) => i.status === "pending",
+  ).length;
   const totalOccupiedSeats = activeMembersCount + pendingInvitesCount;
   const isSeatLimitReached = totalOccupiedSeats >= maxSeats;
 
@@ -110,7 +117,10 @@ export function TeamClient({
     });
   };
 
-  const handleUpdateRole = (targetUserId: string, newRole: "owner" | "admin" | "member") => {
+  const handleUpdateRole = (
+    targetUserId: string,
+    newRole: "owner" | "admin" | "member",
+  ) => {
     startTransition(async () => {
       const formData = new FormData();
       formData.append("workspaceSlug", workspaceSlug);
@@ -123,7 +133,11 @@ export function TeamClient({
   };
 
   const handleRemoveMember = (targetUserId: string, memberName: string) => {
-    if (!confirm(`Remover "${memberName}" da organização? O acesso será revogado imediatamente.`)) {
+    if (
+      !confirm(
+        `Remover "${memberName}" da organização? O acesso será revogado imediatamente.`,
+      )
+    ) {
       return;
     }
     startTransition(async () => {
@@ -140,13 +154,13 @@ export function TeamClient({
     <div className="space-y-8">
       {/* Feedback alerts */}
       {feedback?.error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 animate-in fade-in">
-          <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+        <div className="border-danger-border bg-danger-bg text-12 text-danger-text flex items-center gap-3 rounded-lg border p-4 font-medium">
+          <AlertCircle className="text-danger-text h-4 w-4 shrink-0" />
           <span>{feedback.error}</span>
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="ml-auto text-red-500 hover:text-red-700"
+            className="text-danger-text hover:text-danger-text ml-auto"
           >
             ×
           </button>
@@ -154,29 +168,29 @@ export function TeamClient({
       )}
 
       {feedback?.success && (
-        <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 animate-in fade-in">
+        <div className="border-success-border bg-success-bg text-12 text-success-text space-y-2 rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-semibold">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <CheckCircle2 className="text-success-solid h-4 w-4" />
               <span>{feedback.message}</span>
             </div>
             <button
               type="button"
               onClick={() => setFeedback(null)}
-              className="text-emerald-600 hover:text-emerald-800 font-bold"
+              className="text-success-solid hover:text-success-text font-bold"
             >
               ×
             </button>
           </div>
           {feedback.rawToken && (
-            <div className="mt-2 rounded-md bg-white border border-emerald-200 p-2.5 flex items-center justify-between gap-3">
-              <div className="font-mono text-[11px] truncate select-all text-neutral-800">
+            <div className="bg-surface-card border-success-border mt-2 flex items-center justify-between gap-3 rounded-md border p-2.5">
+              <div className="text-11 text-text truncate font-mono select-all">
                 {feedback.rawToken}
               </div>
               <button
                 type="button"
                 onClick={() => handleCopy(feedback.rawToken!)}
-                className="flex items-center gap-1 shrink-0 rounded bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 text-[11px] font-medium transition"
+                className="bg-primary hover:bg-primary-hover text-on-primary text-11 flex shrink-0 items-center gap-1 rounded-sm px-2 py-1 font-medium transition"
               >
                 {copiedToken === feedback.rawToken ? (
                   <>
@@ -196,22 +210,23 @@ export function TeamClient({
       )}
 
       {/* Quota Banner */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="border-card-border bg-surface-card flex flex-col justify-between gap-4 rounded-xl border p-5 shadow-xs md:flex-row md:items-center">
         <div>
-          <h2 className="text-base font-semibold text-neutral-900">
+          <h2 className="text-16 text-text font-semibold">
             Capacidade de Membros da Empresa
           </h2>
-          <p className="mt-0.5 text-xs text-neutral-500">
-            {organizationName} possui contrato para até {maxSeats} assentos ativos ou convites simultâneos.
+          <p className="text-12 text-text-secondary mt-0.5">
+            {organizationName} possui contrato para até {maxSeats} assentos
+            ativos ou convites simultâneos.
           </p>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <div className="text-lg font-bold text-neutral-900">
+            <div className="text-18 text-text font-bold">
               {totalOccupiedSeats} / {maxSeats}
             </div>
-            <div className="text-[11px] text-neutral-500">
+            <div className="text-11 text-text-secondary">
               {maxSeats - totalOccupiedSeats > 0
                 ? `${maxSeats - totalOccupiedSeats} vagas disponíveis`
                 : "Limite atingido"}
@@ -223,10 +238,10 @@ export function TeamClient({
               type="button"
               disabled={isSeatLimitReached || isPending}
               onClick={() => setInviteModalOpen(true)}
-              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition ${
+              className={`text-12 flex items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition ${
                 isSeatLimitReached
-                  ? "bg-neutral-300 cursor-not-allowed"
-                  : "bg-neutral-900 hover:bg-neutral-800"
+                  ? "bg-surface-strong text-text-tertiary cursor-not-allowed"
+                  : "bg-primary text-on-primary hover:bg-primary-hover"
               }`}
             >
               <UserPlus className="h-4 w-4" />
@@ -238,17 +253,17 @@ export function TeamClient({
 
       {/* Invite Modal */}
       {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-              <div className="flex items-center gap-2 font-semibold text-neutral-900 text-sm">
-                <UserPlus className="h-4 w-4 text-neutral-600" />
+        <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="border-card-border bg-surface-card w-full max-w-md rounded-2xl border p-6 shadow-xl">
+            <div className="border-border flex items-center justify-between border-b pb-4">
+              <div className="text-text text-14 flex items-center gap-2 font-semibold">
+                <UserPlus className="text-text-subtle h-4 w-4" />
                 <span>Novo Convite de Membro</span>
               </div>
               <button
                 type="button"
                 onClick={() => setInviteModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 text-lg leading-none"
+                className="text-text-tertiary hover:text-text-subtle text-18 leading-none"
               >
                 ×
               </button>
@@ -256,7 +271,7 @@ export function TeamClient({
 
             <form onSubmit={handleInviteSubmit} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
                   E-mail do Convidado
                 </label>
                 <input
@@ -265,44 +280,55 @@ export function TeamClient({
                   placeholder="usuario@empresa.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs focus:border-neutral-900 focus:outline-none"
+                  className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
                   Papel de Acesso (RBAC)
                 </label>
                 <select
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as "admin" | "member" | "owner")}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs focus:border-neutral-900 focus:outline-none bg-white"
+                  onChange={(e) =>
+                    setInviteRole(
+                      e.target.value as "admin" | "member" | "owner",
+                    )
+                  }
+                  className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
                 >
-                  <option value="member">Membro (Acesso padrão aos módulos)</option>
-                  <option value="admin">Administrador (Gestão de membros e configurações)</option>
+                  <option value="member">
+                    Membro (Acesso padrão aos módulos)
+                  </option>
+                  <option value="admin">
+                    Administrador (Gestão de membros e configurações)
+                  </option>
                   {isOwner && (
-                    <option value="owner">Proprietário (Gestão completa e contratação)</option>
+                    <option value="owner">
+                      Proprietário (Gestão completa e contratação)
+                    </option>
                   )}
                 </select>
                 {!isOwner && (
-                  <p className="mt-1 text-[11px] text-neutral-400">
-                    * Apenas proprietários podem convidar outros proprietários (AC04).
+                  <p className="text-11 text-text-tertiary mt-1">
+                    * Apenas proprietários podem convidar outros proprietários
+                    (AC04).
                   </p>
                 )}
               </div>
 
-              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-neutral-100">
+              <div className="border-border mt-6 flex items-center justify-end gap-3 border-t pt-3">
                 <button
                   type="button"
                   onClick={() => setInviteModalOpen(false)}
-                  className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                  className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="rounded-lg bg-neutral-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
+                  className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
                 >
                   {isPending ? "Gerando..." : "Gerar Convite"}
                 </button>
@@ -313,47 +339,50 @@ export function TeamClient({
       )}
 
       {/* Active Members Table */}
-      <div className="rounded-xl border border-neutral-200 bg-white shadow-xs overflow-hidden">
-        <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between">
+      <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
+        <div className="border-border flex items-center justify-between border-b px-5 py-4">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-neutral-500" />
-            <h3 className="font-semibold text-sm text-neutral-900">
+            <Users className="text-text-secondary h-4 w-4" />
+            <h3 className="text-14 text-text font-semibold">
               Membros Ativos ({members.length})
             </h3>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-neutral-50 text-neutral-500 uppercase tracking-wider font-semibold border-b border-neutral-200">
+          <table className="text-12 w-full text-left">
+            <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
               <tr>
                 <th className="px-5 py-3">Membro</th>
                 <th className="px-5 py-3">Papel</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Entrou em</th>
-                {canManageTeam && <th className="px-5 py-3 text-right">Ações</th>}
+                {canManageTeam && (
+                  <th className="px-5 py-3 text-right">Ações</th>
+                )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-border divide-y">
               {members.map((member) => {
                 const isTargetOwner = member.role === "owner";
                 // Admin cannot alter or remove an owner (AC04)
                 const canModifyThisMember =
                   canManageTeam &&
-                  (isOwner || (!isTargetOwner && member.userId !== currentUserId));
+                  (isOwner ||
+                    (!isTargetOwner && member.userId !== currentUserId));
 
                 return (
-                  <tr key={member.userId} className="hover:bg-neutral-50/50">
+                  <tr key={member.userId} className="hover:bg-surface-hover">
                     <td className="px-5 py-3.5">
-                      <div className="font-medium text-neutral-900 flex items-center gap-2">
+                      <div className="text-text flex items-center gap-2 font-medium">
                         <span>{member.name}</span>
                         {member.isCurrentUser && (
-                          <span className="rounded-xs bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 font-medium">
+                          <span className="bg-surface-hover text-10 text-text-subtle rounded-xs px-1.5 py-0.5 font-medium">
                             Você
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-neutral-400 font-mono">
+                      <div className="text-11 text-text-tertiary font-mono">
                         {member.userId}
                       </div>
                     </td>
@@ -369,40 +398,42 @@ export function TeamClient({
                               e.target.value as "owner" | "admin" | "member",
                             )
                           }
-                          className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-800 font-medium focus:outline-none"
+                          className="border-border bg-surface-card text-12 text-text rounded-md border px-2 py-1 font-medium focus:outline-none"
                         >
                           <option value="member">Membro</option>
                           <option value="admin">Administrador</option>
-                          {isOwner && <option value="owner">Proprietário</option>}
+                          {isOwner && (
+                            <option value="owner">Proprietário</option>
+                          )}
                         </select>
                       ) : (
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          className={`text-11 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
                             member.role === "owner"
-                              ? "bg-purple-50 text-purple-700 border border-purple-200"
+                              ? "bg-ai-bg text-ai-text border-ai-border border"
                               : member.role === "admin"
-                              ? "bg-blue-50 text-blue-700 border border-blue-200"
-                              : "bg-neutral-100 text-neutral-700"
+                                ? "bg-info-bg text-info-text border-info-border border"
+                                : "bg-surface-hover text-text-subtle"
                           }`}
                         >
                           <Shield className="h-3 w-3" />
                           {member.role === "owner"
                             ? "Proprietário"
                             : member.role === "admin"
-                            ? "Administrador"
-                            : "Membro"}
+                              ? "Administrador"
+                              : "Membro"}
                         </span>
                       )}
                     </td>
 
                     <td className="px-5 py-3.5">
-                      <span className="inline-flex items-center gap-1 text-emerald-700 text-[11px] font-medium">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <span className="text-success-text text-11 inline-flex items-center gap-1 font-medium">
+                        <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                         Ativo
                       </span>
                     </td>
 
-                    <td className="px-5 py-3.5 text-neutral-500">
+                    <td className="text-text-secondary px-5 py-3.5">
                       {member.joinedAt}
                     </td>
 
@@ -415,7 +446,7 @@ export function TeamClient({
                             onClick={() =>
                               handleRemoveMember(member.userId, member.name)
                             }
-                            className="text-neutral-400 hover:text-red-600 transition p-1 rounded hover:bg-red-50"
+                            className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
                             title="Remover membro"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -432,55 +463,59 @@ export function TeamClient({
       </div>
 
       {/* Pending Invitations Table */}
-      <div className="rounded-xl border border-neutral-200 bg-white shadow-xs overflow-hidden">
-        <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between">
-          <h3 className="font-semibold text-sm text-neutral-900">
+      <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
+        <div className="border-border flex items-center justify-between border-b px-5 py-4">
+          <h3 className="text-14 text-text font-semibold">
             Convites Pendentes ({invitations.length})
           </h3>
-          <span className="text-xs text-neutral-400">
+          <span className="text-12 text-text-tertiary">
             Tokens de acesso único com expiração
           </span>
         </div>
 
         {invitations.length === 0 ? (
-          <div className="p-8 text-center text-xs text-neutral-400">
+          <div className="text-12 text-text-tertiary p-8 text-center">
             Nenhum convite pendente no momento.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-neutral-50 text-neutral-500 uppercase tracking-wider font-semibold border-b border-neutral-200">
+            <table className="text-12 w-full text-left">
+              <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
                 <tr>
                   <th className="px-5 py-3">E-mail Convidado</th>
                   <th className="px-5 py-3">Papel Previsto</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">Expira em</th>
-                  {canManageTeam && <th className="px-5 py-3 text-right">Ações</th>}
+                  {canManageTeam && (
+                    <th className="px-5 py-3 text-right">Ações</th>
+                  )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-border divide-y">
                 {invitations.map((invite) => (
-                  <tr key={invite.id} className="hover:bg-neutral-50/50">
-                    <td className="px-5 py-3.5 font-medium text-neutral-900">
+                  <tr key={invite.id} className="hover:bg-surface-hover">
+                    <td className="text-text px-5 py-3.5 font-medium">
                       {invite.email}
                     </td>
-                    <td className="px-5 py-3.5 text-neutral-700 capitalize">
+                    <td className="text-text-subtle px-5 py-3.5 capitalize">
                       {invite.role}
                     </td>
                     <td className="px-5 py-3.5">
                       <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        className={`text-10 inline-block rounded-full px-2 py-0.5 font-semibold ${
                           invite.status === "pending"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            ? "bg-warning-bg text-warning-text border-warning-border border"
                             : invite.status === "accepted"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-neutral-100 text-neutral-500"
+                              ? "bg-success-bg text-success-text"
+                              : "bg-surface-hover text-text-secondary"
                         }`}
                       >
-                        {invite.status === "pending" ? "Pendente" : invite.status}
+                        {invite.status === "pending"
+                          ? "Pendente"
+                          : invite.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-neutral-500">
+                    <td className="text-text-secondary px-5 py-3.5">
                       {invite.expiresAt}
                     </td>
                     {canManageTeam && (
@@ -490,7 +525,7 @@ export function TeamClient({
                             type="button"
                             disabled={isPending}
                             onClick={() => handleRevokeInvite(invite.id)}
-                            className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium p-1 hover:bg-red-50 rounded"
+                            className="text-12 text-danger-text hover:text-danger-text hover:bg-danger-bg inline-flex items-center gap-1 rounded-sm p-1 font-medium"
                           >
                             <XCircle className="h-3.5 w-3.5" />
                             <span>Revogar</span>

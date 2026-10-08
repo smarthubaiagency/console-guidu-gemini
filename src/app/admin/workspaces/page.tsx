@@ -11,38 +11,39 @@ export default async function AdminWorkspacesPage() {
   const workspaces = await listAdminWorkspaces(prisma, identity.userId);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="border-b border-neutral-200 pb-5">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-700 mb-1">
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div className="border-border border-b pb-5">
+        <div className="text-12 text-warning-text mb-1 flex items-center gap-2 font-semibold tracking-wider uppercase">
           <span>Administração</span>
           <span>/</span>
           <span>Workspaces</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-neutral-900 text-white">
+          <div className="bg-primary text-on-primary rounded-lg p-2">
             <Layers className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-20 text-text font-bold tracking-tight">
               Workspaces da Plataforma
             </h1>
-            <p className="text-xs text-neutral-500">
-              Ambientes operacionais isolados vinculados a cada organização contratante.
+            <p className="text-12 text-text-secondary">
+              Ambientes operacionais isolados vinculados a cada organização
+              contratante.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 bg-white shadow-xs overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-neutral-200 bg-neutral-50/50 flex items-center justify-between">
-          <span className="text-xs font-semibold text-neutral-700">
+      <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
+        <div className="border-border bg-surface-sidebar flex items-center justify-between border-b px-5 py-3.5">
+          <span className="text-12 text-text-subtle font-semibold">
             Total de Workspaces ({workspaces.length})
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-neutral-50 text-neutral-500 uppercase tracking-wider font-semibold border-b border-neutral-200">
+          <table className="text-12 w-full text-left">
+            <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
               <tr>
                 <th className="px-5 py-3">Workspace</th>
                 <th className="px-5 py-3">Slug</th>
@@ -51,29 +52,31 @@ export default async function AdminWorkspacesPage() {
                 <th className="px-5 py-3">Criado em</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-border divide-y">
               {workspaces.map((ws) => (
-                <tr key={ws.id} className="hover:bg-neutral-50/50">
+                <tr key={ws.id} className="hover:bg-surface-hover">
                   <td className="px-5 py-3.5">
-                    <div className="font-semibold text-neutral-900">{ws.name}</div>
-                    <div className="text-[11px] font-mono text-neutral-400">{ws.id}</div>
+                    <div className="text-text font-semibold">{ws.name}</div>
+                    <div className="text-11 text-text-tertiary font-mono">
+                      {ws.id}
+                    </div>
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-neutral-700">
+                  <td className="text-text-subtle px-5 py-3.5 font-mono">
                     {ws.slug}
                   </td>
-                  <td className="px-5 py-3.5 text-neutral-800 font-medium">
+                  <td className="text-text px-5 py-3.5 font-medium">
                     {ws.organizationName}
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[11px] font-medium">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    <span className="bg-success-bg text-success-text border-success-border text-11 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
+                      <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                       {ws.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-neutral-500">
-                    {new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(
-                      ws.createdAt,
-                    )}
+                  <td className="text-text-secondary px-5 py-3.5">
+                    {new Intl.DateTimeFormat("pt-BR", {
+                      dateStyle: "short",
+                    }).format(ws.createdAt)}
                   </td>
                 </tr>
               ))}

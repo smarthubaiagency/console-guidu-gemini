@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ShieldAlert, User, ShieldCheck } from "lucide-react";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
 import type { UserWorkspace } from "@/core/workspaces/navigation";
 
 interface AppHeaderProps {
@@ -20,24 +21,24 @@ export function AppHeader({
   isPlatformAdmin = false,
 }: AppHeaderProps) {
   return (
-    <header className="h-14 border-b border-neutral-200 bg-white px-6 flex items-center justify-between shrink-0">
+    <header className="border-border bg-surface-card flex h-14 shrink-0 items-center justify-between border-b px-6">
       <div className="flex items-center gap-4">
-        <Link href="/app" className="flex items-center gap-2 font-bold text-base tracking-tight text-neutral-900 mr-2">
-          <div className="h-6 w-6 rounded bg-neutral-900 text-white flex items-center justify-center text-xs font-black">
+        <Link
+          href="/app"
+          className="text-16 text-text mr-2 flex items-center gap-2 font-bold tracking-tight"
+        >
+          <div className="bg-primary text-on-primary text-12 flex h-6 w-6 items-center justify-center rounded-sm font-black">
             G
           </div>
           <span>GUIDU</span>
         </Link>
 
-        <div className="h-4 w-px bg-neutral-200" />
+        <div className="bg-surface-strong h-4 w-px" />
 
-        <WorkspaceSwitcher
-          currentSlug={currentSlug}
-          workspaces={workspaces}
-        />
+        <WorkspaceSwitcher currentSlug={currentSlug} workspaces={workspaces} />
 
-        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-medium border border-emerald-200">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="bg-success-bg text-success-text text-11 border-success-border hidden items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium sm:flex">
+          <span className="bg-success-solid h-1.5 w-1.5 animate-pulse rounded-full" />
           <span>Ambiente Ativo</span>
         </div>
       </div>
@@ -46,24 +47,25 @@ export function AppHeader({
         {isPlatformAdmin && (
           <Link
             href="/admin"
-            className="flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1.5 rounded-lg transition"
+            className="text-12 text-warning-text bg-warning-bg hover:bg-warning-border border-warning-border flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-medium transition"
           >
-            <ShieldAlert className="h-3.5 w-3.5 text-amber-600" />
+            <ShieldAlert className="text-warning-solid h-3.5 w-3.5" />
             <span>Painel Admin</span>
           </Link>
         )}
 
         <Link
           href="/app/account/security"
-          className="flex items-center gap-2 text-xs text-neutral-700 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-300 px-2.5 py-1.5 rounded-lg transition bg-neutral-50/50"
+          className="text-12 text-text-subtle hover:text-text border-border hover:border-border-strong bg-surface-sidebar flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition"
         >
-          <User className="h-3.5 w-3.5 text-neutral-500" />
-          <span className="hidden md:inline max-w-[140px] truncate">
+          <User className="text-text-secondary h-3.5 w-3.5" />
+          <span className="max-w-email hidden truncate md:inline">
             {userEmail ?? "Minha Conta"}
           </span>
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+          <ShieldCheck className="text-success-solid h-3.5 w-3.5" />
         </Link>
 
+        <ThemeToggle />
         <SignOutForm />
       </div>
     </header>

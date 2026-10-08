@@ -15,7 +15,9 @@ interface CredentialsPageProps {
   params: Promise<{ workspaceSlug: string }>;
 }
 
-export default async function CredentialsSettingsPage({ params }: CredentialsPageProps) {
+export default async function CredentialsSettingsPage({
+  params,
+}: CredentialsPageProps) {
   const { workspaceSlug } = await params;
   const currentPath = `/app/${workspaceSlug}/settings/credentials`;
   const identity = await requireUserPage(currentPath);
@@ -31,23 +33,24 @@ export default async function CredentialsSettingsPage({ params }: CredentialsPag
   });
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="border-b border-neutral-200 pb-5">
-        <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 mb-1">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="border-border border-b pb-5">
+        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
           <span>Configurações</span>
           <span>/</span>
           <span>Credenciais BYOK</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-neutral-100 text-neutral-700">
+          <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
             <KeyRound className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-20 text-text font-bold tracking-tight">
               Credenciais de Provedores de IA (BYOK)
             </h1>
-            <p className="text-xs text-neutral-500">
-              Conecte chaves de API da OpenAI, Google Gemini e Anthropic com cifragem AES-256-GCM em repouso.
+            <p className="text-12 text-text-secondary">
+              Conecte chaves de API da OpenAI, Google Gemini e Anthropic com
+              cifragem AES-256-GCM em repouso.
             </p>
           </div>
         </div>

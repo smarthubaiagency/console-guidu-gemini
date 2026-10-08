@@ -19,40 +19,41 @@ export default async function AdminPage() {
   const metrics = await getAdminMetrics(prisma, identity.userId);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8" data-testid="admin-state">
+    <div className="mx-auto max-w-6xl space-y-8" data-testid="admin-state">
       {/* Header */}
-      <div className="border-b border-neutral-200 pb-5">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-700 mb-1">
-          <ShieldCheck className="h-4 w-4 text-amber-600" />
+      <div className="border-border border-b pb-5">
+        <div className="text-12 text-warning-text mb-1 flex items-center gap-2 font-semibold tracking-wider uppercase">
+          <ShieldCheck className="text-warning-solid h-4 w-4" />
           <span>Controle Interno da Plataforma</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+        <h1 className="text-24 text-text font-bold tracking-tight">
           Visão Geral Operacional
         </h1>
-        <p className="mt-1 text-xs text-neutral-500">
-          Métricas consolidadas de clientes, ambientes e identidades sob governança central.
+        <p className="text-12 text-text-secondary mt-1">
+          Métricas consolidadas de clientes, ambientes e identidades sob
+          governança central.
         </p>
       </div>
 
       {/* Metrics Cards (Real counts, no mock numbers) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-neutral-500">
+            <span className="text-12 text-text-secondary font-medium">
               Empresas / Clientes Ativos
             </span>
-            <Building2 className="h-4 w-4 text-neutral-400" />
+            <Building2 className="text-text-tertiary h-4 w-4" />
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-neutral-900">
+            <span className="text-30 text-text font-bold">
               {metrics.totalOrganizations}
             </span>
-            <span className="text-xs text-neutral-500">organizações</span>
+            <span className="text-12 text-text-secondary">organizações</span>
           </div>
-          <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
+          <div className="border-border text-12 mt-4 flex items-center justify-between border-t pt-3">
             <Link
               href="/admin/customers"
-              className="text-amber-700 hover:text-amber-800 font-semibold flex items-center gap-1"
+              className="text-warning-text hover:text-warning-text flex items-center gap-1 font-semibold"
             >
               <span>Gerenciar empresas</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -60,23 +61,25 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs">
+        <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-neutral-500">
+            <span className="text-12 text-text-secondary font-medium">
               Workspaces Ativos
             </span>
-            <Layers className="h-4 w-4 text-neutral-400" />
+            <Layers className="text-text-tertiary h-4 w-4" />
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-neutral-900">
+            <span className="text-30 text-text font-bold">
               {metrics.totalWorkspaces}
             </span>
-            <span className="text-xs text-neutral-500">ambientes isolados</span>
+            <span className="text-12 text-text-secondary">
+              ambientes isolados
+            </span>
           </div>
-          <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
+          <div className="border-border text-12 mt-4 flex items-center justify-between border-t pt-3">
             <Link
               href="/admin/workspaces"
-              className="text-amber-700 hover:text-amber-800 font-semibold flex items-center gap-1"
+              className="text-warning-text hover:text-warning-text flex items-center gap-1 font-semibold"
             >
               <span>Ver workspaces</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -84,23 +87,25 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs">
+        <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-neutral-500">
+            <span className="text-12 text-text-secondary font-medium">
               Usuários Cadastrados
             </span>
-            <Users className="h-4 w-4 text-neutral-400" />
+            <Users className="text-text-tertiary h-4 w-4" />
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-neutral-900">
+            <span className="text-30 text-text font-bold">
               {metrics.totalUsers}
             </span>
-            <span className="text-xs text-neutral-500">identidades ativas</span>
+            <span className="text-12 text-text-secondary">
+              identidades ativas
+            </span>
           </div>
-          <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
+          <div className="border-border text-12 mt-4 flex items-center justify-between border-t pt-3">
             <Link
               href="/admin/users"
-              className="text-amber-700 hover:text-amber-800 font-semibold flex items-center gap-1"
+              className="text-warning-text hover:text-warning-text flex items-center gap-1 font-semibold"
             >
               <span>Listar usuários</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -110,19 +115,21 @@ export default async function AdminPage() {
       </div>
 
       {/* Security & Health Banner */}
-      <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="border-warning-border bg-warning-bg flex flex-col justify-between gap-4 rounded-xl border p-6 md:flex-row md:items-center">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-wider">
-            <ShieldCheck className="h-4 w-4 text-amber-600" />
+          <div className="text-12 text-warning-text flex items-center gap-2 font-bold tracking-wider uppercase">
+            <ShieldCheck className="text-warning-solid h-4 w-4" />
             <span>Isolamento e Segurança Operacional</span>
           </div>
-          <p className="mt-1 text-xs text-neutral-600 max-w-xl leading-relaxed">
-            Sessão administrativa autenticada com AAL2 (TOTP verificado). Consultas globais de governança usam funções dedicadas security-definer auditadas no banco de dados.
+          <p className="text-12 text-text-subtle mt-1 max-w-xl leading-relaxed">
+            Sessão administrativa autenticada com AAL2 (TOTP verificado).
+            Consultas globais de governança usam funções dedicadas
+            security-definer auditadas no banco de dados.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 border border-emerald-300">
+          <span className="bg-success-bg text-12 text-success-text border-success-border inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-semibold">
             <TrendingUp className="h-3.5 w-3.5" />
             Operação Saudável
           </span>

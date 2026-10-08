@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { expect, it } from "vitest";
 import { describeDatabase } from "../prisma-rls/describe-database.js";
 

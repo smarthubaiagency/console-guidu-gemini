@@ -35,7 +35,7 @@ export default async function WorkspaceLayout({
   const platformAdmin = await getPlatformAdminMember(prisma, identity.userId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-100 text-neutral-900">
+    <div className="bg-surface-hover text-text flex min-h-screen flex-col">
       <AppHeader
         currentSlug={workspaceSlug}
         workspaces={workspaces}
@@ -43,9 +43,9 @@ export default async function WorkspaceLayout({
         isPlatformAdmin={Boolean(platformAdmin)}
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         <AppSidebar workspaceSlug={workspaceSlug} />
-        <main className="flex-1 overflow-y-auto bg-white p-6 md:p-8">
+        <main className="bg-surface-card flex-1 overflow-y-auto p-6 md:p-8">
           {children}
         </main>
       </div>
