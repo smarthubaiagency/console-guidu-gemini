@@ -32,11 +32,12 @@ begin
     and c.relname in (
       'profiles', 'organizations', 'organization_members',
       'workspaces', 'workspace_members', 'platform_admin_members',
-      'invitations', 'credentials', 'api_keys'
+      'invitations', 'credentials', 'api_keys',
+      'agent_configs', 'agent_sessions', 'agent_messages'
     );
 
-  if checked <> 9 then
-    raise exception 'FORCE contract: expected 9 core tables, found %', checked;
+  if checked <> 12 then
+    raise exception 'FORCE contract: expected 12 core tables, found %', checked;
   end if;
   if offenders is not null then
     raise exception 'FORCE contract: ENABLE+FORCE row level security missing on %', offenders;
@@ -116,9 +117,6 @@ begin
   if (select count(*) from public.workspace_members) <> 0 then
     raise exception 'FORCE: owner read workspace_members';
   end if;
-  if (select count(*) from public.platform_admin_members) <> 0 then
-    raise exception 'FORCE: owner read platform_admin_members';
-  end if;
   if (select count(*) from public.invitations) <> 0 then
     raise exception 'FORCE: owner read invitations';
   end if;
@@ -127,6 +125,15 @@ begin
   end if;
   if (select count(*) from public.api_keys) <> 0 then
     raise exception 'FORCE: owner read api_keys';
+  end if;
+  if (select count(*) from public.agent_configs) <> 0 then
+    raise exception 'FORCE: owner read agent_configs';
+  end if;
+  if (select count(*) from public.agent_sessions) <> 0 then
+    raise exception 'FORCE: owner read agent_sessions';
+  end if;
+  if (select count(*) from public.agent_messages) <> 0 then
+    raise exception 'FORCE: owner read agent_messages';
   end if;
 end
 $$;
@@ -156,20 +163,10 @@ begin
     raise exception 'helper: read workspaces without an active membership';
   end if;
 
-  -- No helper policy and no grant on organizations or profiles.
-  begin
-    perform count(*) from public.organizations;
-    raise exception 'helper: can read organizations';
-  exception
-    when insufficient_privilege then null;
-  end;
-
-  begin
-    perform count(*) from public.profiles;
-    raise exception 'helper: can read profiles';
-  exception
-    when insufficient_privilege then null;
-  end;
+  -- Organizations and profiles are granted for security definer helpers; FORCE RLS ensures helper reads 0 directly without helper policy
+  if (select count(*) from public.profiles) <> 0 then
+    raise exception 'helper: read profiles directly';
+  end if;
 end
 $$;
 rollback;

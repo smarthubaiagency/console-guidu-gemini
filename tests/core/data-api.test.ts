@@ -26,6 +26,9 @@ const domainTables = [
   "invitations",
   "credentials",
   "api_keys",
+  "agent_configs",
+  "agent_sessions",
+  "agent_messages",
 ] as const;
 
 describeDatabase("Data API remains closed for core domain tables", requiredVars, () => {

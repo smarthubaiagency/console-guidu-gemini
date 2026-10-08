@@ -13,18 +13,19 @@ datasource db {
 /// identity from writing its own row, even with a still-valid JWT.
 /// SMA-98 adds the remaining auth-slice columns on top of this model.
 model Profile {
-  id                  String       @id @db.Uuid
-  fullName            String?      @map("full_name")
-  preferences         Json         @default("{}")
-  status              String       @default("active")
-  statusReason        String?      @map("status_reason")
-  statusChangedAt     DateTime     @default(now()) @map("status_changed_at") @db.Timestamptz()
-  lastSignInAt        DateTime?    @map("last_sign_in_at") @db.Timestamptz()
-  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
-  sentInvitations     Invitation[] @relation("InvitationsSent")
-  acceptedInvitations Invitation[] @relation("InvitationsAccepted")
+  id                  String         @id @db.Uuid
+  fullName            String?        @map("full_name")
+  preferences         Json           @default("{}")
+  status              String         @default("active")
+  statusReason        String?        @map("status_reason")
+  statusChangedAt     DateTime       @default(now()) @map("status_changed_at") @db.Timestamptz()
+  lastSignInAt        DateTime?      @map("last_sign_in_at") @db.Timestamptz()
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  sentInvitations     Invitation[]   @relation("InvitationsSent")
+  acceptedInvitations Invitation[]   @relation("InvitationsAccepted")
   apiKeys             ApiKey[]
+  agentSessions       AgentSession[]
 
   @@map("profiles")
 }
@@ -69,6 +70,9 @@ model Workspace {
   invitations    Invitation[]
   credentials    Credential[]
   apiKeys        ApiKey[]
+  agentConfigs   AgentConfig[]
+  agentSessions  AgentSession[]
+  agentMessages  AgentMessage[]
 
   @@unique([id, organizationId])
   @@map("workspaces")
@@ -155,4 +159,62 @@ model ApiKey {
   user           Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("api_keys")
+}
+
+model AgentConfig {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String         @map("organization_id") @db.Uuid
+  workspaceId      String         @map("workspace_id") @db.Uuid
+  name             String
+  description      String?
+  systemPrompt     String         @map("system_prompt")
+  primaryProvider  String         @map("primary_provider")
+  primaryModel     String         @map("primary_model")
+  fallbackProvider String?        @map("fallback_provider")
+  fallbackModel    String?        @map("fallback_model")
+  temperature      Decimal        @default(0.70) @db.Decimal(3, 2)
+  status           String         @default("active")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  workspace        Workspace      @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  sessions         AgentSession[]
+
+  @@map("agent_configs")
+}
+
+model AgentSession {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String         @map("organization_id") @db.Uuid
+  workspaceId     String         @map("workspace_id") @db.Uuid
+  agentConfigId   String?        @map("agent_config_id") @db.Uuid
+  title           String         @default("Nova Conversa")
+  createdByUserId String         @map("created_by_user_id") @db.Uuid
+  status          String         @default("active")
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  workspace       Workspace      @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  agentConfig     AgentConfig?   @relation(fields: [agentConfigId], references: [id], onDelete: SetNull)
+  createdByUser   Profile        @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  messages        AgentMessage[]
+
+  @@map("agent_sessions")
+}
+
+model AgentMessage {
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId    String       @map("organization_id") @db.Uuid
+  workspaceId       String       @map("workspace_id") @db.Uuid
+  sessionId         String       @map("session_id") @db.Uuid
+  role              String
+  content           String
+  providerUsed      String       @map("provider_used")
+  modelUsed         String       @map("model_used")
+  fallbackTriggered Boolean      @default(false) @map("fallback_triggered")
+  latencyMs         Int          @default(0) @map("latency_ms")
+  tokensEstimated   Int          @default(0) @map("tokens_estimated")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  workspace         Workspace    @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  session           AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("agent_messages")
 }
