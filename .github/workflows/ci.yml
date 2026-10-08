@@ -73,8 +73,8 @@ jobs:
 
           psql "$admin_url" --set=ON_ERROR_STOP=1 --set=runtime_password="$runtime_password" <<'SQL'
           alter role app_runtime password :'runtime_password';
-          docker restart supabase_pooler_console-guidu >/dev/null
           SQL
+          docker restart supabase_pooler_console-guidu >/dev/null
 
           for attempt in {1..30}; do
             if PGPASSWORD="$runtime_password" psql \
