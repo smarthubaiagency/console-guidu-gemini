@@ -29,10 +29,12 @@ Reproduce the live half with:
 GUIDU_OAUTH_LIVE=1 npm test -- tests/mcp-oauth
 ```
 
-Last run: 2 files, **35 passed**. Without the flag the live file is skipped and
-13 offline checks still run, so the default suite needs no network and writes
-nothing. `console-guidu` has no CI workflow yet, so the evidence here is the
-local run, not a pipeline link.
+Without the flag the live file is skipped and **16 offline checks** still run, so
+the default suite needs no network and writes nothing. The **22 live probes**
+were run once, on 2026-10-08 at commit `495ffde`; they are not re-run on every
+change because each run registers an OAuth client in `guidu` that has to be
+cleaned up by hand. `console-guidu` has no CI workflow yet, so the evidence here
+is the local run, not a pipeline link.
 
 Cleanup: every client the probes registered was soft-deleted afterwards and the
 pending authorizations were removed. `auth.oauth_clients` has no active row,
@@ -134,11 +136,22 @@ access tokens have full access to user data (same as regular session tokens),
 with the addition of the `client_id` claim". An MCP access token is therefore a
 full Supabase session token: a client that obtained one for `/mcp/workspace` can
 skip the MCP server and call the Data API, PostgREST and Storage directly as
-`authenticated`. The grant table protects the MCP surfaces, not the database. So
-F4 depends on the posture already proven in
-[`prisma-rls.md`](./prisma-rls.md) — `anon` and `authenticated` hold no table
-grants on domain tables — plus RLS policies that read the `client_id` claim.
-That is a gating requirement for section 17, not a nice-to-have.
+`authenticated`. The grant table protects the MCP surfaces, not the database.
+
+What neutralises that is already decided and already proven:
+[ADR 0001](../adr/0001-prisma-como-caminho-unico.md) closes the Data API for
+domain tables — `anon` and `authenticated` hold no grants on them, verified in
+[`prisma-rls.md`](./prisma-rls.md) — so a session token reaches no domain row
+regardless of its claims. The same ADR puts every domain query behind Prisma as
+`app_runtime`, with the policies reading **only** the `app.*` context set by
+`set_config`; it explicitly rejects RLS driven by JWT claims. So `client_id` does
+not belong in a policy. The MCP server's job is to turn the token into that
+context: verify the signature, resolve `(sub, client_id, resource)` to an
+`mcp_grants` row, then open the transaction with `app.user_id`,
+`app.workspace_id`, `app.organization_id`, `app.principal_type` and
+`app.grant_id` from the grant — `grantId` already exists in
+`src/db/with-context.ts:8` for this. A request whose token carries no grant
+produces no context, and no context denies access.
 
 ## 3. Custom scopes
 
@@ -213,7 +226,10 @@ So the resolution path is, per request:
 4. reject when there is no row, **or when `revoked_at` is set**, even though the
    JWT is still valid;
 5. compare `mcp_grants.scopes` against the scopes the surface requires and
-   answer `403 insufficient_scope` with the missing ones.
+   answer `403 insufficient_scope` with the missing ones;
+6. only then touch data, through `withContext` with `app.grant_id` and the
+   workspace and organization taken from the grant row — the ADR 0001 path, not
+   the token.
 
 Steps 4 and 5 are covered by `tests/mcp-oauth/resource-server.test.ts:192` and
 `:162`. Step 4 is the compensating control for the missing revocation endpoint,
@@ -271,8 +287,10 @@ Supabase OAuth access token, and asserts: the unauthenticated `401` carries
 `resource_metadata` and `scope`; strict RFC 8707 validation rejects the token and
 cannot tell the two surfaces apart; grant-table binding accepts it on
 `/mcp/workspace`, returns the `get_workspace` payload, and answers `403
-insufficient_scope` on `/mcp/admin`; a revoked grant, an expired token, a foreign
-signing key, a foreign issuer and an unknown surface are all rejected.
+insufficient_scope` on `/mcp/admin`; a revoked grant, an expired token, a token
+with no `exp` at all, a foreign signing key, a foreign issuer and an unknown
+surface are all rejected, and key selection skips JWKS entries that are not
+ES256 signing keys even when the token header carries no `kid`.
 
 The client leg — Claude Code or Codex actually connecting — was not run. It needs
 a real access token, and minting one needs the consent step, which is blocked for
@@ -319,9 +337,11 @@ The application owns, and this is not optional:
 3. The consent page at `<Site URL>/oauth/consent`, rendering the `mcp_grants`
    scopes it is about to create rather than the OIDC scopes Supabase passes
    through.
-4. A closed Data API. Domain tables stay without `anon`/`authenticated` grants
-   and RLS policies read the `client_id` claim, because an MCP token is a full
-   session token.
+4. The ADR 0001 path, unchanged for MCP. Domain tables stay without
+   `anon`/`authenticated` grants, and the MCP server reaches data only through
+   Prisma inside `withContext`, deriving `app.grant_id` (and the workspace and
+   organization) from the resolved `mcp_grants` row. No RLS policy reads a JWT
+   claim; the token is converted into `app.*` context at the edge.
 
 Rejected alternatives. *Supabase pure* fails items 2 and 3 with no path around
 them. *A separate OAuth server* would duplicate the identity of users who already

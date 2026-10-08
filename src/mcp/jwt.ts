@@ -84,12 +84,17 @@ export async function verifyEs256(
     throw new JwtError(`unsupported alg: ${String(header.alg)}`);
   }
 
-  const candidates = jwks.keys.filter(
-    (key) =>
-      (key as { kid?: string }).kid === header.kid ||
-      header.kid === undefined,
-  );
-  if (candidates.length === 0) throw new JwtError("no JWKS key matches kid");
+  // Supabase always sends `kid`, but a token that omits it must not turn every
+  // JWKS entry into a candidate: restrict to ES256 signing keys either way.
+  const candidates = jwks.keys.filter((key) => {
+    if (key.kty !== "EC" || key.crv !== "P-256") return false;
+    if (key.alg !== undefined && key.alg !== "ES256") return false;
+    if (key.use !== undefined && key.use !== "sig") return false;
+    return header.kid === undefined || key.kid === header.kid;
+  });
+  if (candidates.length === 0) {
+    throw new JwtError("no ES256 signing key in the JWKS matches the header");
+  }
 
   const [headerSegment, payloadSegment, signatureSegment] = token.split(".");
   const signingInput = new TextEncoder().encode(
@@ -114,7 +119,10 @@ export async function verifyEs256(
   }
   if (!verified) throw new JwtError("signature does not verify");
 
-  if (claims.exp !== undefined && claims.exp * 1000 <= now.getTime()) {
+  // §17.2 requires expiration to be validated, so a token without `exp` is
+  // rejected rather than treated as non-expiring.
+  if (claims.exp === undefined) throw new JwtError("token has no exp claim");
+  if (claims.exp * 1000 <= now.getTime()) {
     throw new JwtError("token is expired");
   }
 

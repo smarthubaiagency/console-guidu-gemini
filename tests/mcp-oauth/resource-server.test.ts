@@ -10,6 +10,7 @@ import {
 import {
   ADMIN_SURFACE,
   createSigner,
+  foreignCurveJwk,
   grantStore,
   type Signer,
   SUPABASE_ISSUER,
@@ -224,6 +225,48 @@ describe("token hygiene", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.failure.reason).toBe("token is expired");
+  });
+
+  it("rejects a token with no exp claim instead of treating it as eternal", async () => {
+    const { exp: _exp, ...claims } = supabaseAccessTokenClaims();
+    const token = await signer.sign(claims);
+    const result = await authorize(
+      config("grant-table"),
+      WORKSPACE_SURFACE,
+      `Bearer ${token}`,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.failure.reason).toBe("token has no exp claim");
+  });
+
+  it("skips JWKS keys that are not ES256 signing keys when the header has no kid", async () => {
+    const unkeyed = await createSigner(null);
+    const jwks = {
+      keys: [await foreignCurveJwk(), ...unkeyed.jwks.keys],
+    };
+    const token = await unkeyed.sign(supabaseAccessTokenClaims());
+    const result = await authorize(
+      { ...config("grant-table"), jwks },
+      WORKSPACE_SURFACE,
+      `Bearer ${token}`,
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects when the JWKS holds no ES256 signing key at all", async () => {
+    const unkeyed = await createSigner(null);
+    const token = await unkeyed.sign(supabaseAccessTokenClaims());
+    const result = await authorize(
+      { ...config("grant-table"), jwks: { keys: [await foreignCurveJwk()] } },
+      WORKSPACE_SURFACE,
+      `Bearer ${token}`,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.failure.reason).toBe(
+      "no ES256 signing key in the JWKS matches the header",
+    );
   });
 
   it("rejects a token signed by another key", async () => {

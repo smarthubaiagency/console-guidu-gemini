@@ -1,4 +1,4 @@
-import type { JsonWebKeySet } from "../../src/mcp/jwt.js";
+import type { JsonWebKeySet, PublicJwk } from "../../src/mcp/jwt.js";
 import type { GrantStore, McpGrant } from "../../src/mcp/resource-server.js";
 
 export const SUPABASE_ISSUER =
@@ -24,20 +24,27 @@ export type Signer = Readonly<{
  * Mints ES256 tokens with a throwaway key so the resource server can be
  * exercised without the Supabase signing key, which agents cannot read.
  */
-export async function createSigner(kid = "spike-kid"): Promise<Signer> {
+export async function createSigner(
+  kid: string | null = "spike-kid",
+): Promise<Signer> {
   const pair = await crypto.subtle.generateKey(
     { name: "ECDSA", namedCurve: "P-256" },
     true,
     ["sign", "verify"],
   );
   const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
+  const jwk = { ...publicJwk, alg: "ES256", use: "sig" };
 
   return {
-    jwks: { keys: [{ ...publicJwk, kid, alg: "ES256", use: "sig" }] },
+    jwks: { keys: [kid === null ? jwk : { ...jwk, kid }] },
     sign: async (claims) => {
       const header = toBase64Url(
         new TextEncoder().encode(
-          JSON.stringify({ alg: "ES256", typ: "JWT", kid }),
+          JSON.stringify(
+            kid === null
+              ? { alg: "ES256", typ: "JWT" }
+              : { alg: "ES256", typ: "JWT", kid },
+          ),
         ),
       );
       const payload = toBase64Url(
@@ -51,6 +58,20 @@ export async function createSigner(kid = "spike-kid"): Promise<Signer> {
       return `${header}.${payload}.${toBase64Url(new Uint8Array(signature))}`;
     },
   };
+}
+
+/**
+ * A JWKS entry that is not an ES256 signing key — what a JWKS looks like mid
+ * rotation. Importing it as ES256 throws, so key selection must skip it.
+ */
+export async function foreignCurveJwk(): Promise<PublicJwk> {
+  const pair = await crypto.subtle.generateKey(
+    { name: "ECDSA", namedCurve: "P-384" },
+    true,
+    ["sign", "verify"],
+  );
+  const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
+  return { ...publicJwk, alg: "ES384", use: "sig" };
 }
 
 /**
