@@ -13,11 +13,15 @@ datasource db {
 /// identity from writing its own row, even with a still-valid JWT.
 /// SMA-98 (F1.3) adds the remaining auth-slice columns on top of this model.
 model Profile {
-  id        String   @id @db.Uuid
-  fullName  String?  @map("full_name")
-  status    String   @default("active")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  id              String    @id @db.Uuid
+  fullName        String?   @map("full_name")
+  preferences     Json      @default("{}")
+  status          String    @default("active")
+  statusReason    String?   @map("status_reason")
+  statusChangedAt DateTime  @default(now()) @map("status_changed_at") @db.Timestamptz()
+  lastSignInAt    DateTime? @map("last_sign_in_at") @db.Timestamptz()
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@map("profiles")
 }
