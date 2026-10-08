@@ -53,6 +53,13 @@ jobs:
             | sudo tar --extract --gzip --directory /usr/local/bin supabase supabase-go
           supabase --version
 
+      - name: Seed ephemeral app_runtime before pooler bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "RUNTIME_PASSWORD=$runtime_password" >> "$GITHUB_ENV"
+          printf "do \$\$ begin if not exists (select 1 from pg_roles where rolname = 'app_runtime') then create role app_runtime login nosuperuser nocreatedb nocreaterole noinherit nobypassrls password '%s'; else alter role app_runtime password '%s'; end if; end \$\$;\n" "$runtime_password" "$runtime_password" > supabase/roles.sql
+
       - name: Start isolated local Supabase
         run: supabase start --exclude studio,inbucket,storage-api,imgproxy,realtime,postgres-meta,edge-runtime,logflare,vector
 
@@ -63,21 +70,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          runtime_password="$(openssl rand -hex 24)"
-          echo "::add-mask::$runtime_password"
 
           status_json="$(supabase status -o json)"
           api_url="$(jq -r '.API_URL' <<<"$status_json")"
           anon_key="$(jq -r '.ANON_KEY' <<<"$status_json")"
           admin_url="$(jq -r '.DB_URL' <<<"$status_json")"
 
-          psql "$admin_url" --set=ON_ERROR_STOP=1 --set=runtime_password="$runtime_password" <<'SQL'
-          alter role app_runtime password :'runtime_password';
-          SQL
-          docker restart supabase_pooler_console-guidu >/dev/null
 
           for attempt in {1..30}; do
-            if PGPASSWORD="$runtime_password" psql \
+            if PGPASSWORD="$RUNTIME_PASSWORD" psql \
               --host=127.0.0.1 --port=54329 --username=app_runtime.console-guidu --dbname=postgres \
               --command="select 1" >/dev/null 2>&1; then
               break
@@ -90,8 +91,8 @@ jobs:
           done
 
           {
-            echo "DATABASE_URL=postgresql://app_runtime.console-guidu:${runtime_password}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
-            echo "DIRECT_DATABASE_URL=postgresql://app_runtime:${runtime_password}@127.0.0.1:54322/postgres"
+            echo "DATABASE_URL=postgresql://app_runtime.console-guidu:${RUNTIME_PASSWORD}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
+            echo "DIRECT_DATABASE_URL=postgresql://app_runtime:${RUNTIME_PASSWORD}@127.0.0.1:54322/postgres"
             echo "SUPABASE_URL=$api_url"
             echo "SUPABASE_ANON_KEY=$anon_key"
             echo "ADMIN_URL=$admin_url"
