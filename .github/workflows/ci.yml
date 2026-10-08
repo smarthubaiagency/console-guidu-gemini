@@ -76,12 +76,12 @@ jobs:
           SQL
 
           for attempt in {1..30}; do
-            if PGPASSWORD="" psql \
+            if PGPASSWORD="$runtime_password" psql \
               --host=127.0.0.1 --port=54329 --username=app_runtime --dbname=postgres \
               --command="select 1" >/dev/null 2>&1; then
               break
             fi
-            if [[ "" == 30 ]]; then
+            if [[ "$attempt" == 30 ]]; then
               echo "Local transaction pooler did not become ready" >&2
               exit 1
             fi
