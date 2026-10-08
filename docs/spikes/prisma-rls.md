@@ -107,7 +107,8 @@ passing SQL checks:
 5. Transaction overhead (baseline transaction versus five `set_config` calls)
    has not been measured.
 
-To rerun against hosted Supavisor, replace both URLs with `app_runtime` credentials. The pool URL
+To rerun against hosted Supavisor, replace both URLs with `app_runtime`
+credentials. The pool URL
 must use `app_runtime.mmwmhlafzewdyqsgfkzk`, port 6543, and `pgbouncer=true`;
 the direct URL must authenticate as `app_runtime` against the direct database
 endpoint. Also register `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and an authenticated
