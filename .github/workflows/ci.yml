@@ -128,9 +128,7 @@ jobs:
         run: psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/prisma-rls/rls.sql
 
       - name: Prisma and Data API isolation suite
-        run: |
-          set -o pipefail
-          pnpm test:spike --reporter=json 2>&1 | tee /tmp/db-tests.json
+        run: npx vitest run --project integration tests/prisma-rls --reporter=json --outputFile=/tmp/db-tests.json
 
       - name: Assert database test count > 0
         run: |
