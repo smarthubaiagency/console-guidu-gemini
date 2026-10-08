@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
+import { describeDatabase } from "./describe-database.js";
 
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
-const describeApi = url && anonKey ? describe : describe.skip;
+const requiredVars = { SUPABASE_URL: url, SUPABASE_ANON_KEY: anonKey };
 
-describeApi("Data API remains closed for domain tables", () => {
+describeDatabase("Data API remains closed for domain tables", requiredVars, () => {
   it("does not allow anon to read spike_notes", async () => {
     const response = await fetch(`${url}/rest/v1/spike_notes?select=id`, {
       headers: { apikey: anonKey!, Authorization: `Bearer ${anonKey}` },

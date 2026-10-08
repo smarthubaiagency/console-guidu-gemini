@@ -1,11 +1,12 @@
 import { PrismaClient } from "@prisma/client";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, expect, it } from "vitest";
 import { contextA, ids } from "./fixtures.js";
+import { describeDatabase } from "./describe-database.js";
 
 const directUrl = process.env.DIRECT_DATABASE_URL;
-const describeDatabase = directUrl ? describe : describe.skip;
+const requiredVars = { DIRECT_DATABASE_URL: directUrl };
 
-describeDatabase("SQL-level RLS and constraints", () => {
+describeDatabase("SQL-level RLS and constraints", requiredVars, () => {
   const prisma = new PrismaClient({ datasourceUrl: directUrl! });
 
   beforeAll(async () => {

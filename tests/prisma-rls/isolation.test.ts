@@ -1,19 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { withContext } from "../../src/db/with-context.js";
+import { afterAll, beforeAll, expect, it } from "vitest";
+import { withContext } from "../../src/lib/prisma/with-context.js";
 import { contextA, contextB, ids } from "./fixtures.js";
+import { describeDatabase } from "./describe-database.js";
 
 const pooledUrl = process.env.DATABASE_URL;
 const directUrl = process.env.DIRECT_DATABASE_URL;
-const describeDatabase = pooledUrl && directUrl ? describe : describe.skip;
+const requiredVars = { DATABASE_URL: pooledUrl, DIRECT_DATABASE_URL: directUrl };
 
 type RuntimeIdentity = {
   current_user: string;
   rolbypassrls: boolean;
 };
 
-describeDatabase("app_runtime isolation through Prisma", () => {
+describeDatabase("app_runtime isolation through Prisma", requiredVars, () => {
   const pooled = new PrismaClient({ datasourceUrl: pooledUrl! });
   const direct = new PrismaClient({ datasourceUrl: directUrl! });
 

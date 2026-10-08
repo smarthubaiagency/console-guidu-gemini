@@ -35,7 +35,7 @@ jobs:
       - run: pnpm generate
       - run: pnpm typecheck
       - run: pnpm lint
-      - name: Unit tests (database suites skip without URLs)
+      - name: Unit tests (database suites explicitly skipped without URLs — safe in quality job)
         run: pnpm test
       - run: pnpm build
 
@@ -43,6 +43,8 @@ jobs:
     name: db
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      DATABASE_REQUIRED: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -55,6 +57,15 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm generate
+
+      - name: Prove database suite fails without required variables
+        id: guard-negative
+        run: |
+          if pnpm test:spike; then
+            echo "::error::Database test suite succeeded unexpectedly without DATABASE_URL, DIRECT_DATABASE_URL, SUPABASE_URL, or SUPABASE_ANON_KEY"
+            exit 1
+          fi
+          echo "Database test suite correctly failed without required variables"
 
       - name: Install pinned Supabase CLI
         run: |
@@ -117,7 +128,18 @@ jobs:
         run: psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/prisma-rls/rls.sql
 
       - name: Prisma and Data API isolation suite
-        run: pnpm test:spike
+        run: |
+          set -o pipefail
+          pnpm test:spike --reporter=json 2>&1 | tee /tmp/db-tests.json
+
+      - name: Assert database test count > 0
+        run: |
+          count="$(jq '[.testResults[].assertionResults[] | select(.status != "skipped")] | length' /tmp/db-tests.json)"
+          echo "Database tests executed (non-skipped): ${count}"
+          if [ "${count}" -eq 0 ]; then
+            echo "::error::0 database tests executed — expected >0"
+            exit 1
+          fi
 
       - name: Supabase logs on failure
         if: failure()
