@@ -50,7 +50,7 @@ jobs:
         run: |
           curl --fail --silent --show-error --location \
             "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_linux_amd64.tar.gz" \
-            | sudo tar --extract --gzip --directory /usr/local/bin supabase
+            | sudo tar --extract --gzip --directory /usr/local/bin supabase supabase-go
           supabase --version
 
       - name: Start isolated local Supabase
