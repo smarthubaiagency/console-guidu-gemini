@@ -76,7 +76,7 @@ jobs:
           SQL
 
           {
-            echo "DATABASE_URL=postgresql://app_runtime.console-guidu:${runtime_password}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
+            echo "DATABASE_URL=postgresql://app_runtime:${runtime_password}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
             echo "DIRECT_DATABASE_URL=postgresql://app_runtime:${runtime_password}@127.0.0.1:54322/postgres"
             echo "SUPABASE_URL=$api_url"
             echo "SUPABASE_ANON_KEY=$anon_key"
