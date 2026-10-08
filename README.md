@@ -1,1 +1,1 @@
-# console-guidu
+# console-guidu-gemini
