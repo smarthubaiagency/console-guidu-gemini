@@ -1,8 +1,33 @@
 # Prisma + RLS + Supavisor spike (SMA-92)
 
-Status: **SQL-level isolation proven; external Prisma validation failed because
-the injected connection secrets authenticate as the hosted `postgres` role,
-not `app_runtime`**.
+Status: **SQL-level isolation proven; local CI now reconstructs the database and
+validates Prisma/RLS without credentials from the hosted `guidu` project**.
+
+## Continuous integration (SMA-113)
+
+`.github/workflows/ci.yml` runs on every pull request and push to `main`, using
+fixed Node 24.10.0 and Supabase CLI 2.110.0 versions.
+
+- `quality` restores the npm cache, generates Prisma Client, typechecks, and
+  runs tests that do not require database URLs. There is no lint step because
+  this repository has no lint script or configuration yet.
+- `db` starts Supabase locally with its transaction-mode pooler, runs
+  `supabase db reset`, creates an ephemeral password for `app_runtime`, and
+  derives the API URL, anonymous key, and administrator database URL from
+  `supabase status`. It never reads a hosted Supabase secret.
+- The database job loads the two-workspace synthetic fixtures, executes
+  `tests/prisma-rls/rls.sql`, then runs the Prisma suite through both the local
+  transaction pool and a direct connection. Its preflight requires
+  `current_user = 'app_runtime'` and `rolbypassrls = false`; the remaining tests
+  cover cross-workspace access, missing/malformed context, pool reuse,
+  rollback, concurrency, the composite foreign key, and closed Data API access.
+- The pool URL carries `pgbouncer=true`, so Prisma disables prepared statements
+  for the local transaction pool just as it must for hosted Supavisor.
+
+Playwright and deployment remain outside this workflow. Hosted-only Supavisor
+validation also remains manual: use port 6543, the project-qualified
+`app_runtime.<project-ref>` username, and `pgbouncer=true`. The local CI is the
+required gate and does not fall back to `guidu`.
 
 ## Environment and versions
 
@@ -69,7 +94,7 @@ not present, so Data API stayed skipped. This is a credential/configuration
 failure, not proof of an `app_runtime` policy leak. No JWT alternative was
 implemented.
 
-## Remaining validation / explicit blocker
+## Hosted validation still pending
 
 The following claims are **not yet proven** and must not be inferred from the
 passing SQL checks:
@@ -82,7 +107,7 @@ passing SQL checks:
 5. Transaction overhead (baseline transaction versus five `set_config` calls)
    has not been measured.
 
-Required unblock: replace both URLs with `app_runtime` credentials. The pool URL
+To rerun against hosted Supavisor, replace both URLs with `app_runtime` credentials. The pool URL
 must use `app_runtime.mmwmhlafzewdyqsgfkzk`, port 6543, and `pgbouncer=true`;
 the direct URL must authenticate as `app_runtime` against the direct database
 endpoint. Also register `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and an authenticated

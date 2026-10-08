@@ -27,6 +27,6 @@ export async function withContext<T>(
     `;
 
     return operation(tx);
-  });
+  }, { maxWait: 10_000, timeout: 10_000 });
 }
 

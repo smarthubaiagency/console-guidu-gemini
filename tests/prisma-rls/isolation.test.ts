@@ -16,11 +16,21 @@ describeDatabase("app_runtime isolation through Prisma", () => {
     await Promise.all([pooled.$connect(), direct.$connect()]);
 
     const [pooledIdentity, directIdentity] = await Promise.all([
-      pooled.$queryRaw<Array<{ current_user: string }>>`select current_user`,
-      direct.$queryRaw<Array<{ current_user: string }>>`select current_user`,
+      pooled.$queryRaw<Array<{ current_user: string; rolbypassrls: boolean }>>`
+        select current_user, rolbypassrls
+        from pg_roles
+        where rolname = current_user
+      `,
+      direct.$queryRaw<Array<{ current_user: string; rolbypassrls: boolean }>>`
+        select current_user, rolbypassrls
+        from pg_roles
+        where rolname = current_user
+      `,
     ]);
     expect(pooledIdentity[0]?.current_user).toBe("app_runtime");
     expect(directIdentity[0]?.current_user).toBe("app_runtime");
+    expect(pooledIdentity[0]?.rolbypassrls).toBe(false);
+    expect(directIdentity[0]?.rolbypassrls).toBe(false);
   });
 
   afterAll(async () => {
