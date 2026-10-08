@@ -6,12 +6,21 @@ Status: **Spike concluído: isolamento SQL e Prisma comprovado nas conexões Sup
 
 `.github/workflows/ci.yml` runs on every pull request and push to `main`, using fixed Node 24.10.0 and Supabase CLI 2.110.0 versions.
 
-- `quality` restores the npm cache, generates Prisma Client, typechecks, and runs tests that do not require database URLs. There is no lint step because this repository has no lint script or configuration yet.
-- `db` starts Supabase locally with its transaction-mode pooler, runs `supabase db reset`, creates an ephemeral password for `app_runtime`, and derives local API and database values from `supabase status`. It never reads a hosted Supabase secret.
-- The database job loads two-workspace synthetic fixtures, executes `tests/prisma-rls/rls.sql`, then runs the Prisma and Data API suite. Its preflight requires `current_user = app_runtime` and `rolbypassrls = false`; coverage includes cross-workspace access, invalid context, pool reuse, rollback, concurrency, composite FK, and closed Data API access.
-- The local pool username is `app_runtime.pooler-dev`: Supabase CLI 2.110.0 provisions the local Supavisor tenant with the fixed external id `pooler-dev`, independently of this repository's `project_id`. The pool URL carries `pgbouncer=true`, matching the prepared-statement constraint of hosted Supavisor.
+- `quality` generates Prisma Client, typechecks and runs Vitest without database credentials. Every database suite is reported as skipped with the missing variable names; the job cannot present those suites as passing.
+- `db` starts isolated local Supabase, runs every migration from zero with `supabase db reset`, generates an ephemeral password for `app_runtime`, and obtains the direct database and Data API values from `supabase status`. It never reads a hosted secret.
+- `db` sets `REQUIRE_DATABASE_TESTS=true`; missing `DIRECT_DATABASE_URL`, `SUPABASE_URL`, or `SUPABASE_ANON_KEY` fails both an explicit shell preflight and the affected Vitest suite.
+- Direct-connection coverage includes the `app_runtime`/`rolbypassrls=false` preflight, AC01, AC02, AC05, connection reuse, rollback, 60 concurrent requests, Data API denial, and SQL policy tests.
+- The transaction-pool test is hosted-only. CI prints `hosted-only: Supavisor local does not register custom roles` and Vitest reports that suite as skipped. No local Supavisor tenant metadata is modified.
 
-Playwright and deployment remain outside this workflow. Hosted Supavisor validation remains documented below and manual; the CI gate uses only runner-local Supabase and never falls back to `guidu`.
+| Evidence                                 | Local CI (`db`)                | Hosted `guidu`               |
+| ---------------------------------------- | ------------------------------ | ---------------------------- |
+| All migrations from zero                 | Required (`supabase db reset`) | Migration history verified   |
+| RLS/AC01/AC02/AC05                       | Required, direct port          | Passed                       |
+| Rollback and 60-way concurrency          | Required, direct port          | Passed                       |
+| Data API closed and SQL policies         | Required                       | Passed                       |
+| Supavisor transaction + `pgbouncer=true` | Explicit hosted-only skip      | SMA-92/SMA-111: 11/11 passed |
+
+Playwright and deployment remain outside this workflow. The hosted proof is recorded below; CI never falls back to `guidu`.
 
 ## Environment and versions
 
