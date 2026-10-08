@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
@@ -13,6 +12,11 @@ import {
   PlatformAdminAccessDeniedError,
 } from "@/core/admin/platform";
 import { ids } from "./fixtures";
+import { describeDatabase } from "../prisma-rls/describe-database.js";
+
+const databaseUrl =
+  process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
+const requiredVars = { DATABASE_URL: databaseUrl };
 
 /**
  * Automated test suite for Task 05:
@@ -20,7 +24,7 @@ import { ids } from "./fixtures";
  * 2. Multi-tenant workspace enumeration boundary (only active memberships).
  * 3. Platform administration authorization and operations.
  */
-describe("Task 05: Workspace Navigation & Platform Administration", () => {
+describeDatabase("Task 05: Workspace Navigation & Platform Administration", requiredVars, () => {
   const databaseUrl =
     process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL ?? "";
 

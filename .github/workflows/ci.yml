@@ -121,14 +121,20 @@ jobs:
             echo "ADMIN_URL=$admin_url"
           } >> "$GITHUB_ENV"
 
-      - name: Load synthetic two-workspace fixtures
-        run: psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/prisma-rls/seed.sql
+      - name: Load synthetic test fixtures
+        run: |
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/seed.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/membership-seed.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/admin-seed.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/auth/seed.sql
 
       - name: SQL policy tests
-        run: psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/prisma-rls/rls.sql
+        run: |
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/auth/profiles-rls.sql
 
       - name: Prisma and Data API isolation suite
-        run: npx vitest run --project integration tests/prisma-rls --reporter=json --outputFile=/tmp/db-tests.json
+        run: npx vitest run --project integration --reporter=json --outputFile=/tmp/db-tests.json
 
       - name: Assert database test count > 0
         run: |
