@@ -47,7 +47,7 @@ empty, so `guidu` is back to the state it was handed over in.
 |---|---|---|---|
 | 1 | Authorization Code + PKCE, authorization server metadata | **Meets** | `tests/mcp-oauth/supabase-oauth-server.live.test.ts:99` |
 | 1 | Protected resource metadata (RFC 9728) | **Does not meet — not Supabase's job** | Supabase serves no `oauth-protected-resource`; the MCP server must. `src/mcp/resource-server.ts:87` |
-| 2 | Token bound to `/mcp/workspace` vs `/mcp/admin` (audience / resource indicator) | **Partial** | `resource` is validated and stored at `/authorize`, absent from the token. `tests/mcp-oauth/supabase-oauth-server.live.test.ts:188`, `tests/mcp-oauth/resource-server.test.ts:108` |
+| 2 | Token bound to `/mcp/workspace` vs `/mcp/admin` (audience / resource indicator) | **Partial** | `resource` is validated and stored at `/authorize`, absent from the token. `tests/mcp-oauth/supabase-oauth-server.live.test.ts:188`, `tests/mcp-oauth/resource-server.test.ts:109` |
 | 3 | Custom scopes (`workspace:read`, `modules:read`) | **Does not meet** | `unsupported scope: workspace:read`. `tests/mcp-oauth/supabase-oauth-server.live.test.ts:174` |
 | 4 | Pre-registered clients and DCR | **Meets** | `tests/mcp-oauth/supabase-oauth-server.live.test.ts:344` |
 | 4 | Client ID Metadata Documents | **Does not meet** | `oauth_client_not_found: invalid client_id format`. `tests/mcp-oauth/supabase-oauth-server.live.test.ts:262` |
@@ -117,7 +117,7 @@ Both MCP revisions make this a MUST on the resource server:
 Run against a Supabase-shaped token, strict RFC 8707 validation fails, and it
 fails *identically* on both surfaces — the proof that nothing in the token
 distinguishes `/mcp/workspace` from `/mcp/admin`
-(`tests/mcp-oauth/resource-server.test.ts:108` and `:122`).
+(`tests/mcp-oauth/resource-server.test.ts:109` and `:123`).
 
 **Why this is still workable.** The `2025-11-25` revision states the requirement
 with an explicit alternative — tokens must include the server in the audience
@@ -129,7 +129,7 @@ another means is inside the specification. The spike implements that means as
 from the application's own `mcp_grants` row, keyed by the token's `sub` and
 `client_id`. With it, the same token is accepted on `/mcp/workspace` and
 answered `403 insufficient_scope` on `/mcp/admin`
-(`tests/mcp-oauth/resource-server.test.ts:145` and `:162`).
+(`tests/mcp-oauth/resource-server.test.ts:146` and `:163`).
 
 **The consequence nobody should discover later.** The docs state that "all OAuth
 access tokens have full access to user data (same as regular session tokens),
@@ -231,8 +231,8 @@ So the resolution path is, per request:
    workspace and organization taken from the grant row — the ADR 0001 path, not
    the token.
 
-Steps 4 and 5 are covered by `tests/mcp-oauth/resource-server.test.ts:192` and
-`:162`. Step 4 is the compensating control for the missing revocation endpoint,
+Steps 4 and 5 are covered by `tests/mcp-oauth/resource-server.test.ts:193` and
+`:163`. Step 4 is the compensating control for the missing revocation endpoint,
 and it is the reason `mcp_grants` must be read on every call rather than cached
 for the token lifetime.
 
