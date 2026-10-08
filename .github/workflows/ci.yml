@@ -81,7 +81,7 @@ jobs:
 
           for attempt in {1..30}; do
             if PGPASSWORD="$RUNTIME_PASSWORD" psql \
-              --host=127.0.0.1 --port=54329 --username=app_runtime.console-guidu --dbname=postgres \
+              --host=127.0.0.1 --port=54329 --username=app_runtime.pooler-dev --dbname=postgres \
               --command="select 1" >/dev/null 2>&1; then
               break
             fi
@@ -93,7 +93,7 @@ jobs:
           done
 
           {
-            echo "DATABASE_URL=postgresql://app_runtime.console-guidu:${RUNTIME_PASSWORD}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
+            echo "DATABASE_URL=postgresql://app_runtime.pooler-dev:${RUNTIME_PASSWORD}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
             echo "DIRECT_DATABASE_URL=postgresql://app_runtime:${RUNTIME_PASSWORD}@127.0.0.1:54322/postgres"
             echo "SUPABASE_URL=$api_url"
             echo "SUPABASE_ANON_KEY=$anon_key"
