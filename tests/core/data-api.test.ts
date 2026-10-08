@@ -23,6 +23,9 @@ const domainTables = [
   "workspaces",
   "workspace_members",
   "platform_admin_members",
+  "invitations",
+  "credentials",
+  "api_keys",
 ] as const;
 
 describeDatabase("Data API remains closed for core domain tables", requiredVars, () => {

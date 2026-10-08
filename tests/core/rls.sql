@@ -32,11 +32,11 @@ begin
     and c.relname in (
       'profiles', 'organizations', 'organization_members',
       'workspaces', 'workspace_members', 'platform_admin_members',
-      'invitations'
+      'invitations', 'credentials', 'api_keys'
     );
 
-  if checked <> 7 then
-    raise exception 'FORCE contract: expected 7 core tables, found %', checked;
+  if checked <> 9 then
+    raise exception 'FORCE contract: expected 9 core tables, found %', checked;
   end if;
   if offenders is not null then
     raise exception 'FORCE contract: ENABLE+FORCE row level security missing on %', offenders;
@@ -121,6 +121,12 @@ begin
   end if;
   if (select count(*) from public.invitations) <> 0 then
     raise exception 'FORCE: owner read invitations';
+  end if;
+  if (select count(*) from public.credentials) <> 0 then
+    raise exception 'FORCE: owner read credentials';
+  end if;
+  if (select count(*) from public.api_keys) <> 0 then
+    raise exception 'FORCE: owner read api_keys';
   end if;
 end
 $$;

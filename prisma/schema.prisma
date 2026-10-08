@@ -24,6 +24,7 @@ model Profile {
   updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
   sentInvitations     Invitation[] @relation("InvitationsSent")
   acceptedInvitations Invitation[] @relation("InvitationsAccepted")
+  apiKeys             ApiKey[]
 
   @@map("profiles")
 }
@@ -66,6 +67,8 @@ model Workspace {
   organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   members        WorkspaceMember[]
   invitations    Invitation[]
+  credentials    Credential[]
+  apiKeys        ApiKey[]
 
   @@unique([id, organizationId])
   @@map("workspaces")
@@ -115,4 +118,41 @@ model PlatformAdminMember {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@map("platform_admin_members")
+}
+
+model Credential {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String    @map("organization_id") @db.Uuid
+  workspaceId      String    @map("workspace_id") @db.Uuid
+  provider         String
+  purpose          String    @default("all")
+  label            String
+  maskedValue      String    @map("masked_value")
+  encryptedPayload String    @map("encrypted_payload")
+  status           String    @default("active")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  workspace        Workspace @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+
+  @@map("credentials")
+}
+
+model ApiKey {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  name           String
+  prefix         String
+  keyHash        String    @unique @map("key_hash")
+  scopes         String[]  @default(["read"])
+  status         String    @default("active")
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz()
+  lastUsedAt     DateTime? @map("last_used_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  workspace      Workspace @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  user           Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
 }
