@@ -1,8 +1,6 @@
 # Prisma + RLS + Supavisor spike (SMA-92)
 
-Status: **SQL-level isolation and Prisma runtime identity proven; external
-Supavisor validation remains blocked because the port 6543 secret omits
-`pgbouncer=true` and Prisma receives SQLSTATE `26000`**.
+Status: **Spike concluído: isolamento SQL e Prisma comprovado nas conexões Supavisor Transaction (6543) e Session (5432); 11/11 testes automatizados passaram**.
 
 ## Environment and versions
 
@@ -53,46 +51,29 @@ CRUD on the test domain table. A follow-up immutable migration grants
 `SET ROLE` for RLS tests; it grants no privilege to runtime.
 
 Passwords cannot safely live in a migration. The `app_runtime` role therefore
-has LOGIN but no committed password. A strong password must be provisioned and
-stored as Paperclip secrets for `DATABASE_URL` and `DIRECT_DATABASE_URL` before
-the remaining suite can run.
+has LOGIN but no committed password. Runtime credentials are provisioned through
+Paperclip secrets and were injected only for the external validation; no value
+was printed or written to the repository.
 
-## External validation attempts (2026-10-07)
+## External validation (2026-10-07 e 2026-10-08)
 
-The first registered secret version authenticated as the hosted `postgres` role
-and was rejected as invalid evidence. After credentials v2 were registered, the
-mandatory preflight passed on both URLs: `current_user = app_runtime` and
-`rolbypassrls = false`. Basic pooled and port 5432 reads, cross-workspace denial,
-missing/malformed context, and the composite FK checks passed.
+A primeira versão dos segredos autenticava como `postgres` e foi rejeitada como evidência. Com as credenciais de `app_runtime`, o preflight obrigatório passou nas duas URLs: `current_user = app_runtime` e `rolbypassrls = false`.
 
-The resumed run found 6 passing, 4 failing, and 1 skipped test. The failures were
-all on the port 6543 Supavisor path: pool reuse, rollback cleanup, 60 concurrent
-alternating requests, and overhead measurement reached SQLSTATE `26000`
-(`prepared statement ... does not exist`). Sanitized URL inspection confirmed
-that `DATABASE_URL` uses port 6543 but has no `pgbouncer=true`; per operator
-direction, the run stopped without modifying or overriding the secret. The
-provided `DIRECT_DATABASE_URL` uses the Supavisor host on port 5432 rather than
-the direct database hostname, although its runtime identity preflight and direct
-test cases passed.
+A tentativa seguinte provou o diagnóstico de configuração: sem `pgbouncer=true`, o caminho 6543 retornava SQLSTATE `26000`. A versão 3 de `DATABASE_URL`, com `pgbouncer=true&connection_limit=1`, eliminou o erro. Como uma única conexão serializa o burst de 60 transações, o helper passou a declarar `maxWait: 30_000`; isso permite aguardar a conexão sem relaxar o isolamento nem reduzir a concorrência do teste.
 
-`SUPABASE_URL` and `SUPABASE_ANON_KEY` remain absent, so the PostgREST test is
-explicitly skipped. Those are the exact names expected by
-`tests/prisma-rls/data-api.test.ts`; the second may contain a compatible anon
-or publishable key used as the `apikey` header. No JWT alternative was
-implemented.
+Resultado final da suíte externa: **3 arquivos e 11 testes passaram**. A execução cobre leitura nas duas conexões, bloqueio de leitura e escrita cruzadas (AC01), contexto ausente ou inválido e troca de workspace sem vazamento (AC02), rollback, 60 requisições simultâneas alternadas, FK composta (AC05), e negação da Data API para `anon`. O teste de overhead, repetido isoladamente por 30 amostras, mediu baseline de 40,92 ms, transação contextual de 56,93 ms e delta de 16,01 ms por transação. Esses números incluem latência de rede e não constituem benchmark de capacidade.
 
-## Remaining validation / explicit blocker
+Por decisão de infraestrutura, a conexão chamada de “direta” neste spike é o **Supavisor Session pooler na porta 5432**. O hostname direto do Postgres exige IPv6 no projeto sem add-on IPv4, enquanto o runtime dos agentes provavelmente não dispõe de IPv6. O Session pooler autenticou como `app_runtime`, passou o preflight e é evidência aceita para este spike.
 
-Marcelo must update `GUIDU_DEV_DATABASE_URL` so the injected `DATABASE_URL` on
-port 6543 includes `pgbouncer=true`. Then rerun the four currently failing pool
-checks and capture the overhead measurement. For a literal direct-Postgres proof,
-`GUIDU_DEV_DIRECT_DATABASE_URL` must use the project direct database endpoint
-rather than the Supavisor host on port 5432.
+`SUPABASE_URL` e `SUPABASE_ANON_KEY` foram disponibilizadas e o teste HTTP confirmou que `anon` não lê `spike_notes` (401/403). O banco também prova que `authenticated` não possui grants nas tabelas `spike_%`; porém não foi fornecido JWT de usuário sintético para uma chamada HTTP com role `authenticated`. Portanto, essa variante específica da prova via PostgREST permanece uma limitação explícita, sem mudança para o caminho alternativo com JWT.
 
-The Data API check remains pending until `SUPABASE_URL` and
-`SUPABASE_ANON_KEY` are registered. The current HTTP test proves anonymous
-access is denied; an authenticated-user HTTP scenario still requires an
-authorized synthetic auth flow or token and remains outside this run.
+## Final verification
+
+- `npm run test:spike`: 3 arquivos, 11 testes aprovados.
+- `npm run typecheck`: aprovado.
+- Preflight nas duas URLs: `app_runtime`, `rolbypassrls=false`.
+- Supavisor 6543: `pgbouncer=true`, sem recorrência do SQLSTATE `26000`.
+- Cleanup continua preparado e não aplicado.
 
 ## Cleanup
 
