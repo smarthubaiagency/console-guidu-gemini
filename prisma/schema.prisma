@@ -8,12 +8,80 @@ datasource db {
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
-model SpikeNote {
-  id              String @id @db.Uuid
-  workspaceId     String @map("workspace_id") @db.Uuid
-  organizationId  String @map("organization_id") @db.Uuid
-  body            String
+/// Platform-side projection of a Supabase Auth identity. `status` is the
+/// server-side revocation switch: anything other than `active` stops the
+/// identity from writing its own row, even with a still-valid JWT.
+/// SMA-98 (F1.3) adds the remaining auth-slice columns on top of this model.
+model Profile {
+  id        String   @id @db.Uuid
+  fullName  String?  @map("full_name")
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
-  @@map("spike_notes")
+  @@map("profiles")
 }
 
+model Organization {
+  id         String               @id @db.Uuid
+  name       String
+  status     String               @default("active")
+  createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+  members    OrganizationMember[]
+  workspaces Workspace[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  role           String
+  status         String       @default("active")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId])
+  @@map("organization_members")
+}
+
+model Workspace {
+  id             String            @id @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  slug           String            @unique
+  name           String
+  status         String            @default("active")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members        WorkspaceMember[]
+
+  @@unique([id, organizationId])
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  role           String
+  status         String    @default("active")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  workspace      Workspace @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model PlatformAdminMember {
+  userId    String   @id @map("user_id") @db.Uuid
+  role      String
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("platform_admin_members")
+}
