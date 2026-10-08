@@ -73,11 +73,12 @@ jobs:
 
           psql "$admin_url" --set=ON_ERROR_STOP=1 --set=runtime_password="$runtime_password" <<'SQL'
           alter role app_runtime password :'runtime_password';
+          docker restart supabase_pooler_console-guidu >/dev/null
           SQL
 
           for attempt in {1..30}; do
             if PGPASSWORD="$runtime_password" psql \
-              --host=127.0.0.1 --port=54329 --username=app_runtime --dbname=postgres \
+              --host=127.0.0.1 --port=54329 --username=app_runtime.console-guidu --dbname=postgres \
               --command="select 1" >/dev/null 2>&1; then
               break
             fi
@@ -89,7 +90,7 @@ jobs:
           done
 
           {
-            echo "DATABASE_URL=postgresql://app_runtime:${runtime_password}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
+            echo "DATABASE_URL=postgresql://app_runtime.console-guidu:${runtime_password}@127.0.0.1:54329/postgres?pgbouncer=true&connection_limit=10"
             echo "DIRECT_DATABASE_URL=postgresql://app_runtime:${runtime_password}@127.0.0.1:54322/postgres"
             echo "SUPABASE_URL=$api_url"
             echo "SUPABASE_ANON_KEY=$anon_key"
