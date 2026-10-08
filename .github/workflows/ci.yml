@@ -31,7 +31,7 @@ jobs:
       - run: npm run generate
       - run: npm run typecheck
       - name: Unit tests (database suites skip without URLs)
-        run: npm test
+        run: npm test -- --reporter=verbose
 
   db:
     name: db
@@ -97,7 +97,7 @@ jobs:
         run: psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/prisma-rls/rls.sql
 
       - name: Prisma and Data API isolation suite
-        run: npm run test:spike
+        run: npm run test:spike -- --reporter=verbose
 
       - name: Supabase logs on failure
         if: failure()
