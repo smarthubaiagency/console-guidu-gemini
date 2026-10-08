@@ -11,29 +11,33 @@ datasource db {
 /// Platform-side projection of a Supabase Auth identity. `status` is the
 /// server-side revocation switch: anything other than `active` stops the
 /// identity from writing its own row, even with a still-valid JWT.
-/// SMA-98 (F1.3) adds the remaining auth-slice columns on top of this model.
+/// SMA-98 adds the remaining auth-slice columns on top of this model.
 model Profile {
-  id              String    @id @db.Uuid
-  fullName        String?   @map("full_name")
-  preferences     Json      @default("{}")
-  status          String    @default("active")
-  statusReason    String?   @map("status_reason")
-  statusChangedAt DateTime  @default(now()) @map("status_changed_at") @db.Timestamptz()
-  lastSignInAt    DateTime? @map("last_sign_in_at") @db.Timestamptz()
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  id                  String       @id @db.Uuid
+  fullName            String?      @map("full_name")
+  preferences         Json         @default("{}")
+  status              String       @default("active")
+  statusReason        String?      @map("status_reason")
+  statusChangedAt     DateTime     @default(now()) @map("status_changed_at") @db.Timestamptz()
+  lastSignInAt        DateTime?    @map("last_sign_in_at") @db.Timestamptz()
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+  sentInvitations     Invitation[] @relation("InvitationsSent")
+  acceptedInvitations Invitation[] @relation("InvitationsAccepted")
 
   @@map("profiles")
 }
 
 model Organization {
-  id         String               @id @db.Uuid
-  name       String
-  status     String               @default("active")
-  createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt  DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
-  members    OrganizationMember[]
-  workspaces Workspace[]
+  id          String               @id @db.Uuid
+  name        String
+  status      String               @default("active")
+  maxSeats    Int                  @default(5) @map("max_seats")
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+  members     OrganizationMember[]
+  workspaces  Workspace[]
+  invitations Invitation[]
 
   @@map("organizations")
 }
@@ -61,6 +65,7 @@ model Workspace {
   updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
   organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   members        WorkspaceMember[]
+  invitations    Invitation[]
 
   @@unique([id, organizationId])
   @@map("workspaces")
@@ -78,6 +83,28 @@ model WorkspaceMember {
 
   @@id([workspaceId, userId])
   @@map("workspace_members")
+}
+
+model Invitation {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String       @map("organization_id") @db.Uuid
+  workspaceId      String?      @map("workspace_id") @db.Uuid
+  email            String
+  role             String
+  tokenHash        String       @unique @map("token_hash")
+  invitedByUserId  String       @map("invited_by_user_id") @db.Uuid
+  status           String       @default("pending")
+  expiresAt        DateTime     @map("expires_at") @db.Timestamptz()
+  acceptedAt       DateTime?    @map("accepted_at") @db.Timestamptz()
+  acceptedByUserId String?      @map("accepted_by_user_id") @db.Uuid
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace        Workspace?   @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  invitedBy        Profile      @relation("InvitationsSent", fields: [invitedByUserId], references: [id])
+  acceptedBy       Profile?     @relation("InvitationsAccepted", fields: [acceptedByUserId], references: [id])
+
+  @@map("invitations")
 }
 
 model PlatformAdminMember {

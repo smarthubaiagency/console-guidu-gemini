@@ -1,0 +1,227 @@
+/**
+ * ============================================================================
+ * File: src/core/workspaces/members.ts
+ * Module: Workspace Membership & RBAC Service
+ *
+ * Maintenance Rationale:
+ * - Manages membership assignment and role updates within workspaces.
+ * - Adheres to AC05 composite key constraint: (workspace_id, organization_id)
+ *   ensuring no foreign organization membership can cross boundaries.
+ * - Enforces workspace RBAC hierarchy (owner > admin > editor > viewer).
+ * ============================================================================
+ */
+
+import type { ContextTransaction } from "@/lib/prisma/with-context";
+import {
+  canAssignWorkspaceRole,
+  canManageWorkspaceMember,
+  OrganizationRole,
+  WorkspaceRole,
+} from "../permissions/roles";
+import { InsufficientRoleError, MemberNotFoundError } from "../organizations/errors";
+
+export type WorkspaceMemberItem = {
+  workspaceId: string;
+  organizationId: string;
+  userId: string;
+  role: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+/**
+ * Lists all members of a contextual workspace.
+ */
+export async function listWorkspaceMembers(
+  tx: ContextTransaction,
+  workspaceId: string,
+  organizationId: string,
+): Promise<WorkspaceMemberItem[]> {
+  return tx.workspaceMember.findMany({
+    where: {
+      workspaceId,
+      organizationId,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+/**
+ * Adds an existing organization member to a specific workspace.
+ */
+export async function addWorkspaceMember(
+  tx: ContextTransaction,
+  params: {
+    workspaceId: string;
+    organizationId: string;
+    actorId: string;
+    targetUserId: string;
+    role: WorkspaceRole;
+  },
+): Promise<WorkspaceMemberItem> {
+  const { workspaceId, organizationId, actorId, targetUserId, role } = params;
+
+  // 1. Resolve actor's organization & workspace roles
+  const [orgActor, wsActor] = await Promise.all([
+    tx.organizationMember.findUnique({
+      where: { organizationId_userId: { organizationId, userId: actorId } },
+    }),
+    tx.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: actorId } },
+    }),
+  ]);
+
+  const actorOrgRole = orgActor?.role as OrganizationRole | undefined;
+  const actorWsRole = wsActor?.role as WorkspaceRole | undefined;
+
+  // 2. Validate actor privilege to assign this role
+  if (!canAssignWorkspaceRole(actorOrgRole, actorWsRole, role)) {
+    throw new InsufficientRoleError("add_workspace_member", "workspace admin");
+  }
+
+  // 3. Ensure target is already an active member of the organization
+  const targetOrgMember = await tx.organizationMember.findUnique({
+    where: { organizationId_userId: { organizationId, userId: targetUserId } },
+  });
+
+  if (!targetOrgMember || targetOrgMember.status !== "active") {
+    throw new MemberNotFoundError(targetUserId);
+  }
+
+  // 4. Upsert workspace member
+  return tx.workspaceMember.upsert({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: targetUserId,
+      },
+    },
+    update: {
+      role,
+      status: "active",
+    },
+    create: {
+      workspaceId,
+      organizationId,
+      userId: targetUserId,
+      role,
+      status: "active",
+    },
+  });
+}
+
+/**
+ * Updates a workspace member's role.
+ */
+export async function updateWorkspaceMemberRole(
+  tx: ContextTransaction,
+  params: {
+    workspaceId: string;
+    organizationId: string;
+    actorId: string;
+    targetUserId: string;
+    newRole: WorkspaceRole;
+  },
+): Promise<WorkspaceMemberItem> {
+  const { workspaceId, organizationId, actorId, targetUserId, newRole } = params;
+
+  // 1. Resolve actor's roles
+  const [orgActor, wsActor] = await Promise.all([
+    tx.organizationMember.findUnique({
+      where: { organizationId_userId: { organizationId, userId: actorId } },
+    }),
+    tx.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: actorId } },
+    }),
+  ]);
+
+  const actorOrgRole = orgActor?.role as OrganizationRole | undefined;
+  const actorWsRole = wsActor?.role as WorkspaceRole | undefined;
+
+  // 2. Resolve target member
+  const target = await tx.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+  });
+
+  if (!target) {
+    throw new MemberNotFoundError(targetUserId);
+  }
+
+  const targetRole = target.role as WorkspaceRole;
+
+  // 3. Verify actor can manage this member and assign the target role
+  if (!canManageWorkspaceMember(actorOrgRole, actorWsRole, targetRole)) {
+    throw new InsufficientRoleError("manage_workspace_member", "workspace owner");
+  }
+
+  if (!canAssignWorkspaceRole(actorOrgRole, actorWsRole, newRole)) {
+    throw new InsufficientRoleError("assign_workspace_role", newRole);
+  }
+
+  return tx.workspaceMember.update({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: targetUserId,
+      },
+    },
+    data: { role: newRole },
+  });
+}
+
+/**
+ * Removes a member from a workspace.
+ */
+export async function removeWorkspaceMember(
+  tx: ContextTransaction,
+  params: {
+    workspaceId: string;
+    organizationId: string;
+    actorId: string;
+    targetUserId: string;
+  },
+): Promise<void> {
+  const { workspaceId, organizationId, actorId, targetUserId } = params;
+
+  const isSelf = actorId === targetUserId;
+
+  // 1. Resolve actor roles
+  const [orgActor, wsActor] = await Promise.all([
+    tx.organizationMember.findUnique({
+      where: { organizationId_userId: { organizationId, userId: actorId } },
+    }),
+    tx.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: actorId } },
+    }),
+  ]);
+
+  const actorOrgRole = orgActor?.role as OrganizationRole | undefined;
+  const actorWsRole = wsActor?.role as WorkspaceRole | undefined;
+
+  // 2. Resolve target
+  const target = await tx.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+  });
+
+  if (!target) {
+    throw new MemberNotFoundError(targetUserId);
+  }
+
+  const targetRole = target.role as WorkspaceRole;
+
+  // 3. Permission verification
+  if (!isSelf && !canManageWorkspaceMember(actorOrgRole, actorWsRole, targetRole)) {
+    throw new InsufficientRoleError("remove_workspace_member", "workspace owner");
+  }
+
+  // 4. Remove workspace membership
+  await tx.workspaceMember.delete({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: targetUserId,
+      },
+    },
+  });
+}
