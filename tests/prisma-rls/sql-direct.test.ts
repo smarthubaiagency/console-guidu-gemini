@@ -9,8 +9,12 @@ describeDatabase("SQL-level RLS and constraints", () => {
   const prisma = new PrismaClient({ datasourceUrl: directUrl! });
 
   beforeAll(async () => {
-    const identity = await prisma.$queryRaw<Array<{ current_user: string }>>`select current_user`;
-    expect(identity[0]?.current_user).toBe("app_runtime");
+    const identity = await prisma.$queryRaw<Array<{ current_user: string; rolbypassrls: boolean }>>`
+      select current_user, rolbypassrls
+      from pg_roles
+      where rolname = current_user
+    `;
+    expect(identity[0]).toEqual({ current_user: "app_runtime", rolbypassrls: false });
   });
 
   afterAll(() => prisma.$disconnect());
