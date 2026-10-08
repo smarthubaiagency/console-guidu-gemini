@@ -6,17 +6,22 @@
     "generate": "prisma generate",
     "test": "vitest run",
     "test:spike": "vitest run tests/prisma-rls",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "spike:preflight": "tsx scripts/jobs/preflight.ts",
+    "spike:migrate": "tsx scripts/jobs/apply-migration.ts",
+    "spike:test": "tsx scripts/jobs/run-spike.ts"
   },
   "dependencies": {
-    "@prisma/client": "6.12.0"
+    "@prisma/client": "6.12.0",
+    "pg": "8.16.3",
+    "pg-boss": "12.37.0"
   },
   "devDependencies": {
     "@types/node": "24.10.1",
+    "@types/pg": "8.15.5",
     "prisma": "6.12.0",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "5.0.3"
   }
 }
-
