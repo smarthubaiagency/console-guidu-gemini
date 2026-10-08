@@ -30,3 +30,23 @@ export function requireUserPage(currentPath: string): Promise<Identity> {
 export function requireMfaPage(currentPath: string): Promise<Identity> {
   return guardPage(requireMfa, currentPath);
 }
+
+/**
+ * Server guard for internal administration pages (/admin).
+ * Enforces both Multi-Factor Authentication (AAL2) and active membership
+ * in platform_admin_members (spec Section 7 and 12).
+ */
+export async function requirePlatformAdminPage(
+  currentPath: string,
+): Promise<Identity> {
+  const identity = await requireMfaPage(currentPath);
+  const { prisma } = await import("@/lib/prisma/client");
+  const { getPlatformAdminMember } = await import("@/core/admin/platform");
+
+  const admin = await getPlatformAdminMember(prisma, identity.userId);
+  if (!admin) {
+    redirect("/auth/denied");
+  }
+
+  return identity;
+}
