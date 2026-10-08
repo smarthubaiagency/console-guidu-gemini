@@ -1,33 +1,17 @@
 # Prisma + RLS + Supavisor spike (SMA-92)
 
-Status: **SQL-level isolation proven; local CI now reconstructs the database and
-validates Prisma/RLS without credentials from the hosted `guidu` project**.
+Status: **Spike concluído: isolamento SQL e Prisma comprovado nas conexões Supavisor Transaction (6543) e Session (5432); 11/11 testes automatizados passaram**.
 
 ## Continuous integration (SMA-113)
 
-`.github/workflows/ci.yml` runs on every pull request and push to `main`, using
-fixed Node 24.10.0 and Supabase CLI 2.110.0 versions.
+`.github/workflows/ci.yml` runs on every pull request and push to `main`, using fixed Node 24.10.0 and Supabase CLI 2.110.0 versions.
 
-- `quality` restores the npm cache, generates Prisma Client, typechecks, and
-  runs tests that do not require database URLs. There is no lint step because
-  this repository has no lint script or configuration yet.
-- `db` starts Supabase locally with its transaction-mode pooler, runs
-  `supabase db reset`, creates an ephemeral password for `app_runtime`, and
-  derives the API URL, anonymous key, and administrator database URL from
-  `supabase status`. It never reads a hosted Supabase secret.
-- The database job loads the two-workspace synthetic fixtures, executes
-  `tests/prisma-rls/rls.sql`, then runs the Prisma suite through both the local
-  transaction pool and a direct connection. Its preflight requires
-  `current_user = 'app_runtime'` and `rolbypassrls = false`; the remaining tests
-  cover cross-workspace access, missing/malformed context, pool reuse,
-  rollback, concurrency, the composite foreign key, and closed Data API access.
-- The pool URL carries `pgbouncer=true`, so Prisma disables prepared statements
-  for the local transaction pool just as it must for hosted Supavisor.
+- `quality` restores the npm cache, generates Prisma Client, typechecks, and runs tests that do not require database URLs. There is no lint step because this repository has no lint script or configuration yet.
+- `db` starts Supabase locally with its transaction-mode pooler, runs `supabase db reset`, creates an ephemeral password for `app_runtime`, and derives local API and database values from `supabase status`. It never reads a hosted Supabase secret.
+- The database job loads two-workspace synthetic fixtures, executes `tests/prisma-rls/rls.sql`, then runs the Prisma and Data API suite. Its preflight requires `current_user = app_runtime` and `rolbypassrls = false`; coverage includes cross-workspace access, invalid context, pool reuse, rollback, concurrency, composite FK, and closed Data API access.
+- The pool URL carries `pgbouncer=true`, matching the prepared-statement constraint of hosted Supavisor.
 
-Playwright and deployment remain outside this workflow. Hosted-only Supavisor
-validation also remains manual: use port 6543, the project-qualified
-`app_runtime.<project-ref>` username, and `pgbouncer=true`. The local CI is the
-required gate and does not fall back to `guidu`.
+Playwright and deployment remain outside this workflow. Hosted Supavisor validation remains documented below and manual; the CI gate uses only runner-local Supabase and never falls back to `guidu`.
 
 ## Environment and versions
 
@@ -60,9 +44,10 @@ as `set local role app_runtime` proved:
 
 The TypeScript helper uses an interactive Prisma transaction and parameterized
 `set_config(..., true)` calls. Static generation and strict typecheck pass.
-Vitest discovers 10 integration checks. The suite now asserts `current_user =
-'app_runtime'` before exercising RLS so an administrative connection cannot
-produce misleading isolation results.
+Vitest discovers 11 integration checks. The suite now asserts both `current_user =
+'app_runtime'` and `rolbypassrls = false` on the pool and port 5432 connection
+before exercising RLS, so an administrative connection cannot produce misleading
+isolation results.
 
 ## Hosted Supabase differences discovered
 
@@ -77,46 +62,31 @@ CRUD on the test domain table. A follow-up immutable migration grants
 `SET ROLE` for RLS tests; it grants no privilege to runtime.
 
 Passwords cannot safely live in a migration. The `app_runtime` role therefore
-has LOGIN but no committed password. A strong password must be provisioned and
-stored as Paperclip secrets for `DATABASE_URL` and `DIRECT_DATABASE_URL` before
-the remaining suite can run.
+has LOGIN but no committed password. Runtime credentials are provisioned through
+Paperclip secrets and were injected only for the external validation; no value
+was printed or written to the repository.
 
-## External validation attempt (2026-10-07)
+## External validation (2026-10-07 e 2026-10-08)
 
-The registered secrets were injected and the suite ran against the dev project.
-Sanitized inspection showed that both URLs authenticate as
-`postgres.mmwmhlafzewdyqsgfkzk` through the pooler. `DATABASE_URL` uses port
-6543 without `pgbouncer=true`; `DIRECT_DATABASE_URL` uses the pooler host on
-port 5432. Both returned both tenants because the hosted `postgres` role has
-`BYPASSRLS`, and the concurrency run also reached SQLSTATE `26000` from prepared
-statements in transaction pooling. `SUPABASE_URL` and `SUPABASE_ANON_KEY` were
-not present, so Data API stayed skipped. This is a credential/configuration
-failure, not proof of an `app_runtime` policy leak. No JWT alternative was
-implemented.
+A primeira versão dos segredos autenticava como `postgres` e foi rejeitada como evidência. Com as credenciais de `app_runtime`, o preflight obrigatório passou nas duas URLs: `current_user = app_runtime` e `rolbypassrls = false`.
 
-## Hosted validation still pending
+A tentativa seguinte provou o diagnóstico de configuração: sem `pgbouncer=true`, o caminho 6543 retornava SQLSTATE `26000`. A versão 3 de `DATABASE_URL`, com `pgbouncer=true&connection_limit=1`, eliminou o erro. Como uma única conexão serializa o burst de 60 transações, o helper passou a declarar `maxWait: 30_000`; isso permite aguardar a conexão sem relaxar o isolamento nem reduzir a concorrência do teste.
 
-The following claims are **not yet proven** and must not be inferred from the
-passing SQL checks:
+Resultado final da suíte externa: **3 arquivos e 11 testes passaram**. A execução cobre leitura nas duas conexões, bloqueio de leitura e escrita cruzadas (AC01), contexto ausente ou inválido e troca de workspace sem vazamento (AC02), rollback, 60 requisições simultâneas alternadas, FK composta (AC05), e negação da Data API para `anon`. O teste de overhead, repetido isoladamente por 30 amostras, mediu baseline de 40,92 ms, transação contextual de 56,93 ms e delta de 16,01 ms por transação. Esses números incluem latência de rede e não constituem benchmark de capacidade.
 
-1. Prisma connects as `app_runtime` through direct Postgres and through
-   Supavisor transaction mode.
-2. Sixty alternating parallel Prisma transactions do not leak context.
-3. A forced rollback and subsequent pooled request do not retain context.
-4. PostgREST HTTP calls for both `anon` and an authenticated user are denied.
-5. Transaction overhead (baseline transaction versus five `set_config` calls)
-   has not been measured.
+Por decisão de infraestrutura, a conexão chamada de “direta” neste spike é o **Supavisor Session pooler na porta 5432**. O hostname direto do Postgres exige IPv6 no projeto sem add-on IPv4, enquanto o runtime dos agentes provavelmente não dispõe de IPv6. O Session pooler autenticou como `app_runtime`, passou o preflight e é evidência aceita para este spike.
 
-To rerun against hosted Supavisor, replace both URLs with `app_runtime`
-credentials. The pool URL
-must use `app_runtime.mmwmhlafzewdyqsgfkzk`, port 6543, and `pgbouncer=true`;
-the direct URL must authenticate as `app_runtime` against the direct database
-endpoint. Also register `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and an authenticated
-test flow. Then rerun the suite and measure transaction overhead.
+`SUPABASE_URL` e `SUPABASE_ANON_KEY` foram disponibilizadas e o teste HTTP confirmou que `anon` não lê `spike_notes` (401/403). O banco também prova que `authenticated` não possui grants nas tabelas `spike_%`; porém não foi fornecido JWT de usuário sintético para uma chamada HTTP com role `authenticated`. Portanto, essa variante específica da prova via PostgREST permanece uma limitação explícita, sem mudança para o caminho alternativo com JWT.
+
+## Final verification
+
+- `npm run test:spike`: 3 arquivos, 11 testes aprovados.
+- `npm run typecheck`: aprovado.
+- Preflight nas duas URLs: `app_runtime`, `rolbypassrls=false`.
+- Supavisor 6543: `pgbouncer=true`, sem recorrência do SQLSTATE `26000`.
+- Cleanup continua preparado e não aplicado.
 
 ## Cleanup
 
-`20261007225959_remove_prisma_rls_spike.sql` is ready but deliberately not
-applied. It removes only the `spike_%` tables and `spike_private` schema; roles
-remain because role removal needs a separate ownership/membership audit.
+`docs/spikes/sql/remove-prisma-rls-spike.sql` permanece preparado, mas não foi aplicado. Ele foi retirado de `supabase/migrations` antes do primeiro CI porque era um cleanup marcado `DO NOT APPLY`; no histórico, um banco reconstruído apagaria o schema que a própria suíte precisa validar. Ele remove apenas as tabelas `spike_%` e o schema `spike_private`; os roles permanecem porque removê-los exige auditoria separada de ownership e memberships.
 

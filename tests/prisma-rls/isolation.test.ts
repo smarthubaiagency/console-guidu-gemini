@@ -8,6 +8,11 @@ const pooledUrl = process.env.DATABASE_URL;
 const directUrl = process.env.DIRECT_DATABASE_URL;
 const describeDatabase = pooledUrl && directUrl ? describe : describe.skip;
 
+type RuntimeIdentity = {
+  current_user: string;
+  rolbypassrls: boolean;
+};
+
 describeDatabase("app_runtime isolation through Prisma", () => {
   const pooled = new PrismaClient({ datasourceUrl: pooledUrl! });
   const direct = new PrismaClient({ datasourceUrl: directUrl! });
@@ -16,21 +21,19 @@ describeDatabase("app_runtime isolation through Prisma", () => {
     await Promise.all([pooled.$connect(), direct.$connect()]);
 
     const [pooledIdentity, directIdentity] = await Promise.all([
-      pooled.$queryRaw<Array<{ current_user: string; rolbypassrls: boolean }>>`
+      pooled.$queryRaw<RuntimeIdentity[]>`
         select current_user, rolbypassrls
         from pg_roles
         where rolname = current_user
       `,
-      direct.$queryRaw<Array<{ current_user: string; rolbypassrls: boolean }>>`
+      direct.$queryRaw<RuntimeIdentity[]>`
         select current_user, rolbypassrls
         from pg_roles
         where rolname = current_user
       `,
     ]);
-    expect(pooledIdentity[0]?.current_user).toBe("app_runtime");
-    expect(directIdentity[0]?.current_user).toBe("app_runtime");
-    expect(pooledIdentity[0]?.rolbypassrls).toBe(false);
-    expect(directIdentity[0]?.rolbypassrls).toBe(false);
+    expect(pooledIdentity[0]).toEqual({ current_user: "app_runtime", rolbypassrls: false });
+    expect(directIdentity[0]).toEqual({ current_user: "app_runtime", rolbypassrls: false });
   });
 
   afterAll(async () => {
@@ -106,6 +109,26 @@ describeDatabase("app_runtime isolation through Prisma", () => {
       expect(rows[0]?.id).toBe(expectedId);
     });
     await Promise.all(requests);
+  });
+
+  it("measures transaction context overhead", async () => {
+    const samples = 30;
+    const measure = async (operation: () => Promise<unknown>) => {
+      const startedAt = performance.now();
+      for (let index = 0; index < samples; index += 1) await operation();
+      return (performance.now() - startedAt) / samples;
+    };
+
+    const baselineMs = await measure(() => pooled.$transaction((tx) => tx.$queryRaw`select 1`));
+    const contextualMs = await measure(() =>
+      withContext(pooled, contextA, (tx) => tx.$queryRaw`select 1`),
+    );
+
+    console.info(
+      `context overhead: baseline=${baselineMs.toFixed(2)}ms contextual=${contextualMs.toFixed(2)}ms delta=${(contextualMs - baselineMs).toFixed(2)}ms (${samples} samples)`,
+    );
+    expect(baselineMs).toBeGreaterThan(0);
+    expect(contextualMs).toBeGreaterThan(0);
   });
 });
 
