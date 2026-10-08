@@ -6,3 +6,10 @@ coverage/
 dist/
 .claude/
 
+
+/.auth
+/playwright-report
+/test-results
+/.next
+
+*.tsbuildinfo

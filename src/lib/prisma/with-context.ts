@@ -29,9 +29,6 @@ export async function withContext<T>(
 
       return operation(tx);
     },
-    // The transaction-pool URL intentionally uses connection_limit=1. Under a
-    // concurrent burst, requests must be allowed to queue for that connection.
     { maxWait: 30_000 },
   );
 }
-

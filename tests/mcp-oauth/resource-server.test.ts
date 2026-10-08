@@ -229,6 +229,7 @@ describe("token hygiene", () => {
 
   it("rejects a token with no exp claim instead of treating it as eternal", async () => {
     const { exp: _exp, ...claims } = supabaseAccessTokenClaims();
+    void _exp;
     const token = await signer.sign(claims);
     const result = await authorize(
       config("grant-table"),

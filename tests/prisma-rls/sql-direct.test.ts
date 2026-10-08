@@ -1,29 +1,21 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import { requiredDatabaseSuite } from "./database-suite.js";
 import { contextA, ids } from "./fixtures.js";
+import { describeDatabase } from "./describe-database.js";
 
 const directUrl = process.env.DIRECT_DATABASE_URL;
-const describeDatabase = requiredDatabaseSuite(
-  "SQL-level RLS and constraints",
-  ["DIRECT_DATABASE_URL"],
-);
+const requiredVars = { DIRECT_DATABASE_URL: directUrl };
 
-describeDatabase("SQL-level RLS and constraints", () => {
+describeDatabase("SQL-level RLS and constraints", requiredVars, () => {
   const prisma = new PrismaClient({ datasourceUrl: directUrl! });
 
   beforeAll(async () => {
-    const identity = await prisma.$queryRaw<
-      Array<{ current_user: string; rolbypassrls: boolean }>
-    >`
+    const identity = await prisma.$queryRaw<Array<{ current_user: string; rolbypassrls: boolean }>>`
       select current_user, rolbypassrls
       from pg_roles
       where rolname = current_user
     `;
-    expect(identity[0]).toEqual({
-      current_user: "app_runtime",
-      rolbypassrls: false,
-    });
+    expect(identity[0]).toEqual({ current_user: "app_runtime", rolbypassrls: false });
   });
 
   afterAll(() => prisma.$disconnect());
@@ -33,9 +25,7 @@ describeDatabase("SQL-level RLS and constraints", () => {
       await tx.$executeRaw`select set_config('app.user_id', 'invalid', true)`;
       await tx.$executeRaw`select set_config('app.workspace_id', 'invalid', true)`;
       await tx.$executeRaw`select set_config('app.organization_id', 'invalid', true)`;
-      return tx.$queryRaw<
-        Array<{ id: string }>
-      >`select id from public.spike_notes`;
+      return tx.$queryRaw<Array<{ id: string }>>`select id from public.spike_notes`;
     });
     expect(rows).toEqual([]);
   });
@@ -59,3 +49,4 @@ describeDatabase("SQL-level RLS and constraints", () => {
     ).rejects.toThrow();
   });
 });
+

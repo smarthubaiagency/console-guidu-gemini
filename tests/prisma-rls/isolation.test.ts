@@ -1,28 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import { hostedOnlySuite, requiredDatabaseSuite } from "./database-suite.js";
-import { withContext } from "../../src/db/with-context.js";
+import { withContext } from "../../src/lib/prisma/with-context.js";
 import { contextA, contextB, ids } from "./fixtures.js";
+import { describeDatabase } from "./describe-database.js";
 
-const hostedPoolUrl = process.env.DATABASE_URL;
+const pooledUrl = process.env.DATABASE_URL;
 const directUrl = process.env.DIRECT_DATABASE_URL;
-const pooledUrl = directUrl;
-const describeDatabase = requiredDatabaseSuite(
-  "app_runtime isolation through Prisma (direct)",
-  ["DIRECT_DATABASE_URL"],
-);
-const describePooler = hostedOnlySuite(
-  "Supavisor transaction pool",
-  "DATABASE_URL",
-);
+const requiredVars = { DATABASE_URL: pooledUrl, DIRECT_DATABASE_URL: directUrl };
 
 type RuntimeIdentity = {
   current_user: string;
   rolbypassrls: boolean;
 };
 
-describeDatabase("app_runtime isolation through Prisma (direct)", () => {
+describeDatabase("app_runtime isolation through Prisma", requiredVars, () => {
   const pooled = new PrismaClient({ datasourceUrl: pooledUrl! });
   const direct = new PrismaClient({ datasourceUrl: directUrl! });
 
@@ -41,14 +33,8 @@ describeDatabase("app_runtime isolation through Prisma (direct)", () => {
         where rolname = current_user
       `,
     ]);
-    expect(pooledIdentity[0]).toEqual({
-      current_user: "app_runtime",
-      rolbypassrls: false,
-    });
-    expect(directIdentity[0]).toEqual({
-      current_user: "app_runtime",
-      rolbypassrls: false,
-    });
+    expect(pooledIdentity[0]).toEqual({ current_user: "app_runtime", rolbypassrls: false });
+    expect(directIdentity[0]).toEqual({ current_user: "app_runtime", rolbypassrls: false });
   });
 
   afterAll(async () => {
@@ -56,12 +42,10 @@ describeDatabase("app_runtime isolation through Prisma (direct)", () => {
   });
 
   it.each([
-    ["direct client A", pooled],
-    ["direct client B", direct],
+    ["Supavisor transaction pool", pooled],
+    ["direct connection", direct],
   ])("reads only the active workspace over %s", async (_label, client) => {
-    const rows = await withContext(client, contextA, (tx) =>
-      tx.spikeNote.findMany(),
-    );
+    const rows = await withContext(client, contextA, (tx) => tx.spikeNote.findMany());
     expect(rows.map((row) => row.id)).toEqual([ids.noteA]);
   });
 
@@ -88,8 +72,10 @@ describeDatabase("app_runtime isolation through Prisma (direct)", () => {
   it("denies missing and malformed context (AC02)", async () => {
     expect(await pooled.spikeNote.findMany()).toEqual([]);
     expect(
-      await withContext(pooled, { ...contextA, userId: "not-a-uuid" }, (tx) =>
-        tx.spikeNote.findMany(),
+      await withContext(
+        pooled,
+        { ...contextA, userId: "not-a-uuid" },
+        (tx) => tx.spikeNote.findMany(),
       ),
     ).toEqual([]);
   });
@@ -119,9 +105,7 @@ describeDatabase("app_runtime isolation through Prisma (direct)", () => {
     const requests = Array.from({ length: 60 }, async (_, index) => {
       const context = index % 2 === 0 ? contextA : contextB;
       const expectedId = index % 2 === 0 ? ids.noteA : ids.noteB;
-      const rows = await withContext(pooled, context, (tx) =>
-        tx.spikeNote.findMany(),
-      );
+      const rows = await withContext(pooled, context, (tx) => tx.spikeNote.findMany());
       expect(rows).toHaveLength(1);
       expect(rows[0]?.id).toBe(expectedId);
     });
@@ -136,9 +120,7 @@ describeDatabase("app_runtime isolation through Prisma (direct)", () => {
       return (performance.now() - startedAt) / samples;
     };
 
-    const baselineMs = await measure(() =>
-      pooled.$transaction((tx) => tx.$queryRaw`select 1`),
-    );
+    const baselineMs = await measure(() => pooled.$transaction((tx) => tx.$queryRaw`select 1`));
     const contextualMs = await measure(() =>
       withContext(pooled, contextA, (tx) => tx.$queryRaw`select 1`),
     );
@@ -151,22 +133,3 @@ describeDatabase("app_runtime isolation through Prisma (direct)", () => {
   });
 });
 
-describePooler("Supavisor transaction pool", () => {
-  const hostedPool = new PrismaClient({ datasourceUrl: hostedPoolUrl! });
-
-  afterAll(() => hostedPool.$disconnect());
-
-  it("authenticates app_runtime and executes transaction context", async () => {
-    const identity = await hostedPool.$queryRaw<RuntimeIdentity[]>`
-      select current_user, rolbypassrls from pg_roles where rolname = current_user
-    `;
-    expect(identity[0]).toEqual({
-      current_user: "app_runtime",
-      rolbypassrls: false,
-    });
-    const rows = await withContext(hostedPool, contextA, (tx) =>
-      tx.spikeNote.findMany(),
-    );
-    expect(rows.map((row) => row.id)).toEqual([ids.noteA]);
-  });
-});
