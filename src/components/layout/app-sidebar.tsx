@@ -92,10 +92,10 @@ export function AppSidebar({ workspaceSlug }: AppSidebarProps) {
   ];
 
   return (
-    <aside className="w-64 border-r border-neutral-200 bg-neutral-50/50 flex flex-col justify-between shrink-0 min-h-screen">
-      <div className="p-4 space-y-6">
+    <aside className="border-border bg-surface-sidebar flex min-h-screen w-64 shrink-0 flex-col justify-between border-r">
+      <div className="space-y-6 p-4">
         <div>
-          <div className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+          <div className="text-11 text-text-tertiary mb-2 px-3 font-semibold tracking-wider uppercase">
             Plataforma
           </div>
           <nav className="space-y-1">
@@ -108,18 +108,18 @@ export function AppSidebar({ workspaceSlug }: AppSidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition ${
+                  className={`text-12 flex items-center justify-between rounded-lg px-3 py-2 font-medium transition ${
                     isActive
-                      ? "bg-white text-neutral-900 shadow-xs border border-neutral-200"
-                      : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                      ? "bg-surface-card text-text border-border border shadow-xs"
+                      : "text-text-subtle hover:bg-surface-hover hover:text-text"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className="h-4 w-4 shrink-0 text-neutral-500" />
+                    <Icon className="text-text-secondary h-4 w-4 shrink-0" />
                     <span>{item.title}</span>
                   </div>
                   {item.badge && (
-                    <span className="rounded-sm bg-neutral-200/60 px-1.5 py-0.5 text-[10px] text-neutral-600 font-medium">
+                    <span className="bg-surface-strong text-10 text-text-subtle rounded-sm px-1.5 py-0.5 font-medium">
                       {item.badge}
                     </span>
                   )}
@@ -130,7 +130,7 @@ export function AppSidebar({ workspaceSlug }: AppSidebarProps) {
         </div>
 
         <div>
-          <div className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+          <div className="text-11 text-text-tertiary mb-2 px-3 font-semibold tracking-wider uppercase">
             Configurações
           </div>
           <nav className="space-y-1">
@@ -141,13 +141,13 @@ export function AppSidebar({ workspaceSlug }: AppSidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition ${
+                  className={`text-12 flex items-center gap-2.5 rounded-lg px-3 py-2 font-medium transition ${
                     isActive
-                      ? "bg-white text-neutral-900 shadow-xs border border-neutral-200"
-                      : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                      ? "bg-surface-card text-text border-border border shadow-xs"
+                      : "text-text-subtle hover:bg-surface-hover hover:text-text"
                   }`}
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-neutral-500" />
+                  <Icon className="text-text-secondary h-4 w-4 shrink-0" />
                   <span>{item.title}</span>
                 </Link>
               );
@@ -156,13 +156,13 @@ export function AppSidebar({ workspaceSlug }: AppSidebarProps) {
         </div>
       </div>
 
-      <div className="p-4 border-t border-neutral-200">
-        <div className="flex items-center justify-between text-xs text-neutral-500 px-3 py-2">
+      <div className="border-border border-t p-4">
+        <div className="text-12 text-text-secondary flex items-center justify-between px-3 py-2">
           <span className="flex items-center gap-2">
-            <HelpCircle className="h-4 w-4 text-neutral-400" />
+            <HelpCircle className="text-text-tertiary h-4 w-4" />
             <span>Documentação</span>
           </span>
-          <span className="text-[10px] bg-neutral-200 px-1.5 py-0.5 rounded text-neutral-600">
+          <span className="text-10 bg-surface-strong text-text-subtle rounded-sm px-1.5 py-0.5">
             v1.0
           </span>
         </div>

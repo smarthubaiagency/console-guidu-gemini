@@ -6,7 +6,11 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listOrganizationMembers } from "@/core/organizations/members";
 import { listInvitations } from "@/core/organizations/invitations";
-import { TeamClient, type MemberDisplay, type InvitationDisplay } from "./team-client";
+import {
+  TeamClient,
+  type MemberDisplay,
+  type InvitationDisplay,
+} from "./team-client";
 
 export const metadata: Metadata = {
   title: "Gestão de Equipe e Membros",
@@ -62,7 +66,9 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
     const prof = profileMap.get(m.userId);
     return {
       userId: m.userId,
-      name: prof?.fullName ?? (m.userId === identity.userId ? identity.email ?? "Você" : "Membro"),
+      name:
+        prof?.fullName ??
+        (m.userId === identity.userId ? (identity.email ?? "Você") : "Membro"),
       role: m.role,
       status: m.status,
       joinedAt: new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(
@@ -84,23 +90,24 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
   }));
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="border-b border-neutral-200 pb-5">
-        <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 mb-1">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="border-border border-b pb-5">
+        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
           <span>Configurações</span>
           <span>/</span>
           <span>Equipe & Membros</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-neutral-100 text-neutral-700">
+          <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
             <Users className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-20 text-text font-bold tracking-tight">
               Equipe e Permissões de Acesso
             </h1>
-            <p className="text-xs text-neutral-500">
-              Gerencie colaboradores, atribua papéis administrativos e emita convites seguros.
+            <p className="text-12 text-text-secondary">
+              Gerencie colaboradores, atribua papéis administrativos e emita
+              convites seguros.
             </p>
           </div>
         </div>

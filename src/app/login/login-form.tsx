@@ -34,7 +34,7 @@ export function LoginForm({ next }: Readonly<{ next: string }>) {
       />
       {state.error ? <ErrorNotice>{state.error}</ErrorNotice> : null}
       <SubmitButton pending={pending}>Entrar</SubmitButton>
-      <p className="text-sm">
+      <p className="text-14">
         <Link href="/forgot-password" className="underline">
           Esqueci minha senha
         </Link>

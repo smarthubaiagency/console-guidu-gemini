@@ -8,7 +8,7 @@ export function SignOutForm({ label = "Sair" }: Readonly<{ label?: string }>) {
       <button
         type="submit"
         data-testid="sign-out"
-        className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium"
+        className="border-border-strong text-14 rounded-md border px-3 py-2 font-medium"
       >
         {label}
       </button>

@@ -26,7 +26,7 @@ export function ForgotPasswordForm() {
       />
       {state.message ? <SuccessNotice>{state.message}</SuccessNotice> : null}
       <SubmitButton pending={pending}>Enviar link de recuperação</SubmitButton>
-      <p className="text-sm">
+      <p className="text-14">
         <Link href="/login" className="underline">
           Voltar para entrar
         </Link>

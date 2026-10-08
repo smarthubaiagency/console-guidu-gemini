@@ -28,58 +28,60 @@ export default async function AppPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col justify-between">
-      <header className="border-b border-neutral-200 bg-white px-6 py-4 flex items-center justify-between">
+    <div className="bg-surface-raised flex min-h-screen flex-col justify-between">
+      <header className="border-border bg-surface-card flex items-center justify-between border-b px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="h-7 w-7 rounded-lg bg-neutral-900 text-white flex items-center justify-center font-bold text-sm">
+          <div className="bg-primary text-on-primary text-14 flex h-7 w-7 items-center justify-center rounded-lg font-bold">
             G
           </div>
-          <span className="font-bold text-neutral-900 tracking-tight">GUIDU</span>
+          <span className="text-text font-bold tracking-tight">GUIDU</span>
         </div>
 
         <div className="flex items-center gap-3">
           <span
-            className="hidden sm:inline text-xs text-neutral-500 font-medium"
+            className="text-12 text-text-secondary hidden font-medium sm:inline"
             data-testid="identity-email"
           >
             {identity.email}
           </span>
           <Link
             href="/app/account/security"
-            className="flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-900 border border-neutral-200 px-3 py-1.5 rounded-lg"
+            className="text-12 text-text-subtle hover:text-text border-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5"
           >
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+            <ShieldCheck className="text-success-solid h-3.5 w-3.5" />
             <span>Segurança da Conta</span>
           </Link>
           <SignOutForm />
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto w-full px-6 py-12 flex-1">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
+        <div className="mb-8 text-center">
+          <h1 className="text-24 text-text font-bold tracking-tight">
             Selecione seu Workspace
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="text-14 text-text-secondary mt-1">
             Escolha o ambiente de trabalho que deseja acessar para iniciar.
           </p>
         </div>
 
         {workspaces.length === 0 ? (
-          <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-xs">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-neutral-400">
+          <div className="border-card-border bg-surface-card rounded-2xl border p-8 text-center shadow-xs">
+            <div className="bg-surface-hover text-text-tertiary mx-auto flex h-12 w-12 items-center justify-center rounded-xl">
               <Layers className="h-6 w-6" />
             </div>
-            <h2 className="mt-4 text-base font-semibold text-neutral-900">
+            <h2 className="text-16 text-text mt-4 font-semibold">
               Nenhum workspace atribuído
             </h2>
-            <p className="mt-2 text-xs text-neutral-500 max-w-sm mx-auto leading-relaxed">
-              Sua conta está ativa, mas você ainda não foi adicionado a nenhum workspace da sua organização. Solicite um convite ao seu administrador.
+            <p className="text-12 text-text-secondary mx-auto mt-2 max-w-sm leading-relaxed">
+              Sua conta está ativa, mas você ainda não foi adicionado a nenhum
+              workspace da sua organização. Solicite um convite ao seu
+              administrador.
             </p>
             <div className="mt-6">
               <Link
                 href="/app/account/security"
-                className="text-xs font-semibold text-neutral-900 underline hover:text-neutral-700"
+                className="text-12 text-text hover:text-text-subtle font-semibold underline"
               >
                 Gerenciar segurança e MFA da sua conta
               </Link>
@@ -91,26 +93,26 @@ export default async function AppPage() {
               <Link
                 key={ws.workspaceId}
                 href={`/app/${ws.workspaceSlug}`}
-                className="group flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-4 shadow-xs hover:border-neutral-400 hover:shadow-md transition"
+                className="group border-card-border bg-surface-card hover:border-border-strong flex items-center justify-between rounded-xl border p-4 shadow-xs transition hover:shadow-sm"
               >
                 <div className="flex items-center gap-3.5">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-700 group-hover:bg-neutral-900 group-hover:text-white transition">
+                  <div className="bg-surface-hover text-text-subtle group-hover:bg-primary group-hover:text-on-primary flex h-10 w-10 items-center justify-center rounded-lg transition">
                     <Building2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm text-neutral-900">
+                    <h3 className="text-14 text-text font-semibold">
                       {ws.workspaceName}
                     </h3>
-                    <p className="text-xs text-neutral-500">
+                    <p className="text-12 text-text-secondary">
                       {ws.organizationName} • Papel:{" "}
-                      <span className="capitalize font-medium text-neutral-700">
+                      <span className="text-text-subtle font-medium capitalize">
                         {ws.workspaceRole}
                       </span>
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs font-semibold text-neutral-500 group-hover:text-neutral-900 transition">
+                <div className="text-12 text-text-secondary group-hover:text-text flex items-center gap-1 font-semibold transition">
                   <span>Acessar</span>
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -120,7 +122,7 @@ export default async function AppPage() {
         )}
       </main>
 
-      <footer className="border-t border-neutral-200 bg-white py-4 text-center text-xs text-neutral-400">
+      <footer className="border-border bg-surface-card text-12 text-text-tertiary border-t py-4 text-center">
         GUIDU Plataforma SaaS Modular • Isolamento Multiempresa RLS
       </footer>
     </div>

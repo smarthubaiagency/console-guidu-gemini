@@ -3,13 +3,11 @@ export default function Home() {
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl items-center px-6">
       <section>
-        <p className="text-muted-foreground text-sm font-medium">
+        <p className="text-text-secondary text-14 font-medium">
           Fundação em construção
         </p>
-        <h1 className="mt-3 text-5xl font-semibold tracking-tight">
-          {appName}
-        </h1>
-        <p className="text-muted-foreground mt-4 max-w-xl text-lg">
+        <h1 className="text-48 mt-3 font-semibold tracking-tight">{appName}</h1>
+        <p className="text-text-secondary text-18 mt-4 max-w-xl">
           A base segura para uma plataforma SaaS modular.
         </p>
       </section>

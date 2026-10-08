@@ -31,32 +31,30 @@ export default async function ApiSettingsPage({ params }: ApiKeysPageProps) {
   });
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="border-b border-neutral-200 pb-5">
-        <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 mb-1">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="border-border border-b pb-5">
+        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
           <span>Configurações</span>
           <span>/</span>
           <span>Chaves de API</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-neutral-100 text-neutral-700">
+          <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
             <Key className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-20 text-text font-bold tracking-tight">
               Chaves de API e Tokens MCP
             </h1>
-            <p className="text-xs text-neutral-500">
-              Conforme ADR 0009: tokens pessoais com hash SHA-256 e expiração obrigatória para conexões de desenvolvedor e assistentes de IA.
+            <p className="text-12 text-text-secondary">
+              Conforme ADR 0009: tokens pessoais com hash SHA-256 e expiração
+              obrigatória para conexões de desenvolvedor e assistentes de IA.
             </p>
           </div>
         </div>
       </div>
 
-      <ApiKeysClient
-        workspaceSlug={workspaceSlug}
-        apiKeys={apiKeys}
-      />
+      <ApiKeysClient workspaceSlug={workspaceSlug} apiKeys={apiKeys} />
     </div>
   );
 }

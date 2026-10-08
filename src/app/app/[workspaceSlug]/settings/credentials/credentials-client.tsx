@@ -16,7 +16,11 @@ import {
   type CredentialActionState,
 } from "@/core/credentials/credentials-actions";
 import { AI_PROVIDERS } from "@/core/credentials/providers";
-import type { CredentialItem, AIProvider, CredentialPurpose } from "@/core/credentials/vault";
+import type {
+  CredentialItem,
+  AIProvider,
+  CredentialPurpose,
+} from "@/core/credentials/vault";
 
 interface CredentialsClientProps {
   workspaceSlug: string;
@@ -62,7 +66,11 @@ export function CredentialsClient({
   };
 
   const handleRevoke = (credentialId: string, itemLabel: string) => {
-    if (!confirm(`Revogar a credencial "${itemLabel}"? Agentes e rotinas não poderão mais utilizá-la.`)) {
+    if (
+      !confirm(
+        `Revogar a credencial "${itemLabel}"? Agentes e rotinas não poderão mais utilizá-la.`,
+      )
+    ) {
       return;
     }
 
@@ -80,13 +88,13 @@ export function CredentialsClient({
     <div className="space-y-6">
       {/* Feedback banner */}
       {feedback?.error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 animate-in fade-in">
-          <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+        <div className="border-danger-border bg-danger-bg text-12 text-danger-text flex items-center gap-3 rounded-lg border p-4 font-medium">
+          <AlertCircle className="text-danger-text h-4 w-4 shrink-0" />
           <span>{feedback.error}</span>
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="ml-auto text-red-500 hover:text-red-700"
+            className="text-danger-text hover:text-danger-text ml-auto"
           >
             ×
           </button>
@@ -94,15 +102,15 @@ export function CredentialsClient({
       )}
 
       {feedback?.success && (
-        <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 animate-in fade-in">
+        <div className="border-success-border bg-success-bg text-12 text-success-text flex items-center justify-between rounded-lg border p-4 font-semibold">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <CheckCircle2 className="text-success-solid h-4 w-4" />
             <span>{feedback.message}</span>
           </div>
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="text-emerald-600 hover:text-emerald-800"
+            className="text-success-solid hover:text-success-text"
           >
             ×
           </button>
@@ -110,21 +118,22 @@ export function CredentialsClient({
       )}
 
       {/* Top Banner & Action */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="border-card-border bg-surface-card flex flex-col justify-between gap-4 rounded-xl border p-5 shadow-xs md:flex-row md:items-center">
         <div>
-          <h2 className="text-base font-semibold text-neutral-900 flex items-center gap-2">
-            <Lock className="h-4 w-4 text-neutral-500" />
+          <h2 className="text-16 text-text flex items-center gap-2 font-semibold">
+            <Lock className="text-text-secondary h-4 w-4" />
             <span>Cofre de Credenciais BYOK</span>
           </h2>
-          <p className="mt-0.5 text-xs text-neutral-500">
-            Cadastre chaves de API próprias de provedores de IA para uso exclusivo neste workspace.
+          <p className="text-12 text-text-secondary mt-0.5">
+            Cadastre chaves de API próprias de provedores de IA para uso
+            exclusivo neste workspace.
           </p>
         </div>
 
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white px-3.5 py-2 text-xs font-semibold shadow-xs transition shrink-0"
+          className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
         >
           <Plus className="h-4 w-4" />
           <span>Nova Credencial</span>
@@ -133,17 +142,17 @@ export function CredentialsClient({
 
       {/* Modal / Register Form */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-              <div className="flex items-center gap-2 font-semibold text-neutral-900 text-sm">
-                <KeyRound className="h-4 w-4 text-neutral-600" />
+        <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="border-card-border bg-surface-card w-full max-w-lg rounded-2xl border p-6 shadow-xl">
+            <div className="border-border flex items-center justify-between border-b pb-4">
+              <div className="text-text text-14 flex items-center gap-2 font-semibold">
+                <KeyRound className="text-text-subtle h-4 w-4" />
                 <span>Adicionar Credencial de IA</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 text-lg leading-none"
+                className="text-text-tertiary hover:text-text-subtle text-18 leading-none"
               >
                 ×
               </button>
@@ -151,7 +160,7 @@ export function CredentialsClient({
 
             <form onSubmit={handleRegister} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
                   Provedor de IA
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -163,14 +172,14 @@ export function CredentialsClient({
                         key={pKey}
                         type="button"
                         onClick={() => setProvider(pKey)}
-                        className={`p-2.5 rounded-lg border text-left text-xs transition ${
+                        className={`text-12 rounded-lg border p-2.5 text-left transition ${
                           isSelected
-                            ? "border-neutral-900 bg-neutral-50 font-semibold text-neutral-900"
-                            : "border-neutral-200 text-neutral-600 hover:bg-neutral-50/50"
+                            ? "border-focus-ring bg-surface-raised text-text font-semibold"
+                            : "border-border text-text-subtle hover:bg-surface-hover"
                         }`}
                       >
                         <div>{pMeta.name}</div>
-                        <div className="text-[10px] text-neutral-400 font-mono">
+                        <div className="text-10 text-text-tertiary font-mono">
                           {pMeta.keyPrefix}*
                         </div>
                       </button>
@@ -180,7 +189,7 @@ export function CredentialsClient({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
                   Identificador / Rótulo
                 </label>
                 <input
@@ -189,12 +198,12 @@ export function CredentialsClient({
                   placeholder="Ex: Chave de Produção 2026"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs focus:border-neutral-900 focus:outline-none"
+                  className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
                   Chave Secreta de API (API Key)
                 </label>
                 <input
@@ -203,47 +212,56 @@ export function CredentialsClient({
                   placeholder={`Insira a chave do ${activeProviderMeta.name}`}
                   value={secret}
                   onChange={(e) => setSecret(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs font-mono focus:border-neutral-900 focus:outline-none"
+                  className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 font-mono focus:outline-none"
                 />
-                <p className="mt-1 text-[11px] text-neutral-400">
-                  Formato esperado: inicia com &lsquo;{activeProviderMeta.keyPrefix}&rsquo;.
+                <p className="text-11 text-text-tertiary mt-1">
+                  Formato esperado: inicia com &lsquo;
+                  {activeProviderMeta.keyPrefix}&rsquo;.
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
                   Finalidade no Workspace
                 </label>
                 <select
                   value={purpose}
-                  onChange={(e) => setPurpose(e.target.value as CredentialPurpose)}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs focus:border-neutral-900 focus:outline-none bg-white"
+                  onChange={(e) =>
+                    setPurpose(e.target.value as CredentialPurpose)
+                  }
+                  className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
                 >
-                  <option value="all">Todas as finalidades (Chat e Embeddings)</option>
+                  <option value="all">
+                    Todas as finalidades (Chat e Embeddings)
+                  </option>
                   <option value="chat">Apenas Geração de Texto / Chat</option>
-                  <option value="embeddings">Apenas Vetorização / Embeddings</option>
+                  <option value="embeddings">
+                    Apenas Vetorização / Embeddings
+                  </option>
                 </select>
               </div>
 
-              <div className="rounded-lg bg-neutral-50 p-3 border border-neutral-200 flex items-start gap-2 text-[11px] text-neutral-600">
-                <Shield className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+              <div className="bg-surface-raised border-border text-11 text-text-subtle flex items-start gap-2 rounded-lg border p-3">
+                <Shield className="text-success-solid mt-0.5 h-4 w-4 shrink-0" />
                 <span>
-                  O segredo é criptografado com <strong>AES-256-GCM</strong> em repouso no servidor. Após o cadastro, ele nunca mais é transmitido em claro ao navegador.
+                  O segredo é criptografado com <strong>AES-256-GCM</strong> em
+                  repouso no servidor. Após o cadastro, ele nunca mais é
+                  transmitido em claro ao navegador.
                 </span>
               </div>
 
-              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-neutral-100">
+              <div className="border-border mt-6 flex items-center justify-end gap-3 border-t pt-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                  className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="rounded-lg bg-neutral-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
+                  className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
                 >
                   {isPending ? "Criptografando..." : "Salvar no Cofre"}
                 </button>
@@ -254,24 +272,25 @@ export function CredentialsClient({
       )}
 
       {/* Credentials Table */}
-      <div className="rounded-xl border border-neutral-200 bg-white shadow-xs overflow-hidden">
-        <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between">
-          <h3 className="font-semibold text-sm text-neutral-900">
+      <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
+        <div className="border-border flex items-center justify-between border-b px-5 py-4">
+          <h3 className="text-14 text-text font-semibold">
             Credenciais Ativas ({credentials.length})
           </h3>
-          <span className="text-xs text-neutral-400">
+          <span className="text-12 text-text-tertiary">
             Valores mascarados com isolamento RLS
           </span>
         </div>
 
         {credentials.length === 0 ? (
-          <div className="p-8 text-center text-xs text-neutral-400">
-            Nenhuma credencial cadastrada neste workspace. Adicione uma chave para habilitar módulos de IA.
+          <div className="text-12 text-text-tertiary p-8 text-center">
+            Nenhuma credencial cadastrada neste workspace. Adicione uma chave
+            para habilitar módulos de IA.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-neutral-50 text-neutral-500 uppercase tracking-wider font-semibold border-b border-neutral-200">
+            <table className="text-12 w-full text-left">
+              <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
                 <tr>
                   <th className="px-5 py-3">Provedor</th>
                   <th className="px-5 py-3">Rótulo</th>
@@ -281,31 +300,33 @@ export function CredentialsClient({
                   <th className="px-5 py-3 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-border divide-y">
                 {credentials.map((item) => (
-                  <tr key={item.id} className="hover:bg-neutral-50/50">
-                    <td className="px-5 py-3.5 font-semibold text-neutral-900 capitalize">
+                  <tr key={item.id} className="hover:bg-surface-hover">
+                    <td className="text-text px-5 py-3.5 font-semibold capitalize">
                       {item.provider}
                     </td>
-                    <td className="px-5 py-3.5 font-medium text-neutral-800">
+                    <td className="text-text px-5 py-3.5 font-medium">
                       {item.label}
                     </td>
-                    <td className="px-5 py-3.5 font-mono text-neutral-600 bg-neutral-50/50 rounded">
+                    <td className="text-text-subtle bg-surface-sidebar rounded-sm px-5 py-3.5 font-mono">
                       {item.maskedValue}
                     </td>
-                    <td className="px-5 py-3.5 text-neutral-600 capitalize">
-                      {item.purpose === "all" ? "Geral (Chat + Embeddings)" : item.purpose}
+                    <td className="text-text-subtle px-5 py-3.5 capitalize">
+                      {item.purpose === "all"
+                        ? "Geral (Chat + Embeddings)"
+                        : item.purpose}
                     </td>
                     <td className="px-5 py-3.5">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        className={`text-10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${
                           item.status === "active"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-neutral-100 text-neutral-500"
+                            ? "bg-success-bg text-success-text border-success-border border"
+                            : "bg-surface-hover text-text-secondary"
                         }`}
                       >
                         {item.status === "active" && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                         )}
                         {item.status === "active" ? "Ativa" : "Revogada"}
                       </span>
@@ -316,7 +337,7 @@ export function CredentialsClient({
                           type="button"
                           disabled={isPending}
                           onClick={() => handleRevoke(item.id, item.label)}
-                          className="text-neutral-400 hover:text-red-600 transition p-1 rounded hover:bg-red-50"
+                          className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
                           title="Revogar credencial"
                         >
                           <Trash2 className="h-4 w-4" />
