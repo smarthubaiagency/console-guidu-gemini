@@ -57,6 +57,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          runtime_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$runtime_password"
           echo "RUNTIME_PASSWORD=$runtime_password" >> "$GITHUB_ENV"
           printf "do \$\$ begin if not exists (select 1 from pg_roles where rolname = 'app_runtime') then create role app_runtime login nosuperuser nocreatedb nocreaterole noinherit nobypassrls password '%s'; else alter role app_runtime password '%s'; end if; end \$\$;\n" "$runtime_password" "$runtime_password" > supabase/roles.sql
 
