@@ -9,7 +9,7 @@ Atualizado em 08/10/2026 a partir da seção 26 da Especificação v1.0, das dec
 | Escopo de dados sensíveis | Produto e avaliação jurídica definem. |
 | Infraestrutura e recuperação | Operação valida RPO/RTO e cobertura de backup. |
 | Prisma com RLS no Supavisor | Validação parcial na SMA-92: incluir `pgbouncer=true` na URL 6543 e repetir reuso, rollback, concorrência e overhead; Data API HTTP também segue pendente. |
-| OAuth do MCP | O spike precisa validar Supabase, scopes, audience e clientes reais. |
+| OAuth do MCP | Spike SMA-93 concluído (`docs/spikes/mcp-oauth.md`): Supabase + complemento. Restam decisões do Marcelo — manter ou não o DCR aberto em produção, Site URL e URIs canônicas das duas superfícies, e bind da publishable key do `guidu` para provar a perna de consentimento. Em F4, trocar a verificação JWS do spike por `jose`. |
 | Clientes e ferramentas MCP | Começar com núcleo e clientes aprovados; catálogo definitivo continua aberto. |
 | Provedores e cobrança | Selecionar com contratos e requisitos de privacidade. |
 | Retenção e privacidade | Definir por categoria com responsabilidades. |
