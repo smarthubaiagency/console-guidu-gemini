@@ -15,7 +15,7 @@
 
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 
 import { registerCredential } from "@/core/credentials/vault";
 import {
@@ -42,6 +42,20 @@ describe("Task 07: AI Agent Engine, Fallback Resilience & Interaction History", 
           "",
       },
     },
+  });
+
+  beforeEach(async () => {
+    await withContext(prisma, contextA, async (tx) => {
+      await tx.credential.deleteMany({
+        where: { workspaceId: contextA.workspaceId },
+      });
+      await tx.agentSession.deleteMany({
+        where: { workspaceId: contextA.workspaceId },
+      });
+      await tx.agentConfig.deleteMany({
+        where: { workspaceId: contextA.workspaceId },
+      });
+    });
   });
 
   it("creates and lists agent configurations scoped to workspace", async () => {

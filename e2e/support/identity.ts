@@ -62,6 +62,36 @@ export async function blockIdentity(
   expect(response.status()).toBe(200);
 }
 
+/** Seeds the user as an active platform administrator in the database. */
+export async function makePlatformAdmin(
+  request: APIRequestContext,
+  email: string,
+): Promise<void> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/platform-admin`, {
+    data: { email },
+  });
+  expect(response.status()).toBe(200);
+}
+
+/** Seeds an organization, workspace and user membership in the database. */
+export async function seedWorkspace(
+  request: APIRequestContext,
+  params: {
+    email: string;
+    orgName: string;
+    orgSlug: string;
+    wsName: string;
+    wsSlug: string;
+    role?: "owner" | "admin" | "member";
+  },
+): Promise<{ organizationId: string; workspaceId: string }> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-workspace`, {
+    data: params,
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { organizationId: string; workspaceId: string };
+}
+
 /** Fills and submits the login form without waiting for the outcome. */
 export async function submitLogin(
   page: Page,

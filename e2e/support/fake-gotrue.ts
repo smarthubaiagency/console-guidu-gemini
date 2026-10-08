@@ -66,6 +66,17 @@ export type FakeGoTrueOptions = Readonly<{
   onBlockIdentity: (email: string) => Promise<void>;
   /** `count(*)` of profile rows for an identity, for the provisioning checks. */
   onCountProfiles: (email: string) => Promise<number>;
+  /** Seeds user as platform admin in platform_admin_members table. */
+  onMakePlatformAdmin: (email: string) => Promise<void>;
+  /** Seeds workspace and membership in database. */
+  onSeedWorkspace: (params: {
+    email: string;
+    orgName: string;
+    orgSlug: string;
+    wsName: string;
+    wsSlug: string;
+    role?: "owner" | "admin" | "member";
+  }) => Promise<{ organizationId: string; workspaceId: string }>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -185,9 +196,10 @@ export async function startFakeGoTrue(
   };
 
   const server: Server = createServer((request, response) => {
-    void handle(request, response).catch(() =>
-      json(response, 500, { msg: "fake gotrue failure" }),
-    );
+    void handle(request, response).catch((err) => {
+      console.error("FAKE GOTRUE ERROR:", err);
+      return json(response, 500, { msg: "fake gotrue failure", error: String(err) });
+    });
   });
 
   async function handle(
@@ -236,6 +248,34 @@ export async function startFakeGoTrue(
       if (!email) return json(response, 400, { msg: "invalid" });
       await options.onBlockIdentity(email);
       return json(response, 200, { blocked: email });
+    }
+
+    if (path === "/__control/platform-admin" && method === "POST") {
+      const body = await readBody(request);
+      const email = asString(body.email);
+      if (!email) return json(response, 400, { msg: "invalid" });
+      await options.onMakePlatformAdmin(email);
+      return json(response, 200, { admin: email });
+    }
+
+    if (path === "/__control/seed-workspace" && method === "POST") {
+      const body = await readBody(request);
+      const email = asString(body.email);
+      const orgName = asString(body.orgName) ?? "Empresa Teste";
+      const orgSlug = asString(body.orgSlug) ?? `org-${Date.now()}`;
+      const wsName = asString(body.wsName) ?? "Workspace Teste";
+      const wsSlug = asString(body.wsSlug) ?? `ws-${Date.now()}`;
+      const role = asString(body.role) as "owner" | "admin" | "member" | null;
+      if (!email) return json(response, 400, { msg: "invalid email" });
+      const seeded = await options.onSeedWorkspace({
+        email,
+        orgName,
+        orgSlug,
+        wsName,
+        wsSlug,
+        role: role ?? "owner",
+      });
+      return json(response, 200, seeded);
     }
 
     // ---- gotrue ---------------------------------------------------------

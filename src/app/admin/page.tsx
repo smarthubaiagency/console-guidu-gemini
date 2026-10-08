@@ -19,7 +19,7 @@ export default async function AdminPage() {
   const metrics = await getAdminMetrics(prisma, identity.userId);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8" data-testid="admin-state">
       {/* Header */}
       <div className="border-b border-neutral-200 pb-5">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-700 mb-1">

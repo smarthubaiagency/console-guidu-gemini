@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { PGlite } from "@electric-sql/pglite";
 import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
-import { Client } from "pg";
+import { Pool } from "pg";
 
 /**
  * Postgres for the end-to-end suite, served by PGlite over the wire protocol
@@ -15,8 +15,6 @@ import { Client } from "pg";
  * security. The isolation proof runs in the CI `db` job, on local Supabase,
  * connected as `app_runtime`.
  */
-
-const AUTH_MIGRATION = "20261008120000_sma98_auth_identity_profiles.sql";
 
 /** Roles that Supabase provides and the migration refers to by name. */
 const BOOTSTRAP = `
@@ -37,11 +35,15 @@ const BOOTSTRAP = `
     if not exists (select 1 from pg_roles where rolname = 'app_runtime') then
       create role app_runtime nologin noinherit;
     end if;
+    if not exists (select 1 from pg_roles where rolname = 'app_rls_helper') then
+      create role app_rls_helper nologin noinherit;
+    end if;
   end
   $$;
 
   grant app_migrations to postgres;
   grant app_runtime to postgres;
+  grant app_rls_helper to postgres;
   grant usage, create on schema public to app_migrations;
   grant usage on schema public to app_runtime, anon, authenticated;
 
@@ -61,6 +63,15 @@ export type TestDatabase = Readonly<{
   ) => Promise<void>;
   blockIdentity: (email: string) => Promise<void>;
   countProfiles: (email: string) => Promise<number>;
+  makePlatformAdmin: (email: string) => Promise<void>;
+  seedWorkspace: (params: {
+    email: string;
+    orgName: string;
+    orgSlug: string;
+    wsName: string;
+    wsSlug: string;
+    role?: "owner" | "admin" | "member";
+  }) => Promise<{ organizationId: string; workspaceId: string }>;
   close: () => Promise<void>;
 }>;
 
@@ -80,26 +91,32 @@ export async function startTestDatabase(
   await server.start();
 
   const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`;
-  const client = new Client({ connectionString: url });
-  await client.connect();
+  const pool = new Pool({ connectionString: url, max: 10 });
 
-  await client.query(BOOTSTRAP);
-  const migration = await readFile(
-    path.join(repoRoot, "supabase", "migrations", AUTH_MIGRATION),
-    "utf8",
-  );
-  await client.query(migration);
+  await pool.query(BOOTSTRAP);
+
+  const { readdir } = await import("node:fs/promises");
+  const migrationsDir = path.join(repoRoot, "supabase", "migrations");
+  const allFiles = await readdir(migrationsDir);
+  const migrationFiles = allFiles
+    .filter((f) => f.startsWith("20261008") && f.endsWith(".sql"))
+    .sort();
+
+  for (const file of migrationFiles) {
+    const migrationSql = await readFile(path.join(migrationsDir, file), "utf8");
+    await pool.query(migrationSql);
+  }
 
   return {
     url,
     insertAuthUser: async ({ id, email }) => {
-      await client.query(
+      await pool.query(
         "insert into auth.users (id, email) values ($1, $2) on conflict (id) do nothing",
         [id, email],
       );
     },
     blockIdentity: async (email) => {
-      const result = await client.query(
+      const result = await pool.query(
         `update public.profiles
             set status = 'blocked',
                 status_reason = 'e2e revocation',
@@ -112,7 +129,7 @@ export async function startTestDatabase(
       }
     },
     countProfiles: async (email) => {
-      const result = await client.query<{ count: string }>(
+      const result = await pool.query<{ count: string }>(
         `select count(*) as count
            from public.profiles
           where id = (select id from auth.users where lower(email) = lower($1))`,
@@ -120,8 +137,82 @@ export async function startTestDatabase(
       );
       return Number(result.rows[0]?.count ?? 0);
     },
+    makePlatformAdmin: async (email) => {
+      await pool.query(
+        `insert into public.platform_admin_members (user_id, role, status)
+         select id, 'owner', 'active' from auth.users where lower(email) = lower($1)
+         on conflict (user_id) do update set role = 'owner', status = 'active'`,
+        [email],
+      );
+    },
+    seedWorkspace: async (params) => {
+      const userRes = await pool.query<{ id: string }>(
+        `select id from auth.users where lower(email) = lower($1)`,
+        [params.email],
+      );
+      const userId = userRes.rows[0]?.id;
+      if (!userId) throw new Error(`User not found: ${params.email}`);
+
+      await pool.query(
+        `insert into public.profiles (id, full_name, status)
+         values ($1, $2, 'active')
+         on conflict (id) do nothing`,
+        [userId, params.email.split("@")[0]],
+      );
+
+      const existingOrg = await pool.query<{ id: string }>(
+        `select id from public.organizations where name = $1 limit 1`,
+        [params.orgName],
+      );
+      let orgId = existingOrg.rows[0]?.id;
+      if (!orgId) {
+        const orgRes = await pool.query<{ id: string }>(
+          `insert into public.organizations (id, name, max_seats, status)
+           values (gen_random_uuid(), $1, 10, 'active')
+           returning id`,
+          [params.orgName],
+        );
+        orgId = orgRes.rows[0]!.id;
+      }
+
+      await pool.query(
+        `insert into public.organization_members (organization_id, user_id, role, status)
+         values ($1, $2, 'owner', 'active')
+         on conflict (organization_id, user_id) do update set role = 'owner', status = 'active'`,
+        [orgId, userId],
+      );
+
+      const existingWs = await pool.query<{ id: string }>(
+        `select id from public.workspaces where slug = $1 limit 1`,
+        [params.wsSlug],
+      );
+      let wsId = existingWs.rows[0]?.id;
+      if (!wsId) {
+        const wsRes = await pool.query<{ id: string }>(
+          `insert into public.workspaces (id, organization_id, name, slug, status)
+           values (gen_random_uuid(), $1, $2, $3, 'active')
+           returning id`,
+          [orgId, params.wsName, params.wsSlug],
+        );
+        wsId = wsRes.rows[0]!.id;
+      } else {
+        await pool.query(
+          `update public.workspaces set organization_id = $1, name = $2 where id = $3`,
+          [orgId, params.wsName, wsId],
+        );
+      }
+
+      await pool.query(
+        `insert into public.workspace_members (workspace_id, organization_id, user_id, role, status)
+         values ($1, $2, $3, $4, 'active')
+         on conflict (workspace_id, user_id) do update set role = excluded.role, status = 'active'`,
+        [wsId, orgId, userId, params.role || "owner"],
+      );
+
+      return { organizationId: orgId, workspaceId: wsId };
+    },
     close: async () => {
-      await client.end();
+      await pool.end();
       await server.stop();
       await db.close();
     },

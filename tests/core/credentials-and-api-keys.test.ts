@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 
 import { encryptSecret, decryptSecret, maskSecret } from "@/core/credentials/crypto";
 import {
@@ -31,6 +31,17 @@ describe("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 0009, Spec 
           "",
       },
     },
+  });
+
+  beforeEach(async () => {
+    await withContext(prisma, contextA, async (tx) => {
+      await tx.credential.deleteMany({
+        where: { workspaceId: contextA.workspaceId },
+      });
+      await tx.apiKey.deleteMany({
+        where: { workspaceId: contextA.workspaceId },
+      });
+    });
   });
 
   describe("Cryptographic Engine (AES-256-GCM)", () => {

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { createIdentity, signIn, uniqueEmail } from "./support/identity";
+import { createIdentity, makePlatformAdmin, signIn, uniqueEmail } from "./support/identity";
 import { totpCode } from "./support/totp";
 
 test("administration is closed to a session without a second factor", async ({
@@ -30,6 +30,7 @@ test("enrols TOTP, then requires it on the next sign-in and opens /admin", async
 }) => {
   const email = uniqueEmail("mfa-enrol");
   await createIdentity(request, email);
+  await makePlatformAdmin(request, email);
   await signIn(page, email);
   await expect(page).toHaveURL(/\/app$/);
 

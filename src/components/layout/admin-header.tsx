@@ -24,7 +24,7 @@ export function AdminHeader({ userEmail, adminRole = "owner" }: AdminHeaderProps
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-xs text-neutral-600 bg-neutral-50 px-2.5 py-1 rounded-lg border border-neutral-200">
           <User className="h-3.5 w-3.5 text-neutral-400" />
-          <span>{userEmail}</span>
+          <span data-testid="admin-identity">{userEmail}</span>
           <span className="text-[10px] bg-neutral-200 font-bold px-1.5 py-0.5 rounded uppercase text-neutral-700">
             {adminRole}
           </span>

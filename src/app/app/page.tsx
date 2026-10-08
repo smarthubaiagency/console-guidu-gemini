@@ -38,6 +38,12 @@ export default async function AppPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <span
+            className="hidden sm:inline text-xs text-neutral-500 font-medium"
+            data-testid="identity-email"
+          >
+            {identity.email}
+          </span>
           <Link
             href="/app/account/security"
             className="flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-900 border border-neutral-200 px-3 py-1.5 rounded-lg"
