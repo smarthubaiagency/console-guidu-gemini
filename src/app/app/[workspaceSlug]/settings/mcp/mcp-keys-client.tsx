@@ -8,7 +8,9 @@ import {
   Copy,
   Check,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
+  Bot,
 } from "lucide-react";
 import {
   createApiKeyAction,
@@ -16,27 +18,32 @@ import {
   type ApiKeyActionState,
 } from "@/core/credentials/api-keys-actions";
 import type { ApiKeyItem } from "@/core/credentials/api-keys";
+import { SCOPE_DEFINITIONS, DEFAULT_WORKSPACE_SCOPES } from "@/core/mcp/scopes";
+import type { WorkspaceRole } from "@/core/permissions/roles";
 
-export type ApiKeysCapabilities = {
+export type McpKeysCapabilities = {
   canManage: boolean;
   canCreate: boolean;
   canRevokeOwn: boolean;
   canRevokeAny: boolean;
+  isViewer: boolean;
 };
 
-interface ApiKeysClientProps {
+interface McpKeysClientProps {
   workspaceSlug: string;
   apiKeys: ApiKeyItem[];
-  capabilities: ApiKeysCapabilities;
+  capabilities: McpKeysCapabilities;
   currentUserId: string;
+  userRole: WorkspaceRole | null;
 }
 
-export function ApiKeysClient({
+export function McpKeysClient({
   workspaceSlug,
   apiKeys,
   capabilities,
   currentUserId,
-}: ApiKeysClientProps) {
+  userRole,
+}: McpKeysClientProps) {
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<ApiKeyActionState | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -44,31 +51,10 @@ export function ApiKeysClient({
 
   // Form State
   const [name, setName] = useState("");
-  const [scopes, setScopes] = useState<string[]>(["read", "mcp:read"]);
+  const [scopes, setScopes] = useState<string[]>([...DEFAULT_WORKSPACE_SCOPES]);
   const [expiresInDays, setExpiresInDays] = useState(90);
 
-  const availableScopes = [
-    {
-      id: "read",
-      label: "Leitura Geral (read)",
-      desc: "Consulta a recursos e metadados do workspace",
-    },
-    {
-      id: "write",
-      label: "Escrita (write)",
-      desc: "Criação e mutação de recursos operacionais",
-    },
-    {
-      id: "mcp:read",
-      label: "MCP Leitura (mcp:read)",
-      desc: "Acesso a ferramentas de leitura em assistentes de IA",
-    },
-    {
-      id: "mcp:write",
-      label: "MCP Escrita (mcp:write)",
-      desc: "Aprovação e submissão de alterações via MCP",
-    },
-  ];
+  const isViewer = capabilities.isViewer || userRole === "viewer";
 
   const handleCopy = (key: string) => {
     navigator.clipboard.writeText(key);
@@ -77,6 +63,9 @@ export function ApiKeysClient({
   };
 
   const handleScopeToggle = (scopeId: string) => {
+    if (isViewer && scopeId === "proposals:write") {
+      return;
+    }
     setScopes((prev) =>
       prev.includes(scopeId)
         ? prev.filter((s) => s !== scopeId)
@@ -86,12 +75,12 @@ export function ApiKeysClient({
 
   const handleCreateKey = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return;
+    if (!name || name.trim().length === 0) return;
 
     startTransition(async () => {
       const formData = new FormData();
       formData.append("workspaceSlug", workspaceSlug);
-      formData.append("name", name);
+      formData.append("name", name.trim());
       formData.append("expiresInDays", expiresInDays.toString());
       scopes.forEach((s) => formData.append("scopes", s));
 
@@ -99,6 +88,7 @@ export function ApiKeysClient({
       setFeedback(res);
       if (res.success) {
         setName("");
+        setScopes([...DEFAULT_WORKSPACE_SCOPES]);
         setIsModalOpen(false);
       }
     });
@@ -126,6 +116,8 @@ export function ApiKeysClient({
   const canRevokeItem = (item: ApiKeyItem) =>
     capabilities.canRevokeAny ||
     (capabilities.canRevokeOwn && item.userId === currentUserId);
+
+  const hasWriteScopeSelected = scopes.includes("proposals:write");
 
   return (
     <div className="space-y-6">
@@ -195,12 +187,12 @@ export function ApiKeysClient({
       <div className="border-card-border bg-surface-card flex flex-col justify-between gap-4 rounded-xl border p-5 shadow-xs md:flex-row md:items-center">
         <div>
           <h2 className="text-16 text-text flex items-center gap-2 font-semibold">
-            <Key className="text-text-secondary h-4 w-4" />
-            <span>Tokens de API & Autenticação MCP</span>
+            <Bot className="text-text-secondary h-4 w-4" />
+            <span>Conexão de Assistentes</span>
           </h2>
           <p className="text-12 text-text-secondary mt-0.5">
             Conforme ADR 0009: chaves emitidas pela plataforma com expiração
-            obrigatória e hash seguro SHA-256.
+            obrigatória e hash seguro SHA-256 para assistentes de IA (Cursor, Claude Code, Codex).
           </p>
         </div>
 
@@ -223,7 +215,7 @@ export function ApiKeysClient({
             <div className="border-border flex items-center justify-between border-b pb-4">
               <div className="text-text text-14 flex items-center gap-2 font-semibold">
                 <Key className="text-text-subtle h-4 w-4" />
-                <span>Emitir Nova Chave de API</span>
+                <span>Emitir Nova Chave</span>
               </div>
               <button
                 type="button"
@@ -251,43 +243,72 @@ export function ApiKeysClient({
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Escopos de Acesso Permitidos
+                  Escopos de Acesso Permitidos (catálogo §17.3)
                 </label>
                 <div className="space-y-2">
-                  {availableScopes.map((sc) => {
+                  {SCOPE_DEFINITIONS.map((sc) => {
                     const isChecked = scopes.includes(sc.id);
+                    const isWrite = sc.isWrite;
+                    const isDisabled = isWrite && isViewer;
+
                     return (
                       <label
                         key={sc.id}
                         className={`flex cursor-pointer items-start gap-3 rounded-lg border p-2.5 transition ${
-                          isChecked
-                            ? "border-focus-ring bg-surface-raised"
-                            : "border-border hover:bg-surface-hover"
+                          isDisabled
+                            ? "border-border bg-surface-raised opacity-60 cursor-not-allowed"
+                            : isChecked
+                              ? "border-focus-ring bg-surface-raised"
+                              : "border-border hover:bg-surface-hover"
                         }`}
                       >
                         <input
                           type="checkbox"
+                          value={sc.id}
                           checked={isChecked}
+                          disabled={isDisabled}
                           onChange={() => handleScopeToggle(sc.id)}
                           className="mt-0.5 rounded-sm"
                         />
                         <div>
-                          <div className="text-12 text-text font-medium">
-                            {sc.label}
+                          <div className="text-12 text-text font-medium flex items-center gap-1.5">
+                            <span>{sc.label}</span>
+                            {isWrite && (
+                              <span className="text-10 bg-warning-bg text-warning-text border border-warning-border rounded-xs px-1 py-0.5 font-semibold">
+                                Escrita
+                              </span>
+                            )}
                           </div>
                           <div className="text-11 text-text-secondary">
                             {sc.desc}
                           </div>
+                          {isDisabled && (
+                            <div className="text-10 text-danger-text mt-0.5 font-medium">
+                              Apenas leitura para visualizador (sem permissão de escrita)
+                            </div>
+                          )}
                         </div>
                       </label>
                     );
                   })}
                 </div>
+
+                {/* Mandatory Warning for proposals:write */}
+                {hasWriteScopeSelected && (
+                  <div className="border-warning-border bg-warning-bg text-11 text-warning-text mt-3 flex items-start gap-2 rounded-lg border p-3 font-medium">
+                    <AlertTriangle className="text-warning-text h-4 w-4 shrink-0 mt-0.5" />
+                    <div>
+                      <span>
+                        Atenção: este escopo permite ao assistente propor alterações que exigirão aprovação humana na plataforma.
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Período de Validade
+                  Período de Validade (Expiração Obrigatória)
                 </label>
                 <select
                   value={expiresInDays}
@@ -298,7 +319,7 @@ export function ApiKeysClient({
                   <option value={60}>60 dias</option>
                   <option value={90}>90 dias (Recomendado)</option>
                   <option value={180}>180 dias</option>
-                  <option value={365}>1 ano</option>
+                  <option value={365}>365 dias (1 ano)</option>
                 </select>
               </div>
 
@@ -337,7 +358,7 @@ export function ApiKeysClient({
         {apiKeys.length === 0 ? (
           <div className="text-12 text-text-tertiary p-8 text-center">
             Nenhuma chave emitida para este workspace. Crie uma chave para
-            conectar assistentes MCP ou integrações REST.
+            conectar assistentes MCP (Cursor, Claude Code, etc.).
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -367,7 +388,11 @@ export function ApiKeysClient({
                         {item.scopes.map((sc) => (
                           <span
                             key={sc}
-                            className="bg-surface-hover text-10 text-text-subtle rounded-xs px-1.5 py-0.5 font-mono"
+                            className={`rounded-xs px-1.5 py-0.5 font-mono text-10 ${
+                              sc === "proposals:write"
+                                ? "bg-warning-bg text-warning-text border border-warning-border font-medium"
+                                : "bg-surface-hover text-text-subtle"
+                            }`}
                           >
                             {sc}
                           </span>

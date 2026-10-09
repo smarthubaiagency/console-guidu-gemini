@@ -72,10 +72,10 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
     });
 
     await signIn(page, email);
-    await page.goto(`/app/${wsSlug}/settings/api`);
+    await page.goto(`/app/${wsSlug}/settings/mcp`);
 
-    // Verify API keys page
-    await expect(page.getByRole("heading", { name: "Chaves de API e Tokens MCP" })).toBeVisible();
+    // Verify MCP keys page
+    await expect(page.getByRole("heading", { name: "Assistentes conectados (MCP)" })).toBeVisible();
 
     // Open creation modal
     await page.getByRole("button", { name: "Emitir Nova Chave" }).click();
@@ -92,7 +92,7 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
     await expect(page.getByText("Chave E2E de Teste")).toBeVisible();
   });
 
-  test("restricts viewer from registering credentials and issuing API keys", async ({
+  test("restricts viewer from registering credentials and issuing write-scoped keys", async ({
     page,
     request,
   }) => {
@@ -115,10 +115,12 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
     await expect(page.getByRole("heading", { name: "Credenciais de Provedores de IA (BYOK)" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Nova Credencial" })).not.toBeVisible();
 
-    // Verify api keys page: heading is visible, but "Emitir Nova Chave" button is not visible
-    await page.goto(`/app/${wsSlug}/settings/api`);
-    await expect(page.getByRole("heading", { name: "Chaves de API e Tokens MCP" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Emitir Nova Chave" })).not.toBeVisible();
+    // Verify mcp keys page: viewer cannot select proposals:write
+    await page.goto(`/app/${wsSlug}/settings/mcp`);
+    await expect(page.getByRole("heading", { name: "Assistentes conectados (MCP)" })).toBeVisible();
+    await page.getByRole("button", { name: "Emitir Nova Chave" }).click();
+    const propWrite = page.locator('input[type="checkbox"][value="proposals:write"]');
+    await expect(propWrite).toBeDisabled();
   });
 });
 

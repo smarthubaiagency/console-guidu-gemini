@@ -14,7 +14,7 @@ import { defineConfig, devices } from "@playwright/test";
 import { AUTH_BASE_URL, DATABASE_URL, RIG } from "./e2e/support/rig";
 
 export default defineConfig({
-  testDir: "./e2e",
+  testMatch: ["e2e/**/*.spec.ts", "tests/e2e/**/*.spec.ts"],
   globalSetup: "./e2e/support/global-setup.ts",
   fullyParallel: false,
   workers: 1,
