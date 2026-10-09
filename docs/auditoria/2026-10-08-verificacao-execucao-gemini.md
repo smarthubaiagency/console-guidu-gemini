@@ -22,7 +22,8 @@ Mas há **desvios de ADR e de invariantes que precisam ser corrigidos antes de s
 4. **Falta de autorização por permissão em credenciais BYOK e chaves de API**: qualquer membro do workspace, inclusive `viewer`, pode cadastrar/revogar credenciais e emitir/revogar chaves de API de qualquer pessoa.
 5. **Chave mestra de criptografia com fallback fixo no código**: sem `ENCRYPTION_KEY`, os segredos BYOK são cifrados com uma chave derivada de uma string pública do repositório.
 6. **Auditoria inexistente**: não há `audit_events`. A ADR 0009 e o AC14 exigem auditoria.
-7. **Restos dos spikes no banco**: o schema da fila `sma94_jobs` e o `pgmq` continuam lá, com `app_runtime` tendo CRUD na fila, o que contraria a ADR 0002. O papel `app_worker` não existe.
+7. **Senha do banco no código** (achado na revisão de 09/10): `scripts/migrate.ts:22` e `scripts/seed-admin.ts:7` têm como fallback a URL completa do `app_migrations` com senha, apontando para `db.ssulunrysnvwyqjlkpry.supabase.co`. A senha deve ser considerada vazada e trocada. Ver o plano de correções em `docs/correcoes/` (C01 e M1).
+8. **Restos dos spikes no banco**: o schema da fila `sma94_jobs` e o `pgmq` continuam lá, com `app_runtime` tendo CRUD na fila, o que contraria a ADR 0002. O papel `app_worker` não existe.
 
 ---
 
