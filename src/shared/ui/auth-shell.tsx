@@ -1,22 +1,24 @@
 import type { ReactNode } from "react";
 
-const appName = process.env.APP_NAME ?? "GUIDU";
-
 /** Common frame for the identity pages: login, recovery, MFA and the states. */
 export function AuthShell({
   title,
   description,
   children,
   footer,
+  appName,
 }: Readonly<{
   title: string;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
+  appName?: string;
 }>) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-12">
-      <p className="text-text-secondary text-14 font-medium">{appName}</p>
+      {appName ? (
+        <p className="text-text-secondary text-14 font-medium">{appName}</p>
+      ) : null}
       <h1 className="text-30 mt-2 font-semibold tracking-tight">{title}</h1>
       {description ? (
         <p className="text-text-secondary text-14 mt-3">{description}</p>

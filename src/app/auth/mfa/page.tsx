@@ -6,6 +6,7 @@ import { safeInternalPath } from "@/core/auth/redirects";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AuthShell } from "@/shared/ui/auth-shell";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
+import { appConfig } from "@/core/config/app";
 
 import { MfaChallengeForm } from "./mfa-challenge-form";
 
@@ -41,6 +42,7 @@ export default async function MfaPage({
     <AuthShell
       title="Verificação em duas etapas"
       description="Informe o código de seis dígitos do seu aplicativo autenticador."
+      appName={appConfig.name}
       footer={<SignOutForm label="Entrar com outra conta" />}
     >
       <MfaChallengeForm factorId={factor.id} next={next} />

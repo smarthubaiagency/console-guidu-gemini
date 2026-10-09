@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AuthShell, ErrorNotice } from "@/shared/ui/auth-shell";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
+import { appConfig } from "@/core/config/app";
 
 export const metadata: Metadata = { title: "Conta suspensa" };
 
@@ -14,6 +15,7 @@ export default function SuspendedPage() {
     <AuthShell
       title="Conta suspensa"
       description="Esta identidade está bloqueada e não pode realizar operações."
+      appName={appConfig.name}
       footer={<SignOutForm />}
     >
       <ErrorNotice testId="suspended-state">

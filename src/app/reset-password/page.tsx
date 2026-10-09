@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { readSessionClaims } from "@/core/auth/identity";
 import { AuthShell } from "@/shared/ui/auth-shell";
+import { appConfig } from "@/core/config/app";
 
 import { ResetPasswordForm } from "./reset-password-form";
 
@@ -18,6 +19,7 @@ export default async function ResetPasswordPage() {
     <AuthShell
       title="Definir nova senha"
       description="Escolha a senha que você vai usar para entrar."
+      appName={appConfig.name}
     >
       <ResetPasswordForm />
     </AuthShell>

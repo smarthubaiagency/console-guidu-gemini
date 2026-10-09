@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AUTH_MESSAGES } from "@/core/auth/form-state";
 import { safeInternalPath } from "@/core/auth/redirects";
 import { AuthShell, ErrorNotice, SuccessNotice } from "@/shared/ui/auth-shell";
+import { appConfig } from "@/core/config/app";
 
 import { LoginForm } from "./login-form";
 
@@ -36,7 +37,8 @@ export default async function LoginPage({
   return (
     <AuthShell
       title="Entrar"
-      description="Use o e-mail e a senha da sua conta GUIDU."
+      description={`Use o e-mail e a senha da sua conta ${appConfig.name}.`}
+      appName={appConfig.name}
     >
       {arrivalError ? (
         <div className="mb-4">

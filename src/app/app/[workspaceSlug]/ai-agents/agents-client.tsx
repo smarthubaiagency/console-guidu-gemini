@@ -252,7 +252,7 @@ export function AgentsClient({
             className="border-border-strong bg-surface-sidebar text-12 text-text focus:ring-focus-ring w-full rounded-xl border px-3 py-2 font-medium focus:ring-2 focus:outline-none"
           >
             {configs.length === 0 && (
-              <option value="">Guidu Assistant (Padrão)</option>
+              <option value="">Assistente Padrão</option>
             )}
             {configs.map((c) => (
               <option key={c.id} value={c.id}>
@@ -344,7 +344,7 @@ export function AgentsClient({
             <div>
               <div className="text-14 text-text flex items-center gap-2 font-semibold">
                 <span>
-                  {activeConfig ? activeConfig.name : "Guidu Assistant"}
+                  {activeConfig ? activeConfig.name : "Assistente Padrão"}
                 </span>
                 <span className="text-11 bg-success-bg text-success-text rounded-full px-2 py-0.5 font-normal">
                   Online
