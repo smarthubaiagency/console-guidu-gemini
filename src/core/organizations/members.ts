@@ -20,6 +20,8 @@ import {
   OrganizationRole,
   OrganizationRoles,
 } from "../permissions/roles";
+import { Permissions } from "../permissions/catalog";
+import { requireOrganizationPermission } from "../permissions/guard";
 import {
   InsufficientRoleError,
   LastOwnerCannotBeRemovedError,
@@ -52,7 +54,7 @@ export async function listOrganizationMembers(
  * Updates the organization role of a target member.
  *
  * Enforces AC04:
- * 1. Actor must be an active owner or admin.
+ * 1. Actor must have organization.members.manage permission (owner or admin).
  * 2. Actor cannot assign a role higher than allowed (admin cannot assign owner).
  * 3. Actor cannot manage an owner unless actor is an owner.
  * 4. Demoting the last active owner of the organization is strictly forbidden.
@@ -68,21 +70,12 @@ export async function updateOrganizationMemberRole(
 ): Promise<OrganizationMemberItem> {
   const { organizationId, actorId, targetUserId, newRole } = params;
 
-  // 1. Resolve actor's membership
-  const actor = await tx.organizationMember.findUnique({
-    where: {
-      organizationId_userId: {
-        organizationId,
-        userId: actorId,
-      },
-    },
-  });
-
-  if (!actor || actor.status !== "active") {
-    throw new InsufficientRoleError("update_member_role", "active member");
-  }
-
-  const actorRole = actor.role as OrganizationRole;
+  // 1. Validate actor organization member management permission via guard
+  const { organizationRole } = await requireOrganizationPermission(
+    tx,
+    { userId: actorId, organizationId, workspaceId: "" },
+    Permissions.ORGANIZATION_MEMBERS_MANAGE,
+  );
 
   // 2. Resolve target member
   const target = await tx.organizationMember.findUnique({
@@ -100,8 +93,8 @@ export async function updateOrganizationMemberRole(
 
   const targetRole = target.role as OrganizationRole;
 
-  // 3. Check role management permissions
-  if (!canManageOrganizationMember(actorRole, targetRole)) {
+  // 3. Check role management permissions (AC04: admin cannot manage owner)
+  if (!canManageOrganizationMember(organizationRole, targetRole)) {
     throw new InsufficientRoleError(
       "manage_member",
       `role higher than ${targetRole}`,
@@ -109,7 +102,7 @@ export async function updateOrganizationMemberRole(
   }
 
   // 4. Check role assignment permissions (AC04: admin cannot promote to owner)
-  if (!canAssignOrganizationRole(actorRole, newRole)) {
+  if (!canAssignOrganizationRole(organizationRole, newRole)) {
     throw new InsufficientRoleError("assign_role", "owner");
   }
 
@@ -150,7 +143,7 @@ export async function updateOrganizationMemberRole(
  * Removes a member from an organization.
  *
  * Enforces AC04:
- * 1. Actor must be an active owner or admin (or the member leaving voluntarily).
+ * 1. Actor must have organization.members.manage permission (or member leaving voluntarily).
  * 2. An admin cannot remove an owner.
  * 3. The last active owner cannot be removed under any circumstance.
  */
@@ -166,21 +159,17 @@ export async function removeOrganizationMember(
 
   const isSelf = actorId === targetUserId;
 
-  // 1. Resolve actor membership
-  const actor = await tx.organizationMember.findUnique({
-    where: {
-      organizationId_userId: {
-        organizationId,
-        userId: actorId,
-      },
-    },
-  });
+  // 1. Validate actor membership via guard if non-self removal
+  let actorRole: OrganizationRole | null = null;
 
-  if (!actor || actor.status !== "active") {
-    throw new InsufficientRoleError("remove_member", "active member");
+  if (!isSelf) {
+    const auth = await requireOrganizationPermission(
+      tx,
+      { userId: actorId, organizationId, workspaceId: "" },
+      Permissions.ORGANIZATION_MEMBERS_MANAGE,
+    );
+    actorRole = auth.organizationRole;
   }
-
-  const actorRole = actor.role as OrganizationRole;
 
   // 2. Resolve target membership
   const target = await tx.organizationMember.findUnique({
@@ -198,8 +187,8 @@ export async function removeOrganizationMember(
 
   const targetRole = target.role as OrganizationRole;
 
-  // 3. Permission verification: non-self removal requires authorization
-  if (!isSelf && !canManageOrganizationMember(actorRole, targetRole)) {
+  // 3. Permission verification: non-self removal requires authorization (AC04)
+  if (!isSelf && actorRole && !canManageOrganizationMember(actorRole, targetRole)) {
     throw new InsufficientRoleError("remove_member", "owner");
   }
 

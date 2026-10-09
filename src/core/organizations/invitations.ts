@@ -28,6 +28,11 @@ import {
   OrganizationRoles,
   WorkspaceRole,
 } from "../permissions/roles";
+import { Permissions } from "../permissions/catalog";
+import {
+  requireOrganizationPermission,
+  requireWorkspacePermission,
+} from "../permissions/guard";
 import {
   InsufficientRoleError,
   InvitationAlreadyAcceptedError,
@@ -107,34 +112,30 @@ export async function createInvitation(
     select pg_advisory_xact_lock(hashtext('org_seats:' || ${organizationId}::text))
   `;
 
-  // 2. Resolve actor's roles
-  const [actorOrgMember, actorWsMember] = await Promise.all([
-    tx.organizationMember.findUnique({
-      where: { organizationId_userId: { organizationId, userId: actorId } },
-    }),
-    workspaceId
-      ? tx.workspaceMember.findUnique({
-          where: { workspaceId_userId: { workspaceId, userId: actorId } },
-        })
-      : null,
-  ]);
-
-  const actorOrgRole = actorOrgMember?.role as OrganizationRole | undefined;
-  const actorWsRole = actorWsMember?.role as WorkspaceRole | undefined;
-
-  // 3. Verify actor permissions (AC04 boundary)
+  // 2. Validate actor permissions via guard and escalation rules (AC04 boundary)
   if (!workspaceId) {
+    const { organizationRole } = await requireOrganizationPermission(
+      tx,
+      { userId: actorId, organizationId, workspaceId: "" },
+      Permissions.ORGANIZATION_MEMBERS_INVITE,
+    );
+
     if (
-      !actorOrgRole ||
-      !canAssignOrganizationRole(actorOrgRole, role as OrganizationRole)
+      !canAssignOrganizationRole(organizationRole, role as OrganizationRole)
     ) {
       throw new InsufficientRoleError("invite_organization_member", role);
     }
   } else {
+    const { workspaceRole, organizationRole } = await requireWorkspacePermission(
+      tx,
+      { userId: actorId, workspaceId, organizationId },
+      Permissions.WORKSPACE_MEMBERS_INVITE,
+    );
+
     if (
       !canAssignWorkspaceRole(
-        actorOrgRole,
-        actorWsRole,
+        organizationRole ?? undefined,
+        workspaceRole,
         role as WorkspaceRole,
       )
     ) {
@@ -226,14 +227,12 @@ export async function revokeInvitation(
 ): Promise<InvitationItem> {
   const { organizationId, actorId, invitationId } = params;
 
-  // Verify actor has admin/owner privilege
-  const actor = await tx.organizationMember.findUnique({
-    where: { organizationId_userId: { organizationId, userId: actorId } },
-  });
-
-  if (!actor || actor.status !== "active" || actor.role === OrganizationRoles.MEMBER) {
-    throw new InsufficientRoleError("revoke_invitation", "admin");
-  }
+  // Verify actor has organization member manage privilege via guard
+  await requireOrganizationPermission(
+    tx,
+    { userId: actorId, organizationId, workspaceId: "" },
+    Permissions.ORGANIZATION_MEMBERS_MANAGE,
+  );
 
   return tx.invitation.update({
     where: { id: invitationId },

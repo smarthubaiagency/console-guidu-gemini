@@ -19,7 +19,9 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("server-only", () => ({}));
 import {
   LastOwnerCannotBeRemovedError,
   InsufficientRoleError,

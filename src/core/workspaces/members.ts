@@ -18,6 +18,8 @@ import {
   OrganizationRole,
   WorkspaceRole,
 } from "../permissions/roles";
+import { Permissions } from "../permissions/catalog";
+import { requireWorkspacePermission } from "../permissions/guard";
 import { InsufficientRoleError, MemberNotFoundError } from "../organizations/errors";
 
 export type WorkspaceMemberItem = {
@@ -62,21 +64,15 @@ export async function addWorkspaceMember(
 ): Promise<WorkspaceMemberItem> {
   const { workspaceId, organizationId, actorId, targetUserId, role } = params;
 
-  // 1. Resolve actor's organization & workspace roles
-  const [orgActor, wsActor] = await Promise.all([
-    tx.organizationMember.findUnique({
-      where: { organizationId_userId: { organizationId, userId: actorId } },
-    }),
-    tx.workspaceMember.findUnique({
-      where: { workspaceId_userId: { workspaceId, userId: actorId } },
-    }),
-  ]);
+  // 1. Validate actor workspace invitation permission via guard
+  const { workspaceRole, organizationRole } = await requireWorkspacePermission(
+    tx,
+    { userId: actorId, workspaceId, organizationId },
+    Permissions.WORKSPACE_MEMBERS_INVITE,
+  );
 
-  const actorOrgRole = orgActor?.role as OrganizationRole | undefined;
-  const actorWsRole = wsActor?.role as WorkspaceRole | undefined;
-
-  // 2. Validate actor privilege to assign this role
-  if (!canAssignWorkspaceRole(actorOrgRole, actorWsRole, role)) {
+  // 2. Validate actor privilege boundary to assign this role (AC04)
+  if (!canAssignWorkspaceRole(organizationRole ?? undefined, workspaceRole, role)) {
     throw new InsufficientRoleError("add_workspace_member", "workspace admin");
   }
 
@@ -126,18 +122,12 @@ export async function updateWorkspaceMemberRole(
 ): Promise<WorkspaceMemberItem> {
   const { workspaceId, organizationId, actorId, targetUserId, newRole } = params;
 
-  // 1. Resolve actor's roles
-  const [orgActor, wsActor] = await Promise.all([
-    tx.organizationMember.findUnique({
-      where: { organizationId_userId: { organizationId, userId: actorId } },
-    }),
-    tx.workspaceMember.findUnique({
-      where: { workspaceId_userId: { workspaceId, userId: actorId } },
-    }),
-  ]);
-
-  const actorOrgRole = orgActor?.role as OrganizationRole | undefined;
-  const actorWsRole = wsActor?.role as WorkspaceRole | undefined;
+  // 1. Validate actor workspace member management permission via guard
+  const { workspaceRole, organizationRole } = await requireWorkspacePermission(
+    tx,
+    { userId: actorId, workspaceId, organizationId },
+    Permissions.WORKSPACE_MEMBERS_MANAGE,
+  );
 
   // 2. Resolve target member
   const target = await tx.workspaceMember.findUnique({
@@ -150,12 +140,12 @@ export async function updateWorkspaceMemberRole(
 
   const targetRole = target.role as WorkspaceRole;
 
-  // 3. Verify actor can manage this member and assign the target role
-  if (!canManageWorkspaceMember(actorOrgRole, actorWsRole, targetRole)) {
+  // 3. Verify actor can manage this member and assign the target role (AC04)
+  if (!canManageWorkspaceMember(organizationRole ?? undefined, workspaceRole, targetRole)) {
     throw new InsufficientRoleError("manage_workspace_member", "workspace owner");
   }
 
-  if (!canAssignWorkspaceRole(actorOrgRole, actorWsRole, newRole)) {
+  if (!canAssignWorkspaceRole(organizationRole ?? undefined, workspaceRole, newRole)) {
     throw new InsufficientRoleError("assign_workspace_role", newRole);
   }
 
@@ -186,18 +176,19 @@ export async function removeWorkspaceMember(
 
   const isSelf = actorId === targetUserId;
 
-  // 1. Resolve actor roles
-  const [orgActor, wsActor] = await Promise.all([
-    tx.organizationMember.findUnique({
-      where: { organizationId_userId: { organizationId, userId: actorId } },
-    }),
-    tx.workspaceMember.findUnique({
-      where: { workspaceId_userId: { workspaceId, userId: actorId } },
-    }),
-  ]);
+  // 1. Resolve & check actor roles via guard if not self-removal
+  let actorRoles: {
+    workspaceRole: WorkspaceRole;
+    organizationRole: OrganizationRole | null;
+  } | null = null;
 
-  const actorOrgRole = orgActor?.role as OrganizationRole | undefined;
-  const actorWsRole = wsActor?.role as WorkspaceRole | undefined;
+  if (!isSelf) {
+    actorRoles = await requireWorkspacePermission(
+      tx,
+      { userId: actorId, workspaceId, organizationId },
+      Permissions.WORKSPACE_MEMBERS_MANAGE,
+    );
+  }
 
   // 2. Resolve target
   const target = await tx.workspaceMember.findUnique({
@@ -210,8 +201,16 @@ export async function removeWorkspaceMember(
 
   const targetRole = target.role as WorkspaceRole;
 
-  // 3. Permission verification
-  if (!isSelf && !canManageWorkspaceMember(actorOrgRole, actorWsRole, targetRole)) {
+  // 3. Permission verification (AC04)
+  if (
+    !isSelf &&
+    actorRoles &&
+    !canManageWorkspaceMember(
+      actorRoles.organizationRole ?? undefined,
+      actorRoles.workspaceRole,
+      targetRole,
+    )
+  ) {
     throw new InsufficientRoleError("remove_workspace_member", "workspace owner");
   }
 
