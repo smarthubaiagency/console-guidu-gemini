@@ -38,8 +38,12 @@ export default defineConfig({
       DATABASE_URL: DATABASE_URL,
       DIRECT_DATABASE_URL: DATABASE_URL,
       SUPABASE_JWT_SECRET: "e2e-fake-gotrue-secret",
-      ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-      ENCRYPTION_KEY_ID: "k1",
+      ENCRYPTION_KEY:
+        process.env.ENCRYPTION_KEY ||
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      ENCRYPTION_KEY_ID: process.env.ENCRYPTION_KEY_ID || "k1",
+      APP_NAME: process.env.APP_NAME || "GUIDU",
+      APP_URL: process.env.APP_URL || RIG.appUrl,
     },
   },
 });

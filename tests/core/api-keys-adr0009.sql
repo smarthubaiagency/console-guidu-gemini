@@ -11,6 +11,9 @@
 -- Test 1: Check constraint api_keys_scopes_catalog_check
 -- ----------------------------------------------------------------------------
 begin;
+select set_config('app.user_id', 'a0000000-0000-4000-8000-000000000031', true);
+select set_config('app.workspace_id', 'a0000000-0000-4000-8000-000000000011', true);
+select set_config('app.organization_id', 'a0000000-0000-4000-8000-000000000010', true);
 
 -- 1a: Rejeita escopo legado 'read'
 do $$
@@ -197,6 +200,9 @@ rollback;
 -- Test 2: Check constraint api_keys_expires_at_check
 -- ----------------------------------------------------------------------------
 begin;
+select set_config('app.user_id', 'a0000000-0000-4000-8000-000000000031', true);
+select set_config('app.workspace_id', 'a0000000-0000-4000-8000-000000000011', true);
+select set_config('app.organization_id', 'a0000000-0000-4000-8000-000000000010', true);
 
 -- 2a: Rejeita expiração > 365 dias
 do $$
@@ -329,6 +335,9 @@ rollback;
 begin;
 
 -- Cria duas chaves de teste
+alter table public.api_keys no force row level security;
+alter table public.api_keys disable row level security;
+
 insert into public.api_keys (
   id, organization_id, workspace_id, user_id, name, prefix, key_hash, scopes, status, expires_at
 ) values (
@@ -355,7 +364,13 @@ insert into public.api_keys (
   now() + interval '60 days'
 );
 
+alter table public.api_keys enable row level security;
+alter table public.api_keys force row level security;
+
 -- Transiciona para app_runtime SEM nenhum contexto prévio de workspace/org
+select set_config('app.user_id', '', true);
+select set_config('app.workspace_id', '', true);
+select set_config('app.organization_id', '', true);
 set local role app_runtime;
 
 -- 3a: Busca por hash válido retorna exatamente 1 linha correspondente
@@ -427,6 +442,9 @@ rollback;
 begin;
 
 -- Cria uma chave no banco
+alter table public.api_keys no force row level security;
+alter table public.api_keys disable row level security;
+
 insert into public.api_keys (
   id, organization_id, workspace_id, user_id, name, prefix, key_hash, scopes, status, expires_at
 ) values (
@@ -442,7 +460,13 @@ insert into public.api_keys (
   now() + interval '30 days'
 );
 
+alter table public.api_keys enable row level security;
+alter table public.api_keys force row level security;
+
 -- Transiciona para app_runtime SEM contexto de workspace
+select set_config('app.user_id', '', true);
+select set_config('app.workspace_id', '', true);
+select set_config('app.organization_id', '', true);
 set local role app_runtime;
 
 -- 4a: SELECT direto sem contexto retorna 0 linhas (RLS bloqueia totalmente)
