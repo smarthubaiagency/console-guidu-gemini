@@ -17,6 +17,7 @@
 
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { resolveProviderSecret, type AIProvider } from "@/core/credentials/vault";
+import { assertModuleAvailable } from "@/core/modules/availability";
 import { executeProviderPrompt, type ExecutionResult } from "./providers/executor";
 
 export type AgentConfigData = {
@@ -100,6 +101,7 @@ export async function createAgentConfig(
     temperature?: number | undefined;
   },
 ): Promise<AgentConfigData> {
+  assertModuleAvailable("ai-agents");
   const record = await tx.agentConfig.create({
     data: {
       organizationId: params.organizationId,
@@ -141,6 +143,7 @@ export async function listAgentConfigs(
   tx: ContextTransaction,
   workspaceId: string,
 ): Promise<AgentConfigData[]> {
+  assertModuleAvailable("ai-agents");
   const records = await tx.agentConfig.findMany({
     where: { workspaceId, status: "active" },
     orderBy: { createdAt: "asc" },
@@ -171,6 +174,7 @@ export async function getAgentConfig(
   tx: ContextTransaction,
   id: string,
 ): Promise<AgentConfigData | null> {
+  assertModuleAvailable("ai-agents");
   const record = await tx.agentConfig.findUnique({
     where: { id },
   });
@@ -208,6 +212,7 @@ export async function createAgentSession(
     title?: string | undefined;
   },
 ): Promise<AgentSessionData> {
+  assertModuleAvailable("ai-agents");
   const record = await tx.agentSession.create({
     data: {
       organizationId: params.organizationId,
@@ -240,6 +245,7 @@ export async function listAgentSessions(
   workspaceId: string,
   limit: number = 30,
 ): Promise<AgentSessionData[]> {
+  assertModuleAvailable("ai-agents");
   const records = await tx.agentSession.findMany({
     where: { workspaceId, status: "active" },
     orderBy: { updatedAt: "desc" },
@@ -269,6 +275,7 @@ export async function getSessionWithMessages(
   session: AgentSessionData | null;
   messages: AgentMessageData[];
 }> {
+  assertModuleAvailable("ai-agents");
   const sessionRecord = await tx.agentSession.findUnique({
     where: { id: sessionId },
     include: {
@@ -327,6 +334,7 @@ export async function executeAgentPrompt(
   },
   executorFn: typeof executeProviderPrompt = executeProviderPrompt,
 ): Promise<PromptExecutionResult> {
+  assertModuleAvailable("ai-agents");
   const { workspaceId, organizationId, userId, prompt, agentConfigId, sessionId } = params;
 
   if (!prompt || prompt.trim().length === 0) {
@@ -341,23 +349,12 @@ export async function executeAgentPrompt(
       throw new Error(`Agent configuration '${agentConfigId}' not found in workspace`);
     }
   } else {
-    // Pick first active or create default
+    // Pick first active or fail with actionable error
     const existingConfigs = await listAgentConfigs(tx, workspaceId);
     if (existingConfigs.length > 0 && existingConfigs[0]) {
       config = existingConfigs[0];
     } else {
-      config = await createAgentConfig(tx, {
-        organizationId,
-        workspaceId,
-        name: "Guidu Assistant",
-        description: "Assistente inteligente contextual padrão da plataforma",
-        systemPrompt: "Você é o assistente inteligente da plataforma GUIDU. Responda de forma precisa, objetiva e útil.",
-        primaryProvider: "openai",
-        primaryModel: "gpt-4o-mini",
-        fallbackProvider: "gemini",
-        fallbackModel: "gemini-2.5-flash",
-        temperature: 0.7,
-      });
+      throw new AgentExecutionError("nenhum agente configurado");
     }
   }
 

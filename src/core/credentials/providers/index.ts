@@ -17,40 +17,38 @@ export type AIProviderMetadata = {
   name: string;
   description: string;
   keyPrefix: string;
-  defaultChatModel: string;
-  defaultEmbeddingModel?: string;
-  supportedModels: string[];
   documentationUrl: string;
+  // TODO(spec-ai-agents): O catálogo oficial de modelos e defaults será definido na especificação do módulo de Agentes de IA.
+  supportedModels?: string[];
+  defaultChatModel?: string;
+  defaultEmbeddingModel?: string;
 };
 
+// TODO(spec-ai-agents): Catálogo de modelos e modelos padrão removidos (D1/ADR 0003/pendências).
+// A lista formal de modelos homologados e defaults será definida na especificação do módulo.
 export const AI_PROVIDERS: Record<AIProvider, AIProviderMetadata> = {
   openai: {
     id: "openai",
     name: "OpenAI",
-    description: "Modelos GPT-4o, GPT-4o-mini e embeddings ada/text-embedding-3.",
+    description: "Provedor OpenAI para modelos de linguagem e embeddings.",
     keyPrefix: "sk-",
-    defaultChatModel: "gpt-4o-mini",
-    defaultEmbeddingModel: "text-embedding-3-small",
-    supportedModels: ["gpt-4o", "gpt-4o-mini", "text-embedding-3-small", "text-embedding-3-large"],
+    supportedModels: [],
     documentationUrl: "https://platform.openai.com/api-keys",
   },
   anthropic: {
     id: "anthropic",
     name: "Anthropic Claude",
-    description: "Família Claude 3.5 Sonnet e Claude 3 Haiku para raciocínio avançado.",
+    description: "Provedor Anthropic para a família Claude.",
     keyPrefix: "sk-ant-",
-    defaultChatModel: "claude-3-5-sonnet-latest",
-    supportedModels: ["claude-3-5-sonnet-latest", "claude-3-haiku-20240307"],
+    supportedModels: [],
     documentationUrl: "https://console.anthropic.com/settings/keys",
   },
   gemini: {
     id: "gemini",
     name: "Google Gemini",
-    description: "Modelos Gemini 2.5 Pro, Flash e embeddings multimodais de alta velocidade.",
+    description: "Provedor Google para a família Gemini.",
     keyPrefix: "AIza",
-    defaultChatModel: "gemini-2.5-flash",
-    defaultEmbeddingModel: "text-embedding-004",
-    supportedModels: ["gemini-2.5-flash", "gemini-2.5-pro", "text-embedding-004"],
+    supportedModels: [],
     documentationUrl: "https://aistudio.google.com/app/apikey",
   },
 };

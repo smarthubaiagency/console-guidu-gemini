@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveWorkspaceContext } from "@/core/auth/context";
+import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
@@ -58,22 +59,30 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
       };
     });
 
+  const aiAgentsAvailable = isModuleTechnicallyAvailable("ai-agents");
+  const catalogAvailable = isModuleTechnicallyAvailable("catalog");
+  const googleBusinessAvailable = isModuleTechnicallyAvailable("google-business");
+
   const modules = [
     {
       title: "Catálogo",
       description: "Gestão unificada de produtos, itens e estoque multicanal.",
       href: `/app/${workspaceSlug}/catalog`,
       icon: ShoppingBag,
-      status: "Em breve",
-      statusColor: "bg-info-bg text-info-text border-info-border",
+      status: catalogAvailable ? "Ativo" : "Em breve",
+      statusColor: catalogAvailable
+        ? "bg-success-bg text-success-text border-success-border"
+        : "bg-info-bg text-info-text border-info-border",
     },
     {
       title: "Google Meu Negócio",
       description: "Sincronização de perfis, avaliações e posts corporativos.",
       href: `/app/${workspaceSlug}/google-business`,
       icon: Store,
-      status: "Em breve",
-      statusColor: "bg-ai-bg text-ai-text border-ai-border",
+      status: googleBusinessAvailable ? "Ativo" : "Em breve",
+      statusColor: googleBusinessAvailable
+        ? "bg-success-bg text-success-text border-success-border"
+        : "bg-ai-bg text-ai-text border-ai-border",
     },
     {
       title: "Agentes de IA",
@@ -81,8 +90,10 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
         "Automação de fluxos e atendimento assistido por inteligência artificial.",
       href: `/app/${workspaceSlug}/ai-agents`,
       icon: Bot,
-      status: "Em breve",
-      statusColor: "bg-warning-bg text-warning-text border-warning-border",
+      status: aiAgentsAvailable ? "Ativo" : "Indisponível",
+      statusColor: aiAgentsAvailable
+        ? "bg-success-bg text-success-text border-success-border"
+        : "bg-warning-bg text-warning-text border-warning-border",
     },
     {
       title: "Execuções de Jobs",

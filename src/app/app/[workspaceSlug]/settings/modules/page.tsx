@@ -1,18 +1,47 @@
 import type { Metadata } from "next";
-import { Puzzle, CheckCircle2 } from "lucide-react";
+import { Puzzle, CheckCircle2, Clock } from "lucide-react";
+import {
+  isModuleTechnicallyAvailable,
+  type PlatformModuleKey,
+} from "@/core/modules/availability";
 
 export const metadata: Metadata = { title: "Módulos do Workspace" };
 
 export default async function ModulesSettingsPage() {
-  const modules = [
-    { key: "catalog", name: "Catálogo", status: "Disponível em breve" },
+  const moduleKeys: Array<{
+    key: PlatformModuleKey;
+    name: string;
+    description: string;
+  }> = [
+    {
+      key: "catalog",
+      name: "Catálogo",
+      description: "Gestão de sortimento e produtos (Fase 5)",
+    },
     {
       key: "google-business",
       name: "Google Meu Negócio",
-      status: "Disponível em breve",
+      description: "Integração e sincronização de perfis comerciais",
     },
-    { key: "ai-agents", name: "Agentes de IA", status: "Disponível em breve" },
+    {
+      key: "ai-agents",
+      name: "Agentes de IA",
+      description: "Assistentes contextuais e motor de prompts (Congelado)",
+    },
   ];
+
+  const modules = moduleKeys.map((m) => {
+    const isAvailable = isModuleTechnicallyAvailable(m.key);
+    return {
+      ...m,
+      isAvailable,
+      status: isAvailable
+        ? "Disponível"
+        : m.key === "ai-agents"
+          ? "Indisponível"
+          : "Em breve",
+    };
+  });
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -47,8 +76,18 @@ export default async function ModulesSettingsPage() {
                 key: {m.key}
               </div>
             </div>
-            <span className="text-12 text-text-subtle bg-surface-hover flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium">
-              <CheckCircle2 className="text-text-tertiary h-3.5 w-3.5" />
+            <span
+              className={`text-12 flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium ${
+                m.isAvailable
+                  ? "bg-success-bg text-success-text"
+                  : "bg-surface-hover text-text-subtle"
+              }`}
+            >
+              {m.isAvailable ? (
+                <CheckCircle2 className="text-success-solid h-3.5 w-3.5" />
+              ) : (
+                <Clock className="text-text-tertiary h-3.5 w-3.5" />
+              )}
               <span>{m.status}</span>
             </span>
           </div>

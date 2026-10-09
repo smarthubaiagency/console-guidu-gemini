@@ -19,9 +19,13 @@ import {
 
 interface AppSidebarProps {
   workspaceSlug: string;
+  isAiAgentsAvailable?: boolean;
 }
 
-export function AppSidebar({ workspaceSlug }: AppSidebarProps) {
+export function AppSidebar({
+  workspaceSlug,
+  isAiAgentsAvailable = false,
+}: AppSidebarProps) {
   const pathname = usePathname();
 
   const mainNav = [
@@ -44,12 +48,16 @@ export function AppSidebar({ workspaceSlug }: AppSidebarProps) {
       icon: Store,
       badge: "Em breve",
     },
-    {
-      title: "Agentes de IA",
-      href: `/app/${workspaceSlug}/ai-agents`,
-      icon: Bot,
-      badge: "Em breve",
-    },
+    ...(isAiAgentsAvailable
+      ? [
+          {
+            title: "Agentes de IA",
+            href: `/app/${workspaceSlug}/ai-agents`,
+            icon: Bot,
+            badge: "Em breve",
+          },
+        ]
+      : []),
     {
       title: "Execuções",
       href: `/app/${workspaceSlug}/executions`,
