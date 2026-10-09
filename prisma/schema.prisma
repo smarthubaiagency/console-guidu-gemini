@@ -59,14 +59,14 @@ model OrganizationMember {
 }
 
 model Workspace {
-  id             String            @id @db.Uuid
-  organizationId String            @map("organization_id") @db.Uuid
-  slug           String            @unique
+  id             String             @id @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  slug           String             @unique
   name           String
-  status         String            @default("active")
-  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
-  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status         String             @default("active")
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   members        WorkspaceMember[]
   invitations    Invitation[]
   credentials    Credential[]
@@ -75,6 +75,8 @@ model Workspace {
   agentSessions  AgentSession[]
   agentMessages  AgentMessage[]
   auditEvents    AuditEvent[]
+  modules        WorkspaceModule[]
+  helloRecords   HelloWorldRecord[]
 
   @@unique([id, organizationId])
   @@map("workspaces")
@@ -245,4 +247,49 @@ model AuditEvent {
   @@index([workspaceId, occurredAt(sort: Desc)])
   @@index([organizationId, occurredAt(sort: Desc)])
   @@map("audit_events")
+}
+
+/// Global module state written only by platform owner/operations (ADR 0005).
+/// A missing row means availability "enabled" with an empty config.
+model PlatformModule {
+  moduleKey    String   @id @map("module_key")
+  availability String   @default("enabled")
+  config       Json     @default("{}")
+  updatedBy    String?  @map("updated_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("platform_modules")
+}
+
+/// Per-workspace module enablement and configuration (Especificação §6).
+model WorkspaceModule {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  moduleKey      String    @map("module_key")
+  status         String    @default("disabled")
+  config         Json      @default("{}")
+  updatedBy      String?   @map("updated_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  workspace      Workspace @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+
+  @@unique([workspaceId, moduleKey])
+  @@index([workspaceId, organizationId])
+  @@map("workspace_modules")
+}
+
+/// Demonstration data of the reference module (Adendo §9); never seeded.
+model HelloWorldRecord {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  title          String
+  createdBy      String    @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  workspace      Workspace @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
+
+  @@index([workspaceId, organizationId, createdAt(sort: Desc)])
+  @@map("hello_world_records")
 }

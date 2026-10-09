@@ -19,6 +19,8 @@ export const Permissions = {
   WORKSPACE_MEMBERS_READ: "workspace.members.read",
   WORKSPACE_MEMBERS_INVITE: "workspace.members.invite",
   WORKSPACE_MEMBERS_MANAGE: "workspace.members.manage",
+  /** Enable or disable modules in the workspace (ADR 0005). */
+  WORKSPACE_MODULES_MANAGE: "workspace.modules.manage",
 
   // BYOK Credentials Vault (Spec §16)
   CREDENTIALS_READ: "credentials.read",
@@ -39,9 +41,24 @@ export const Permissions = {
   ORGANIZATION_MEMBERS_INVITE: "organization.members.invite",
   ORGANIZATION_MEMBERS_MANAGE: "organization.members.manage",
   ORGANIZATION_SETTINGS_UPDATE: "organization.settings.update",
+
+  // Platform administration of modules (ADR 0005: /admin/modules and
+  // /admin/settings/modules/[moduleKey]); granted by internal role, never by
+  // workspace role.
+  PLATFORM_MODULES_READ: "platform.modules.read",
+  PLATFORM_MODULES_MANAGE: "platform.modules.manage",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];
+
+/**
+ * Permission declared by a registered module manifest (`<namespace>.<action>`).
+ * Resolved against the module registry by the server guard; unknown keys deny.
+ */
+export type ModulePermissionKey = `${string}.${string}`;
+
+/** Any permission the server guard can evaluate. */
+export type PermissionKey = Permission | ModulePermissionKey;
 
 /** Set of all declared permissions for catalog verification. */
 export const ALL_PERMISSIONS = Object.freeze(

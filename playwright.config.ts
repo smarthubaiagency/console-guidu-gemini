@@ -42,6 +42,8 @@ export default defineConfig({
         process.env.ENCRYPTION_KEY ||
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
       ENCRYPTION_KEY_ID: process.env.ENCRYPTION_KEY_ID || "k1",
+      // Reference module is restricted to development and tests (Adendo §9).
+      GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
       APP_NAME: process.env.APP_NAME || "GUIDU",
       APP_URL: process.env.APP_URL || RIG.appUrl,
     },

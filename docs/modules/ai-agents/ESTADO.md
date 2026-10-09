@@ -3,6 +3,7 @@
 - **Status:** Congelado (inativo por padrão)
 - **Data do congelamento:** 09/10/2026 (Decisão do Marcelo, correção C04)
 - **Feature Flag de ativação:** `GUIDU_MODULE_AI_AGENTS_ENABLED="true"` (padrão: desligado)
+- **Registro de módulos (F2):** manifesto em `src/modules/ai-agents/manifest.ts`, `beta` atrás da mesma flag. Com a flag ligada, o item de menu só aparece depois de habilitado no workspace; a página congelada continua usando só `isModuleTechnicallyAvailable`.
 - **Especificação:** rascunho v0.1 em [especificacao.md](especificacao.md), aguardando aprovação; não descongela o módulo.
 
 ---

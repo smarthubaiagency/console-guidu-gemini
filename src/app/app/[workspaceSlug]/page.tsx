@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  ShoppingBag,
-  Store,
-  Bot,
   PlayCircle,
   Users,
   Settings,
@@ -13,7 +10,8 @@ import {
 } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveWorkspaceContext } from "@/core/auth/context";
-import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
+import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
+import { navIcon } from "@/components/layout/nav-icons";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
@@ -59,42 +57,32 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
       };
     });
 
-  const aiAgentsAvailable = isModuleTechnicallyAvailable("ai-agents");
-  const catalogAvailable = isModuleTechnicallyAvailable("catalog");
-  const googleBusinessAvailable = isModuleTechnicallyAvailable("google-business");
+  // Module cards come from the registry with their resolved state (Adendo §8).
+  const { modules: moduleViews } = await loadWorkspaceModuleViews(
+    prisma,
+    context,
+    workspaceSlug,
+  );
+
+  const STATE_COLORS: Record<string, string> = {
+    enabled: "bg-success-bg text-success-text border-success-border",
+    coming_soon: "bg-info-bg text-info-text border-info-border",
+    maintenance: "bg-warning-bg text-warning-text border-warning-border",
+    not_enabled: "bg-surface-hover text-text-subtle border-border",
+  };
 
   const modules = [
-    {
-      title: "Catálogo",
-      description: "Gestão unificada de produtos, itens e estoque multicanal.",
-      href: `/app/${workspaceSlug}/catalog`,
-      icon: ShoppingBag,
-      status: catalogAvailable ? "Ativo" : "Em breve",
-      statusColor: catalogAvailable
-        ? "bg-success-bg text-success-text border-success-border"
-        : "bg-info-bg text-info-text border-info-border",
-    },
-    {
-      title: "Google Meu Negócio",
-      description: "Sincronização de perfis, avaliações e posts corporativos.",
-      href: `/app/${workspaceSlug}/google-business`,
-      icon: Store,
-      status: googleBusinessAvailable ? "Ativo" : "Em breve",
-      statusColor: googleBusinessAvailable
-        ? "bg-success-bg text-success-text border-success-border"
-        : "bg-ai-bg text-ai-text border-ai-border",
-    },
-    {
-      title: "Agentes de IA",
-      description:
-        "Automação de fluxos e atendimento assistido por inteligência artificial.",
-      href: `/app/${workspaceSlug}/ai-agents`,
-      icon: Bot,
-      status: aiAgentsAvailable ? "Ativo" : "Indisponível",
-      statusColor: aiAgentsAvailable
-        ? "bg-success-bg text-success-text border-success-border"
-        : "bg-warning-bg text-warning-text border-warning-border",
-    },
+    ...moduleViews.map((view) => ({
+      title: view.displayName,
+      description: view.description,
+      href:
+        view.state === "not_enabled" || !view.href
+          ? `/app/${workspaceSlug}/settings/modules`
+          : view.href,
+      icon: navIcon(view.iconKey),
+      status: view.stateLabel,
+      statusColor: STATE_COLORS[view.state] ?? STATE_COLORS.not_enabled,
+    })),
     {
       title: "Execuções de Jobs",
       description:

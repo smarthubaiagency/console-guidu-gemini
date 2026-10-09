@@ -2,6 +2,7 @@ import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
+import { loadAdminNavigation } from "@/core/module-runtime/loaders";
 import { AdminHeader } from "@/components/layout/admin-header";
 import { appConfig } from "@/core/config/app";
 
@@ -22,7 +23,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <AdminSidebar />
+        <AdminSidebar sections={loadAdminNavigation(adminInfo?.role ?? null)} />
         <main className="bg-surface-sidebar flex-1 overflow-y-auto p-6 md:p-8">
           {children}
         </main>

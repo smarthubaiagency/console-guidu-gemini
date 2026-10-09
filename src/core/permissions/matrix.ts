@@ -33,6 +33,7 @@ const ALL_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permissions.WORKSPACE_MEMBERS_READ,
   Permissions.WORKSPACE_MEMBERS_INVITE,
   Permissions.WORKSPACE_MEMBERS_MANAGE,
+  Permissions.WORKSPACE_MODULES_MANAGE,
   Permissions.CREDENTIALS_READ,
   Permissions.CREDENTIALS_MANAGE,
   Permissions.API_KEYS_CREATE_OWN,
@@ -118,4 +119,35 @@ export function hasOrganizationRolePermission(
   permission: Permission,
 ): boolean {
   return ORGANIZATION_ROLE_PERMISSIONS[role]?.has(permission) ?? false;
+}
+
+/** Internal platform roles (Especificação §7). */
+export type PlatformAdminRoleKey =
+  "owner" | "operations" | "billing" | "support";
+
+/**
+ * Platform admin role permission mapping (Proposta F2, sujeita à confirmação
+ * do produto). Billing and support only read module state.
+ */
+export const PLATFORM_ROLE_PERMISSIONS: Record<
+  PlatformAdminRoleKey,
+  ReadonlySet<Permission>
+> = {
+  owner: new Set([
+    Permissions.PLATFORM_MODULES_READ,
+    Permissions.PLATFORM_MODULES_MANAGE,
+  ]),
+  operations: new Set([
+    Permissions.PLATFORM_MODULES_READ,
+    Permissions.PLATFORM_MODULES_MANAGE,
+  ]),
+  billing: new Set([Permissions.PLATFORM_MODULES_READ]),
+  support: new Set([Permissions.PLATFORM_MODULES_READ]),
+};
+
+export function hasPlatformRolePermission(
+  role: PlatformAdminRoleKey,
+  permission: Permission,
+): boolean {
+  return PLATFORM_ROLE_PERMISSIONS[role]?.has(permission) ?? false;
 }

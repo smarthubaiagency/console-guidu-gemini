@@ -2,40 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Building2,
-  Layers,
-  Users,
-  ArrowLeft,
-  LayoutDashboard,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
-export function AdminSidebar() {
+import type { NavSection } from "@/core/module-runtime/navigation";
+
+import { activeNavItemId } from "./nav-active";
+import { NavIcon } from "./nav-icons";
+
+interface AdminSidebarProps {
+  /** Generated on the server from core entries and the module registry. */
+  sections: readonly NavSection[];
+}
+
+export function AdminSidebar({ sections }: AdminSidebarProps) {
   const pathname = usePathname();
-
-  const navItems = [
-    {
-      title: "Visão Geral",
-      href: "/admin",
-      icon: LayoutDashboard,
-      exact: true,
-    },
-    {
-      title: "Clientes / Empresas",
-      href: "/admin/customers",
-      icon: Building2,
-    },
-    {
-      title: "Workspaces",
-      href: "/admin/workspaces",
-      icon: Layers,
-    },
-    {
-      title: "Usuários da Plataforma",
-      href: "/admin/users",
-      icon: Users,
-    },
-  ];
+  const activeId = activeNavItemId(sections, pathname);
 
   return (
     <aside className="border-border-inverse bg-surface-inverse text-text-inverse flex min-h-screen w-64 shrink-0 flex-col justify-between border-r">
@@ -54,33 +35,40 @@ export function AdminSidebar() {
           </div>
         </div>
 
-        <div>
-          <div className="text-10 text-text-inverse-secondary mb-2 px-3 font-bold tracking-wider uppercase">
-            Administração
+        {sections.map((section) => (
+          <div key={section.id}>
+            <div className="text-10 text-text-inverse-secondary mb-2 px-3 font-bold tracking-wider uppercase">
+              {section.label}
+            </div>
+            <nav aria-label={section.label}>
+              <ul className="space-y-1">
+                {section.items.map((item) => {
+                  const isActive = item.id === activeId;
+                  if (!item.href) return null;
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        href={item.href}
+                        aria-current={isActive ? "page" : undefined}
+                        className={`text-12 flex items-center gap-2.5 rounded-lg px-3 py-2 font-medium transition ${
+                          isActive
+                            ? "bg-surface-inverse-hover text-text-inverse font-semibold shadow-xs"
+                            : "text-text-inverse-secondary hover:bg-surface-inverse-hover hover:text-text-inverse"
+                        }`}
+                      >
+                        <NavIcon
+                          iconKey={item.iconKey}
+                          className="text-text-inverse-secondary h-4 w-4 shrink-0"
+                        />
+                        <span>{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           </div>
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = item.exact
-                ? pathname === item.href
-                : pathname.startsWith(item.href);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`text-12 flex items-center gap-2.5 rounded-lg px-3 py-2 font-medium transition ${
-                    isActive
-                      ? "bg-surface-inverse-hover text-text-inverse font-semibold shadow-xs"
-                      : "text-text-inverse-secondary hover:bg-surface-inverse-hover hover:text-text-inverse"
-                  }`}
-                >
-                  <Icon className="text-text-inverse-secondary h-4 w-4 shrink-0" />
-                  <span>{item.title}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+        ))}
       </div>
 
       <div className="border-border-inverse border-t p-4">
