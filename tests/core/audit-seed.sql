@@ -31,7 +31,7 @@ insert into public.organization_members (organization_id, user_id, role, status)
   ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000031', 'owner', 'active'),
   ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000032', 'admin', 'active'),
   ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000033', 'admin', 'active'),
-  ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000034', 'admin', 'active')
+  ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000034', 'member', 'active')
 on conflict (organization_id, user_id) do update set role = excluded.role, status = 'active';
 
 insert into public.workspace_members (workspace_id, organization_id, user_id, role, status) values

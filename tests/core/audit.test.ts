@@ -132,7 +132,7 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
           ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000031', 'owner', 'active'),
           ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000032', 'admin', 'active'),
           ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000033', 'admin', 'active'),
-          ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000034', 'admin', 'active')
+          ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000034', 'member', 'active')
         on conflict (organization_id, user_id) do update set role = excluded.role, status = 'active';
 
         insert into public.workspace_members (workspace_id, organization_id, user_id, role, status) values
@@ -146,15 +146,15 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
   beforeEach(async () => {
     if (adminClient) {
-      // Ensure target user is reset to viewer in org and not in workspace before each test
+      // Ensure target user is reset to member in org and not in workspace before each test
       await adminClient.query(
         "delete from public.workspace_members where workspace_id = $1 and user_id = $2",
         [auditFixtures.workspaceId, auditFixtures.targetId],
       );
       await adminClient.query(
         `insert into public.organization_members (organization_id, user_id, role, status)
-         values ($1, $2, 'viewer', 'active')
-         on conflict (organization_id, user_id) do update set role = 'viewer', status = 'active'`,
+         values ($1, $2, 'member', 'active')
+         on conflict (organization_id, user_id) do update set role = 'member', status = 'active'`,
         [auditFixtures.orgId, auditFixtures.targetId],
       );
     }
@@ -461,6 +461,7 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
       const event = await getLatestAuditEvent("organization_members.role_changed");
       expect(event.metadata.targetUserId).toBe(targetUser);
+      expect(event.metadata.from).toBe("member");
       expect(event.metadata.to).toBe("admin");
     });
 
@@ -481,6 +482,7 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
       const event = await getLatestAuditEvent("organization_members.removed");
       expect(event.metadata.targetUserId).toBe(targetUser);
+      expect(event.metadata.role).toBe("member");
     });
   });
 
