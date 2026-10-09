@@ -7,12 +7,30 @@ import { hasMfaAssurance, type SessionClaims } from "./claims";
 import { AccessDeniedError } from "./errors";
 import { ensureProfile, readProfile, type ProfileRecord } from "./profiles";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 export type Identity = Readonly<{
   userId: string;
   email: string | undefined;
+  emailConfirmedAt?: string | null;
   mfaSatisfied: boolean;
   profile: ProfileRecord;
 }>;
+
+async function resolveEmailConfirmedAt(
+  supabase: SupabaseClient,
+  claims: SessionClaims | null,
+): Promise<string | null> {
+  if (claims?.email_confirmed_at) {
+    return claims.email_confirmed_at;
+  }
+  try {
+    const { data } = await supabase.auth.getUser();
+    return data?.user?.email_confirmed_at ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Validates the session against the Auth server and returns its claims.
@@ -33,15 +51,19 @@ export async function readSessionClaims(): Promise<SessionClaims | null> {
  * usable session. Never throws, so pages can branch on it.
  */
 export async function readIdentity(): Promise<Identity | null> {
+  const supabase = await createSupabaseServerClient();
   const claims = await readSessionClaims();
   if (!claims?.sub) return null;
 
   const profile = await readProfile(claims.sub);
   if (!profile) return null;
 
+  const emailConfirmedAt = await resolveEmailConfirmedAt(supabase, claims);
+
   return {
     userId: claims.sub,
     email: claims.email,
+    emailConfirmedAt,
     mfaSatisfied: hasMfaAssurance(claims),
     profile,
   };
@@ -94,9 +116,13 @@ async function guard(requireMfaFactor: boolean): Promise<Identity> {
     throw new AccessDeniedError("unauthenticated", 401);
   }
 
+  const supabase = await createSupabaseServerClient();
+  const emailConfirmedAt = await resolveEmailConfirmedAt(supabase, claims);
+
   return {
     userId: decision.userId,
     email: claims.email,
+    emailConfirmedAt,
     mfaSatisfied: hasMfaAssurance(claims),
     profile,
   };

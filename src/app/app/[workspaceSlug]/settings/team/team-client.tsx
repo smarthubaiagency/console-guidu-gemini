@@ -188,17 +188,25 @@ export function TeamClient({
               ×
             </button>
           </div>
-          {feedback.rawToken && (
+          {(feedback.inviteUrl || feedback.rawToken) && (
             <div className="bg-surface-card border-success-border mt-2 flex items-center justify-between gap-3 rounded-md border p-2.5">
               <div className="text-11 text-text truncate font-mono select-all">
-                {feedback.rawToken}
+                {feedback.inviteUrl ||
+                  (typeof window !== "undefined"
+                    ? `${window.location.origin}/invite/${feedback.rawToken}`
+                    : `/invite/${feedback.rawToken}`)}
               </div>
               <button
                 type="button"
-                onClick={() => handleCopy(feedback.rawToken!)}
+                onClick={() => {
+                  const linkToCopy =
+                    feedback.inviteUrl ||
+                    `${window.location.origin}/invite/${feedback.rawToken}`;
+                  handleCopy(linkToCopy);
+                }}
                 className="bg-primary hover:bg-primary-hover text-on-primary text-11 flex shrink-0 items-center gap-1 rounded-sm px-2 py-1 font-medium transition"
               >
-                {copiedToken === feedback.rawToken ? (
+                {copiedToken ? (
                   <>
                     <Check className="h-3 w-3" />
                     <span>Copiado!</span>
@@ -206,7 +214,7 @@ export function TeamClient({
                 ) : (
                   <>
                     <Copy className="h-3 w-3" />
-                    <span>Copiar Token</span>
+                    <span>Copiar Link</span>
                   </>
                 )}
               </button>

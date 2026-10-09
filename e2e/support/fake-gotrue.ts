@@ -77,6 +77,14 @@ export type FakeGoTrueOptions = Readonly<{
     wsSlug: string;
     role?: "owner" | "admin" | "member" | "viewer";
   }) => Promise<{ organizationId: string; workspaceId: string }>;
+  /** Seeds invitation in database and returns token. */
+  onSeedInvitation?: (params: {
+    organizationId: string;
+    workspaceId?: string | undefined;
+    email: string;
+    role?: ("owner" | "admin" | "member" | "viewer") | undefined;
+    expiresInHours?: number | undefined;
+  }) => Promise<{ id: string; rawToken: string }>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -152,6 +160,7 @@ export async function startFakeGoTrue(
       {
         sub: user.id,
         email: user.email,
+        email_confirmed_at: new Date(0).toISOString(),
         aud: "authenticated",
         role: "authenticated",
         aal,
@@ -274,6 +283,26 @@ export async function startFakeGoTrue(
         wsName,
         wsSlug,
         role: role ?? "owner",
+      });
+      return json(response, 200, seeded);
+    }
+
+    if (path === "/__control/seed-invitation" && method === "POST") {
+      const body = await readBody(request);
+      const organizationId = asString(body.organizationId);
+      const workspaceId = asString(body.workspaceId) ?? undefined;
+      const email = asString(body.email);
+      const role = asString(body.role) as "owner" | "admin" | "member" | "viewer" | undefined;
+      const expiresInHours = typeof body.expiresInHours === "number" ? body.expiresInHours : undefined;
+      if (!organizationId || !email || !options.onSeedInvitation) {
+        return json(response, 400, { msg: "invalid parameters" });
+      }
+      const seeded = await options.onSeedInvitation({
+        organizationId,
+        workspaceId,
+        email,
+        role,
+        expiresInHours,
       });
       return json(response, 200, seeded);
     }

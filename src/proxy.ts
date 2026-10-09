@@ -14,7 +14,7 @@ import { refreshSupabaseSession } from "@/lib/supabase/session";
  */
 
 const PROTECTED_PREFIXES = ["/app", "/admin"] as const;
-const SIGNED_IN_ONLY_PREFIXES = ["/auth/mfa"] as const;
+const SIGNED_IN_ONLY_PREFIXES = ["/auth/mfa", "/invite"] as const;
 const SIGNED_OUT_ONLY_PATHS = ["/login", "/forgot-password"] as const;
 
 function startsWithAny(pathname: string, prefixes: readonly string[]): boolean {

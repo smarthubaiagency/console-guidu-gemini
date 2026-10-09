@@ -22,6 +22,8 @@ import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+
+import type { Identity } from "../../src/core/auth/identity";
 import {
   LastOwnerCannotBeRemovedError,
   InsufficientRoleError,
@@ -29,6 +31,8 @@ import {
   InvitationExpiredError,
   InvitationAlreadyAcceptedError,
   InvitationRevokedError,
+  InvitationRecipientMismatchError,
+  InvitationEmailUnconfirmedError,
 } from "../../src/core/organizations/errors";
 import {
   createInvitation,
@@ -76,6 +80,29 @@ const ownerContext = {
   organizationId: fixtures.orgId,
   workspaceId: fixtures.workspaceId,
 };
+
+function createTestIdentity(params: {
+  userId: string;
+  email: string;
+  emailConfirmedAt?: string | null;
+}): Identity {
+  return {
+    userId: params.userId,
+    email: params.email,
+    emailConfirmedAt:
+      params.emailConfirmedAt !== undefined
+        ? params.emailConfirmedAt
+        : new Date().toISOString(),
+    mfaSatisfied: false,
+    profile: {
+      id: params.userId,
+      fullName: null,
+      status: "active",
+      statusReason: null,
+      lastSignInAt: null,
+    },
+  };
+}
 
 describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requiredVars, () => {
   const prisma = new PrismaClient({ datasourceUrl: pooledUrl! });
@@ -318,7 +345,7 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
   });
 
   describe("AC06: Expirable Tokens & Invitation Lifecycle", () => {
-    it("generates high-entropy token and stores only SHA-256 hash", async () => {
+    it("generates high-entropy token and stores only SHA-256 hash, accepting with verified confirmed identity", async () => {
       let createdRawToken = "";
       await withContext(prisma, ownerContext, async (tx) => {
         const { invitation, rawToken } = await createInvitation(tx, {
@@ -334,10 +361,13 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
         expect(invitation.status).toBe("pending");
       });
 
-      // Verification via acceptInvitation
+      // Verification via acceptInvitation with verified matching identity
       const result = await acceptInvitation(prisma, {
         rawToken: createdRawToken,
-        userId: fixtures.users[1],
+        identity: createTestIdentity({
+          userId: fixtures.users[1],
+          email: "crypto-check@test.guidu.co",
+        }),
       });
       expect(result.invitation.status).toBe("accepted");
 
@@ -349,6 +379,86 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
               organizationId: fixtures.orgId,
               userId: fixtures.users[1],
             },
+          },
+        });
+      });
+    });
+
+    it("refuses acceptance when recipient email does not match, throwing InvitationRecipientMismatchError without creating membership", async () => {
+      let candidateRawToken = "";
+      await withContext(prisma, ownerContext, async (tx) => {
+        const { rawToken } = await createInvitation(tx, {
+          organizationId: fixtures.orgId,
+          actorId: fixtures.ownerId,
+          email: "destinatario-correto@test.guidu.co",
+          role: "member",
+        });
+        candidateRawToken = rawToken;
+      });
+
+      // Different user with different email attempts to accept
+      await expect(
+        acceptInvitation(prisma, {
+          rawToken: candidateRawToken,
+          identity: createTestIdentity({
+            userId: fixtures.users[2],
+            email: "outro-usuario@test.guidu.co",
+          }),
+        }),
+      ).rejects.toThrow(InvitationRecipientMismatchError);
+
+      // Verify no membership was created for the mismatched user
+      await withContext(prisma, ownerContext, async (tx) => {
+        const member = await tx.organizationMember.findUnique({
+          where: {
+            organizationId_userId: {
+              organizationId: fixtures.orgId,
+              userId: fixtures.users[2],
+            },
+          },
+        });
+        expect(member).toBeNull();
+
+        // Clean up invitation
+        await tx.invitation.deleteMany({
+          where: {
+            organizationId: fixtures.orgId,
+            email: "destinatario-correto@test.guidu.co",
+          },
+        });
+      });
+    });
+
+    it("refuses acceptance when recipient email is not confirmed, throwing InvitationEmailUnconfirmedError", async () => {
+      let candidateRawToken = "";
+      await withContext(prisma, ownerContext, async (tx) => {
+        const { rawToken } = await createInvitation(tx, {
+          organizationId: fixtures.orgId,
+          actorId: fixtures.ownerId,
+          email: "unconfirmed-user@test.guidu.co",
+          role: "member",
+        });
+        candidateRawToken = rawToken;
+      });
+
+      // User with matching email but unconfirmed email status attempts to accept
+      await expect(
+        acceptInvitation(prisma, {
+          rawToken: candidateRawToken,
+          identity: createTestIdentity({
+            userId: fixtures.users[3],
+            email: "unconfirmed-user@test.guidu.co",
+            emailConfirmedAt: null,
+          }),
+        }),
+      ).rejects.toThrow(InvitationEmailUnconfirmedError);
+
+      // Clean up invitation
+      await withContext(prisma, ownerContext, async (tx) => {
+        await tx.invitation.deleteMany({
+          where: {
+            organizationId: fixtures.orgId,
+            email: "unconfirmed-user@test.guidu.co",
           },
         });
       });
@@ -370,7 +480,10 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
       await expect(
         acceptInvitation(prisma, {
           rawToken: expiredRawToken,
-          userId: fixtures.users[2],
+          identity: createTestIdentity({
+            userId: fixtures.users[2],
+            email: "expired-check@test.guidu.co",
+          }),
         }),
       ).rejects.toThrow(InvitationExpiredError);
     });
@@ -395,7 +508,10 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
       await expect(
         acceptInvitation(prisma, {
           rawToken: revokedRawToken,
-          userId: fixtures.users[3],
+          identity: createTestIdentity({
+            userId: fixtures.users[3],
+            email: "revoked-check@test.guidu.co",
+          }),
         }),
       ).rejects.toThrow(InvitationRevokedError);
     });
@@ -415,14 +531,20 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
       // First accept: OK
       await acceptInvitation(prisma, {
         rawToken: rawTokenToReuse,
-        userId: fixtures.users[4],
+        identity: createTestIdentity({
+          userId: fixtures.users[4],
+          email: "reuse-check@test.guidu.co",
+        }),
       });
 
       // Second accept with same token: rejected
       await expect(
         acceptInvitation(prisma, {
           rawToken: rawTokenToReuse,
-          userId: fixtures.users[4],
+          identity: createTestIdentity({
+            userId: fixtures.users[4],
+            email: "reuse-check@test.guidu.co",
+          }),
         }),
       ).rejects.toThrow(InvitationAlreadyAcceptedError);
 
@@ -501,7 +623,10 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
         candidateTokens.map((rawToken, idx) =>
           acceptInvitation(prisma, {
             rawToken,
-            userId: candidateUserIds[idx]!,
+            identity: createTestIdentity({
+              userId: candidateUserIds[idx]!,
+              email: `concurrency-candidate-${idx}@test.guidu.co`,
+            }),
           }),
         ),
       );

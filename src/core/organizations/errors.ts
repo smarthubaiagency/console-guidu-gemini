@@ -79,3 +79,19 @@ export class MemberNotFoundError extends Error {
     this.name = "MemberNotFoundError";
   }
 }
+
+export class InvitationRecipientMismatchError extends Error {
+  readonly code = "INVITATION_RECIPIENT_MISMATCH";
+  constructor() {
+    super("Este convite foi enviado para outro e-mail.");
+    this.name = "InvitationRecipientMismatchError";
+  }
+}
+
+export class InvitationEmailUnconfirmedError extends Error {
+  readonly code = "INVITATION_EMAIL_UNCONFIRMED";
+  constructor() {
+    super("O e-mail do usuário precisa estar confirmado para aceitar o convite.");
+    this.name = "InvitationEmailUnconfirmedError";
+  }
+}
