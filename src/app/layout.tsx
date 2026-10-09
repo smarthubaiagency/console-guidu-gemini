@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/shared/ui/theme-provider";
+import { appConfig } from "@/core/config/app";
 import "./globals.css";
-
-const appName = process.env.APP_NAME ?? "GUIDU";
 
 const outfit = localFont({
   src: "./fonts/Outfit-Variable.woff2",
@@ -14,7 +13,7 @@ const outfit = localFont({
 });
 
 export const metadata: Metadata = {
-  title: appName,
+  title: appConfig.name,
   description: "Plataforma SaaS modular",
 };
 export const runtime = "nodejs";

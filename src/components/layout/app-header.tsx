@@ -12,6 +12,7 @@ interface AppHeaderProps {
   workspaces: UserWorkspace[];
   userEmail?: string | undefined;
   isPlatformAdmin?: boolean;
+  appName: string;
 }
 
 export function AppHeader({
@@ -19,6 +20,7 @@ export function AppHeader({
   workspaces,
   userEmail,
   isPlatformAdmin = false,
+  appName,
 }: AppHeaderProps) {
   return (
     <header className="border-border bg-surface-card flex h-14 shrink-0 items-center justify-between border-b px-6">
@@ -28,9 +30,9 @@ export function AppHeader({
           className="text-16 text-text mr-2 flex items-center gap-2 font-bold tracking-tight"
         >
           <div className="bg-primary text-on-primary text-12 flex h-6 w-6 items-center justify-center rounded-sm font-black">
-            G
+            {appName.charAt(0).toUpperCase()}
           </div>
-          <span>GUIDU</span>
+          <span>{appName}</span>
         </Link>
 
         <div className="bg-surface-strong h-4 w-px" />

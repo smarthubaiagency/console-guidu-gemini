@@ -7,6 +7,7 @@ import { getPlatformAdminMember } from "@/core/admin/platform";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
+import { appConfig } from "@/core/config/app";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -44,6 +45,7 @@ export default async function WorkspaceLayout({
         workspaces={workspaces}
         userEmail={identity.email}
         isPlatformAdmin={Boolean(platformAdmin)}
+        appName={appConfig.name}
       />
 
       <div className="flex flex-1 overflow-hidden">

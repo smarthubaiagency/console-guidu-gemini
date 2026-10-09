@@ -21,6 +21,9 @@ jobs:
     name: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      APP_NAME: "GUIDU"
+      APP_URL: "http://localhost:3000"
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4

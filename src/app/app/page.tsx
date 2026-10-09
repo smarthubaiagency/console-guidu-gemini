@@ -6,6 +6,7 @@ import { requireUserPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { listUserWorkspaces } from "@/core/workspaces/navigation";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
+import { appConfig } from "@/core/config/app";
 
 export const metadata: Metadata = { title: "Seus Workspaces" };
 
@@ -32,9 +33,9 @@ export default async function AppPage() {
       <header className="border-border bg-surface-card flex items-center justify-between border-b px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="bg-primary text-on-primary text-14 flex h-7 w-7 items-center justify-center rounded-lg font-bold">
-            G
+            {appConfig.name.charAt(0).toUpperCase()}
           </div>
-          <span className="text-text font-bold tracking-tight">GUIDU</span>
+          <span className="text-text font-bold tracking-tight">{appConfig.name}</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -123,7 +124,7 @@ export default async function AppPage() {
       </main>
 
       <footer className="border-border bg-surface-card text-12 text-text-tertiary border-t py-4 text-center">
-        GUIDU Plataforma SaaS Modular • Isolamento Multiempresa RLS
+        {appConfig.name} Plataforma SaaS Modular • Isolamento Multiempresa RLS
       </footer>
     </div>
   );

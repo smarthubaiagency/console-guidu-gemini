@@ -7,17 +7,19 @@ import { ThemeToggle } from "@/shared/ui/theme-toggle";
 interface AdminHeaderProps {
   userEmail?: string | undefined;
   adminRole?: string | undefined;
+  appName: string;
 }
 
 export function AdminHeader({
   userEmail,
   adminRole = "owner",
+  appName,
 }: AdminHeaderProps) {
   return (
     <header className="border-border bg-surface-card flex h-14 shrink-0 items-center justify-between border-b px-6">
       <div className="flex items-center gap-3">
         <span className="text-14 text-text font-bold tracking-tight">
-          GUIDU Admin
+          {appName} Admin
         </span>
         <div className="bg-warning-bg text-warning-text text-11 border-warning-border flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-semibold">
           <ShieldCheck className="text-warning-solid h-3.5 w-3.5" />
