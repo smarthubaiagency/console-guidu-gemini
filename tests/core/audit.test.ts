@@ -104,14 +104,31 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       await adminClient.connect();
 
       // Ensure seed fixtures are initialized
+      try {
+        await adminClient.query(`
+          insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+          values
+            ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000031', 'authenticated', 'authenticated', 'audit-owner@test.guidu.co', '', now(), '{}', '{}', now(), now()),
+            ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000032', 'authenticated', 'authenticated', 'audit-editor@test.guidu.co', '', now(), '{}', '{}', now(), now()),
+            ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000033', 'authenticated', 'authenticated', 'audit-viewer@test.guidu.co', '', now(), '{}', '{}', now(), now()),
+            ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000034', 'authenticated', 'authenticated', 'audit-target@test.guidu.co', '', now(), '{}', '{}', now(), now())
+          on conflict (id) do nothing;
+        `);
+      } catch {
+        // auth.users may not be writable by app_migrations in hosted environments; fixtures are pre-seeded
+      }
+
       await adminClient.query(`
-        insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-        values
-          ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000031', 'authenticated', 'authenticated', 'audit-owner@test.guidu.co', '', now(), '{}', '{}', now(), now()),
-          ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000032', 'authenticated', 'authenticated', 'audit-editor@test.guidu.co', '', now(), '{}', '{}', now(), now()),
-          ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000033', 'authenticated', 'authenticated', 'audit-viewer@test.guidu.co', '', now(), '{}', '{}', now(), now()),
-          ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000034', 'authenticated', 'authenticated', 'audit-target@test.guidu.co', '', now(), '{}', '{}', now(), now())
-        on conflict (id) do nothing;
+        alter table public.profiles no force row level security;
+        alter table public.profiles disable row level security;
+        alter table public.organizations no force row level security;
+        alter table public.organizations disable row level security;
+        alter table public.workspaces no force row level security;
+        alter table public.workspaces disable row level security;
+        alter table public.organization_members no force row level security;
+        alter table public.organization_members disable row level security;
+        alter table public.workspace_members no force row level security;
+        alter table public.workspace_members disable row level security;
 
         insert into public.profiles (id, full_name, status) values
           ('e0000000-0000-4000-8000-000000000031', 'Audit Test Owner', 'active'),
@@ -140,6 +157,20 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
           ('e0000000-0000-4000-8000-000000000011', 'e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000032', 'editor', 'active'),
           ('e0000000-0000-4000-8000-000000000011', 'e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000033', 'viewer', 'active')
         on conflict (workspace_id, user_id) do update set role = excluded.role, status = 'active';
+
+        alter table public.profiles enable row level security;
+        alter table public.profiles force row level security;
+        alter table public.organizations enable row level security;
+        alter table public.organizations force row level security;
+        alter table public.workspaces enable row level security;
+        alter table public.workspaces force row level security;
+        alter table public.organization_members enable row level security;
+        alter table public.organization_members force row level security;
+        alter table public.workspace_members enable row level security;
+        alter table public.workspace_members force row level security;
+
+        -- Allow table owner app_migrations to query audit_events for test assertions
+        alter table public.audit_events no force row level security;
       `);
     }
   });
@@ -147,22 +178,33 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
   beforeEach(async () => {
     if (adminClient) {
       // Ensure target user is reset to member in org and not in workspace before each test
-      await adminClient.query(
-        "delete from public.workspace_members where workspace_id = $1 and user_id = $2",
-        [auditFixtures.workspaceId, auditFixtures.targetId],
-      );
-      await adminClient.query(
-        `insert into public.organization_members (organization_id, user_id, role, status)
-         values ($1, $2, 'member', 'active')
-         on conflict (organization_id, user_id) do update set role = 'member', status = 'active'`,
-        [auditFixtures.orgId, auditFixtures.targetId],
-      );
+      await adminClient.query(`
+        alter table public.workspace_members no force row level security;
+        alter table public.workspace_members disable row level security;
+        alter table public.organization_members no force row level security;
+        alter table public.organization_members disable row level security;
+
+        delete from public.workspace_members where workspace_id = '${auditFixtures.workspaceId}' and user_id = '${auditFixtures.targetId}';
+        insert into public.organization_members (organization_id, user_id, role, status)
+        values ('${auditFixtures.orgId}', '${auditFixtures.targetId}', 'member', 'active')
+        on conflict (organization_id, user_id) do update set role = 'member', status = 'active';
+
+        alter table public.workspace_members enable row level security;
+        alter table public.workspace_members force row level security;
+        alter table public.organization_members enable row level security;
+        alter table public.organization_members force row level security;
+      `);
     }
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
     if (adminClient) {
+      try {
+        await adminClient.query("alter table public.audit_events force row level security;");
+      } catch {
+        // cleanup best effort
+      }
       await adminClient.end();
     }
   });
