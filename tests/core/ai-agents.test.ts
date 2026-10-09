@@ -14,9 +14,12 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { expect, it, beforeEach } from "vitest";
+import { expect, it, beforeEach, afterEach, vi } from "vitest";
+
+vi.mock("server-only", () => ({}));
 
 import { registerCredential } from "@/core/credentials/vault";
+import { ModuleUnavailableError } from "@/core/modules/availability";
 import {
   createAgentConfig,
   listAgentConfigs,
@@ -48,7 +51,7 @@ describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction Hi
     },
   });
 
-  beforeEach(async () => {
+  const cleanup = async () => {
     await withContext(prisma, contextA, async (tx) => {
       await tx.credential.deleteMany({
         where: { workspaceId: contextA.workspaceId },
@@ -60,6 +63,16 @@ describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction Hi
         where: { workspaceId: contextA.workspaceId },
       });
     });
+  };
+
+  beforeEach(async () => {
+    vi.stubEnv("GUIDU_MODULE_AI_AGENTS_ENABLED", "true");
+    await cleanup();
+  });
+
+  afterEach(async () => {
+    vi.unstubAllEnvs();
+    await cleanup();
   });
 
   it("creates and lists agent configurations scoped to workspace", async () => {
@@ -378,6 +391,116 @@ describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction Hi
       const bHistory = await getSessionWithMessages(tx, sessionAId);
       expect(bHistory.session).toBeNull();
       expect(bHistory.messages.length).toBe(0);
+    });
+  });
+
+  it("blocks all engine operations when GUIDU_MODULE_AI_AGENTS_ENABLED is false without touching DB or executor", async () => {
+    vi.stubEnv("GUIDU_MODULE_AI_AGENTS_ENABLED", "false");
+
+    let executorCalled = false;
+    const spyExecutor = async (): Promise<ExecutionResult> => {
+      executorCalled = true;
+      return { reply: "should not be called", tokensEstimated: 0, latencyMs: 0 };
+    };
+
+    await withContext(prisma, contextA, async (tx) => {
+      // 1. createAgentConfig throws
+      await expect(
+        createAgentConfig(tx, {
+          organizationId: contextA.organizationId,
+          workspaceId: contextA.workspaceId,
+          name: "Blocked Agent",
+          systemPrompt: "Blocked",
+          primaryProvider: "openai",
+          primaryModel: "gpt-4o-mini",
+        }),
+      ).rejects.toThrow(ModuleUnavailableError);
+
+      // 2. listAgentConfigs throws
+      await expect(listAgentConfigs(tx, contextA.workspaceId)).rejects.toThrow(
+        ModuleUnavailableError,
+      );
+
+      // 3. getAgentConfig throws
+      await expect(getAgentConfig(tx, "00000000-0000-0000-0000-000000000000")).rejects.toThrow(
+        ModuleUnavailableError,
+      );
+
+      // 4. createAgentSession throws
+      await expect(
+        createAgentSession(tx, {
+          organizationId: contextA.organizationId,
+          workspaceId: contextA.workspaceId,
+          createdByUserId: contextA.userId,
+        }),
+      ).rejects.toThrow(ModuleUnavailableError);
+
+      // 5. listAgentSessions throws
+      await expect(listAgentSessions(tx, contextA.workspaceId)).rejects.toThrow(
+        ModuleUnavailableError,
+      );
+
+      // 6. getSessionWithMessages throws
+      await expect(
+        getSessionWithMessages(tx, "00000000-0000-0000-0000-000000000000"),
+      ).rejects.toThrow(ModuleUnavailableError);
+
+      // 7. executeAgentPrompt throws and executor is NOT called
+      await expect(
+        executeAgentPrompt(
+          tx,
+          {
+            workspaceId: contextA.workspaceId,
+            organizationId: contextA.organizationId,
+            userId: contextA.userId,
+            prompt: "Tentativa bloqueada",
+          },
+          spyExecutor,
+        ),
+      ).rejects.toThrow(ModuleUnavailableError);
+
+      expect(executorCalled).toBe(false);
+
+      // Verify no records were inserted into agent tables
+      const countConfigs = await tx.agentConfig.count({
+        where: { workspaceId: contextA.workspaceId },
+      });
+      const countSessions = await tx.agentSession.count({
+        where: { workspaceId: contextA.workspaceId },
+      });
+      expect(countConfigs).toBe(0);
+      expect(countSessions).toBe(0);
+    });
+  });
+
+  it("throws actionable 'nenhum agente configurado' when prompt is dispatched without any registered agent", async () => {
+    await withContext(prisma, contextA, async (tx) => {
+      await registerCredential(tx, {
+        organizationId: contextA.organizationId,
+        workspaceId: contextA.workspaceId,
+        provider: "openai",
+        label: "OpenAI Valid Key",
+        secret: "sk-proj-valid-test-key-1234567890",
+      });
+
+      const mockExecutor = async (): Promise<ExecutionResult> => ({
+        reply: "should not run",
+        tokensEstimated: 0,
+        latencyMs: 0,
+      });
+
+      await expect(
+        executeAgentPrompt(
+          tx,
+          {
+            workspaceId: contextA.workspaceId,
+            organizationId: contextA.organizationId,
+            userId: contextA.userId,
+            prompt: "Pergunta sem agente cadastrado",
+          },
+          mockExecutor,
+        ),
+      ).rejects.toThrow("nenhum agente configurado");
     });
   });
 });

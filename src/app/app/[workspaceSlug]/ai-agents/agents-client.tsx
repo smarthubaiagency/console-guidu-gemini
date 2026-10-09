@@ -77,9 +77,7 @@ export function AgentsClient({
   const [isCreatingConfig, startCreateTransition] = useTransition();
   const [newAgentName, setNewAgentName] = useState("");
   const [newAgentDesc, setNewAgentDesc] = useState("");
-  const [newAgentSystemPrompt, setNewAgentSystemPrompt] = useState(
-    "Você é um assistente especialista da plataforma GUIDU. Auxilie o usuário de forma clara e contextual.",
-  );
+  const [newAgentSystemPrompt, setNewAgentSystemPrompt] = useState("");
   const [newPrimaryProvider, setNewPrimaryProvider] =
     useState<AIProvider>("openai");
   const [newPrimaryModel, setNewPrimaryModel] = useState("gpt-4o-mini");

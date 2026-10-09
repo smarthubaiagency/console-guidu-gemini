@@ -12,7 +12,7 @@ Atualizado em 08/10/2026 a partir da seção 26 da Especificação v1.0, das dec
 | Clientes e ferramentas MCP | Começar com núcleo e clientes aprovados; catálogo definitivo continua aberto. |
 | Provedores e cobrança | Selecionar com contratos e requisitos de privacidade. |
 | Retenção e privacidade | Definir por categoria com responsabilidades. |
-| Configurações dos módulos | Catálogo, Google Business e Agentes de IA permanecem abertos em documentos próprios; não inferir regras internas. |
+| Configurações dos módulos | Catálogo, Google Business e Agentes de IA permanecem abertos em documentos próprios; não inferir regras internas. Módulo Agentes de IA congelado atrás de flag (C04) — ver [ESTADO.md](modules/ai-agents/ESTADO.md). |
 | Escala horizontal de jobs | Certificar `groupConcurrency` do pg-boss entre múltiplos processos antes do primeiro scale-out. |
 
 ## Resolvidas

@@ -20,6 +20,7 @@ import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import type { AIProvider } from "@/core/credentials/vault";
+import { assertModuleAvailable } from "@/core/modules/availability";
 import {
   createAgentConfig,
   executeAgentPrompt,
@@ -64,6 +65,7 @@ export async function executePromptAction(
   const { workspaceSlug, prompt, agentConfigId, sessionId } = parsed.data;
 
   try {
+    assertModuleAvailable("ai-agents");
     const identity = await requireUser();
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
@@ -144,6 +146,7 @@ export async function createAgentConfigAction(
   } = parsed.data;
 
   try {
+    assertModuleAvailable("ai-agents");
     const identity = await requireUser();
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
@@ -186,6 +189,7 @@ export async function loadSessionMessagesAction(
   error?: string;
 }> {
   try {
+    assertModuleAvailable("ai-agents");
     const identity = await requireUser();
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
