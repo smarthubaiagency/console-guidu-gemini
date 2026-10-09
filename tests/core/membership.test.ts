@@ -174,6 +174,9 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
           },
         });
 
+        // Switch contextual actor to adminId (who is now co-owner)
+        await tx.$executeRaw`select set_config('app.user_id', ${fixtures.adminId}, true)`;
+
         // 2. Now demoting original owner succeeds because another active owner exists
         const updated = await updateOrganizationMemberRole(tx, {
           organizationId: fixtures.orgId,
@@ -200,6 +203,9 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
           targetUserId: fixtures.ownerId,
           newRole: "owner",
         });
+
+        // Restore context to ownerId for cleanup
+        await tx.$executeRaw`select set_config('app.user_id', ${fixtures.ownerId}, true)`;
 
         // Clean up second owner
         await tx.organizationMember.delete({
