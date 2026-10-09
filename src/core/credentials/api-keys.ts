@@ -1,19 +1,34 @@
 /**
  * ============================================================================
  * File: src/core/credentials/api-keys.ts
- * Module: Platform API Keys & MCP Token Authentication (ADR 0009)
+ * Module: Platform API Keys & MCP Token Authentication (ADR 0009 & C07)
  *
  * Maintenance Rationale:
- * - Implements ADR 0009: Personal API tokens replace OAuth as primary MCP authentication.
- * - Each key is scoped to a user, a workspace, and explicit permissions.
- * - Stored exclusively as SHA-256 hash. The plaintext key is returned once upon creation.
- * - Mandatory expiration and immediate revocation on request.
- * - Key format: `gdu_live_<64_hex_chars>`.
+ * - Implements ADR 0009 & C07:
+ *   - Personal API tokens replace OAuth as primary MCP authentication.
+ *   - createApiKey exige api_keys.create_own e grava userId = ctx.userId (nunca de parâmetro).
+ *   - revokeApiKey: permitido se a chave é do próprio usuário (api_keys.revoke_own) ou
+ *     se ele tem api_keys.revoke_any. Caso contrário, PermissionDeniedError.
+ *     Busca usa findFirst({ where: { id, workspaceId: ctx.workspaceId } }); chave inexistente
+ *     ou de outro workspace responde igual ("não encontrada").
+ *   - listApiKeys: com api_keys.read_all, lista todas; sem ela, só as do próprio usuário.
+ *   - Stored exclusively as SHA-256 hash. The plaintext key is returned once upon creation.
+ *   - Mandatory expiration and immediate revocation on request.
+ *   - Key format: `gdu_live_<64_hex_chars>`.
  * ============================================================================
  */
 
+import "server-only";
+
 import crypto from "node:crypto";
-import type { ContextTransaction } from "@/lib/prisma/with-context";
+import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
+import { Permissions } from "@/core/permissions/catalog";
+import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
+import {
+  getEffectiveWorkspaceRole,
+  PermissionDeniedError,
+  requireWorkspacePermission,
+} from "@/core/permissions/guard";
 
 export const API_KEY_PREFIX = "gdu_live_";
 
@@ -53,22 +68,20 @@ export function generateApiKey(): { rawKey: string; keyHash: string; prefix: str
 
 /**
  * Creates a platform API key with mandatory expiration and explicit scopes (ADR 0009).
+ * Requires `api_keys.create_own` permission and records `userId = ctx.userId`.
  */
 export async function createApiKey(
   tx: ContextTransaction,
+  ctx: RequestContext,
   params: {
-    organizationId: string;
-    workspaceId: string;
-    userId: string;
     name: string;
     scopes?: string[];
     expiresInDays?: number;
   },
 ): Promise<{ apiKey: ApiKeyItem; rawKey: string }> {
+  await requireWorkspacePermission(tx, ctx, Permissions.API_KEYS_CREATE_OWN);
+
   const {
-    organizationId,
-    workspaceId,
-    userId,
     name,
     scopes = ["read"],
     expiresInDays = 90,
@@ -83,9 +96,9 @@ export async function createApiKey(
 
   const record = await tx.apiKey.create({
     data: {
-      organizationId,
-      workspaceId,
-      userId,
+      organizationId: ctx.organizationId,
+      workspaceId: ctx.workspaceId,
+      userId: ctx.userId,
       name: name.trim(),
       prefix,
       keyHash,
@@ -115,14 +128,29 @@ export async function createApiKey(
 }
 
 /**
- * Lists API keys for a workspace.
+ * Lists API keys for the contextual workspace.
+ * Users with `api_keys.read_all` see all workspace keys; otherwise, only own keys.
  */
 export async function listApiKeys(
   tx: ContextTransaction,
-  workspaceId: string,
+  ctx: RequestContext,
 ): Promise<ApiKeyItem[]> {
+  const { workspaceRole } = await requireWorkspacePermission(
+    tx,
+    ctx,
+    Permissions.WORKSPACE_READ,
+  );
+
+  const canReadAll = hasWorkspaceRolePermission(
+    workspaceRole,
+    Permissions.API_KEYS_READ_ALL,
+  );
+
   const records = await tx.apiKey.findMany({
-    where: { workspaceId },
+    where: {
+      workspaceId: ctx.workspaceId,
+      ...(canReadAll ? {} : { userId: ctx.userId }),
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -144,13 +172,55 @@ export async function listApiKeys(
 
 /**
  * Immediately revokes an API key.
+ * Allowed if the key belongs to the current user (`api_keys.revoke_own`) or if actor
+ * has `api_keys.revoke_any`. Key not found in workspace throws "não encontrada".
  */
 export async function revokeApiKey(
   tx: ContextTransaction,
+  ctx: RequestContext,
   apiKeyId: string,
 ): Promise<ApiKeyItem> {
+  const workspaceRole = await getEffectiveWorkspaceRole(tx, ctx);
+  if (!workspaceRole) {
+    throw new PermissionDeniedError();
+  }
+
+  const hasRevokeOwn = hasWorkspaceRolePermission(
+    workspaceRole,
+    Permissions.API_KEYS_REVOKE_OWN,
+  );
+  const hasRevokeAny = hasWorkspaceRolePermission(
+    workspaceRole,
+    Permissions.API_KEYS_REVOKE_ANY,
+  );
+
+  if (!hasRevokeOwn && !hasRevokeAny) {
+    throw new PermissionDeniedError();
+  }
+
+  const candidate = await tx.apiKey.findFirst({
+    where: {
+      id: apiKeyId,
+      workspaceId: ctx.workspaceId,
+    },
+  });
+
+  if (!candidate) {
+    throw new Error("Chave de API não encontrada.");
+  }
+
+  if (candidate.userId === ctx.userId) {
+    if (!hasRevokeOwn) {
+      throw new PermissionDeniedError();
+    }
+  } else {
+    if (!hasRevokeAny) {
+      throw new PermissionDeniedError();
+    }
+  }
+
   const updated = await tx.apiKey.update({
-    where: { id: apiKeyId },
+    where: { id: candidate.id },
     data: { status: "revoked" },
   });
 

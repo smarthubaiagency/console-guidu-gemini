@@ -5,7 +5,13 @@ import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listApiKeys } from "@/core/credentials/api-keys";
-import { ApiKeysClient } from "./api-keys-client";
+import { Permissions } from "@/core/permissions/catalog";
+import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
+import type { WorkspaceRole } from "@/core/permissions/roles";
+import {
+  ApiKeysClient,
+  type ApiKeysCapabilities,
+} from "./api-keys-client";
 
 export const metadata: Metadata = {
   title: "Chaves de API & Conexões MCP",
@@ -26,9 +32,45 @@ export default async function ApiSettingsPage({ params }: ApiKeysPageProps) {
     workspaceSlug,
   );
 
-  const apiKeys = await withContext(prisma, context, async (tx) => {
-    return listApiKeys(tx, context.workspaceId);
-  });
+  const { apiKeys, capabilities } = await withContext(
+    prisma,
+    context,
+    async (tx) => {
+      const wsMember = await tx.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: context.workspaceId,
+            userId: context.userId,
+          },
+        },
+      });
+
+      const wsRole =
+        wsMember?.status === "active" ? (wsMember.role as WorkspaceRole) : null;
+
+      const canCreate = wsRole
+        ? hasWorkspaceRolePermission(wsRole, Permissions.API_KEYS_CREATE_OWN)
+        : false;
+      const canRevokeOwn = wsRole
+        ? hasWorkspaceRolePermission(wsRole, Permissions.API_KEYS_REVOKE_OWN)
+        : false;
+      const canRevokeAny = wsRole
+        ? hasWorkspaceRolePermission(wsRole, Permissions.API_KEYS_REVOKE_ANY)
+        : false;
+
+      const keys = wsRole ? await listApiKeys(tx, context) : [];
+
+      return {
+        apiKeys: keys,
+        capabilities: {
+          canManage: canCreate || canRevokeAny,
+          canCreate,
+          canRevokeOwn,
+          canRevokeAny,
+        } satisfies ApiKeysCapabilities,
+      };
+    },
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -54,7 +96,12 @@ export default async function ApiSettingsPage({ params }: ApiKeysPageProps) {
         </div>
       </div>
 
-      <ApiKeysClient workspaceSlug={workspaceSlug} apiKeys={apiKeys} />
+      <ApiKeysClient
+        workspaceSlug={workspaceSlug}
+        apiKeys={apiKeys}
+        capabilities={capabilities}
+        currentUserId={context.userId}
+      />
     </div>
   );
 }

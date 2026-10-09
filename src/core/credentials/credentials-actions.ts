@@ -7,6 +7,7 @@ import { requireUser } from "@/core/auth/identity";
 import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { isPermissionDeniedError } from "@/core/permissions/guard";
 import {
   registerCredential,
   revokeCredential,
@@ -58,9 +59,7 @@ export async function registerCredentialAction(
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     await withContext(prisma, context, async (tx) => {
-      return registerCredential(tx, {
-        organizationId: context.organizationId,
-        workspaceId: context.workspaceId,
+      return registerCredential(tx, context, {
         provider: provider as AIProvider,
         label,
         secret,
@@ -75,6 +74,9 @@ export async function registerCredentialAction(
       message: `Credencial '${label}' registrada com sucesso e protegida no cofre.`,
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err)) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const msg = err instanceof Error ? err.message : "Erro ao registrar credencial.";
     return { error: msg };
   }
@@ -105,7 +107,7 @@ export async function revokeCredentialAction(
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     await withContext(prisma, context, async (tx) => {
-      return revokeCredential(tx, credentialId);
+      return revokeCredential(tx, context, credentialId);
     });
 
     revalidatePath(`/app/${workspaceSlug}/settings/credentials`);
@@ -115,6 +117,9 @@ export async function revokeCredentialAction(
       message: "Credencial revogada com sucesso.",
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err)) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const msg = err instanceof Error ? err.message : "Erro ao revogar credencial.";
     return { error: msg };
   }

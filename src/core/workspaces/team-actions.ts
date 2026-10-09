@@ -7,6 +7,8 @@ import { requireUser } from "@/core/auth/identity";
 import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { isPermissionDeniedError } from "@/core/permissions/guard";
+import { InsufficientRoleError } from "@/core/organizations/errors";
 import {
   createInvitation,
   revokeInvitation,
@@ -72,6 +74,9 @@ export async function createInvitationAction(
       rawToken: result.rawToken,
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const errorMsg =
       err instanceof Error ? err.message : "Erro ao gerar convite.";
     return { error: errorMsg };
@@ -121,6 +126,9 @@ export async function revokeInvitationAction(
       message: "Convite revogado com sucesso.",
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const errorMsg =
       err instanceof Error ? err.message : "Erro ao revogar convite.";
     return { error: errorMsg };
@@ -173,6 +181,9 @@ export async function updateMemberRoleAction(
       message: "Papel do membro atualizado com sucesso.",
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const errorMsg =
       err instanceof Error ? err.message : "Erro ao atualizar papel do membro.";
     return { error: errorMsg };
@@ -222,6 +233,9 @@ export async function removeMemberAction(
       message: "Membro removido da organização com sucesso.",
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const errorMsg =
       err instanceof Error ? err.message : "Erro ao remover membro.";
     return { error: errorMsg };

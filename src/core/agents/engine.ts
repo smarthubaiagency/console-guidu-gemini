@@ -1,23 +1,26 @@
 /**
  * ============================================================================
  * File: src/core/agents/engine.ts
- * Module: AI Prompt & Agent Execution Engine with Resilient Fallbacks
+ * Module: AI Prompt & Agent Execution Engine with Resilient Fallbacks (C07)
  *
  * Maintenance Rationale:
- * - Implements Spec Section 16 & SMA-100:
+ * - Implements Spec Section 16 & SMA-100 & C07:
  *   - Manages AI Agent Configurations with primary & fallback providers.
+ *   - ai_agents.manage para criar e editar configuração.
+ *   - ai_agents.use para executar e ler sessões.
+ *   - Module remains frozen behind availability flag (C04), which blocks first.
  *   - Orchestrates prompt execution via decrypted BYOK keys inside `withContext`.
- *   - Implements resilient automated fallback: if primary provider encounters
- *     quota, auth, or network failure, transparently dispatches to the fallback
- *     provider and flags `fallbackTriggered: true`.
- *   - Preserves complete interaction audit history (sessions and messages)
- *     with execution latency, tokens estimated, and provider metadata.
+ *   - Resilient automated fallback across providers.
  * ============================================================================
  */
 
-import type { ContextTransaction } from "@/lib/prisma/with-context";
+import "server-only";
+
+import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
 import { resolveProviderSecret, type AIProvider } from "@/core/credentials/vault";
 import { assertModuleAvailable } from "@/core/modules/availability";
+import { Permissions } from "@/core/permissions/catalog";
+import { requireWorkspacePermission } from "@/core/permissions/guard";
 import { executeProviderPrompt, type ExecutionResult } from "./providers/executor";
 
 export type AgentConfigData = {
@@ -83,29 +86,54 @@ export class AgentExecutionError extends Error {
   }
 }
 
+type CreateAgentConfigParams = {
+  name: string;
+  description?: string | null | undefined;
+  systemPrompt: string;
+  primaryProvider: AIProvider;
+  primaryModel: string;
+  fallbackProvider?: AIProvider | null | undefined;
+  fallbackModel?: string | null | undefined;
+  temperature?: number | undefined;
+};
+
 /**
  * Creates a new Agent Configuration for a workspace.
+ * Requires `ai_agents.manage`.
  */
 export async function createAgentConfig(
   tx: ContextTransaction,
-  params: {
-    organizationId: string;
-    workspaceId: string;
-    name: string;
-    description?: string | null | undefined;
-    systemPrompt: string;
-    primaryProvider: AIProvider;
-    primaryModel: string;
-    fallbackProvider?: AIProvider | null | undefined;
-    fallbackModel?: string | null | undefined;
-    temperature?: number | undefined;
-  },
+  ctxOrParams:
+    | RequestContext
+    | (CreateAgentConfigParams & {
+        organizationId: string;
+        workspaceId: string;
+        userId?: string;
+      }),
+  maybeParams?: CreateAgentConfigParams,
 ): Promise<AgentConfigData> {
   assertModuleAvailable("ai-agents");
+
+  const ctx: RequestContext =
+    "userId" in ctxOrParams && ctxOrParams.userId
+      ? (ctxOrParams as RequestContext)
+      : {
+          organizationId: ctxOrParams.organizationId,
+          workspaceId: ctxOrParams.workspaceId,
+          userId: (ctxOrParams as { userId?: string }).userId ?? "",
+        };
+
+  const params: CreateAgentConfigParams =
+    maybeParams ?? (ctxOrParams as CreateAgentConfigParams);
+
+  if (ctx.userId) {
+    await requireWorkspacePermission(tx, ctx, Permissions.AI_AGENTS_MANAGE);
+  }
+
   const record = await tx.agentConfig.create({
     data: {
-      organizationId: params.organizationId,
-      workspaceId: params.workspaceId,
+      organizationId: ctx.organizationId,
+      workspaceId: ctx.workspaceId,
       name: params.name.trim(),
       description: params.description?.trim() || null,
       systemPrompt: params.systemPrompt.trim(),
@@ -138,12 +166,23 @@ export async function createAgentConfig(
 
 /**
  * Lists all active agent configurations in a workspace.
+ * Requires `ai_agents.use`.
  */
 export async function listAgentConfigs(
   tx: ContextTransaction,
-  workspaceId: string,
+  ctxOrWorkspaceId: RequestContext | string,
 ): Promise<AgentConfigData[]> {
   assertModuleAvailable("ai-agents");
+
+  const workspaceId =
+    typeof ctxOrWorkspaceId === "string"
+      ? ctxOrWorkspaceId
+      : ctxOrWorkspaceId.workspaceId;
+
+  if (typeof ctxOrWorkspaceId === "object" && ctxOrWorkspaceId.userId) {
+    await requireWorkspacePermission(tx, ctxOrWorkspaceId, Permissions.AI_AGENTS_USE);
+  }
+
   const records = await tx.agentConfig.findMany({
     where: { workspaceId, status: "active" },
     orderBy: { createdAt: "asc" },
@@ -169,12 +208,21 @@ export async function listAgentConfigs(
 
 /**
  * Fetches an agent configuration by ID.
+ * Requires `ai_agents.use`.
  */
 export async function getAgentConfig(
   tx: ContextTransaction,
-  id: string,
+  ctxOrId: RequestContext | string,
+  maybeId?: string,
 ): Promise<AgentConfigData | null> {
   assertModuleAvailable("ai-agents");
+
+  const id = maybeId ?? (typeof ctxOrId === "string" ? ctxOrId : "");
+
+  if (typeof ctxOrId === "object" && ctxOrId.userId) {
+    await requireWorkspacePermission(tx, ctxOrId, Permissions.AI_AGENTS_USE);
+  }
+
   const record = await tx.agentConfig.findUnique({
     where: { id },
   });
@@ -199,25 +247,49 @@ export async function getAgentConfig(
   };
 }
 
+type CreateAgentSessionParams = {
+  agentConfigId?: string | null | undefined;
+  title?: string | undefined;
+};
+
 /**
  * Creates an agent chat session.
+ * Requires `ai_agents.use`.
  */
 export async function createAgentSession(
   tx: ContextTransaction,
-  params: {
-    organizationId: string;
-    workspaceId: string;
-    createdByUserId: string;
-    agentConfigId?: string | null | undefined;
-    title?: string | undefined;
-  },
+  ctxOrParams:
+    | RequestContext
+    | (CreateAgentSessionParams & {
+        organizationId: string;
+        workspaceId: string;
+        createdByUserId: string;
+      }),
+  maybeParams?: CreateAgentSessionParams,
 ): Promise<AgentSessionData> {
   assertModuleAvailable("ai-agents");
+
+  const ctx: RequestContext =
+    "userId" in ctxOrParams && ctxOrParams.userId
+      ? (ctxOrParams as RequestContext)
+      : {
+          organizationId: ctxOrParams.organizationId,
+          workspaceId: ctxOrParams.workspaceId,
+          userId: (ctxOrParams as { createdByUserId: string }).createdByUserId,
+        };
+
+  const params: CreateAgentSessionParams =
+    maybeParams ?? (ctxOrParams as CreateAgentSessionParams);
+
+  if (ctx.userId) {
+    await requireWorkspacePermission(tx, ctx, Permissions.AI_AGENTS_USE);
+  }
+
   const record = await tx.agentSession.create({
     data: {
-      organizationId: params.organizationId,
-      workspaceId: params.workspaceId,
-      createdByUserId: params.createdByUserId,
+      organizationId: ctx.organizationId,
+      workspaceId: ctx.workspaceId,
+      createdByUserId: ctx.userId,
       agentConfigId: params.agentConfigId || null,
       title: params.title || "Nova Conversa",
       status: "active",
@@ -239,13 +311,24 @@ export async function createAgentSession(
 
 /**
  * Lists recent agent sessions for a workspace.
+ * Requires `ai_agents.use`.
  */
 export async function listAgentSessions(
   tx: ContextTransaction,
-  workspaceId: string,
+  ctxOrWorkspaceId: RequestContext | string,
   limit: number = 30,
 ): Promise<AgentSessionData[]> {
   assertModuleAvailable("ai-agents");
+
+  const workspaceId =
+    typeof ctxOrWorkspaceId === "string"
+      ? ctxOrWorkspaceId
+      : ctxOrWorkspaceId.workspaceId;
+
+  if (typeof ctxOrWorkspaceId === "object" && ctxOrWorkspaceId.userId) {
+    await requireWorkspacePermission(tx, ctxOrWorkspaceId, Permissions.AI_AGENTS_USE);
+  }
+
   const records = await tx.agentSession.findMany({
     where: { workspaceId, status: "active" },
     orderBy: { updatedAt: "desc" },
@@ -267,15 +350,26 @@ export async function listAgentSessions(
 
 /**
  * Gets session details along with all messages in chronological order.
+ * Requires `ai_agents.use`.
  */
 export async function getSessionWithMessages(
   tx: ContextTransaction,
-  sessionId: string,
+  ctxOrSessionId: RequestContext | string,
+  maybeSessionId?: string,
 ): Promise<{
   session: AgentSessionData | null;
   messages: AgentMessageData[];
 }> {
   assertModuleAvailable("ai-agents");
+
+  const sessionId =
+    maybeSessionId ??
+    (typeof ctxOrSessionId === "string" ? ctxOrSessionId : "");
+
+  if (typeof ctxOrSessionId === "object" && ctxOrSessionId.userId) {
+    await requireWorkspacePermission(tx, ctxOrSessionId, Permissions.AI_AGENTS_USE);
+  }
+
   const sessionRecord = await tx.agentSession.findUnique({
     where: { id: sessionId },
     include: {
@@ -319,23 +413,67 @@ export async function getSessionWithMessages(
   return { session, messages };
 }
 
+type ExecutePromptParams = {
+  prompt: string;
+  agentConfigId?: string | null | undefined;
+  sessionId?: string | null | undefined;
+};
+
 /**
  * Executes an AI Prompt with automatic fallback resilience and persists the interaction history.
+ * Requires `ai_agents.use`.
  */
 export async function executeAgentPrompt(
   tx: ContextTransaction,
-  params: {
-    workspaceId: string;
-    organizationId: string;
-    userId: string;
-    prompt: string;
-    agentConfigId?: string | null | undefined;
-    sessionId?: string | null | undefined;
-  },
-  executorFn: typeof executeProviderPrompt = executeProviderPrompt,
+  ctxOrParams:
+    | RequestContext
+    | (ExecutePromptParams & {
+        workspaceId: string;
+        organizationId: string;
+        userId: string;
+      }),
+  paramsOrExecutor?: ExecutePromptParams | typeof executeProviderPrompt,
+  maybeExecutor?: typeof executeProviderPrompt,
 ): Promise<PromptExecutionResult> {
   assertModuleAvailable("ai-agents");
-  const { workspaceId, organizationId, userId, prompt, agentConfigId, sessionId } = params;
+
+  let ctx: RequestContext;
+  let params: ExecutePromptParams;
+  let executorFn: typeof executeProviderPrompt = executeProviderPrompt;
+
+  if (
+    typeof paramsOrExecutor === "object" &&
+    paramsOrExecutor !== null &&
+    "prompt" in paramsOrExecutor
+  ) {
+    ctx = ctxOrParams as RequestContext;
+    params = paramsOrExecutor;
+    if (maybeExecutor) {
+      executorFn = maybeExecutor;
+    }
+  } else {
+    const legacy = ctxOrParams as ExecutePromptParams & {
+      workspaceId: string;
+      organizationId: string;
+      userId: string;
+    };
+    ctx = {
+      workspaceId: legacy.workspaceId,
+      organizationId: legacy.organizationId,
+      userId: legacy.userId,
+    };
+    params = legacy;
+    if (typeof paramsOrExecutor === "function") {
+      executorFn = paramsOrExecutor;
+    }
+  }
+
+  if (ctx.userId) {
+    await requireWorkspacePermission(tx, ctx, Permissions.AI_AGENTS_USE);
+  }
+
+  const { workspaceId, organizationId } = ctx;
+  const { prompt, agentConfigId, sessionId } = params;
 
   if (!prompt || prompt.trim().length === 0) {
     throw new Error("Prompt cannot be empty");
@@ -344,13 +482,13 @@ export async function executeAgentPrompt(
   // 1. Resolve or establish Agent Configuration
   let config: AgentConfigData | null = null;
   if (agentConfigId) {
-    config = await getAgentConfig(tx, agentConfigId);
+    config = await getAgentConfig(tx, ctx, agentConfigId);
     if (!config || config.workspaceId !== workspaceId) {
       throw new Error(`Agent configuration '${agentConfigId}' not found in workspace`);
     }
   } else {
     // Pick first active or fail with actionable error
-    const existingConfigs = await listAgentConfigs(tx, workspaceId);
+    const existingConfigs = await listAgentConfigs(tx, ctx);
     if (existingConfigs.length > 0 && existingConfigs[0]) {
       config = existingConfigs[0];
     } else {
@@ -375,7 +513,7 @@ export async function executeAgentPrompt(
 
   // Try primary provider
   try {
-    const primaryApiKey = await resolveProviderSecret(tx, workspaceId, config.primaryProvider);
+    const primaryApiKey = await resolveProviderSecret(tx, ctx, config.primaryProvider);
     const result: ExecutionResult = await executorFn({
       provider: config.primaryProvider,
       model: config.primaryModel,
@@ -396,7 +534,7 @@ export async function executeAgentPrompt(
   if (primaryFailed) {
     if (config.fallbackProvider && config.fallbackModel) {
       try {
-        const fallbackApiKey = await resolveProviderSecret(tx, workspaceId, config.fallbackProvider);
+        const fallbackApiKey = await resolveProviderSecret(tx, ctx, config.fallbackProvider);
         const result: ExecutionResult = await executorFn({
           provider: config.fallbackProvider,
           model: config.fallbackModel,
@@ -451,10 +589,7 @@ export async function executeAgentPrompt(
     // Generate brief title from prompt
     const cleanPrompt = prompt.trim().replace(/\s+/g, " ");
     const title = cleanPrompt.length > 40 ? `${cleanPrompt.slice(0, 37)}...` : cleanPrompt;
-    activeSession = await createAgentSession(tx, {
-      organizationId,
-      workspaceId,
-      createdByUserId: userId,
+    activeSession = await createAgentSession(tx, ctx, {
       agentConfigId: config.id,
       title,
     });
