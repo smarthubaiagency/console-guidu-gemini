@@ -83,7 +83,7 @@ declare
   remaining_owners integer;
 begin
   -- Skip enforcement if maintenance is run by migration administrator without tenant context
-  if current_user = 'app_migrations' and private.context_uuid('app.workspace_id') is null then
+  if current_user in ('app_migrations', 'postgres') and private.context_uuid('app.workspace_id') is null then
     return coalesce(new, old);
   end if;
 
@@ -198,7 +198,7 @@ declare
   v_has_valid_invitation boolean;
 begin
   -- Skip enforcement if maintenance is run by migration administrator without tenant context
-  if current_user = 'app_migrations' and private.context_uuid('app.organization_id') is null then
+  if current_user in ('app_migrations', 'postgres') and private.context_uuid('app.organization_id') is null then
     return coalesce(new, old);
   end if;
 
