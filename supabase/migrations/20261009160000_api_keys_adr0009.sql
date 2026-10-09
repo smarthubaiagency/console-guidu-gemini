@@ -27,9 +27,16 @@ alter table public.api_keys
 -- ----------------------------------------------------------------------------
 -- 2. Convert Synthetic / Legacy Data
 -- ----------------------------------------------------------------------------
+-- Temporarily lift FORCE RLS so table owner app_migrations can convert synthetic rows
+alter table public.api_keys no force row level security;
+alter table public.api_keys disable row level security;
+
 update public.api_keys
 set scopes = array['workspace:read', 'modules:read']::text[]
 where scopes = array['read']::text[] or 'read' = any(scopes);
+
+alter table public.api_keys enable row level security;
+alter table public.api_keys force row level security;
 
 -- ----------------------------------------------------------------------------
 -- 3. Update Column Default Scopes
@@ -117,10 +124,10 @@ begin
 end;
 $$;
 
-alter function private.resolve_api_key(text) owner to app_rls_helper;
-
 revoke all on function private.resolve_api_key(text) from public, anon, authenticated;
 grant execute on function private.resolve_api_key(text) to app_runtime;
+
+alter function private.resolve_api_key(text) owner to app_rls_helper;
 
 -- ----------------------------------------------------------------------------
 -- 7. Table Ownership and RLS Enforcement
