@@ -40,6 +40,7 @@ model Organization {
   members     OrganizationMember[]
   workspaces  Workspace[]
   invitations Invitation[]
+  auditEvents AuditEvent[]
 
   @@map("organizations")
 }
@@ -73,6 +74,7 @@ model Workspace {
   agentConfigs   AgentConfig[]
   agentSessions  AgentSession[]
   agentMessages  AgentMessage[]
+  auditEvents    AuditEvent[]
 
   @@unique([id, organizationId])
   @@map("workspaces")
@@ -217,4 +219,29 @@ model AgentMessage {
   session           AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("agent_messages")
+}
+
+model AuditEvent {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  occurredAt         DateTime      @default(now()) @map("occurred_at") @db.Timestamptz()
+  organizationId     String?       @map("organization_id") @db.Uuid
+  workspaceId        String?       @map("workspace_id") @db.Uuid
+  actorUserId        String?       @map("actor_user_id") @db.Uuid
+  actorPrincipalType String        @map("actor_principal_type")
+  representedUserId  String?       @map("represented_user_id") @db.Uuid
+  origin             String
+  clientId           String?       @map("client_id")
+  grantId            String?       @map("grant_id") @db.Uuid
+  action             String
+  resourceType       String        @map("resource_type")
+  resourceId         String?       @map("resource_id")
+  result             String
+  requestId          String?       @map("request_id")
+  metadata           Json          @default("{}")
+  organization       Organization? @relation(fields: [organizationId], references: [id])
+  workspace          Workspace?    @relation(fields: [workspaceId, organizationId], references: [id, organizationId])
+
+  @@index([workspaceId, occurredAt(sort: Desc)])
+  @@index([organizationId, occurredAt(sort: Desc)])
+  @@map("audit_events")
 }

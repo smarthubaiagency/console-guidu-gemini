@@ -33,6 +33,7 @@ import {
   requireOrganizationPermission,
   requireWorkspacePermission,
 } from "../permissions/guard";
+import { recordAudit } from "../audit/record";
 import { appConfig } from "../config/app";
 import type { Identity } from "../auth/identity";
 import {
@@ -202,6 +203,28 @@ export async function createInvitation(
     },
   });
 
+  const emailDomain = email.includes("@") ? email.split("@")[1] : "unknown";
+  await recordAudit(
+    tx,
+    {
+      userId: actorId,
+      organizationId,
+      workspaceId: workspaceId ?? "",
+    },
+    {
+      action: "invitations.created",
+      resourceType: "invitation",
+      resourceId: invitation.id,
+      result: "success",
+      origin: "app",
+      metadata: {
+        role: invitation.role,
+        emailDomain,
+        target: workspaceId ? "workspace" : "organization",
+      },
+    },
+  );
+
   const inviteUrl = `${appConfig.url}/invite/${rawToken}`;
   return { invitation, rawToken, inviteUrl };
 }
@@ -252,10 +275,28 @@ export async function revokeInvitation(
     Permissions.ORGANIZATION_MEMBERS_MANAGE,
   );
 
-  return tx.invitation.update({
+  const revoked = await tx.invitation.update({
     where: { id: invitationId },
     data: { status: "revoked" },
   });
+
+  await recordAudit(
+    tx,
+    {
+      userId: actorId,
+      organizationId,
+      workspaceId: "",
+    },
+    {
+      action: "invitations.revoked",
+      resourceType: "invitation",
+      resourceId: invitationId,
+      result: "success",
+      origin: "app",
+    },
+  );
+
+  return revoked;
 }
 
 /**
@@ -432,6 +473,25 @@ export async function acceptInvitation(
           acceptedByUserId: identity.userId,
         },
       });
+
+      await recordAudit(
+        tx,
+        {
+          userId: identity.userId,
+          organizationId,
+          workspaceId: workspaceId ?? "",
+        },
+        {
+          action: "invitations.accepted",
+          resourceType: "invitation",
+          resourceId: invitation.id,
+          result: "success",
+          origin: "app",
+          metadata: {
+            role: invitation.role,
+          },
+        },
+      );
 
       return {
         invitation: acceptedInvitation,

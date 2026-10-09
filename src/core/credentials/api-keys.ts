@@ -29,6 +29,7 @@ import {
   PermissionDeniedError,
   requireWorkspacePermission,
 } from "@/core/permissions/guard";
+import { recordAudit, recordAuditDenied } from "@/core/audit/record";
 
 export const API_KEY_PREFIX = "gdu_live_";
 
@@ -105,6 +106,19 @@ export async function createApiKey(
       scopes,
       status: "active",
       expiresAt,
+    },
+  });
+
+  await recordAudit(tx, ctx, {
+    action: "api_keys.created",
+    resourceType: "api_key",
+    resourceId: record.id,
+    result: "success",
+    origin: "app",
+    metadata: {
+      scopes: record.scopes,
+      expiresAt: record.expiresAt.toISOString(),
+      prefix: record.prefix,
     },
   });
 
@@ -215,6 +229,11 @@ export async function revokeApiKey(
     }
   } else {
     if (!hasRevokeAny) {
+      await recordAuditDenied(ctx, {
+        action: Permissions.API_KEYS_REVOKE_ANY,
+        resourceType: "api_key",
+        resourceId: candidate.id,
+      });
       throw new PermissionDeniedError();
     }
   }
@@ -222,6 +241,17 @@ export async function revokeApiKey(
   const updated = await tx.apiKey.update({
     where: { id: candidate.id },
     data: { status: "revoked" },
+  });
+
+  await recordAudit(tx, ctx, {
+    action: "api_keys.revoked",
+    resourceType: "api_key",
+    resourceId: updated.id,
+    result: "success",
+    origin: "app",
+    metadata: {
+      prefix: updated.prefix,
+    },
   });
 
   return {

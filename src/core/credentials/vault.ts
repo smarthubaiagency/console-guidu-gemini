@@ -20,6 +20,7 @@ import "server-only";
 import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
 import { Permissions } from "@/core/permissions/catalog";
 import { requireWorkspacePermission } from "@/core/permissions/guard";
+import { recordAudit } from "@/core/audit/record";
 import { encryptSecret, decryptSecret } from "./crypto";
 
 export type AIProvider = "openai" | "anthropic" | "gemini";
@@ -100,6 +101,19 @@ export async function registerCredential(
     },
   });
 
+  await recordAudit(tx, ctx, {
+    action: "credentials.created",
+    resourceType: "credential",
+    resourceId: record.id,
+    result: "success",
+    origin: "app",
+    metadata: {
+      provider: record.provider,
+      purpose: record.purpose,
+      maskedValue: record.maskedValue,
+    },
+  });
+
   return {
     id: record.id,
     organizationId: record.organizationId,
@@ -166,6 +180,19 @@ export async function revokeCredential(
   const updated = await tx.credential.update({
     where: { id: candidate.id },
     data: { status: "revoked" },
+  });
+
+  await recordAudit(tx, ctx, {
+    action: "credentials.revoked",
+    resourceType: "credential",
+    resourceId: updated.id,
+    result: "success",
+    origin: "app",
+    metadata: {
+      provider: updated.provider,
+      purpose: updated.purpose,
+      maskedValue: updated.maskedValue,
+    },
   });
 
   return {

@@ -27,6 +27,7 @@ import {
   WorkspaceRole,
   WorkspaceRoles,
 } from "./roles";
+import { recordAuditDenied } from "@/core/audit/record";
 
 /**
  * Domain error thrown when an actor lacks required permissions or an active membership.
@@ -46,6 +47,29 @@ export function isPermissionDeniedError(
   error: unknown,
 ): error is PermissionDeniedError {
   return error instanceof PermissionDeniedError;
+}
+
+async function handleCriticalPermissionDenial(
+  ctx: RequestContext,
+  permission: Permission,
+): Promise<void> {
+  if (
+    permission === Permissions.CREDENTIALS_MANAGE ||
+    permission === Permissions.API_KEYS_REVOKE_ANY ||
+    permission === Permissions.WORKSPACE_MEMBERS_MANAGE
+  ) {
+    const resourceType =
+      permission === Permissions.CREDENTIALS_MANAGE
+        ? "credential"
+        : permission === Permissions.API_KEYS_REVOKE_ANY
+          ? "api_key"
+          : "workspace_member";
+
+    await recordAuditDenied(ctx, {
+      action: permission,
+      resourceType,
+    });
+  }
 }
 
 /**
@@ -102,11 +126,13 @@ export async function requireWorkspacePermission(
       return { workspaceRole: wsRole, organizationRole: orgRole };
     }
 
+    await handleCriticalPermissionDenial(ctx, permission);
     throw new PermissionDeniedError();
   }
 
   // If workspace membership exists but is inactive, deny immediately (AC03)
   if (wsMember && !isWsActive) {
+    await handleCriticalPermissionDenial(ctx, permission);
     throw new PermissionDeniedError();
   }
 
@@ -124,6 +150,7 @@ export async function requireWorkspacePermission(
   }
 
   // Otherwise, user lacks active membership in this workspace
+  await handleCriticalPermissionDenial(ctx, permission);
   throw new PermissionDeniedError();
 }
 
