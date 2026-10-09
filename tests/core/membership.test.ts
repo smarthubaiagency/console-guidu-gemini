@@ -591,5 +591,18 @@ describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requi
         });
       });
     });
+
+    it("refuses to remove the sole active workspace owner (isSelf)", async () => {
+      await withContext(prisma, ownerContext, async (tx) => {
+        await expect(
+          removeWorkspaceMember(tx, {
+            workspaceId: fixtures.workspaceId,
+            organizationId: fixtures.orgId,
+            actorId: fixtures.ownerId,
+            targetUserId: fixtures.ownerId,
+          }),
+        ).rejects.toThrow(LastOwnerCannotBeRemovedError);
+      });
+    });
   });
 });

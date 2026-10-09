@@ -17,10 +17,15 @@ import {
   canManageWorkspaceMember,
   OrganizationRole,
   WorkspaceRole,
+  WorkspaceRoles,
 } from "../permissions/roles";
 import { Permissions } from "../permissions/catalog";
 import { requireWorkspacePermission } from "../permissions/guard";
-import { InsufficientRoleError, MemberNotFoundError } from "../organizations/errors";
+import {
+  InsufficientRoleError,
+  LastOwnerCannotBeRemovedError,
+  MemberNotFoundError,
+} from "../organizations/errors";
 
 export type WorkspaceMemberItem = {
   workspaceId: string;
@@ -149,15 +154,46 @@ export async function updateWorkspaceMemberRole(
     throw new InsufficientRoleError("assign_workspace_role", newRole);
   }
 
-  return tx.workspaceMember.update({
-    where: {
-      workspaceId_userId: {
+  // 4. Invariant AC04: Cannot demote the last active owner of a workspace
+  if (
+    targetRole === WorkspaceRoles.OWNER &&
+    target.status === "active" &&
+    newRole !== WorkspaceRoles.OWNER
+  ) {
+    const activeOwnerCount = await tx.workspaceMember.count({
+      where: {
         workspaceId,
-        userId: targetUserId,
+        role: WorkspaceRoles.OWNER,
+        status: "active",
       },
-    },
-    data: { role: newRole },
-  });
+    });
+
+    if (activeOwnerCount <= 1) {
+      throw new LastOwnerCannotBeRemovedError(workspaceId);
+    }
+  }
+
+  try {
+    return await tx.workspaceMember.update({
+      where: {
+        workspaceId_userId: {
+          workspaceId,
+          userId: targetUserId,
+        },
+      },
+      data: { role: newRole },
+    });
+  } catch (err: unknown) {
+    if (
+      err instanceof Error &&
+      (err.message.includes("last active owner") ||
+        err.message.includes("P0001") ||
+        err.message.includes("Cannot remove, revoke or demote the last active owner"))
+    ) {
+      throw new LastOwnerCannotBeRemovedError(workspaceId);
+    }
+    throw err;
+  }
 }
 
 /**
@@ -214,13 +250,40 @@ export async function removeWorkspaceMember(
     throw new InsufficientRoleError("remove_workspace_member", "workspace owner");
   }
 
-  // 4. Remove workspace membership
-  await tx.workspaceMember.delete({
-    where: {
-      workspaceId_userId: {
+  // 4. Invariant AC04: Cannot remove the last active owner of a workspace (even if self-removing)
+  if (targetRole === WorkspaceRoles.OWNER && target.status === "active") {
+    const activeOwnerCount = await tx.workspaceMember.count({
+      where: {
         workspaceId,
-        userId: targetUserId,
+        role: WorkspaceRoles.OWNER,
+        status: "active",
       },
-    },
-  });
+    });
+
+    if (activeOwnerCount <= 1) {
+      throw new LastOwnerCannotBeRemovedError(workspaceId);
+    }
+  }
+
+  // 5. Remove workspace membership
+  try {
+    await tx.workspaceMember.delete({
+      where: {
+        workspaceId_userId: {
+          workspaceId,
+          userId: targetUserId,
+        },
+      },
+    });
+  } catch (err: unknown) {
+    if (
+      err instanceof Error &&
+      (err.message.includes("last active owner") ||
+        err.message.includes("P0001") ||
+        err.message.includes("Cannot remove, revoke or demote the last active owner"))
+    ) {
+      throw new LastOwnerCannotBeRemovedError(workspaceId);
+    }
+    throw err;
+  }
 }

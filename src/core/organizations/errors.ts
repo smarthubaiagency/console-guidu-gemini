@@ -12,9 +12,9 @@
 
 export class LastOwnerCannotBeRemovedError extends Error {
   readonly code = "LAST_OWNER_CANNOT_BE_REMOVED";
-  constructor(organizationId: string) {
+  constructor(entityId: string) {
     super(
-      `Cannot remove, demote or revoke the last active owner of organization ${organizationId} (AC04)`,
+      `Cannot remove, demote or revoke the last active owner of organization or workspace ${entityId} (AC04)`,
     );
     this.name = "LastOwnerCannotBeRemovedError";
   }
