@@ -8,6 +8,10 @@ export default defineConfig({
     },
   },
   test: {
+    env: {
+      ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      ENCRYPTION_KEY_ID: "k1",
+    },
     projects: [
       {
         test: {

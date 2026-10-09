@@ -7,6 +7,7 @@ import { AUTH_MESSAGES, type AuthFormState } from "@/core/auth/form-state";
 import { provisionIdentity } from "@/core/auth/identity";
 import { safeInternalPath } from "@/core/auth/redirects";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AppError, toSafeError } from "@/shared/errors";
 
 const SignInInput = z.object({
   email: z.email().trim(),
@@ -24,7 +25,15 @@ export async function signInWithPassword(
     next: formData.get("next") ?? undefined,
   });
 
-  if (!parsed.success) return { error: AUTH_MESSAGES.invalidInput };
+  if (!parsed.success) {
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: AUTH_MESSAGES.invalidInput,
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+  }
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword({
@@ -34,7 +43,15 @@ export async function signInWithPassword(
 
   // One message for wrong password, unknown e-mail and unconfirmed e-mail: the
   // form must not become an account-existence oracle.
-  if (error) return { error: AUTH_MESSAGES.invalidCredentials };
+  if (error) {
+    const safe = toSafeError(
+      new AppError({
+        code: "unauthenticated",
+        safeMessage: AUTH_MESSAGES.invalidCredentials,
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+  }
 
   const { decision } = await provisionIdentity();
 

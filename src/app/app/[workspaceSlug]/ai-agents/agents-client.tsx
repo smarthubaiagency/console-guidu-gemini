@@ -182,8 +182,8 @@ export function AgentsClient({
           assistantMessage,
         ]);
       }
-    } catch (err: unknown) {
-      setFeedback({ error: err instanceof Error ? err.message : String(err) });
+    } catch {
+      setFeedback({ error: "Falha na comunicação ao enviar mensagem. Tente novamente." });
       setMessages((prev) => prev.filter((m) => m.id !== optimisticUserMsg.id));
     } finally {
       setIsSending(false);

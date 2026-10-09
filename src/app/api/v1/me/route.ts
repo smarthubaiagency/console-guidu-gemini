@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { accessDeniedResponse } from "@/core/auth/api-guard";
 import { requireUser } from "@/core/auth/identity";
+import { apiErrorResponse } from "@/shared/errors";
 
 /**
  * Protected service endpoint for the current identity.
@@ -22,8 +22,6 @@ export async function GET() {
       mfaSatisfied: identity.mfaSatisfied,
     });
   } catch (error) {
-    const denied = accessDeniedResponse(error);
-    if (denied) return denied;
-    throw error;
+    return apiErrorResponse(error);
   }
 }

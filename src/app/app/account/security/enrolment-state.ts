@@ -10,6 +10,8 @@ export type EnrolmentState = Readonly<{
   /** Shared secret, shown once so the user can type it by hand. */
   secret?: string;
   error?: string;
+  code?: string;
+  requestId?: string;
   message?: string;
 }>;
 

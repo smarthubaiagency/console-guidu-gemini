@@ -6,6 +6,7 @@ import { z } from "zod";
 import { AUTH_MESSAGES } from "@/core/auth/form-state";
 import { requireUser } from "@/core/auth/identity";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AppError, toSafeError } from "@/shared/errors";
 
 import type { EnrolmentState } from "./enrolment-state";
 
@@ -22,7 +23,15 @@ export async function startTotpEnrolment(): Promise<EnrolmentState> {
     friendlyName: `TOTP ${new Date().toISOString().slice(0, 10)}`,
   });
 
-  if (error || !data) return { error: AUTH_MESSAGES.unavailable };
+  if (error || !data) {
+    const safe = toSafeError(
+      new AppError({
+        code: "unavailable",
+        safeMessage: AUTH_MESSAGES.unavailable,
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+  }
 
   return {
     factorId: data.id,
@@ -51,8 +60,15 @@ export async function confirmTotpEnrolment(
     code: formData.get("code"),
   });
 
-  if (!parsed.success)
-    return { ...previous, error: AUTH_MESSAGES.invalidMfaCode };
+  if (!parsed.success) {
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: AUTH_MESSAGES.invalidMfaCode,
+      }),
+    );
+    return { ...previous, error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+  }
 
   const supabase = await createSupabaseServerClient();
 
@@ -60,7 +76,13 @@ export async function confirmTotpEnrolment(
     factorId: parsed.data.factorId,
   });
   if (challenge.error || !challenge.data) {
-    return { ...previous, error: AUTH_MESSAGES.invalidMfaCode };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: AUTH_MESSAGES.invalidMfaCode,
+      }),
+    );
+    return { ...previous, error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { error } = await supabase.auth.mfa.verify({
@@ -69,7 +91,15 @@ export async function confirmTotpEnrolment(
     code: parsed.data.code,
   });
 
-  if (error) return { ...previous, error: AUTH_MESSAGES.invalidMfaCode };
+  if (error) {
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: AUTH_MESSAGES.invalidMfaCode,
+      }),
+    );
+    return { ...previous, error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+  }
 
   revalidatePath("/app/account/security");
   return { message: "Verificação em duas etapas ativada." };

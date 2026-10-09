@@ -38,6 +38,8 @@ export default defineConfig({
       DATABASE_URL: DATABASE_URL,
       DIRECT_DATABASE_URL: DATABASE_URL,
       SUPABASE_JWT_SECRET: "e2e-fake-gotrue-secret",
+      ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      ENCRYPTION_KEY_ID: "k1",
     },
   },
 });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { accessDeniedResponse } from "@/core/auth/api-guard";
 import { requireMfa } from "@/core/auth/identity";
+import { apiErrorResponse } from "@/shared/errors";
 
 /**
  * Administrative endpoints authorize independently of the customer API
@@ -17,8 +17,6 @@ export async function GET() {
       mfaSatisfied: identity.mfaSatisfied,
     });
   } catch (error) {
-    const denied = accessDeniedResponse(error);
-    if (denied) return denied;
-    throw error;
+    return apiErrorResponse(error);
   }
 }
