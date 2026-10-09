@@ -99,7 +99,7 @@ export async function startTestDatabase(
   const migrationsDir = path.join(repoRoot, "supabase", "migrations");
   const allFiles = await readdir(migrationsDir);
   const migrationFiles = allFiles
-    .filter((f) => f.startsWith("20261008") && f.endsWith(".sql"))
+    .filter((f) => f >= "20261008" && f.endsWith(".sql"))
     .sort();
 
   for (const file of migrationFiles) {
