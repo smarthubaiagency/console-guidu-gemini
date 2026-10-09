@@ -170,3 +170,42 @@ jobs:
       - name: Supabase logs on failure
         if: failure()
         run: supabase status && docker ps --all
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      APP_NAME: "GUIDU"
+      APP_URL: "http://localhost:3000"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.10.1
+          run_install: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Generate ephemeral encryption key
+        shell: bash
+        run: |
+          enc_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$enc_key"
+          echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
+          echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm generate
+      - name: Install Playwright Chromium with system dependencies
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run Playwright E2E tests
+        run: pnpm test:e2e
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
