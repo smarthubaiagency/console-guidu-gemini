@@ -9,6 +9,10 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
 import { createApiKey, revokeApiKey } from "./api-keys";
+import {
+  WorkspaceScopeSchema,
+  DEFAULT_WORKSPACE_SCOPES,
+} from "@/core/mcp/scopes";
 
 export type ApiKeyActionState = {
   success?: boolean;
@@ -22,7 +26,10 @@ export type ApiKeyActionState = {
 const CreateKeyInput = z.object({
   workspaceSlug: z.string().min(1),
   name: z.string().min(1).max(64),
-  scopes: z.array(z.string()).default(["read"]),
+  scopes: z
+    .array(WorkspaceScopeSchema)
+    .min(1)
+    .default([...DEFAULT_WORKSPACE_SCOPES]),
   expiresInDays: z.coerce.number().min(1).max(365).default(90),
 });
 
@@ -31,7 +38,8 @@ export async function createApiKeyAction(
   formData: FormData,
 ): Promise<ApiKeyActionState> {
   const scopeRaw = formData.getAll("scopes");
-  const scopes = scopeRaw.length > 0 ? (scopeRaw as string[]) : ["read"];
+  const scopes =
+    scopeRaw.length > 0 ? (scopeRaw as string[]) : [...DEFAULT_WORKSPACE_SCOPES];
 
   const parsed = CreateKeyInput.safeParse({
     workspaceSlug: formData.get("workspaceSlug"),
@@ -64,7 +72,7 @@ export async function createApiKeyAction(
       });
     });
 
-    revalidatePath(`/app/${workspaceSlug}/settings/api`);
+    revalidatePath(`/app/${workspaceSlug}/settings/mcp`);
 
     return {
       success: true,
@@ -111,7 +119,7 @@ export async function revokeApiKeyAction(
       return revokeApiKey(tx, context, apiKeyId);
     });
 
-    revalidatePath(`/app/${workspaceSlug}/settings/api`);
+    revalidatePath(`/app/${workspaceSlug}/settings/mcp`);
 
     return {
       success: true,

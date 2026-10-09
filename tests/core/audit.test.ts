@@ -249,7 +249,7 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       const { apiKey, rawKey } = await withContext(prisma, contextOwner, async (tx) => {
         return createApiKey(tx, contextOwner, {
           name: "MCP Claude Assistant Key",
-          scopes: ["read", "proposals:write"],
+          scopes: ["workspace:read", "proposals:write"],
           expiresInDays: 30,
         });
       });
@@ -265,7 +265,7 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       const metadataStr = JSON.stringify(event.metadata);
       expect(metadataStr).not.toContain(rawKey);
       expect(event.metadata.prefix).toBe(apiKey.prefix);
-      expect(event.metadata.scopes).toEqual(["read", "proposals:write"]);
+      expect(event.metadata.scopes).toEqual(["workspace:read", "proposals:write"]);
     });
 
     it("records exactly 1 event on API key revocation", async () => {

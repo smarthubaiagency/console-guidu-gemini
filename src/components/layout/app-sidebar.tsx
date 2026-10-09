@@ -88,7 +88,12 @@ export function AppSidebar({
       icon: KeyRound,
     },
     {
-      title: "Chaves de API",
+      title: "Assistentes MCP",
+      href: `/app/${workspaceSlug}/settings/mcp`,
+      icon: Bot,
+    },
+    {
+      title: "API e Webhooks",
       href: `/app/${workspaceSlug}/settings/api`,
       icon: Code2,
     },

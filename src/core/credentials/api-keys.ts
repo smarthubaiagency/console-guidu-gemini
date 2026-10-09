@@ -30,6 +30,7 @@ import {
   requireWorkspacePermission,
 } from "@/core/permissions/guard";
 import { recordAudit, recordAuditDenied } from "@/core/audit/record";
+import { WorkspaceScopeSchema, DEFAULT_WORKSPACE_SCOPES } from "@/core/mcp/scopes";
 
 export const API_KEY_PREFIX = "gdu_live_";
 
@@ -44,6 +45,7 @@ export type ApiKeyItem = {
   status: "active" | "revoked";
   expiresAt: Date;
   lastUsedAt: Date | null;
+  revokedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -80,16 +82,39 @@ export async function createApiKey(
     expiresInDays?: number;
   },
 ): Promise<{ apiKey: ApiKeyItem; rawKey: string }> {
-  await requireWorkspacePermission(tx, ctx, Permissions.API_KEYS_CREATE_OWN);
+  const { workspaceRole } = await requireWorkspacePermission(
+    tx,
+    ctx,
+    Permissions.API_KEYS_CREATE_OWN,
+  );
 
   const {
     name,
-    scopes = ["read"],
+    scopes = [...DEFAULT_WORKSPACE_SCOPES],
     expiresInDays = 90,
   } = params;
 
   if (!name || name.trim().length === 0) {
     throw new Error("API key name is required");
+  }
+
+  if (expiresInDays <= 0 || expiresInDays > 365) {
+    throw new Error("API key expiration must be between 1 and 365 days");
+  }
+
+  if (!Array.isArray(scopes) || scopes.length === 0) {
+    throw new Error("At least one scope is required");
+  }
+
+  for (const sc of scopes) {
+    const parsed = WorkspaceScopeSchema.safeParse(sc);
+    if (!parsed.success) {
+      throw new Error(`Invalid scope: ${sc}`);
+    }
+  }
+
+  if (workspaceRole === "viewer" && scopes.includes("proposals:write")) {
+    throw new PermissionDeniedError();
   }
 
   const { rawKey, keyHash, prefix } = generateApiKey();
@@ -134,6 +159,7 @@ export async function createApiKey(
       status: record.status as "active" | "revoked",
       expiresAt: record.expiresAt,
       lastUsedAt: record.lastUsedAt,
+      revokedAt: record.revokedAt,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     },
@@ -179,6 +205,7 @@ export async function listApiKeys(
     status: r.status as "active" | "revoked",
     expiresAt: r.expiresAt,
     lastUsedAt: r.lastUsedAt,
+    revokedAt: r.revokedAt,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   }));
@@ -238,9 +265,13 @@ export async function revokeApiKey(
     }
   }
 
+  const now = new Date();
   const updated = await tx.apiKey.update({
     where: { id: candidate.id },
-    data: { status: "revoked" },
+    data: {
+      status: "revoked",
+      revokedAt: now,
+    },
   });
 
   await recordAudit(tx, ctx, {
@@ -265,6 +296,7 @@ export async function revokeApiKey(
     status: updated.status as "active" | "revoked",
     expiresAt: updated.expiresAt,
     lastUsedAt: updated.lastUsedAt,
+    revokedAt: updated.revokedAt,
     createdAt: updated.createdAt,
     updatedAt: updated.updatedAt,
   };
@@ -317,6 +349,7 @@ export async function validateApiKey(
       status: found.status as "active" | "revoked",
       expiresAt: found.expiresAt,
       lastUsedAt: new Date(),
+      revokedAt: found.revokedAt,
       createdAt: found.createdAt,
       updatedAt: found.updatedAt,
     },

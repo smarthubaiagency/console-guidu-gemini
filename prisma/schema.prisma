@@ -151,10 +151,11 @@ model ApiKey {
   name           String
   prefix         String
   keyHash        String    @unique @map("key_hash")
-  scopes         String[]  @default(["read"])
+  scopes         String[]  @default(["workspace:read", "modules:read"])
   status         String    @default("active")
   expiresAt      DateTime  @map("expires_at") @db.Timestamptz()
   lastUsedAt     DateTime? @map("last_used_at") @db.Timestamptz()
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz()
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
   workspace      Workspace @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)

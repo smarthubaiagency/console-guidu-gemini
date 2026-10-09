@@ -4,7 +4,7 @@ export type RequestContext = Readonly<{
   userId: string;
   workspaceId: string;
   organizationId: string;
-  principalType?: "user" | "service";
+  principalType?: "user" | "service" | "api_key";
   grantId?: string | null;
 }>;
 

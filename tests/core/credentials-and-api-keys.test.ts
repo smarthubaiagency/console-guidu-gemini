@@ -26,7 +26,8 @@ import { describeDatabase } from "../prisma-rls/describe-database.js";
 
 const databaseUrl =
   process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
-const requiredVars = { DATABASE_URL: databaseUrl };
+const adminUrl = process.env.MIGRATION_DATABASE_URL ?? process.env.ADMIN_URL;
+const requiredVars = { DATABASE_URL: databaseUrl, ADMIN_URL: adminUrl };
 
 const contextEditorInA = {
   userId: ids.userOrgOnly,
@@ -191,14 +192,14 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
       const result = await withContext(prisma, contextA, async (tx) => {
         return createApiKey(tx, contextA, {
           name: "MCP Client Cursor",
-          scopes: ["read", "mcp:read"],
+          scopes: ["workspace:read", "modules:read"],
           expiresInDays: 60,
         });
       });
 
       expect(result.rawKey.startsWith(API_KEY_PREFIX)).toBe(true);
       expect(result.apiKey.name).toBe("MCP Client Cursor");
-      expect(result.apiKey.scopes).toEqual(["read", "mcp:read"]);
+      expect(result.apiKey.scopes).toEqual(["workspace:read", "modules:read"]);
       expect(result.apiKey.status).toBe("active");
       expect(result.apiKey.userId).toBe(contextA.userId);
 
@@ -218,7 +219,7 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
       const { rawKey, apiKey } = await withContext(prisma, contextA, async (tx) => {
         return createApiKey(tx, contextA, {
           name: "Validation Test Key",
-          scopes: ["read"],
+          scopes: ["workspace:read", "modules:read"],
           expiresInDays: 30,
         });
       });
@@ -247,7 +248,7 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
       const { rawKey, apiKey } = await withContext(prisma, contextA, async (tx) => {
         return createApiKey(tx, contextA, {
           name: "Revocation Key",
-          scopes: ["read"],
+          scopes: ["workspace:read", "modules:read"],
           expiresInDays: 30,
         });
       });
@@ -270,7 +271,7 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
       const { apiKey } = await withContext(prisma, contextA, async (tx) => {
         return createApiKey(tx, contextA, {
           name: "Isolation Key A",
-          scopes: ["read"],
+          scopes: ["workspace:read", "modules:read"],
         });
       });
 
@@ -279,6 +280,43 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
       });
 
       expect(listB.find((k) => k.id === apiKey.id)).toBeUndefined();
+    });
+
+    it("rejects invalid scopes that violate database check constraint", async () => {
+      await withContext(prisma, contextA, async (tx) => {
+        await expect(
+          createApiKey(tx, contextA, {
+            name: "Invalid Scope Key",
+            scopes: ["read"],
+          }),
+        ).rejects.toThrow();
+
+        await expect(
+          createApiKey(tx, contextA, {
+            name: "Admin Scope Key",
+            scopes: ["admin:customers:read"],
+          }),
+        ).rejects.toThrow();
+
+        await expect(
+          createApiKey(tx, contextA, {
+            name: "Empty Scope Key",
+            scopes: [],
+          }),
+        ).rejects.toThrow();
+      });
+    });
+
+    it("rejects expiration exceeding 365 days", async () => {
+      await withContext(prisma, contextA, async (tx) => {
+        await expect(
+          createApiKey(tx, contextA, {
+            name: "Over-expired Key",
+            scopes: ["workspace:read"],
+            expiresInDays: 400,
+          }),
+        ).rejects.toThrow();
+      });
     });
   });
 
@@ -358,6 +396,7 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
       const adminKey = await withContext(prisma, contextA, async (tx) => {
         return createApiKey(tx, contextA, {
           name: "Admin Key",
+          scopes: ["workspace:read", "modules:read"],
         });
       });
 
@@ -365,6 +404,7 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
       const editorKey = await withContext(prisma, contextEditorInA, async (tx) => {
         return createApiKey(tx, contextEditorInA, {
           name: "Editor Own Key",
+          scopes: ["workspace:read", "modules:read"],
         });
       });
 
@@ -385,6 +425,7 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
       const editorKey2 = await withContext(prisma, contextEditorInA, async (tx) => {
         return createApiKey(tx, contextEditorInA, {
           name: "Editor Key 2",
+          scopes: ["workspace:read", "modules:read"],
         });
       });
 
@@ -398,12 +439,18 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
     it("membro sem read_all lista só as próprias chaves", async () => {
       // Create key as Admin
       await withContext(prisma, contextA, async (tx) => {
-        return createApiKey(tx, contextA, { name: "Admin Key for Listing" });
+        return createApiKey(tx, contextA, {
+          name: "Admin Key for Listing",
+          scopes: ["workspace:read", "modules:read"],
+        });
       });
 
       // Create key as Editor
       const editorKey = await withContext(prisma, contextEditorInA, async (tx) => {
-        return createApiKey(tx, contextEditorInA, { name: "Editor Key for Listing" });
+        return createApiKey(tx, contextEditorInA, {
+          name: "Editor Key for Listing",
+          scopes: ["workspace:read", "modules:read"],
+        });
       });
 
       // Editor (without api_keys.read_all) sees ONLY their own keys
@@ -426,7 +473,10 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
     it("chave de outro workspace responde 'não encontrada'", async () => {
       // Key created in workspace B
       const keyB = await withContext(prisma, contextB, async (tx) => {
-        return createApiKey(tx, contextB, { name: "Workspace B Key" });
+        return createApiKey(tx, contextB, {
+          name: "Workspace B Key",
+          scopes: ["workspace:read", "modules:read"],
+        });
       });
 
       // Calling revokeApiKey from workspace A context with key B id
@@ -440,7 +490,10 @@ describeDatabase("Task 06: AI Providers, BYOK Vault & Platform API Keys (ADR 000
     it("vínculo desativado no meio do teste perde o acesso na chamada seguinte (AC03)", async () => {
       // 1. Editor is active and creates key successfully
       const initialKey = await withContext(prisma, contextEditorInA, async (tx) => {
-        return createApiKey(tx, contextEditorInA, { name: "Active Member Key" });
+        return createApiKey(tx, contextEditorInA, {
+          name: "Active Member Key",
+          scopes: ["workspace:read", "modules:read"],
+        });
       });
       expect(initialKey.apiKey.id).toBeDefined();
 
