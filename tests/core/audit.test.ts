@@ -249,7 +249,7 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       const { apiKey, rawKey } = await withContext(prisma, contextOwner, async (tx) => {
         return createApiKey(tx, contextOwner, {
           name: "MCP Claude Assistant Key",
-          scopes: ["read", "proposals:write"],
+          scopes: ["workspace:read", "proposals:write"],
           expiresInDays: 30,
         });
       });

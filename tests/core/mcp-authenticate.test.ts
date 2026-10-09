@@ -24,7 +24,7 @@ import {
 import { createApiKey, revokeApiKey } from "@/core/credentials/api-keys";
 import { withContext } from "@/lib/prisma/with-context";
 import { describeDatabase } from "../prisma-rls/describe-database.js";
-import { contextA, contextB, ids } from "./fixtures";
+import { contextA, contextB, contextMultiOrgInA } from "./fixtures";
 
 const databaseUrl =
   process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
@@ -113,18 +113,12 @@ describeDatabase(
     });
 
     it("vínculo desativado no workspace bloqueia o próximo uso da chave (AC03)", async () => {
-      const contextEditor = {
-        userId: ids.userOrgOnly,
-        workspaceId: contextA.workspaceId,
-        organizationId: contextA.organizationId,
-      };
-
       // 1. Create key while member is active
       const { rawKey } = await withContext(
         prisma,
-        contextEditor,
+        contextMultiOrgInA,
         async (tx) => {
-          return createApiKey(tx, contextEditor, {
+          return createApiKey(tx, contextMultiOrgInA, {
             name: "Active Member Key",
             scopes: ["workspace:read"],
           });
@@ -133,7 +127,7 @@ describeDatabase(
 
       // Authenticate succeeds
       const auth1 = await authenticateApiKey(prisma, rawKey);
-      expect(auth1.context.userId).toBe(contextEditor.userId);
+      expect(auth1.context.userId).toBe(contextMultiOrgInA.userId);
 
       // 2. Member has status changed to inactive
       await withContext(prisma, contextA, async (tx) => {
@@ -141,7 +135,7 @@ describeDatabase(
           where: {
             workspaceId_userId: {
               workspaceId: contextA.workspaceId,
-              userId: contextEditor.userId,
+              userId: contextMultiOrgInA.userId,
             },
           },
           data: { status: "inactive" },
@@ -159,7 +153,7 @@ describeDatabase(
           where: {
             workspaceId_userId: {
               workspaceId: contextA.workspaceId,
-              userId: contextEditor.userId,
+              userId: contextMultiOrgInA.userId,
             },
           },
           data: { status: "active" },
