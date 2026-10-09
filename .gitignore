@@ -1,11 +1,12 @@
 node_modules/
 .env
+.env.local
+.env*.local
 .env.*
 !.env.example
 coverage/
 dist/
 .claude/
-
 
 /.auth
 /playwright-report
@@ -13,3 +14,10 @@ dist/
 /.next
 
 *.tsbuildinfo
+
+# Repository hygiene & lockfile governance (pnpm only)
+package-lock.json
+yarn.lock
+
+# Supabase CLI ephemeral artifacts (supabase link is prohibited without approval)
+supabase/.temp/
