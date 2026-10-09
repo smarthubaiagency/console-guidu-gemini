@@ -144,6 +144,7 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/membership-seed.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/admin-seed.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/auth/seed.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/audit-seed.sql
 
       - name: SQL policy tests
         run: |

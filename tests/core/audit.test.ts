@@ -15,12 +15,14 @@
  *      in the audit metadata.
  *   5. Queries count(*) and reads from audit_events strictly as `app_migrations` (or admin),
  *      since `app_runtime` has no SELECT privileges.
+ *   6. Uses isolated synthetic fixtures (UUID range e000...) to guarantee no side-effects
+ *      on shared fixtures or other concurrent/subsequent test suites.
  * ============================================================================
  */
 
 import { PrismaClient } from "@prisma/client";
 import pg from "pg";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
@@ -42,7 +44,6 @@ import {
 } from "@/core/organizations/members";
 import { PermissionDeniedError } from "@/core/permissions/guard";
 import { withContext } from "@/lib/prisma/with-context";
-import { contextA, ids } from "./fixtures";
 import { describeDatabase } from "../prisma-rls/describe-database";
 
 const pooledUrl = process.env.DATABASE_URL;
@@ -53,6 +54,34 @@ const requiredVars = {
   DATABASE_URL: pooledUrl,
   DIRECT_DATABASE_URL: directUrl,
   ADMIN_URL: adminUrl,
+};
+
+// Synthetic fixtures defined in tests/core/audit-seed.sql (UUID range e000...)
+const auditFixtures = {
+  orgId: "e0000000-0000-4000-8000-000000000010",
+  workspaceId: "e0000000-0000-4000-8000-000000000011",
+  ownerId: "e0000000-0000-4000-8000-000000000031",
+  editorId: "e0000000-0000-4000-8000-000000000032",
+  viewerId: "e0000000-0000-4000-8000-000000000033",
+  targetId: "e0000000-0000-4000-8000-000000000034",
+};
+
+const contextOwner = {
+  userId: auditFixtures.ownerId,
+  organizationId: auditFixtures.orgId,
+  workspaceId: auditFixtures.workspaceId,
+};
+
+const contextEditor = {
+  userId: auditFixtures.editorId,
+  organizationId: auditFixtures.orgId,
+  workspaceId: auditFixtures.workspaceId,
+};
+
+const contextViewer = {
+  userId: auditFixtures.viewerId,
+  organizationId: auditFixtures.orgId,
+  workspaceId: auditFixtures.workspaceId,
 };
 
 describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 & ADR 0009)", requiredVars, () => {
@@ -73,6 +102,59 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
             : { rejectUnauthorized: false },
       });
       await adminClient.connect();
+
+      // Ensure seed fixtures are initialized
+      await adminClient.query(`
+        insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+        values
+          ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000031', 'authenticated', 'authenticated', 'audit-owner@test.guidu.co', '', now(), '{}', '{}', now(), now()),
+          ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000032', 'authenticated', 'authenticated', 'audit-editor@test.guidu.co', '', now(), '{}', '{}', now(), now()),
+          ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000033', 'authenticated', 'authenticated', 'audit-viewer@test.guidu.co', '', now(), '{}', '{}', now(), now()),
+          ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000034', 'authenticated', 'authenticated', 'audit-target@test.guidu.co', '', now(), '{}', '{}', now(), now())
+        on conflict (id) do nothing;
+
+        insert into public.profiles (id, full_name, status) values
+          ('e0000000-0000-4000-8000-000000000031', 'Audit Test Owner', 'active'),
+          ('e0000000-0000-4000-8000-000000000032', 'Audit Test Editor', 'active'),
+          ('e0000000-0000-4000-8000-000000000033', 'Audit Test Viewer', 'active'),
+          ('e0000000-0000-4000-8000-000000000034', 'Audit Target Member', 'active')
+        on conflict (id) do nothing;
+
+        insert into public.organizations (id, name, status, max_seats) values
+          ('e0000000-0000-4000-8000-000000000010', 'Organization Audit Test', 'active', 50)
+        on conflict (id) do update set max_seats = 50;
+
+        insert into public.workspaces (id, organization_id, slug, name, status) values
+          ('e0000000-0000-4000-8000-000000000011', 'e0000000-0000-4000-8000-000000000010', 'workspace-audit-test', 'Workspace Audit Test', 'active')
+        on conflict (id) do nothing;
+
+        insert into public.organization_members (organization_id, user_id, role, status) values
+          ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000031', 'owner', 'active'),
+          ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000032', 'admin', 'active'),
+          ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000033', 'admin', 'active'),
+          ('e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000034', 'admin', 'active')
+        on conflict (organization_id, user_id) do update set role = excluded.role, status = 'active';
+
+        insert into public.workspace_members (workspace_id, organization_id, user_id, role, status) values
+          ('e0000000-0000-4000-8000-000000000011', 'e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000031', 'owner', 'active'),
+          ('e0000000-0000-4000-8000-000000000011', 'e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000032', 'editor', 'active'),
+          ('e0000000-0000-4000-8000-000000000011', 'e0000000-0000-4000-8000-000000000010', 'e0000000-0000-4000-8000-000000000033', 'viewer', 'active')
+        on conflict (workspace_id, user_id) do update set role = excluded.role, status = 'active';
+      `);
+    }
+  });
+
+  beforeEach(async () => {
+    if (adminClient) {
+      // Ensure target user is reset to viewer in org and not in workspace before each test
+      await adminClient.query(`
+        delete from public.workspace_members
+        where workspace_id = $1 and user_id = $2;
+
+        insert into public.organization_members (organization_id, user_id, role, status)
+        values ($3, $2, 'viewer', 'active')
+        on conflict (organization_id, user_id) do update set role = 'viewer', status = 'active';
+      `, [auditFixtures.workspaceId, auditFixtures.targetId, auditFixtures.orgId]);
     }
   });
 
@@ -86,8 +168,8 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
   async function getAuditEventCount(action: string, result = "success"): Promise<number> {
     if (!adminClient) throw new Error("adminClient is required to count audit_events");
     const res = await adminClient.query<{ count: string }>(
-      "select count(*)::text as count from public.audit_events where action = $1 and result = $2",
-      [action, result],
+      "select count(*)::text as count from public.audit_events where action = $1 and result = $2 and organization_id = $3",
+      [action, result, auditFixtures.orgId],
     );
     return parseInt(res.rows[0]?.count ?? "0", 10);
   }
@@ -95,8 +177,8 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
   async function getLatestAuditEvent(action: string, result = "success") {
     if (!adminClient) throw new Error("adminClient is required to inspect audit_events");
     const res = await adminClient.query(
-      "select * from public.audit_events where action = $1 and result = $2 order by occurred_at desc limit 1",
-      [action, result],
+      "select * from public.audit_events where action = $1 and result = $2 and organization_id = $3 order by occurred_at desc limit 1",
+      [action, result, auditFixtures.orgId],
     );
     return res.rows[0];
   }
@@ -106,8 +188,8 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       const initialCount = await getAuditEventCount("credentials.created");
       const rawSecret = "sk-super-secret-openai-api-key-999888";
 
-      const created = await withContext(prisma, contextA, async (tx) => {
-        return registerCredential(tx, contextA, {
+      const created = await withContext(prisma, contextOwner, async (tx) => {
+        return registerCredential(tx, contextOwner, {
           provider: "openai",
           label: "Test OpenAI Key",
           secret: rawSecret,
@@ -121,9 +203,9 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       const event = await getLatestAuditEvent("credentials.created");
       expect(event.resource_type).toBe("credential");
       expect(event.resource_id).toBe(created.id);
-      expect(event.actor_user_id).toBe(contextA.userId);
-      expect(event.workspace_id).toBe(contextA.workspaceId);
-      expect(event.organization_id).toBe(contextA.organizationId);
+      expect(event.actor_user_id).toBe(contextOwner.userId);
+      expect(event.workspace_id).toBe(contextOwner.workspaceId);
+      expect(event.organization_id).toBe(contextOwner.organizationId);
 
       // Verify metadata strictly masks value and NEVER leaks raw secret
       const metadataStr = JSON.stringify(event.metadata);
@@ -135,8 +217,8 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
     it("records exactly 1 event on credential revocation", async () => {
       // Create first
-      const created = await withContext(prisma, contextA, async (tx) => {
-        return registerCredential(tx, contextA, {
+      const created = await withContext(prisma, contextOwner, async (tx) => {
+        return registerCredential(tx, contextOwner, {
           provider: "anthropic",
           label: "Revocable Anthropic Key",
           secret: "sk-ant-temporary-secret-key-111222",
@@ -145,8 +227,8 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
       const initialCount = await getAuditEventCount("credentials.revoked");
 
-      await withContext(prisma, contextA, async (tx) => {
-        return revokeCredential(tx, contextA, created.id);
+      await withContext(prisma, contextOwner, async (tx) => {
+        return revokeCredential(tx, contextOwner, created.id);
       });
 
       const newCount = await getAuditEventCount("credentials.revoked");
@@ -162,8 +244,8 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
     it("records exactly 1 event on API key creation without exposing raw key", async () => {
       const initialCount = await getAuditEventCount("api_keys.created");
 
-      const { apiKey, rawKey } = await withContext(prisma, contextA, async (tx) => {
-        return createApiKey(tx, contextA, {
+      const { apiKey, rawKey } = await withContext(prisma, contextOwner, async (tx) => {
+        return createApiKey(tx, contextOwner, {
           name: "MCP Claude Assistant Key",
           scopes: ["read", "proposals:write"],
           expiresInDays: 30,
@@ -185,16 +267,16 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
     });
 
     it("records exactly 1 event on API key revocation", async () => {
-      const { apiKey } = await withContext(prisma, contextA, async (tx) => {
-        return createApiKey(tx, contextA, {
+      const { apiKey } = await withContext(prisma, contextOwner, async (tx) => {
+        return createApiKey(tx, contextOwner, {
           name: "Temporary API Key",
         });
       });
 
       const initialCount = await getAuditEventCount("api_keys.revoked");
 
-      await withContext(prisma, contextA, async (tx) => {
-        return revokeApiKey(tx, contextA, apiKey.id);
+      await withContext(prisma, contextOwner, async (tx) => {
+        return revokeApiKey(tx, contextOwner, apiKey.id);
       });
 
       const newCount = await getAuditEventCount("api_keys.revoked");
@@ -211,13 +293,13 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       const initialCount = await getAuditEventCount("invitations.created");
       const candidateEmail = `audit_invite_${Date.now()}@guidu-partner.com`;
 
-      const result = await withContext(prisma, contextA, async (tx) => {
+      const result = await withContext(prisma, contextOwner, async (tx) => {
         return createInvitation(tx, {
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           email: candidateEmail,
           role: "viewer",
-          workspaceId: contextA.workspaceId,
+          workspaceId: contextOwner.workspaceId,
         });
       });
 
@@ -237,22 +319,22 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
     it("records exactly 1 event on invitation revocation", async () => {
       const candidateEmail = `revoke_audit_${Date.now()}@guidu-corp.com`;
-      const created = await withContext(prisma, contextA, async (tx) => {
+      const created = await withContext(prisma, contextOwner, async (tx) => {
         return createInvitation(tx, {
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           email: candidateEmail,
           role: "viewer",
-          workspaceId: contextA.workspaceId,
+          workspaceId: contextOwner.workspaceId,
         });
       });
 
       const initialCount = await getAuditEventCount("invitations.revoked");
 
-      await withContext(prisma, contextA, async (tx) => {
+      await withContext(prisma, contextOwner, async (tx) => {
         return revokeInvitation(tx, {
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           invitationId: created.invitation.id,
         });
       });
@@ -262,16 +344,16 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
     });
 
     it("records exactly 1 event on invitation acceptance", async () => {
-      const targetUser = ids.userOrgOnly;
-      const candidateEmail = "org_only_user@example.com";
+      const targetUser = auditFixtures.targetId;
+      const candidateEmail = "audit-target@test.guidu.co";
 
-      const created = await withContext(prisma, contextA, async (tx) => {
+      const created = await withContext(prisma, contextOwner, async (tx) => {
         return createInvitation(tx, {
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           email: candidateEmail,
           role: "viewer",
-          workspaceId: contextA.workspaceId,
+          workspaceId: contextOwner.workspaceId,
         });
       });
 
@@ -286,7 +368,7 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
           mfaSatisfied: false,
           profile: {
             id: targetUser,
-            fullName: "Org Only Member",
+            fullName: "Audit Target Member",
             status: "active",
             statusReason: null,
             lastSignInAt: null,
@@ -305,14 +387,14 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
   describe("Membership Audit Trail (role_changed & removed)", () => {
     it("records workspace_members.role_changed and workspace_members.removed", async () => {
-      const targetUser = ids.userOrgOnly;
+      const targetUser = auditFixtures.targetId;
 
-      // Ensure membership exists in workspace A
-      await withContext(prisma, contextA, async (tx) => {
+      // Ensure membership exists in workspace
+      await withContext(prisma, contextOwner, async (tx) => {
         await addWorkspaceMember(tx, {
-          workspaceId: contextA.workspaceId,
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          workspaceId: contextOwner.workspaceId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           targetUserId: targetUser,
           role: "viewer",
         });
@@ -321,11 +403,11 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       // 1. Update role
       const initialRoleChangedCount = await getAuditEventCount("workspace_members.role_changed");
 
-      await withContext(prisma, contextA, async (tx) => {
+      await withContext(prisma, contextOwner, async (tx) => {
         return updateWorkspaceMemberRole(tx, {
-          workspaceId: contextA.workspaceId,
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          workspaceId: contextOwner.workspaceId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           targetUserId: targetUser,
           newRole: "editor",
         });
@@ -342,11 +424,11 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       // 2. Remove workspace member
       const initialRemovedCount = await getAuditEventCount("workspace_members.removed");
 
-      await withContext(prisma, contextA, async (tx) => {
+      await withContext(prisma, contextOwner, async (tx) => {
         return removeWorkspaceMember(tx, {
-          workspaceId: contextA.workspaceId,
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          workspaceId: contextOwner.workspaceId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           targetUserId: targetUser,
         });
       });
@@ -361,12 +443,12 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
     it("records organization_members.role_changed", async () => {
       const initialCount = await getAuditEventCount("organization_members.role_changed");
-      const targetUser = ids.userMultiOrg;
+      const targetUser = auditFixtures.targetId;
 
-      await withContext(prisma, contextA, async (tx) => {
+      await withContext(prisma, contextOwner, async (tx) => {
         return updateOrganizationMemberRole(tx, {
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           targetUserId: targetUser,
           newRole: "admin",
         });
@@ -382,12 +464,12 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
     it("records organization_members.removed", async () => {
       const initialCount = await getAuditEventCount("organization_members.removed");
-      const targetUser = ids.userOrgOnly;
+      const targetUser = auditFixtures.targetId;
 
-      await withContext(prisma, contextA, async (tx) => {
+      await withContext(prisma, contextOwner, async (tx) => {
         return removeOrganizationMember(tx, {
-          organizationId: contextA.organizationId,
-          actorId: contextA.userId,
+          organizationId: contextOwner.organizationId,
+          actorId: contextOwner.userId,
           targetUserId: targetUser,
         });
       });
@@ -406,8 +488,8 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
       // Attempt to register credential with intentionally failing post-mutation step
       await expect(
-        withContext(prisma, contextA, async (tx) => {
-          await registerCredential(tx, contextA, {
+        withContext(prisma, contextOwner, async (tx) => {
+          await registerCredential(tx, contextOwner, {
             provider: "openai",
             label: "Doomed Credential",
             secret: "sk-doomed-secret-999",
@@ -427,15 +509,9 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
     it("records result = 'denied' in dedicated transaction when credentials.manage is denied", async () => {
       const initialDeniedCount = await getAuditEventCount("credentials.manage", "denied");
 
-      const viewerContext = {
-        userId: ids.userMultiOrg, // viewer in Workspace A
-        workspaceId: contextA.workspaceId,
-        organizationId: contextA.organizationId,
-      };
-
       await expect(
-        withContext(prisma, viewerContext, async (tx) => {
-          return registerCredential(tx, viewerContext, {
+        withContext(prisma, contextViewer, async (tx) => {
+          return registerCredential(tx, contextViewer, {
             provider: "openai",
             label: "Unauthorized Key",
             secret: "sk-unauthorized-secret-000",
@@ -447,7 +523,7 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
       expect(newDeniedCount).toBe(initialDeniedCount + 1);
 
       const event = await getLatestAuditEvent("credentials.manage", "denied");
-      expect(event.actor_user_id).toBe(ids.userMultiOrg);
+      expect(event.actor_user_id).toBe(contextViewer.userId);
       expect(event.result).toBe("denied");
       expect(event.resource_type).toBe("credential");
     });
@@ -455,19 +531,13 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
     it("records result = 'denied' when workspace.members.manage is denied", async () => {
       const initialDeniedCount = await getAuditEventCount("workspace.members.manage", "denied");
 
-      const viewerContext = {
-        userId: ids.userMultiOrg,
-        workspaceId: contextA.workspaceId,
-        organizationId: contextA.organizationId,
-      };
-
       await expect(
-        withContext(prisma, viewerContext, async (tx) => {
+        withContext(prisma, contextViewer, async (tx) => {
           return updateWorkspaceMemberRole(tx, {
-            workspaceId: contextA.workspaceId,
-            organizationId: contextA.organizationId,
-            actorId: ids.userMultiOrg,
-            targetUserId: ids.userA,
+            workspaceId: contextViewer.workspaceId,
+            organizationId: contextViewer.organizationId,
+            actorId: contextViewer.userId,
+            targetUserId: contextOwner.userId,
             newRole: "editor",
           });
         }),
@@ -483,24 +553,20 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
 
     it("records result = 'denied' when api_keys.revoke_any is denied to non-admin", async () => {
       // 1. Create key as owner
-      const { apiKey } = await withContext(prisma, contextA, async (tx) => {
-        return createApiKey(tx, contextA, {
+      const { apiKey } = await withContext(prisma, contextOwner, async (tx) => {
+        return createApiKey(tx, contextOwner, {
           name: "Owner Private Key",
         });
       });
 
       const initialDeniedCount = await getAuditEventCount("api_keys.revoke_any", "denied");
 
-      const editorContext = {
-        userId: ids.userMultiOrg,
-        workspaceId: contextA.workspaceId,
-        organizationId: contextA.organizationId,
-      };
-
-      // 2. Member without revoke_any attempts to revoke owner's key
+      // 2. Member without revoke_any (editor in workspace, admin in org) attempts to revoke owner's key
+      // Wait: in guard, requireWorkspacePermission checks if user is admin in workspace
+      // contextEditor is editor in workspace, not admin.
       await expect(
-        withContext(prisma, editorContext, async (tx) => {
-          return revokeApiKey(tx, editorContext, apiKey.id);
+        withContext(prisma, contextEditor, async (tx) => {
+          return revokeApiKey(tx, contextEditor, apiKey.id);
         }),
       ).rejects.toThrow(PermissionDeniedError);
 
