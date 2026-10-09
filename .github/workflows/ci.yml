@@ -34,6 +34,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+      - name: Generate ephemeral encryption key
+        shell: bash
+        run: |
+          enc_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$enc_key"
+          echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
+          echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm generate
       - run: pnpm typecheck
@@ -58,6 +65,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+      - name: Generate ephemeral encryption key
+        shell: bash
+        run: |
+          enc_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$enc_key"
+          echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
+          echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm generate
 

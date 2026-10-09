@@ -2,6 +2,8 @@
 export type AuthFormState = Readonly<{
   error?: string;
   message?: string;
+  code?: string;
+  requestId?: string;
 }>;
 
 export const EMPTY_FORM_STATE: AuthFormState = {};

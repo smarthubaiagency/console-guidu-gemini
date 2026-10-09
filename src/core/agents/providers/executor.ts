@@ -6,13 +6,26 @@
  * Maintenance Rationale:
  * - Direct HTTP clients for OpenAI, Google Gemini and Anthropic.
  * - Receives decrypted API key in memory on the server only.
- * - Normalizes request/response formats and captures execution latency.
- * - Throws descriptive errors on network/provider failures to allow automatic
- *   fallback execution by the prompt engine.
+ * - Adheres strictly to AC07: secrets are never passed in query strings or logged.
+ *   Gemini uses the `x-goog-api-key` header instead of `?key=`.
+ * - Provider errors throw ProviderError with only provider name and HTTP status;
+ *   response bodies are never leaked in error messages.
  * ============================================================================
  */
 
 import type { AIProvider } from "@/core/credentials/vault";
+
+export class ProviderError extends Error {
+  readonly provider: AIProvider;
+  readonly status: number;
+
+  constructor(provider: AIProvider, status: number) {
+    super(`AI provider ${provider} returned HTTP ${status}`);
+    this.name = "ProviderError";
+    this.provider = provider;
+    this.status = status;
+  }
+}
 
 export type ExecutionResult = {
   reply: string;
@@ -59,8 +72,7 @@ async function executeOpenAI(
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`OpenAI API error [${response.status}]: ${errorBody}`);
+    throw new ProviderError("openai", response.status);
   }
 
   const data = await response.json();
@@ -72,6 +84,7 @@ async function executeOpenAI(
 
 /**
  * Dispatches a prompt to Google Gemini API (v1beta generateContent).
+ * Strictly passes API key in the `x-goog-api-key` header (never in query params).
  */
 async function executeGemini(
   model: string,
@@ -81,7 +94,7 @@ async function executeGemini(
   temperature: number,
 ): Promise<{ reply: string; tokensEstimated: number }> {
   const modelName = model || "gemini-2.5-flash";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
 
   const body: {
     contents: Array<{ role: string; parts: Array<{ text: string }> }>;
@@ -98,13 +111,15 @@ async function executeGemini(
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
     body: JSON.stringify(body),
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Gemini API error [${response.status}]: ${errorBody}`);
+    throw new ProviderError("gemini", response.status);
   }
 
   const data = await response.json();
@@ -145,8 +160,7 @@ async function executeAnthropic(
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Anthropic API error [${response.status}]: ${errorBody}`);
+    throw new ProviderError("anthropic", response.status);
   }
 
   const data = await response.json();

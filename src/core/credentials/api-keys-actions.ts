@@ -7,7 +7,7 @@ import { requireUser } from "@/core/auth/identity";
 import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
-import { isPermissionDeniedError } from "@/core/permissions/guard";
+import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
 import { createApiKey, revokeApiKey } from "./api-keys";
 
 export type ApiKeyActionState = {
@@ -15,6 +15,8 @@ export type ApiKeyActionState = {
   message?: string;
   error?: string;
   rawKey?: string;
+  code?: AppErrorCode;
+  requestId?: string;
 };
 
 const CreateKeyInput = z.object({
@@ -39,7 +41,13 @@ export async function createApiKeyAction(
   });
 
   if (!parsed.success) {
-    return { error: "Dados inválidos para emissão da chave de API." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Dados inválidos para emissão da chave de API.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, name, scopes: finalScopes, expiresInDays } = parsed.data;
@@ -64,11 +72,8 @@ export async function createApiKeyAction(
       rawKey: result.rawKey,
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err)) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const msg = err instanceof Error ? err.message : "Erro ao emitir chave de API.";
-    return { error: msg };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }
 
@@ -87,7 +92,13 @@ export async function revokeApiKeyAction(
   });
 
   if (!parsed.success) {
-    return { error: "Identificador de chave inválido." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Identificador de chave inválido.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, apiKeyId } = parsed.data;
@@ -107,10 +118,7 @@ export async function revokeApiKeyAction(
       message: "Chave de API revogada com sucesso.",
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err)) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const msg = err instanceof Error ? err.message : "Erro ao revogar chave de API.";
-    return { error: msg };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }

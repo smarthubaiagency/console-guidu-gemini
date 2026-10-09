@@ -1,13 +1,13 @@
 /**
  * ============================================================================
  * File: src/core/agents/actions.ts
- * Module: AI Prompt & Agent Execution Server Actions (C07)
+ * Module: AI Prompt & Agent Execution Server Actions (C07 & C10)
  *
  * Maintenance Rationale:
  * - Server actions bridge between client chat UI and backend prompt engine.
  * - All mutations execute securely within `withContext` (ADR 0001).
  * - No decrypted keys or raw payloads ever leak to the browser.
- * - Enforces permission checks and safe denial messaging ("Você não tem permissão para esta ação.").
+ * - Enforces permission checks and safe standardized error contracts via `toSafeError`.
  * ============================================================================
  */
 
@@ -22,7 +22,7 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import type { AIProvider } from "@/core/credentials/vault";
 import { assertModuleAvailable } from "@/core/modules/availability";
-import { isPermissionDeniedError } from "@/core/permissions/guard";
+import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
 import {
   createAgentConfig,
   executeAgentPrompt,
@@ -44,6 +44,8 @@ export type ExecutePromptActionState = {
   success?: boolean;
   result?: PromptExecutionResult;
   error?: string;
+  code?: AppErrorCode;
+  requestId?: string;
 };
 
 /**
@@ -61,7 +63,13 @@ export async function executePromptAction(
   });
 
   if (!parsed.success) {
-    return { error: "Dados inválidos para execução do prompt." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Dados inválidos para execução do agente.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, prompt, agentConfigId, sessionId } = parsed.data;
@@ -86,11 +94,8 @@ export async function executePromptAction(
       result,
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err)) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const message = err instanceof Error ? err.message : "Erro desconhecido ao executar o agente.";
-    return { error: message };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }
 
@@ -110,6 +115,8 @@ export type CreateAgentConfigActionState = {
   success?: boolean;
   config?: AgentConfigData;
   error?: string;
+  code?: AppErrorCode;
+  requestId?: string;
 };
 
 /**
@@ -132,7 +139,13 @@ export async function createAgentConfigAction(
   });
 
   if (!parsed.success) {
-    return { error: "Configurações inválidas para o agente." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Configurações inválidas para o agente.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const {
@@ -172,11 +185,8 @@ export async function createAgentConfigAction(
       config,
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err)) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const message = err instanceof Error ? err.message : "Erro ao cadastrar agente de IA.";
-    return { error: message };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }
 
@@ -190,20 +200,30 @@ export async function loadSessionMessagesAction(
   session: AgentSessionData | null;
   messages: AgentMessageData[];
   error?: string;
+  code?: AppErrorCode;
+  requestId?: string;
 }> {
   try {
     assertModuleAvailable("ai-agents");
     const identity = await requireUser();
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
-    return await withContext(prisma, context, async (tx) => {
+    const result = await withContext(prisma, context, async (tx) => {
       return getSessionWithMessages(tx, context, sessionId);
     });
+
+    return {
+      session: result.session,
+      messages: result.messages,
+    };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err)) {
-      return { session: null, messages: [], error: "Você não tem permissão para esta ação." };
-    }
-    const message = err instanceof Error ? err.message : "Erro ao carregar mensagens da sessão.";
-    return { session: null, messages: [], error: message };
+    const safe = toSafeError(err);
+    return {
+      session: null,
+      messages: [],
+      error: safe.safeMessage,
+      code: safe.code,
+      requestId: safe.requestId,
+    };
   }
 }

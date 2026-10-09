@@ -1,3 +1,15 @@
+/**
+ * ============================================================================
+ * File: src/core/workspaces/team-actions.ts
+ * Module: Workspace & Organization Team Management Server Actions (C07 & C10)
+ *
+ * Maintenance Rationale:
+ * - Server actions bridge between team administration UI and domain services.
+ * - All mutations execute securely within `withContext` (ADR 0001).
+ * - Enforces permission checks and safe standardized error contracts via `toSafeError`.
+ * ============================================================================
+ */
+
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -7,8 +19,7 @@ import { requireUser } from "@/core/auth/identity";
 import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
-import { isPermissionDeniedError } from "@/core/permissions/guard";
-import { InsufficientRoleError } from "@/core/organizations/errors";
+import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
 import {
   createInvitation,
   revokeInvitation,
@@ -25,6 +36,8 @@ export type ActionState = {
   error?: string;
   rawToken?: string;
   inviteUrl?: string;
+  code?: AppErrorCode;
+  requestId?: string;
 };
 
 const InviteInput = z.object({
@@ -44,7 +57,13 @@ export async function createInvitationAction(
   });
 
   if (!parsed.success) {
-    return { error: "Dados inválidos para o convite." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Dados inválidos para o convite.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, email, role } = parsed.data;
@@ -76,12 +95,8 @@ export async function createInvitationAction(
       inviteUrl: result.inviteUrl,
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const errorMsg =
-      err instanceof Error ? err.message : "Erro ao gerar convite.";
-    return { error: errorMsg };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }
 
@@ -100,7 +115,13 @@ export async function revokeInvitationAction(
   });
 
   if (!parsed.success) {
-    return { error: "Identificador de convite inválido." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Identificador de convite inválido.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, invitationId } = parsed.data;
@@ -128,12 +149,8 @@ export async function revokeInvitationAction(
       message: "Convite revogado com sucesso.",
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const errorMsg =
-      err instanceof Error ? err.message : "Erro ao revogar convite.";
-    return { error: errorMsg };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }
 
@@ -154,7 +171,13 @@ export async function updateMemberRoleAction(
   });
 
   if (!parsed.success) {
-    return { error: "Dados inválidos para alteração de papel." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Dados inválidos para alteração de papel.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, targetUserId, newRole } = parsed.data;
@@ -183,12 +206,8 @@ export async function updateMemberRoleAction(
       message: "Papel do membro atualizado com sucesso.",
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const errorMsg =
-      err instanceof Error ? err.message : "Erro ao atualizar papel do membro.";
-    return { error: errorMsg };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }
 
@@ -207,7 +226,13 @@ export async function removeMemberAction(
   });
 
   if (!parsed.success) {
-    return { error: "Identificador de membro inválido." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Identificador de membro inválido.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, targetUserId } = parsed.data;
@@ -235,11 +260,7 @@ export async function removeMemberAction(
       message: "Membro removido da organização com sucesso.",
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const errorMsg =
-      err instanceof Error ? err.message : "Erro ao remover membro.";
-    return { error: errorMsg };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }

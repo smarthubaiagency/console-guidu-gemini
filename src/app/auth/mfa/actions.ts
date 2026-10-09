@@ -8,6 +8,7 @@ import { AUTH_MESSAGES, type AuthFormState } from "@/core/auth/form-state";
 import { requireUser } from "@/core/auth/identity";
 import { safeInternalPath } from "@/core/auth/redirects";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AppError, toSafeError } from "@/shared/errors";
 
 const ChallengeInput = z.object({
   factorId: z.string().min(1),
@@ -33,7 +34,15 @@ export async function verifyMfaChallenge(
     next: formData.get("next") ?? undefined,
   });
 
-  if (!parsed.success) return { error: AUTH_MESSAGES.invalidMfaCode };
+  if (!parsed.success) {
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: AUTH_MESSAGES.invalidMfaCode,
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+  }
 
   // Revalidate the identity's server-side status before touching Auth: the
   // page that rendered this form may have been open since before an
@@ -52,7 +61,13 @@ export async function verifyMfaChallenge(
     factorId: parsed.data.factorId,
   });
   if (challenge.error || !challenge.data) {
-    return { error: AUTH_MESSAGES.invalidMfaCode };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: AUTH_MESSAGES.invalidMfaCode,
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { error } = await supabase.auth.mfa.verify({
@@ -61,7 +76,15 @@ export async function verifyMfaChallenge(
     code: parsed.data.code,
   });
 
-  if (error) return { error: AUTH_MESSAGES.invalidMfaCode };
+  if (error) {
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: AUTH_MESSAGES.invalidMfaCode,
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+  }
 
   redirect(safeInternalPath(parsed.data.next));
 }

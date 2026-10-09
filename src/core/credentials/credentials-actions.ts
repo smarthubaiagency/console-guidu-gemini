@@ -7,7 +7,7 @@ import { requireUser } from "@/core/auth/identity";
 import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
-import { isPermissionDeniedError } from "@/core/permissions/guard";
+import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
 import {
   registerCredential,
   revokeCredential,
@@ -20,6 +20,8 @@ export type CredentialActionState = {
   success?: boolean;
   message?: string;
   error?: string;
+  code?: AppErrorCode;
+  requestId?: string;
 };
 
 const RegisterInput = z.object({
@@ -43,7 +45,13 @@ export async function registerCredentialAction(
   });
 
   if (!parsed.success) {
-    return { error: "Dados inválidos para o registro da credencial." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Dados inválidos para o registro da credencial.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, provider, label, secret, purpose } = parsed.data;
@@ -51,7 +59,13 @@ export async function registerCredentialAction(
   // Validate format
   const formatCheck = validateProviderKeyFormat(provider as AIProvider, secret);
   if (!formatCheck.valid) {
-    return { error: formatCheck.error ?? "Formato de chave inválido." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: formatCheck.error ?? "Formato de chave inválido.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   try {
@@ -74,11 +88,8 @@ export async function registerCredentialAction(
       message: `Credencial '${label}' registrada com sucesso e protegida no cofre.`,
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err)) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const msg = err instanceof Error ? err.message : "Erro ao registrar credencial.";
-    return { error: msg };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }
 
@@ -97,7 +108,13 @@ export async function revokeCredentialAction(
   });
 
   if (!parsed.success) {
-    return { error: "Identificador de credencial inválido." };
+    const safe = toSafeError(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Identificador de credencial inválido.",
+      }),
+    );
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, credentialId } = parsed.data;
@@ -117,10 +134,7 @@ export async function revokeCredentialAction(
       message: "Credencial revogada com sucesso.",
     };
   } catch (err: unknown) {
-    if (isPermissionDeniedError(err)) {
-      return { error: "Você não tem permissão para esta ação." };
-    }
-    const msg = err instanceof Error ? err.message : "Erro ao revogar credencial.";
-    return { error: msg };
+    const safe = toSafeError(err);
+    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 }
