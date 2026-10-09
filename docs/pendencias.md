@@ -5,7 +5,7 @@ Atualizado em 08/10/2026 a partir da seção 26 da Especificação v1.0, das dec
 | Pendência | Estado / próximo responsável |
 | --- | --- |
 | Herança de acesso empresarial | Proposta de concessão explícita; produto confirma. |
-| Planos, preços e cotas | Comercial define números, política de vagas e limites. |
+| Planos, preços e cotas | Comercial define números, política de vagas e limites. Nota: organizations.max_seats usa default técnico 5 até o Comercial definir; não é regra comercial. |
 | Escopo de dados sensíveis | Produto e avaliação jurídica definem. |
 | Infraestrutura e recuperação | Operação valida RPO/RTO e cobertura de backup. |
 | Herança de variáveis de ambiente do Paperclip | Revisar a herança de variáveis de ambiente do Paperclip para os agentes (exposição do banco de controle). |

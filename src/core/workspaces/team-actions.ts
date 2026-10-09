@@ -24,6 +24,7 @@ export type ActionState = {
   message?: string;
   error?: string;
   rawToken?: string;
+  inviteUrl?: string;
 };
 
 const InviteInput = z.object({
@@ -72,6 +73,7 @@ export async function createInvitationAction(
       success: true,
       message: `Convite gerado para ${email}.`,
       rawToken: result.rawToken,
+      inviteUrl: result.inviteUrl,
     };
   } catch (err: unknown) {
     if (isPermissionDeniedError(err) || err instanceof InsufficientRoleError) {

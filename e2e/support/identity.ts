@@ -92,6 +92,24 @@ export async function seedWorkspace(
   return (await response.json()) as { organizationId: string; workspaceId: string };
 }
 
+/** Seeds an invitation in the database and returns rawToken for testing. */
+export async function seedInvitation(
+  request: APIRequestContext,
+  params: {
+    organizationId: string;
+    workspaceId?: string | undefined;
+    email: string;
+    role?: ("owner" | "admin" | "member" | "viewer") | undefined;
+    expiresInHours?: number | undefined;
+  },
+): Promise<{ id: string; rawToken: string }> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-invitation`, {
+    data: params,
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { id: string; rawToken: string };
+}
+
 /** Fills and submits the login form without waiting for the outcome. */
 export async function submitLogin(
   page: Page,

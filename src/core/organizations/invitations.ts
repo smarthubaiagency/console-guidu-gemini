@@ -33,11 +33,15 @@ import {
   requireOrganizationPermission,
   requireWorkspacePermission,
 } from "../permissions/guard";
+import { appConfig } from "../config/app";
+import type { Identity } from "../auth/identity";
 import {
   InsufficientRoleError,
   InvitationAlreadyAcceptedError,
+  InvitationEmailUnconfirmedError,
   InvitationExpiredError,
   InvitationNotFoundError,
+  InvitationRecipientMismatchError,
   InvitationRevokedError,
   SeatLimitExceededError,
 } from "./errors";
@@ -95,7 +99,7 @@ export async function createInvitation(
     workspaceId?: string | null;
     expiresInHours?: number;
   },
-): Promise<{ invitation: InvitationItem; rawToken: string }> {
+): Promise<{ invitation: InvitationItem; rawToken: string; inviteUrl: string }> {
   const {
     organizationId,
     actorId,
@@ -198,7 +202,8 @@ export async function createInvitation(
     },
   });
 
-  return { invitation, rawToken };
+  const inviteUrl = `${appConfig.url}/invite/${rawToken}`;
+  return { invitation, rawToken, inviteUrl };
 }
 
 /**
@@ -257,35 +262,44 @@ export async function revokeInvitation(
  * Atomically accepts an invitation under strict concurrency control (AC06).
  *
  * Guarantees:
- * 1. Token lookup via SHA-256 hash.
- * 2. Expiration check with automatic status transition to 'expired'.
- * 3. Advisory lock on the organization prevents seat oversubscription.
- * 4. Automatic membership creation in organization and/or workspace.
+ * 1. Validates verified recipient identity matching invitation email.
+ * 2. Requires confirmed email address on the identity.
+ * 3. Token lookup via SHA-256 hash.
+ * 4. Expiration check with automatic status transition to 'expired'.
+ * 5. Advisory lock on the organization prevents seat oversubscription.
+ * 6. Automatic membership creation in organization and/or workspace.
  */
 export async function acceptInvitation(
   prisma: PrismaClient,
   params: {
     rawToken: string;
-    userId: string;
+    identity: Identity;
   },
 ): Promise<{
   invitation: InvitationItem;
   organizationId: string;
   workspaceId: string | null;
+  workspaceSlug?: string | null;
 }> {
-  const { rawToken, userId } = params;
+  const { rawToken, identity } = params;
+
+  // 1. Require confirmed email address (Specification §8)
+  if (!identity.emailConfirmedAt) {
+    throw new InvitationEmailUnconfirmedError();
+  }
+
   const tokenHash = hashInvitationToken(rawToken);
 
   return prisma.$transaction(
     async (tx) => {
-      // 1. Establish initial identity & invitation context for RLS
+      // 2. Establish initial identity & invitation context for RLS
       await tx.$executeRaw`
         select
-          set_config('app.user_id', ${userId}, true),
+          set_config('app.user_id', ${identity.userId}, true),
           set_config('app.invitation_token_hash', ${tokenHash}, true)
       `;
 
-      // 2. Query invitation by token hash
+      // 3. Query invitation by token hash
       const invitation = await tx.invitation.findUnique({
         where: { tokenHash },
       });
@@ -294,9 +308,17 @@ export async function acceptInvitation(
         throw new InvitationNotFoundError();
       }
 
+      // 4. Strict recipient verification: invitation email must match identity email (Specification §8)
+      if (
+        !identity.email ||
+        identity.email.trim().toLowerCase() !== invitation.email.trim().toLowerCase()
+      ) {
+        throw new InvitationRecipientMismatchError();
+      }
+
       const { organizationId, workspaceId } = invitation;
 
-      // 3. Set organization and optional workspace context in RLS immediately
+      // 5. Set organization and optional workspace context in RLS immediately
       await tx.$executeRaw`
         select
           set_config('app.organization_id', ${organizationId}, true),
@@ -322,17 +344,17 @@ export async function acceptInvitation(
         throw new InvitationExpiredError();
       }
 
-      // 4. Serialize seat capacity using Postgres transaction advisory lock (AC06)
+      // 6. Serialize seat capacity using Postgres transaction advisory lock (AC06)
       await tx.$executeRaw`
         select pg_advisory_xact_lock(hashtext('org_seats:' || ${organizationId}::text))
       `;
 
-      // 5. Check if user is already an active member of this organization
+      // 7. Check if user is already an active member of this organization
       const existingOrgMember = await tx.organizationMember.findUnique({
         where: {
           organizationId_userId: {
             organizationId,
-            userId,
+            userId: identity.userId,
           },
         },
       });
@@ -346,7 +368,7 @@ export async function acceptInvitation(
         await tx.organizationMember.create({
           data: {
             organizationId,
-            userId,
+            userId: identity.userId,
             role: assignedOrgRole,
             status: "active",
           },
@@ -367,7 +389,8 @@ export async function acceptInvitation(
         }
       }
 
-      // 6. If invitation target is a specific workspace, attach membership
+      // 8. If invitation target is a specific workspace, attach membership
+      let workspaceSlug: string | null = null;
       if (workspaceId) {
         const assignedWsRole = isWorkspaceRole(invitation.role)
           ? (invitation.role as WorkspaceRole)
@@ -377,7 +400,7 @@ export async function acceptInvitation(
           where: {
             workspaceId_userId: {
               workspaceId,
-              userId,
+              userId: identity.userId,
             },
           },
           update: {
@@ -387,20 +410,26 @@ export async function acceptInvitation(
           create: {
             workspaceId,
             organizationId,
-            userId,
+            userId: identity.userId,
             role: assignedWsRole,
             status: "active",
           },
         });
+
+        const ws = await tx.workspace.findUnique({
+          where: { id: workspaceId },
+          select: { slug: true },
+        });
+        workspaceSlug = ws?.slug ?? null;
       }
 
-      // 7. Mark invitation as accepted
+      // 9. Mark invitation as accepted
       const acceptedInvitation = await tx.invitation.update({
         where: { id: invitation.id },
         data: {
           status: "accepted",
           acceptedAt: new Date(),
-          acceptedByUserId: userId,
+          acceptedByUserId: identity.userId,
         },
       });
 
@@ -408,8 +437,116 @@ export async function acceptInvitation(
         invitation: acceptedInvitation,
         organizationId,
         workspaceId,
+        workspaceSlug,
       };
     },
     { maxWait: 30_000, timeout: 30_000 },
   );
 }
+
+export type InvitationDetails = {
+  status:
+    | "valid"
+    | "expired"
+    | "revoked"
+    | "already_accepted"
+    | "recipient_mismatch"
+    | "email_unconfirmed"
+    | "not_found";
+  organizationName?: string;
+  workspaceName?: string | null;
+  role?: string;
+  errorMessage?: string;
+};
+
+/**
+ * Reads invitation details for the /invite/[token] route using RLS context.
+ * Uses policy `organizations_select_by_invitation` with `app.invitation_token_hash`.
+ * Never logs or reveals the invitation token or target email to a mismatched visitor.
+ */
+export async function getInvitationDetails(
+  prisma: PrismaClient,
+  rawToken: string,
+  identity: Identity,
+): Promise<InvitationDetails> {
+  const tokenHash = hashInvitationToken(rawToken);
+
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`
+      select
+        set_config('app.user_id', ${identity.userId}, true),
+        set_config('app.invitation_token_hash', ${tokenHash}, true)
+    `;
+
+    const invitation = await tx.invitation.findUnique({
+      where: { tokenHash },
+    });
+
+    if (!invitation) {
+      return {
+        status: "not_found",
+        errorMessage: "Convite não encontrado ou inválido.",
+      };
+    }
+
+    if (invitation.status === "accepted") {
+      return {
+        status: "already_accepted",
+        errorMessage: "Este convite já foi aceito.",
+      };
+    }
+
+    if (invitation.status === "revoked") {
+      return {
+        status: "revoked",
+        errorMessage: "Este convite foi revogado por um administrador.",
+      };
+    }
+
+    if (invitation.status === "expired" || invitation.expiresAt <= new Date()) {
+      return {
+        status: "expired",
+        errorMessage: "Este convite expirou.",
+      };
+    }
+
+    if (
+      !identity.email ||
+      identity.email.trim().toLowerCase() !== invitation.email.trim().toLowerCase()
+    ) {
+      return {
+        status: "recipient_mismatch",
+        errorMessage: "Este convite foi enviado para outro e-mail.",
+      };
+    }
+
+    if (!identity.emailConfirmedAt) {
+      return {
+        status: "email_unconfirmed",
+        errorMessage: "O seu e-mail precisa estar confirmado para aceitar o convite.",
+      };
+    }
+
+    const org = await tx.organization.findUnique({
+      where: { id: invitation.organizationId },
+      select: { name: true },
+    });
+
+    let workspaceName: string | null = null;
+    if (invitation.workspaceId) {
+      const ws = await tx.workspace.findUnique({
+        where: { id: invitation.workspaceId },
+        select: { name: true },
+      });
+      workspaceName = ws?.name ?? null;
+    }
+
+    return {
+      status: "valid",
+      organizationName: org?.name ?? "Organização",
+      workspaceName,
+      role: invitation.role,
+    };
+  });
+}
+

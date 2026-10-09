@@ -17,6 +17,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     onCountProfiles: (email) => database.countProfiles(email),
     onMakePlatformAdmin: (email) => database.makePlatformAdmin(email),
     onSeedWorkspace: (params) => database.seedWorkspace(params),
+    onSeedInvitation: (params) => database.seedInvitation(params),
   });
 
   return async () => {

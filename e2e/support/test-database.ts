@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -72,6 +73,13 @@ export type TestDatabase = Readonly<{
     wsSlug: string;
     role?: "owner" | "admin" | "member" | "viewer";
   }) => Promise<{ organizationId: string; workspaceId: string }>;
+  seedInvitation: (params: {
+    organizationId: string;
+    workspaceId?: string | undefined;
+    email: string;
+    role?: ("owner" | "admin" | "member" | "viewer") | undefined;
+    expiresInHours?: number | undefined;
+  }) => Promise<{ id: string; rawToken: string }>;
   close: () => Promise<void>;
 }>;
 
@@ -210,6 +218,41 @@ export async function startTestDatabase(
       );
 
       return { organizationId: orgId, workspaceId: wsId };
+    },
+    seedInvitation: async (params) => {
+      const inviterRes = await pool.query<{ user_id: string }>(
+        `select user_id from public.organization_members where organization_id = $1 limit 1`,
+        [params.organizationId],
+      );
+      const inviterId = inviterRes.rows[0]?.user_id;
+      if (!inviterId) {
+        throw new Error(`No member found for organization ${params.organizationId}`);
+      }
+
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+      const hours = params.expiresInHours ?? 168;
+
+      const res = await pool.query<{ id: string }>(
+        `insert into public.invitations (
+           id, organization_id, workspace_id, email, role, token_hash,
+           invited_by_user_id, status, expires_at, created_at, updated_at
+         ) values (
+           gen_random_uuid(), $1, $2, lower($3), $4, $5,
+           $6, 'pending', now() + ($7 || ' hours')::interval, now(), now()
+         ) returning id`,
+        [
+          params.organizationId,
+          params.workspaceId ?? null,
+          params.email,
+          params.role ?? "member",
+          tokenHash,
+          inviterId,
+          hours.toString(),
+        ],
+      );
+
+      return { id: res.rows[0]!.id, rawToken };
     },
     close: async () => {
       await pool.end();

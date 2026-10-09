@@ -5,6 +5,7 @@ export type AssuranceLevel = "aal1" | "aal2" | "aal3";
 export type SessionClaims = Readonly<{
   sub?: string;
   email?: string;
+  email_confirmed_at?: string;
   aal?: string;
   session_id?: string;
   exp?: number;
