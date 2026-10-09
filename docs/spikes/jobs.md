@@ -1,5 +1,7 @@
 # Spike de motor de jobs — pg-boss vs pgmq (SMA-94)
 
+> O código executável deste spike foi removido em 09/10/2026 (C03); o registro histórico está no commit `39582d4bae59d8b28b6da510d54463f8e38e6873`.
+
 ## Decisão
 
 **Recomendação única: pg-boss 12.37.0**, executado por processo de worker

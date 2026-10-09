@@ -20,10 +20,7 @@
     "test:unit": "vitest run --project unit",
     "test:spike": "vitest run --project integration tests/prisma-rls",
     "test:core": "vitest run --project integration tests/core",
-    "test:e2e": "playwright test",
-    "spike:preflight": "tsx scripts/jobs/preflight.ts",
-    "spike:migrate": "tsx scripts/jobs/apply-migration.ts",
-    "spike:test": "tsx scripts/jobs/run-spike.ts"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@prisma/client": "6.12.0",

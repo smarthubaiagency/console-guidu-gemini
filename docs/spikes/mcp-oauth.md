@@ -1,5 +1,7 @@
 # MCP over the Supabase OAuth 2.1 Server (SMA-93)
 
+> O código executável deste spike foi removido em 09/10/2026 (C03); o registro histórico está no commit `39582d4bae59d8b28b6da510d54463f8e38e6873`.
+
 Verdict: **Supabase + complement.** Supabase can be the authorization server for
 the MCP surfaces, but it cannot carry the per-surface authorization by itself.
 It issues no custom scopes and it does not bind the token to the `resource`,
