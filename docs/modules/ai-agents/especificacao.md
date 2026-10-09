@@ -1,8 +1,8 @@
 # Especificação do módulo Agentes de IA — canais, conversas e saídas
 
-- **Versão:** 0.1 (rascunho)
+- **Versão:** 0.2 (rascunho)
 - **Data:** 09/10/2026
-- **Estado:** **Proposta, aguarda aprovação do Marcelo.** Não descongela o módulo ([ESTADO.md](ESTADO.md)) nem altera a ordem das fases ([ADR 0003](../../adr/0003-ordem-das-fases.md)).
+- **Estado:** **Proposta, aguarda aprovação do Marcelo.** A camada de canais (D-AG-01) já foi aprovada e está registrada na [ADR 0011](../../adr/0011-camada-de-canais-no-nucleo.md). Não descongela o módulo ([ESTADO.md](ESTADO.md)) nem altera a ordem das fases ([ADR 0003](../../adr/0003-ordem-das-fases.md)).
 - **Escopo desta versão:** agente conversacional atendendo por canais de mensagem (texto e áudio), com resposta dividida em mensagens curtas e saídas em texto, áudio ou JSON conforme o canal. RAG, agendamentos e ferramentas MCP do módulo ficam fora desta versão.
 - **Referências:** Especificação v1.0 §6, §14–§20; Adendo v1.1 §3–§7, §12–§13; ADRs 0001, 0002, 0006 e 0009; avaliação do eve em [`docs/spikes/eve.md`](../../spikes/eve.md).
 
@@ -50,17 +50,17 @@ Hoje o atendimento com IA da operação roda em fluxos do n8n ligados ao Chatwoo
 
 ### 4.1 Onde fica
 
-**[Proposta]** Conexões de canal e adaptadores ficam no **núcleo** (`src/core/channels/`), não dentro do módulo. Motivo: o chat interno, um módulo futuro, vai usar as mesmas conexões, por exemplo a Meta Cloud API. Pelo Adendo §7, um módulo não acessa repositório interno de outro. Com os canais no núcleo, os dois módulos consomem a mesma interface pública.
+**[Decidido — [ADR 0011](../../adr/0011-camada-de-canais-no-nucleo.md)]** Conexões de canal, adaptadores, entrada, roteamento, identidade da conversa e saída ficam no **núcleo** (`src/core/channels/`). O módulo Agentes de IA é um **consumidor**: recebe eventos normalizados e responde pelo serviço de saída do núcleo. Motivo: o chat interno, um módulo futuro, vai usar as mesmas conexões, por exemplo a Meta Cloud API, e pelo Adendo §7 um módulo não acessa repositório interno de outro.
 
-Consequência: a decisão é do núcleo e precisa de ADR própria (seção 14, D-AG-01).
+O que fica no módulo: agentes, vínculos e política de saída, estado da conversa na visão do agente, turno (agrupamento, transcrição, modelo, plano de resposta), consumo e auditoria do agente.
 
 ### 4.2 Contrato do adaptador
 
-Todo canal implementa o mesmo contrato. A assinatura abaixo é ilustrativa; o tipo final nasce com o código.
+O adaptador é interno do núcleo: nenhum módulo o chama diretamente. Todo canal implementa o mesmo contrato. A assinatura abaixo é ilustrativa; o tipo final nasce com o código.
 
 ```ts
 interface ChannelAdapter {
-  kind: "chatwoot" | "meta_cloud" | "evolution" | "matrix" | "internal_chat";
+  kind: "chatwoot" | "meta_cloud" | "evolution" | "matrix";
   hub: boolean;
   capabilities: ChannelCapabilities;
   verifyInbound(
@@ -101,23 +101,93 @@ interface ChannelCapabilities {
 | **Meta WhatsApp Cloud API** [Decidido]     | Direto                    | Texto, áudio (ogg/opus), imagem, documento | Texto, nota de voz, mensagens interativas (futuro)                   | Assinatura `X-Hub-Signature-256` com o app secret e desafio de verificação no cadastro do webhook. A mídia é baixada pelo id na Graph API. Fora da janela de 24 horas só é permitido template aprovado: o agente não pode enviar texto livre e a entrega falha de forma explícita. A transferência depende de um hub (seção 4.4).                                                                                                                                                                                   |
 | **Evolution API** [Decidido]               | Direto                    | Texto, áudio, mídia                        | Texto, áudio                                                         | Integração não oficial com o WhatsApp: risco de bloqueio do número e de conflito com os termos do WhatsApp. Exige aceite de risco registrado por workspace (D-AG-05). Webhook autenticado por chave da instância.                                                                                                                                                                                                                                                                                                   |
 | **Matrix** [Decidido, prioridade alta]     | Direto, ou hub com pontes | Texto, áudio (`m.audio`), arquivos         | Texto (corpo simples e formatado), áudio, JSON em evento customizado | Dois modos de conexão: Application Service (o homeserver empurra transações autenticadas por `hs_token`; exige registro no homeserver) ou usuário bot pela Client-Server API (`/sync`; funciona em homeserver de terceiros). Salas com criptografia ponta a ponta exigem guardar o estado criptográfico do bot de forma persistente e protegida (D-AG-06). Com pontes (mautrix e similares), uma sala representa um contato de outro serviço e o Matrix vira hub.                                                   |
-| **Chat interno** [Decidido, módulo futuro] | Hub                       | Texto, áudio, arquivos                     | Texto, áudio, **JSON** (cartões e ações ricas)                       | Integração por serviço público ou evento entre módulos (Adendo §7). O agente entra como participante bot; a transferência é nativa.                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Chat interno** [Decidido, módulo futuro] | Hub                       | Texto, áudio, arquivos                     | Texto, áudio, **JSON** (cartões e ações ricas)                       | Não é adaptador de provedor: é um **módulo hub** consumidor do núcleo, que aciona o agente pelo serviço público do módulo (seção 4.5). O agente entra como participante bot; a transferência é nativa.                                                                                                                                                                                                                                                                                                              |
 
-### 4.4 Cenário: chat interno com Meta Cloud API
+### 4.4 Roteamento
 
-O contato manda mensagem no WhatsApp. A conexão Meta entrega ao **chat interno**, que é o hub e dono da conversa. O chat interno aciona o agente como bot. Na transferência, o chat interno atribui a conversa a um atendente. Nesse arranjo o vínculo do agente aponta para o chat interno, não para a Meta, e a mesma conexão Meta não pode ter ao mesmo tempo um vínculo direto com agente no mesmo escopo. O roteamento "conexão → consumidor" (agente ou chat interno) é responsabilidade do núcleo de canais.
+**[Decidido — ADR 0011]** O núcleo mantém uma tabela de rotas: para cada **(conexão, escopo)** existe no máximo **uma rota ativa**, com o consumidor dono das conversas daquele escopo.
+
+| Campo                    | Conteúdo                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Conexão                  | A conexão de canal do workspace                                                                                                                   |
+| Escopo                   | Inbox do Chatwoot, `phone_number_id` da Meta, instância Evolution ou sala/espaço Matrix. Uma conexão pode ter vários escopos com donos diferentes |
+| Consumidor               | `module_key` do módulo dono (`ai-agents`, futuramente o chat interno)                                                                             |
+| Referência do consumidor | O que o módulo usa para achar sua configuração. No Agentes de IA, é o **vínculo** (seção 3)                                                       |
+| Estado                   | Ativa, pausada ou encerrada                                                                                                                       |
+
+- O vínculo do agente e a rota do núcleo nascem juntos: criar um vínculo direto num escopo cria a rota com `ai-agents` como consumidor, na mesma transação. Se o escopo já tem rota ativa de outro consumidor, a criação é recusada.
+- Trocar o dono de um escopo é uma operação explícita, auditada e com permissão `channels.manage`. Por exemplo, de "agente direto" para "chat interno com agente". Conversas abertas seguem a regra do consumidor que sai: encerrar ou transferir (em aberto, D-AG-13).
+- Evento de escopo sem rota ativa é gravado e não é despachado; aparece na saúde da conexão.
+
+### 4.5 Contrato entre consumidor e núcleo
+
+O módulo consumidor declara no manifesto a capacidade `channels.consumer` e registra um handler de servidor. As assinaturas abaixo são ilustrativas.
+
+```ts
+// Implementado pelo módulo consumidor (server-only)
+interface ChannelConsumer {
+  moduleKey: string;
+  handleEvent(ctx: ChannelEventContext, event: InboundEvent): Promise<void>;
+  onRouteChanged?(ctx: ChannelEventContext, change: RouteChange): Promise<void>;
+}
+
+// Montado pelo núcleo antes de chamar o consumidor
+interface ChannelEventContext {
+  workspace: AuthorizedWorkspaceContext;
+  conversation: ChannelConversationRef;
+  route: { id: string; consumerRef: string };
+  capabilities: ChannelCapabilities;
+}
+
+// Serviço público do núcleo usado pelos consumidores
+interface ChannelOutbound {
+  send(
+    ctx: ChannelEventContext,
+    parts: DeliveryPart[],
+    idempotencyKey: string,
+  ): Promise<DeliveryReceipt>;
+  handoff(ctx: ChannelEventContext, reason: HandoffReason): Promise<void>;
+  setTyping(ctx: ChannelEventContext): Promise<void>;
+  fetchMedia(ctx: ChannelEventContext, ref: MediaRef): Promise<MediaFile>;
+}
+```
+
+- **Despacho:** o núcleo chama `handleEvent` dentro de um job do worker, nunca no webhook. A concorrência é 1 por conversa. O contexto é montado pelo núcleo depois de revalidar workspace, conexão, rota e disponibilidade do módulo.
+- **Envio:** o núcleo só aceita envio do consumidor dono da rota da conversa. Cada parte tem chave de idempotência; o núcleo cuida de fila, retry, ordem, intervalo e regras do provedor. O receipt informa as partes aceitas e as recusadas, por exemplo por janela de 24 horas expirada.
+- **Mídia:** o consumidor baixa mídia só pelo núcleo, que aplica limites e restringe os hosts.
+- **Isolamento:** o consumidor nunca vê payload bruto, segredo da conexão nem conversas de escopo que não são suas.
+
+#### Agente acionado por um hub
+
+Quando o dono da rota é um módulo hub, como o chat interno, o módulo Agentes de IA expõe um serviço público para o hub chamar:
+
+```ts
+interface AgentTurnService {
+  runTurn(ctx: HubTurnContext, input: HubTurnInput): Promise<ResponsePlan>;
+}
+```
+
+O hub informa o vínculo (agente e política de saída), as mensagens novas e o histórico relevante. O agente devolve o plano de resposta (seção 7) **sem enviar nada**: o hub exibe no seu painel e envia pelo `ChannelOutbound` do núcleo, como dono da rota. A ação `handoff` do plano é executada pelo hub. A validação de permissão, módulo e quota acontece nos dois módulos.
+
+### 4.6 Cenários
+
+| Cenário                                   | Dono da rota | Fluxo                                                                                                                                                           |
+| ----------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Chatwoot com agente** (substitui o n8n) | `ai-agents`  | Chatwoot → núcleo → agente → núcleo envia como bot no Chatwoot. A transferência muda o status no Chatwoot e os humanos assumem lá                               |
+| **Meta com chat interno e agente**        | Chat interno | Meta → núcleo → chat interno → `runTurn` do agente → chat interno → núcleo envia no WhatsApp. A transferência atribui um atendente no chat interno              |
+| **Meta direto com agente**                | `ai-agents`  | Meta → núcleo → agente → núcleo envia. Sem hub, a transferência só pausa a conversa e notifica (seção 6). Para ter humanos, troca-se a rota para o chat interno |
 
 ## 5. Fluxo de processamento
 
 Segue a [ADR 0002](../../adr/0002-jobs-e-hospedagem.md): o webhook só registra o evento, e o processamento roda em jobs no worker `app_worker`.
 
-1. **Recepção:** um Route Handler por conexão valida a autenticação do canal, normaliza, grava o evento com restrição única no id externo (um reenvio do provedor não duplica nada) e responde rápido.
+1. **Recepção (núcleo):** o webhook da conexão valida a autenticação do canal, normaliza, grava o evento com restrição única no id externo (um reenvio do provedor não duplica nada), resolve a rota e enfileira o despacho para o consumidor.
 2. **Filtro:** o evento é descartado como gatilho quando o remetente é o bot ou um atendente, quando a conversa não está em `bot_ativo`, ou quando módulo, plano ou vínculo não permitem o atendimento. Mensagens de atendentes continuam no histórico como contexto.
 3. **Agrupamento:** agenda o job de turno da conversa com atraso igual à janela de agrupamento do vínculo, para juntar mensagens seguidas do contato. Cada conversa processa um turno por vez (concorrência 1 por conversa). Mensagem que chega durante um turno entra no turno seguinte.
 4. **Preparação do turno:** dentro de `withContext`, revalida módulo, vínculo, estado da conversa e quota, e carrega o histórico. Áudios recebidos são baixados com limites de tamanho e tipo e transcritos; a transcrição fica salva junto da mensagem.
 5. **Execução do agente:** chamada ao modelo **fora** de transação de banco. As ferramentas abrem a própria transação contextualizada, com o contexto vindo do job e nunca de argumento do modelo. O resultado é um plano de resposta validado por Zod.
 6. **Renderização por canal:** aplica a política de saída do vínculo e as capacidades do canal (seção 7).
-7. **Entrega:** um job de entrega por parte, em ordem, com intervalo entre as mensagens e indicador de digitação quando houver. Cada parte tem chave de idempotência (conversa + turno + índice), então um retry não duplica mensagem para o contato.
+7. **Entrega (núcleo):** o módulo chama o `ChannelOutbound`; o núcleo cria um job de entrega por parte, em ordem, com intervalo entre as mensagens e indicador de digitação quando houver. Cada parte tem chave de idempotência (conversa + turno + índice), então um retry não duplica mensagem para o contato.
 8. **Registro:** consumo medido (seção 10) e auditoria das ações relevantes.
 
 **[Em aberto]** Se o contato mandar nova mensagem enquanto as partes ainda estão sendo entregues: continuar a entrega ou cancelar as partes restantes e reprocessar (D-AG-08).
@@ -192,12 +262,12 @@ A escolha do SDK deve virar ADR quando aprovada (D-AG-02).
 
 Ficam as permissões já existentes no catálogo (`src/core/permissions/catalog.ts`), mais duas propostas:
 
-| Permissão                                 | Uso                                                                                               |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `ai_agents.use`                           | Testar agentes e ver a lista de conversas e seus estados                                          |
-| `ai_agents.manage`                        | Criar e alterar agentes, vínculos e políticas de saída; pausar e encerrar conversas               |
-| `ai_agents.conversations.read` [Proposta] | Ler o conteúdo das conversas (texto, transcrições, áudios), que é dado pessoal de clientes finais |
-| `channels.manage` [Proposta, núcleo]      | Criar, testar e revogar conexões de canal                                                         |
+| Permissão                                       | Uso                                                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `ai_agents.use`                                 | Testar agentes e ver a lista de conversas e seus estados                                          |
+| `ai_agents.manage`                              | Criar e alterar agentes, vínculos e políticas de saída; pausar e encerrar conversas               |
+| `ai_agents.conversations.read` [Proposta]       | Ler o conteúdo das conversas (texto, transcrições, áudios), que é dado pessoal de clientes finais |
+| `channels.manage` [Decidido, núcleo — ADR 0011] | Criar, testar e revogar conexões de canal                                                         |
 
 ## 10. Consumo, planos e limites
 
@@ -213,11 +283,13 @@ Proposta de tabelas. Toda tabela operacional tem `workspace_id NOT NULL`, RLS fo
 | ------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `channel_connections`     | Núcleo | Tipo, nome, configuração não secreta, referências ao cofre (tokens, app secret, chave de instância), hash do token do webhook, estado, última verificação |
 | `channel_inbound_events`  | Núcleo | Evento bruto normalizado, id externo único por conexão, estado de processamento; retenção curta                                                           |
+| `channel_routes`          | Núcleo | Conexão, escopo, `module_key` do consumidor, referência do consumidor, estado; única ativa por (conexão, escopo)                                          |
+| `channel_conversations`   | Núcleo | Conexão, escopo, conversa e contato externos, rota atual; referenciada pelas tabelas dos módulos                                                          |
+| `channel_deliveries`      | Núcleo | Parte a entregar, ordem, chave de idempotência única, tentativas, id externo, estado                                                                      |
 | `agent_configs` (existe)  | Módulo | Evolui para o agente: instruções, referência à conexão de modelo, ferramentas permitidas                                                                  |
-| `agent_channel_bindings`  | Módulo | Agente, conexão, escopo, política de saída, estado; único ativo por (conexão, escopo)                                                                     |
-| `agent_conversations`     | Módulo | Vínculo, conversa e contato externos, estado (seção 6), horários                                                                                          |
+| `agent_channel_bindings`  | Módulo | Agente, rota do núcleo, política de saída, estado; criado na mesma transação da rota                                                                      |
+| `agent_conversations`     | Módulo | Conversa do núcleo (FK composta), vínculo, estado na visão do agente (seção 6), horários                                                                  |
 | `agent_messages` (existe) | Módulo | Passa a ter direção, remetente, partes, referência de mídia, transcrição e ids externos                                                                   |
-| `agent_deliveries`        | Módulo | Parte a entregar, ordem, chave de idempotência única, tentativas, id externo, estado                                                                      |
 
 As tabelas `agent_sessions`/`agent_messages` atuais vieram do protótipo congelado. A migração delas faz parte da implementação (D-AG-11).
 
@@ -244,7 +316,7 @@ O conteúdo das conversas é dado pessoal dos clientes finais do workspace, e a 
 
 | ID      | Decisão                                                                                                                             | Recomendação                                                                    |
 | ------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| D-AG-01 | Camada de canais no núcleo, compartilhada com o chat interno                                                                        | Sim, com ADR própria                                                            |
+| D-AG-01 | Camada de canais no núcleo, compartilhada com o chat interno                                                                        | **Decidido:** [ADR 0011](../../adr/0011-camada-de-canais-no-nucleo.md)          |
 | D-AG-02 | SDK do agente                                                                                                                       | AI SDK; registrar em ADR                                                        |
 | D-AG-03 | Relação agente × canal                                                                                                              | N:N por vínculo, um vínculo ativo por escopo                                    |
 | D-AG-04 | Ordem dos canais na implementação                                                                                                   | Chatwoot (substitui o n8n), depois Matrix, Meta Cloud, chat interno e Evolution |
@@ -256,6 +328,7 @@ O conteúdo das conversas é dado pessoal dos clientes finais do workspace, e a 
 | D-AG-10 | Quotas e comportamento ao esgotar                                                                                                   | Comercial e produto                                                             |
 | D-AG-11 | Destino das tabelas do protótipo                                                                                                    | Evoluir por migrations compatíveis                                              |
 | D-AG-12 | Resposta ao provedor quando o módulo está indisponível (aceitar e descartar com auditoria, ou recusar e deixar o provedor reenviar) | Aceitar e descartar com auditoria, para não acumular reenvios                   |
+| D-AG-13 | Conversas abertas quando o dono de um escopo muda (encerrar, transferir ou migrar para o novo consumidor)                           | Em aberto                                                                       |
 
 ## 15. Critérios de aceite
 
