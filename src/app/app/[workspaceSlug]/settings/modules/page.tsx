@@ -1,98 +1,111 @@
 import type { Metadata } from "next";
-import { Puzzle, CheckCircle2, Clock } from "lucide-react";
-import {
-  isModuleTechnicallyAvailable,
-  type PlatformModuleKey,
-} from "@/core/modules/availability";
+import Link from "next/link";
+import { Puzzle } from "lucide-react";
+
+import { WorkspaceModuleToggle } from "@/components/modules/module-status-forms";
+import { ModulePageHeader } from "@/components/modules/module-page-header";
+import { NavIcon } from "@/components/layout/nav-icons";
+import { resolveWorkspaceContext } from "@/core/auth/context";
+import { requireUserPage } from "@/core/auth/page-guard";
+import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
+import { prisma } from "@/lib/prisma/client";
 
 export const metadata: Metadata = { title: "Módulos do Workspace" };
 
-export default async function ModulesSettingsPage() {
-  const moduleKeys: Array<{
-    key: PlatformModuleKey;
-    name: string;
-    description: string;
-  }> = [
-    {
-      key: "catalog",
-      name: "Catálogo",
-      description: "Gestão de sortimento e produtos (Fase 5)",
-    },
-    {
-      key: "google-business",
-      name: "Google Meu Negócio",
-      description: "Integração e sincronização de perfis comerciais",
-    },
-    {
-      key: "ai-agents",
-      name: "Agentes de IA",
-      description: "Assistentes contextuais e motor de prompts (Congelado)",
-    },
-  ];
+interface PageProps {
+  params: Promise<{ workspaceSlug: string }>;
+}
 
-  const modules = moduleKeys.map((m) => {
-    const isAvailable = isModuleTechnicallyAvailable(m.key);
-    return {
-      ...m,
-      isAvailable,
-      status: isAvailable
-        ? "Disponível"
-        : m.key === "ai-agents"
-          ? "Indisponível"
-          : "Em breve",
-    };
-  });
+const STATE_STYLES: Record<string, string> = {
+  enabled: "bg-success-bg text-success-text",
+  maintenance: "bg-warning-bg text-warning-text",
+  coming_soon: "bg-info-bg text-info-text",
+  not_enabled: "bg-surface-hover text-text-subtle",
+};
+
+/** Enablement and state index of the workspace modules (ADR 0005). */
+export default async function ModulesSettingsPage({ params }: PageProps) {
+  const { workspaceSlug } = await params;
+  const identity = await requireUserPage(
+    `/app/${workspaceSlug}/settings/modules`,
+  );
+  const context = await resolveWorkspaceContext(
+    prisma,
+    identity.userId,
+    workspaceSlug,
+  );
+  const { modules, canManage } = await loadWorkspaceModuleViews(
+    prisma,
+    context,
+    workspaceSlug,
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="border-border border-b pb-5">
-        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>Configurações</span>
-          <span>/</span>
-          <span>Módulos</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
-            <Puzzle className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-20 text-text font-bold tracking-tight">
-              Habilitação e Estado dos Módulos
-            </h1>
-            <p className="text-12 text-text-secondary">
-              Conforme ADR 0005: índice de ativação por workspace e estado
-              operacional.
-            </p>
-          </div>
-        </div>
-      </div>
+      <ModulePageHeader
+        trail={["Configurações", "Módulos"]}
+        title="Habilitação e Estado dos Módulos"
+        description="Módulos registrados na plataforma, seu estado neste workspace e o acesso às configurações."
+        icon={<Puzzle className="h-5 w-5" />}
+      />
 
-      <div className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs">
+      {!canManage && (
+        <p className="text-12 text-text-secondary">
+          Somente proprietários e administradores do workspace habilitam ou
+          desabilitam módulos.
+        </p>
+      )}
+
+      <ul className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs">
         {modules.map((m) => (
-          <div key={m.key} className="flex items-center justify-between p-4">
-            <div>
-              <div className="text-14 text-text font-semibold">{m.name}</div>
-              <div className="text-12 text-text-secondary font-mono">
-                key: {m.key}
+          <li
+            key={m.moduleKey}
+            className="flex items-center justify-between gap-4 p-4"
+          >
+            <div className="flex items-start gap-3">
+              <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
+                <NavIcon iconKey={m.iconKey} className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-14 text-text font-semibold">
+                  {m.displayName}
+                </div>
+                <div className="text-12 text-text-secondary">
+                  {m.description}
+                </div>
+                <div className="text-11 text-text-tertiary font-mono">
+                  key: {m.moduleKey}
+                </div>
+                {m.hasWorkspaceSettings && m.state === "enabled" && (
+                  <Link
+                    href={`/app/${workspaceSlug}/settings/modules/${m.moduleKey}`}
+                    className="text-12 text-text-subtle hover:text-text mt-1 inline-block font-medium underline"
+                  >
+                    Configurar {m.displayName}
+                  </Link>
+                )}
               </div>
             </div>
-            <span
-              className={`text-12 flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium ${
-                m.isAvailable
-                  ? "bg-success-bg text-success-text"
-                  : "bg-surface-hover text-text-subtle"
-              }`}
-            >
-              {m.isAvailable ? (
-                <CheckCircle2 className="text-success-solid h-3.5 w-3.5" />
-              ) : (
-                <Clock className="text-text-tertiary h-3.5 w-3.5" />
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <span
+                className={`text-12 rounded-full px-2.5 py-1 font-medium ${
+                  STATE_STYLES[m.state] ?? STATE_STYLES.not_enabled
+                }`}
+              >
+                {m.stateLabel}
+              </span>
+              {m.canToggle && (
+                <WorkspaceModuleToggle
+                  workspaceSlug={workspaceSlug}
+                  moduleKey={m.moduleKey}
+                  moduleName={m.displayName}
+                  enabled={m.state === "enabled" || m.state === "maintenance"}
+                />
               )}
-              <span>{m.status}</span>
-            </span>
-          </div>
+            </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

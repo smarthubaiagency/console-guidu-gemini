@@ -15,8 +15,16 @@
 
 import "server-only";
 
-import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
-import { Permission, Permissions } from "./catalog";
+import type {
+  ContextTransaction,
+  RequestContext,
+} from "@/lib/prisma/with-context";
+import {
+  ALL_PERMISSIONS,
+  Permission,
+  PermissionKey,
+  Permissions,
+} from "./catalog";
 import {
   hasOrganizationRolePermission,
   hasWorkspaceRolePermission,
@@ -28,6 +36,22 @@ import {
   WorkspaceRoles,
 } from "./roles";
 import { recordAuditDenied } from "@/core/audit/record";
+import { getModulePermissionRoles } from "@/modules/registry";
+
+/**
+ * Whether a workspace role grants a permission: core permissions come from the
+ * matrix, module permissions from the defaults declared in the registered
+ * manifest. Unknown permissions are denied.
+ */
+export function workspaceRoleGrants(
+  role: WorkspaceRole,
+  permission: PermissionKey,
+): boolean {
+  if (ALL_PERMISSIONS.has(permission as Permission)) {
+    return hasWorkspaceRolePermission(role, permission as Permission);
+  }
+  return getModulePermissionRoles(permission)?.includes(role) ?? false;
+}
 
 /**
  * Domain error thrown when an actor lacks required permissions or an active membership.
@@ -51,7 +75,7 @@ export function isPermissionDeniedError(
 
 async function handleCriticalPermissionDenial(
   ctx: RequestContext,
-  permission: Permission,
+  permission: PermissionKey,
 ): Promise<void> {
   if (
     permission === Permissions.CREDENTIALS_MANAGE ||
@@ -81,7 +105,7 @@ async function handleCriticalPermissionDenial(
 export async function requireWorkspacePermission(
   tx: ContextTransaction,
   ctx: RequestContext,
-  permission: Permission,
+  permission: PermissionKey,
 ): Promise<{
   workspaceRole: WorkspaceRole;
   organizationRole: OrganizationRole | null;
@@ -113,7 +137,7 @@ export async function requireWorkspacePermission(
   if (wsMember && isWsActive) {
     const wsRole = wsMember.role as WorkspaceRole;
 
-    if (hasWorkspaceRolePermission(wsRole, permission)) {
+    if (workspaceRoleGrants(wsRole, permission)) {
       return { workspaceRole: wsRole, organizationRole: orgRole };
     }
 
@@ -189,7 +213,11 @@ export async function getEffectiveWorkspaceRole(
     return null;
   }
 
-  if (orgMember && orgMember.status === "active" && orgMember.role === OrganizationRoles.OWNER) {
+  if (
+    orgMember &&
+    orgMember.status === "active" &&
+    orgMember.role === OrganizationRoles.OWNER
+  ) {
     return WorkspaceRoles.OWNER;
   }
 

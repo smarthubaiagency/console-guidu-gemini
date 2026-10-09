@@ -29,6 +29,9 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_READ]: true,
         [Permissions.WORKSPACE_MEMBERS_INVITE]: true,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: true,
+        [Permissions.WORKSPACE_MODULES_MANAGE]: true,
+        [Permissions.PLATFORM_MODULES_READ]: false,
+        [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
         [Permissions.API_KEYS_CREATE_OWN]: true,
@@ -48,6 +51,9 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_READ]: true,
         [Permissions.WORKSPACE_MEMBERS_INVITE]: true,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: true,
+        [Permissions.WORKSPACE_MODULES_MANAGE]: true,
+        [Permissions.PLATFORM_MODULES_READ]: false,
+        [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
         [Permissions.API_KEYS_CREATE_OWN]: true,
@@ -67,6 +73,9 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_READ]: true,
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
+        [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.PLATFORM_MODULES_READ]: false,
+        [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: true,
@@ -86,6 +95,9 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_READ]: true,
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
+        [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.PLATFORM_MODULES_READ]: false,
+        [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: true,
@@ -120,8 +132,8 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(13);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(13);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(14);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(14);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(6);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(4);
     });
@@ -141,6 +153,9 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_READ]: false,
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
+        [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.PLATFORM_MODULES_READ]: false,
+        [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: false,
@@ -160,6 +175,9 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_READ]: false,
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
+        [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.PLATFORM_MODULES_READ]: false,
+        [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: false,
@@ -179,6 +197,9 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_READ]: false,
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
+        [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.PLATFORM_MODULES_READ]: false,
+        [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: false,
@@ -213,9 +234,15 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in ORGANIZATION_ROLE_PERMISSIONS", () => {
-      expect(ORGANIZATION_ROLE_PERMISSIONS[OrganizationRoles.OWNER].size).toBe(4);
-      expect(ORGANIZATION_ROLE_PERMISSIONS[OrganizationRoles.ADMIN].size).toBe(4);
-      expect(ORGANIZATION_ROLE_PERMISSIONS[OrganizationRoles.MEMBER].size).toBe(1);
+      expect(ORGANIZATION_ROLE_PERMISSIONS[OrganizationRoles.OWNER].size).toBe(
+        4,
+      );
+      expect(ORGANIZATION_ROLE_PERMISSIONS[OrganizationRoles.ADMIN].size).toBe(
+        4,
+      );
+      expect(ORGANIZATION_ROLE_PERMISSIONS[OrganizationRoles.MEMBER].size).toBe(
+        1,
+      );
     });
   });
 });

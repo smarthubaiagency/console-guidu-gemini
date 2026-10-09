@@ -1,0 +1,369 @@
+/**
+ * ============================================================================
+ * File: src/core/module-runtime/navigation.ts
+ * Module: Generated Navigation (Adendo §8.1)
+ *
+ * Maintenance Rationale:
+ * - Builds the app and admin navigation trees from core entries plus the
+ *   registered manifests. Layouts render this tree; no layout keeps its own
+ *   hand-written module list.
+ * - App: state (gate, global availability, release, workspace enablement) and
+ *   permissions of the active identity decide what appears. Items without
+ *   access and groups without visible children are removed.
+ * - Admin: internal role permissions and presence in the registry decide;
+ *   global settings stay reachable during maintenance (Adendo §8.1).
+ * - Output is a plain DTO (labels, hrefs, icon keys): no component, server
+ *   code or secret reaches the browser bundle through navigation.
+ * ============================================================================
+ */
+
+import "server-only";
+
+import type { ModuleIconKey } from "@/core/module-contracts/manifest";
+import type { PermissionKey } from "@/core/permissions/catalog";
+import type { RegisteredModule } from "@/modules/registry";
+
+import {
+  moduleStateLabel,
+  resolveModuleAccessState,
+  type PlatformModuleState,
+  type WorkspaceModuleState,
+} from "./state";
+
+export type NavIconKey =
+  | ModuleIconKey
+  | "code"
+  | "gauge"
+  | "key"
+  | "layers"
+  | "play-circle"
+  | "building"
+  | "users";
+
+export type NavItem = Readonly<{
+  id: string;
+  label: string;
+  /** Null for an entry that only groups its children. */
+  href: string | null;
+  iconKey: NavIconKey | null;
+  badge: string | null;
+  /** Active only on an exact path match (dashboards). */
+  exact: boolean;
+  children: readonly NavItem[];
+}>;
+
+export type NavSection = Readonly<{
+  id: string;
+  label: string;
+  items: readonly NavItem[];
+}>;
+
+type Grants = (permission: PermissionKey) => boolean;
+
+function allGranted(permissions: readonly string[], grants: Grants): boolean {
+  return permissions.every((permission) => grants(permission as PermissionKey));
+}
+
+function byOrder<T extends { order: number; id: string }>(a: T, b: T): number {
+  return a.order - b.order || a.id.localeCompare(b.id);
+}
+
+function routePath(
+  mod: RegisteredModule,
+  routeKey: string | undefined,
+): string | null {
+  if (!routeKey) return null;
+  return (
+    mod.manifest.routes.find((route) => route.routeKey === routeKey)?.path ??
+    null
+  );
+}
+
+function item(
+  partial: Pick<NavItem, "id" | "label" | "href" | "iconKey"> &
+    Partial<NavItem>,
+): NavItem {
+  return { badge: null, exact: false, children: [], ...partial };
+}
+
+export type AppNavigationInput = Readonly<{
+  workspaceSlug: string;
+  modules: readonly RegisteredModule[];
+  platformStates: ReadonlyMap<string, PlatformModuleState>;
+  workspaceStates: ReadonlyMap<string, WorkspaceModuleState>;
+  grants: Grants;
+}>;
+
+/** Module entries of the app sidebar, already filtered and sorted. */
+export function buildAppModuleItems(input: AppNavigationInput): NavItem[] {
+  const base = `/app/${input.workspaceSlug}`;
+  const entries: Array<{ order: number; id: string; value: NavItem }> = [];
+
+  for (const mod of input.modules) {
+    const state = resolveModuleAccessState(
+      mod,
+      input.platformStates.get(mod.manifest.moduleKey),
+      input.workspaceStates.get(mod.manifest.moduleKey),
+    );
+    if (state === "hidden" || state === "not_enabled") continue;
+
+    for (const entry of mod.manifest.navigation) {
+      if (entry.destination !== "app") continue;
+      if (!allGranted(entry.requiredPermissions, input.grants)) continue;
+
+      const parentPath = routePath(mod, entry.routeKey);
+      const operational = state === "enabled";
+      const children = operational
+        ? [...entry.children]
+            .sort(byOrder)
+            .filter((child) =>
+              allGranted(child.requiredPermissions, input.grants),
+            )
+            .flatMap((child) => {
+              const path = routePath(mod, child.routeKey);
+              return path
+                ? [
+                    item({
+                      id: child.id,
+                      label: child.label,
+                      href: `${base}/${path}`,
+                      iconKey: child.iconKey ?? null,
+                    }),
+                  ]
+                : [];
+            })
+        : [];
+
+      // A coming-soon or maintenance module keeps one entry pointing at its
+      // landing route; a group without visible children disappears.
+      const firstChildHref = entry.children
+        .map((child) => routePath(mod, child.routeKey))
+        .find((path) => path !== null);
+      const href = parentPath
+        ? `${base}/${parentPath}`
+        : operational
+          ? null
+          : firstChildHref
+            ? `${base}/${firstChildHref}`
+            : null;
+      if (!href && children.length === 0) continue;
+
+      const badge =
+        state === "enabled" && mod.manifest.releaseStatus === "available"
+          ? null
+          : moduleStateLabel(state, mod.manifest.releaseStatus);
+
+      entries.push({
+        order: entry.order,
+        id: entry.id,
+        value: item({
+          id: entry.id,
+          label: entry.label,
+          href,
+          iconKey: entry.iconKey ?? null,
+          badge,
+          children,
+        }),
+      });
+    }
+  }
+
+  return entries.sort(byOrder).map((entry) => entry.value);
+}
+
+/** Workspace settings entries contributed by enabled modules. */
+export function buildAppModuleSettingsItems(
+  input: AppNavigationInput,
+): NavItem[] {
+  const base = `/app/${input.workspaceSlug}/settings/modules`;
+  const entries: Array<{ order: number; id: string; value: NavItem }> = [];
+
+  for (const mod of input.modules) {
+    const state = resolveModuleAccessState(
+      mod,
+      input.platformStates.get(mod.manifest.moduleKey),
+      input.workspaceStates.get(mod.manifest.moduleKey),
+    );
+    if (state !== "enabled" && state !== "maintenance") continue;
+
+    for (const entry of mod.manifest.settings) {
+      if (entry.destination !== "workspace") continue;
+      if (!allGranted(entry.readPermissions, input.grants)) continue;
+      entries.push({
+        order: entry.order,
+        id: entry.id,
+        value: item({
+          id: entry.id,
+          label: entry.label,
+          href: `${base}/${mod.manifest.moduleKey}`,
+          iconKey: null,
+        }),
+      });
+    }
+  }
+
+  return entries.sort(byOrder).map((entry) => entry.value);
+}
+
+/** Full app sidebar: core entries around the module contributions. */
+export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
+  const base = `/app/${input.workspaceSlug}`;
+  return [
+    {
+      id: "platform",
+      label: "Plataforma",
+      items: [
+        item({
+          id: "core.overview",
+          label: "Visão Geral",
+          href: base,
+          iconKey: "layout-dashboard",
+          exact: true,
+        }),
+        ...buildAppModuleItems(input),
+        item({
+          id: "core.executions",
+          label: "Execuções",
+          href: `${base}/executions`,
+          iconKey: "play-circle",
+          badge: "Sem dados",
+        }),
+      ],
+    },
+    {
+      id: "settings",
+      label: "Configurações",
+      items: [
+        item({
+          id: "core.team",
+          label: "Equipe & Membros",
+          href: `${base}/settings/team`,
+          iconKey: "users",
+        }),
+        item({
+          id: "core.general",
+          label: "Geral",
+          href: `${base}/settings/general`,
+          iconKey: "settings",
+        }),
+        item({
+          id: "core.modules",
+          label: "Módulos",
+          href: `${base}/settings/modules`,
+          iconKey: "puzzle",
+          exact: true,
+          children: buildAppModuleSettingsItems(input),
+        }),
+        item({
+          id: "core.credentials",
+          label: "Credenciais BYOK",
+          href: `${base}/settings/credentials`,
+          iconKey: "key",
+        }),
+        item({
+          id: "core.mcp",
+          label: "Assistentes MCP",
+          href: `${base}/settings/mcp`,
+          iconKey: "bot",
+        }),
+        item({
+          id: "core.api",
+          label: "API e Webhooks",
+          href: `${base}/settings/api`,
+          iconKey: "code",
+        }),
+        item({
+          id: "core.usage",
+          label: "Consumo & Limites",
+          href: `${base}/settings/usage`,
+          iconKey: "gauge",
+        }),
+      ],
+    },
+  ];
+}
+
+export type AdminNavigationInput = Readonly<{
+  modules: readonly RegisteredModule[];
+  grants: Grants;
+}>;
+
+/** Admin sidebar: core entries plus global module settings. */
+export function buildAdminNavigation(
+  input: AdminNavigationInput,
+): NavSection[] {
+  const settingsItems = input.modules
+    .filter((mod) => mod.technicalGate())
+    .flatMap((mod) =>
+      mod.manifest.settings
+        .filter((entry) => entry.destination === "admin")
+        .filter((entry) => allGranted(entry.readPermissions, input.grants))
+        .map((entry) => ({
+          order: entry.order,
+          id: entry.id,
+          value: item({
+            id: entry.id,
+            label: entry.label,
+            href: `/admin/settings/modules/${mod.manifest.moduleKey}`,
+            iconKey: null,
+          }),
+        })),
+    )
+    .sort(byOrder)
+    .map((entry) => entry.value);
+
+  const canReadModules = input.grants("platform.modules.read");
+
+  return [
+    {
+      id: "admin",
+      label: "Administração",
+      items: [
+        item({
+          id: "admin.overview",
+          label: "Visão Geral",
+          href: "/admin",
+          iconKey: "layout-dashboard",
+          exact: true,
+        }),
+        item({
+          id: "admin.customers",
+          label: "Clientes / Empresas",
+          href: "/admin/customers",
+          iconKey: "building",
+        }),
+        item({
+          id: "admin.workspaces",
+          label: "Workspaces",
+          href: "/admin/workspaces",
+          iconKey: "layers",
+        }),
+        item({
+          id: "admin.users",
+          label: "Usuários da Plataforma",
+          href: "/admin/users",
+          iconKey: "users",
+        }),
+        ...(canReadModules
+          ? [
+              item({
+                id: "admin.modules",
+                label: "Módulos",
+                href: "/admin/modules",
+                iconKey: "puzzle",
+              }),
+            ]
+          : []),
+      ],
+    },
+    ...(settingsItems.length > 0
+      ? [
+          {
+            id: "admin.settings",
+            label: "Configurações de módulos",
+            items: settingsItems,
+          },
+        ]
+      : []),
+  ];
+}
