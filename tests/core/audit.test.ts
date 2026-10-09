@@ -147,14 +147,16 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
   beforeEach(async () => {
     if (adminClient) {
       // Ensure target user is reset to viewer in org and not in workspace before each test
-      await adminClient.query(`
-        delete from public.workspace_members
-        where workspace_id = $1 and user_id = $2;
-
-        insert into public.organization_members (organization_id, user_id, role, status)
-        values ($3, $2, 'viewer', 'active')
-        on conflict (organization_id, user_id) do update set role = 'viewer', status = 'active';
-      `, [auditFixtures.workspaceId, auditFixtures.targetId, auditFixtures.orgId]);
+      await adminClient.query(
+        "delete from public.workspace_members where workspace_id = $1 and user_id = $2",
+        [auditFixtures.workspaceId, auditFixtures.targetId],
+      );
+      await adminClient.query(
+        `insert into public.organization_members (organization_id, user_id, role, status)
+         values ($1, $2, 'viewer', 'active')
+         on conflict (organization_id, user_id) do update set role = 'viewer', status = 'active'`,
+        [auditFixtures.orgId, auditFixtures.targetId],
+      );
     }
   });
 
