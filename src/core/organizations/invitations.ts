@@ -18,7 +18,7 @@
 
 import crypto from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import type { ContextTransaction } from "@/lib/prisma/with-context";
+import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
 import {
   canAssignOrganizationRole,
   canAssignWorkspaceRole,
@@ -203,13 +203,26 @@ export async function createInvitation(
 
 /**
  * Lists all invitations for an organization.
+ * When ctx is provided, requires `organization.members.invite` permission.
  */
 export async function listInvitations(
   tx: ContextTransaction,
-  organizationId: string,
+  ctxOrOrgId: RequestContext | string,
 ): Promise<InvitationItem[]> {
+  if (typeof ctxOrOrgId === "object") {
+    await requireOrganizationPermission(
+      tx,
+      ctxOrOrgId,
+      Permissions.ORGANIZATION_MEMBERS_INVITE,
+    );
+    return tx.invitation.findMany({
+      where: { organizationId: ctxOrOrgId.organizationId },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   return tx.invitation.findMany({
-    where: { organizationId },
+    where: { organizationId: ctxOrOrgId },
     orderBy: { createdAt: "desc" },
   });
 }

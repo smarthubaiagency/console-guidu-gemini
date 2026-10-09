@@ -107,9 +107,7 @@ describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction Hi
   it("executes prompt using primary provider when successful", async () => {
     await withContext(prisma, contextA, async (tx) => {
       // Register credentials for primary provider
-      await registerCredential(tx, {
-        organizationId: contextA.organizationId,
-        workspaceId: contextA.workspaceId,
+      await registerCredential(tx, contextA, {
         provider: "openai",
         label: "OpenAI Primary Key",
         secret: "sk-proj-valid-test-key-1234567890",
@@ -165,17 +163,13 @@ describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction Hi
   it("transparently triggers fallback provider when primary provider fails", async () => {
     await withContext(prisma, contextA, async (tx) => {
       // Register keys for both primary and fallback
-      await registerCredential(tx, {
-        organizationId: contextA.organizationId,
-        workspaceId: contextA.workspaceId,
+      await registerCredential(tx, contextA, {
         provider: "openai",
         label: "OpenAI Broken Key",
         secret: "sk-proj-failing-primary-key-1234567890",
       });
 
-      await registerCredential(tx, {
-        organizationId: contextA.organizationId,
-        workspaceId: contextA.workspaceId,
+      await registerCredential(tx, contextA, {
         provider: "gemini",
         label: "Gemini Fallback Key",
         secret: "AIzaSy-fallback-working-key-1234567890",
@@ -231,17 +225,13 @@ describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction Hi
 
   it("throws descriptive AgentExecutionError when both primary and fallback fail", async () => {
     await withContext(prisma, contextA, async (tx) => {
-      await registerCredential(tx, {
-        organizationId: contextA.organizationId,
-        workspaceId: contextA.workspaceId,
+      await registerCredential(tx, contextA, {
         provider: "openai",
         label: "Broken Key 1",
         secret: "sk-proj-fail1-1234567890",
       });
 
-      await registerCredential(tx, {
-        organizationId: contextA.organizationId,
-        workspaceId: contextA.workspaceId,
+      await registerCredential(tx, contextA, {
         provider: "gemini",
         label: "Broken Key 2",
         secret: "AIzaSy-fail2-1234567890",
@@ -280,9 +270,7 @@ describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction Hi
 
   it("maintains conversation history across multiple turns in the same session", async () => {
     await withContext(prisma, contextA, async (tx) => {
-      await registerCredential(tx, {
-        organizationId: contextA.organizationId,
-        workspaceId: contextA.workspaceId,
+      await registerCredential(tx, contextA, {
         provider: "anthropic",
         label: "Anthropic Key",
         secret: "sk-ant-multi-turn-key-1234567890",
@@ -475,9 +463,7 @@ describeDatabase("Task 07: AI Agent Engine, Fallback Resilience & Interaction Hi
 
   it("throws actionable 'nenhum agente configurado' when prompt is dispatched without any registered agent", async () => {
     await withContext(prisma, contextA, async (tx) => {
-      await registerCredential(tx, {
-        organizationId: contextA.organizationId,
-        workspaceId: contextA.workspaceId,
+      await registerCredential(tx, contextA, {
         provider: "openai",
         label: "OpenAI Valid Key",
         secret: "sk-proj-valid-test-key-1234567890",

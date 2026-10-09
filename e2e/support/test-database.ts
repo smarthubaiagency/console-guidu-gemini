@@ -70,7 +70,7 @@ export type TestDatabase = Readonly<{
     orgSlug: string;
     wsName: string;
     wsSlug: string;
-    role?: "owner" | "admin" | "member";
+    role?: "owner" | "admin" | "member" | "viewer";
   }) => Promise<{ organizationId: string; workspaceId: string }>;
   close: () => Promise<void>;
 }>;

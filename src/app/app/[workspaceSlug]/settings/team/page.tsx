@@ -6,10 +6,14 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listOrganizationMembers } from "@/core/organizations/members";
 import { listInvitations } from "@/core/organizations/invitations";
+import { Permissions } from "@/core/permissions/catalog";
+import { hasOrganizationRolePermission } from "@/core/permissions/matrix";
+import type { OrganizationRole } from "@/core/permissions/roles";
 import {
   TeamClient,
   type MemberDisplay,
   type InvitationDisplay,
+  type TeamCapabilities,
 } from "./team-client";
 
 export const metadata: Metadata = {
@@ -31,16 +35,42 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
     workspaceSlug,
   );
 
-  const { organization, members, invitations, profiles } = await withContext(
-    prisma,
-    context,
-    async (tx) => {
+  const { organization, members, invitations, profiles, capabilities } =
+    await withContext(prisma, context, async (tx) => {
+      const orgMember = await tx.organizationMember.findUnique({
+        where: {
+          organizationId_userId: {
+            organizationId: context.organizationId,
+            userId: context.userId,
+          },
+        },
+      });
+
+      const orgRole =
+        orgMember?.status === "active"
+          ? (orgMember.role as OrganizationRole)
+          : null;
+
+      const canInvite = orgRole
+        ? hasOrganizationRolePermission(
+            orgRole,
+            Permissions.ORGANIZATION_MEMBERS_INVITE,
+          )
+        : false;
+
+      const canManageMembers = orgRole
+        ? hasOrganizationRolePermission(
+            orgRole,
+            Permissions.ORGANIZATION_MEMBERS_MANAGE,
+          )
+        : false;
+
       const [org, orgMembers, orgInvites] = await Promise.all([
         tx.organization.findUnique({
           where: { id: context.organizationId },
         }),
         listOrganizationMembers(tx, context.organizationId),
-        listInvitations(tx, context.organizationId),
+        canInvite ? listInvitations(tx, context) : [],
       ]);
 
       const userIds = orgMembers.map((m) => m.userId);
@@ -53,9 +83,13 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
         members: orgMembers,
         invitations: orgInvites,
         profiles: userProfiles,
+        capabilities: {
+          canManage: canManageMembers,
+          canInvite,
+          canManageMembers,
+        } satisfies TeamCapabilities,
       };
-    },
-  );
+    });
 
   const profileMap = new Map(profiles.map((p) => [p.id, p]));
 
@@ -121,6 +155,7 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
         maxSeats={organization?.maxSeats ?? 5}
         members={memberDisplays}
         invitations={invitationDisplays}
+        capabilities={capabilities}
       />
     </div>
   );

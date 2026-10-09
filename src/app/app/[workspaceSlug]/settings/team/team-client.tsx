@@ -37,6 +37,12 @@ export type InvitationDisplay = {
   expiresAt: string;
 };
 
+export type TeamCapabilities = {
+  canManage: boolean;
+  canInvite: boolean;
+  canManageMembers: boolean;
+};
+
 interface TeamClientProps {
   workspaceSlug: string;
   currentUserId: string;
@@ -45,6 +51,7 @@ interface TeamClientProps {
   maxSeats: number;
   members: MemberDisplay[];
   invitations: InvitationDisplay[];
+  capabilities: TeamCapabilities;
 }
 
 export function TeamClient({
@@ -55,6 +62,7 @@ export function TeamClient({
   maxSeats,
   members,
   invitations,
+  capabilities,
 }: TeamClientProps) {
   const [isPending, startTransition] = useTransition();
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
@@ -67,8 +75,6 @@ export function TeamClient({
     "member",
   );
 
-  const canManageTeam =
-    currentUserRole === "owner" || currentUserRole === "admin";
   const isOwner = currentUserRole === "owner";
 
   const activeMembersCount = members.filter(
@@ -233,7 +239,7 @@ export function TeamClient({
             </div>
           </div>
 
-          {canManageTeam && (
+          {capabilities.canInvite && (
             <button
               type="button"
               disabled={isSeatLimitReached || isPending}
@@ -357,7 +363,7 @@ export function TeamClient({
                 <th className="px-5 py-3">Papel</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Entrou em</th>
-                {canManageTeam && (
+                {capabilities.canManageMembers && (
                   <th className="px-5 py-3 text-right">Ações</th>
                 )}
               </tr>
@@ -367,7 +373,7 @@ export function TeamClient({
                 const isTargetOwner = member.role === "owner";
                 // Admin cannot alter or remove an owner (AC04)
                 const canModifyThisMember =
-                  canManageTeam &&
+                  capabilities.canManageMembers &&
                   (isOwner ||
                     (!isTargetOwner && member.userId !== currentUserId));
 
@@ -437,7 +443,7 @@ export function TeamClient({
                       {member.joinedAt}
                     </td>
 
-                    {canManageTeam && (
+                    {capabilities.canManageMembers && (
                       <td className="px-5 py-3.5 text-right">
                         {canModifyThisMember && (
                           <button
@@ -486,7 +492,7 @@ export function TeamClient({
                   <th className="px-5 py-3">Papel Previsto</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">Expira em</th>
-                  {canManageTeam && (
+                  {capabilities.canManageMembers && (
                     <th className="px-5 py-3 text-right">Ações</th>
                   )}
                 </tr>
@@ -518,7 +524,7 @@ export function TeamClient({
                     <td className="text-text-secondary px-5 py-3.5">
                       {invite.expiresAt}
                     </td>
-                    {canManageTeam && (
+                    {capabilities.canManageMembers && (
                       <td className="px-5 py-3.5 text-right">
                         {invite.status === "pending" && (
                           <button

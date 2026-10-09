@@ -91,4 +91,34 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
     // Verify key is listed in active table
     await expect(page.getByText("Chave E2E de Teste")).toBeVisible();
   });
+
+  test("restricts viewer from registering credentials and issuing API keys", async ({
+    page,
+    request,
+  }) => {
+    const email = uniqueEmail("viewer-user");
+    const wsSlug = `ws-viewer-${Date.now()}`;
+    await createIdentity(request, email);
+    await seedWorkspace(request, {
+      email,
+      orgName: "Viewer Company",
+      orgSlug: `org-viewer-${Date.now()}`,
+      wsName: "Workspace Viewer",
+      wsSlug,
+      role: "viewer",
+    });
+
+    await signIn(page, email);
+
+    // Verify credentials page: heading is visible, but "Nova Credencial" button is not visible
+    await page.goto(`/app/${wsSlug}/settings/credentials`);
+    await expect(page.getByRole("heading", { name: "Credenciais de Provedores de IA (BYOK)" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nova Credencial" })).not.toBeVisible();
+
+    // Verify api keys page: heading is visible, but "Emitir Nova Chave" button is not visible
+    await page.goto(`/app/${wsSlug}/settings/api`);
+    await expect(page.getByRole("heading", { name: "Chaves de API e Tokens MCP" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Emitir Nova Chave" })).not.toBeVisible();
+  });
 });
+

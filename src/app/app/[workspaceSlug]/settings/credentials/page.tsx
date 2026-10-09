@@ -5,7 +5,13 @@ import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listWorkspaceCredentials } from "@/core/credentials/vault";
-import { CredentialsClient } from "./credentials-client";
+import { Permissions } from "@/core/permissions/catalog";
+import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
+import type { WorkspaceRole } from "@/core/permissions/roles";
+import {
+  CredentialsClient,
+  type CredentialsCapabilities,
+} from "./credentials-client";
 
 export const metadata: Metadata = {
   title: "Credenciais e Provedores de IA (BYOK)",
@@ -28,9 +34,42 @@ export default async function CredentialsSettingsPage({
     workspaceSlug,
   );
 
-  const credentials = await withContext(prisma, context, async (tx) => {
-    return listWorkspaceCredentials(tx, context.workspaceId);
-  });
+  const { credentials, capabilities } = await withContext(
+    prisma,
+    context,
+    async (tx) => {
+      const wsMember = await tx.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: context.workspaceId,
+            userId: context.userId,
+          },
+        },
+      });
+
+      const wsRole =
+        wsMember?.status === "active" ? (wsMember.role as WorkspaceRole) : null;
+
+      const canRead = wsRole
+        ? hasWorkspaceRolePermission(wsRole, Permissions.CREDENTIALS_READ)
+        : false;
+      const canManage = wsRole
+        ? hasWorkspaceRolePermission(wsRole, Permissions.CREDENTIALS_MANAGE)
+        : false;
+
+      const creds = canRead
+        ? await listWorkspaceCredentials(tx, context)
+        : [];
+
+      return {
+        credentials: creds,
+        capabilities: {
+          canManage,
+          canRead,
+        } satisfies CredentialsCapabilities,
+      };
+    },
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -59,6 +98,7 @@ export default async function CredentialsSettingsPage({
       <CredentialsClient
         workspaceSlug={workspaceSlug}
         credentials={credentials}
+        capabilities={capabilities}
       />
     </div>
   );

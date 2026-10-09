@@ -1,12 +1,13 @@
 /**
  * ============================================================================
  * File: src/core/agents/actions.ts
- * Module: AI Prompt & Agent Execution Server Actions
+ * Module: AI Prompt & Agent Execution Server Actions (C07)
  *
  * Maintenance Rationale:
  * - Server actions bridge between client chat UI and backend prompt engine.
  * - All mutations execute securely within `withContext` (ADR 0001).
  * - No decrypted keys or raw payloads ever leak to the browser.
+ * - Enforces permission checks and safe denial messaging ("Você não tem permissão para esta ação.").
  * ============================================================================
  */
 
@@ -21,6 +22,7 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import type { AIProvider } from "@/core/credentials/vault";
 import { assertModuleAvailable } from "@/core/modules/availability";
+import { isPermissionDeniedError } from "@/core/permissions/guard";
 import {
   createAgentConfig,
   executeAgentPrompt,
@@ -70,10 +72,7 @@ export async function executePromptAction(
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     const result = await withContext(prisma, context, async (tx) => {
-      return executeAgentPrompt(tx, {
-        workspaceId: context.workspaceId,
-        organizationId: context.organizationId,
-        userId: identity.userId,
+      return executeAgentPrompt(tx, context, {
         prompt,
         agentConfigId: agentConfigId || undefined,
         sessionId: sessionId || undefined,
@@ -87,6 +86,9 @@ export async function executePromptAction(
       result,
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err)) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const message = err instanceof Error ? err.message : "Erro desconhecido ao executar o agente.";
     return { error: message };
   }
@@ -151,9 +153,7 @@ export async function createAgentConfigAction(
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     const config = await withContext(prisma, context, async (tx) => {
-      return createAgentConfig(tx, {
-        organizationId: context.organizationId,
-        workspaceId: context.workspaceId,
+      return createAgentConfig(tx, context, {
         name,
         description,
         systemPrompt,
@@ -172,6 +172,9 @@ export async function createAgentConfigAction(
       config,
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err)) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const message = err instanceof Error ? err.message : "Erro ao cadastrar agente de IA.";
     return { error: message };
   }
@@ -194,9 +197,12 @@ export async function loadSessionMessagesAction(
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     return await withContext(prisma, context, async (tx) => {
-      return getSessionWithMessages(tx, sessionId);
+      return getSessionWithMessages(tx, context, sessionId);
     });
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err)) {
+      return { session: null, messages: [], error: "Você não tem permissão para esta ação." };
+    }
     const message = err instanceof Error ? err.message : "Erro ao carregar mensagens da sessão.";
     return { session: null, messages: [], error: message };
   }

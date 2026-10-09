@@ -4,15 +4,22 @@
  * Module: BYOK Credential Vault Domain Service
  *
  * Maintenance Rationale:
- * - Implements Spec Section 16: "Cada workspace pode ter várias conexões...
- *   Guardar chaves em cofre com privilégios restritos. Metadados contêm identificação
- *   mascarada, estado e última verificação. Consultas posteriores não devolvem o segredo."
+ * - Implements Spec Section 16 & C07:
+ *   - "Cada workspace pode ter várias conexões... Guardar chaves em cofre com privilégios restritos."
+ *   - registerCredential e revokeCredential exigem credentials.manage.
+ *   - listWorkspaceCredentials exige credentials.read.
+ *   - resolveProviderSecret é interno: não exposto a action e recebe RequestContext já autorizado.
+ *   - Funções recebem ctx: RequestContext e usam ctx.workspaceId/ctx.organizationId.
  * - All mutations and reads operate within `withContext` (ADR 0001).
  * - Decryption occurs only at the server boundary immediately before provider execution.
  * ============================================================================
  */
 
-import type { ContextTransaction } from "@/lib/prisma/with-context";
+import "server-only";
+
+import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
+import { Permissions } from "@/core/permissions/catalog";
+import { requireWorkspacePermission } from "@/core/permissions/guard";
 import { encryptSecret, decryptSecret } from "./crypto";
 
 export type AIProvider = "openai" | "anthropic" | "gemini";
@@ -49,27 +56,22 @@ const SUPPORTED_PROVIDERS: Set<string> = new Set(["openai", "anthropic", "gemini
 
 /**
  * Registers a new BYOK credential inside the contextual workspace.
+ * Requires `credentials.manage` permission.
  * Encrypts the raw secret at rest and returns only safe metadata.
  */
 export async function registerCredential(
   tx: ContextTransaction,
+  ctx: RequestContext,
   params: {
-    organizationId: string;
-    workspaceId: string;
     provider: AIProvider;
     label: string;
     secret: string;
     purpose?: CredentialPurpose;
   },
 ): Promise<CredentialItem> {
-  const {
-    organizationId,
-    workspaceId,
-    provider,
-    label,
-    secret,
-    purpose = "all",
-  } = params;
+  await requireWorkspacePermission(tx, ctx, Permissions.CREDENTIALS_MANAGE);
+
+  const { provider, label, secret, purpose = "all" } = params;
 
   if (!SUPPORTED_PROVIDERS.has(provider)) {
     throw new InvalidProviderError(provider);
@@ -87,8 +89,8 @@ export async function registerCredential(
 
   const record = await tx.credential.create({
     data: {
-      organizationId,
-      workspaceId,
+      organizationId: ctx.organizationId,
+      workspaceId: ctx.workspaceId,
       provider,
       purpose,
       label: label.trim(),
@@ -113,14 +115,18 @@ export async function registerCredential(
 }
 
 /**
- * Lists all credentials for a workspace (returning masked values, never raw secrets).
+ * Lists all credentials for the contextual workspace.
+ * Requires `credentials.read` permission.
+ * Returns only masked values, never raw secrets.
  */
 export async function listWorkspaceCredentials(
   tx: ContextTransaction,
-  workspaceId: string,
+  ctx: RequestContext,
 ): Promise<CredentialItem[]> {
+  await requireWorkspacePermission(tx, ctx, Permissions.CREDENTIALS_READ);
+
   const records = await tx.credential.findMany({
-    where: { workspaceId },
+    where: { workspaceId: ctx.workspaceId },
     orderBy: { createdAt: "desc" },
   });
 
@@ -139,14 +145,26 @@ export async function listWorkspaceCredentials(
 }
 
 /**
- * Revokes an existing credential.
+ * Revokes an existing credential in the contextual workspace.
+ * Requires `credentials.manage` permission.
  */
 export async function revokeCredential(
   tx: ContextTransaction,
+  ctx: RequestContext,
   credentialId: string,
 ): Promise<CredentialItem> {
+  await requireWorkspacePermission(tx, ctx, Permissions.CREDENTIALS_MANAGE);
+
+  const candidate = await tx.credential.findFirst({
+    where: { id: credentialId, workspaceId: ctx.workspaceId },
+  });
+
+  if (!candidate) {
+    throw new Error("Credencial não encontrada.");
+  }
+
   const updated = await tx.credential.update({
-    where: { id: credentialId },
+    where: { id: candidate.id },
     data: { status: "revoked" },
   });
 
@@ -166,17 +184,17 @@ export async function revokeCredential(
 
 /**
  * Resolves and decrypts the active raw secret for a provider in the workspace.
- * Used exclusively on the server when executing AI tasks.
+ * Internal: not exposed to any client actions; receives RequestContext already authorized.
  */
 export async function resolveProviderSecret(
   tx: ContextTransaction,
-  workspaceId: string,
+  ctx: RequestContext,
   provider: AIProvider,
   purpose: CredentialPurpose = "all",
 ): Promise<string> {
   const candidate = await tx.credential.findFirst({
     where: {
-      workspaceId,
+      workspaceId: ctx.workspaceId,
       provider,
       status: "active",
       purpose: { in: [purpose, "all"] },
@@ -185,7 +203,7 @@ export async function resolveProviderSecret(
   });
 
   if (!candidate) {
-    throw new CredentialNotFoundError(provider, workspaceId);
+    throw new CredentialNotFoundError(provider, ctx.workspaceId);
   }
 
   return decryptSecret(candidate.encryptedPayload);

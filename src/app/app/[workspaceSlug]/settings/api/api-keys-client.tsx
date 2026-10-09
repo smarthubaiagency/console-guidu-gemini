@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import {
   Key,
   Plus,
-  Shield,
   Trash2,
   Copy,
   Check,
@@ -18,12 +17,26 @@ import {
 } from "@/core/credentials/api-keys-actions";
 import type { ApiKeyItem } from "@/core/credentials/api-keys";
 
+export type ApiKeysCapabilities = {
+  canManage: boolean;
+  canCreate: boolean;
+  canRevokeOwn: boolean;
+  canRevokeAny: boolean;
+};
+
 interface ApiKeysClientProps {
   workspaceSlug: string;
   apiKeys: ApiKeyItem[];
+  capabilities: ApiKeysCapabilities;
+  currentUserId: string;
 }
 
-export function ApiKeysClient({ workspaceSlug, apiKeys }: ApiKeysClientProps) {
+export function ApiKeysClient({
+  workspaceSlug,
+  apiKeys,
+  capabilities,
+  currentUserId,
+}: ApiKeysClientProps) {
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<ApiKeyActionState | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -110,6 +123,10 @@ export function ApiKeysClient({ workspaceSlug, apiKeys }: ApiKeysClientProps) {
     });
   };
 
+  const canRevokeItem = (item: ApiKeyItem) =>
+    capabilities.canRevokeAny ||
+    (capabilities.canRevokeOwn && item.userId === currentUserId);
+
   return (
     <div className="space-y-6">
       {/* Feedback banner */}
@@ -187,18 +204,20 @@ export function ApiKeysClient({ workspaceSlug, apiKeys }: ApiKeysClientProps) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Emitir Nova Chave</span>
-        </button>
+        {capabilities.canCreate && (
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Emitir Nova Chave</span>
+          </button>
+        )}
       </div>
 
       {/* Modal / Create Key Form */}
-      {isModalOpen && (
+      {capabilities.canCreate && isModalOpen && (
         <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
           <div className="border-card-border bg-surface-card w-full max-w-lg rounded-2xl border p-6 shadow-xl">
             <div className="border-border flex items-center justify-between border-b pb-4">
@@ -231,33 +250,33 @@ export function ApiKeysClient({ workspaceSlug, apiKeys }: ApiKeysClientProps) {
               </div>
 
               <div>
-                <label className="text-12 text-text-subtle mb-1.5 block font-medium">
-                  Escopos de Acesso (ADR 0009)
+                <label className="text-12 text-text-subtle mb-1 block font-medium">
+                  Escopos de Acesso Permitidos
                 </label>
                 <div className="space-y-2">
-                  {availableScopes.map((scope) => {
-                    const isChecked = scopes.includes(scope.id);
+                  {availableScopes.map((sc) => {
+                    const isChecked = scopes.includes(sc.id);
                     return (
                       <label
-                        key={scope.id}
+                        key={sc.id}
                         className={`flex cursor-pointer items-start gap-3 rounded-lg border p-2.5 transition ${
                           isChecked
-                            ? "border-focus-ring bg-surface-sidebar"
+                            ? "border-focus-ring bg-surface-raised"
                             : "border-border hover:bg-surface-hover"
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
-                          onChange={() => handleScopeToggle(scope.id)}
-                          className="text-text focus:ring-focus-ring mt-0.5 rounded-sm"
+                          onChange={() => handleScopeToggle(sc.id)}
+                          className="mt-0.5 rounded-sm"
                         />
-                        <div className="text-12">
-                          <div className="text-text font-semibold">
-                            {scope.label}
+                        <div>
+                          <div className="text-12 text-text font-medium">
+                            {sc.label}
                           </div>
                           <div className="text-11 text-text-secondary">
-                            {scope.desc}
+                            {sc.desc}
                           </div>
                         </div>
                       </label>
@@ -268,7 +287,7 @@ export function ApiKeysClient({ workspaceSlug, apiKeys }: ApiKeysClientProps) {
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Validade / Expiração Obrigatória
+                  Período de Validade
                 </label>
                 <select
                   value={expiresInDays}
@@ -281,15 +300,6 @@ export function ApiKeysClient({ workspaceSlug, apiKeys }: ApiKeysClientProps) {
                   <option value={180}>180 dias</option>
                   <option value={365}>1 ano</option>
                 </select>
-              </div>
-
-              <div className="bg-surface-raised border-border text-11 text-text-subtle flex items-start gap-2 rounded-lg border p-3">
-                <Shield className="text-success-solid mt-0.5 h-4 w-4 shrink-0" />
-                <span>
-                  O hash <strong>SHA-256</strong> é armazenado no banco. Tokens
-                  de API não são tokens do Supabase e operam estritamente sob o
-                  contexto do workspace.
-                </span>
               </div>
 
               <div className="border-border mt-6 flex items-center justify-end gap-3 border-t pt-3">
@@ -392,7 +402,7 @@ export function ApiKeysClient({ workspaceSlug, apiKeys }: ApiKeysClientProps) {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      {item.status === "active" && (
+                      {item.status === "active" && canRevokeItem(item) && (
                         <button
                           type="button"
                           disabled={isPending}

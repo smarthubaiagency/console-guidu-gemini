@@ -22,14 +22,21 @@ import type {
   CredentialPurpose,
 } from "@/core/credentials/vault";
 
+export type CredentialsCapabilities = {
+  canManage: boolean;
+  canRead: boolean;
+};
+
 interface CredentialsClientProps {
   workspaceSlug: string;
   credentials: CredentialItem[];
+  capabilities: CredentialsCapabilities;
 }
 
 export function CredentialsClient({
   workspaceSlug,
   credentials,
+  capabilities,
 }: CredentialsClientProps) {
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<CredentialActionState | null>(null);
@@ -130,18 +137,20 @@ export function CredentialsClient({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nova Credencial</span>
-        </button>
+        {capabilities.canManage && (
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nova Credencial</span>
+          </button>
+        )}
       </div>
 
       {/* Modal / Register Form */}
-      {isModalOpen && (
+      {capabilities.canManage && isModalOpen && (
         <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
           <div className="border-card-border bg-surface-card w-full max-w-lg rounded-2xl border p-6 shadow-xl">
             <div className="border-border flex items-center justify-between border-b pb-4">
@@ -284,8 +293,9 @@ export function CredentialsClient({
 
         {credentials.length === 0 ? (
           <div className="text-12 text-text-tertiary p-8 text-center">
-            Nenhuma credencial cadastrada neste workspace. Adicione uma chave
-            para habilitar módulos de IA.
+            {!capabilities.canRead
+              ? "Você não possui permissão para visualizar credenciais deste workspace."
+              : "Nenhuma credencial cadastrada neste workspace. Adicione uma chave para habilitar módulos de IA."}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -297,7 +307,9 @@ export function CredentialsClient({
                   <th className="px-5 py-3">Chave Mascarada</th>
                   <th className="px-5 py-3">Finalidade</th>
                   <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Ações</th>
+                  <th className="px-5 py-3 text-right">
+                    {capabilities.canManage ? "Ações" : ""}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
@@ -332,7 +344,7 @@ export function CredentialsClient({
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      {item.status === "active" && (
+                      {capabilities.canManage && item.status === "active" && (
                         <button
                           type="button"
                           disabled={isPending}

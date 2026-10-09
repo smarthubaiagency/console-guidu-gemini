@@ -36,7 +36,7 @@ export class PermissionDeniedError extends Error {
   readonly code = "forbidden" as const;
   readonly status = 403 as const;
 
-  constructor(message = "Permissão negada.") {
+  constructor(message = "Você não tem permissão para esta ação.") {
     super(message);
     this.name = "PermissionDeniedError";
   }
@@ -125,6 +125,48 @@ export async function requireWorkspacePermission(
 
   // Otherwise, user lacks active membership in this workspace
   throw new PermissionDeniedError();
+}
+
+/**
+ * Resolves the effective workspace role for the current contextual identity.
+ * Returns null if user is inactive, blocked or has no active role in the workspace.
+ */
+export async function getEffectiveWorkspaceRole(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+): Promise<WorkspaceRole | null> {
+  const [wsMember, orgMember] = await Promise.all([
+    tx.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId: ctx.workspaceId,
+          userId: ctx.userId,
+        },
+      },
+    }),
+    tx.organizationMember.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: ctx.organizationId,
+          userId: ctx.userId,
+        },
+      },
+    }),
+  ]);
+
+  if (wsMember && wsMember.status === "active") {
+    return wsMember.role as WorkspaceRole;
+  }
+
+  if (wsMember && wsMember.status !== "active") {
+    return null;
+  }
+
+  if (orgMember && orgMember.status === "active" && orgMember.role === OrganizationRoles.OWNER) {
+    return WorkspaceRoles.OWNER;
+  }
+
+  return null;
 }
 
 /**

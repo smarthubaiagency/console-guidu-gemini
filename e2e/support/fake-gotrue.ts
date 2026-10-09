@@ -75,7 +75,7 @@ export type FakeGoTrueOptions = Readonly<{
     orgSlug: string;
     wsName: string;
     wsSlug: string;
-    role?: "owner" | "admin" | "member";
+    role?: "owner" | "admin" | "member" | "viewer";
   }) => Promise<{ organizationId: string; workspaceId: string }>;
 }>;
 
@@ -265,7 +265,7 @@ export async function startFakeGoTrue(
       const orgSlug = asString(body.orgSlug) ?? `org-${Date.now()}`;
       const wsName = asString(body.wsName) ?? "Workspace Teste";
       const wsSlug = asString(body.wsSlug) ?? `ws-${Date.now()}`;
-      const role = asString(body.role) as "owner" | "admin" | "member" | null;
+      const role = asString(body.role) as "owner" | "admin" | "member" | "viewer" | null;
       if (!email) return json(response, 400, { msg: "invalid email" });
       const seeded = await options.onSeedWorkspace({
         email,

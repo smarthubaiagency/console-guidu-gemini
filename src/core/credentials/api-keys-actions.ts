@@ -7,6 +7,7 @@ import { requireUser } from "@/core/auth/identity";
 import { resolveWorkspaceContext } from "@/core/auth/context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { isPermissionDeniedError } from "@/core/permissions/guard";
 import { createApiKey, revokeApiKey } from "./api-keys";
 
 export type ApiKeyActionState = {
@@ -48,10 +49,7 @@ export async function createApiKeyAction(
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     const result = await withContext(prisma, context, async (tx) => {
-      return createApiKey(tx, {
-        organizationId: context.organizationId,
-        workspaceId: context.workspaceId,
-        userId: identity.userId,
+      return createApiKey(tx, context, {
         name,
         scopes: finalScopes,
         expiresInDays,
@@ -66,6 +64,9 @@ export async function createApiKeyAction(
       rawKey: result.rawKey,
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err)) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const msg = err instanceof Error ? err.message : "Erro ao emitir chave de API.";
     return { error: msg };
   }
@@ -96,7 +97,7 @@ export async function revokeApiKeyAction(
     const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     await withContext(prisma, context, async (tx) => {
-      return revokeApiKey(tx, apiKeyId);
+      return revokeApiKey(tx, context, apiKeyId);
     });
 
     revalidatePath(`/app/${workspaceSlug}/settings/api`);
@@ -106,6 +107,9 @@ export async function revokeApiKeyAction(
       message: "Chave de API revogada com sucesso.",
     };
   } catch (err: unknown) {
+    if (isPermissionDeniedError(err)) {
+      return { error: "Você não tem permissão para esta ação." };
+    }
     const msg = err instanceof Error ? err.message : "Erro ao revogar chave de API.";
     return { error: msg };
   }
