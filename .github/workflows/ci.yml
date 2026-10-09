@@ -151,6 +151,7 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/auth/profiles-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/invariants.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/membership-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/audit.sql
 
       - name: Prisma and Data API isolation suite
         run: npx vitest run --project integration --reporter=default --reporter=json --outputFile=/tmp/db-tests.json

@@ -26,6 +26,7 @@ import {
   LastOwnerCannotBeRemovedError,
   MemberNotFoundError,
 } from "../organizations/errors";
+import { recordAudit } from "../audit/record";
 
 export type WorkspaceMemberItem = {
   workspaceId: string;
@@ -174,7 +175,7 @@ export async function updateWorkspaceMemberRole(
   }
 
   try {
-    return await tx.workspaceMember.update({
+    const updated = await tx.workspaceMember.update({
       where: {
         workspaceId_userId: {
           workspaceId,
@@ -183,6 +184,29 @@ export async function updateWorkspaceMemberRole(
       },
       data: { role: newRole },
     });
+
+    await recordAudit(
+      tx,
+      {
+        userId: actorId,
+        workspaceId,
+        organizationId,
+      },
+      {
+        action: "workspace_members.role_changed",
+        resourceType: "workspace_member",
+        resourceId: targetUserId,
+        result: "success",
+        origin: "app",
+        metadata: {
+          from: targetRole,
+          to: newRole,
+          targetUserId,
+        },
+      },
+    );
+
+    return updated;
   } catch (err: unknown) {
     if (
       err instanceof Error &&
@@ -275,6 +299,26 @@ export async function removeWorkspaceMember(
         },
       },
     });
+
+    await recordAudit(
+      tx,
+      {
+        userId: actorId,
+        workspaceId,
+        organizationId,
+      },
+      {
+        action: "workspace_members.removed",
+        resourceType: "workspace_member",
+        resourceId: targetUserId,
+        result: "success",
+        origin: "app",
+        metadata: {
+          role: targetRole,
+          targetUserId,
+        },
+      },
+    );
   } catch (err: unknown) {
     if (
       err instanceof Error &&

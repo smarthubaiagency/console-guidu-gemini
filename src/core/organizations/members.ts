@@ -27,6 +27,7 @@ import {
   LastOwnerCannotBeRemovedError,
   MemberNotFoundError,
 } from "./errors";
+import { recordAudit } from "../audit/record";
 
 export type OrganizationMemberItem = {
   userId: string;
@@ -126,7 +127,7 @@ export async function updateOrganizationMemberRole(
   }
 
   // 6. Execute update
-  return tx.organizationMember.update({
+  const updated = await tx.organizationMember.update({
     where: {
       organizationId_userId: {
         organizationId,
@@ -137,6 +138,29 @@ export async function updateOrganizationMemberRole(
       role: newRole,
     },
   });
+
+  await recordAudit(
+    tx,
+    {
+      userId: actorId,
+      organizationId,
+      workspaceId: "",
+    },
+    {
+      action: "organization_members.role_changed",
+      resourceType: "organization_member",
+      resourceId: targetUserId,
+      result: "success",
+      origin: "app",
+      metadata: {
+        from: targetRole,
+        to: newRole,
+        targetUserId,
+      },
+    },
+  );
+
+  return updated;
 }
 
 /**
@@ -224,4 +248,24 @@ export async function removeOrganizationMember(
       },
     },
   });
+
+  await recordAudit(
+    tx,
+    {
+      userId: actorId,
+      organizationId,
+      workspaceId: "",
+    },
+    {
+      action: "organization_members.removed",
+      resourceType: "organization_member",
+      resourceId: targetUserId,
+      result: "success",
+      origin: "app",
+      metadata: {
+        role: targetRole,
+        targetUserId,
+      },
+    },
+  );
 }

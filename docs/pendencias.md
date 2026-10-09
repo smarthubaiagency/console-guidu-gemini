@@ -14,6 +14,7 @@ Atualizado em 08/10/2026 a partir da seção 26 da Especificação v1.0, das dec
 | Retenção e privacidade | Definir por categoria com responsabilidades. |
 | Configurações dos módulos | Catálogo, Google Business e Agentes de IA permanecem abertos em documentos próprios; não inferir regras internas. Módulo Agentes de IA congelado atrás de flag (C04) — ver [ESTADO.md](modules/ai-agents/ESTADO.md). |
 | Escala horizontal de jobs | Certificar `groupConcurrency` do pg-boss entre múltiplos processos antes do primeiro scale-out. |
+| Auditoria transacional de MFA (`auth.mfa_enrolled`, `auth.mfa_unenrolled`) | Supabase Auth gerencia fatores TOTP via API GoTrue (schema `auth`) fora da transação Postgres/Prisma da aplicação. Sem contexto transacional compartilhado entre GoTrue e Prisma, a gravação de auditoria atômica deve ser vinculada via webhook do Supabase Auth ou trigger em `auth.mfa_factors` na F3 (C11). |
 
 ## Resolvidas
 
