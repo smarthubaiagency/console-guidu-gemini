@@ -250,7 +250,7 @@ do $$
 declare
   v_err boolean := false;
 begin
-  select set_config('app.invitation_token_hash', '', true);
+  perform set_config('app.invitation_token_hash', '', true);
   begin
     insert into public.workspace_members (workspace_id, organization_id, user_id, role, status)
     values (
@@ -276,7 +276,7 @@ do $$
 declare
   v_err boolean := false;
 begin
-  select set_config('app.invitation_token_hash', 'valid_test_token_hash_456', true);
+  perform set_config('app.invitation_token_hash', 'valid_test_token_hash_456', true);
   begin
     insert into public.workspace_members (workspace_id, organization_id, user_id, role, status)
     values (
@@ -302,7 +302,7 @@ do $$
 declare
   v_ins_count integer;
 begin
-  select set_config('app.invitation_token_hash', 'valid_test_token_hash_456', true);
+  perform set_config('app.invitation_token_hash', 'valid_test_token_hash_456', true);
   insert into public.workspace_members (workspace_id, organization_id, user_id, role, status)
   values (
     'a0000000-0000-4000-8000-000000000011'::uuid,
