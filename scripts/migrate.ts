@@ -1,11 +1,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";
+import { assertDevDatabase } from "./lib/dev-database.js";
 
 /**
  * Migration runner for developer and CI environments.
  * Runs as `app_migrations` (migration administrator) to apply versioned migrations
  * from `supabase/migrations/` sequentially.
+ *
+ * Enforces ADR 0008 and ADR 0010:
+ * - Requires MIGRATION_DATABASE_URL environment variable (no fallback).
+ * - Restricts execution to console-guidu (ssulunrysnvwyqjlkpry) or local test host.
+ * - Never prints raw database credentials.
  */
 async function main() {
   const migrationsDir = path.resolve(process.cwd(), "supabase/migrations");
@@ -16,14 +22,18 @@ async function main() {
 
   console.log(`Found ${files.length} migration files in ${migrationsDir}`);
 
-  // Connect as app_migrations
-  const connectionString =
-    process.env.MIGRATION_DATABASE_URL ||
-    `postgresql://app_migrations:ikkbI7I3t3Qw0fGbrda746XLkUF7VE9c@db.ssulunrysnvwyqjlkpry.supabase.co:5432/postgres`;
+  // Validate database URL against ADR 0010 governance rules
+  const db = assertDevDatabase(process.env.MIGRATION_DATABASE_URL);
+  console.log(
+    `Target database: ${db.host} (role: ${db.user || "app_migrations"})`,
+  );
 
   const client = new pg.Client({
-    connectionString,
-    ssl: { rejectUnauthorized: false },
+    connectionString: db.url,
+    ssl:
+      db.host === "localhost" || db.host === "127.0.0.1"
+        ? false
+        : { rejectUnauthorized: false },
   });
 
   await client.connect();
@@ -73,6 +83,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Migration failed:", err);
+  console.error("Migration failed:", err instanceof Error ? err.message : err);
   process.exit(1);
 });
