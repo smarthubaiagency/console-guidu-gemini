@@ -1,10 +1,11 @@
 # ADR 0012 — Plataforma de parceiros (white label, cobrança dividida e comunicação)
 
-- **Status:** Proposto, aguarda aprovação do Marcelo no PR.
+- **Status:** Aceito
+- **Aprovador:** Marcelo, no PR #18 (10/10/2026)
 - **Data:** 10/10/2026
 - **Decisões de origem (Marcelo, 10/10/2026):** três níveis com console da plataforma em `/platform` e console do parceiro em `/admin`; cliente final acessa pelo domínio do parceiro com a identidade, os termos e a cobrança dele; checkout da plataforma com o preço do parceiro, valores mínimos e divisão padrão de 70% para o parceiro e 30% para a plataforma; alternativa em que o próprio parceiro cadastra o cliente e paga só o valor base da plataforma; provedores Iugu, Stripe e manual como opções.
 - **Altera:** ADR 0004 (marca e domínio deixam de ser só por ambiente), ADR 0005 (rotas administrativas passam de `/admin` para `/platform`) e a §12 da especificação.
-- **Detalhamento:** [`docs/partners/especificacao.md`](../partners/especificacao.md).
+- **Detalhamento:** [`docs/partners/especificacao.md`](../partners/especificacao.md). Plano de execução em [`docs/partners/plano-de-execucao.md`](../partners/plano-de-execucao.md).
 
 ## Contexto
 

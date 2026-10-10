@@ -2,7 +2,7 @@
 
 - **Versão:** 0.3 (rascunho). Novidades: modo de cobrança em que o próprio parceiro paga o valor base da plataforma, e chave "Ativar checkout" no console do parceiro, desligada por padrão (§3.1).
 - **Data:** 10/10/2026
-- **Estado:** proposta, aguarda aprovação do Marcelo. Base: [ADR 0012](../adr/0012-plataforma-de-parceiros.md).
+- **Estado:** aprovada no PR #18; itens marcados **[Em aberto]** e **[Verificar]** continuam pendentes. Execução em [plano-de-execucao.md](plano-de-execucao.md). Base: [ADR 0012](../adr/0012-plataforma-de-parceiros.md).
 - **Objetivo desta versão:** deixar a estrutura de parceria prevista para uso futuro, com contratos e pontos de extensão definidos, sem preencher regras comerciais por suposição.
 
 Legenda: **[Decidido]** foi definido por Marcelo; **[Proposta]** é recomendação técnica a aprovar; **[Em aberto]** depende de decisão de produto, comercial, contábil ou jurídica; **[Verificar]** é fato de fornecedor ainda não confirmado na documentação oficial.
@@ -305,7 +305,7 @@ Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 
 | ID      | Decisão                                           | Recomendação                                                                                             |
 | ------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| D-PA-01 | Aprovar a ADR 0012                                | —                                                                                                        |
+| D-PA-01 | Aprovar a ADR 0012                                | **[Decidido]** Aceita no PR #18                                                                          |
 | D-PA-02 | Papéis do parceiro (seção 1.2)                    | Aprovar como proposto                                                                                    |
 | D-PA-03 | Base do percentual e quem paga a taxa do provedor | Comercial e contador                                                                                     |
 | D-PA-04 | Estorno e chargeback                              | Reversão proporcional; responsabilidade a definir                                                        |
@@ -313,7 +313,7 @@ Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 | D-PA-06 | Papéis na LGPD e contrato de parceria             | Jurídico                                                                                                 |
 | D-PA-07 | Provedor inicial                                  | Iugu, depois de verificar os itens da seção 3.4; manual para pilotos                                     |
 | D-PA-08 | Provedor de e-mail transacional                   | Em aberto                                                                                                |
-| D-PA-09 | Ordem de execução                                 | Itens de esforço baixo da seção 9 primeiro                                                               |
+| D-PA-09 | Ordem de execução                                 | **[Decidido]** Etapas P1 a P7 do [plano de execução](plano-de-execucao.md)                               |
 | D-PA-10 | Chave Ativar checkout                             | **[Decidido]** Parceiro escolhe, desligada por padrão; pré-requisitos e regras de transição como na §3.1 |
 | D-PA-11 | Valor base do parceiro por plano                  | Comercial: igual ao repasse mínimo ou preço próprio                                                      |
 | D-PA-12 | Fatura consolidada do parceiro                    | Começar por assinatura; consolidar depois                                                                |
