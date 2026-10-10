@@ -42,6 +42,13 @@ const ALL_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permissions.API_KEYS_READ_ALL,
   Permissions.AI_AGENTS_USE,
   Permissions.AI_AGENTS_MANAGE,
+  Permissions.WORKSPACE_DATA_EXPORT,
+]);
+
+/** Owner only: deleting the workspace (F3e, decision of 17/10/2026). */
+const OWNER_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
+  ...ALL_WORKSPACE_PERMISSIONS,
+  Permissions.WORKSPACE_DELETE,
 ]);
 
 /**
@@ -52,7 +59,7 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
   ReadonlySet<Permission>
 > = {
   // Workspace Owner: tudo do workspace.
-  [WorkspaceRoles.OWNER]: ALL_WORKSPACE_PERMISSIONS,
+  [WorkspaceRoles.OWNER]: OWNER_WORKSPACE_PERMISSIONS,
 
   // Workspace Admin: tudo do workspace (regras de escalonamento contra owners em roles.ts).
   [WorkspaceRoles.ADMIN]: ALL_WORKSPACE_PERMISSIONS,

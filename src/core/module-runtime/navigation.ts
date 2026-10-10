@@ -319,6 +319,18 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
               }),
             ]
           : []),
+        // Export and deletion of the workspace (F3e): owner/admin.
+        ...(input.grants("workspace.data.export") ||
+        input.grants("workspace.delete")
+          ? [
+              item({
+                id: "core.data",
+                label: "Dados e privacidade",
+                href: `${base}/settings/data`,
+                iconKey: "file-text",
+              }),
+            ]
+          : []),
         // Temporary partner support access (ADR 0012, P4b2): owner/admin.
         ...(input.grants("workspace.members.manage")
           ? [

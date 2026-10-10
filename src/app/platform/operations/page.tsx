@@ -12,6 +12,7 @@ import {
   ageLabel,
   durationLabel,
   getOperationsOverview,
+  getPrivacyOverview,
   type WorkerView,
 } from "@/core/operations/service";
 import { getRequestPartner } from "@/core/partners/resolve";
@@ -66,6 +67,16 @@ export default async function PlatformOperationsPage() {
     identity.userId,
     (tx) =>
       getOperationsOverview(tx, {
+        userId: identity.userId,
+        platformRole: role,
+      }),
+    { partnerId: partner?.partnerId ?? null },
+  );
+  const privacy = await withIdentityContext(
+    prisma,
+    identity.userId,
+    (tx) =>
+      getPrivacyOverview(tx, {
         userId: identity.userId,
         platformRole: role,
       }),
@@ -216,6 +227,56 @@ export default async function PlatformOperationsPage() {
           {data.failures.length === 0 ? (
             <li className="text-12 text-text-secondary py-2">
               Nenhuma falha registrada.
+            </li>
+          ) : null}
+        </ul>
+      </section>
+
+      {/* Privacy (F3e) */}
+      <section className={sectionClass} data-testid="operations-privacy">
+        <h2 className="text-14 text-text font-semibold">Privacidade</h2>
+        <p className="text-12 text-text-secondary">
+          Retenção por categoria: desligada até as regras do jurídico; a mudança
+          vem por migration. Exclusões de workspace são concluídas pela rotina
+          diária depois de 30 dias de carência.
+        </p>
+        <ul className="divide-border divide-y" data-testid="retention-policies">
+          {privacy.retention.map((r) => (
+            <li key={r.category} className="text-12 text-text-secondary py-2">
+              <span className="text-text font-semibold">{r.category}</span> ·{" "}
+              {r.description} ·{" "}
+              {r.enabled
+                ? `ligada: ${r.retainDays} dias`
+                : r.automated
+                  ? "desligada (aguardando o jurídico)"
+                  : "processo restrito, sem remoção automática"}
+            </li>
+          ))}
+        </ul>
+        <h3 className="text-12 text-text font-semibold">
+          Exclusões de workspace
+        </h3>
+        <ul
+          className="divide-border divide-y"
+          data-testid="workspace-deletions"
+        >
+          {privacy.deletions.map((d) => (
+            <li
+              key={`${d.workspaceId}-${d.requestedAt.toISOString()}`}
+              className="text-12 text-text-secondary py-2"
+            >
+              <span className="text-text font-semibold">{d.workspaceName}</span>{" "}
+              · pedida em {formatDateTime(d.requestedAt)} ·{" "}
+              {d.state === "purged"
+                ? `concluída em ${d.purgedAt ? formatDateTime(d.purgedAt) : "—"}`
+                : d.state === "canceled"
+                  ? "cancelada"
+                  : `agendada para ${formatDateTime(d.purgeAfter)}`}
+            </li>
+          ))}
+          {privacy.deletions.length === 0 ? (
+            <li className="text-12 text-text-secondary py-2">
+              Nenhuma exclusão pedida.
             </li>
           ) : null}
         </ul>

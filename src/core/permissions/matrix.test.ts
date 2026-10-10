@@ -30,6 +30,8 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_INVITE]: true,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: true,
         [Permissions.WORKSPACE_MODULES_MANAGE]: true,
+        [Permissions.WORKSPACE_DATA_EXPORT]: true,
+        [Permissions.WORKSPACE_DELETE]: true,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.PLATFORM_BRAND_MANAGE]: false,
@@ -68,6 +70,8 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_INVITE]: true,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: true,
         [Permissions.WORKSPACE_MODULES_MANAGE]: true,
+        [Permissions.WORKSPACE_DATA_EXPORT]: true,
+        [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.PLATFORM_BRAND_MANAGE]: false,
@@ -106,6 +110,8 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.WORKSPACE_DATA_EXPORT]: false,
+        [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.PLATFORM_BRAND_MANAGE]: false,
@@ -144,6 +150,8 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.WORKSPACE_DATA_EXPORT]: false,
+        [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.PLATFORM_BRAND_MANAGE]: false,
@@ -196,8 +204,8 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(14);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(14);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(16);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(15);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(6);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(4);
     });
@@ -218,6 +226,8 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.WORKSPACE_DATA_EXPORT]: false,
+        [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.PLATFORM_BRAND_MANAGE]: false,
@@ -256,6 +266,8 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.WORKSPACE_DATA_EXPORT]: false,
+        [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.PLATFORM_BRAND_MANAGE]: false,
@@ -294,6 +306,8 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
         [Permissions.WORKSPACE_MEMBERS_MANAGE]: false,
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
+        [Permissions.WORKSPACE_DATA_EXPORT]: false,
+        [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
         [Permissions.PLATFORM_BRAND_MANAGE]: false,

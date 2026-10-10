@@ -9,6 +9,11 @@ import { listRequestUserWorkspaces } from "@/core/partners/request-context";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 import { getRequestBrand } from "@/core/brand/resolve";
 import { BrandMark } from "@/shared/ui/brand-mark";
+import { ActionForm } from "@/components/partners/action-form";
+import { cancelWorkspaceDeletionAction } from "@/core/privacy/actions";
+import { listScheduledDeletions } from "@/core/privacy/deletion";
+import { getRequestPartner } from "@/core/partners/resolve";
+import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
 export const metadata: Metadata = { title: "Seus Workspaces" };
 
@@ -25,10 +30,18 @@ export default async function AppPage() {
   const identity = await requireUserPage("/app");
   await requireLegalAcceptance(identity, "/app");
   const workspaces = await listRequestUserWorkspaces(prisma, identity.userId);
+  // Deletions this owner may still cancel (F3e); they keep the page here.
+  const partner = await getRequestPartner();
+  const scheduled = await withIdentityContext(
+    prisma,
+    identity.userId,
+    (tx) => listScheduledDeletions(tx),
+    { partnerId: partner?.partnerId ?? null },
+  );
 
   // If the user has access to exactly one workspace, direct redirect
   const singleWorkspace = workspaces[0];
-  if (workspaces.length === 1 && singleWorkspace) {
+  if (workspaces.length === 1 && singleWorkspace && scheduled.length === 0) {
     redirect(`/app/${singleWorkspace.workspaceSlug}`);
   }
 
@@ -67,6 +80,45 @@ export default async function AppPage() {
             Escolha o ambiente de trabalho que deseja acessar para iniciar.
           </p>
         </div>
+
+        {scheduled.length > 0 ? (
+          <section
+            className="border-warning-border bg-warning-bg mb-6 space-y-3 rounded-xl border p-4"
+            data-testid="scheduled-deletions"
+          >
+            <h2 className="text-14 text-warning-text font-semibold">
+              Exclusões agendadas
+            </h2>
+            <ul className="space-y-3">
+              {scheduled.map((d) => (
+                <li
+                  key={d.workspaceId}
+                  className="text-12 text-warning-text flex flex-wrap items-center justify-between gap-3"
+                >
+                  <span>
+                    <span className="font-semibold">{d.workspaceName}</span> ·
+                    bloqueado; os dados serão apagados em{" "}
+                    {d.purgeAfter.toLocaleDateString("pt-BR", {
+                      timeZone: "America/Sao_Paulo",
+                    })}
+                  </span>
+                  <ActionForm
+                    action={cancelWorkspaceDeletionAction}
+                    submitLabel="Cancelar exclusão"
+                    tone="neutral"
+                    testId={`cancel-deletion-${d.workspaceSlug}`}
+                  >
+                    <input
+                      type="hidden"
+                      name="workspaceId"
+                      value={d.workspaceId}
+                    />
+                  </ActionForm>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         {workspaces.length === 0 ? (
           <div className="border-card-border bg-surface-card rounded-2xl border p-8 text-center shadow-xs">

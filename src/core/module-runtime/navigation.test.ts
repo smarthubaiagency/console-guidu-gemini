@@ -146,6 +146,10 @@ describe("generated navigation", () => {
     );
     expect(find(app("admin"), "core.billing")).toBeDefined();
     expect(find(app("viewer"), "core.billing")).toBeUndefined();
+    // Data and privacy (F3e): owner and admin only.
+    expect(find(app("owner"), "core.data")?.href).toContain("/settings/data");
+    expect(find(app("admin"), "core.data")).toBeDefined();
+    expect(find(app("editor"), "core.data")).toBeUndefined();
   });
 
   it("adds workspace settings under Módulos only for enabled modules", () => {

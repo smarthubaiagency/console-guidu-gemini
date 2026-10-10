@@ -21,6 +21,10 @@ export const Permissions = {
   WORKSPACE_MEMBERS_MANAGE: "workspace.members.manage",
   /** Enable or disable modules in the workspace (ADR 0005). */
   WORKSPACE_MODULES_MANAGE: "workspace.modules.manage",
+  /** Export all data of the workspace (F3e, AC12). */
+  WORKSPACE_DATA_EXPORT: "workspace.data.export",
+  /** Schedule or cancel the deletion of the workspace (F3e). */
+  WORKSPACE_DELETE: "workspace.delete",
 
   // BYOK Credentials Vault (Spec §16)
   CREDENTIALS_READ: "credentials.read",

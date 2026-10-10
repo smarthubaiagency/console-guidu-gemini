@@ -1,4 +1,6 @@
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
+import { workspaceExportJob } from "@/core/privacy/export";
+import { privacyJobs, privacySchedules } from "@/core/privacy/maintenance";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
 
 import type { JobDefinition, JobSchedule } from "./definition";
@@ -10,6 +12,8 @@ import type { JobDefinition, JobSchedule } from "./definition";
 // Each definition validates its own payload type; the registry erases it.
 const DEFINITIONS = [
   ...billingJobs,
+  ...privacyJobs,
+  workspaceExportJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
 
@@ -31,5 +35,5 @@ export function getJobDefinition(kind: string): JobDefinition<unknown> | null {
 
 /** Recurring platform jobs started by the worker's scheduler. */
 export function listJobSchedules(): readonly JobSchedule[] {
-  return billingSchedules;
+  return [...billingSchedules, ...privacySchedules];
 }

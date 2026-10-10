@@ -220,3 +220,63 @@ export function durationLabel(ms: number | null): string {
   if (ms < 1000) return `${ms} ms`;
   return `${(ms / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} s`;
 }
+
+export type RetentionView = Readonly<{
+  category: string;
+  description: string;
+  enabled: boolean;
+  automated: boolean;
+  retainDays: number | null;
+}>;
+
+export type DeletionRecordView = Readonly<{
+  workspaceId: string;
+  workspaceName: string;
+  state: "scheduled" | "canceled" | "purged";
+  requestedAt: Date;
+  purgeAfter: Date;
+  purgedAt: Date | null;
+}>;
+
+/** Retention categories and recent workspace deletions (F3e). */
+export async function getPrivacyOverview(
+  tx: ContextTransaction,
+  actor: OperationsActor,
+): Promise<{ retention: RetentionView[]; deletions: DeletionRecordView[] }> {
+  if (!canReadOperations(actor)) throw new PermissionDeniedError();
+  const [retention, deletions] = await Promise.all([
+    tx.retentionPolicy.findMany({
+      orderBy: { category: "asc" },
+      select: {
+        category: true,
+        description: true,
+        enabled: true,
+        automated: true,
+        retainDays: true,
+      },
+    }),
+    tx.workspaceDeletion.findMany({
+      orderBy: { requestedAt: "desc" },
+      take: 20,
+      select: {
+        workspaceId: true,
+        workspaceName: true,
+        requestedAt: true,
+        purgeAfter: true,
+        canceledAt: true,
+        purgedAt: true,
+      },
+    }),
+  ]);
+  return {
+    retention,
+    deletions: deletions.map((d) => ({
+      workspaceId: d.workspaceId,
+      workspaceName: d.workspaceName,
+      state: d.purgedAt ? "purged" : d.canceledAt ? "canceled" : "scheduled",
+      requestedAt: d.requestedAt,
+      purgeAfter: d.purgeAfter,
+      purgedAt: d.purgedAt,
+    })),
+  };
+}
