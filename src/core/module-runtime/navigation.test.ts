@@ -158,12 +158,15 @@ describe("generated navigation", () => {
     expect(owner.flatMap((s) => s.items).map((i) => i.href)).toEqual([
       "/admin",
       "/admin/customers",
+      "/admin/modules",
+      "/admin/templates",
       "/admin/members",
       "/admin/brand",
     ]);
 
     const finance = buildPartnerNavigation(partnerGrants("partner_finance"));
     expect(find(finance, "partner.brand")).toBeUndefined();
+    expect(find(finance, "partner.templates")).toBeUndefined();
     expect(find(finance, "partner.customers")?.href).toBe("/admin/customers");
 
     expect(

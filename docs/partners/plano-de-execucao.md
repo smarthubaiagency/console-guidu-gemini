@@ -53,7 +53,7 @@ São **sete etapas**. P1 a P4 não dependem de nenhuma decisão comercial e pode
 **Como ficou:**
 
 - Hosts da plataforma vêm do ambiente (host de `APP_URL`, `PLATFORM_HOSTS` e, fora de produção, `localhost` e `127.0.0.1`) e sempre resolvem para o parceiro zero. `partner_domains` guarda só hosts de parceiros; sem linhas até a P4/P7.
-- O parceiro vem do cabeçalho `Host`, nunca de `X-Forwarded-Host` nem de campo de formulário. O host só escolhe a fatia de parceiro; vínculo e RLS continuam decidindo o acesso.
+- O parceiro vem do host da requisição (primeiro valor de `X-Forwarded-Host`, senão `Host`), nunca de campo de formulário. O host só escolhe a fatia de parceiro; vínculo e RLS continuam decidindo o acesso. **Correção na P4b:** a versão inicial lia só `Host`. Depois de um redirect em Server Action, o Next monta a página de destino por uma requisição interna à própria origem, em que `Host` é o endereço do servidor e o host original segue em `X-Forwarded-Host`. Por isso o login e o aceite de convite num domínio de parceiro caíam no parceiro da casa.
 - Host desconhecido não resolve nenhum workspace; `/platform` e `/api/v1/platform/*` respondem 404 fora dos hosts da plataforma (proxy, guard de página e rota).
 - `resolve_workspace_slug` e `list_user_workspaces` passaram a exigir o parceiro do contexto. Páginas e ações usam `resolveRequestWorkspaceContext` e `listRequestUserWorkspaces` (`src/core/partners/request-context.ts`).
 - `organizations.partner_id` não pode ser alterado pela aplicação (gatilho); mover empresa de parceiro será operação da plataforma.
@@ -106,11 +106,15 @@ Dividida em dois PRs, aprovados por Marcelo em 10/10/2026, junto com os papéis 
   - membros e convites do parceiro;
   - console `/admin` com visão geral, clientes (só metadados), membros e marca;
   - aceite de convite em `/partner-invite/[token]`.
-- **P4b**, a seguir. Entrega:
-  - cadastro de cliente pelo parceiro;
-  - modelos de workspace e catálogo de módulos oferecidos;
-  - termos e privacidade versionados, com aceite;
-  - acesso de suporte temporário.
+- **P4b**, em dois PRs:
+  - **P4b1**, implementada no PR da P4b1, com a migration `20261011090000_p4b_partner_customers.sql`, a aplicar no dev após aprovação. Entrega:
+    - cadastro de cliente pelo parceiro: empresa, primeiro workspace, módulos do modelo e convite de proprietário válido por 7 dias;
+    - catálogo de módulos oferecidos;
+    - modelos de workspace.
+
+    O parceiro grava esses dados, mas continua sem ler o workspace ou o conteúdo dele. Até a P5, o cliente fica ativo assim que é cadastrado, e a suspensão de cliente entra com os estados de assinatura.
+
+  - **P4b2**, a seguir. Entrega termos e privacidade versionados com aceite, e acesso de suporte temporário.
 
 **Como ficou a P4a:**
 

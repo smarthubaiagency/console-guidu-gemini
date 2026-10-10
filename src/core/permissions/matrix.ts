@@ -187,12 +187,14 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
   partner_owner: new Set([
     Permissions.PARTNER_READ,
     Permissions.PARTNER_CUSTOMERS_READ,
+    Permissions.PARTNER_CUSTOMERS_MANAGE,
     Permissions.PARTNER_MEMBERS_MANAGE,
     Permissions.PARTNER_BRAND_MANAGE,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
     Permissions.PARTNER_CUSTOMERS_READ,
+    Permissions.PARTNER_CUSTOMERS_MANAGE,
     Permissions.PARTNER_BRAND_MANAGE,
   ]),
   partner_finance: new Set([

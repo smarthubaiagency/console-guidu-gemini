@@ -60,6 +60,8 @@ export const Permissions = {
   PARTNER_CUSTOMERS_READ: "partner.customers.read",
   PARTNER_MEMBERS_MANAGE: "partner.members.manage",
   PARTNER_BRAND_MANAGE: "partner.brand.manage",
+  // Register customers, workspace templates and the module catalog (P4b).
+  PARTNER_CUSTOMERS_MANAGE: "partner.customers.manage",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

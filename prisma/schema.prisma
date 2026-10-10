@@ -34,22 +34,51 @@ model Profile {
 /// (`isHouse`) serves direct customers. Read-only for the application and
 /// scoped by RLS to `app.partner_id`.
 model Partner {
-  id              String              @id @db.Uuid
-  slug            String              @unique
+  id              String                     @id @db.Uuid
+  slug            String                     @unique
   name            String
-  status          String              @default("active")
-  isHouse         Boolean             @default(false) @map("is_house")
-  checkoutEnabled Boolean             @default(false) @map("checkout_enabled")
-  checkoutBlocked Boolean             @default(false) @map("checkout_blocked")
-  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
+  status          String                     @default("active")
+  isHouse         Boolean                    @default(false) @map("is_house")
+  checkoutEnabled Boolean                    @default(false) @map("checkout_enabled")
+  checkoutBlocked Boolean                    @default(false) @map("checkout_blocked")
+  createdAt       DateTime                   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime                   @updatedAt @map("updated_at") @db.Timestamptz()
   domains         PartnerDomain[]
   organizations   Organization[]
   brands          PartnerBrand[]
   members         PartnerMember[]
   invitations     PartnerInvitation[]
+  offeredModules  PartnerOfferedModule[]
+  templates       PartnerWorkspaceTemplate[]
 
   @@map("partners")
+}
+
+/// Modules a partner offers to its customers (P4b).
+model PartnerOfferedModule {
+  partnerId String   @map("partner_id") @db.Uuid
+  moduleKey String   @map("module_key")
+  createdBy String?  @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@id([partnerId, moduleKey])
+  @@map("partner_offered_modules")
+}
+
+/// Named set of offered modules applied to a new customer's workspace (P4b).
+model PartnerWorkspaceTemplate {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId  String   @map("partner_id") @db.Uuid
+  name       String
+  moduleKeys String[] @default([]) @map("module_keys")
+  createdBy  String?  @map("created_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  partner    Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, name])
+  @@map("partner_workspace_templates")
 }
 
 /// Partner roles (D-PA-02). Grant no access to workspace data.

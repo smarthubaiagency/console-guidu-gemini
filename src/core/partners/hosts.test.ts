@@ -5,6 +5,7 @@ import {
   partnerHostOrigin,
   partnerSubdomainBase,
   platformHosts,
+  requestHost,
   subdomainHost,
 } from "./hosts";
 
@@ -118,5 +119,31 @@ describe("partner subdomains", () => {
     ]) {
       expect(subdomainHost(value, "guidu.com.br")).toBeNull();
     }
+  });
+});
+
+describe("requestHost", () => {
+  const from = (headers: Record<string, string>) => (name: string) =>
+    headers[name];
+
+  it("prefers the first X-Forwarded-Host value over Host", () => {
+    expect(
+      requestHost(
+        from({
+          host: "localhost:3000",
+          "x-forwarded-host": "agencia.localhost:3000, proxy.internal",
+        }),
+      ),
+    ).toBe("agencia.localhost:3000");
+  });
+
+  it("falls back to Host", () => {
+    expect(requestHost(from({ host: "agencia.localhost:3000" }))).toBe(
+      "agencia.localhost:3000",
+    );
+    expect(requestHost(from({ host: "x.test", "x-forwarded-host": " " }))).toBe(
+      "x.test",
+    );
+    expect(requestHost(from({}))).toBeNull();
   });
 });
