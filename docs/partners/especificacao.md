@@ -1,6 +1,6 @@
 # Especificação da plataforma de parceiros — marca, pagamento e comunicação
 
-- **Versão:** 0.2 (rascunho). Novidade: modo de cobrança em que o próprio parceiro paga o valor base da plataforma (§3.1).
+- **Versão:** 0.3 (rascunho). Novidades: modo de cobrança em que o próprio parceiro paga o valor base da plataforma, e chave "Ativar checkout" no console do parceiro, desligada por padrão (§3.1).
 - **Data:** 10/10/2026
 - **Estado:** proposta, aguarda aprovação do Marcelo. Base: [ADR 0012](../adr/0012-plataforma-de-parceiros.md).
 - **Objetivo desta versão:** deixar a estrutura de parceria prevista para uso futuro, com contratos e pontos de extensão definidos, sem preencher regras comerciais por suposição.
@@ -75,7 +75,12 @@ Layouts, telas de autenticação, e-mails e metadados leem só dessa função. I
 
 ### 3.1 Modos de cobrança
 
-**[Decidido]** Existem dois modos. O modo é escolhido **por assinatura**, ou seja, por cliente, e um parceiro pode usar os dois ao mesmo tempo.
+**[Decidido]** Existem dois modos, e quem escolhe é o parceiro, pela chave **"Ativar checkout"** no console dele (`/admin`):
+
+- **Desligada (padrão):** modo **parceiro paga**. O parceiro cuida da cobrança no próprio painel: ativação e mensalidades de cada cliente.
+- **Ligada:** o checkout da plataforma aparece no painel do cliente (`/app`), e o próprio cliente ativa a assinatura e paga as mensalidades. É o modo **cliente paga**.
+
+O modo fica gravado em cada assinatura, para que ligar ou desligar a chave tenha regra clara para quem já é cliente (ver "Chave Ativar checkout", abaixo).
 
 | Modo                               | Quem paga a plataforma               | Valor cobrado pela plataforma         | Divisão        | Quando usar                                                                                             |
 | ---------------------------------- | ------------------------------------ | ------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
@@ -109,7 +114,28 @@ Nos dois modos, a plataforma mantém os **planos base** (o que cada um inclui) e
 
 - Valor base do parceiro: se é igual ao repasse mínimo do plano ou um preço próprio por plano (D-PA-11, Comercial).
 - Inadimplência do parceiro: a suspensão atinge os workspaces dos clientes dele. Proposta: avisar o parceiro, dar prazo de carência e só então suspender; se o cliente é avisado e se pode assumir o pagamento (migrando para cliente paga), fica a decidir (D-PA-13).
-- Disponibilidade de cada modo por parceiro: se a plataforma habilita os modos por parceiro ou os dois ficam sempre disponíveis (D-PA-10).
+
+#### Chave "Ativar checkout"
+
+**[Proposta]**
+
+- **Quem muda:** `partner_owner` ou `partner_finance`. A mudança é auditada com o valor anterior e o novo, no mesmo padrão já usado para ativar e desativar módulos na F2.
+- **Pré-requisitos para ligar**, conferidos no servidor:
+  - conta de recebimento do parceiro verificada no provedor (KYC), porque a divisão precisa dela;
+  - pelo menos um plano de parceiro com preço ≥ piso;
+  - termos e política de privacidade do parceiro publicados;
+  - provedor do parceiro com divisão (Iugu ou Stripe). O adaptador manual não atende o modo cliente paga com checkout.
+- **A plataforma pode bloquear** a chave para um parceiro em `/platform` (por exemplo, durante análise ou disputa). Bloqueada, a chave aparece desligada e sem opção de mudar.
+- **Ao ligar:**
+  - clientes novos já nascem no modo cliente paga e veem o checkout no `/app`;
+  - quem já é cliente continua no modo parceiro paga até o fim do período pago. Depois disso, o parceiro decide cliente a cliente se passa para cliente paga, e o cliente recebe aviso para cadastrar a forma de pagamento.
+- **Exceção por cliente:** com a chave ligada, o parceiro ainda pode manter um cliente específico no modo parceiro paga.
+- **Ao desligar:**
+  - nenhum checkout novo é aberto no `/app`;
+  - as assinaturas no modo cliente paga continuam até o fim do período já pago e não renovam pelo checkout. Antes da renovação, o parceiro precisa assumir cada cliente (parceiro paga) ou cancelar;
+  - o parceiro e os clientes afetados recebem aviso com antecedência.
+
+**[Em aberto]** Prazo do aviso ao desligar, e o que acontece se o parceiro não assumir um cliente até a renovação: suspender ou dar carência (junto com D-PA-13).
 
 #### Comum aos dois modos
 
@@ -233,24 +259,24 @@ Os eventos normalizados (`ProviderEvent`) são: `recipient.verified`, `recipient
 
 Toda tabela com `partner_id` usa RLS por `app.partner_id`. As tabelas operacionais dos clientes continuam por workspace (ADR 0001). Nomes ilustrativos; o SQL nasce em migration aprovada.
 
-| Tabela                                              | Conteúdo                                                                            |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `partners`                                          | Nome, slug, status; inclui o parceiro zero                                          |
-| `partner_members`                                   | Usuário, papel e status                                                             |
-| `partner_domains`                                   | Host, tipo (subdomínio ou próprio), verificação, status do certificado              |
-| `partner_brands`                                    | Versão da marca: nome, referências aos arquivos, tokens de cor, contatos            |
-| `partner_legal_documents`, `legal_acceptances`      | Documentos versionados e aceites                                                    |
-| `organizations.partner_id`                          | Coluna nova, `NOT NULL`, padrão o parceiro zero                                     |
-| `payment_provider_accounts`                         | Provedor por parceiro, referência de credencial no cofre, estado                    |
-| `partner_payment_accounts`                          | Conta de recebimento do parceiro no provedor e estado do KYC                        |
-| `plans`, `plan_versions`, `pricing_floors`          | Planos base, versões, pisos e valor base do parceiro (F3)                           |
-| `partner_plans`                                     | Plano do parceiro sobre uma versão: preço, moeda, periodicidade, status             |
-| `split_rules`                                       | Percentual e repasse mínimo, versionados, padrão e por parceiro                     |
-| `partner_billing_profiles`                          | Dados de cobrança do parceiro como pagador (modo parceiro paga)                     |
-| `subscriptions`                                     | Empresa, plano (do parceiro ou base), modo, pagador, provedor, estado, período      |
-| `payments`                                          | Somente inclusão: valor bruto, taxas, repasses, ids do provedor, evidência (manual) |
-| `payment_provider_events`                           | Webhooks recebidos, com id externo único e estado de processamento                  |
-| `notification_templates`, `notification_deliveries` | Modelos por parceiro e evento; entregas com idempotência                            |
+| Tabela                                              | Conteúdo                                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `partners`                                          | Nome, slug, status, chave Ativar checkout e bloqueio da plataforma; inclui o parceiro zero |
+| `partner_members`                                   | Usuário, papel e status                                                                    |
+| `partner_domains`                                   | Host, tipo (subdomínio ou próprio), verificação, status do certificado                     |
+| `partner_brands`                                    | Versão da marca: nome, referências aos arquivos, tokens de cor, contatos                   |
+| `partner_legal_documents`, `legal_acceptances`      | Documentos versionados e aceites                                                           |
+| `organizations.partner_id`                          | Coluna nova, `NOT NULL`, padrão o parceiro zero                                            |
+| `payment_provider_accounts`                         | Provedor por parceiro, referência de credencial no cofre, estado                           |
+| `partner_payment_accounts`                          | Conta de recebimento do parceiro no provedor e estado do KYC                               |
+| `plans`, `plan_versions`, `pricing_floors`          | Planos base, versões, pisos e valor base do parceiro (F3)                                  |
+| `partner_plans`                                     | Plano do parceiro sobre uma versão: preço, moeda, periodicidade, status                    |
+| `split_rules`                                       | Percentual e repasse mínimo, versionados, padrão e por parceiro                            |
+| `partner_billing_profiles`                          | Dados de cobrança do parceiro como pagador (modo parceiro paga)                            |
+| `subscriptions`                                     | Empresa, plano (do parceiro ou base), modo, pagador, provedor, estado, período             |
+| `payments`                                          | Somente inclusão: valor bruto, taxas, repasses, ids do provedor, evidência (manual)        |
+| `payment_provider_events`                           | Webhooks recebidos, com id externo único e estado de processamento                         |
+| `notification_templates`, `notification_deliveries` | Modelos por parceiro e evento; entregas com idempotência                                   |
 
 ## 8. Segurança
 
@@ -277,21 +303,21 @@ Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 
 ## 10. Decisões necessárias
 
-| ID      | Decisão                                           | Recomendação                                                               |
-| ------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
-| D-PA-01 | Aprovar a ADR 0012                                | —                                                                          |
-| D-PA-02 | Papéis do parceiro (seção 1.2)                    | Aprovar como proposto                                                      |
-| D-PA-03 | Base do percentual e quem paga a taxa do provedor | Comercial e contador                                                       |
-| D-PA-04 | Estorno e chargeback                              | Reversão proporcional; responsabilidade a definir                          |
-| D-PA-05 | Nota fiscal na divisão                            | Contador                                                                   |
-| D-PA-06 | Papéis na LGPD e contrato de parceria             | Jurídico                                                                   |
-| D-PA-07 | Provedor inicial                                  | Iugu, depois de verificar os itens da seção 3.4; manual para pilotos       |
-| D-PA-08 | Provedor de e-mail transacional                   | Em aberto                                                                  |
-| D-PA-09 | Ordem de execução                                 | Itens de esforço baixo da seção 9 primeiro                                 |
-| D-PA-10 | Modos de cobrança habilitados por parceiro        | Os dois disponíveis; a plataforma pode desligar um por parceiro            |
-| D-PA-11 | Valor base do parceiro por plano                  | Comercial: igual ao repasse mínimo ou preço próprio                        |
-| D-PA-12 | Fatura consolidada do parceiro                    | Começar por assinatura; consolidar depois                                  |
-| D-PA-13 | Inadimplência do parceiro                         | Aviso ao parceiro, carência e depois suspensão; aviso ao cliente a definir |
+| ID      | Decisão                                           | Recomendação                                                                                             |
+| ------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| D-PA-01 | Aprovar a ADR 0012                                | —                                                                                                        |
+| D-PA-02 | Papéis do parceiro (seção 1.2)                    | Aprovar como proposto                                                                                    |
+| D-PA-03 | Base do percentual e quem paga a taxa do provedor | Comercial e contador                                                                                     |
+| D-PA-04 | Estorno e chargeback                              | Reversão proporcional; responsabilidade a definir                                                        |
+| D-PA-05 | Nota fiscal na divisão                            | Contador                                                                                                 |
+| D-PA-06 | Papéis na LGPD e contrato de parceria             | Jurídico                                                                                                 |
+| D-PA-07 | Provedor inicial                                  | Iugu, depois de verificar os itens da seção 3.4; manual para pilotos                                     |
+| D-PA-08 | Provedor de e-mail transacional                   | Em aberto                                                                                                |
+| D-PA-09 | Ordem de execução                                 | Itens de esforço baixo da seção 9 primeiro                                                               |
+| D-PA-10 | Chave Ativar checkout                             | **[Decidido]** Parceiro escolhe, desligada por padrão; pré-requisitos e regras de transição como na §3.1 |
+| D-PA-11 | Valor base do parceiro por plano                  | Comercial: igual ao repasse mínimo ou preço próprio                                                      |
+| D-PA-12 | Fatura consolidada do parceiro                    | Começar por assinatura; consolidar depois                                                                |
+| D-PA-13 | Inadimplência do parceiro                         | Aviso ao parceiro, carência e depois suspensão; aviso ao cliente a definir                               |
 
 ## 11. Critérios de aceite (quando implementado)
 
@@ -305,3 +331,5 @@ Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 8. Nenhuma credencial de provedor ou de e-mail aparece em log, erro ou DTO.
 9. No modo parceiro paga, o checkout cobra o valor base do parceiro sem divisão, só membros com `partner_finance` pagam, e o cliente não vê checkout nem faturas no `/app`.
 10. Um cliente cadastrado pelo parceiro só tem a assinatura ativada depois do pagamento confirmado (ou do registro manual com evidência), e precisa aceitar os termos do parceiro no primeiro acesso.
+11. Com a chave Ativar checkout desligada, o `/app` não mostra checkout e o servidor recusa abrir um, mesmo por chamada direta.
+12. A chave só liga com os pré-requisitos da §3.1 atendidos, e ligar ou desligar não muda o modo de assinaturas no meio do período pago.
