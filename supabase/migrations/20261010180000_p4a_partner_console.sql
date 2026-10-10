@@ -66,6 +66,9 @@ create index partner_invitations_partner_id_idx on public.partner_invitations (p
 
 alter table public.partner_members owner to app_migrations;
 alter table public.partner_invitations owner to app_migrations;
+-- Supabase grants new public tables to anon/authenticated by default.
+revoke all on public.partner_members from public, anon, authenticated;
+revoke all on public.partner_invitations from public, anon, authenticated;
 alter table public.partner_members enable row level security;
 alter table public.partner_members force row level security;
 alter table public.partner_invitations enable row level security;
