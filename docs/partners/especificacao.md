@@ -28,7 +28,7 @@ Legenda: **[Decidido]** foi definido por Marcelo; **[Proposta]** é recomendaç�
 
 ### 1.2 Papéis do parceiro
 
-**[Proposta]** Os nomes dos papéis são proposta; o produto confirma.
+**[Decidido]** Papéis aprovados por Marcelo em 10/10/2026 (D-PA-02), implementados na P4a.
 
 | Papel             | Pode                                                                                                                 |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
@@ -306,7 +306,7 @@ Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 | ID      | Decisão                                           | Recomendação                                                                                             |
 | ------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | D-PA-01 | Aprovar a ADR 0012                                | **[Decidido]** Aceita no PR #18                                                                          |
-| D-PA-02 | Papéis do parceiro (seção 1.2)                    | Aprovar como proposto                                                                                    |
+| D-PA-02 | Papéis do parceiro (seção 1.2)                    | **[Decidido]** Aprovados como propostos (10/10/2026)                                                     |
 | D-PA-03 | Base do percentual e quem paga a taxa do provedor | Comercial e contador                                                                                     |
 | D-PA-04 | Estorno e chargeback                              | Reversão proporcional; responsabilidade a definir                                                        |
 | D-PA-05 | Nota fiscal na divisão                            | Contador                                                                                                 |

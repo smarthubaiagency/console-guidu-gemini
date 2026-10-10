@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeHost, platformHosts } from "./hosts";
+import { normalizeHost, partnerHostOrigin, platformHosts } from "./hosts";
 
 describe("normalizeHost", () => {
   it("lowercases and strips the port and a trailing dot", () => {
@@ -56,5 +56,25 @@ describe("platformHosts", () => {
     expect(
       platformHosts({ APP_URL: "not a url", NODE_ENV: "production" }).size,
     ).toBe(0);
+  });
+});
+
+describe("partnerHostOrigin", () => {
+  it("always uses https in production", () => {
+    expect(
+      partnerHostOrigin("app.agencia-b.com.br", {
+        NODE_ENV: "production",
+        APP_URL: "http://localhost:3000",
+      }),
+    ).toBe("https://app.agencia-b.com.br");
+  });
+
+  it("reuses the APP_URL scheme and port outside production", () => {
+    expect(
+      partnerHostOrigin("agencia.localhost", {
+        NODE_ENV: "development",
+        APP_URL: "http://localhost:3000",
+      }),
+    ).toBe("http://agencia.localhost:3000");
   });
 });

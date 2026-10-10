@@ -38,6 +38,7 @@ export type NavIconKey =
   | "layers"
   | "play-circle"
   | "building"
+  | "handshake"
   | "palette"
   | "users";
 
@@ -315,6 +316,7 @@ export function buildPlatformNavigation(
 
   const canReadModules = input.grants("platform.modules.read");
   const canManageBrand = input.grants("platform.brand.manage");
+  const canReadPartners = input.grants("platform.partners.read");
 
   return [
     {
@@ -356,6 +358,16 @@ export function buildPlatformNavigation(
               }),
             ]
           : []),
+        ...(canReadPartners
+          ? [
+              item({
+                id: "platform.partners",
+                label: "Parceiros",
+                href: "/platform/partners",
+                iconKey: "handshake",
+              }),
+            ]
+          : []),
         ...(canManageBrand
           ? [
               item({
@@ -377,5 +389,54 @@ export function buildPlatformNavigation(
           },
         ]
       : []),
+  ];
+}
+
+/** Partner console sidebar (/admin, ADR 0012): driven by partner grants. */
+export function buildPartnerNavigation(grants: Grants): NavSection[] {
+  return [
+    {
+      id: "partner",
+      label: "Parceiro",
+      items: [
+        item({
+          id: "partner.overview",
+          label: "Visão Geral",
+          href: "/admin",
+          iconKey: "layout-dashboard",
+          exact: true,
+        }),
+        ...(grants("partner.customers.read")
+          ? [
+              item({
+                id: "partner.customers",
+                label: "Clientes",
+                href: "/admin/customers",
+                iconKey: "building",
+              }),
+            ]
+          : []),
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.members",
+                label: "Membros",
+                href: "/admin/members",
+                iconKey: "users",
+              }),
+            ]
+          : []),
+        ...(grants("partner.brand.manage")
+          ? [
+              item({
+                id: "partner.brand",
+                label: "Marca",
+                href: "/admin/brand",
+                iconKey: "palette",
+              }),
+            ]
+          : []),
+      ],
+    },
   ];
 }

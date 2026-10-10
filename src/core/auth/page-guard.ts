@@ -57,3 +57,30 @@ export async function requirePlatformAdminPage(
 
   return identity;
 }
+
+/**
+ * Server guard for the partner console (/admin, ADR 0012). The host selects
+ * the partner (404 for unknown hosts); the identity needs AAL2 and an active
+ * role in that partner, otherwise it is sent to the denial page.
+ */
+export async function requirePartnerConsolePage(currentPath: string) {
+  const { getRequestPartner } = await import("@/core/partners/resolve");
+  const partner = await getRequestPartner();
+  if (!partner) {
+    notFound();
+  }
+
+  const identity = await requireMfaPage(currentPath);
+  const { prisma } = await import("@/lib/prisma/client");
+  const { getPartnerMembership } = await import("@/core/partners/members");
+  const membership = await getPartnerMembership(
+    prisma,
+    identity.userId,
+    partner.partnerId,
+  );
+  if (!membership) {
+    redirect("/auth/denied");
+  }
+
+  return { identity, partner, membership };
+}

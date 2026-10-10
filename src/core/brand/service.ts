@@ -1,12 +1,15 @@
 import { z } from "zod";
 
 import { recordAudit } from "@/core/audit/record";
-import {
-  adminAuditContext,
-  requirePlatformPermission,
-} from "@/core/module-runtime/settings";
+import { adminAuditContext } from "@/core/module-runtime/settings";
 import { Permissions } from "@/core/permissions/catalog";
-import type { PlatformAdminRoleKey } from "@/core/permissions/matrix";
+import { PermissionDeniedError } from "@/core/permissions/guard";
+import {
+  hasPartnerRolePermission,
+  hasPlatformRolePermission,
+  type PartnerRoleKey,
+  type PlatformAdminRoleKey,
+} from "@/core/permissions/matrix";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
@@ -72,18 +75,43 @@ const LOGO_ERRORS = {
 } as const;
 
 /**
+ * Who saves a brand: platform owner/operations (any context partner) or the
+ * partner_owner/partner_admin of the context partner (P4a).
+ */
+export type BrandActor = Readonly<{
+  userId: string;
+  platformRole?: PlatformAdminRoleKey | null;
+  partnerRole?: PartnerRoleKey | null;
+}>;
+
+export function canManageBrand(actor: BrandActor): boolean {
+  return Boolean(
+    (actor.platformRole &&
+      hasPlatformRolePermission(
+        actor.platformRole,
+        Permissions.PLATFORM_BRAND_MANAGE,
+      )) ||
+    (actor.partnerRole &&
+      hasPartnerRolePermission(
+        actor.partnerRole,
+        Permissions.PARTNER_BRAND_MANAGE,
+      )),
+  );
+}
+
+/**
  * Saves a new brand version for the context partner (insert-only history).
- * Platform owner/operations only; RLS repeats the role and partner checks.
+ * RLS repeats the role and partner checks.
  * Must run inside withIdentityContext with that partner's id.
  */
 export async function saveBrandVersion(
   tx: ContextTransaction,
-  actor: Readonly<{ userId: string; role: PlatformAdminRoleKey | null }>,
+  actor: BrandActor,
   partnerId: string,
   input: BrandInput,
   logoChange: LogoChange,
 ): Promise<{ version: number }> {
-  requirePlatformPermission(actor.role, Permissions.PLATFORM_BRAND_MANAGE);
+  if (!canManageBrand(actor)) throw new PermissionDeniedError();
 
   const parsed = BrandInputSchema.safeParse(input);
   if (!parsed.success) {

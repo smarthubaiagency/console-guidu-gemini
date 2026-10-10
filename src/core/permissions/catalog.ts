@@ -50,6 +50,16 @@ export const Permissions = {
 
   // Brand of the house partner served on the platform hosts (ADR 0012, P3).
   PLATFORM_BRAND_MANAGE: "platform.brand.manage",
+
+  // Partner management in the platform console (ADR 0012, P4).
+  PLATFORM_PARTNERS_READ: "platform.partners.read",
+  PLATFORM_PARTNERS_MANAGE: "platform.partners.manage",
+
+  // Partner console (/admin), granted only by partner roles (D-PA-02).
+  PARTNER_READ: "partner.read",
+  PARTNER_CUSTOMERS_READ: "partner.customers.read",
+  PARTNER_MEMBERS_MANAGE: "partner.members.manage",
+  PARTNER_BRAND_MANAGE: "partner.brand.manage",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

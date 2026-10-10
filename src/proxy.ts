@@ -14,8 +14,12 @@ import { refreshSupabaseSession } from "@/lib/supabase/session";
  * request that slips past this file still gets 401/403 downstream.
  */
 
-const PROTECTED_PREFIXES = ["/app", "/platform"] as const;
-const SIGNED_IN_ONLY_PREFIXES = ["/auth/mfa", "/invite"] as const;
+const PROTECTED_PREFIXES = ["/app", "/platform", "/admin"] as const;
+const SIGNED_IN_ONLY_PREFIXES = [
+  "/auth/mfa",
+  "/invite",
+  "/partner-invite",
+] as const;
 const SIGNED_OUT_ONLY_PATHS = ["/login", "/forgot-password"] as const;
 /**
  * Served only on platform hosts (ADR 0012); 404 everywhere else. API routes

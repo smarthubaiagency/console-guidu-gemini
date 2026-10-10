@@ -61,3 +61,18 @@ export function platformHosts(env: PlatformHostEnv): ReadonlySet<string> {
 
   return hosts;
 }
+
+/**
+ * Origin for links on a partner host. Production always uses https. Outside
+ * production the scheme and port of APP_URL are reused, so a development
+ * domain such as `agencia.localhost` works on `http://…:3000`.
+ */
+export function partnerHostOrigin(host: string, env: PlatformHostEnv): string {
+  if (env.NODE_ENV === "production") return `https://${host}`;
+  try {
+    const app = new URL(env.APP_URL ?? "");
+    return `${app.protocol}//${host}${app.port ? `:${app.port}` : ""}`;
+  } catch {
+    return `https://${host}`;
+  }
+}

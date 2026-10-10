@@ -137,14 +137,24 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_MODULES_READ,
     Permissions.PLATFORM_MODULES_MANAGE,
     Permissions.PLATFORM_BRAND_MANAGE,
+    Permissions.PLATFORM_PARTNERS_READ,
+    Permissions.PLATFORM_PARTNERS_MANAGE,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
     Permissions.PLATFORM_MODULES_MANAGE,
     Permissions.PLATFORM_BRAND_MANAGE,
+    Permissions.PLATFORM_PARTNERS_READ,
+    Permissions.PLATFORM_PARTNERS_MANAGE,
   ]),
-  billing: new Set([Permissions.PLATFORM_MODULES_READ]),
-  support: new Set([Permissions.PLATFORM_MODULES_READ]),
+  billing: new Set([
+    Permissions.PLATFORM_MODULES_READ,
+    Permissions.PLATFORM_PARTNERS_READ,
+  ]),
+  support: new Set([
+    Permissions.PLATFORM_MODULES_READ,
+    Permissions.PLATFORM_PARTNERS_READ,
+  ]),
 };
 
 export function hasPlatformRolePermission(
@@ -152,4 +162,56 @@ export function hasPlatformRolePermission(
   permission: Permission,
 ): boolean {
   return PLATFORM_ROLE_PERMISSIONS[role]?.has(permission) ?? false;
+}
+
+/** Partner roles approved by Marcelo (D-PA-02, ADR 0012). */
+export type PartnerRoleKey =
+  "partner_owner" | "partner_admin" | "partner_finance" | "partner_support";
+
+export const PARTNER_ROLES: readonly PartnerRoleKey[] = [
+  "partner_owner",
+  "partner_admin",
+  "partner_finance",
+  "partner_support",
+];
+
+/**
+ * Partner console permissions (especificação de parceiros §1.2). No partner
+ * role reads workspace data; support access comes with a temporary grant
+ * (P4b). Plans, prices and payouts arrive with billing (P5).
+ */
+export const PARTNER_ROLE_PERMISSIONS: Record<
+  PartnerRoleKey,
+  ReadonlySet<Permission>
+> = {
+  partner_owner: new Set([
+    Permissions.PARTNER_READ,
+    Permissions.PARTNER_CUSTOMERS_READ,
+    Permissions.PARTNER_MEMBERS_MANAGE,
+    Permissions.PARTNER_BRAND_MANAGE,
+  ]),
+  partner_admin: new Set([
+    Permissions.PARTNER_READ,
+    Permissions.PARTNER_CUSTOMERS_READ,
+    Permissions.PARTNER_BRAND_MANAGE,
+  ]),
+  partner_finance: new Set([
+    Permissions.PARTNER_READ,
+    Permissions.PARTNER_CUSTOMERS_READ,
+  ]),
+  partner_support: new Set([
+    Permissions.PARTNER_READ,
+    Permissions.PARTNER_CUSTOMERS_READ,
+  ]),
+};
+
+export function isPartnerRole(value: string): value is PartnerRoleKey {
+  return (PARTNER_ROLES as readonly string[]).includes(value);
+}
+
+export function hasPartnerRolePermission(
+  role: PartnerRoleKey,
+  permission: Permission,
+): boolean {
+  return PARTNER_ROLE_PERMISSIONS[role]?.has(permission) ?? false;
 }

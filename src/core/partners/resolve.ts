@@ -8,7 +8,7 @@ import { appOrigin } from "@/core/auth/origin";
 import { prisma } from "@/lib/prisma/client";
 
 import { HOUSE_PARTNER_ID } from "./constants";
-import { normalizeHost, platformHosts } from "./hosts";
+import { normalizeHost, partnerHostOrigin, platformHosts } from "./hosts";
 
 export type RequestPartner = Readonly<{
   partnerId: string;
@@ -53,11 +53,13 @@ export const getRequestPartner = cache(
 /**
  * Origin for links sent to users of the current host (invitations, P3).
  * Platform hosts use the operator-controlled APP_URL. A partner host is used
- * only after it matched an active partner domain, and always over https.
+ * only after it matched an active partner domain (https in production).
  * Null for unknown hosts.
  */
 export async function getRequestOrigin(): Promise<string | null> {
   const partner = await getRequestPartner();
   if (!partner) return null;
-  return partner.isPlatformHost ? appOrigin() : `https://${partner.host}`;
+  return partner.isPlatformHost
+    ? appOrigin()
+    : partnerHostOrigin(partner.host, process.env);
 }
