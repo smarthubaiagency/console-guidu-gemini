@@ -46,6 +46,8 @@ export class InvalidApiKeyError extends AppError {
 
 export type AuthenticateApiKeyOptions = {
   requestId?: string;
+  /** Surface that received the key, for the usage audit (F4a). */
+  origin?: "api" | "mcp";
 };
 
 export type AuthenticatedApiKeyResult = {
@@ -231,7 +233,7 @@ export async function authenticateApiKey(
         resourceType: "api_key",
         resourceId: keyRecord.id,
         result: "success",
-        origin: "mcp",
+        origin: options?.origin ?? "mcp",
         ...(requestId ? { requestId } : {}),
         metadata: {
           scopes: validatedScopes,

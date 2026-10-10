@@ -1,12 +1,12 @@
 /**
  * ============================================================================
  * File: tests/e2e/settings-api.spec.ts
- * Module: End-to-End Tests for Clean Phase 4 API & Webhooks Placeholder
+ * Module: End-to-End Tests for the API & Webhooks page
  *
  * Maintenance Rationale:
  * - Validates Specification Section 11, Section 15 & ADR 0009:
- *   - /settings/api is reserved for REST API keys and Webhooks in Phase 4.
- *   - Displays clean informational placeholder: "Em breve — chaves REST e webhooks (Fase 4)".
+ *   - /settings/api documents the REST API v1 (F4a): base URL, workspace id,
+ *     routes with their scopes and limits; webhooks are "Em breve".
  *   - No fake charts, dummy metrics, or synthetic telemetry graphs.
  *   - Includes an informational link directing users to /settings/mcp for AI assistant connections.
  * ============================================================================
@@ -20,8 +20,8 @@ import {
   uniqueEmail,
 } from "../../e2e/support/identity";
 
-test.describe("API & Webhooks Phase 4 Placeholder (/settings/api)", () => {
-  test("Tier 1 & 4: Renders clean Phase 4 placeholder page without dummy metrics", async ({
+test.describe("API & Webhooks (/settings/api)", () => {
+  test("Tier 1 & 4: Documents the API v1 without dummy metrics", async ({
     page,
     request,
   }) => {
@@ -52,10 +52,11 @@ test.describe("API & Webhooks Phase 4 Placeholder (/settings/api)", () => {
       page.getByText(/(API e Webhooks|Chaves de API)/i).first(),
     ).toBeVisible();
 
-    // Verify clean Phase 4 informational notice
-    await expect(
-      page.getByText(/Em breve — chaves REST e webhooks \(Fase 4\)|Fase 4.*REST/i),
-    ).toBeVisible();
+    // The API v1 routes are documented; webhooks are announced (F4a).
+    await expect(page.getByTestId("api-routes")).toContainText(
+      "GET /workspaces/{id}",
+    );
+    await expect(page.getByText(/Em breve: avisos da plataforma/i)).toBeVisible();
 
     // Verify STRICT ABSENCE of dummy metrics / fake charts (Specification Section 11 & AGENTS.md)
     // There should be NO synthetic request counters, fake uptime percentages, or mock charts.
@@ -121,10 +122,8 @@ test.describe("API & Webhooks Phase 4 Placeholder (/settings/api)", () => {
     await signIn(page, email);
     await page.goto(`/app/${wsSlug}/settings/api`);
 
-    // Viewer can view the informational Phase 4 page without 403 or error
-    await expect(
-      page.getByText(/Em breve — chaves REST e webhooks \(Fase 4\)|Fase 4.*REST/i),
-    ).toBeVisible();
+    // Viewer can view the developer page without 403 or error
+    await expect(page.getByTestId("api-routes")).toBeVisible();
     await expect(page.getByText(/Acesso Negado|PermissionDenied/i)).not.toBeVisible();
   });
 });

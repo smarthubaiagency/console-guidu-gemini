@@ -22,7 +22,8 @@ test("the web answers its liveness and readiness probes", async ({
 
   const ready = await request.get("/api/health/ready");
   expect(ready.status()).toBe(200);
-  expect(await ready.json()).toEqual({
+  // Redis is reported but does not decide readiness (F4a).
+  expect(await ready.json()).toMatchObject({
     status: "ok",
     checks: { database: "ok" },
   });

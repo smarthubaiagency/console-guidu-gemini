@@ -103,6 +103,11 @@ export async function runPrivacyMaintenance(
     });
   }
 
+  // Fallback rate-limit windows older than a day (F4a).
+  await tx.$executeRaw`
+    delete from public.api_rate_counters where window_start < now() - interval '1 day'
+  `;
+
   const exportsExpired = await tx.$executeRaw`
     update public.workspace_exports set status = 'expired', file = null
     where status = 'ready' and expires_at <= now()
