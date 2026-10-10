@@ -31,4 +31,6 @@ export const aiAgentsManifest = defineModuleManifest({
       requiredPermissions: ["ai_agents.use"],
     },
   ],
+  // Export and purge of its rows (F3e): src/modules/ai-agents/data.ts.
+  capabilities: ["export"],
 });

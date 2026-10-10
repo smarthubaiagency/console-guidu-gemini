@@ -54,7 +54,8 @@ begin
   exception when insufficient_privilege then null;
   end;
   begin
-    perform count(*) from public.hello_world_records;
+    -- The purge (F3e) sees only workspace_id, never the content.
+    perform title from public.hello_world_records;
     raise exception 'jobs: app_worker reads module data';
   exception when insufficient_privilege then null;
   end;
@@ -182,11 +183,9 @@ begin
     raise exception 'jobs: worker created a finished run';
   exception when insufficient_privilege then null;
   end;
-  begin
-    delete from public.job_runs;
-    raise exception 'jobs: worker deleted runs';
-  exception when insufficient_privilege then null;
-  end;
+  -- Deletes only by purge of a deleted workspace or enabled retention (F3e).
+  delete from public.job_runs;
+  if found then raise exception 'jobs: worker deleted runs'; end if;
 end
 $$;
 rollback;

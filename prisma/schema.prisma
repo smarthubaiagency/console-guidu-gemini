@@ -91,6 +91,57 @@ model JobRun {
   @@map("job_runs")
 }
 
+/// Record of a workspace deletion, kept after the purge (F3e).
+model WorkspaceDeletion {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceSlug  String    @map("workspace_slug")
+  workspaceName  String    @map("workspace_name")
+  requestedBy    String?   @map("requested_by") @db.Uuid
+  requestedAt    DateTime  @default(now()) @map("requested_at") @db.Timestamptz()
+  purgeAfter     DateTime  @map("purge_after") @db.Timestamptz()
+  canceledAt     DateTime? @map("canceled_at") @db.Timestamptz()
+  canceledBy     String?   @map("canceled_by") @db.Uuid
+  purgedAt       DateTime? @map("purged_at") @db.Timestamptz()
+  purgeSummary   Json?     @map("purge_summary")
+
+  @@map("workspace_deletions")
+}
+
+/// Export file of a workspace (F3e, AC12); expires after 24 hours.
+model WorkspaceExport {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  requestedBy    String    @map("requested_by") @db.Uuid
+  status         String    @default("pending")
+  file           Bytes?
+  fileSize       Int?      @map("file_size")
+  sha256         String?
+  error          String?
+  expiresAt      DateTime? @map("expires_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  finishedAt     DateTime? @map("finished_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@map("workspace_exports")
+}
+
+/// Retention by data category (F3e); all disabled until the legal rules.
+model RetentionPolicy {
+  category    String   @id
+  description String
+  retainDays  Int?     @map("retain_days")
+  enabled     Boolean  @default(false)
+  automated   Boolean
+  legalBasis  String?  @map("legal_basis")
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("retention_policies")
+}
+
 /// Heartbeat of a worker instance (F3d); only the platform reads it.
 model WorkerHeartbeat {
   instanceName String   @id @map("instance_name")
@@ -528,24 +579,29 @@ model OrganizationMember {
 }
 
 model Workspace {
-  id             String             @id @db.Uuid
-  organizationId String             @map("organization_id") @db.Uuid
-  slug           String             @unique
-  name           String
-  status         String             @default("active")
-  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  members        WorkspaceMember[]
-  invitations    Invitation[]
-  credentials    Credential[]
-  apiKeys        ApiKey[]
-  agentConfigs   AgentConfig[]
-  agentSessions  AgentSession[]
-  agentMessages  AgentMessage[]
-  auditEvents    AuditEvent[]
-  modules        WorkspaceModule[]
-  helloRecords   HelloWorldRecord[]
+  id                  String             @id @db.Uuid
+  organizationId      String             @map("organization_id") @db.Uuid
+  slug                String             @unique
+  name                String
+  status              String             @default("active")
+  /// F3e: logical deletion with a 30-day grace period, then a tombstone.
+  deletionRequestedAt DateTime?          @map("deletion_requested_at") @db.Timestamptz()
+  deletionRequestedBy String?            @map("deletion_requested_by") @db.Uuid
+  purgeAfter          DateTime?          @map("purge_after") @db.Timestamptz()
+  deletedAt           DateTime?          @map("deleted_at") @db.Timestamptz()
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members             WorkspaceMember[]
+  invitations         Invitation[]
+  credentials         Credential[]
+  apiKeys             ApiKey[]
+  agentConfigs        AgentConfig[]
+  agentSessions       AgentSession[]
+  agentMessages       AgentMessage[]
+  auditEvents         AuditEvent[]
+  modules             WorkspaceModule[]
+  helloRecords        HelloWorldRecord[]
 
   @@unique([id, organizationId])
   @@map("workspaces")

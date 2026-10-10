@@ -76,7 +76,7 @@ Aprendizados:
 
 ### F3d — Observabilidade
 
-**Estado:** pronta para revisão. Migration `20261016090000_f3d_operations.sql` (como `app_migrations`). Detalhes em [observabilidade.md](observabilidade.md).
+**Estado:** concluída (PR #32), migration `20261016090000_f3d_operations.sql` aplicada no dev. Detalhes em [observabilidade.md](observabilidade.md).
 
 Entregue:
 
@@ -94,11 +94,54 @@ Decisões desta etapa:
 
 ### F3e — Privacidade e recuperação
 
-- Exportação do workspace em job (AC12), por contrato de exportação no manifesto, em bucket privado com URL assinada curta.
-- Exclusão de workspace em job, com propagação e registro mantido.
-- Mecanismo de retenção por categoria, desligado até as regras do jurídico.
-- Auditoria de MFA por gatilho em `auth.mfa_factors` (pendência C11).
-- Procedimento de backup e restore (banco e Storage); prova real na F6.
+**Estado:** pronta para revisão. Duas migrations:
+
+- `20261017090000_f3e_privacy.sql`, aplicar como `app_migrations`.
+- `20261017091000_f3e_mfa_audit.sql`, **aplicar como `postgres`**. No dev, `postgres` tem BYPASSRLS e o privilégio de gatilho em `auth.mfa_factors` (conferido em 17/10/2026). A migration para com mensagem clara se rodar com outro papel.
+
+Decisões de 17/10/2026:
+
+1. **Arquivo da exportação no banco.** Fica em `workspace_exports` (bytea, até 25 MB) e é servido por rota do app que revalida sessão, permissão e MFA. O link vale 15 min e é assinado com chave derivada da `ENCRYPTION_KEY`, sem segredo novo. O arquivo expira em 24 h. O Supabase Storage fica para a F6, atrás do mesmo serviço.
+2. **Exclusão lógica com carência de 30 dias.** Ao agendar, o workspace fecha para todos. Durante a carência o owner pode cancelar em `/app`. Depois, a rotina diária apaga os dados e deixa uma lápide.
+3. **Permissões.** `workspace.data.export` vale para owner e admin; `workspace.delete` só para owner. As duas pedem MFA verificado e são auditadas.
+4. **Auditoria de MFA** por gatilho em `auth.mfa_factors`, numa migration separada aplicada como `postgres`.
+
+Entregue:
+
+- **Banco:**
+  - `private.is_workspace_member` e `private.current_workspace_role` passam a exigir workspace ativo. Assim, um workspace agendado ou excluído fecha em todas as políticas de uma vez: web, chaves de API, MCP e worker.
+  - Agendar, cancelar e listar exclusões passam por funções `security definer`, que exigem owner ativo e nunca acesso de suporte. A carência é fixa em 30 dias no banco.
+  - O worker só apaga linhas de workspace com a carência vencida (`private.workspace_purgeable`). O gatilho de invariantes de membros (AC04) deixa o worker apagar só nesse caso.
+- **Contrato de dados dos módulos:**
+  - `ModuleDataContract` (`export` e `purge`) fica em `src/core/privacy`. Hello World e Agentes de IA têm contrato.
+  - Um teste exige contrato para todo módulo com a capacidade `export` no manifesto.
+- **Exportação:**
+  - Job de workspace `core.workspace-export`, que roda no contexto de quem pediu. Gera um JSON com:
+    - workspace, membros, convites;
+    - chaves de API sem hash e credenciais só mascaradas;
+    - módulos, execuções e os dados de cada módulo.
+  - A auditoria fica fora do arquivo: é pedida ao suporte.
+- **Rotina diária** `privacy.daily-maintenance` (job de plataforma, a partir das 03:00 de Brasília):
+  - conclui as exclusões vencidas: módulos, depois o núcleo, depois a lápide anonimizada; o registro da exclusão e a auditoria ficam;
+  - expira as exportações;
+  - aplica a retenção das categorias ligadas.
+- **Retenção:** `retention_policies` tem quatro categorias, todas desligadas. O banco recusa a remoção enquanto a categoria estiver desligada. Auditoria e registros de exclusão são marcados como processo restrito, sem remoção automática.
+- **Telas:**
+  - `/app/[slug]/settings/data` ("Dados e privacidade"): exportações com link curto e exclusão com confirmação do slug.
+  - `/app`: exclusões agendadas, com o botão de cancelar.
+  - `/platform/operations`: bloco "Privacidade", com a retenção e os registros de exclusão.
+- **Backup e restore:** [backup-restore.md](backup-restore.md), com a reaplicação de exclusões e revogações (AC13 como procedimento).
+- **Testes:**
+  - suíte SQL `privacy-rls.sql` (agendar, cancelar, limpar, exportações, retenção e gatilho de MFA);
+  - unitários do link curto, da agenda e do registro de contratos;
+  - integração `privacy.test.ts` (exportação pelo worker sem segredos, permissões, cancelamento, limpeza com lápide e repetição sem efeito);
+  - e2e `privacy.spec.ts` (exportar e baixar com MFA, agendar, workspace fechado, cancelar).
+
+Aprendizados:
+
+- **DELETE com RLS também exige política de SELECT.** O worker ganhou leitura restrita aos workspaces que já podem ser limpos.
+- **A auditoria tem chave estrangeira para `workspaces`** e não pode ser apagada. Por isso a exclusão termina numa lápide (`deleted`, nome e slug anonimizados), não na remoção da linha.
+- **`postgres` não é superusuário no Supabase hospedado,** mas tem BYPASSRLS e privilégio de gatilho nas tabelas do Auth. A trava da migration confere exatamente isso.
 
 ## Como rodar o worker
 
