@@ -1,6 +1,6 @@
 # Especificação do módulo Agentes de IA — canais, conversas e saídas
 
-- **Versão:** 0.2 (rascunho)
+- **Versão:** 0.3 (rascunho)
 - **Data:** 09/10/2026
 - **Estado:** **Proposta, aguarda aprovação do Marcelo.** A camada de canais (D-AG-01) já foi aprovada e está registrada na [ADR 0011](../../adr/0011-camada-de-canais-no-nucleo.md). Não descongela o módulo ([ESTADO.md](ESTADO.md)) nem altera a ordem das fases ([ADR 0003](../../adr/0003-ordem-das-fases.md)).
 - **Escopo desta versão:** agente conversacional atendendo por canais de mensagem (texto e áudio), com resposta dividida em mensagens curtas e saídas em texto, áudio ou JSON conforme o canal. RAG, agendamentos e ferramentas MCP do módulo ficam fora desta versão.
@@ -92,6 +92,17 @@ interface ChannelCapabilities {
 ```
 
 `InboundEvent` normalizado contém: id externo da mensagem (chave de idempotência), conversa externa, contato externo, remetente (contato, atendente humano ou o próprio bot), conteúdo (texto ou referência de mídia) e horário do provedor.
+
+**Requisitos comuns de todo adaptador** (detalhes e referência de implementação em [`docs/spikes/copilotkit.md`](../../spikes/copilotkit.md) §3 e §4):
+
+- verificação de autenticidade do webhook em tempo constante, sobre o corpo bruto e com limite de tamanho;
+- evento gravado com id externo único **antes** de responder ao provedor;
+- segredos só pelo cofre, por conexão;
+- download de mídia restrito aos hosts do provedor, com limite aplicado durante a transferência e verificação do tipo real;
+- limites do canal declarados em `ChannelCapabilities` e aplicados na renderização;
+- **suíte de conformidade** comum (assinatura, desafio de cadastro, idempotência, mídia acima do limite, normalização de texto, áudio e interação, renderização dentro dos limites). Um adaptador só entra com a suíte verde.
+
+O adaptador Meta Cloud API toma como referência o adaptador de WhatsApp do Channels SDK do CopilotKit (MIT), com atribuição em cada arquivo derivado e em `THIRD_PARTY_NOTICES.md`.
 
 ### 4.3 Canais previstos
 
