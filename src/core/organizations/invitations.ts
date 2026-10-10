@@ -19,6 +19,7 @@
 import crypto from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
+import { resolveSeatLimit } from "@/core/entitlements/quotas";
 import {
   canAssignOrganizationRole,
   canAssignWorkspaceRole,
@@ -155,7 +156,8 @@ export async function createInvitation(
     where: { id: organizationId },
   });
 
-  const maxSeats = org?.maxSeats ?? 5;
+  // Plan limit (F3b) when the company has one, else max_seats.
+        const maxSeats = await resolveSeatLimit(tx, organizationId, org?.maxSeats ?? 5);
 
   const [activeMembersCount, pendingInvitesCount] = await Promise.all([
     tx.organizationMember.count({
@@ -421,7 +423,8 @@ export async function acceptInvitation(
         const org = await tx.organization.findUnique({
           where: { id: organizationId },
         });
-        const maxSeats = org?.maxSeats ?? 5;
+        // Plan limit (F3b) when the company has one, else max_seats.
+        const maxSeats = await resolveSeatLimit(tx, organizationId, org?.maxSeats ?? 5);
 
         const activeCount = await tx.organizationMember.count({
           where: { organizationId, status: "active" },

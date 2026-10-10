@@ -15,6 +15,7 @@ import "server-only";
 import type { PrismaClient } from "@prisma/client";
 
 import type { PermissionKey } from "@/core/permissions/catalog";
+import { loadCompanyContract } from "@/core/entitlements/contract";
 import {
   getEffectiveWorkspaceRole,
   workspaceRoleGrants,
@@ -40,6 +41,7 @@ import {
 } from "./navigation";
 import {
   loadPlatformModuleStates,
+  contractAccessFor,
   loadWorkspaceModuleStates,
   moduleStateLabel,
   resolveModuleAccessState,
@@ -68,17 +70,21 @@ export async function loadAppNavigation(
   workspaceSlug: string,
 ): Promise<NavSection[]> {
   return withContext(prisma, context, async (tx) => {
-    const [role, platformStates, workspaceStates] = await Promise.all([
-      getEffectiveWorkspaceRole(tx, context),
-      loadPlatformModuleStates(tx),
-      loadWorkspaceModuleStates(tx, context),
-    ]);
+    const [role, platformStates, workspaceStates, contract] = await Promise.all(
+      [
+        getEffectiveWorkspaceRole(tx, context),
+        loadPlatformModuleStates(tx),
+        loadWorkspaceModuleStates(tx, context),
+        loadCompanyContract(tx, context.organizationId),
+      ],
+    );
     return buildAppNavigation({
       workspaceSlug,
       modules: listRegisteredModules(),
       platformStates,
       workspaceStates,
       grants: workspaceGrants(role),
+      contract,
     });
   });
 }
@@ -116,11 +122,14 @@ export async function loadWorkspaceModuleViews(
   workspaceSlug: string,
 ): Promise<{ modules: WorkspaceModuleView[]; canManage: boolean }> {
   return withContext(prisma, context, async (tx) => {
-    const [role, platformStates, workspaceStates] = await Promise.all([
-      getEffectiveWorkspaceRole(tx, context),
-      loadPlatformModuleStates(tx),
-      loadWorkspaceModuleStates(tx, context),
-    ]);
+    const [role, platformStates, workspaceStates, contract] = await Promise.all(
+      [
+        getEffectiveWorkspaceRole(tx, context),
+        loadPlatformModuleStates(tx),
+        loadWorkspaceModuleStates(tx, context),
+        loadCompanyContract(tx, context.organizationId),
+      ],
+    );
     const canManage = workspaceGrants(role)("workspace.modules.manage");
 
     const modules = listRegisteredModules().flatMap(
@@ -130,6 +139,7 @@ export async function loadWorkspaceModuleViews(
           mod,
           platformStates.get(key),
           workspaceStates.get(key),
+          contractAccessFor(contract, key),
         );
         if (state === "hidden") return [];
         const firstRoute = mod.manifest.routes.find(
@@ -151,7 +161,8 @@ export async function loadWorkspaceModuleViews(
               canManage &&
               (state === "enabled" ||
                 state === "not_enabled" ||
-                state === "maintenance"),
+                state === "maintenance" ||
+                state === "suspended"),
             hasWorkspaceSettings: mod.manifest.settings.some(
               (entry) => entry.destination === "workspace",
             ),

@@ -11,6 +11,11 @@ export type PlatformModuleKey = ModuleKey;
  */
 export class ModuleUnavailableError extends Error {
   readonly moduleKey: string;
+  /**
+   * Why, when known (F3b): `maintenance` passes, the others hold until the
+   * contract or the workspace changes. Jobs retry only maintenance.
+   */
+  reason?: "maintenance" | "not_contracted" | "suspended" | "not_enabled";
 
   constructor(moduleKey: string, message?: string) {
     super(

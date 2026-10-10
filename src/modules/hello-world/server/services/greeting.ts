@@ -50,7 +50,7 @@ export async function resolveHelloWorldGreeting(
   tx: ContextTransaction,
   ctx: RequestContext,
 ): Promise<ResolvedGreeting> {
-  await assertModuleOperational(tx, ctx, MODULE_KEY);
+  await assertModuleOperational(tx, ctx, MODULE_KEY, "read");
   await requireWorkspacePermission(tx, ctx, HelloWorldPermissions.READ);
   const [workspaceConfig, globalConfig] = await Promise.all([
     getWorkspaceModuleConfig(tx, ctx, MODULE_KEY),

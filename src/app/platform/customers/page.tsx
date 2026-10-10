@@ -2,13 +2,40 @@ import type { Metadata } from "next";
 import { Building2 } from "lucide-react";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
-import { listAdminOrganizations } from "@/core/admin/platform";
+import {
+  getPlatformAdminMember,
+  listAdminOrganizations,
+} from "@/core/admin/platform";
+import {
+  statusLabel,
+  isSubscriptionStatus,
+} from "@/core/billing/subscriptions";
+import { platformGrants } from "@/core/module-runtime/loaders";
+import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
 export const metadata: Metadata = { title: "Clientes & Empresas (Admin)" };
 
 export default async function AdminCustomersPage() {
   const identity = await requirePlatformAdminPage("/platform/customers");
   const organizations = await listAdminOrganizations(prisma, identity.userId);
+  // Plan column (F3b): subscriptions are readable by billing roles only.
+  const admin = await getPlatformAdminMember(prisma, identity.userId);
+  const canReadBilling = platformGrants(
+    admin?.status === "active" ? admin.role : null,
+  )("platform.billing.read");
+  const plans = canReadBilling
+    ? await withIdentityContext(prisma, identity.userId, (tx) =>
+        tx.subscription.findMany({
+          where: { status: { not: "canceled" } },
+          select: {
+            organizationId: true,
+            status: true,
+            planVersion: { select: { plan: { select: { name: true } } } },
+          },
+        }),
+      )
+    : [];
+  const planByOrg = new Map(plans.map((p) => [p.organizationId, p]));
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -47,6 +74,7 @@ export default async function AdminCustomersPage() {
               <tr>
                 <th className="px-5 py-3">Organização</th>
                 <th className="px-5 py-3">Assentos Máximos</th>
+                <th className="px-5 py-3">Plano</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Criado em</th>
               </tr>
@@ -62,6 +90,19 @@ export default async function AdminCustomersPage() {
                   </td>
                   <td className="text-text-subtle px-5 py-3.5 font-medium">
                     {org.maxSeats} assentos
+                  </td>
+                  <td className="text-text-subtle px-5 py-3.5">
+                    {!canReadBilling
+                      ? "—"
+                      : (() => {
+                          const plan = planByOrg.get(org.id);
+                          if (!plan) return "Legado (sem assinatura)";
+                          return `${plan.planVersion.plan.name} · ${
+                            isSubscriptionStatus(plan.status)
+                              ? statusLabel(plan.status)
+                              : plan.status
+                          }`;
+                        })()}
                   </td>
                   <td className="px-5 py-3.5">
                     <span className="bg-success-bg text-success-text border-success-border text-11 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">

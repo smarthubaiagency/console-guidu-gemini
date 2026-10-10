@@ -129,11 +129,20 @@ export const ModulePermissionSchema = z.object({
   defaultWorkspaceRoles: z.array(z.enum(WORKSPACE_ROLE_KEYS)).default([]),
 });
 
-export const ModuleEntitlementSchema = z.object({
-  key: stableId,
-  kind: z.enum(["capability", "quota"]),
-  description: z.string().trim().min(1).max(160),
-});
+export const ModuleEntitlementSchema = z
+  .object({
+    key: stableId,
+    kind: z.enum(["capability", "quota"]),
+    description: z.string().trim().min(1).max(160),
+    /**
+     * Quota limit when the company's plan does not set one (and for
+     * companies without a subscription). Plans set limits per version (F3b).
+     */
+    defaultLimit: z.number().int().positive().optional(),
+  })
+  .refine((e) => e.kind === "quota" || e.defaultLimit === undefined, {
+    message: "defaultLimit só vale para cotas.",
+  });
 
 const zodSchema = z.custom<z.ZodType>(
   (value) => value instanceof z.ZodType,

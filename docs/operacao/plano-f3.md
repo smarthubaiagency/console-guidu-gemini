@@ -18,7 +18,7 @@ Ordem: F3a → F3b → F3c → F3d → F3e. Um PR por etapa, com o "pode começa
 
 ### F3a — Fila e worker
 
-**Estado:** pronta para revisão.
+**Estado:** concluída (PR #29), migrations aplicadas no dev.
 
 - Migration `20261013090000_f3a_worker_role_and_queue.sql` (**aplicar como `postgres`**): papel `app_worker`, direito de assumir `app_runtime` sem herdar, schema `pgboss` de propriedade do `app_worker` com o plano de instalação do pg-boss 12.37.0 gerado pela biblioteca. O `app_runtime` não tem acesso à fila.
 - Migration `20261013091000_f3a_job_runs.sql` (como `app_migrations`): `job_runs` com RLS (membros leem; owner/admin reprocessam só falhas; o worker cuida do resto pelas próprias políticas).
@@ -34,6 +34,21 @@ Aprendizados:
 - **E2E:** o PGlite tem uma sessão só. Web e worker passaram a usar `pgbouncer=true` (sem prepared statements com nome); isso também acabou com os erros "portal does not exist" que deixavam o e2e instável.
 
 ### F3b — Contratação e cotas (primeira metade da P5b)
+
+**Estado:** pronta para revisão. Migration `20261014090000_f3b_contract_and_limits.sql` (como `app_migrations`).
+
+Entregue:
+
+- `private.organization_contract(org)`: o contrato da empresa para qualquer membro dela (viewer e editor não leem `subscriptions`). Sem assinatura: legado. Com assinatura aberta: ela; só canceladas: a mais recente.
+- Estados de módulo novos: `not_contracted` (fora do plano ou assinatura cancelada) e `suspended` (só leitura). `assertModuleOperational(tx, ctx, módulo, "read" | "write")` separa consulta de escrita; telas, navegação, configurações do módulo e worker usam a mesma decisão. Habilitar um módulo fora do plano é recusado.
+- **Plano provisório sem módulos listados não restringe** ("módulos a definir"), para não cortar os clientes do Essencial v1 semeado na P5m. Uma versão definitiva sem módulos restringe todos.
+- Cotas: `plan_versions.limits` por versão (`core.seats`, `hello-world.records`), cadastradas em `/platform/billing`; sem limite no plano vale o padrão (manifesto do módulo; `max_seats` da empresa para assentos). Checagem na transação de criação, sob a trava de cada recurso; limite menor não apaga nada, só bloqueia novos.
+- Assentos: convite e aceite usam o limite resolvido; dashboard, Equipe e Consumo mostram o mesmo número.
+- "Consumo & Limites" com uso medido e fonte do limite (plano, padrão ou sem limite); `/platform/customers` mostra o plano ou "Legado"; `/admin/billing` marca "legado" quem não tem assinatura.
+- Worker: job de módulo não contratado, suspenso ou desabilitado é ignorado na hora; só manutenção volta para a fila.
+- Testes: suíte SQL `contract-rls.sql`, integração `entitlements.test.ts` (cada estado × leitura, escrita, configuração e worker; cota sob concorrência; plano menor sem apagar; assentos) e e2e `usage.spec.ts`.
+
+Fora desta etapa: não há criação de workspace pelo cliente, então a cota `core.workspaces` fica para quando esse fluxo existir. API REST e MCP de módulos nascem na F4 e devem chamar os mesmos serviços, que já fazem a checagem.
 
 - Estado do módulo considera o plano: "não contratado" fora de `plan_versions.module_keys`; regras da decisão 3; bloqueio em UI, API, MCP e worker (AC08).
 - Serviço de cotas na transação que cria o recurso, com contadores por workspace e período; limites cadastrados por versão de plano, provisórios até o Comercial; o limite do hello-world vira cota cadastrada.

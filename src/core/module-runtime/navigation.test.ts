@@ -1,3 +1,4 @@
+import type { CompanyContract } from "@/core/entitlements/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -29,6 +30,7 @@ function app(
   role: WorkspaceRole | null,
   workspaceStates: Record<string, WorkspaceModuleState> = {},
   platformStates: Record<string, PlatformModuleState> = {},
+  contract?: CompanyContract,
 ): NavSection[] {
   return buildAppNavigation({
     workspaceSlug: "acme",
@@ -36,6 +38,7 @@ function app(
     platformStates: new Map(Object.entries(platformStates)),
     workspaceStates: new Map(Object.entries(workspaceStates)),
     grants: grantsFor(role),
+    ...(contract ? { contract } : {}),
   });
 }
 
@@ -107,6 +110,34 @@ describe("generated navigation", () => {
       },
     );
     expect(find(disabled, "hello-world")).toBeUndefined();
+  });
+
+  it("hides modules outside the plan and keeps suspended ones readable (F3b)", () => {
+    const contract = (
+      status: "active" | "suspended",
+      moduleKeys: string[],
+    ): CompanyContract => ({
+      kind: "subscribed",
+      status,
+      planName: "Plano",
+      planVersion: 2,
+      moduleKeys,
+      limits: {},
+      provisional: false,
+    });
+    const states = { "hello-world": enabled };
+    expect(
+      find(
+        app("owner", states, {}, contract("active", ["catalog"])),
+        "hello-world",
+      ),
+    ).toBeUndefined();
+    const suspended = find(
+      app("owner", states, {}, contract("suspended", ["hello-world"])),
+      "hello-world",
+    );
+    expect(suspended?.badge).toBe("Só leitura");
+    expect(suspended?.children.length).toBeGreaterThan(0);
   });
 
   it("shows plan and billing to workspace owners and admins only (P5m)", () => {

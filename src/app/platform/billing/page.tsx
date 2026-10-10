@@ -29,6 +29,7 @@ import {
 import {
   listPartnerTotals,
   listPlans,
+  listQuotaKeys,
   listRecentPayments,
   listSplitRules,
 } from "@/core/billing/catalog";
@@ -86,6 +87,7 @@ export default async function PlatformBillingPage() {
   const partnerById = new Map(data.partners.map((p) => [p.id, p]));
   const orgNames = new Map(data.organizations.map((o) => [o.id, o.name]));
   const modules = listRegisteredModules().map((m) => m.manifest);
+  const quotaKeys = listQuotaKeys();
 
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="platform-billing">
@@ -170,6 +172,13 @@ export default async function PlatformBillingPage() {
                         {intervalLabel(current.billingInterval)}
                         {current.moduleKeys.length
                           ? ` · módulos: ${current.moduleKeys.join(", ")}`
+                          : current.provisional
+                            ? " · módulos a definir (não restringe)"
+                            : " · nenhum módulo"}
+                        {Object.keys(current.limits).length
+                          ? ` · limites: ${Object.entries(current.limits)
+                              .map(([k, v]) => `${k} ${v}`)
+                              .join(", ")}`
                           : ""}
                       </span>
                     ) : (
@@ -278,6 +287,22 @@ export default async function PlatformBillingPage() {
                           ))}
                         </div>
                       </fieldset>
+                      {quotaKeys.map((quota) => (
+                        <label key={quota.key} className={labelClass}>
+                          Limite {quota.key} (vazio = padrão)
+                          <input
+                            name={`limit.${quota.key}`}
+                            inputMode="numeric"
+                            title={quota.description}
+                            defaultValue={
+                              current?.limits[quota.key] !== undefined
+                                ? String(current.limits[quota.key])
+                                : ""
+                            }
+                            className={inputClass}
+                          />
+                        </label>
+                      ))}
                       <label className="text-12 text-text-subtle flex items-center gap-2 font-medium sm:col-span-3">
                         <input
                           type="checkbox"

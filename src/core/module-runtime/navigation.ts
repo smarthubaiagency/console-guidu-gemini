@@ -20,11 +20,16 @@
 import "server-only";
 
 import type { ModuleIconKey } from "@/core/module-contracts/manifest";
+import {
+  type CompanyContract,
+  LEGACY_CONTRACT,
+} from "@/core/entitlements/types";
 import type { PermissionKey } from "@/core/permissions/catalog";
 import type { RegisteredModule } from "@/modules/registry";
 
 import {
   moduleStateLabel,
+  contractAccessFor,
   resolveModuleAccessState,
   type PlatformModuleState,
   type WorkspaceModuleState,
@@ -95,6 +100,8 @@ export type AppNavigationInput = Readonly<{
   platformStates: ReadonlyMap<string, PlatformModuleState>;
   workspaceStates: ReadonlyMap<string, WorkspaceModuleState>;
   grants: Grants;
+  /** The company's plan contract (F3b); legacy when absent. */
+  contract?: CompanyContract;
 }>;
 
 /** Module entries of the app sidebar, already filtered and sorted. */
@@ -107,15 +114,25 @@ export function buildAppModuleItems(input: AppNavigationInput): NavItem[] {
       mod,
       input.platformStates.get(mod.manifest.moduleKey),
       input.workspaceStates.get(mod.manifest.moduleKey),
+      contractAccessFor(
+        input.contract ?? LEGACY_CONTRACT,
+        mod.manifest.moduleKey,
+      ),
     );
-    if (state === "hidden" || state === "not_enabled") continue;
+    if (
+      state === "hidden" ||
+      state === "not_enabled" ||
+      state === "not_contracted"
+    ) {
+      continue;
+    }
 
     for (const entry of mod.manifest.navigation) {
       if (entry.destination !== "app") continue;
       if (!allGranted(entry.requiredPermissions, input.grants)) continue;
 
       const parentPath = routePath(mod, entry.routeKey);
-      const operational = state === "enabled";
+      const operational = state === "enabled" || state === "suspended";
       const children = operational
         ? [...entry.children]
             .sort(byOrder)
@@ -186,8 +203,18 @@ export function buildAppModuleSettingsItems(
       mod,
       input.platformStates.get(mod.manifest.moduleKey),
       input.workspaceStates.get(mod.manifest.moduleKey),
+      contractAccessFor(
+        input.contract ?? LEGACY_CONTRACT,
+        mod.manifest.moduleKey,
+      ),
     );
-    if (state !== "enabled" && state !== "maintenance") continue;
+    if (
+      state !== "enabled" &&
+      state !== "maintenance" &&
+      state !== "suspended"
+    ) {
+      continue;
+    }
 
     for (const entry of mod.manifest.settings) {
       if (entry.destination !== "workspace") continue;

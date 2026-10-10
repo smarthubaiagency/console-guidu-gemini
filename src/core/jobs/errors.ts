@@ -1,3 +1,4 @@
+import { ModuleUnavailableError } from "@/core/modules/availability";
 import { toSafeError } from "@/shared/errors";
 
 /**
@@ -26,6 +27,15 @@ export function classifyJobFailure(error: unknown): FailureOutcome {
     return { action: "skip", message: error.safeMessage };
   }
   const safe = toSafeError(error);
+  // A module outside the plan, suspended or disabled stays so until someone
+  // changes it; only maintenance is worth retrying (F3b).
+  if (
+    error instanceof ModuleUnavailableError &&
+    error.reason &&
+    error.reason !== "maintenance"
+  ) {
+    return { action: "skip", message: safe.safeMessage.slice(0, 500) };
+  }
   const message = safe.safeMessage.slice(0, 500);
   switch (safe.code) {
     case "forbidden":

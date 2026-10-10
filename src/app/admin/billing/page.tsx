@@ -141,7 +141,9 @@ export default async function PartnerBillingPage() {
                       ) : null}
                     </div>
                   ) : (
-                    <div className="text-12 text-text-secondary">Sem plano</div>
+                    <div className="text-12 text-text-secondary">
+                      Sem plano · legado: módulos e limites como antes
+                    </div>
                   )}
                 </div>
                 {canManage && row.subscription
