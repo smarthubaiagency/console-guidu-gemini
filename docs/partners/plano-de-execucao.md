@@ -111,7 +111,7 @@ O detalhe da sessão que fez P1 a P4 e o ponto de partida para continuar estão 
 
 ## P4 — Console do parceiro em `/admin`
 
-**Estado:** concluída. P4a no PR #22 (com a correção de privilégios), correção de subdomínio no PR #23, P4b1 no PR #24 e P4b2 no PR #25. As migrations da P4a e da P4b1 foram aplicadas no dev (a da P4b1 a confirmar); a da P4b2 falta aplicar.
+**Estado:** concluída. P4a no PR #22 (com a correção de privilégios), correção de subdomínio no PR #23, P4b1 no PR #24 e P4b2 no PR #25. As migrations da P4a, da P4b1 e da P4b2 estão aplicadas no dev (conferido em `supabase_migrations.schema_migrations` em 10/10/2026).
 
 **Objetivo:** o parceiro opera os próprios clientes, ainda sem cobrança automática.
 
