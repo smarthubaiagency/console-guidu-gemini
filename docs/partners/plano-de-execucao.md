@@ -167,7 +167,7 @@ Dividida em dois PRs, aprovados por Marcelo em 10/10/2026, junto com os papéis 
 
 ## P5m — Cobrança manual e provedores previstos (F3)
 
-**Estado:** em andamento, dividida em dois PRs. PR A (núcleo: migration `20261012090000_p5m_billing.sql`, `src/core/billing/`, permissões e testes) pronto para revisão; PR B (telas e e2e) começa depois do merge do A e da migration aplicada no dev.
+**Estado:** em andamento, dividida em dois PRs. PR A (núcleo: migration `20261012090000_p5m_billing.sql`, `src/core/billing/`, permissões e testes) mergeado no PR #27, com a migration aplicada no dev. PR B (telas `/platform/billing`, `/admin/billing`, `/app/[slug]/settings/billing` e o checkout de demonstração, navegação e e2e `e2e/partner-billing.spec.ts`) pronto para revisão. O comprovante de pagamento vai até 900 KB, abaixo do limite de 1 MB das Server Actions.
 
 **Decisões do Marcelo (10/10/2026), ao dar o "pode começar":**
 

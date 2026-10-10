@@ -7,6 +7,7 @@ import {
 import { randomUUID } from "node:crypto";
 
 import { signAccessToken } from "./jwt";
+import type { SeedPartnerParams } from "./test-database";
 import { generateBase32Secret, totpMatches } from "./totp";
 
 /**
@@ -85,6 +86,8 @@ export type FakeGoTrueOptions = Readonly<{
     role?: ("owner" | "admin" | "member" | "viewer") | undefined;
     expiresInHours?: number | undefined;
   }) => Promise<{ id: string; rawToken: string }>;
+  /** Seeds a partner with an active domain, a member and maybe a customer. */
+  onSeedPartner?: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -303,6 +306,27 @@ export async function startFakeGoTrue(
         email,
         role,
         expiresInHours,
+      });
+      return json(response, 200, seeded);
+    }
+
+    if (path === "/__control/seed-partner" && method === "POST") {
+      const body = await readBody(request);
+      const slug = asString(body.slug);
+      const name = asString(body.name);
+      const host = asString(body.host);
+      const memberEmail = asString(body.memberEmail);
+      const role = asString(body.role) as SeedPartnerParams["role"] | null;
+      if (!slug || !name || !host || !memberEmail || !role || !options.onSeedPartner) {
+        return json(response, 400, { msg: "invalid parameters" });
+      }
+      const seeded = await options.onSeedPartner({
+        slug,
+        name,
+        host,
+        memberEmail,
+        role,
+        organizationId: asString(body.organizationId) ?? undefined,
       });
       return json(response, 200, seeded);
     }

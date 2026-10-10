@@ -80,8 +80,23 @@ export type TestDatabase = Readonly<{
     role?: ("owner" | "admin" | "member" | "viewer") | undefined;
     expiresInHours?: number | undefined;
   }) => Promise<{ id: string; rawToken: string }>;
+  seedPartner: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
   close: () => Promise<void>;
 }>;
+
+/** A partner with an active domain, a member and, optionally, a customer. */
+export type SeedPartnerParams = {
+  slug: string;
+  name: string;
+  host: string;
+  memberEmail: string;
+  role:
+    | "partner_owner"
+    | "partner_admin"
+    | "partner_finance"
+    | "partner_support";
+  organizationId?: string | undefined;
+};
 
 export async function startTestDatabase(
   port: number,
@@ -253,6 +268,44 @@ export async function startTestDatabase(
       );
 
       return { id: res.rows[0]!.id, rawToken };
+    },
+    seedPartner: async (params) => {
+      const userRes = await pool.query<{ id: string }>(
+        `select id from auth.users where lower(email) = lower($1)`,
+        [params.memberEmail],
+      );
+      const userId = userRes.rows[0]?.id;
+      if (!userId) throw new Error(`User not found: ${params.memberEmail}`);
+      await pool.query(
+        `insert into public.profiles (id, full_name, status)
+         values ($1, $2, 'active')
+         on conflict (id) do nothing`,
+        [userId, params.memberEmail.split("@")[0]],
+      );
+      const partnerRes = await pool.query<{ id: string }>(
+        `insert into public.partners (id, slug, name)
+         values (gen_random_uuid(), $1, $2)
+         returning id`,
+        [params.slug, params.name],
+      );
+      const partnerId = partnerRes.rows[0]!.id;
+      await pool.query(
+        `insert into public.partner_domains (host, partner_id, kind, status)
+         values (lower($1), $2, 'subdomain', 'active')`,
+        [params.host, partnerId],
+      );
+      await pool.query(
+        `insert into public.partner_members (partner_id, user_id, email, role)
+         values ($1, $2, lower($3), $4)`,
+        [partnerId, userId, params.memberEmail, params.role],
+      );
+      if (params.organizationId) {
+        await pool.query(
+          `update public.organizations set partner_id = $1 where id = $2`,
+          [partnerId, params.organizationId],
+        );
+      }
+      return { partnerId };
     },
     close: async () => {
       await pool.end();
