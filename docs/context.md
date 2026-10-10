@@ -30,8 +30,7 @@ Estas invariantes vêm da seção 25 da especificação e não podem ser relaxad
 
 1. [Especificação v1.0](spec/especificacao-v1.0.md).
 2. [Adendo de módulos v1.1](spec/adendo-modulos-v1.1.md).
-3. [ADRs aceitos](adr/), que registram as decisões D1–D9 validadas por Marcelo e prevalecem sobre os documentos anteriores onde houver conflito (a ADR 0010 ajusta a 0008 para este repositório; a ADR 0011 cria a camada de canais de mensagem no núcleo).
+3. [ADRs aceitos](adr/), que registram as decisões D1–D9 validadas por Marcelo e prevalecem sobre os documentos anteriores onde houver conflito (a ADR 0010 ajusta a 0008 para este repositório; a ADR 0011 cria a camada de canais de mensagem no núcleo; a ADR 0012, proposta, prevê a plataforma de parceiros).
 4. [Pendências abertas](pendencias.md), que não autorizam preenchimento por inferência.
 5. Migrations versionadas em `supabase/migrations`, fonte de verdade do schema aplicado.
 6. [Matriz de permissões](architecture/permissoes.md), que define o catálogo de permissões, a matriz papel × permissão e os guards de servidor (§4, §7 e §25).
-
