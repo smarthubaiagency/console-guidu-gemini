@@ -6,18 +6,43 @@
  * disabled and nothing leaves the platform.
  */
 
-/** Events with a template. Add one template per new event. */
-export type NotificationEvent = Readonly<{
-  type: "invitation.created";
+type EventBase = Readonly<{
   recipientEmail: string;
   /** Stable key that makes a retried delivery a no-op. */
   idempotencyKey: string;
-  data: Readonly<{
-    inviteUrl: string;
-    organizationName: string;
-    expiresAt: Date;
-  }>;
 }>;
+
+/** Notice to the partner about a customer's subscription (F3c). */
+export type SubscriptionNoticeData = Readonly<{
+  partnerName: string;
+  organizationName: string;
+  /** Due date: the end of the paid period. */
+  periodEnd: Date;
+  /** Day the next step happens (suspension), when there is one. */
+  nextStepOn: Date | null;
+  billingUrl: string;
+}>;
+
+/** Events with a template. Add one template per new event. */
+export type NotificationEvent = EventBase &
+  (
+    | Readonly<{
+        type: "invitation.created";
+        data: Readonly<{
+          inviteUrl: string;
+          organizationName: string;
+          expiresAt: Date;
+        }>;
+      }>
+    | Readonly<{
+        type: "billing.subscription.past_due";
+        data: SubscriptionNoticeData;
+      }>
+    | Readonly<{
+        type: "billing.subscription.suspended";
+        data: SubscriptionNoticeData;
+      }>
+  );
 
 /** Brand fields a template may use. */
 export type NotificationBrand = Readonly<{

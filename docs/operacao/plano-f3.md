@@ -35,7 +35,7 @@ Aprendizados:
 
 ### F3b — Contratação e cotas (primeira metade da P5b)
 
-**Estado:** pronta para revisão. Migration `20261014090000_f3b_contract_and_limits.sql` (como `app_migrations`).
+**Estado:** concluída (PR #30), migration `20261014090000_f3b_contract_and_limits.sql` aplicada no dev.
 
 Entregue:
 
@@ -57,10 +57,22 @@ Fora desta etapa: não há criação de workspace pelo cliente, então a cota `c
 
 ### F3c — Cobrança em job (segunda metade da P5b)
 
-- Rotina diária no pg-boss: ativa → em atraso → suspensa, com os prazos da decisão 4.
-- Avisos pela porta de notificação, com envio desligado até o provedor de e-mail (D-PA-08); entregas gravadas como "não enviadas", com idempotência.
-- Relatório de repasse por período, em job.
-- Testes com relógio controlado e rotina repetida sem efeito duplicado.
+**Estado:** pronta para revisão. Migration `20261015090000_f3c_billing_automation.sql` (como `app_migrations`).
+
+Entregue:
+
+- **Jobs de plataforma.** Além dos jobs pedidos por usuários (escopo `workspace`, F3a), o worker roda jobs sem usuário (escopo `platform`) como `app_worker`, por políticas estreitas da migration: lê assinaturas e só as colunas de que os avisos e relatórios precisam (grants por coluna; nada de CNPJ, comprovantes ou ids de membros), muda assinatura só de ativa para em atraso e de em atraso para suspensa (o gatilho da P5m continua validando a transição e os termos), grava avisos e relatórios e audita como serviço do worker (sem usuário nem workspace). Uma execução por tipo de job por vez, por trava.
+- **Agendador no worker.** A cada minuto insere a execução devida com chave por período (`on conflict do nothing`): a rotina diária a partir das 06:00 de Brasília, chave = data; o relatório mensal do mês fechado, chave = mês. Vários workers e vários ticks criam uma execução por período; as execuções aparecem em `job_runs` como as demais.
+- **Rotina diária** (`billing.daily-transitions`): ativa → em atraso quando `hoje ≥ vencimento + tolerância`; em atraso → suspensa quando `hoje ≥ vencimento + tolerância + carência`. Prazos em `billing_settings` (3 e 7, provisórios), editáveis por quem gerencia a cobrança da plataforma em `/platform/billing`, valendo a partir da próxima execução. Cada execução avança no máximo um passo por assinatura, então o parceiro sempre recebe o aviso de atraso antes da suspensão. Um pagamento registrado no meio do caminho vence: a mudança só acontece a partir da situação lida.
+- **Avisos ao parceiro** (decisão 4): e-mail de cobrança do perfil de faturamento; sem perfil, os donos do parceiro. Pela porta de notificação, com a marca da plataforma e link para `/admin/billing` no domínio do parceiro. Cada aviso é gravado uma vez por chave (assinatura, situação, vencimento, destinatário) em `notification_deliveries`, com o resultado: hoje "não enviado (envio desligado)", D-PA-08. Parceiro e plataforma veem os avisos em `/admin/billing` e `/platform/billing`.
+- **Relatório de repasse** (`billing.payout-report`): por parceiro e mês, com pagamentos e estornos datados no mês (recebido, estornado, líquido da plataforma e do parceiro). Um relatório gerado não muda; aparece em `/platform/billing` (todos) e `/admin/billing` (o do parceiro).
+- Testes: suíte SQL `billing-automation-rls.sql`; unitários das regras de prazo, agendas e modelos de aviso; integração `billing-automation.test.ts` com o worker real e relógio controlado (antes do horário nada roda, uma execução por data, mesma data repetida sem efeito, suspensão depois da carência com aviso único, pagamento não desfeito, relatório gerado uma vez com estornos, prazos só pela cobrança da plataforma); e2e confere prazos, avisos e relatórios em `/admin/billing`.
+
+Aprendizados:
+
+- O Prisma não consegue ler `partner_members` como `app_worker` (com grant só de algumas colunas) por `findMany`; a consulta dos donos é SQL direto com as colunas permitidas.
+- Uma execução de plataforma que esgota as tentativas fica como falha em `job_runs`, sem botão de reprocessar (o reprocessamento da tela de Execuções é do workspace). A rotina diária se recupera sozinha no dia seguinte, porque decide pelas datas; um relatório mensal com falha precisa de nova execução manual até a tela de operações da F3d.
+- A carência conta a partir do vencimento, não da data em que a rotina marcou o atraso; com a rotina diária as duas coincidem, e um passo por execução evita suspender sem aviso depois de uma parada do worker.
 
 ### F3d — Observabilidade
 

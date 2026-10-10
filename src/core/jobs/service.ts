@@ -11,7 +11,7 @@ import type {
 } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import type { JobDefinition } from "./definition";
+import type { WorkspaceJobDefinition } from "./definition";
 
 /**
  * Web side of jobs (F3a, decision 2): the job is a row of `job_runs`
@@ -48,7 +48,7 @@ export type JobRunView = Readonly<{
 export async function enqueueJob<P>(
   tx: ContextTransaction,
   ctx: RequestContext,
-  definition: JobDefinition<P>,
+  definition: WorkspaceJobDefinition<P>,
   payload: P,
   options: Readonly<{ idempotencyKey?: string; runAfter?: Date }> = {},
 ): Promise<{ id: string; created: boolean }> {

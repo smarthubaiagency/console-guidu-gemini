@@ -24,6 +24,7 @@ import {
   setPlanStatus,
 } from "./catalog";
 import { simulateDemoCheckout } from "./customer";
+import { updateBillingTerms } from "./operations";
 import {
   changeSubscriptionStatus,
   createPartnerPlan,
@@ -188,6 +189,29 @@ export async function setPlanStatusAction(
     return {
       success: true,
       message: status === "active" ? "Plano reativado." : "Plano retirado.",
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function updateBillingTermsAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const actor = await platformBillingActor();
+    await inPlatform(actor, (tx) =>
+      updateBillingTerms(tx, actor, {
+        pastDueAfterDays: text(formData, "pastDueAfterDays"),
+        suspendAfterDays: text(formData, "suspendAfterDays"),
+        provisional: formData.get("provisional") === "on",
+      }),
+    );
+    revalidatePath("/platform/billing");
+    return {
+      success: true,
+      message: "Prazos salvos. Valem a partir da próxima rotina diária.",
     };
   } catch (err) {
     return failure(err);

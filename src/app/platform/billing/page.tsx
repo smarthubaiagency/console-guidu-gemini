@@ -9,6 +9,10 @@ import {
   ProvisionalBadge,
   sectionClass,
 } from "@/components/billing/billing-ui";
+import {
+  NoticesSection,
+  PayoutReportsSection,
+} from "@/components/billing/automation-panels";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import {
@@ -25,6 +29,7 @@ import {
   refundPaymentAction,
   setCheckoutBlockedAction,
   setPlanStatusAction,
+  updateBillingTermsAction,
 } from "@/core/billing/actions";
 import {
   listPartnerTotals,
@@ -33,6 +38,11 @@ import {
   listRecentPayments,
   listSplitRules,
 } from "@/core/billing/catalog";
+import {
+  getBillingTerms,
+  listNotificationDeliveries,
+  listPayoutReports,
+} from "@/core/billing/operations";
 import { formatCents } from "@/core/billing/split";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { getRequestPartner } from "@/core/partners/resolve";
@@ -45,7 +55,8 @@ export const metadata: Metadata = { title: "Cobrança (Admin)" };
 /**
  * Platform billing (P5m, D-PA-14): base plans and insert-only versions,
  * split rules, totals per partner, the checkout block and refunds of manual
- * payments. Values are records; seeded ones are marked provisional.
+ * payments. Values are records; seeded ones are marked provisional. F3c
+ * adds the overdue terms, the payout reports and the partner notices.
  */
 export default async function PlatformBillingPage() {
   const identity = await requirePlatformAdminPage("/platform/billing");
@@ -68,6 +79,9 @@ export default async function PlatformBillingPage() {
       plans: await listPlans(tx),
       rules: await listSplitRules(tx, actor),
       payments: await listRecentPayments(tx, actor, { take: 50 }),
+      terms: await getBillingTerms(tx, actor),
+      reports: await listPayoutReports(tx, actor, null),
+      notices: await listNotificationDeliveries(tx, actor, null),
       partners: await tx.partner.findMany({
         select: {
           id: true,
@@ -147,6 +161,63 @@ export default async function PlatformBillingPage() {
           })}
         </ul>
       </section>
+
+      {/* Overdue terms (F3c) */}
+      <section className={sectionClass} data-testid="billing-terms">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-14 text-text font-semibold">
+            Prazos de cobrança
+          </h2>
+          {data.terms.provisional ? <ProvisionalBadge /> : null}
+        </div>
+        <p className="text-12 text-text-secondary">
+          Sem pagamento registrado, a assinatura passa a &quot;em atraso&quot;{" "}
+          {data.terms.pastDueAfterDays} dia(s) depois do vencimento e a
+          &quot;suspensa&quot; {data.terms.suspendAfterDays} dia(s) depois
+          disso. A rotina diária do worker aplica os prazos e avisa o parceiro;
+          uma mudança vale a partir da próxima execução.
+        </p>
+        {canManage ? (
+          <ActionForm
+            action={updateBillingTermsAction}
+            submitLabel="Salvar prazos"
+            className="grid gap-3 sm:grid-cols-3"
+            testId="billing-terms-form"
+          >
+            <label className={labelClass}>
+              Tolerância até &quot;em atraso&quot; (dias)
+              <input
+                name="pastDueAfterDays"
+                required
+                inputMode="numeric"
+                defaultValue={data.terms.pastDueAfterDays}
+                className={inputClass}
+              />
+            </label>
+            <label className={labelClass}>
+              Carência até &quot;suspensa&quot; (dias)
+              <input
+                name="suspendAfterDays"
+                required
+                inputMode="numeric"
+                defaultValue={data.terms.suspendAfterDays}
+                className={inputClass}
+              />
+            </label>
+            <label className="text-12 text-text-subtle flex items-center gap-2 font-medium">
+              <input
+                type="checkbox"
+                name="provisional"
+                defaultChecked={data.terms.provisional}
+              />
+              Prazos provisórios
+            </label>
+          </ActionForm>
+        ) : null}
+      </section>
+
+      <PayoutReportsSection reports={data.reports} showPartner />
+      <NoticesSection notices={data.notices} showPartner />
 
       {/* Plans */}
       <section className={sectionClass}>

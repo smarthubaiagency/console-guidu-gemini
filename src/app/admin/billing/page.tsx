@@ -16,6 +16,10 @@ import {
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import {
+  NoticesSection,
+  PayoutReportsSection,
+} from "@/components/billing/automation-panels";
+import {
   ActionForm,
   inputClass,
   labelClass,
@@ -30,6 +34,11 @@ import {
   startSubscriptionAction,
 } from "@/core/billing/actions";
 import { listPayments, listPlans } from "@/core/billing/catalog";
+import {
+  getBillingTerms,
+  listNotificationDeliveries,
+  listPayoutReports,
+} from "@/core/billing/operations";
 import {
   checkoutPrerequisites,
   getBillingProfile,
@@ -90,6 +99,9 @@ export default async function PartnerBillingPage() {
         partnerId: partner.partnerId,
         take: 50,
       }),
+      terms: await getBillingTerms(tx, actor),
+      notices: await listNotificationDeliveries(tx, actor, partner.partnerId),
+      reports: await listPayoutReports(tx, actor, partner.partnerId),
     }),
     { partnerId: partner.partnerId },
   );
@@ -322,6 +334,9 @@ export default async function PartnerBillingPage() {
         </ul>
       </section>
 
+      <NoticesSection notices={data.notices} showPartner={false} />
+      <PayoutReportsSection reports={data.reports} showPartner={false} />
+
       {/* Checkout switch */}
       <section className={sectionClass} data-testid="checkout-switch">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -515,6 +530,12 @@ export default async function PartnerBillingPage() {
         Situações: {MANUAL_STATUS_TARGETS.map(statusLabel).join(", ")} são
         marcadas por você; a assinatura fica ativa com cada pagamento
         registrado.
+      </p>
+      <p className="text-11 text-text-secondary" data-testid="billing-terms">
+        Sem pagamento registrado, a assinatura fica em atraso{" "}
+        {data.terms.pastDueAfterDays} dia(s) depois do vencimento e é suspensa{" "}
+        {data.terms.suspendAfterDays} dia(s) depois disso, automaticamente.
+        {data.terms.provisional ? " Prazos provisórios." : ""}
       </p>
     </div>
   );
