@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
+import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
 import { listUserWorkspaces } from "@/core/workspaces/navigation";
 import {
   getPlatformAdminMember,
@@ -40,7 +41,7 @@ describeDatabase("Task 05: Workspace Navigation & Platform Administration", requ
 
   describe("Workspace Navigation (listUserWorkspaces)", () => {
     it("returns active workspaces with organization metadata for an active member", async () => {
-      const workspaces = await listUserWorkspaces(prisma, ids.userA);
+      const workspaces = await listUserWorkspaces(prisma, ids.userA, HOUSE_PARTNER_ID);
 
       expect(workspaces.length).toBeGreaterThanOrEqual(1);
       const wsA = workspaces.find((w) => w.workspaceSlug === "workspace-a");
@@ -52,7 +53,7 @@ describeDatabase("Task 05: Workspace Navigation & Platform Administration", requ
     });
 
     it("does not expose workspaces of other organizations (AC01 isolation)", async () => {
-      const workspaces = await listUserWorkspaces(prisma, ids.userA);
+      const workspaces = await listUserWorkspaces(prisma, ids.userA, HOUSE_PARTNER_ID);
 
       // User A belongs only to Workspace A / Org A, never Workspace B / Org B
       const wsB = workspaces.find((w) => w.workspaceSlug === "workspace-b");
@@ -60,14 +61,25 @@ describeDatabase("Task 05: Workspace Navigation & Platform Administration", requ
     });
 
     it("returns zero workspaces for a user whose workspace membership is revoked (AC03)", async () => {
-      const workspaces = await listUserWorkspaces(prisma, ids.userRevoked);
+      const workspaces = await listUserWorkspaces(prisma, ids.userRevoked, HOUSE_PARTNER_ID);
 
       const wsA = workspaces.find((w) => w.workspaceSlug === "workspace-a");
       expect(wsA).toBeUndefined();
     });
 
+    it("returns zero workspaces without a partner or for another partner (ADR 0012)", async () => {
+      expect(await listUserWorkspaces(prisma, ids.userA, null)).toEqual([]);
+      expect(
+        await listUserWorkspaces(
+          prisma,
+          ids.userA,
+          "00000000-0000-4000-8000-0000000000ff",
+        ),
+      ).toEqual([]);
+    });
+
     it("returns zero workspaces for an organization-only member (inheritance off)", async () => {
-      const workspaces = await listUserWorkspaces(prisma, ids.userOrgOnly);
+      const workspaces = await listUserWorkspaces(prisma, ids.userOrgOnly, HOUSE_PARTNER_ID);
 
       expect(workspaces).toEqual([]);
     });

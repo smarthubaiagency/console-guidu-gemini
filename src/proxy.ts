@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { safeInternalPath } from "@/core/auth/redirects";
+import { normalizeHost, platformHosts } from "@/core/partners/hosts";
 import { refreshSupabaseSession } from "@/lib/supabase/session";
 
 /**
@@ -16,6 +17,11 @@ import { refreshSupabaseSession } from "@/lib/supabase/session";
 const PROTECTED_PREFIXES = ["/app", "/platform"] as const;
 const SIGNED_IN_ONLY_PREFIXES = ["/auth/mfa", "/invite"] as const;
 const SIGNED_OUT_ONLY_PATHS = ["/login", "/forgot-password"] as const;
+/**
+ * Served only on platform hosts (ADR 0012); 404 everywhere else. API routes
+ * are outside the matcher, so /api/v1/platform checks the host itself.
+ */
+const PLATFORM_ONLY_PREFIXES = ["/platform"] as const;
 
 function startsWithAny(pathname: string, prefixes: readonly string[]): boolean {
   return prefixes.some(
@@ -25,6 +31,18 @@ function startsWithAny(pathname: string, prefixes: readonly string[]): boolean {
 
 export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // The page and route guards repeat this check; answering here keeps a
+  // partner domain from even redirecting /platform to the login page.
+  if (
+    startsWithAny(pathname, PLATFORM_ONLY_PREFIXES) &&
+    !platformHosts(process.env).has(
+      normalizeHost(request.headers.get("host")) ?? "",
+    )
+  ) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const { response, claims } = await refreshSupabaseSession(request);
   const signedIn = Boolean(claims?.sub);
 

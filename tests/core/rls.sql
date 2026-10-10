@@ -475,6 +475,9 @@ rollback;
 begin;
 set local role app_runtime;
 select set_config('app.user_id', 'a0000000-0000-4000-8000-000000000031', true);
+-- ADR 0012: the resolver is also partner-bound; seed organizations belong to
+-- the house partner (tests/core/partners-rls.sql covers the partner checks).
+select set_config('app.partner_id', '00000000-0000-4000-8000-000000000000', true);
 do $$
 begin
   -- Cross-tenant slug: owner of A asking for B.

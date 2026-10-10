@@ -5,7 +5,7 @@ import { Puzzle } from "lucide-react";
 import { WorkspaceModuleToggle } from "@/components/modules/module-status-forms";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { NavIcon } from "@/components/layout/nav-icons";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
@@ -29,7 +29,7 @@ export default async function ModulesSettingsPage({ params }: PageProps) {
   const identity = await requireUserPage(
     `/app/${workspaceSlug}/settings/modules`,
   );
-  const context = await resolveWorkspaceContext(
+  const context = await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,

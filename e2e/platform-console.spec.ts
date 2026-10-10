@@ -103,4 +103,15 @@ test.describe("Platform Administration Governance Console", () => {
     const response = await request.get("/admin", { maxRedirects: 0 });
     expect(response.status()).toBe(404);
   });
+
+  test("answers 404 for /platform on a host that is not a platform host", async ({
+    request,
+  }) => {
+    const headers = { host: "app.agencia-exemplo.com.br" };
+    const page = await request.get("/platform", { headers, maxRedirects: 0 });
+    expect(page.status()).toBe(404);
+
+    const api = await request.get("/api/v1/platform/session", { headers });
+    expect(api.status()).toBe(404);
+  });
 });

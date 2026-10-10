@@ -4,6 +4,12 @@ export type RequestContext = Readonly<{
   userId: string;
   workspaceId: string;
   organizationId: string;
+  /**
+   * Partner of the request host (ADR 0012). Set by resolveWorkspaceContext;
+   * contexts built elsewhere (API keys, audit) leave it empty until their
+   * surface becomes partner-aware.
+   */
+  partnerId?: string | null;
   principalType?: "user" | "service" | "api_key";
   grantId?: string | null;
 }>;
@@ -23,6 +29,7 @@ export async function withContext<T>(
           set_config('app.user_id', ${context.userId}, true),
           set_config('app.workspace_id', ${context.workspaceId}, true),
           set_config('app.organization_id', ${context.organizationId}, true),
+          set_config('app.partner_id', ${context.partnerId ?? ""}, true),
           set_config('app.principal_type', ${context.principalType ?? "user"}, true),
           set_config('app.grant_id', ${context.grantId ?? ""}, true)
       `;

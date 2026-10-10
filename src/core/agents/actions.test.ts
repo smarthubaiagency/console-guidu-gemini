@@ -2,14 +2,16 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { requireUser, resolveWorkspaceContext, withContext } = vi.hoisted(() => ({
+const { requireUser, resolveRequestWorkspaceContext, withContext } = vi.hoisted(() => ({
   requireUser: vi.fn(),
-  resolveWorkspaceContext: vi.fn(),
+  resolveRequestWorkspaceContext: vi.fn(),
   withContext: vi.fn(),
 }));
 
 vi.mock("@/core/auth/identity", () => ({ requireUser }));
-vi.mock("@/core/auth/context", () => ({ resolveWorkspaceContext }));
+vi.mock("@/core/partners/request-context", () => ({
+  resolveRequestWorkspaceContext,
+}));
 vi.mock("@/lib/prisma/with-context", () => ({ withContext }));
 vi.mock("@/lib/prisma/client", () => ({ prisma: {} }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -52,7 +54,7 @@ describe("AI Agents Server Actions - Availability Guard (C04)", () => {
     expect(result.success).toBeUndefined();
     expect(result.error).toContain("temporariamente indisponível");
     expect(requireUser).not.toHaveBeenCalled();
-    expect(resolveWorkspaceContext).not.toHaveBeenCalled();
+    expect(resolveRequestWorkspaceContext).not.toHaveBeenCalled();
     expect(withContext).not.toHaveBeenCalled();
   });
 
@@ -73,7 +75,7 @@ describe("AI Agents Server Actions - Availability Guard (C04)", () => {
     expect(result.success).toBeUndefined();
     expect(result.error).toContain("temporariamente indisponível");
     expect(requireUser).not.toHaveBeenCalled();
-    expect(resolveWorkspaceContext).not.toHaveBeenCalled();
+    expect(resolveRequestWorkspaceContext).not.toHaveBeenCalled();
     expect(withContext).not.toHaveBeenCalled();
   });
 
@@ -89,7 +91,7 @@ describe("AI Agents Server Actions - Availability Guard (C04)", () => {
     expect(result.messages).toEqual([]);
     expect(result.error).toContain("temporariamente indisponível");
     expect(requireUser).not.toHaveBeenCalled();
-    expect(resolveWorkspaceContext).not.toHaveBeenCalled();
+    expect(resolveRequestWorkspaceContext).not.toHaveBeenCalled();
     expect(withContext).not.toHaveBeenCalled();
   });
 });

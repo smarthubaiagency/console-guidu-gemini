@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { resolveWorkspaceContext } from "../../src/core/auth/context.js";
+import { HOUSE_PARTNER_ID } from "../../src/core/partners/constants.js";
 import { withContext } from "../../src/lib/prisma/with-context.js";
 import {
   contextA,
@@ -354,11 +355,12 @@ describeDatabase("workspace context resolution", requiredVars, () => {
   });
 
   it("resolves workspace context from slug for active member", async () => {
-    const ctx = await resolveWorkspaceContext(prisma, ids.userA, "workspace-a");
+    const ctx = await resolveWorkspaceContext(prisma, ids.userA, "workspace-a", HOUSE_PARTNER_ID);
     expect(ctx).toEqual({
       userId: ids.userA,
       workspaceId: ids.workspaceA,
       organizationId: ids.organizationA,
+      partnerId: HOUSE_PARTNER_ID,
     });
   });
 
@@ -367,11 +369,13 @@ describeDatabase("workspace context resolution", requiredVars, () => {
       prisma,
       ids.userMultiOrg,
       "workspace-a",
+      HOUSE_PARTNER_ID,
     );
     expect(ctx).toEqual({
       userId: ids.userMultiOrg,
       workspaceId: ids.workspaceA,
       organizationId: ids.organizationA,
+      partnerId: HOUSE_PARTNER_ID,
     });
   });
 
@@ -380,28 +384,45 @@ describeDatabase("workspace context resolution", requiredVars, () => {
   // alternative leaks the existence of other tenants' workspaces.
   it("reports a foreign slug exactly like an unknown slug", async () => {
     await expect(
-      resolveWorkspaceContext(prisma, ids.userA, "workspace-b"),
+      resolveWorkspaceContext(prisma, ids.userA, "workspace-b", HOUSE_PARTNER_ID),
     ).rejects.toThrow("Workspace not found or inactive");
 
     await expect(
-      resolveWorkspaceContext(prisma, ids.userA, "nonexistent"),
+      resolveWorkspaceContext(prisma, ids.userA, "nonexistent", HOUSE_PARTNER_ID),
     ).rejects.toThrow("Workspace not found or inactive");
   });
 
   it("refuses an organization-only member (inheritance off)", async () => {
     await expect(
-      resolveWorkspaceContext(prisma, ids.userOrgOnly, "workspace-a"),
+      resolveWorkspaceContext(prisma, ids.userOrgOnly, "workspace-a", HOUSE_PARTNER_ID),
     ).rejects.toThrow("Workspace not found or inactive");
   });
 
   it("refuses a revoked workspace membership", async () => {
     await expect(
-      resolveWorkspaceContext(prisma, ids.userRevoked, "workspace-a"),
+      resolveWorkspaceContext(prisma, ids.userRevoked, "workspace-a", HOUSE_PARTNER_ID),
+    ).rejects.toThrow("Workspace not found or inactive");
+  });
+
+  it("refuses every slug without a partner (unknown host)", async () => {
+    await expect(
+      resolveWorkspaceContext(prisma, ids.userA, "workspace-a", null),
+    ).rejects.toThrow("Workspace not found or inactive");
+  });
+
+  it("refuses a slug whose organization belongs to another partner", async () => {
+    await expect(
+      resolveWorkspaceContext(
+        prisma,
+        ids.userA,
+        "workspace-a",
+        "00000000-0000-4000-8000-0000000000ff",
+      ),
     ).rejects.toThrow("Workspace not found or inactive");
   });
 
   it("clears transaction-local context after resolution", async () => {
-    await resolveWorkspaceContext(prisma, ids.userA, "workspace-a");
+    await resolveWorkspaceContext(prisma, ids.userA, "workspace-a", HOUSE_PARTNER_ID);
     expect(await prisma.organization.findMany()).toEqual([]);
   });
 });

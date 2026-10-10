@@ -13,7 +13,7 @@
 import type { Metadata } from "next";
 import { Bot, Clock } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
@@ -38,7 +38,7 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
   const currentPath = `/app/${workspaceSlug}/ai-agents`;
   const identity = await requireUserPage(currentPath);
 
-  const context = await resolveWorkspaceContext(
+  const context = await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,

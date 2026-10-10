@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Users } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listOrganizationMembers } from "@/core/organizations/members";
@@ -29,7 +29,7 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
   const currentPath = `/app/${workspaceSlug}/settings/team`;
   const identity = await requireUserPage(currentPath);
 
-  const context = await resolveWorkspaceContext(
+  const context = await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,

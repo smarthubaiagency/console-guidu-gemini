@@ -4,7 +4,7 @@ import { Puzzle } from "lucide-react";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { workspaceGrants } from "@/core/module-runtime/loaders";
 import {
@@ -49,7 +49,7 @@ export default async function WorkspaceModuleSettingsPage({
 
   let context;
   try {
-    context = await resolveWorkspaceContext(
+    context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug,

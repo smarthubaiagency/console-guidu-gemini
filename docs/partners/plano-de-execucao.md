@@ -36,6 +36,8 @@ São **sete etapas**. P1 a P4 não dependem de nenhuma decisão comercial e pode
 
 ## P2 — Parceiro zero e contexto de parceiro
 
+**Estado:** implementada no PR da P2; migration `20261010120000_p2_partners_and_partner_context.sql` a aplicar no dev após aprovação.
+
 **Objetivo:** todo dado novo já nasce ligado a um parceiro.
 
 - Migration:
@@ -47,6 +49,19 @@ São **sete etapas**. P1 a P4 não dependem de nenhuma decisão comercial e pode
 - No login e na lista de empresas, só aparecem empresas do parceiro do host.
 - `/platform` responde 404 quando o host não é da plataforma.
 - Testes: SQL de RLS (parceiro A não vê empresa do parceiro B), integração em PGlite e unitários da resolução por host.
+
+**Como ficou:**
+
+- Hosts da plataforma vêm do ambiente (host de `APP_URL`, `PLATFORM_HOSTS` e, fora de produção, `localhost` e `127.0.0.1`) e sempre resolvem para o parceiro zero. `partner_domains` guarda só hosts de parceiros; sem linhas até a P4/P7.
+- O parceiro vem do cabeçalho `Host`, nunca de `X-Forwarded-Host` nem de campo de formulário. O host só escolhe a fatia de parceiro; vínculo e RLS continuam decidindo o acesso.
+- Host desconhecido não resolve nenhum workspace; `/platform` e `/api/v1/platform/*` respondem 404 fora dos hosts da plataforma (proxy, guard de página e rota).
+- `resolve_workspace_slug` e `list_user_workspaces` passaram a exigir o parceiro do contexto. Páginas e ações usam `resolveRequestWorkspaceContext` e `listRequestUserWorkspaces` (`src/core/partners/request-context.ts`).
+- `organizations.partner_id` não pode ser alterado pela aplicação (gatilho); mover empresa de parceiro será operação da plataforma.
+
+**Ficou para depois, de propósito:**
+
+- Chaves de API e MCP (`private.resolve_api_key`) ainda não conferem o parceiro: entra com o servidor MCP na F4.
+- O link de convite ainda usa `APP_URL`; passa a usar o host do parceiro na P3, junto com a marca.
 
 **Aceite:** critérios 1 e 2 da especificação §11.
 

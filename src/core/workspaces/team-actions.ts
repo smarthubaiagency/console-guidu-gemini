@@ -16,7 +16,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
@@ -70,7 +70,7 @@ export async function createInvitationAction(
 
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(
+    const context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug,
@@ -128,7 +128,7 @@ export async function revokeInvitationAction(
 
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(
+    const context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug,
@@ -184,7 +184,7 @@ export async function updateMemberRoleAction(
 
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(
+    const context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug,
@@ -239,7 +239,7 @@ export async function removeMemberAction(
 
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(
+    const context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug,

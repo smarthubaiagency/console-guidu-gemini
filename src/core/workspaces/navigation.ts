@@ -38,16 +38,26 @@ type UserWorkspaceSqlRow = {
  * - Guarantees that only workspaces where `workspace_members.status = 'active'`
  *   are returned. Inactive/revoked members see 0 rows.
  *
+ * - Only lists workspaces of organizations that belong to `partnerId`, the
+ *   partner of the request host (ADR 0012). No partner, no workspaces.
+ *
  * @param prisma PrismaClient instance connected with `app_runtime`
  * @param userId Authenticated user UUID
+ * @param partnerId Partner of the request host, or null for an unknown host
  * @returns Array of active user workspaces
  */
 export async function listUserWorkspaces(
   prisma: PrismaClient,
   userId: string,
+  partnerId: string | null,
 ): Promise<UserWorkspace[]> {
-  return withIdentityContext(prisma, userId, async (tx) => {
-    const rows = await tx.$queryRaw<UserWorkspaceSqlRow[]>`
+  if (!partnerId) return [];
+
+  return withIdentityContext(
+    prisma,
+    userId,
+    async (tx) => {
+      const rows = await tx.$queryRaw<UserWorkspaceSqlRow[]>`
       select
         workspace_id,
         workspace_name,
@@ -60,15 +70,17 @@ export async function listUserWorkspaces(
       from private.list_user_workspaces()
     `;
 
-    return rows.map((row) => ({
-      workspaceId: row.workspace_id,
-      workspaceName: row.workspace_name,
-      workspaceSlug: row.workspace_slug,
-      workspaceStatus: row.workspace_status,
-      workspaceRole: row.workspace_role,
-      organizationId: row.organization_id,
-      organizationName: row.organization_name,
-      organizationRole: row.organization_role,
-    }));
-  });
+      return rows.map((row) => ({
+        workspaceId: row.workspace_id,
+        workspaceName: row.workspace_name,
+        workspaceSlug: row.workspace_slug,
+        workspaceStatus: row.workspace_status,
+        workspaceRole: row.workspace_role,
+        organizationId: row.organization_id,
+        organizationName: row.organization_name,
+        organizationRole: row.organization_role,
+      }));
+    },
+    { partnerId },
+  );
 }

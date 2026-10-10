@@ -9,7 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
 import { navIcon } from "@/components/layout/nav-icons";
 import { prisma } from "@/lib/prisma/client";
@@ -26,7 +26,7 @@ interface WorkspacePageProps {
 export default async function WorkspacePage({ params }: WorkspacePageProps) {
   const { workspaceSlug } = await params;
   const identity = await requireUserPage(`/app/${workspaceSlug}`);
-  const context = await resolveWorkspaceContext(
+  const context = await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,

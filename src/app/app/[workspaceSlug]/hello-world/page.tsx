@@ -5,7 +5,7 @@ import { Hand } from "lucide-react";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveModulePageAccess } from "@/core/module-runtime/page-access";
 import { prisma } from "@/lib/prisma/client";
@@ -34,7 +34,7 @@ export default async function HelloWorldPage({ params }: PageProps) {
   const identity = await requireUserPage(`/app/${workspaceSlug}/hello-world`);
   let context;
   try {
-    context = await resolveWorkspaceContext(
+    context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug,

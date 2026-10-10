@@ -40,14 +40,28 @@ export class NotAMemberError extends Error {
  * distinguishing the two would disclose which workspaces other tenants own.
  * NotAMemberError therefore stays unreachable while step 2 holds — it is the
  * second line of defence if that resolver is ever loosened.
+ *
+ * `partnerId` is the partner of the request host (ADR 0012). The resolver only
+ * returns workspaces of organizations of that partner, so a slug of another
+ * partner is "not found" exactly like a slug of another tenant. A null
+ * partner (unknown host) never resolves anything.
  */
 export async function resolveWorkspaceContext(
   prisma: PrismaClient,
   userId: string,
   workspaceSlug: string,
+  partnerId: string | null,
 ): Promise<RequestContext> {
+  if (!partnerId) {
+    throw new WorkspaceNotFoundError(workspaceSlug);
+  }
+
   return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`select set_config('app.user_id', ${userId}, true)`;
+    await tx.$executeRaw`
+      select
+        set_config('app.user_id', ${userId}, true),
+        set_config('app.partner_id', ${partnerId}, true)
+    `;
 
     const rows = await tx.$queryRaw<WorkspaceSlugRow[]>`
       select workspace_id, organization_id
@@ -79,6 +93,6 @@ export async function resolveWorkspaceContext(
       throw new NotAMemberError();
     }
 
-    return { userId, workspaceId, organizationId };
+    return { userId, workspaceId, organizationId, partnerId };
   });
 }

@@ -1,5 +1,5 @@
 import "server-only";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { isAccessDeniedError } from "./errors";
 import { requireMfa, requireUser, type Identity } from "./identity";
@@ -33,12 +33,19 @@ export function requireMfaPage(currentPath: string): Promise<Identity> {
 
 /**
  * Server guard for internal administration pages (/platform).
- * Enforces both Multi-Factor Authentication (AAL2) and active membership
- * in platform_admin_members (spec Section 7 and 12).
+ * Answers 404 outside the platform hosts (ADR 0012), then enforces both
+ * Multi-Factor Authentication (AAL2) and active membership in
+ * platform_admin_members (spec Section 7 and 12).
  */
 export async function requirePlatformAdminPage(
   currentPath: string,
 ): Promise<Identity> {
+  const { getRequestPartner } = await import("@/core/partners/resolve");
+  const partner = await getRequestPartner();
+  if (!partner?.isPlatformHost) {
+    notFound();
+  }
+
   const identity = await requireMfaPage(currentPath);
   const { prisma } = await import("@/lib/prisma/client");
   const { getPlatformAdminMember } = await import("@/core/admin/platform");

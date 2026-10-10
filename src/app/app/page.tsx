@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Building2, Layers, ArrowRight, ShieldCheck } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
-import { listUserWorkspaces } from "@/core/workspaces/navigation";
+import { listRequestUserWorkspaces } from "@/core/partners/request-context";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 import { appConfig } from "@/core/config/app";
 
@@ -20,7 +20,7 @@ export const metadata: Metadata = { title: "Seus Workspaces" };
  */
 export default async function AppPage() {
   const identity = await requireUserPage("/app");
-  const workspaces = await listUserWorkspaces(prisma, identity.userId);
+  const workspaces = await listRequestUserWorkspaces(prisma, identity.userId);
 
   // If the user has access to exactly one workspace, direct redirect
   const singleWorkspace = workspaces[0];

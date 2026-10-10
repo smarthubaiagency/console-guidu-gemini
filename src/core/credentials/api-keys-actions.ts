@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
@@ -62,7 +62,7 @@ export async function createApiKeyAction(
 
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     const result = await withContext(prisma, context, async (tx) => {
       return createApiKey(tx, context, {
@@ -113,7 +113,7 @@ export async function revokeApiKeyAction(
 
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
 
     await withContext(prisma, context, async (tx) => {
       return revokeApiKey(tx, context, apiKeyId);
