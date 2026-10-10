@@ -52,7 +52,37 @@ Tirados deste estudo e da ADR 0011; entram na especificação como critérios de
 - Limites do canal declarados em `ChannelCapabilities` e aplicados na renderização.
 - **Suíte de conformidade** comum (ideia do `runStateStoreConformance` deles): assinatura válida e inválida, desafio de cadastro, idempotência, mídia acima do limite, normalização de texto, áudio e interação, e renderização dentro dos limites. Cada adaptador novo só entra com a suíte verde.
 
-## 5. Para avaliar depois
+## 5. Referências para a UI de chat e para os canais
+
+Referência de desenho, não dependência. Versões lidas: `@copilotkit/react-core` 1.78.0 e `@copilotkit/channels-ui` 0.11.0, ambos MIT.
+
+### 5.1 UI de chat (chat interno, módulo futuro)
+
+A interface atual é a v2, em `@copilotkit/react-core/v2`. O pacote `@copilotkit/react-ui` é a v1 e está **descontinuado**; não usar como referência.
+
+| O que observar                                                                                             | Onde está                                                                                 | Por que interessa ao GUIDU                                                                                |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Anatomia do chat por tipo de mensagem: usuário, assistente, raciocínio, chamadas de ferramenta e atividade | `v2/components/chat/CopilotChat*.tsx`                                                     | Modelo para os tipos de mensagem do chat interno, inclusive o painel do atendente                         |
+| Anexos e **gravação de áudio** no campo de entrada                                                         | `CopilotChatAttachmentQueue`, `CopilotChatAttachmentRenderer`, `CopilotChatAudioRecorder` | Entrada de áudio do contato e do atendente, alinhada à especificação do Agentes de IA                     |
+| Lista de conversas e formatos de janela (popup, barra lateral, página)                                     | `CopilotThreadsDrawer`, `CopilotPopup`, `CopilotSidebar`                                  | Layouts do chat interno e de um copiloto dentro do dashboard                                              |
+| Aprovação humana dentro da conversa                                                                        | hooks `useHumanInTheLoop`, `useInterrupt`                                                 | Padrão para a transferência e para as propostas da §17.4                                                  |
+| Ferramentas executadas no navegador e contexto da tela enviado ao agente                                   | `useFrontendTool(s)`, `useAgentContext`                                                   | Copiloto que opera os módulos do GUIDU com a autorização revalidada no servidor                           |
+| Interface gerada pelo agente a partir de um catálogo permitido                                             | `useComponent`, `useRenderCustomMessages`, `a2ui-renderer`                                | Mesmo princípio do nosso registro estático de componentes: o agente escolhe, o código decide o que existe |
+| Sugestões de próxima pergunta                                                                              | `CopilotChatSuggestion*`, `useConfigureSuggestions`                                       | Atalhos no chat interno                                                                                   |
+
+**Ressalvas:**
+
+- **Open-core.** O `CopilotKitProvider` mostra um aviso de licença conforme o status que o runtime informa (`no_license`, `expired`, `invalid`, `expiring`), e marca funções como camada Enterprise (por exemplo `selfManagedAgents`, com alerta no console). `useMemories` e os hooks de aprendizado dependem da plataforma Intelligence.
+- **Design system.** Os componentes usam estilos inline, que o nosso lint proíbe (P0 do design system). A UI do GUIDU deve ser construída com os nossos tokens e o shadcn/ui, seguindo a anatomia acima.
+- **Áudio.** O pacote `@copilotkit/voice` (transcrição e voz) fica só como referência; a decisão proposta é o AI SDK.
+
+### 5.2 Vocabulário de mensagens dos canais
+
+`@copilotkit/channels-ui` define um vocabulário único que cada adaptador converte para o formato nativo: `Message`, `Header`, `Section`, `Markdown`, `Field`/`Fields`, `Context`, `Actions`, `Button`, `Select`, `Input`, `Image`, `Divider`, `Chart`, `Table`/`Row`/`Cell` e `Modal`.
+
+Para o GUIDU, é a referência para as **partes do plano de resposta** (especificação §7). Um subconjunto inicial basta: texto em markdown, botões de resposta, lista de opções, imagem, áudio e cartão de dados para o chat interno. Cada adaptador converte esse subconjunto dentro das suas `ChannelCapabilities`, como o `render/budget.ts` faz para o WhatsApp.
+
+## 6. Para avaliar depois
 
 - AG-UI como formato de eventos entre o agente e o chat interno, comparado ao stream do AI SDK.
 - Frontend MIT do CopilotKit para um copiloto dentro do dashboard, com aprovação humana pelas propostas da §17.4.

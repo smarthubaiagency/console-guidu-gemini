@@ -238,6 +238,7 @@ const ResponsePlan = z.object({
 
 - `messages` já vem dividido pelo modelo em mensagens curtas. A divisão por saída estruturada é mais confiável que separadores no texto. O renderizador ainda corta pelo `maxLength` do canal, se precisar.
 - `data` só existe em vínculos com saída JSON e é validado contra o schema do vínculo.
+- **[Em aberto]** Vocabulário de partes além de texto (botões de resposta, lista de opções, imagem, áudio, cartão de dados). Referência: `@copilotkit/channels-ui`, em [`docs/spikes/copilotkit.md`](../../spikes/copilotkit.md) §5.2.
 
 ### 7.2 Política de saída do vínculo
 
