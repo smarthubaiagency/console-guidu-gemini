@@ -15,7 +15,10 @@ import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
 
-import { createHelloWorldRecord } from "./services/records";
+import {
+  createHelloWorldRecord,
+  enqueueHelloWorldRecord,
+} from "./services/records";
 
 export type HelloWorldActionState = {
   success?: boolean;
@@ -62,6 +65,16 @@ export async function createHelloWorldRecordAction(
       identity.userId,
       workspaceSlug.data,
     );
+    if (formData.get("mode") === "background") {
+      await withContext(prisma, context, (tx) =>
+        enqueueHelloWorldRecord(tx, context, { title: formData.get("title") }),
+      );
+      revalidatePath(`/app/${workspaceSlug.data}/executions`);
+      return {
+        success: true,
+        message: "Pedido enviado. Acompanhe em Execuções.",
+      };
+    }
     const record = await withContext(prisma, context, (tx) =>
       createHelloWorldRecord(tx, context, { title: formData.get("title") }),
     );

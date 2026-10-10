@@ -88,6 +88,8 @@ export type FakeGoTrueOptions = Readonly<{
   }) => Promise<{ id: string; rawToken: string }>;
   /** Seeds a partner with an active domain, a member and maybe a customer. */
   onSeedPartner?: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
+  /** Runs the job worker until no job is waiting (F3a). */
+  onRunJobs?: () => Promise<{ remaining: number }>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -308,6 +310,11 @@ export async function startFakeGoTrue(
         expiresInHours,
       });
       return json(response, 200, seeded);
+    }
+
+    if (path === "/__control/run-jobs" && method === "POST") {
+      if (!options.onRunJobs) return json(response, 400, { msg: "unsupported" });
+      return json(response, 200, await options.onRunJobs());
     }
 
     if (path === "/__control/seed-partner" && method === "POST") {

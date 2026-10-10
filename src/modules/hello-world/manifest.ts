@@ -137,5 +137,5 @@ export const helloWorldManifest = defineModuleManifest({
     workspace: helloWorldWorkspaceConfigSchema,
     admin: helloWorldAdminConfigSchema,
   },
-  capabilities: ["settings"],
+  capabilities: ["settings", "jobs"],
 });

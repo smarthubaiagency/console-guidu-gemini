@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import { recordAudit } from "@/core/audit/record";
+import { enqueueJob } from "@/core/jobs/service";
 import { assertModuleOperational } from "@/core/module-runtime/state";
 import { requireWorkspacePermission } from "@/core/permissions/guard";
 import type {
@@ -135,4 +136,31 @@ export async function createHelloWorldRecord(
   });
 
   return toDto(row, ctx);
+}
+
+/**
+ * Asks for a record to be created in the background (F3a reference job).
+ * Checks now for immediate feedback; the job checks again when it runs.
+ */
+export async function enqueueHelloWorldRecord(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  input: unknown,
+): Promise<{ jobRunId: string }> {
+  await assertModuleOperational(tx, ctx, MODULE_KEY);
+  await requireWorkspacePermission(
+    tx,
+    ctx,
+    HelloWorldPermissions.RECORDS_WRITE,
+  );
+  const parsed = CreateRecordInput.safeParse(input);
+  if (!parsed.success) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: "Informe um título de 1 a 120 caracteres.",
+    });
+  }
+  const { createRecordJob } = await import("../../jobs");
+  const { id } = await enqueueJob(tx, ctx, createRecordJob, parsed.data);
+  return { jobRunId: id };
 }

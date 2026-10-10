@@ -129,6 +129,15 @@ export async function seedPartner(
   return (await response.json()) as { partnerId: string };
 }
 
+/** Runs the job worker until no job waits; returns how many still wait. */
+export async function runJobs(request: APIRequestContext): Promise<number> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/run-jobs`, {
+    timeout: 60_000,
+  });
+  expect(response.status()).toBe(200);
+  return ((await response.json()) as { remaining: number }).remaining;
+}
+
 /** Fills and submits the login form without waiting for the outcome. */
 export async function submitLogin(
   page: Page,

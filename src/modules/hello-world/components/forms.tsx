@@ -60,6 +60,16 @@ export function CreateRecordForm({ workspaceSlug }: { workspaceSlug: string }) {
         <button type="submit" disabled={pending} className={BUTTON}>
           {pending ? "Criando..." : "Criar registro"}
         </button>
+        {/* F3a reference job: the same creation through the worker. */}
+        <button
+          type="submit"
+          name="mode"
+          value="background"
+          disabled={pending}
+          className="border-border text-text-subtle hover:bg-surface-hover text-12 rounded-lg border px-4 py-2 font-semibold whitespace-nowrap disabled:opacity-60"
+        >
+          Em segundo plano
+        </button>
       </div>
       <Feedback state={state} />
     </form>

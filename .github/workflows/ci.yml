@@ -138,6 +138,16 @@ jobs:
             echo "ADMIN_URL=$admin_url"
           } >> "$GITHUB_ENV"
 
+      - name: Provision ephemeral app_worker password (F3a)
+        shell: bash
+        run: |
+          set -euo pipefail
+          worker_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$worker_password"
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --quiet \
+            --command="alter role app_worker with login password '${worker_password}'"
+          echo "WORKER_DATABASE_URL=postgresql://app_worker:${worker_password}@127.0.0.1:54322/postgres" >> "$GITHUB_ENV"
+
       - name: Load synthetic test fixtures
         run: |
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/seed.sql
@@ -161,6 +171,7 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/partner-customers-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/legal-support-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/billing-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/jobs-rls.sql
 
       - name: Prisma and Data API isolation suite
         run: npx vitest run --project integration --reporter=default --reporter=json --outputFile=/tmp/db-tests.json

@@ -229,7 +229,6 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
           label: "Execuções",
           href: `${base}/executions`,
           iconKey: "play-circle",
-          badge: "Sem dados",
         }),
       ],
     },

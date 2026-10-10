@@ -81,6 +81,8 @@ export type TestDatabase = Readonly<{
     expiresInHours?: number | undefined;
   }) => Promise<{ id: string; rawToken: string }>;
   seedPartner: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
+  /** Runs the real worker (`pnpm worker`) until no job is waiting. */
+  runJobs: () => Promise<{ remaining: number }>;
   close: () => Promise<void>;
 }>;
 
@@ -306,6 +308,45 @@ export async function startTestDatabase(
         );
       }
       return { partnerId };
+    },
+    runJobs: async () => {
+      // A worker process only while jobs wait: constant polling would add
+      // concurrent load to PGlite, which serves one session at a time.
+      const { spawn } = await import("node:child_process");
+      const child = spawn(
+        path.join(repoRoot, "node_modules", ".bin", "tsx"),
+        ["--conditions=react-server", "src/worker/index.ts"],
+        {
+          cwd: repoRoot,
+          env: {
+            ...process.env,
+            // PGlite serves one session: named prepared statements of two
+            // Prisma clients (web and worker) would collide there.
+            WORKER_DATABASE_URL: `${url}?pgbouncer=true&connection_limit=2`,
+            WORKER_CONCURRENCY: "1",
+            GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
+          },
+          stdio: "ignore",
+        },
+      );
+      const waiting = async () =>
+        Number(
+          (
+            await pool.query<{ n: string }>(
+              `select count(*) as n from public.job_runs
+               where status in ('pending', 'queued', 'running')`,
+            )
+          ).rows[0]?.n ?? 0,
+        );
+      const deadline = Date.now() + 30_000;
+      let remaining = await waiting();
+      while (remaining > 0 && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        remaining = await waiting();
+      }
+      child.kill("SIGTERM");
+      await new Promise((resolve) => child.once("exit", resolve));
+      return { remaining };
     },
     close: async () => {
       await pool.end();
