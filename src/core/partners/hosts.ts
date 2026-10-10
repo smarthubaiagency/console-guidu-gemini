@@ -2,16 +2,31 @@
  * Host helpers for partner resolution (ADR 0012: the host selects the
  * partner, the route selects the role).
  *
- * The `Host` header is client-supplied. That is acceptable here because it
+ * The request host is client-supplied. That is acceptable here because it
  * only selects which partner's slice the request sees; membership and RLS
- * still decide what the identity can read. `X-Forwarded-Host` is never used.
- * Platform hosts come only from operator-controlled configuration.
+ * still decide what the identity can read. Platform hosts come only from
+ * operator-controlled configuration.
  */
 
 const HOSTNAME =
   /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
 
 const LOOPBACK_HOSTS = ["localhost", "127.0.0.1"] as const;
+
+/**
+ * Host the visitor addressed: the first `X-Forwarded-Host` value, else
+ * `Host`. Next.js fills X-Forwarded-Host with the original host and keeps it
+ * when it renders the target of a Server Action redirect through an internal
+ * request to its own origin (where `Host` is the server's address); a proxy
+ * such as Vercel sets it to the real host. Either header is client-controlled
+ * without a proxy, so trusting one is no weaker than trusting the other.
+ */
+export function requestHost(
+  get: (name: string) => string | null | undefined,
+): string | null {
+  const forwarded = get("x-forwarded-host")?.split(",")[0]?.trim();
+  return forwarded || get("host") || null;
+}
 
 /**
  * Lowercased hostname without port, or null when the value is not a plain

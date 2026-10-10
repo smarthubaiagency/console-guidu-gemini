@@ -9,6 +9,12 @@ import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
 
+import {
+  createPartnerCustomer,
+  createWorkspaceTemplate,
+  deleteWorkspaceTemplate,
+  setModuleOffered,
+} from "./customers";
 import { partnerHostOrigin } from "./hosts";
 import {
   acceptPartnerInvitation,
@@ -341,6 +347,127 @@ export async function updatePartnerMemberAction(
     );
     revalidatePath("/admin/members");
     return { success: true, message: "Membro atualizado." };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function createPartnerCustomerAction(
+  _prev: PartnerActionState,
+  formData: FormData,
+): Promise<PartnerActionState> {
+  try {
+    const actor = await partnerActor();
+    const origin = (await getRequestOrigin()) ?? "";
+    const result = await withIdentityContext(
+      prisma,
+      actor.userId,
+      (tx) =>
+        createPartnerCustomer(
+          tx,
+          { userId: actor.userId, partnerRole: actor.partnerRole },
+          actor.partnerId,
+          {
+            organizationName: text(formData, "organizationName"),
+            workspaceName: text(formData, "workspaceName"),
+            workspaceSlug: text(formData, "workspaceSlug"),
+            ownerEmail: text(formData, "ownerEmail"),
+            templateId: text(formData, "templateId") || null,
+          },
+          origin,
+        ),
+      { partnerId: actor.partnerId },
+    );
+    revalidatePath("/admin/customers");
+    return {
+      success: true,
+      message: "Cliente cadastrado. Envie o convite ao responsável.",
+      inviteUrl: result.inviteUrl,
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function setModuleOfferedAction(
+  _prev: PartnerActionState,
+  formData: FormData,
+): Promise<PartnerActionState> {
+  try {
+    const actor = await partnerActor();
+    const offered = text(formData, "offered") === "true";
+    await withIdentityContext(
+      prisma,
+      actor.userId,
+      (tx) =>
+        setModuleOffered(
+          tx,
+          { userId: actor.userId, partnerRole: actor.partnerRole },
+          actor.partnerId,
+          text(formData, "moduleKey"),
+          offered,
+        ),
+      { partnerId: actor.partnerId },
+    );
+    revalidatePath("/admin/modules");
+    return {
+      success: true,
+      message: offered ? "Módulo oferecido." : "Módulo retirado da oferta.",
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function createWorkspaceTemplateAction(
+  _prev: PartnerActionState,
+  formData: FormData,
+): Promise<PartnerActionState> {
+  try {
+    const actor = await partnerActor();
+    const moduleKeys = formData
+      .getAll("moduleKeys")
+      .filter((v): v is string => typeof v === "string");
+    await withIdentityContext(
+      prisma,
+      actor.userId,
+      (tx) =>
+        createWorkspaceTemplate(
+          tx,
+          { userId: actor.userId, partnerRole: actor.partnerRole },
+          actor.partnerId,
+          { name: text(formData, "name"), moduleKeys },
+        ),
+      { partnerId: actor.partnerId },
+    );
+    revalidatePath("/admin/templates");
+    return { success: true, message: "Modelo criado." };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function deleteWorkspaceTemplateAction(
+  _prev: PartnerActionState,
+  formData: FormData,
+): Promise<PartnerActionState> {
+  try {
+    const actor = await partnerActor();
+    const templateId = uuid.parse(text(formData, "templateId"));
+    await withIdentityContext(
+      prisma,
+      actor.userId,
+      (tx) =>
+        deleteWorkspaceTemplate(
+          tx,
+          { userId: actor.userId, partnerRole: actor.partnerRole },
+          actor.partnerId,
+          templateId,
+        ),
+      { partnerId: actor.partnerId },
+    );
+    revalidatePath("/admin/templates");
+    return { success: true, message: "Modelo removido." };
   } catch (err) {
     return failure(err);
   }

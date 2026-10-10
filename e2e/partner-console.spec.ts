@@ -10,6 +10,9 @@
  *   which the browser resolves to loopback), accepts the invitation, opens
  *   the partner console at /admin and saves the partner brand.
  * - The platform host keeps its own brand: brands never cross hosts.
+ * - P4b: the owner offers a module, builds a template and registers a
+ *   customer, whose owner accepts on the partner domain and lands in the
+ *   workspace with the template module and the partner brand.
  * ============================================================================
  */
 
@@ -37,6 +40,8 @@ test("platform creates a partner whose owner runs the console on the partner dom
   request,
   browser,
 }) => {
+  // Three identities on two hosts: longer than the default budget.
+  test.setTimeout(120_000);
   const stamp = Date.now().toString(36);
   const slug = `agencia-${stamp}`;
   const host = `${slug}.localhost`;
@@ -129,5 +134,67 @@ test("platform creates a partner whose owner runs the console on the partner dom
   });
   expect(platformStatus).toBe(404);
 
+  // P4b: offer a module, build a template and register a customer.
+  await owner.goto("/admin/modules");
+  const helloRow = owner
+    .getByTestId("partner-modules")
+    .getByRole("listitem")
+    .filter({ hasText: "Hello" });
+  await helloRow.getByRole("button", { name: "Oferecer" }).click();
+  await expect(helloRow.getByRole("status")).toContainText("Módulo oferecido.");
+
+  await owner.goto("/admin/templates");
+  const template = owner.getByTestId("create-template");
+  await template.getByLabel("Nome").fill("Padrão E2E");
+  await template.getByRole("checkbox").first().check();
+  await template.getByRole("button", { name: "Criar modelo" }).click();
+  await expect(template.getByRole("status")).toContainText("Modelo criado.");
+
+  const customerEmail = uniqueEmail("customer-owner");
+  const customerSlug = `cliente-${stamp}`;
+  await owner.goto("/admin/customers");
+  const customer = owner.getByTestId("create-customer");
+  await customer.getByLabel("Empresa").fill("Cliente E2E");
+  await customer.getByLabel("E-mail do responsável").fill(customerEmail);
+  await customer.getByLabel("Nome do workspace").fill("Operação E2E");
+  await customer.getByLabel("Endereço do workspace").fill(customerSlug);
+  await customer.getByLabel("Modelo de workspace").selectOption({
+    label: "Padrão E2E",
+  });
+  await customer.getByRole("button", { name: "Cadastrar cliente" }).click();
+  const customerInvite = (
+    await customer.getByTestId("partner-invite-url").textContent()
+  )?.trim();
+  expect(customerInvite).toMatch(
+    new RegExp(`^http://${host}:3000/invite/[0-9a-f]{64}$`),
+  );
+  await owner.reload();
+  await expect(owner.getByTestId("partner-customers")).toContainText(
+    "Cliente E2E",
+  );
+
+  // The customer owner accepts on the partner domain and lands in the
+  // workspace with the template's module and the partner brand.
+  const customerContext = await browser.newContext({
+    baseURL: `http://${host}:3000`,
+  });
+  const customerPage = await customerContext.newPage();
+  await createIdentity(request, customerEmail);
+  await signIn(customerPage, customerEmail);
+  await customerPage.goto(customerInvite!);
+  await expect(customerPage.getByText("Cliente E2E")).toBeVisible();
+  await customerPage.getByRole("button", { name: "Aceitar Convite" }).click();
+  await expect(customerPage).toHaveURL(new RegExp(`/app/${customerSlug}$`));
+  await expect(
+    customerPage.getByRole("heading", { name: "Operação E2E" }),
+  ).toBeVisible();
+  await expect(customerPage.locator("header").first()).toContainText(
+    "Marca Agência E2E",
+  );
+  await expect(
+    customerPage.getByRole("link", { name: /Hello/ }).first(),
+  ).toBeVisible();
+
+  await customerContext.close();
   await partnerContext.close();
 });

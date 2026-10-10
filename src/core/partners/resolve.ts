@@ -8,7 +8,12 @@ import { appOrigin } from "@/core/auth/origin";
 import { prisma } from "@/lib/prisma/client";
 
 import { HOUSE_PARTNER_ID } from "./constants";
-import { normalizeHost, partnerHostOrigin, platformHosts } from "./hosts";
+import {
+  normalizeHost,
+  partnerHostOrigin,
+  platformHosts,
+  requestHost,
+} from "./hosts";
 
 export type RequestPartner = Readonly<{
   partnerId: string;
@@ -46,7 +51,10 @@ export async function resolvePartnerForHost(
 export const getRequestPartner = cache(
   async (): Promise<RequestPartner | null> => {
     const requestHeaders = await headers();
-    return resolvePartnerForHost(prisma, requestHeaders.get("host"));
+    return resolvePartnerForHost(
+      prisma,
+      requestHost((name) => requestHeaders.get(name)),
+    );
   },
 );
 

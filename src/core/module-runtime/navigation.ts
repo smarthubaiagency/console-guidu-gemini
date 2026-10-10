@@ -416,6 +416,22 @@ export function buildPartnerNavigation(grants: Grants): NavSection[] {
               }),
             ]
           : []),
+        ...(grants("partner.customers.manage")
+          ? [
+              item({
+                id: "partner.modules",
+                label: "Módulos oferecidos",
+                href: "/admin/modules",
+                iconKey: "puzzle",
+              }),
+              item({
+                id: "partner.templates",
+                label: "Modelos de workspace",
+                href: "/admin/templates",
+                iconKey: "layers",
+              }),
+            ]
+          : []),
         ...(grants("partner.read")
           ? [
               item({

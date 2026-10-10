@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { safeInternalPath } from "@/core/auth/redirects";
-import { normalizeHost, platformHosts } from "@/core/partners/hosts";
+import {
+  normalizeHost,
+  platformHosts,
+  requestHost,
+} from "@/core/partners/hosts";
 import { refreshSupabaseSession } from "@/lib/supabase/session";
 
 /**
@@ -41,7 +45,7 @@ export default async function proxy(request: NextRequest) {
   if (
     startsWithAny(pathname, PLATFORM_ONLY_PREFIXES) &&
     !platformHosts(process.env).has(
-      normalizeHost(request.headers.get("host")) ?? "",
+      normalizeHost(requestHost((name) => request.headers.get(name))) ?? "",
     )
   ) {
     return new NextResponse(null, { status: 404 });
