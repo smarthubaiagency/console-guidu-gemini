@@ -27,6 +27,8 @@ export type WorkspaceBillingView = Readonly<{
     currentPeriodEnd: Date | null;
   }> | null;
   checkoutAvailable: boolean;
+  /** Who bills the company: the partner of the host. */
+  partnerName: string;
 }>;
 
 async function requireBillingViewer(
@@ -40,15 +42,18 @@ async function requireBillingViewer(
   );
 }
 
-async function checkoutAvailable(
+async function partnerCheckout(
   tx: ContextTransaction,
   partnerId: string,
-): Promise<boolean> {
+): Promise<{ available: boolean; name: string }> {
   const partner = await tx.partner.findUnique({
     where: { id: partnerId },
-    select: { checkoutEnabled: true, checkoutBlocked: true },
+    select: { name: true, checkoutEnabled: true, checkoutBlocked: true },
   });
-  return Boolean(partner?.checkoutEnabled && !partner.checkoutBlocked);
+  return {
+    available: Boolean(partner?.checkoutEnabled && !partner.checkoutBlocked),
+    name: partner?.name ?? "",
+  };
 }
 
 export async function getWorkspaceBilling(
@@ -57,7 +62,7 @@ export async function getWorkspaceBilling(
   partnerId: string,
 ): Promise<WorkspaceBillingView> {
   await requireBillingViewer(tx, ctx);
-  const [subscription, available] = await Promise.all([
+  const [subscription, partner] = await Promise.all([
     tx.subscription.findFirst({
       where: {
         organizationId: ctx.organizationId,
@@ -71,7 +76,7 @@ export async function getWorkspaceBilling(
         planVersion: { select: { plan: { select: { name: true } } } },
       },
     }),
-    checkoutAvailable(tx, partnerId),
+    partnerCheckout(tx, partnerId),
   ]);
   return {
     subscription:
@@ -87,7 +92,8 @@ export async function getWorkspaceBilling(
             currentPeriodEnd: subscription.currentPeriodEnd,
           }
         : null,
-    checkoutAvailable: available,
+    checkoutAvailable: partner.available,
+    partnerName: partner.name,
   };
 }
 
@@ -117,7 +123,9 @@ export async function openDemoCheckout(
   partnerId: string,
 ): Promise<DemoCheckoutView> {
   await requireBillingViewer(tx, ctx);
-  if (!(await checkoutAvailable(tx, partnerId))) throw checkoutUnavailable();
+  if (!(await partnerCheckout(tx, partnerId)).available) {
+    throw checkoutUnavailable();
+  }
   const plans = await listPartnerPlans(tx, partnerId, { activeOnly: true });
   return {
     demo: true,

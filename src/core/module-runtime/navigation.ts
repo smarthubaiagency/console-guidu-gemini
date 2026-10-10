@@ -33,6 +33,7 @@ import {
 export type NavIconKey =
   | ModuleIconKey
   | "code"
+  | "credit-card"
   | "gauge"
   | "key"
   | "layers"
@@ -280,6 +281,17 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
           href: `${base}/settings/usage`,
           iconKey: "gauge",
         }),
+        // Plan and billing state of the company (P5m): owner/admin.
+        ...(input.grants("workspace.settings.update")
+          ? [
+              item({
+                id: "core.billing",
+                label: "Plano e cobrança",
+                href: `${base}/settings/billing`,
+                iconKey: "credit-card",
+              }),
+            ]
+          : []),
         // Temporary partner support access (ADR 0012, P4b2): owner/admin.
         ...(input.grants("workspace.members.manage")
           ? [
@@ -329,6 +341,7 @@ export function buildPlatformNavigation(
   const canManageBrand = input.grants("platform.brand.manage");
   const canReadPartners = input.grants("platform.partners.read");
   const canManageLegal = input.grants("platform.legal.manage");
+  const canReadBilling = input.grants("platform.billing.read");
 
   return [
     {
@@ -377,6 +390,16 @@ export function buildPlatformNavigation(
                 label: "Parceiros",
                 href: "/platform/partners",
                 iconKey: "handshake",
+              }),
+            ]
+          : []),
+        ...(canReadBilling
+          ? [
+              item({
+                id: "platform.billing",
+                label: "Cobrança",
+                href: "/platform/billing",
+                iconKey: "credit-card",
               }),
             ]
           : []),
@@ -451,6 +474,16 @@ export function buildPartnerNavigation(grants: Grants): NavSection[] {
                 label: "Modelos de workspace",
                 href: "/admin/templates",
                 iconKey: "layers",
+              }),
+            ]
+          : []),
+        ...(grants("partner.billing.read")
+          ? [
+              item({
+                id: "partner.billing",
+                label: "Cobrança",
+                href: "/admin/billing",
+                iconKey: "credit-card",
               }),
             ]
           : []),

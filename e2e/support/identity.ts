@@ -110,6 +110,25 @@ export async function seedInvitation(
   return (await response.json()) as { id: string; rawToken: string };
 }
 
+/** Seeds a partner with an active domain and a member (ADR 0012). */
+export async function seedPartner(
+  request: APIRequestContext,
+  params: {
+    slug: string;
+    name: string;
+    host: string;
+    memberEmail: string;
+    role: "partner_owner" | "partner_admin" | "partner_finance" | "partner_support";
+    organizationId?: string;
+  },
+): Promise<{ partnerId: string }> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-partner`, {
+    data: params,
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { partnerId: string };
+}
+
 /** Fills and submits the login form without waiting for the outcome. */
 export async function submitLogin(
   page: Page,

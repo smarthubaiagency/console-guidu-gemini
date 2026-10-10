@@ -459,7 +459,9 @@ export async function changeSubscriptionStatus(
 // Manual payments
 // ---------------------------------------------------------------------------
 
-export const MAX_EVIDENCE_BYTES = 2 * 1024 * 1024;
+// Server Actions accept bodies up to 1 MB (Next.js default); the database
+// allows up to 2 MB for adapters that upload outside a form.
+export const MAX_EVIDENCE_BYTES = 900 * 1024;
 
 /** Real type of the evidence: PDF or the image types accepted for logos. */
 export function detectEvidenceMime(
@@ -531,7 +533,7 @@ export async function recordManualPayment(
     throw invalidBillingInput("Anexe o comprovante do pagamento.");
   }
   if (input.evidence.length > MAX_EVIDENCE_BYTES) {
-    throw invalidBillingInput("O comprovante pode ter até 2 MB.");
+    throw invalidBillingInput("O comprovante pode ter até 900 KB.");
   }
   const mime = detectEvidenceMime(input.evidence);
   if (!mime) {

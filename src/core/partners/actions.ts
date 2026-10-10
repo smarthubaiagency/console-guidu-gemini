@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { getPlatformAdminMember } from "@/core/admin/platform";
-import { requireMfa, requireUser } from "@/core/auth/identity";
+import { requireUser } from "@/core/auth/identity";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { type AppErrorCode, toSafeError } from "@/shared/errors";
 
+import { partnerActor, platformActor } from "./actors";
 import {
   createPartnerCustomer,
   createWorkspaceTemplate,
@@ -28,7 +28,7 @@ import {
   setPartnerDomainStatus,
   setPartnerStatus,
 } from "./management";
-import { getPartnerMembership, updatePartnerMember } from "./members";
+import { updatePartnerMember } from "./members";
 import { resolveRequestWorkspaceContext } from "./request-context";
 import { getRequestOrigin, getRequestPartner } from "./resolve";
 import {
@@ -63,42 +63,6 @@ function text(formData: FormData, key: string): string {
 }
 
 const uuid = z.string().uuid();
-
-function notFound(): AppError {
-  return new AppError({
-    code: "not_found",
-    safeMessage: "Recurso não encontrado.",
-  });
-}
-
-/** Platform console actor: AAL2, platform host and active internal role. */
-async function platformActor() {
-  const identity = await requireMfa();
-  const partner = await getRequestPartner();
-  if (!partner?.isPlatformHost) throw notFound();
-  const admin = await getPlatformAdminMember(prisma, identity.userId);
-  return {
-    userId: identity.userId,
-    role: admin?.status === "active" ? admin.role : null,
-  };
-}
-
-/** Partner console actor: AAL2 and an active role in the host's partner. */
-async function partnerActor() {
-  const identity = await requireMfa();
-  const partner = await getRequestPartner();
-  if (!partner) throw notFound();
-  const membership = await getPartnerMembership(
-    prisma,
-    identity.userId,
-    partner.partnerId,
-  );
-  return {
-    userId: identity.userId,
-    partnerId: partner.partnerId,
-    partnerRole: membership?.role ?? null,
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Platform console (/platform/partners)

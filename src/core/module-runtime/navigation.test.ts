@@ -109,6 +109,14 @@ describe("generated navigation", () => {
     expect(find(disabled, "hello-world")).toBeUndefined();
   });
 
+  it("shows plan and billing to workspace owners and admins only (P5m)", () => {
+    expect(find(app("owner"), "core.billing")?.href).toBe(
+      "/app/acme/settings/billing",
+    );
+    expect(find(app("admin"), "core.billing")).toBeDefined();
+    expect(find(app("viewer"), "core.billing")).toBeUndefined();
+  });
+
   it("adds workspace settings under Módulos only for enabled modules", () => {
     expect(find(app("owner"), "core.modules")?.children).toEqual([]);
     const modules = find(
@@ -150,6 +158,8 @@ describe("generated navigation", () => {
     expect(find(none, "platform.modules")).toBeUndefined();
     expect(find(owner, "platform.brand")?.href).toBe("/platform/brand");
     expect(find(none, "platform.brand")).toBeUndefined();
+    expect(find(owner, "platform.billing")?.href).toBe("/platform/billing");
+    expect(find(none, "platform.billing")).toBeUndefined();
     expect(find(none, "hello-world.admin")).toBeUndefined();
   });
 
@@ -160,6 +170,7 @@ describe("generated navigation", () => {
       "/admin/customers",
       "/admin/modules",
       "/admin/templates",
+      "/admin/billing",
       "/admin/support",
       "/admin/legal",
       "/admin/members",
@@ -174,6 +185,9 @@ describe("generated navigation", () => {
     expect(find(support, "partner.support")?.href).toBe("/admin/support");
     expect(find(support, "partner.legal")).toBeUndefined();
     expect(find(finance, "partner.customers")?.href).toBe("/admin/customers");
+    // P5m: money is for owner, admin and finance; never partner_support.
+    expect(find(finance, "partner.billing")?.href).toBe("/admin/billing");
+    expect(find(support, "partner.billing")).toBeUndefined();
 
     expect(
       buildPartnerNavigation(partnerGrants(null))
