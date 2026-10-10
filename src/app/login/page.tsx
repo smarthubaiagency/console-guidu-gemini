@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { AUTH_MESSAGES } from "@/core/auth/form-state";
 import { safeInternalPath } from "@/core/auth/redirects";
 import { AuthShell, ErrorNotice, SuccessNotice } from "@/shared/ui/auth-shell";
-import { appConfig } from "@/core/config/app";
+import { getRequestBrand } from "@/core/brand/resolve";
 
 import { LoginForm } from "./login-form";
 
@@ -27,6 +27,7 @@ export default async function LoginPage({
 }: Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>) {
+  const brand = await getRequestBrand();
   const params = await searchParams;
   const nextParam = typeof params.next === "string" ? params.next : null;
   const errorCode = typeof params.error === "string" ? params.error : null;
@@ -37,8 +38,9 @@ export default async function LoginPage({
   return (
     <AuthShell
       title="Entrar"
-      description={`Use o e-mail e a senha da sua conta ${appConfig.name}.`}
-      appName={appConfig.name}
+      description={`Use o e-mail e a senha da sua conta ${brand.name}.`}
+      appName={brand.name}
+      logoUrl={brand.logoUrl}
     >
       {arrivalError ? (
         <div className="mb-4">

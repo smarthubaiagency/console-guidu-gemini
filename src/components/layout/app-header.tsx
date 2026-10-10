@@ -6,6 +6,7 @@ import { WorkspaceSwitcher } from "./workspace-switcher";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 import { ThemeToggle } from "@/shared/ui/theme-toggle";
 import type { UserWorkspace } from "@/core/workspaces/navigation";
+import { BrandMark } from "@/shared/ui/brand-mark";
 
 interface AppHeaderProps {
   currentSlug: string;
@@ -13,6 +14,7 @@ interface AppHeaderProps {
   userEmail?: string | undefined;
   isPlatformAdmin?: boolean;
   appName: string;
+  logoUrl?: string | null | undefined;
 }
 
 export function AppHeader({
@@ -21,6 +23,7 @@ export function AppHeader({
   userEmail,
   isPlatformAdmin = false,
   appName,
+  logoUrl,
 }: AppHeaderProps) {
   return (
     <header className="border-border bg-surface-card flex h-14 shrink-0 items-center justify-between border-b px-6">
@@ -29,9 +32,7 @@ export function AppHeader({
           href="/app"
           className="text-16 text-text mr-2 flex items-center gap-2 font-bold tracking-tight"
         >
-          <div className="bg-primary text-on-primary text-12 flex h-6 w-6 items-center justify-center rounded-sm font-black">
-            {appName.charAt(0).toUpperCase()}
-          </div>
+          <BrandMark name={appName} logoUrl={logoUrl} />
           <span>{appName}</span>
         </Link>
 

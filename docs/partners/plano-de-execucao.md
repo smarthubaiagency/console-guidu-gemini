@@ -67,6 +67,8 @@ São **sete etapas**. P1 a P4 não dependem de nenhuma decisão comercial e pode
 
 ## P3 — Marca por host e porta de notificação
 
+**Estado:** implementada no PR da P3; migration `20261010150000_p3_partner_brands.sql` a aplicar no dev após aprovação.
+
 **Objetivo:** toda tela e todo e-mail leem a marca de um único ponto.
 
 - Migration: `partner_brands` versionada (nome, logo, cores em tokens, contatos de suporte), com a marca do parceiro zero vinda do ambiente (ADR 0004).
@@ -75,6 +77,21 @@ São **sete etapas**. P1 a P4 não dependem de nenhuma decisão comercial e pode
 - Tela em `/platform` para editar a marca do parceiro zero.
 - `src/core/notifications/`: porta única, modelos por evento com variáveis de marca, envio em job com idempotência. Até a P7, os e-mails de autenticação continuam saindo pelo Supabase Auth.
 - Testes: contraste e validação de marca, resolução por host e modelos de notificação.
+
+**Como ficou:**
+
+- `partner_brands` só aceita inclusão: cada gravação cria a próxima versão e a maior é a ativa. Sem versão, vale a marca do ambiente (`APP_NAME`).
+- O parceiro escolhe uma cor primária; as demais (texto sobre a cor, texto em destaque nos temas claro e escuro, hover e fundo suave) são calculadas para manter contraste mínimo de 4,5:1. Só valores `#rrggbb` chegam ao CSS, injetado em `<style id="brand-tokens">`.
+- O logo fica na própria linha (PNG, JPEG ou WebP, até 256 KB, tipo conferido pela assinatura do arquivo) e é servido por `/brand/logo/[versão]` com `nosniff` e CSP restritiva. SVG é recusado. Não depende de serviço de armazenamento.
+- `getRequestBrand()` substitui o `appConfig` em todas as telas e no título. Se a marca não puder ser lida (banco fora), a página usa a marca do ambiente em vez de falhar.
+- Tela `/platform/brand` para owner e operations (permissão `platform.brand.manage`), com auditoria `partner.brand.update`.
+- O link de convite usa o host da requisição: `APP_URL` nos hosts da plataforma e `https://` + domínio ativo do parceiro nos demais.
+- `src/core/notifications/`: porta `notify()`, modelo de convite com a marca e escape de HTML, e transporte desligado até a escolha do provedor (D-PA-08).
+
+**Ficou para depois, de propósito:**
+
+- O envio de e-mails, o registro de entregas e a idempotência em job dependem do worker (F3) e do provedor de e-mail (D-PA-08). Hoje o convite continua sendo copiado na tela.
+- A edição de marca pelo próprio parceiro entra na P4, ampliando a política de inclusão.
 
 **Aceite:** trocar a marca do parceiro zero muda nome, logo e cores no login, no app e no convite, sem novo deploy.
 

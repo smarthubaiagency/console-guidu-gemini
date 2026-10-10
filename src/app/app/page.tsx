@@ -6,7 +6,8 @@ import { requireUserPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { listRequestUserWorkspaces } from "@/core/partners/request-context";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
-import { appConfig } from "@/core/config/app";
+import { getRequestBrand } from "@/core/brand/resolve";
+import { BrandMark } from "@/shared/ui/brand-mark";
 
 export const metadata: Metadata = { title: "Seus Workspaces" };
 
@@ -19,6 +20,7 @@ export const metadata: Metadata = { title: "Seus Workspaces" };
  * - Zero workspaces: displays a clean, honest empty state with contact advice.
  */
 export default async function AppPage() {
+  const brand = await getRequestBrand();
   const identity = await requireUserPage("/app");
   const workspaces = await listRequestUserWorkspaces(prisma, identity.userId);
 
@@ -32,10 +34,8 @@ export default async function AppPage() {
     <div className="bg-surface-raised flex min-h-screen flex-col justify-between">
       <header className="border-border bg-surface-card flex items-center justify-between border-b px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="bg-primary text-on-primary text-14 flex h-7 w-7 items-center justify-center rounded-lg font-bold">
-            {appConfig.name.charAt(0).toUpperCase()}
-          </div>
-          <span className="text-text font-bold tracking-tight">{appConfig.name}</span>
+          <BrandMark name={brand.name} logoUrl={brand.logoUrl} size="md" />
+          <span className="text-text font-bold tracking-tight">{brand.name}</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -124,7 +124,7 @@ export default async function AppPage() {
       </main>
 
       <footer className="border-border bg-surface-card text-12 text-text-tertiary border-t py-4 text-center">
-        {appConfig.name} Plataforma SaaS Modular • Isolamento Multiempresa RLS
+        {brand.name} Plataforma SaaS Modular • Isolamento Multiempresa RLS
       </footer>
     </div>
   );

@@ -38,6 +38,7 @@ export type NavIconKey =
   | "layers"
   | "play-circle"
   | "building"
+  | "palette"
   | "users";
 
 export type NavItem = Readonly<{
@@ -313,6 +314,7 @@ export function buildPlatformNavigation(
     .map((entry) => entry.value);
 
   const canReadModules = input.grants("platform.modules.read");
+  const canManageBrand = input.grants("platform.brand.manage");
 
   return [
     {
@@ -351,6 +353,16 @@ export function buildPlatformNavigation(
                 label: "Módulos",
                 href: "/platform/modules",
                 iconKey: "puzzle",
+              }),
+            ]
+          : []),
+        ...(canManageBrand
+          ? [
+              item({
+                id: "platform.brand",
+                label: "Marca",
+                href: "/platform/brand",
+                iconKey: "palette",
               }),
             ]
           : []),

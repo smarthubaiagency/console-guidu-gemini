@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { readIdentity } from "@/core/auth/identity";
-import { appConfig } from "@/core/config/app";
+import { getRequestBrand } from "@/core/brand/resolve";
 import { getInvitationDetails } from "@/core/organizations/invitations";
 import { prisma } from "@/lib/prisma/client";
 import { AuthShell, ErrorNotice, SuccessNotice } from "@/shared/ui/auth-shell";
@@ -37,6 +37,7 @@ export default async function InviteTokenPage({
 }: Readonly<{
   params: Promise<{ token: string }>;
 }>) {
+  const brand = await getRequestBrand();
   const { token } = await params;
   const identity = await readIdentity();
 
@@ -54,7 +55,8 @@ export default async function InviteTokenPage({
       <AuthShell
         title="Convite inválido"
         description="O link de convite acessado é inválido ou não foi encontrado."
-        appName={appConfig.name}
+        appName={brand.name}
+        logoUrl={brand.logoUrl}
         footer={
           <Link href="/app" className="underline text-14">
             Ir para o painel
@@ -73,7 +75,8 @@ export default async function InviteTokenPage({
       <AuthShell
         title="Convite expirado"
         description="Este convite expirou e não pode mais ser utilizado."
-        appName={appConfig.name}
+        appName={brand.name}
+        logoUrl={brand.logoUrl}
         footer={
           <Link href="/app" className="underline text-14">
             Ir para o painel
@@ -92,7 +95,8 @@ export default async function InviteTokenPage({
       <AuthShell
         title="Convite revogado"
         description="Este convite foi cancelado por um administrador."
-        appName={appConfig.name}
+        appName={brand.name}
+        logoUrl={brand.logoUrl}
         footer={
           <Link href="/app" className="underline text-14">
             Ir para o painel
@@ -111,7 +115,8 @@ export default async function InviteTokenPage({
       <AuthShell
         title="Convite já aceito"
         description="Este convite já foi utilizado anteriormente."
-        appName={appConfig.name}
+        appName={brand.name}
+        logoUrl={brand.logoUrl}
         footer={
           <Link href="/app" className="underline text-14">
             Ir para o painel
@@ -130,7 +135,8 @@ export default async function InviteTokenPage({
       <AuthShell
         title="Destinatário diferente"
         description="Você está conectado com uma conta diferente daquela para a qual o convite foi enviado."
-        appName={appConfig.name}
+        appName={brand.name}
+        logoUrl={brand.logoUrl}
         footer={
           <div className="flex items-center gap-4 text-14">
             <Link href="/app" className="underline">
@@ -159,7 +165,8 @@ export default async function InviteTokenPage({
       <AuthShell
         title="E-mail não confirmado"
         description="Confirmação de e-mail obrigatória."
-        appName={appConfig.name}
+        appName={brand.name}
+        logoUrl={brand.logoUrl}
         footer={
           <div className="flex items-center gap-4 text-14">
             <Link href="/app" className="underline">
@@ -181,7 +188,8 @@ export default async function InviteTokenPage({
     <AuthShell
       title="Convite de equipe"
       description="Você foi convidado para participar de uma organização."
-      appName={appConfig.name}
+      appName={brand.name}
+      logoUrl={brand.logoUrl}
       footer={
         <div className="flex items-center justify-between text-12 text-text-tertiary">
           <span>

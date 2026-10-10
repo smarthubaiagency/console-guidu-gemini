@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 
 import { AuthShell } from "@/shared/ui/auth-shell";
-import { appConfig } from "@/core/config/app";
+import { getRequestBrand } from "@/core/brand/resolve";
 
 import { ForgotPasswordForm } from "./forgot-password-form";
 
 export const metadata: Metadata = { title: "Recuperar senha" };
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage() {
+  const brand = await getRequestBrand();
   return (
     <AuthShell
       title="Recuperar senha"
       description="Enviamos um link para você definir uma nova senha."
-      appName={appConfig.name}
+      appName={brand.name}
+      logoUrl={brand.logoUrl}
     >
       <ForgotPasswordForm />
     </AuthShell>

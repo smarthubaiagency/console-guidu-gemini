@@ -45,8 +45,29 @@ model Partner {
   updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
   domains         PartnerDomain[]
   organizations   Organization[]
+  brands          PartnerBrand[]
 
   @@map("partners")
+}
+
+/// Versioned partner brand (ADR 0012, P3). Insert-only; the highest version
+/// is active. A partner without rows uses the environment brand (ADR 0004).
+model PartnerBrand {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId    String   @map("partner_id") @db.Uuid
+  version      Int
+  displayName  String   @map("display_name")
+  primaryColor String?  @map("primary_color")
+  supportEmail String?  @map("support_email")
+  supportUrl   String?  @map("support_url")
+  logo         Bytes?
+  logoMime     String?  @map("logo_mime")
+  createdBy    String?  @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  partner      Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, version])
+  @@map("partner_brands")
 }
 
 /// Partner hosts (subdomain or custom). Platform hosts come from the

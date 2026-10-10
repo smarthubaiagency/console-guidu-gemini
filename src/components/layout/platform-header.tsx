@@ -3,21 +3,25 @@
 import { ShieldCheck, User } from "lucide-react";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 import { ThemeToggle } from "@/shared/ui/theme-toggle";
+import { BrandMark } from "@/shared/ui/brand-mark";
 
 interface PlatformHeaderProps {
   userEmail?: string | undefined;
   adminRole?: string | undefined;
   appName: string;
+  logoUrl?: string | null | undefined;
 }
 
 export function PlatformHeader({
   userEmail,
   adminRole = "owner",
   appName,
+  logoUrl,
 }: PlatformHeaderProps) {
   return (
     <header className="border-border bg-surface-card flex h-14 shrink-0 items-center justify-between border-b px-6">
       <div className="flex items-center gap-3">
+        <BrandMark name={appName} logoUrl={logoUrl} />
         <span className="text-14 text-text font-bold tracking-tight">
           {appName} Admin
         </span>
