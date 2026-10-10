@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import { recordAudit } from "@/core/audit/record";
+import { assertWithinQuota, resolveQuota } from "@/core/entitlements/quotas";
 import { enqueueJob } from "@/core/jobs/service";
 import { assertModuleOperational } from "@/core/module-runtime/state";
 import { requireWorkspacePermission } from "@/core/permissions/guard";
@@ -12,12 +13,10 @@ import type {
 } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import {
-  HELLO_WORLD_DEMO_RECORD_LIMIT,
-  HelloWorldPermissions,
-} from "../../manifest";
+import { HelloWorldPermissions } from "../../manifest";
 
 const MODULE_KEY = "hello-world";
+const RECORDS_QUOTA = "hello-world.records";
 
 export type HelloWorldRecordDto = Readonly<{
   id: string;
@@ -46,17 +45,20 @@ function toDto(
 export async function listHelloWorldRecords(
   tx: ContextTransaction,
   ctx: RequestContext,
-): Promise<{ records: HelloWorldRecordDto[]; limit: number }> {
-  await assertModuleOperational(tx, ctx, MODULE_KEY);
+): Promise<{ records: HelloWorldRecordDto[]; limit: number | null }> {
+  await assertModuleOperational(tx, ctx, MODULE_KEY, "read");
   await requireWorkspacePermission(tx, ctx, HelloWorldPermissions.READ);
-  const rows = await tx.helloWorldRecord.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-    take: HELLO_WORLD_DEMO_RECORD_LIMIT,
-  });
+  const [rows, quota] = await Promise.all([
+    tx.helloWorldRecord.findMany({
+      where: { workspaceId: ctx.workspaceId },
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+      take: 100,
+    }),
+    resolveQuota(tx, ctx.organizationId, RECORDS_QUOTA),
+  ]);
   return {
     records: rows.map((row) => toDto(row, ctx)),
-    limit: HELLO_WORLD_DEMO_RECORD_LIMIT,
+    limit: quota.limit,
   };
 }
 
@@ -66,7 +68,7 @@ export async function getHelloWorldRecord(
   ctx: RequestContext,
   recordId: string,
 ): Promise<HelloWorldRecordDto> {
-  await assertModuleOperational(tx, ctx, MODULE_KEY);
+  await assertModuleOperational(tx, ctx, MODULE_KEY, "read");
   await requireWorkspacePermission(tx, ctx, HelloWorldPermissions.READ);
   const parsed = z.string().uuid().safeParse(recordId);
   const row = parsed.success
@@ -108,15 +110,11 @@ export async function createHelloWorldRecord(
   }
 
   await tx.$executeRaw`select pg_advisory_xact_lock(hashtext(${`hello_world_records:${ctx.workspaceId}`}))`;
-  const count = await tx.helloWorldRecord.count({
-    where: { workspaceId: ctx.workspaceId },
-  });
-  if (count >= HELLO_WORLD_DEMO_RECORD_LIMIT) {
-    throw new AppError({
-      code: "conflict",
-      safeMessage: `Limite de demonstração atingido (${HELLO_WORLD_DEMO_RECORD_LIMIT} registros por workspace).`,
-    });
-  }
+  const [count, quota] = await Promise.all([
+    tx.helloWorldRecord.count({ where: { workspaceId: ctx.workspaceId } }),
+    resolveQuota(tx, ctx.organizationId, RECORDS_QUOTA),
+  ]);
+  assertWithinQuota(quota, count, "registros de exemplo por workspace");
 
   const row = await tx.helloWorldRecord.create({
     data: {

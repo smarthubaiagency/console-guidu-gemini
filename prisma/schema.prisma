@@ -117,6 +117,8 @@ model PlanVersion {
   minPlatformShareCents Int            @map("min_platform_share_cents")
   partnerBasePriceCents Int            @map("partner_base_price_cents")
   provisional           Boolean        @default(false)
+  /// Quota limits of this version, `{ "<key>": n }` (F3b).
+  limits                Json           @default("{}")
   createdBy             String?        @map("created_by") @db.Uuid
   createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz()
   plan                  Plan           @relation(fields: [planId], references: [id], onDelete: Restrict)

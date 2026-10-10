@@ -14,6 +14,7 @@ import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
 import { navIcon } from "@/components/layout/nav-icons";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { resolveSeatLimit } from "@/core/entitlements/quotas";
 
 export const metadata: Metadata = {
   title: "Dashboard do Workspace",
@@ -32,30 +33,41 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
     workspaceSlug,
   );
 
-  const { workspace, organization, memberCount, pendingInvitesCount } =
-    await withContext(prisma, context, async (tx) => {
-      const [ws, org, members, invites] = await Promise.all([
-        tx.workspace.findUnique({
-          where: { id: context.workspaceId },
-        }),
-        tx.organization.findUnique({
-          where: { id: context.organizationId },
-        }),
-        tx.organizationMember.count({
-          where: { organizationId: context.organizationId, status: "active" },
-        }),
-        tx.invitation.count({
-          where: { organizationId: context.organizationId, status: "pending" },
-        }),
-      ]);
+  const {
+    workspace,
+    organization,
+    memberCount,
+    pendingInvitesCount,
+    seatLimit,
+  } = await withContext(prisma, context, async (tx) => {
+    const [ws, org, members, invites] = await Promise.all([
+      tx.workspace.findUnique({
+        where: { id: context.workspaceId },
+      }),
+      tx.organization.findUnique({
+        where: { id: context.organizationId },
+      }),
+      tx.organizationMember.count({
+        where: { organizationId: context.organizationId, status: "active" },
+      }),
+      tx.invitation.count({
+        where: { organizationId: context.organizationId, status: "pending" },
+      }),
+    ]);
 
-      return {
-        workspace: ws,
-        organization: org,
-        memberCount: members,
-        pendingInvitesCount: invites,
-      };
-    });
+    return {
+      workspace: ws,
+      organization: org,
+      memberCount: members,
+      pendingInvitesCount: invites,
+      // Plan limit (F3b) when the company has one, else max_seats.
+      seatLimit: await resolveSeatLimit(
+        tx,
+        context.organizationId,
+        org?.maxSeats ?? 5,
+      ),
+    };
+  });
 
   // Module cards come from the registry with their resolved state (Adendo §8).
   const { modules: moduleViews } = await loadWorkspaceModuleViews(
@@ -94,7 +106,7 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
     },
   ];
 
-  const maxSeats = organization?.maxSeats ?? 5;
+  const maxSeats = seatLimit;
   const totalOccupied = memberCount + pendingInvitesCount;
   const seatsPercentage = Math.min(
     Math.round((totalOccupied / maxSeats) * 100),

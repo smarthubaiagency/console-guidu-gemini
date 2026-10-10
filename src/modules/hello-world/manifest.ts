@@ -131,6 +131,7 @@ export const helloWorldManifest = defineModuleManifest({
       key: "hello-world.records",
       kind: "quota",
       description: "Limite de demonstração de registros por workspace.",
+      defaultLimit: HELLO_WORLD_DEMO_RECORD_LIMIT,
     },
   ],
   configurationSchema: {

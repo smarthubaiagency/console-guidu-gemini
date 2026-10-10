@@ -73,12 +73,18 @@ export default async function WorkspaceModuleSettingsPage({
     if (state === "hidden" || state === "coming_soon")
       return { kind: "missing" as const };
     if (!canRead) return { kind: "denied" as const };
-    if (state !== "enabled") return { kind: state };
+    if (state !== "enabled" && state !== "suspended") return { kind: state };
     const [config, inherited] = await Promise.all([
       getWorkspaceModuleConfig(tx, context, moduleKey),
       getPlatformModuleConfig(tx, moduleKey),
     ]);
-    return { kind: "ready" as const, canWrite, config, inherited };
+    // Suspended subscription: settings are shown read-only.
+    return {
+      kind: "ready" as const,
+      canWrite: canWrite && state === "enabled",
+      config,
+      inherited,
+    };
   });
 
   if (view.kind === "missing") notFound();

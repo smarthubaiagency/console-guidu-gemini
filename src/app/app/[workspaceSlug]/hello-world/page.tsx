@@ -79,7 +79,9 @@ export default async function HelloWorldPage({ params }: PageProps) {
             {ORIGIN_LABELS[view.greeting.origin]}
           </p>
           <p className="text-12 text-text-secondary">
-            {view.count} de {view.limit} registros de demonstração.{" "}
+            {view.limit === null
+              ? `${view.count} registros de demonstração.`
+              : `${view.count} de ${view.limit} registros de demonstração.`}{" "}
             <Link
               href={`/app/${workspaceSlug}/hello-world/records`}
               className="underline"

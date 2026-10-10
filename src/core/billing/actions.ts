@@ -71,6 +71,25 @@ function reais(formData: FormData, key: string, label: string): number {
   return cents;
 }
 
+/** `limit.<key>` fields of the plan version form; empty means "default". */
+function quotaLimits(formData: FormData): Record<string, number> {
+  const limits: Record<string, number> = {};
+  for (const [name, value] of formData.entries()) {
+    if (!name.startsWith("limit.") || typeof value !== "string") continue;
+    const text = value.trim();
+    if (!text) continue;
+    const number = Number(text);
+    if (!Number.isInteger(number) || number < 0) {
+      throw new AppError({
+        code: "invalid_input",
+        safeMessage: "Limites precisam ser números inteiros.",
+      });
+    }
+    limits[name.slice("limit.".length)] = number;
+  }
+  return limits;
+}
+
 // ---------------------------------------------------------------------------
 // Platform (/platform/billing)
 // ---------------------------------------------------------------------------
@@ -141,6 +160,7 @@ export async function publishPlanVersionAction(
           "o valor base do parceiro",
         ),
         provisional: formData.get("provisional") === "on",
+        limits: quotaLimits(formData),
       }),
     );
     revalidatePath("/platform/billing");

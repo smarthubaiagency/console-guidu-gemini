@@ -19,8 +19,14 @@ export type ModulePageAccess =
   | { kind: "missing" }
   | { kind: "maintenance" }
   | { kind: "not_enabled" }
+  | { kind: "not_contracted" }
   | { kind: "denied" }
-  | { kind: "ok"; can: (permission: PermissionKey) => boolean };
+  | {
+      kind: "ok";
+      can: (permission: PermissionKey) => boolean;
+      /** Subscription suspended: the page shows data but offers no writes. */
+      readOnly: boolean;
+    };
 
 export async function resolveModulePageAccess(
   tx: ContextTransaction,
@@ -36,6 +42,15 @@ export async function resolveModulePageAccess(
   const can = workspaceGrants(role);
   if (!can(readPermission)) return { kind: "denied" };
   if (state === "maintenance") return { kind: "maintenance" };
+  if (state === "not_contracted") return { kind: "not_contracted" };
   if (state === "not_enabled") return { kind: "not_enabled" };
-  return { kind: "ok", can };
+  if (state === "suspended") {
+    // Only read permissions remain while suspended.
+    return {
+      kind: "ok",
+      can: (p) => p === readPermission && can(p),
+      readOnly: true,
+    };
+  }
+  return { kind: "ok", can, readOnly: false };
 }

@@ -5,6 +5,7 @@ import { adminAuditContext } from "@/core/module-runtime/settings";
 import { Permissions } from "@/core/permissions/catalog";
 import { hasPlatformRolePermission } from "@/core/permissions/matrix";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
+import { CORE_QUOTAS } from "@/core/entitlements/quotas";
 import { listRegisteredModules } from "@/modules/registry";
 import { AppError } from "@/shared/errors";
 
@@ -35,6 +36,8 @@ export type PlanVersionView = Readonly<{
   minPlatformShareCents: number;
   partnerBasePriceCents: number;
   provisional: boolean;
+  /** Quota limits of the version (F3b). */
+  limits: Record<string, number>;
   createdAt: Date;
 }>;
 
@@ -56,12 +59,41 @@ function toVersionView(row: {
   minPlatformShareCents: number;
   partnerBasePriceCents: number;
   provisional: boolean;
+  limits: unknown;
   createdAt: Date;
 }): PlanVersionView {
+  const limits =
+    row.limits && typeof row.limits === "object" && !Array.isArray(row.limits)
+      ? Object.fromEntries(
+          Object.entries(row.limits as Record<string, unknown>).filter(
+            (entry): entry is [string, number] => typeof entry[1] === "number",
+          ),
+        )
+      : {};
   return {
-    ...row,
+    id: row.id,
+    version: row.version,
     billingInterval: row.billingInterval === "yearly" ? "yearly" : "monthly",
+    moduleKeys: row.moduleKeys,
+    minPriceCents: row.minPriceCents,
+    minPlatformShareCents: row.minPlatformShareCents,
+    partnerBasePriceCents: row.partnerBasePriceCents,
+    provisional: row.provisional,
+    limits,
+    createdAt: row.createdAt,
   };
+}
+
+/** Quota keys a plan version may limit: core quotas and module quotas. */
+export function listQuotaKeys(): Array<{ key: string; description: string }> {
+  return [
+    ...CORE_QUOTAS.map((q) => ({ key: q.key, description: q.description })),
+    ...listRegisteredModules().flatMap((mod) =>
+      mod.manifest.entitlements
+        .filter((e) => e.kind === "quota")
+        .map((e) => ({ key: e.key, description: e.description })),
+    ),
+  ];
 }
 
 /** Plans readable by any signed-in context (the catalog is not secret). */
@@ -181,6 +213,9 @@ const VersionSchema = z
     minPlatformShareCents: CentsSchema,
     partnerBasePriceCents: CentsSchema,
     provisional: z.boolean(),
+    limits: z
+      .record(z.string(), z.number().int().min(0).max(1_000_000))
+      .default({}),
   })
   .refine((v) => v.minPlatformShareCents <= v.minPriceCents, {
     message: "O repasse mínimo não pode passar do piso.",
@@ -211,6 +246,10 @@ export async function publishPlanVersion(
   const moduleKeys = [...new Set(parsed.data.moduleKeys)];
   if (moduleKeys.some((key) => !known.has(key))) {
     throw invalidBillingInput("Módulo desconhecido no plano.");
+  }
+  const quotaKeys = new Set(listQuotaKeys().map((q) => q.key));
+  if (Object.keys(parsed.data.limits).some((key) => !quotaKeys.has(key))) {
+    throw invalidBillingInput("Limite de cota desconhecida no plano.");
   }
   const plan = await tx.plan.findUnique({
     where: { id: planId },

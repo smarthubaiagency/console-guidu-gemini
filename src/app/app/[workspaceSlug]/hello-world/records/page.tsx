@@ -50,6 +50,7 @@ export default async function HelloWorldRecordsPage({ params }: PageProps) {
       records,
       limit,
       canWrite: access.can(HelloWorldPermissions.RECORDS_WRITE),
+      readOnly: access.readOnly,
     };
   });
   if (view.kind === "missing") notFound();
@@ -67,12 +68,20 @@ export default async function HelloWorldRecordsPage({ params }: PageProps) {
       ) : (
         <>
           <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
-            {view.canWrite ? (
-              view.records.length < view.limit ? (
+            {view.readOnly ? (
+              <p
+                className="text-12 text-text-secondary"
+                data-testid="module-read-only"
+              >
+                Assinatura suspensa: os registros ficam disponíveis só para
+                consulta.
+              </p>
+            ) : view.canWrite ? (
+              view.limit === null || view.records.length < view.limit ? (
                 <CreateRecordForm workspaceSlug={workspaceSlug} />
               ) : (
                 <p className="text-12 text-text-secondary">
-                  Limite de demonstração atingido ({view.limit} registros por
+                  Limite do plano atingido ({view.limit} registros por
                   workspace).
                 </p>
               )

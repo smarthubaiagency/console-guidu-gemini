@@ -16,6 +16,16 @@ const VARIANTS = {
     title: "Módulo desabilitado",
     text: "Este módulo não está habilitado neste workspace.",
   },
+  not_contracted: {
+    icon: Lock,
+    title: "Módulo não contratado",
+    text: "O plano da sua empresa não inclui este módulo. Fale com quem cuida do seu plano.",
+  },
+  suspended: {
+    icon: Lock,
+    title: "Assinatura suspensa",
+    text: "Este módulo está disponível só para consulta enquanto a assinatura estiver suspensa.",
+  },
   unavailable: {
     icon: Clock,
     title: "Módulo Indisponível",

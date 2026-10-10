@@ -99,6 +99,13 @@ export async function setWorkspaceModuleStatus(
       safeMessage: "Este módulo ainda não pode ser habilitado.",
     });
   }
+  // Disabling is always allowed; enabling needs the module in the plan.
+  if (status === "enabled" && state === "not_contracted") {
+    throw new AppError({
+      code: "conflict",
+      safeMessage: "O plano da sua empresa não inclui este módulo.",
+    });
+  }
 
   const existing = await tx.workspaceModule.findFirst({
     where: { workspaceId: ctx.workspaceId, moduleKey },
