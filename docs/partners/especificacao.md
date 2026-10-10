@@ -1,6 +1,6 @@
 # Especificação da plataforma de parceiros — marca, pagamento e comunicação
 
-- **Versão:** 0.1 (rascunho)
+- **Versão:** 0.2 (rascunho). Novidade: modo de cobrança em que o próprio parceiro paga o valor base da plataforma (§3.1).
 - **Data:** 10/10/2026
 - **Estado:** proposta, aguarda aprovação do Marcelo. Base: [ADR 0012](../adr/0012-plataforma-de-parceiros.md).
 - **Objetivo desta versão:** deixar a estrutura de parceria prevista para uso futuro, com contratos e pontos de extensão definidos, sem preencher regras comerciais por suposição.
@@ -30,12 +30,12 @@ Legenda: **[Decidido]** foi definido por Marcelo; **[Proposta]** é recomendaç�
 
 **[Proposta]** Os nomes dos papéis são proposta; o produto confirma.
 
-| Papel             | Pode                                                                                   |
-| ----------------- | -------------------------------------------------------------------------------------- |
-| `partner_owner`   | Tudo do parceiro, inclusive membros, domínio e conta de recebimento                    |
-| `partner_admin`   | Clientes, marca, modelos de workspace, catálogo de módulos oferecidos, planos e preços |
-| `partner_finance` | Planos e preços, faturas, repasses e relatórios financeiros                            |
-| `partner_support` | Ver a lista de clientes; entrar num workspace só com concessão temporária              |
+| Papel             | Pode                                                                                                                 |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `partner_owner`   | Tudo do parceiro, inclusive membros, domínio e conta de recebimento                                                  |
+| `partner_admin`   | Clientes (inclusive cadastrar cliente), marca, modelos de workspace, catálogo de módulos oferecidos, planos e preços |
+| `partner_finance` | Planos e preços, perfil de cobrança, checkout do valor base, faturas, repasses e relatórios financeiros              |
+| `partner_support` | Ver a lista de clientes; entrar num workspace só com concessão temporária                                            |
 
 Nenhum papel de parceiro lê dados de workspace por padrão (pendência "Herança de acesso empresarial").
 
@@ -73,15 +73,49 @@ Layouts, telas de autenticação, e-mails e metadados leem só dessa função. I
 
 ## 3. Pagamento
 
-### 3.1 Fluxo
+### 3.1 Modos de cobrança
 
-1. A plataforma mantém os **planos base** (o que cada um inclui) e os **pisos** (preço mínimo e repasse mínimo) por versão.
-2. O parceiro cria **planos de parceiro** sobre uma versão de plano base, com preço ≥ piso e periodicidade.
-3. O cliente contrata no **checkout da plataforma**, servido no domínio e com a marca do parceiro.
-4. O provedor cobra e **divide na origem**: parte do parceiro para a conta de recebimento dele, parte da plataforma para a conta da plataforma.
-5. O webhook do provedor chega assinado, é gravado com chave única e processado em job. A assinatura muda de estado conforme a §18: ativa, em atraso, suspensa, cancelada.
+**[Decidido]** Existem dois modos. O modo é escolhido **por assinatura**, ou seja, por cliente, e um parceiro pode usar os dois ao mesmo tempo.
 
-### 3.2 Cálculo da divisão
+| Modo                               | Quem paga a plataforma               | Valor cobrado pela plataforma         | Divisão        | Quando usar                                                                                             |
+| ---------------------------------- | ------------------------------------ | ------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
+| **Cliente paga** (`customer_pays`) | O cliente final, no checkout         | Preço do parceiro                     | Sim, na origem | O parceiro quer que a plataforma cobre o cliente com a marca dele                                       |
+| **Parceiro paga** (`partner_pays`) | O parceiro, no checkout ou na fatura | Valor base da plataforma para o plano | Não            | Caso mais comum (B2B): o parceiro cadastra o cliente, ativa o plano e cobra o cliente por conta própria |
+
+Nos dois modos, a plataforma mantém os **planos base** (o que cada um inclui) e os valores por versão: preço mínimo, repasse mínimo e **valor base do parceiro**.
+
+#### Cliente paga
+
+1. O parceiro cria **planos de parceiro** sobre uma versão de plano base, com preço ≥ piso e periodicidade.
+2. O cliente contrata no **checkout da plataforma**, servido no domínio e com a marca do parceiro.
+3. O provedor cobra e **divide na origem** (§3.2): parte do parceiro para a conta de recebimento dele, parte da plataforma para a conta da plataforma.
+
+#### Parceiro paga
+
+1. Um membro do parceiro (`partner_admin`) **cadastra o cliente** em `/admin`: empresa, primeiro workspace (a partir de um modelo, §6, se houver) e e-mail do responsável.
+2. O parceiro escolhe o plano base e a periodicidade, e um membro com `partner_finance` paga no **checkout da plataforma** o **valor base do parceiro**. Não há divisão: o valor vai inteiro para a plataforma, e a parte do parceiro é o que ele cobrar do cliente fora da plataforma.
+3. Pago o checkout, a assinatura fica **ativa** e o responsável recebe o convite com a marca do parceiro. No primeiro acesso, aceita os termos e a política de privacidade do parceiro (§5).
+4. No `/app`, o cliente vê o plano e o contato do parceiro para assuntos de cobrança. Não vê checkout, faturas nem forma de pagamento. Mudança de plano e cancelamento são feitos pelo parceiro.
+
+**[Proposta]**
+
+- O pagador é registrado na assinatura: `payer = partner` ou `payer = organization`. O parceiro tem um **perfil de cobrança** próprio (razão social, CNPJ, e-mail financeiro, forma de pagamento), separado da conta de recebimento usada no modo cliente paga.
+- O parceiro pode pagar assinatura por assinatura ou, mais adiante, receber uma **fatura consolidada** por período com todos os clientes ativos nesse modo. Ver D-PA-12.
+- Neste modo, a plataforma não conhece nem controla o preço que o parceiro cobra do cliente; o piso do §3.2 não se aplica.
+- Trocar de modo só vale no fim do período pago, por processo explícito e auditado, sem cobrança dupla.
+- Como não há divisão, qualquer adaptador atende, inclusive o manual (por exemplo, transferência mensal do parceiro com evidência).
+
+**[Em aberto]**
+
+- Valor base do parceiro: se é igual ao repasse mínimo do plano ou um preço próprio por plano (D-PA-11, Comercial).
+- Inadimplência do parceiro: a suspensão atinge os workspaces dos clientes dele. Proposta: avisar o parceiro, dar prazo de carência e só então suspender; se o cliente é avisado e se pode assumir o pagamento (migrando para cliente paga), fica a decidir (D-PA-13).
+- Disponibilidade de cada modo por parceiro: se a plataforma habilita os modos por parceiro ou os dois ficam sempre disponíveis (D-PA-10).
+
+#### Comum aos dois modos
+
+O webhook do provedor chega assinado, é gravado com chave única e processado em job. A assinatura muda de estado conforme a §18: ativa, em atraso, suspensa, cancelada.
+
+### 3.2 Cálculo da divisão (modo cliente paga)
 
 **[Decidido]** O padrão é 70% para o parceiro e 30% para a plataforma, com valores mínimos.
 
@@ -125,7 +159,9 @@ interface PaymentProvider {
   };
   createRecipient(partner: PartnerRef): Promise<RecipientRef>;
   getRecipientStatus(ref: RecipientRef): Promise<RecipientStatus>;
-  upsertCustomer(org: OrganizationRef): Promise<CustomerRef>;
+  // Pagador: a empresa (cliente paga) ou o parceiro (parceiro paga).
+  upsertCustomer(payer: OrganizationRef | PartnerRef): Promise<CustomerRef>;
+  // CheckoutInput traz o modo; a divisão só existe em customer_pays.
   createCheckout(
     input: CheckoutInput,
   ): Promise<{ url: string; externalId: string }>;
@@ -157,11 +193,11 @@ Os eventos normalizados (`ProviderEvent`) são: `recipient.verified`, `recipient
 
 ### 3.5 Telas
 
-| Onde                | O quê                                                                                               |
-| ------------------- | --------------------------------------------------------------------------------------------------- |
-| `/platform`         | Planos base, pisos, regra padrão de divisão, provedores habilitados, visão de repasses por parceiro |
-| `/admin` (parceiro) | Conta de recebimento e KYC, planos e preços do parceiro, faturas e repasses                         |
-| `/app` (cliente)    | Checkout, plano atual, faturas, forma de pagamento e cancelamento, tudo com a marca do parceiro     |
+| Onde                | O quê                                                                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/platform`         | Planos base, pisos, valor base do parceiro, regra padrão de divisão, modos e provedores habilitados, visão de repasses e de valores devidos por parceiro                   |
+| `/admin` (parceiro) | Cadastro de clientes, escolha do modo por cliente, checkout do valor base, perfil de cobrança, conta de recebimento e KYC, planos e preços do parceiro, faturas e repasses |
+| `/app` (cliente)    | Cliente paga: checkout, plano atual, faturas, forma de pagamento e cancelamento, com a marca do parceiro. Parceiro paga: só o plano atual e o contato do parceiro          |
 
 ## 4. Comunicação
 
@@ -191,7 +227,7 @@ Os eventos normalizados (`ProviderEvent`) são: `recipient.verified`, `recipient
 
 ## 6. Modelos de workspace
 
-**[Proposta]** O parceiro monta modelos com módulos habilitados e configurações padrão (o contrato de módulos da F2 já suporta isso) e gera um **link de cadastro**. O cadastro cria empresa e workspace a partir do modelo, já ligados ao parceiro. O modelo só usa módulos que o parceiro oferece e que a plataforma disponibiliza.
+**[Proposta]** O parceiro monta modelos com módulos habilitados e configurações padrão (o contrato de módulos da F2 já suporta isso) e gera um **link de cadastro**. O cadastro cria empresa e workspace a partir do modelo, já ligados ao parceiro. No modo parceiro paga, o próprio parceiro faz esse cadastro em `/admin` (§3.1). O modelo só usa módulos que o parceiro oferece e que a plataforma disponibiliza.
 
 ## 7. Dados (proposta)
 
@@ -207,10 +243,11 @@ Toda tabela com `partner_id` usa RLS por `app.partner_id`. As tabelas operaciona
 | `organizations.partner_id`                          | Coluna nova, `NOT NULL`, padrão o parceiro zero                                     |
 | `payment_provider_accounts`                         | Provedor por parceiro, referência de credencial no cofre, estado                    |
 | `partner_payment_accounts`                          | Conta de recebimento do parceiro no provedor e estado do KYC                        |
-| `plans`, `plan_versions`, `pricing_floors`          | Planos base, versões e pisos (F3)                                                   |
+| `plans`, `plan_versions`, `pricing_floors`          | Planos base, versões, pisos e valor base do parceiro (F3)                           |
 | `partner_plans`                                     | Plano do parceiro sobre uma versão: preço, moeda, periodicidade, status             |
 | `split_rules`                                       | Percentual e repasse mínimo, versionados, padrão e por parceiro                     |
-| `subscriptions`                                     | Empresa, plano do parceiro, provedor, estado, período                               |
+| `partner_billing_profiles`                          | Dados de cobrança do parceiro como pagador (modo parceiro paga)                     |
+| `subscriptions`                                     | Empresa, plano (do parceiro ou base), modo, pagador, provedor, estado, período      |
 | `payments`                                          | Somente inclusão: valor bruto, taxas, repasses, ids do provedor, evidência (manual) |
 | `payment_provider_events`                           | Webhooks recebidos, com id externo único e estado de processamento                  |
 | `notification_templates`, `notification_deliveries` | Modelos por parceiro e evento; entregas com idempotência                            |
@@ -228,29 +265,33 @@ Toda tabela com `partner_id` usa RLS por `app.partner_id`. As tabelas operaciona
 
 Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 
-| Item                                                                                  | Esforço | Por que agora                                                               |
-| ------------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------- |
-| Mover `/admin` para `/platform` (rotas, navegação gerada, testes e e2e)               | Baixo   | Fica mais caro a cada página administrativa nova                            |
-| Parceiro zero: tabela `partners` mínima e `organizations.partner_id` com padrão       | Baixo   | Todo dado novo já nasce ligado a um parceiro                                |
-| `resolveBrand(host)` no lugar do `appConfig`, devolvendo a marca do ambiente          | Baixo   | Toda tela passa a ler de um ponto que depois vira por parceiro              |
-| Contratos `PaymentProvider` e `ProviderEvent`, mais o adaptador **manual** com testes | Médio   | Fixa a interface para Iugu e Stripe sem depender de conta no provedor       |
-| Porta de notificação com modelos por evento, usando hoje a marca do ambiente          | Médio   | Centraliza os e-mails antes de existirem muitos                             |
-| Tabelas de planos, divisão, assinaturas e pagamentos                                  | Alto    | **Esperar a F3**: depende dos números do Comercial e da escolha de provedor |
-| Subdomínios, domínio próprio e hook de e-mail do Supabase                             | Alto    | **Esperar** a decisão de hospedagem de produção                             |
+| Item                                                                                                                | Esforço | Por que agora                                                               |
+| ------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------- |
+| Mover `/admin` para `/platform` (rotas, navegação gerada, testes e e2e)                                             | Baixo   | Fica mais caro a cada página administrativa nova                            |
+| Parceiro zero: tabela `partners` mínima e `organizations.partner_id` com padrão                                     | Baixo   | Todo dado novo já nasce ligado a um parceiro                                |
+| `resolveBrand(host)` no lugar do `appConfig`, devolvendo a marca do ambiente                                        | Baixo   | Toda tela passa a ler de um ponto que depois vira por parceiro              |
+| Contratos `PaymentProvider` e `ProviderEvent` com os dois modos de cobrança, mais o adaptador **manual** com testes | Médio   | Fixa a interface para Iugu e Stripe sem depender de conta no provedor       |
+| Porta de notificação com modelos por evento, usando hoje a marca do ambiente                                        | Médio   | Centraliza os e-mails antes de existirem muitos                             |
+| Tabelas de planos, divisão, assinaturas e pagamentos                                                                | Alto    | **Esperar a F3**: depende dos números do Comercial e da escolha de provedor |
+| Subdomínios, domínio próprio e hook de e-mail do Supabase                                                           | Alto    | **Esperar** a decisão de hospedagem de produção                             |
 
 ## 10. Decisões necessárias
 
-| ID      | Decisão                                           | Recomendação                                                         |
-| ------- | ------------------------------------------------- | -------------------------------------------------------------------- |
-| D-PA-01 | Aprovar a ADR 0012                                | —                                                                    |
-| D-PA-02 | Papéis do parceiro (seção 1.2)                    | Aprovar como proposto                                                |
-| D-PA-03 | Base do percentual e quem paga a taxa do provedor | Comercial e contador                                                 |
-| D-PA-04 | Estorno e chargeback                              | Reversão proporcional; responsabilidade a definir                    |
-| D-PA-05 | Nota fiscal na divisão                            | Contador                                                             |
-| D-PA-06 | Papéis na LGPD e contrato de parceria             | Jurídico                                                             |
-| D-PA-07 | Provedor inicial                                  | Iugu, depois de verificar os itens da seção 3.4; manual para pilotos |
-| D-PA-08 | Provedor de e-mail transacional                   | Em aberto                                                            |
-| D-PA-09 | Ordem de execução                                 | Itens de esforço baixo da seção 9 primeiro                           |
+| ID      | Decisão                                           | Recomendação                                                               |
+| ------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
+| D-PA-01 | Aprovar a ADR 0012                                | —                                                                          |
+| D-PA-02 | Papéis do parceiro (seção 1.2)                    | Aprovar como proposto                                                      |
+| D-PA-03 | Base do percentual e quem paga a taxa do provedor | Comercial e contador                                                       |
+| D-PA-04 | Estorno e chargeback                              | Reversão proporcional; responsabilidade a definir                          |
+| D-PA-05 | Nota fiscal na divisão                            | Contador                                                                   |
+| D-PA-06 | Papéis na LGPD e contrato de parceria             | Jurídico                                                                   |
+| D-PA-07 | Provedor inicial                                  | Iugu, depois de verificar os itens da seção 3.4; manual para pilotos       |
+| D-PA-08 | Provedor de e-mail transacional                   | Em aberto                                                                  |
+| D-PA-09 | Ordem de execução                                 | Itens de esforço baixo da seção 9 primeiro                                 |
+| D-PA-10 | Modos de cobrança habilitados por parceiro        | Os dois disponíveis; a plataforma pode desligar um por parceiro            |
+| D-PA-11 | Valor base do parceiro por plano                  | Comercial: igual ao repasse mínimo ou preço próprio                        |
+| D-PA-12 | Fatura consolidada do parceiro                    | Começar por assinatura; consolidar depois                                  |
+| D-PA-13 | Inadimplência do parceiro                         | Aviso ao parceiro, carência e depois suspensão; aviso ao cliente a definir |
 
 ## 11. Critérios de aceite (quando implementado)
 
@@ -262,3 +303,5 @@ Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 6. Trocar a versão da regra de divisão não altera assinaturas existentes sem processo explícito.
 7. E-mails de autenticação e de cobrança saem com a marca e o remetente do parceiro do domínio.
 8. Nenhuma credencial de provedor ou de e-mail aparece em log, erro ou DTO.
+9. No modo parceiro paga, o checkout cobra o valor base do parceiro sem divisão, só membros com `partner_finance` pagam, e o cliente não vê checkout nem faturas no `/app`.
+10. Um cliente cadastrado pelo parceiro só tem a assinatura ativada depois do pagamento confirmado (ou do registro manual com evidência), e precisa aceitar os termos do parceiro no primeiro acesso.

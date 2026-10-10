@@ -2,7 +2,7 @@
 
 - **Status:** Proposto, aguarda aprovação do Marcelo no PR.
 - **Data:** 10/10/2026
-- **Decisões de origem (Marcelo, 10/10/2026):** três níveis com console da plataforma em `/platform` e console do parceiro em `/admin`; cliente final acessa pelo domínio do parceiro com a identidade, os termos e a cobrança dele; checkout da plataforma com o preço do parceiro, valores mínimos e divisão padrão de 70% para o parceiro e 30% para a plataforma; provedores Iugu, Stripe e manual como opções.
+- **Decisões de origem (Marcelo, 10/10/2026):** três níveis com console da plataforma em `/platform` e console do parceiro em `/admin`; cliente final acessa pelo domínio do parceiro com a identidade, os termos e a cobrança dele; checkout da plataforma com o preço do parceiro, valores mínimos e divisão padrão de 70% para o parceiro e 30% para a plataforma; alternativa em que o próprio parceiro cadastra o cliente e paga só o valor base da plataforma; provedores Iugu, Stripe e manual como opções.
 - **Altera:** ADR 0004 (marca e domínio deixam de ser só por ambiente), ADR 0005 (rotas administrativas passam de `/admin` para `/platform`) e a §12 da especificação.
 - **Detalhamento:** [`docs/partners/especificacao.md`](../partners/especificacao.md).
 
@@ -20,10 +20,10 @@ O GUIDU vai ser revendido por parceiros (agências) com a marca deles, e os clie
 3. **Papéis de parceiro são separados** dos papéis internos e dos papéis de empresa e workspace. Por padrão, **não dão acesso aos dados dos workspaces dos clientes**. O acesso de suporte só existe por concessão temporária, justificada, auditada e visível ao cliente (especificação §12).
 4. **A marca é do parceiro e é resolvida no servidor a partir do host.** A configuração de ambiente da ADR 0004 continua como marca do parceiro zero e como padrão.
 5. **Domínios em etapas:** primeiro subdomínio da plataforma (`<parceiro>.<domínio-da-plataforma>`), depois domínio próprio com verificação de posse e certificado automático.
-6. **Cobrança dividida com checkout da plataforma.** O cliente paga o preço do parceiro, e o provedor divide o valor na origem entre a conta do parceiro e a da plataforma. A plataforma não custodia o dinheiro dos parceiros.
-   - Preço do parceiro ≥ preço mínimo do plano base.
-   - Repasse da plataforma = maior valor entre o percentual da plataforma (padrão 30%) e o repasse mínimo do plano. O parceiro recebe o restante.
-   - Pisos, percentuais e preços são versionados. Mudanças não alteram assinaturas existentes sem processo explícito (§18).
+6. **Dois modos de cobrança, escolhidos por assinatura**, ambos pelo checkout da plataforma. A plataforma não custodia o dinheiro dos parceiros.
+   - **Cliente paga:** o cliente paga o preço do parceiro, e o provedor divide o valor na origem entre a conta do parceiro e a da plataforma. Preço do parceiro ≥ preço mínimo do plano base. Repasse da plataforma = maior valor entre o percentual da plataforma (padrão 30%) e o repasse mínimo do plano; o parceiro recebe o restante.
+   - **Parceiro paga:** o parceiro cadastra o cliente, paga só o **valor base da plataforma** para o plano escolhido e cobra o cliente por conta própria. Não há divisão, e o cliente não vê cobrança no produto.
+   - Pisos, percentuais, valores base e preços são versionados. Mudanças não alteram assinaturas existentes sem processo explícito (§18).
 7. **Provedores atrás de uma porta única** (`PaymentProvider`), com três adaptadores previstos: **Iugu**, **Stripe** e **manual**. O manual cobre pilotos e acordos fora do gateway: registro de pagamentos com evidência e relatório de repasse.
 8. **Comunicação com a identidade do parceiro.** E-mails de autenticação, convites, cobrança e avisos usam marca, remetente e contato de suporte do parceiro, por uma porta única de notificação. Os e-mails de autenticação passam a ser enviados pela plataforma (hook de envio do Supabase Auth), não pelos modelos únicos do projeto.
 9. **Termos e privacidade versionados por parceiro**, com registro de aceite por versão.
