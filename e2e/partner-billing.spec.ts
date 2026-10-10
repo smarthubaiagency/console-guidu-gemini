@@ -6,7 +6,8 @@
  * Maintenance Rationale:
  * - A partner (seeded with an active `*.localhost` domain) opens the plan of
  *   a customer and records a monthly payment with evidence in
- *   /admin/billing; the subscription goes from pending to active.
+ *   /admin/billing; the subscription goes from pending to active. The page
+ *   shows the overdue terms, notices and payout reports (F3c).
  * - The customer sees the plan and the partner's contact in
  *   /app/[slug]/settings/billing, and no checkout while the switch is off;
  *   a direct visit to the checkout answers 404 (criteria 9 and 11).
@@ -110,6 +111,14 @@ test("partner activates a customer with a manual payment; the checkout stays a d
     .getByRole("listitem")
     .filter({ hasText: `Cliente Cobrança ${stamp}` });
   await expect(customerRow).toContainText("Sem plano");
+  // Overdue terms of the daily routine and its notices (F3c).
+  await expect(owner.getByTestId("billing-terms")).toContainText(
+    "em atraso 3 dia(s) depois do vencimento",
+  );
+  await expect(owner.getByTestId("billing-notices")).toContainText(
+    "Nenhum aviso registrado.",
+  );
+  await expect(owner.getByTestId("payout-reports")).toContainText("Sem dados.");
   const start = owner.getByTestId(`start-subscription-${organizationId}`);
   await start.getByRole("button", { name: "Abrir assinatura" }).click();
   // The page refreshes: the form gives way to the pending subscription.

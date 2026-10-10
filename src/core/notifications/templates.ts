@@ -33,6 +33,13 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
+function formatDay(date: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 function supportLines(brand: NotificationBrand): string[] {
   return [
     brand.supportEmail ? `Suporte: ${brand.supportEmail}` : null,
@@ -82,6 +89,38 @@ export function renderNotification(
             `O convite vale até ${formatDate(event.data.expiresAt)}.`,
           ],
           { label: "Aceitar convite", url },
+        ),
+      };
+    }
+    case "billing.subscription.past_due": {
+      const { data } = event;
+      return {
+        subject: `Assinatura em atraso: ${data.organizationName}`,
+        ...layout(
+          brand,
+          [
+            `Olá, ${data.partnerName}.`,
+            `A assinatura de ${data.organizationName} está em atraso: o período pago venceu em ${formatDay(data.periodEnd)} e nenhum pagamento novo foi registrado.`,
+            data.nextStepOn
+              ? `Sem pagamento registrado, a assinatura será suspensa em ${formatDay(data.nextStepOn)}; o cliente passa a ter acesso só de leitura.`
+              : "Sem pagamento registrado, a assinatura poderá ser suspensa.",
+          ],
+          { label: "Ver cobrança", url: safeLink(data.billingUrl) },
+        ),
+      };
+    }
+    case "billing.subscription.suspended": {
+      const { data } = event;
+      return {
+        subject: `Assinatura suspensa: ${data.organizationName}`,
+        ...layout(
+          brand,
+          [
+            `Olá, ${data.partnerName}.`,
+            `A assinatura de ${data.organizationName} foi suspensa por falta de pagamento do período que venceu em ${formatDay(data.periodEnd)}.`,
+            "O cliente mantém o acesso de leitura e exportação, sem novas alterações. Registrar o pagamento reativa a assinatura.",
+          ],
+          { label: "Ver cobrança", url: safeLink(data.billingUrl) },
         ),
       };
     }

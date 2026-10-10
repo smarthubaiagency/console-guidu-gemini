@@ -1,13 +1,15 @@
+import { billingJobs, billingSchedules } from "@/core/billing/automation";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
 
-import type { JobDefinition } from "./definition";
+import type { JobDefinition, JobSchedule } from "./definition";
 
 /**
  * Jobs known to this build, by explicit import (like the module registry).
- * Core jobs join here in later stages (billing in F3c).
+ * Core platform jobs (billing, F3c) come first.
  */
 // Each definition validates its own payload type; the registry erases it.
 const DEFINITIONS = [
+  ...billingJobs,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
 
@@ -25,4 +27,9 @@ export function listJobDefinitions(): readonly JobDefinition<unknown>[] {
 
 export function getJobDefinition(kind: string): JobDefinition<unknown> | null {
   return BY_KIND.get(kind) ?? null;
+}
+
+/** Recurring platform jobs started by the worker's scheduler. */
+export function listJobSchedules(): readonly JobSchedule[] {
+  return billingSchedules;
 }

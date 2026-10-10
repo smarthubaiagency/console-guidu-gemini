@@ -4,10 +4,12 @@ import { PgBoss, type Job } from "pg-boss";
 import {
   DEAD_LETTER_QUEUE,
   type JobDefinition,
+  type JobResult,
+  type JobSchedule,
   queueName,
 } from "@/core/jobs/definition";
 import { classifyJobFailure, SkipJobError } from "@/core/jobs/errors";
-import { listJobDefinitions } from "@/core/jobs/registry";
+import { listJobDefinitions, listJobSchedules } from "@/core/jobs/registry";
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import type {
   ContextTransaction,
@@ -32,6 +34,11 @@ import type {
  * pg-boss group limit avoids most collisions, and a transaction advisory
  * lock per workspace guarantees it (pg-boss alone is racy between
  * processes; measured in tests/core/jobs.test.ts).
+ *
+ * Platform jobs (F3c) have no requester: they run as app_worker through
+ * their own narrow policies, one run per kind at a time. The scheduler
+ * inserts their runs with a key per period (`on conflict do nothing`), so
+ * repeated ticks and several workers start each period once.
  */
 
 export type WorkerOptions = Readonly<{
@@ -42,6 +49,11 @@ export type WorkerOptions = Readonly<{
   dispatchIntervalMs?: number;
   pollingIntervalSeconds?: number;
   definitions?: readonly JobDefinition<unknown>[];
+  /** Recurring platform jobs; defaults to the registry's. */
+  schedules?: readonly JobSchedule[];
+  scheduleIntervalMs?: number;
+  /** Clock of the scheduler (tests control it). */
+  now?: () => Date;
   instanceName?: string;
   log?: (event: Record<string, unknown>) => void;
 }>;
@@ -51,6 +63,8 @@ export type JobWorker = Readonly<{
   stop(): Promise<void>;
   /** Dispatches pending runs now; returns how many were sent. */
   dispatchOnce(): Promise<number>;
+  /** Inserts the due scheduled runs now; returns how many were new. */
+  scheduleOnce(): Promise<number>;
 }>;
 
 type RunRow = {
@@ -92,6 +106,10 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
   const log = options.log ?? defaultLog;
   const definitions = options.definitions ?? listJobDefinitions();
   const byKind = new Map(definitions.map((d) => [d.kind, d]));
+  const schedules = (options.schedules ?? listJobSchedules()).filter((s) =>
+    byKind.has(s.kind),
+  );
+  const clock = options.now ?? (() => new Date());
   const prisma = new PrismaClient({
     datasources: { db: { url: options.databaseUrl } },
   });
@@ -112,6 +130,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
   const maxRunMs =
     Math.max(300, ...definitions.map((d) => d.expireInSeconds ?? 300)) * 1000;
   let dispatchTimer: NodeJS.Timeout | null = null;
+  let scheduleTimer: NodeJS.Timeout | null = null;
   let dispatching: Promise<number> | null = null;
   let stopped = false;
 
@@ -166,6 +185,27 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     return dispatching;
   }
 
+  async function scheduleOnce(): Promise<number> {
+    const now = clock();
+    let created = 0;
+    for (const schedule of schedules) {
+      const due = schedule.due(now);
+      if (!due) continue;
+      const definition = byKind.get(schedule.kind);
+      const inserted = await prisma.$executeRaw`
+        insert into public.job_runs (kind, scope, payload, idempotency_key, max_attempts)
+        values (${schedule.kind}, 'platform', ${JSON.stringify(due.payload)}::jsonb,
+                ${due.key}, ${definition?.maxAttempts ?? 3})
+        on conflict (kind, idempotency_key) do nothing
+      `;
+      if (inserted > 0) {
+        created += inserted;
+        log({ event: "job.scheduled", kind: schedule.kind, key: due.key });
+      }
+    }
+    return created;
+  }
+
   async function recordFailure(
     run: RunRow,
     action: "skip" | "fail" | "retry",
@@ -188,6 +228,31 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     `;
   }
 
+  async function markRunning(
+    tx: ContextTransaction,
+    id: string,
+  ): Promise<void> {
+    await tx.$executeRaw`
+      update public.job_runs
+      set status = 'running', started_at = now()
+      where id = ${id}::uuid
+    `;
+  }
+
+  async function markSucceeded(
+    tx: ContextTransaction,
+    id: string,
+    result: JobResult | null,
+  ): Promise<void> {
+    await tx.$executeRaw`
+      update public.job_runs
+      set status = 'succeeded', attempts = attempts + 1, finished_at = now(),
+          last_error = null,
+          result = ${result ? JSON.stringify(result) : null}::jsonb
+      where id = ${id}::uuid
+    `;
+  }
+
   async function execute(job: Job<{ jobRunId: string }>): Promise<void> {
     const jobRunId = job.data?.jobRunId;
     if (!jobRunId) return;
@@ -207,8 +272,25 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
           const definition = byKind.get(run.kind);
           if (!definition)
             throw new SkipJobError("Tipo de job desconhecido nesta versão.");
+          if (run.scope === "platform" && definition.scope === "platform") {
+            // One run of each platform job at a time, across processes.
+            await tx.$executeRaw`
+              select pg_advisory_xact_lock(hashtext('job_platform:' || ${run.kind}))
+            `;
+            await markRunning(tx, run.id);
+            const payload = definition.payload.safeParse(run.payload);
+            if (!payload.success) {
+              throw new SkipJobError(
+                "Dados do job inválidos para esta versão.",
+              );
+            }
+            const result = (await definition.run(tx, payload.data)) ?? null;
+            await markSucceeded(tx, run.id, result);
+            return;
+          }
           if (
             run.scope !== "workspace" ||
+            definition.scope !== "workspace" ||
             !run.workspace_id ||
             !run.organization_id ||
             !run.requested_by
@@ -220,11 +302,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
           await tx.$executeRaw`
             select pg_advisory_xact_lock(hashtext('job_workspace:' || ${run.workspace_id}))
           `;
-          await tx.$executeRaw`
-            update public.job_runs
-            set status = 'running', started_at = now()
-            where id = ${run.id}::uuid
-          `;
+          await markRunning(tx, run.id);
 
           const ctx: RequestContext = {
             userId: run.requested_by,
@@ -258,13 +336,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
           const result = (await definition.run(tx, ctx, payload.data)) ?? null;
 
           await tx.$executeRawUnsafe("reset role");
-          await tx.$executeRaw`
-            update public.job_runs
-            set status = 'succeeded', attempts = attempts + 1, finished_at = now(),
-                last_error = null,
-                result = ${result ? JSON.stringify(result) : null}::jsonb
-            where id = ${jobRunId}::uuid
-          `;
+          await markSucceeded(tx, run.id, result);
         },
         { timeout: maxRunMs, maxWait: 30_000 },
       );
@@ -337,17 +409,34 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
       if (!stopped) dispatchTimer = setTimeout(tick, interval);
     };
     dispatchTimer = setTimeout(tick, 0);
+
+    const scheduleInterval = options.scheduleIntervalMs ?? 60_000;
+    const scheduleTick = async () => {
+      if (stopped) return;
+      try {
+        await scheduleOnce();
+      } catch (error) {
+        log({
+          level: "error",
+          event: "schedule.error",
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+      if (!stopped) scheduleTimer = setTimeout(scheduleTick, scheduleInterval);
+    };
+    if (schedules.length > 0) scheduleTimer = setTimeout(scheduleTick, 0);
     log({ event: "worker.started", queues: definitions.map((d) => d.kind) });
   }
 
   async function stop(): Promise<void> {
     stopped = true;
     if (dispatchTimer) clearTimeout(dispatchTimer);
+    if (scheduleTimer) clearTimeout(scheduleTimer);
     if (dispatching) await dispatching.catch(() => 0);
     await boss.stop({ graceful: true, timeout: 20_000 });
     await prisma.$disconnect();
     log({ event: "worker.stopped" });
   }
 
-  return { start, stop, dispatchOnce };
+  return { start, stop, dispatchOnce, scheduleOnce };
 }

@@ -37,14 +37,25 @@ begin
 end
 $$;
 
--- The worker reads no domain table with its own role.
+-- With its own role the worker reads the queue and only the columns
+-- platform jobs need (F3c); everything else stays closed.
 begin;
 set local role app_worker;
 do $$
 begin
   begin
-    perform count(*) from public.organizations;
-    raise exception 'jobs: app_worker reads organizations';
+    perform count(*) from public.profiles;
+    raise exception 'jobs: app_worker reads profiles';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform max(max_seats) from public.organizations;
+    raise exception 'jobs: app_worker reads organization columns beyond the name';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform count(*) from public.hello_world_records;
+    raise exception 'jobs: app_worker reads module data';
   exception when insufficient_privilege then null;
   end;
   perform count(*) from pgboss.queue;

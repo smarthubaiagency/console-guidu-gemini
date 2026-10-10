@@ -89,3 +89,44 @@ describe("escapeHtml", () => {
     );
   });
 });
+
+describe("billing notices (F3c)", () => {
+  const data = {
+    partnerName: "Agência B",
+    organizationName: "Cliente <X>",
+    periodEnd: new Date("2026-10-01T00:00:00Z"),
+    nextStepOn: new Date("2026-10-11T00:00:00Z"),
+    billingUrl: "https://agencia-b.com.br/admin/billing",
+  };
+
+  it("tells the partner about the arrears and the suspension date", () => {
+    const message = renderNotification(
+      {
+        type: "billing.subscription.past_due",
+        recipientEmail: "cobranca@agencia-b.com.br",
+        idempotencyKey: "k",
+        data,
+      },
+      brand,
+    );
+    expect(message.subject).toBe("Assinatura em atraso: Cliente <X>");
+    expect(message.text).toContain("venceu em 01/10/2026");
+    expect(message.text).toContain("suspensa em 11/10/2026");
+    expect(message.text).toContain("https://agencia-b.com.br/admin/billing");
+    expect(message.html).toContain("Cliente &lt;X&gt;");
+  });
+
+  it("explains what a suspension means for the customer", () => {
+    const message = renderNotification(
+      {
+        type: "billing.subscription.suspended",
+        recipientEmail: "cobranca@agencia-b.com.br",
+        idempotencyKey: "k",
+        data: { ...data, nextStepOn: null },
+      },
+      brand,
+    );
+    expect(message.subject).toBe("Assinatura suspensa: Cliente <X>");
+    expect(message.text).toContain("leitura e exportação");
+  });
+});
