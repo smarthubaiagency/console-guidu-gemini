@@ -13,7 +13,12 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
 import { invalidPartnerInput, partnerNotFound } from "./errors";
-import { normalizeHost, platformHosts } from "./hosts";
+import {
+  normalizeHost,
+  partnerSubdomainBase,
+  platformHosts,
+  subdomainHost,
+} from "./hosts";
 
 /**
  * Partner management in the platform console (ADR 0012, P4a). Runs inside
@@ -158,11 +163,27 @@ export async function addPartnerDomain(
   requirePlatformPermission(actor.role, Permissions.PLATFORM_PARTNERS_MANAGE);
   await requireManagedPartner(tx, partnerId);
 
-  const host = normalizeHost(input.host);
-  if (!host || !host.includes(".")) {
-    throw invalidPartnerInput(
-      "Informe um domínio válido, como app.agencia.com.br.",
-    );
+  let host: string | null;
+  if (input.kind === "subdomain") {
+    const base = partnerSubdomainBase(process.env);
+    if (!base) {
+      throw invalidPartnerInput(
+        "Subdomínios da plataforma não estão configurados (PARTNER_SUBDOMAIN_BASE).",
+      );
+    }
+    host = subdomainHost(input.host, base);
+    if (!host) {
+      throw invalidPartnerInput(
+        `Informe só o nome do subdomínio, como agencia (vira agencia.${base}).`,
+      );
+    }
+  } else {
+    host = normalizeHost(input.host);
+    if (!host || !host.includes(".")) {
+      throw invalidPartnerInput(
+        "Informe um domínio válido, como app.agencia.com.br.",
+      );
+    }
   }
   if (platformHosts(process.env).has(host)) {
     throw invalidPartnerInput("Esse domínio pertence à plataforma.");

@@ -160,6 +160,23 @@ describeDatabase("P4a: partner console (ADR 0012)", requiredVars, () => {
     expect(
       await resolvePartnerForHost(prisma, "app.agencia-teste.localhost:3000"),
     ).toMatchObject({ partnerId, isPlatformHost: false });
+
+    // Platform subdomain: just the name, under the base (localhost here).
+    const { host } = await withIdentityContext(prisma, platformOwner, (tx) =>
+      addPartnerDomain(tx, platformActor, partnerId, {
+        host: "Agencia-Teste",
+        kind: "subdomain",
+      }),
+    );
+    expect(host).toBe("agencia-teste.localhost");
+    await expect(
+      withIdentityContext(prisma, platformOwner, (tx) =>
+        addPartnerDomain(tx, platformActor, partnerId, {
+          host: "app.outro.com.br",
+          kind: "subdomain",
+        }),
+      ),
+    ).rejects.toSatisfy(isAppError("invalid_input"));
   });
 
   it("invites the owner from the platform and accepts with the invited e-mail", async () => {
