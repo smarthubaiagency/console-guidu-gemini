@@ -237,8 +237,9 @@ begin
     return;
   end if;
   execute $sql$
-    insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status)
-    values ('f3e00000-0000-4000-8000-0000000000f1', 'a0000000-0000-4000-8000-000000000031', 'Telefone', 'totp', 'unverified')
+    insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at)
+    values ('f3e00000-0000-4000-8000-0000000000f1', 'a0000000-0000-4000-8000-000000000031', 'Telefone', 'totp',
+            'unverified', now(), now())
   $sql$;
   if exists (select 1 from public.audit_events where resource_id = 'f3e00000-0000-4000-8000-0000000000f1') then
     raise exception 'privacy: an unverified factor was audited';
