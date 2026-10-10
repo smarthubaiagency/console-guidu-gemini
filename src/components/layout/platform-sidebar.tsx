@@ -12,9 +12,16 @@ import { NavIcon } from "./nav-icons";
 interface PlatformSidebarProps {
   /** Generated on the server from core entries and the module registry. */
   sections: readonly NavSection[];
+  /** Console name; the partner console (/admin) passes its own. */
+  title?: string;
+  subtitle?: string;
 }
 
-export function PlatformSidebar({ sections }: PlatformSidebarProps) {
+export function PlatformSidebar({
+  sections,
+  title = "Admin Console",
+  subtitle = "Governança & Auditoria",
+}: PlatformSidebarProps) {
   const pathname = usePathname();
   const activeId = activeNavItemId(sections, pathname);
 
@@ -23,14 +30,14 @@ export function PlatformSidebar({ sections }: PlatformSidebarProps) {
       <div className="space-y-6 p-4">
         <div className="border-border-inverse flex items-center gap-2.5 border-b px-3 py-2">
           <div className="bg-warning-solid text-on-warning text-12 flex h-7 w-7 items-center justify-center rounded-lg font-black">
-            A
+            {title.charAt(0).toUpperCase()}
           </div>
           <div>
             <div className="text-14 text-text-inverse flex items-center gap-1.5 font-bold tracking-tight">
-              <span>Admin Console</span>
+              <span>{title}</span>
             </div>
             <div className="text-10 text-warning-solid font-medium">
-              Governança & Auditoria
+              {subtitle}
             </div>
           </div>
         </div>

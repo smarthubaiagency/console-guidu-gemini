@@ -4,6 +4,11 @@ import { useActionState } from "react";
 
 import { saveBrandAction, type BrandActionState } from "@/core/brand/actions";
 
+type BrandAction = (
+  prev: BrandActionState,
+  formData: FormData,
+) => Promise<BrandActionState>;
+
 const INITIAL: BrandActionState = {};
 
 const field =
@@ -14,6 +19,7 @@ const label = "text-12 text-text-subtle font-medium";
 export function BrandForm({
   defaults,
   hasLogo,
+  action: saveAction = saveBrandAction,
 }: Readonly<{
   defaults: {
     displayName: string;
@@ -22,8 +28,10 @@ export function BrandForm({
     supportUrl: string;
   };
   hasLogo: boolean;
+  /** Platform (default) or partner console save action. */
+  action?: BrandAction;
 }>) {
-  const [state, action, pending] = useActionState(saveBrandAction, INITIAL);
+  const [state, action, pending] = useActionState(saveAction, INITIAL);
 
   return (
     <form action={action} className="space-y-4" data-testid="brand-form">

@@ -34,20 +34,57 @@ model Profile {
 /// (`isHouse`) serves direct customers. Read-only for the application and
 /// scoped by RLS to `app.partner_id`.
 model Partner {
-  id              String          @id @db.Uuid
-  slug            String          @unique
+  id              String              @id @db.Uuid
+  slug            String              @unique
   name            String
-  status          String          @default("active")
-  isHouse         Boolean         @default(false) @map("is_house")
-  checkoutEnabled Boolean         @default(false) @map("checkout_enabled")
-  checkoutBlocked Boolean         @default(false) @map("checkout_blocked")
-  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+  status          String              @default("active")
+  isHouse         Boolean             @default(false) @map("is_house")
+  checkoutEnabled Boolean             @default(false) @map("checkout_enabled")
+  checkoutBlocked Boolean             @default(false) @map("checkout_blocked")
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
   domains         PartnerDomain[]
   organizations   Organization[]
   brands          PartnerBrand[]
+  members         PartnerMember[]
+  invitations     PartnerInvitation[]
 
   @@map("partners")
+}
+
+/// Partner roles (D-PA-02). Grant no access to workspace data.
+model PartnerMember {
+  partnerId String   @map("partner_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  email     String
+  role      String
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@id([partnerId, userId])
+  @@index([userId])
+  @@map("partner_members")
+}
+
+/// Invitation to join a partner; the token is stored only as a hash.
+model PartnerInvitation {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId  String   @map("partner_id") @db.Uuid
+  email      String
+  role       String
+  tokenHash  String   @unique @map("token_hash")
+  status     String   @default("pending")
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz()
+  invitedBy  String?  @map("invited_by") @db.Uuid
+  acceptedBy String?  @map("accepted_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  partner    Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@map("partner_invitations")
 }
 
 /// Versioned partner brand (ADR 0012, P3). Insert-only; the highest version

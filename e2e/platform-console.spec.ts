@@ -8,8 +8,8 @@
  *   - Enforces AAL2 MFA and platform_admin_members membership for /platform.
  *   - Displays consolidated operational metrics and tenant management pages.
  *   - Denies non-admin accounts access via server guard.
- * - ADR 0012: the console moved from /admin to /platform; /admin stays free
- *   for the partner console and answers 404 until then.
+ * - ADR 0012: the console moved from /admin to /platform; /admin is the
+ *   partner console and requires a partner role.
  * ============================================================================
  */
 
@@ -97,11 +97,18 @@ test.describe("Platform Administration Governance Console", () => {
     // Attempt to access /platform -> redirected to /auth/denied
     await page.goto("/platform");
     await expect(page).toHaveURL(/\/auth\/denied$/);
+
+    // Not a member of the house partner either: /admin is denied too.
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/auth\/denied$/);
   });
 
-  test("answers 404 on the former /admin route", async ({ request }) => {
+  test("sends a signed-out visitor of the partner console to login", async ({
+    request,
+  }) => {
     const response = await request.get("/admin", { maxRedirects: 0 });
-    expect(response.status()).toBe(404);
+    expect(response.status()).toBe(307);
+    expect(response.headers()["location"]).toContain("/login?next=%2Fadmin");
   });
 
   test("answers 404 for /platform on a host that is not a platform host", async ({

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requireMfa } from "@/core/auth/identity";
+import { getPartnerMembership } from "@/core/partners/members";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
@@ -66,8 +67,63 @@ export async function saveBrandAction(
           tx,
           {
             userId: identity.userId,
-            role: admin?.status === "active" ? admin.role : null,
+            platformRole: admin?.status === "active" ? admin.role : null,
           },
+          partner.partnerId,
+          {
+            displayName: text(formData, "displayName"),
+            primaryColor: text(formData, "primaryColor"),
+            supportEmail: text(formData, "supportEmail"),
+            supportUrl: text(formData, "supportUrl"),
+          },
+          logoChange,
+        ),
+      { partnerId: partner.partnerId },
+    );
+
+    revalidatePath("/", "layout");
+    return { success: true, message: `Marca salva (versão ${version}).` };
+  } catch (err) {
+    const safe = toSafeError(err);
+    return {
+      error: safe.safeMessage,
+      code: safe.code,
+      requestId: safe.requestId,
+    };
+  }
+}
+
+/**
+ * Saves a new brand version of the host's partner from the partner console
+ * (/admin): partner_owner and partner_admin only, revalidated here and by RLS.
+ */
+export async function savePartnerBrandAction(
+  _prev: BrandActionState,
+  formData: FormData,
+): Promise<BrandActionState> {
+  try {
+    const identity = await requireMfa();
+    const partner = await getRequestPartner();
+    if (!partner) {
+      throw new AppError({
+        code: "not_found",
+        safeMessage: "Recurso não encontrado.",
+      });
+    }
+    const membership = await getPartnerMembership(
+      prisma,
+      identity.userId,
+      partner.partnerId,
+    );
+    const logoChange = await logoChangeFrom(formData);
+
+    const { version } = await withIdentityContext(
+      prisma,
+      identity.userId,
+      (tx) =>
+        saveBrandVersion(
+          tx,
+          { userId: identity.userId, partnerRole: membership?.role ?? null },
           partner.partnerId,
           {
             displayName: text(formData, "displayName"),

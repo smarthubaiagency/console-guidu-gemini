@@ -70,12 +70,12 @@ begin
     raise exception 'partner_domains: partner could not read its own domain';
   end if;
 
-  begin
-    update public.partners set name = 'x';
+  -- Since P4a app_runtime holds UPDATE for platform owner/operations; RLS
+  -- leaves a regular caller with no row to change.
+  update public.partners set name = 'x';
+  if found then
     raise exception 'partners: app_runtime could update';
-  exception when insufficient_privilege then
-    null;
-  end;
+  end if;
   begin
     insert into public.partner_domains (host, partner_id, kind)
     values ('evil.example.com', 'b0000000-0000-4000-8000-000000000001', 'custom');

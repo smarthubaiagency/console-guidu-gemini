@@ -99,6 +99,34 @@ São **sete etapas**. P1 a P4 não dependem de nenhuma decisão comercial e pode
 
 **Objetivo:** o parceiro opera os próprios clientes, ainda sem cobrança automática.
 
+Dividida em dois PRs, aprovados por Marcelo em 10/10/2026, junto com os papéis da §1.2 (D-PA-02):
+
+- **P4a**, implementada no PR da P4a, com a migration `20261010180000_p4a_partner_console.sql`, a aplicar no dev após aprovação. Entrega:
+  - gestão de parceiros em `/platform/partners`: criar, suspender, cadastrar e ativar domínios, convidar e revogar;
+  - membros e convites do parceiro;
+  - console `/admin` com visão geral, clientes (só metadados), membros e marca;
+  - aceite de convite em `/partner-invite/[token]`.
+- **P4b**, a seguir. Entrega:
+  - cadastro de cliente pelo parceiro;
+  - modelos de workspace e catálogo de módulos oferecidos;
+  - termos e privacidade versionados, com aceite;
+  - acesso de suporte temporário.
+
+**Como ficou a P4a:**
+
+- **Convites:** o único caminho para entrar num parceiro.
+  - O token fica guardado só como hash e vale por 72 horas.
+  - O aceite exige o e-mail convidado e confirmado.
+  - O RLS confere token, parceiro, papel e e-mail.
+  - O e-mail do membro é copiado do convite, para o console listar a equipe sem ler perfis alheios.
+- **`/admin`:** exige AAL2 e um papel ativo no parceiro do host. Parceiro suspenso perde o console e a resolução dos domínios.
+- **O que os papéis não acessam:** nenhum papel de parceiro lê workspaces. O console mostra só nome, situação e data das empresas.
+- **Quem gerencia:**
+  - só o `partner_owner` gerencia membros, e nunca a própria linha;
+  - `partner_owner` e `partner_admin` editam a marca do parceiro.
+- **Domínios:** a ativação é manual e auditada até a verificação de DNS da P7.
+- **Em desenvolvimento:** use domínios `*.localhost`, como `agencia.localhost`. O navegador os resolve para a máquina local, e os links usam o esquema e a porta de `APP_URL`.
+
 - Migration:
   - `partner_members` com os papéis da §1.2 (`partner_owner`, `partner_admin`, `partner_finance`, `partner_support`);
   - `partner_legal_documents` e `legal_acceptances`;

@@ -9,12 +9,13 @@ import { listRegisteredModules } from "@/modules/registry";
 import { listSettingsComponentKeys } from "@/modules/settings-components";
 
 import {
+  buildPartnerNavigation,
   buildPlatformNavigation,
   buildAppNavigation,
   type NavItem,
   type NavSection,
 } from "./navigation";
-import { platformGrants } from "./loaders";
+import { partnerGrants, platformGrants } from "./loaders";
 import type { PlatformModuleState, WorkspaceModuleState } from "./state";
 
 const enabled: WorkspaceModuleState = { status: "enabled", config: {} };
@@ -150,6 +151,26 @@ describe("generated navigation", () => {
     expect(find(owner, "platform.brand")?.href).toBe("/platform/brand");
     expect(find(none, "platform.brand")).toBeUndefined();
     expect(find(none, "hello-world.admin")).toBeUndefined();
+  });
+
+  it("builds the partner console by partner role (D-PA-02)", () => {
+    const owner = buildPartnerNavigation(partnerGrants("partner_owner"));
+    expect(owner.flatMap((s) => s.items).map((i) => i.href)).toEqual([
+      "/admin",
+      "/admin/customers",
+      "/admin/members",
+      "/admin/brand",
+    ]);
+
+    const finance = buildPartnerNavigation(partnerGrants("partner_finance"));
+    expect(find(finance, "partner.brand")).toBeUndefined();
+    expect(find(finance, "partner.customers")?.href).toBe("/admin/customers");
+
+    expect(
+      buildPartnerNavigation(partnerGrants(null))
+        .flatMap((s) => s.items)
+        .map((i) => i.id),
+    ).toEqual(["partner.overview"]);
   });
 
   it("marks the most specific route as active", () => {

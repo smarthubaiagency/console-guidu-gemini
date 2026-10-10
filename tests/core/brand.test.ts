@@ -41,7 +41,13 @@ describeDatabase("P3: partner brand versions (ADR 0012)", requiredVars, () => {
       prisma,
       userId,
       (tx) =>
-        saveBrandVersion(tx, { userId, role }, HOUSE_PARTNER_ID, input, logo),
+        saveBrandVersion(
+          tx,
+          { userId, platformRole: role },
+          HOUSE_PARTNER_ID,
+          input,
+          logo,
+        ),
       { partnerId: HOUSE_PARTNER_ID },
     );
 

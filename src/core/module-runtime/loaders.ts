@@ -20,7 +20,9 @@ import {
   workspaceRoleGrants,
 } from "@/core/permissions/guard";
 import {
+  hasPartnerRolePermission,
   hasPlatformRolePermission,
+  type PartnerRoleKey,
   type PlatformAdminRoleKey,
 } from "@/core/permissions/matrix";
 import type { Permission } from "@/core/permissions/catalog";
@@ -52,6 +54,12 @@ export function workspaceGrants(role: WorkspaceRole | null) {
 export function platformGrants(role: PlatformAdminRoleKey | null) {
   return (permission: PermissionKey): boolean =>
     role !== null && hasPlatformRolePermission(role, permission as Permission);
+}
+
+/** Grants of a partner role in the partner console (ADR 0012, D-PA-02). */
+export function partnerGrants(role: PartnerRoleKey | null) {
+  return (permission: PermissionKey): boolean =>
+    role !== null && hasPartnerRolePermission(role, permission as Permission);
 }
 
 export async function loadAppNavigation(
