@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Code2, ArrowRight, Bot } from "lucide-react";
+import { ArrowRight, Code2 } from "lucide-react";
+
+import { sectionClass } from "@/components/billing/billing-ui";
+import { ModulePageHeader } from "@/components/modules/module-page-header";
+import { API_ROUTES, type ApiRoute } from "@/core/api/contracts";
+import { configuredRateLimits } from "@/core/api/rate-limit";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
+import { getRequestOrigin } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 
 export const metadata: Metadata = {
@@ -13,86 +19,106 @@ interface ApiSettingsPageProps {
   params: Promise<{ workspaceSlug: string }>;
 }
 
-export default async function ApiSettingsPage({ params }: ApiSettingsPageProps) {
+/**
+ * Developer page of the workspace (F4a): base URL, authentication, the
+ * read routes of the API v1 with the scope each one needs, the limits and
+ * the OpenAPI contract. Keys are created in Configurações › MCP; webhooks
+ * come later (plano F4, decisão 4).
+ */
+export default async function ApiSettingsPage({
+  params,
+}: ApiSettingsPageProps) {
   const { workspaceSlug } = await params;
-  const currentPath = `/app/${workspaceSlug}/settings/api`;
-  const identity = await requireUserPage(currentPath);
-
-  // Validate user has access to workspace
-  await resolveRequestWorkspaceContext(
+  const identity = await requireUserPage(`/app/${workspaceSlug}/settings/api`);
+  const context = await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,
   );
+  const origin = (await getRequestOrigin()) ?? "";
+  const base = `${origin}/api/v1`;
+  const limits = configuredRateLimits();
+  const routes = Object.values(API_ROUTES) as ApiRoute[];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div className="border-border border-b pb-5">
-        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>Configurações</span>
-          <span>/</span>
-          <span>API e Webhooks</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
-            <Code2 className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-20 text-text font-bold tracking-tight">
-              API e Webhooks
-            </h1>
-            <p className="text-12 text-text-secondary">
-              Integrações REST e webhooks para desenvolvedores e plataformas externas.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6" data-testid="api-settings">
+      <ModulePageHeader
+        trail={["Configurações", "API e Webhooks"]}
+        title="API e Webhooks"
+        description="API REST v1 para integrar este workspace a outros sistemas."
+        icon={<Code2 className="h-5 w-5" />}
+      />
 
-      {/* Clean Phase 4 Placeholder Card */}
-      <div className="border-card-border bg-surface-card rounded-xl border p-8 shadow-xs">
-        <div className="mx-auto max-w-xl text-center space-y-4">
-          <div className="bg-surface-raised mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-border">
-            <Code2 className="text-text-subtle h-6 w-6" />
-          </div>
-          <div className="space-y-1.5">
-            <span className="text-11 bg-surface-raised text-text-secondary border-border inline-block rounded-full border px-3 py-1 font-semibold uppercase tracking-wider">
-              Fase 4
-            </span>
-            <h2 className="text-18 text-text font-semibold">
-              Em breve — chaves REST e webhooks (Fase 4)
-            </h2>
-            <p className="text-12 text-text-secondary leading-relaxed">
-              A emissão de chaves da plataforma para a API REST (/api/v1) e a configuração de endpoints de webhooks serão disponibilizadas na Fase 4.
-            </p>
-          </div>
+      <section className={sectionClass}>
+        <h2 className="text-14 text-text font-semibold">Como conectar</h2>
+        <ul className="text-12 text-text-secondary space-y-1">
+          <li>
+            Endereço base: <code className="text-text">{base}</code>
+          </li>
+          <li>
+            Id deste workspace:{" "}
+            <code className="text-text" data-testid="api-workspace-id">
+              {context.workspaceId}
+            </code>
+          </li>
+          <li>
+            Autenticação: cabeçalho{" "}
+            <code className="text-text">Authorization: Bearer gdu_live_…</code>{" "}
+            com uma chave criada em{" "}
+            <Link
+              href={`/app/${workspaceSlug}/settings/mcp`}
+              className="text-primary inline-flex items-center gap-1 font-semibold"
+            >
+              Configurações › MCP <ArrowRight className="h-3 w-3" />
+            </Link>
+            . A chave vale só para este workspace e para os escopos marcados
+            nela, e só neste endereço.
+          </li>
+          <li>
+            Limites provisórios por minuto: {limits.key} por chave,{" "}
+            {limits.user} por pessoa e {limits.workspace} por workspace. Acima
+            disso a resposta é 429 com <code>Retry-After</code>.
+          </li>
+          <li>
+            Erros trazem <code>code</code>, <code>message</code> e{" "}
+            <code>requestId</code>; informe o requestId ao suporte.
+          </li>
+          <li>
+            Contrato completo:{" "}
+            <a
+              href={`${base}/openapi.json`}
+              className="text-primary font-semibold"
+            >
+              openapi.json
+            </a>
+          </li>
+        </ul>
+      </section>
 
-          {/* Informational redirection to /settings/mcp */}
-          <div className="border-border bg-surface-sidebar mt-6 rounded-lg border p-4 text-left">
-            <div className="flex items-start gap-3">
-              <div className="bg-surface-card rounded-md p-1.5 border border-border">
-                <Bot className="text-text-secondary h-4 w-4" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-12 text-text font-semibold">
-                  Procurando conexões com assistentes de IA (MCP)?
-                </p>
-                <p className="text-11 text-text-secondary">
-                  A gestão de tokens pessoais para conexão com Claude Code, Cursor e Codex está disponível na página de assistentes MCP.
-                </p>
-                <div className="pt-2">
-                  <Link
-                    href={`/app/${workspaceSlug}/settings/mcp`}
-                    className="text-12 text-primary hover:text-primary-hover inline-flex items-center gap-1 font-semibold transition"
-                  >
-                    <span>Configurar assistentes MCP</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <section className={sectionClass}>
+        <h2 className="text-14 text-text font-semibold">Rotas disponíveis</h2>
+        <ul className="divide-border divide-y" data-testid="api-routes">
+          {routes.map((route) => (
+            <li
+              key={route.operationId}
+              className="text-12 text-text-secondary py-2"
+            >
+              <code className="text-text font-semibold">
+                {route.method} {route.path}
+              </code>{" "}
+              · escopo <code>{route.scope}</code> · {route.summary}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className={sectionClass}>
+        <h2 className="text-14 text-text font-semibold">Webhooks</h2>
+        <p className="text-12 text-text-secondary">
+          Em breve: avisos da plataforma para um endereço seu quando algo
+          acontecer neste workspace.
+        </p>
+      </section>
     </div>
   );
 }

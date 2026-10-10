@@ -37,6 +37,28 @@ Falta:
 
 ### F4a — Base da API REST
 
+**Estado:** pronta para revisão. A migration `20261018090000_f4a_api_rate_limits.sql` é aplicada como `app_migrations`.
+
+Entregue:
+
+- `src/core/api/handler.ts`: a camada única de entrada. Na ordem: parceiro do host, quem chama (chave ou sessão), escopo, workspace, limite, consulta e serviço. A saída passa pelo esquema da rota, então campo fora do contrato não sai (AC07).
+- Uma chave de outro parceiro, revogada, vencida ou de membro removido responde 401. Workspace fora do alcance responde 404, sem revelar se existe.
+- `src/core/api/contracts.ts`: as rotas, os escopos e os esquemas em um só lugar, que também geram o OpenAPI (`/api/v1/openapi.json`).
+- Rotas: `/me/workspaces`, `/workspaces/{id}`, `/overview`, `/modules`, `/usage`, `/executions` e `/members`. As duas últimas são paginadas por cursor.
+- Limite de requisições: janela de 1 minuto por chave, por pessoa e por workspace, no Redis (`REDIS_URL`). Sem o Redis, ou com ele fora do ar, a contagem vai para `private.hit_rate_limit` no Postgres, e a tabela não fica exposta ao app. Toda resposta traz os cabeçalhos `RateLimit-*`, e o 429 traz também `Retry-After`. A rotina diária apaga as janelas com mais de um dia.
+- `/api/health/ready` passa a informar o estado do Redis, que não decide se a aplicação está pronta.
+- A página "API e Webhooks" mostra o endereço base, o id do workspace, as rotas com o escopo de cada uma, os limites e o OpenAPI. Webhooks aparecem como "em breve".
+- CI: Redis temporário no job `db`.
+- Testes:
+  - unitários: limites, cursor e OpenAPI;
+  - suíte SQL `api-rate-limit-rls.sql`;
+  - integração `api.test.ts`: contrato, AC01, AC03, parceiro do host, sessão e 429 no Redis e no Postgres;
+  - e2e `api.spec.ts`: sessão, 401 anônimo, OpenAPI e página.
+
+Aprendizado: o cursor guarda o carimbo de tempo como o Postgres o escreve, em microssegundos. Uma `Date` do JavaScript corta em milissegundos, e linhas criadas na mesma transação sumiam da página seguinte.
+
+Planejado:
+
 - Uma camada única de entrada: sessão ou chave Bearer. Ela resolve quem chama, o vínculo, o escopo (só para chave), a permissão, o estado e a contratação do módulo, a cota e valida a entrada com Zod.
 - Erros 401, 403, 404, 409, 422 e 429, sempre com código, mensagem segura e `requestId`.
 - Paginação por cursor, com até 100 itens por página. A `v1` só muda de forma compatível.
