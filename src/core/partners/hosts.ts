@@ -29,6 +29,7 @@ export function normalizeHost(raw: string | null | undefined): string | null {
 export type PlatformHostEnv = Readonly<{
   APP_URL?: string | undefined;
   PLATFORM_HOSTS?: string | undefined;
+  PARTNER_SUBDOMAIN_BASE?: string | undefined;
   NODE_ENV?: string | undefined;
 }>;
 
@@ -75,4 +76,30 @@ export function partnerHostOrigin(host: string, env: PlatformHostEnv): string {
   } catch {
     return `https://${host}`;
   }
+}
+
+const DNS_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
+
+/**
+ * Base domain of platform subdomains (`<parceiro>.<base>`, ADR 0012):
+ * PARTNER_SUBDOMAIN_BASE, or `localhost` outside production. Null when
+ * production has none configured.
+ */
+export function partnerSubdomainBase(env: PlatformHostEnv): string | null {
+  const configured = normalizeHost(env.PARTNER_SUBDOMAIN_BASE);
+  if (configured) return configured;
+  return env.NODE_ENV === "production" ? null : "localhost";
+}
+
+/**
+ * Host of a platform subdomain from what the operator typed: just the name
+ * (`agencia`) or the full host already under the base
+ * (`agencia.guidu.com.br`). Null when it is neither.
+ */
+export function subdomainHost(input: string, base: string): string | null {
+  const value = input.trim().toLowerCase().replace(/\.$/, "");
+  const label = value.endsWith(`.${base}`)
+    ? value.slice(0, -(base.length + 1))
+    : value;
+  return DNS_LABEL.test(label) ? `${label}.${base}` : null;
 }

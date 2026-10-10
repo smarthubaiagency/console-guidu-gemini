@@ -13,6 +13,7 @@ import { partnerRoleLabel } from "@/components/partners/role-label";
 import { RoleSelect } from "@/components/partners/role-select";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
+import { partnerSubdomainBase } from "@/core/partners/hosts";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import {
   addPartnerDomainAction,
@@ -70,6 +71,7 @@ export default async function PlatformPartnerPage({
   if (!data) notFound();
   const { partner, members, invitations } = data;
   const canManage = grants("platform.partners.manage");
+  const subdomainBase = partnerSubdomainBase(process.env);
   const editable = canManage && !partner.isHouse;
 
   return (
@@ -165,11 +167,11 @@ export default async function PlatformPartnerPage({
             >
               <input type="hidden" name="partnerId" value={partner.id} />
               <label className={labelClass}>
-                Domínio
+                Domínio ou nome do subdomínio
                 <input
                   name="host"
                   required
-                  placeholder="app.agencia.com.br"
+                  placeholder="app.agencia.com.br ou agencia"
                   className={inputClass}
                 />
               </label>
@@ -187,8 +189,11 @@ export default async function PlatformPartnerPage({
             </ActionForm>
           ) : null}
           <p className="text-11 text-text-tertiary mt-2">
-            Até a verificação automática de DNS (P7), ativar um domínio é uma
-            decisão manual registrada na auditoria.
+            Domínio próprio: informe o endereço completo. Subdomínio da
+            plataforma: informe só o nome, que vira{" "}
+            <code>nome.{subdomainBase ?? "(base não configurada)"}</code>. Até a
+            verificação automática de DNS (P7), ativar um domínio é uma decisão
+            manual registrada na auditoria.
           </p>
         </section>
       ) : null}

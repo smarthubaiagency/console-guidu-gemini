@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeHost, partnerHostOrigin, platformHosts } from "./hosts";
+import {
+  normalizeHost,
+  partnerHostOrigin,
+  partnerSubdomainBase,
+  platformHosts,
+  subdomainHost,
+} from "./hosts";
 
 describe("normalizeHost", () => {
   it("lowercases and strips the port and a trailing dot", () => {
@@ -76,5 +82,41 @@ describe("partnerHostOrigin", () => {
         APP_URL: "http://localhost:3000",
       }),
     ).toBe("http://agencia.localhost:3000");
+  });
+});
+
+describe("partner subdomains", () => {
+  it("uses PARTNER_SUBDOMAIN_BASE, or localhost outside production", () => {
+    expect(
+      partnerSubdomainBase({
+        PARTNER_SUBDOMAIN_BASE: "Guidu.com.br",
+        NODE_ENV: "production",
+      }),
+    ).toBe("guidu.com.br");
+    expect(partnerSubdomainBase({ NODE_ENV: "development" })).toBe("localhost");
+    expect(partnerSubdomainBase({ NODE_ENV: "production" })).toBeNull();
+  });
+
+  it("builds the host from the name or accepts the full host under the base", () => {
+    expect(subdomainHost(" Agencia ", "guidu.com.br")).toBe(
+      "agencia.guidu.com.br",
+    );
+    expect(subdomainHost("agencia.guidu.com.br", "guidu.com.br")).toBe(
+      "agencia.guidu.com.br",
+    );
+    expect(subdomainHost("agencia", "localhost")).toBe("agencia.localhost");
+  });
+
+  it("refuses nested names, other domains and invalid labels", () => {
+    for (const value of [
+      "app.agencia",
+      "agencia.outro.com.br",
+      "-agencia",
+      "agência",
+      "",
+      "a".repeat(64),
+    ]) {
+      expect(subdomainHost(value, "guidu.com.br")).toBeNull();
+    }
   });
 });

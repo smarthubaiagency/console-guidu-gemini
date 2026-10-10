@@ -57,7 +57,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
   await page.waitForURL(/\/platform\/partners\/[0-9a-f-]{36}$/);
 
   const domain = page.getByTestId("add-domain");
-  await domain.getByLabel("Domínio", { exact: true }).fill(host);
+  await domain.getByLabel("Domínio ou nome do subdomínio").fill(host);
   await domain.getByRole("button", { name: "Cadastrar domínio" }).click();
   await expect(domain.getByRole("status")).toContainText("pendente");
   await page.reload();
