@@ -52,8 +52,181 @@ model Partner {
   templates       PartnerWorkspaceTemplate[]
   legalDocuments  PartnerLegalDocument[]
   supportGrants   PartnerSupportGrant[]
+  partnerPlans    PartnerPlan[]
+  billingProfile  PartnerBillingProfile?
+  splitRules      SplitRule[]
+  subscriptions   Subscription[]
+  payments        Payment[]
+  providerEvents  PaymentProviderEvent[]
 
   @@map("partners")
+}
+
+/// Base plan of the platform (P5m). Values live in insert-only versions.
+model Plan {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String        @unique
+  name      String
+  status    String        @default("active")
+  createdBy String?       @map("created_by") @db.Uuid
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+  versions  PlanVersion[]
+
+  @@map("plans")
+}
+
+/// Insert-only plan version: floor, minimum platform share and partner base
+/// value in cents, interval and included modules (P5m).
+model PlanVersion {
+  id                    String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  planId                String         @map("plan_id") @db.Uuid
+  version               Int
+  billingInterval       String         @default("monthly") @map("billing_interval")
+  moduleKeys            String[]       @default([]) @map("module_keys")
+  minPriceCents         Int            @map("min_price_cents")
+  minPlatformShareCents Int            @map("min_platform_share_cents")
+  partnerBasePriceCents Int            @map("partner_base_price_cents")
+  provisional           Boolean        @default(false)
+  createdBy             String?        @map("created_by") @db.Uuid
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  plan                  Plan           @relation(fields: [planId], references: [id], onDelete: Restrict)
+  partnerPlans          PartnerPlan[]
+  subscriptions         Subscription[]
+
+  @@unique([planId, version])
+  @@index([planId])
+  @@map("plan_versions")
+}
+
+/// Platform percentage in basis points, insert-only; no partner = default.
+model SplitRule {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId         String?        @map("partner_id") @db.Uuid
+  version           Int
+  platformPercentBp Int            @map("platform_percent_bp")
+  createdBy         String?        @map("created_by") @db.Uuid
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  partner           Partner?       @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  subscriptions     Subscription[]
+
+  @@unique([partnerId, version])
+  @@map("split_rules")
+}
+
+/// Partner price over a plan version (customer pays mode, P5m).
+model PartnerPlan {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId     String         @map("partner_id") @db.Uuid
+  planVersionId String         @map("plan_version_id") @db.Uuid
+  name          String
+  priceCents    Int            @map("price_cents")
+  status        String         @default("active")
+  createdBy     String?        @map("created_by") @db.Uuid
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  partner       Partner        @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  planVersion   PlanVersion    @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  subscriptions Subscription[]
+
+  @@unique([partnerId, name])
+  @@index([partnerId])
+  @@map("partner_plans")
+}
+
+/// The partner as payer and its provider (manual until P6).
+model PartnerBillingProfile {
+  partnerId    String   @id @map("partner_id") @db.Uuid
+  legalName    String   @map("legal_name")
+  taxId        String   @map("tax_id")
+  billingEmail String   @map("billing_email")
+  provider     String   @default("manual")
+  updatedBy    String?  @map("updated_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  partner      Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("partner_billing_profiles")
+}
+
+/// Subscription of a company; terms frozen at creation (P5m).
+model Subscription {
+  id                 String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId          String       @map("partner_id") @db.Uuid
+  organizationId     String       @map("organization_id") @db.Uuid
+  planVersionId      String       @map("plan_version_id") @db.Uuid
+  partnerPlanId      String?      @map("partner_plan_id") @db.Uuid
+  splitRuleId        String?      @map("split_rule_id") @db.Uuid
+  mode               String
+  payer              String
+  provider           String       @default("manual")
+  billingInterval    String       @map("billing_interval")
+  amountCents        Int          @map("amount_cents")
+  status             String       @default("pending")
+  currentPeriodStart DateTime?    @map("current_period_start") @db.Date
+  currentPeriodEnd   DateTime?    @map("current_period_end") @db.Date
+  canceledAt         DateTime?    @map("canceled_at") @db.Timestamptz()
+  createdBy          String?      @map("created_by") @db.Uuid
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+  partner            Partner      @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  planVersion        PlanVersion  @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  partnerPlan        PartnerPlan? @relation(fields: [partnerPlanId], references: [id], onDelete: Restrict)
+  splitRule          SplitRule?   @relation(fields: [splitRuleId], references: [id], onDelete: Restrict)
+
+  @@unique([id, partnerId, organizationId])
+  @@index([partnerId])
+  @@map("subscriptions")
+}
+
+/// Normalized provider event, unique per provider and external id (P5m).
+model PaymentProviderEvent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider    String
+  externalId  String    @map("external_id")
+  eventType   String    @map("event_type")
+  partnerId   String    @map("partner_id") @db.Uuid
+  payload     Json      @default("{}")
+  status      String    @default("received")
+  recordedBy  String?   @map("recorded_by") @db.Uuid
+  receivedAt  DateTime  @default(now()) @map("received_at") @db.Timestamptz()
+  processedAt DateTime? @map("processed_at") @db.Timestamptz()
+  partner     Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  payment     Payment?
+
+  @@unique([provider, externalId])
+  @@index([partnerId])
+  @@map("payment_provider_events")
+}
+
+/// Insert-only payment or refund, with the computed shares (P5m).
+model Payment {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId          String               @map("partner_id") @db.Uuid
+  organizationId     String               @map("organization_id") @db.Uuid
+  subscriptionId     String               @map("subscription_id") @db.Uuid
+  kind               String               @default("payment")
+  refundOf           String?              @unique @map("refund_of") @db.Uuid
+  provider           String
+  providerEventId    String               @unique @map("provider_event_id") @db.Uuid
+  method             String
+  amountCents        Int                  @map("amount_cents")
+  platformShareCents Int                  @map("platform_share_cents")
+  partnerShareCents  Int                  @map("partner_share_cents")
+  periodStart        DateTime?            @map("period_start") @db.Date
+  periodEnd          DateTime?            @map("period_end") @db.Date
+  paidOn             DateTime             @map("paid_on") @db.Date
+  note               String?
+  evidence           Bytes?
+  evidenceMime       String?              @map("evidence_mime")
+  recordedBy         String?              @map("recorded_by") @db.Uuid
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  partner            Partner              @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  providerEvent      PaymentProviderEvent @relation(fields: [providerEventId], references: [id], onDelete: Restrict)
+
+  @@index([partnerId])
+  @@index([subscriptionId])
+  @@map("payments")
 }
 
 /// Terms and privacy policy of a partner, versioned and insert-only (P4b2).

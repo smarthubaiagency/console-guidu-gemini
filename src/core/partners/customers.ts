@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { recordAudit } from "@/core/audit/record";
+import { startSubscription } from "@/core/billing/partner";
 import { adminAuditContext } from "@/core/module-runtime/settings";
 import { generateInvitationToken } from "@/core/organizations/invitations";
 import { PermissionDeniedError } from "@/core/permissions/guard";
@@ -230,6 +231,7 @@ const CustomerInputSchema = z.object({
     .email("Informe um e-mail válido.")
     .max(254),
   templateId: z.string().uuid().nullable(),
+  planId: z.string().uuid().nullable(),
 });
 
 export type CustomerInput = Readonly<{
@@ -238,6 +240,8 @@ export type CustomerInput = Readonly<{
   workspaceSlug: string;
   ownerEmail: string;
   templateId?: string | null;
+  /** Base plan of the pending subscription; default: the first active one. */
+  planId?: string | null;
 }>;
 
 function isUniqueViolation(error: unknown): boolean {
@@ -271,6 +275,7 @@ export async function createPartnerCustomer(
   const parsed = CustomerInputSchema.safeParse({
     ...input,
     templateId: input.templateId || null,
+    planId: input.planId || null,
   });
   if (!parsed.success) {
     throw invalidPartnerInput(
@@ -329,6 +334,30 @@ export async function createPartnerCustomer(
       (${organizationId}::uuid, ${workspaceId}::uuid, ${data.ownerEmail}, 'owner',
        ${tokenHash}, ${actor.userId}::uuid, 'pending', ${expiresAt})
   `;
+
+  // Born pending: active only after the first recorded payment (criterion
+  // 10, P5m). Without any plan in the catalog the customer has no plan.
+  const planId =
+    data.planId ??
+    (
+      await tx.plan.findFirst({
+        where: { status: "active", versions: { some: {} } },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      })
+    )?.id;
+  if (planId) {
+    await startSubscription(
+      tx,
+      {
+        userId: actor.userId,
+        partnerRole: actor.partnerRole,
+        canRegisterCustomers: true,
+      },
+      partnerId,
+      { organizationId, planId },
+    );
+  }
 
   await recordAudit(tx, adminAuditContext(actor.userId), {
     action: "partner.customer.create",

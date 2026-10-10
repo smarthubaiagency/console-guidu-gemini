@@ -56,6 +56,9 @@ export const Permissions = {
   // Partner management in the platform console (ADR 0012, P4).
   PLATFORM_PARTNERS_READ: "platform.partners.read",
   PLATFORM_PARTNERS_MANAGE: "platform.partners.manage",
+  // Plans, floors, split rules and amounts due per partner (P5m).
+  PLATFORM_BILLING_READ: "platform.billing.read",
+  PLATFORM_BILLING_MANAGE: "platform.billing.manage",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
@@ -67,6 +70,10 @@ export const Permissions = {
   // Terms and privacy of the partner, and temporary support access (P4b2).
   PARTNER_LEGAL_MANAGE: "partner.legal.manage",
   PARTNER_SUPPORT_REQUEST: "partner.support.request",
+  // Partner prices, billing profile, customer subscriptions, manual payments
+  // and the "Ativar checkout" switch (P5m).
+  PARTNER_BILLING_READ: "partner.billing.read",
+  PARTNER_BILLING_MANAGE: "partner.billing.manage",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

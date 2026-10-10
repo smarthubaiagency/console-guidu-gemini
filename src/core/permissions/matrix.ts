@@ -140,6 +140,8 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_LEGAL_MANAGE,
     Permissions.PLATFORM_PARTNERS_READ,
     Permissions.PLATFORM_PARTNERS_MANAGE,
+    Permissions.PLATFORM_BILLING_READ,
+    Permissions.PLATFORM_BILLING_MANAGE,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -148,10 +150,13 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_LEGAL_MANAGE,
     Permissions.PLATFORM_PARTNERS_READ,
     Permissions.PLATFORM_PARTNERS_MANAGE,
+    Permissions.PLATFORM_BILLING_READ,
   ]),
   billing: new Set([
     Permissions.PLATFORM_MODULES_READ,
     Permissions.PLATFORM_PARTNERS_READ,
+    Permissions.PLATFORM_BILLING_READ,
+    Permissions.PLATFORM_BILLING_MANAGE,
   ]),
   support: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -180,7 +185,8 @@ export const PARTNER_ROLES: readonly PartnerRoleKey[] = [
 /**
  * Partner console permissions (especificação de parceiros §1.2). No partner
  * role reads workspace data; support access comes with a temporary grant
- * (P4b). Plans, prices and payouts arrive with billing (P5).
+ * (P4b). Billing (P5m) is read by owner, admin and finance and managed by
+ * owner and finance; partner_support never sees money.
  */
 export const PARTNER_ROLE_PERMISSIONS: Record<
   PartnerRoleKey,
@@ -194,6 +200,8 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_BRAND_MANAGE,
     Permissions.PARTNER_LEGAL_MANAGE,
     Permissions.PARTNER_SUPPORT_REQUEST,
+    Permissions.PARTNER_BILLING_READ,
+    Permissions.PARTNER_BILLING_MANAGE,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
@@ -202,10 +210,13 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_BRAND_MANAGE,
     Permissions.PARTNER_LEGAL_MANAGE,
     Permissions.PARTNER_SUPPORT_REQUEST,
+    Permissions.PARTNER_BILLING_READ,
   ]),
   partner_finance: new Set([
     Permissions.PARTNER_READ,
     Permissions.PARTNER_CUSTOMERS_READ,
+    Permissions.PARTNER_BILLING_READ,
+    Permissions.PARTNER_BILLING_MANAGE,
   ]),
   partner_support: new Set([
     Permissions.PARTNER_READ,

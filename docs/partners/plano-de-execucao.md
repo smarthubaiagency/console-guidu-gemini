@@ -167,7 +167,16 @@ Dividida em dois PRs, aprovados por Marcelo em 10/10/2026, junto com os papéis 
 
 ## P5m — Cobrança manual e provedores previstos (F3)
 
-**Estado:** próxima etapa, aguardando o "pode começar" do Marcelo.
+**Estado:** em andamento, dividida em dois PRs. PR A (núcleo: migration `20261012090000_p5m_billing.sql`, `src/core/billing/`, permissões e testes) pronto para revisão; PR B (telas e e2e) começa depois do merge do A e da migration aplicada no dev.
+
+**Decisões do Marcelo (10/10/2026), ao dar o "pode começar":**
+
+1. Cliente cadastrado pelo parceiro nasce com assinatura `pending` e só fica `active` com o primeiro pagamento registrado. Até a P5b o `pending` não bloqueia módulos; o `/app` só avisa. Clientes anteriores ficam "sem plano".
+2. No modo parceiro paga, o registro manual do parceiro com comprovante já ativa a assinatura; a plataforma vê tudo em `/platform/billing` e pode estornar. Conferência prévia pela plataforma fica para a fatura consolidada (D-PA-12).
+3. Pré-requisitos da chave "Ativar checkout" na P5m: plano do parceiro com preço ≥ piso, termos e política publicados e chave não bloqueada. Conta de recebimento (KYC) e provedor com divisão aparecem como pendentes e passam a ser exigidos na P6.
+4. Clientes da casa seguem o mesmo fluxo, pelo `/admin` dos membros do parceiro zero.
+
+Piso, repasse mínimo e valor base ficaram em `plan_versions` (em vez de uma tabela `pricing_floors` separada): são valores da mesma versão do plano.
 
 **Pré-requisitos:** nenhum externo. Não usa worker, provedor nem número comercial definitivo.
 
