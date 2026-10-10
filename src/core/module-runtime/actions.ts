@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireMfa, requireUser } from "@/core/auth/identity";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
@@ -63,7 +63,7 @@ export async function setWorkspaceModuleStatusAction(
 
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(
+    const context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Bot } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listApiKeys } from "@/core/credentials/api-keys";
@@ -23,7 +23,7 @@ export default async function McpSettingsPage({ params }: McpSettingsPageProps) 
   const currentPath = `/app/${workspaceSlug}/settings/mcp`;
   const identity = await requireUserPage(currentPath);
 
-  const context = await resolveWorkspaceContext(
+  const context = await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,

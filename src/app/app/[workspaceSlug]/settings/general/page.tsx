@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Settings } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
@@ -18,7 +18,7 @@ export default async function GeneralSettingsPage({
   const identity = await requireUserPage(
     `/app/${workspaceSlug}/settings/general`,
   );
-  const context = await resolveWorkspaceContext(
+  const context = await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,

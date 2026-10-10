@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
-import { listUserWorkspaces } from "@/core/workspaces/navigation";
+import { listRequestUserWorkspaces } from "@/core/partners/request-context";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { loadAppNavigation } from "@/core/module-runtime/loaders";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -25,7 +25,7 @@ export default async function WorkspaceLayout({
   // Validate user membership and resolve context
   let context;
   try {
-    context = await resolveWorkspaceContext(
+    context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug,
@@ -36,7 +36,7 @@ export default async function WorkspaceLayout({
   }
 
   // Load all user workspaces for switcher
-  const workspaces = await listUserWorkspaces(prisma, identity.userId);
+  const workspaces = await listRequestUserWorkspaces(prisma, identity.userId);
 
   // Check if current user is platform admin
   const platformAdmin = await getPlatformAdminMember(prisma, identity.userId);

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Code2, ArrowRight, Bot } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ export default async function ApiSettingsPage({ params }: ApiSettingsPageProps) 
   const identity = await requireUserPage(currentPath);
 
   // Validate user has access to workspace
-  await resolveWorkspaceContext(
+  await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,

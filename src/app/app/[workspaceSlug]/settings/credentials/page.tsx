@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { KeyRound } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listWorkspaceCredentials } from "@/core/credentials/vault";
@@ -28,7 +28,7 @@ export default async function CredentialsSettingsPage({
   const currentPath = `/app/${workspaceSlug}/settings/credentials`;
   const identity = await requireUserPage(currentPath);
 
-  const context = await resolveWorkspaceContext(
+  const context = await resolveRequestWorkspaceContext(
     prisma,
     identity.userId,
     workspaceSlug,

@@ -30,11 +30,48 @@ model Profile {
   @@map("profiles")
 }
 
+/// Partner level above organizations (ADR 0012). The house partner
+/// (`isHouse`) serves direct customers. Read-only for the application and
+/// scoped by RLS to `app.partner_id`.
+model Partner {
+  id              String          @id @db.Uuid
+  slug            String          @unique
+  name            String
+  status          String          @default("active")
+  isHouse         Boolean         @default(false) @map("is_house")
+  checkoutEnabled Boolean         @default(false) @map("checkout_enabled")
+  checkoutBlocked Boolean         @default(false) @map("checkout_blocked")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+  domains         PartnerDomain[]
+  organizations   Organization[]
+
+  @@map("partners")
+}
+
+/// Partner hosts (subdomain or custom). Platform hosts come from the
+/// environment and always resolve to the house partner.
+model PartnerDomain {
+  host      String   @id
+  partnerId String   @map("partner_id") @db.Uuid
+  kind      String
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@map("partner_domains")
+}
+
 model Organization {
   id          String               @id @db.Uuid
   name        String
   status      String               @default("active")
   maxSeats    Int                  @default(5) @map("max_seats")
+  /// Never written by the application (trigger in the P2 migration).
+  partnerId   String               @default("00000000-0000-4000-8000-000000000000") @map("partner_id") @db.Uuid
+  partner     Partner              @relation(fields: [partnerId], references: [id], onDelete: Restrict)
   createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
   members     OrganizationMember[]
@@ -42,6 +79,7 @@ model Organization {
   invitations Invitation[]
   auditEvents AuditEvent[]
 
+  @@index([partnerId])
   @@map("organizations")
 }
 

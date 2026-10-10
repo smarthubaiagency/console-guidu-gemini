@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getPlatformAdminMember } from "@/core/admin/platform";
-import { resolveWorkspaceContext } from "@/core/auth/context";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { requireMfa, requireUser } from "@/core/auth/identity";
 import {
   savePlatformModuleConfig,
@@ -57,7 +57,7 @@ export async function createHelloWorldRecordAction(
   }
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(
+    const context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug.data,
@@ -84,7 +84,7 @@ export async function saveHelloWorldWorkspaceSettingsAction(
   }
   try {
     const identity = await requireUser();
-    const context = await resolveWorkspaceContext(
+    const context = await resolveRequestWorkspaceContext(
       prisma,
       identity.userId,
       workspaceSlug.data,
