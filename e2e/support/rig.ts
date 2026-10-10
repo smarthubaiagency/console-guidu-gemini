@@ -12,4 +12,7 @@ export const RIG = {
 } as const;
 
 export const AUTH_BASE_URL = `http://127.0.0.1:${RIG.authPort}`;
-export const DATABASE_URL = `postgresql://postgres:postgres@127.0.0.1:${RIG.databasePort}/postgres?connection_limit=5`;
+// pgbouncer=true: no named prepared statements. PGlite serves a single
+// session shared by the web server and the job worker (F3a), where named
+// statements of two Prisma clients would collide.
+export const DATABASE_URL = `postgresql://postgres:postgres@127.0.0.1:${RIG.databasePort}/postgres?connection_limit=5&pgbouncer=true`;

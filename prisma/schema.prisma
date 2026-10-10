@@ -62,6 +62,35 @@ model Partner {
   @@map("partners")
 }
 
+/// Job run: transactional outbox of the web runtime and projection of the
+/// Executions page (F3a). The worker mirrors pg-boss state here.
+model JobRun {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind           String
+  scope          String    @default("workspace")
+  partnerId      String?   @map("partner_id") @db.Uuid
+  organizationId String?   @map("organization_id") @db.Uuid
+  workspaceId    String?   @map("workspace_id") @db.Uuid
+  requestedBy    String?   @map("requested_by") @db.Uuid
+  payload        Json      @default("{}")
+  idempotencyKey String    @map("idempotency_key")
+  status         String    @default("pending")
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(3) @map("max_attempts")
+  runAfter       DateTime  @default(now()) @map("run_after") @db.Timestamptz()
+  lastError      String?   @map("last_error")
+  result         Json?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  dispatchedAt   DateTime? @map("dispatched_at") @db.Timestamptz()
+  startedAt      DateTime? @map("started_at") @db.Timestamptz()
+  finishedAt     DateTime? @map("finished_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([kind, idempotencyKey])
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@map("job_runs")
+}
+
 /// Base plan of the platform (P5m). Values live in insert-only versions.
 model Plan {
   id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

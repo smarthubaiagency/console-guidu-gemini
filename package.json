@@ -11,6 +11,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "worker": "tsx --conditions=react-server src/worker/index.ts",
     "generate": "prisma generate",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",

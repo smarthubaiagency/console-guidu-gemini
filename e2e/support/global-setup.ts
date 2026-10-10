@@ -19,6 +19,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     onSeedWorkspace: (params) => database.seedWorkspace(params),
     onSeedInvitation: (params) => database.seedInvitation(params),
     onSeedPartner: (params) => database.seedPartner(params),
+    onRunJobs: () => database.runJobs(),
   });
 
   return async () => {
