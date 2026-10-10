@@ -291,15 +291,15 @@ Toda tabela com `partner_id` usa RLS por `app.partner_id`. As tabelas operaciona
 
 Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 
-| Item                                                                                                                | Esforço | Por que agora                                                               |
-| ------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------- |
-| Mover `/admin` para `/platform` (rotas, navegação gerada, testes e e2e)                                             | Baixo   | Fica mais caro a cada página administrativa nova                            |
-| Parceiro zero: tabela `partners` mínima e `organizations.partner_id` com padrão                                     | Baixo   | Todo dado novo já nasce ligado a um parceiro                                |
-| `resolveBrand(host)` no lugar do `appConfig`, devolvendo a marca do ambiente                                        | Baixo   | Toda tela passa a ler de um ponto que depois vira por parceiro              |
-| Contratos `PaymentProvider` e `ProviderEvent` com os dois modos de cobrança, mais o adaptador **manual** com testes | Médio   | Fixa a interface para Iugu e Stripe sem depender de conta no provedor       |
-| Porta de notificação com modelos por evento, usando hoje a marca do ambiente                                        | Médio   | Centraliza os e-mails antes de existirem muitos                             |
-| Tabelas de planos, divisão, assinaturas e pagamentos                                                                | Alto    | **Esperar a F3**: depende dos números do Comercial e da escolha de provedor |
-| Subdomínios, domínio próprio e hook de e-mail do Supabase                                                           | Alto    | **Esperar** a decisão de hospedagem de produção                             |
+| Item                                                                                                                | Esforço | Por que agora                                                            |
+| ------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------ |
+| Mover `/admin` para `/platform` (rotas, navegação gerada, testes e e2e)                                             | Baixo   | Fica mais caro a cada página administrativa nova                         |
+| Parceiro zero: tabela `partners` mínima e `organizations.partner_id` com padrão                                     | Baixo   | Todo dado novo já nasce ligado a um parceiro                             |
+| `resolveBrand(host)` no lugar do `appConfig`, devolvendo a marca do ambiente                                        | Baixo   | Toda tela passa a ler de um ponto que depois vira por parceiro           |
+| Contratos `PaymentProvider` e `ProviderEvent` com os dois modos de cobrança, mais o adaptador **manual** com testes | Médio   | Fixa a interface para Iugu e Stripe sem depender de conta no provedor    |
+| Porta de notificação com modelos por evento, usando hoje a marca do ambiente                                        | Médio   | Centraliza os e-mails antes de existirem muitos                          |
+| Tabelas de planos, divisão, assinaturas e pagamentos                                                                | Alto    | **Antecipado na P5m** (D-PA-14): valores viram cadastro, provedor manual |
+| Subdomínios, domínio próprio e hook de e-mail do Supabase                                                           | Alto    | **Esperar** a decisão de hospedagem de produção                          |
 
 ## 10. Decisões necessárias
 
@@ -318,6 +318,7 @@ Sem regra comercial nova e sem quebrar a ordem das fases (ADR 0003):
 | D-PA-11 | Valor base do parceiro por plano                  | Comercial: igual ao repasse mínimo ou preço próprio                                                      |
 | D-PA-12 | Fatura consolidada do parceiro                    | Começar por assinatura; consolidar depois                                                                |
 | D-PA-13 | Inadimplência do parceiro                         | Aviso ao parceiro, carência e depois suspensão; aviso ao cliente a definir                               |
+| D-PA-14 | Cobrança antes do provedor real                   | **[Decidido]** Manual e simulada (P5m); Iugu e Stripe previstos e desligados (10/10/2026)                |
 
 ## 11. Critérios de aceite (quando implementado)
 
