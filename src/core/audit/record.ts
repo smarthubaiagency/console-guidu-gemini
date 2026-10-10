@@ -21,6 +21,7 @@ import "server-only";
 import crypto from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
+import { appLog } from "@/lib/telemetry/log";
 import {
   type ContextTransaction,
   type RequestContext,
@@ -274,6 +275,6 @@ export async function recordAuditDenied(
     });
   } catch (err) {
     // Non-fatal for the denial response: log warning and let PermissionDeniedError bubble up
-    console.error("Failed to persist audit denial event in short transaction:", err);
+    appLog.error("audit.denial_not_recorded", { error: err });
   }
 }

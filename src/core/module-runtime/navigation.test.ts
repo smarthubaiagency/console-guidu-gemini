@@ -192,6 +192,20 @@ describe("generated navigation", () => {
     expect(find(owner, "platform.billing")?.href).toBe("/platform/billing");
     expect(find(none, "platform.billing")).toBeUndefined();
     expect(find(none, "hello-world.admin")).toBeUndefined();
+    // Operations (F3d): owner, operations and support; not billing.
+    expect(find(owner, "platform.operations")?.href).toBe(
+      "/platform/operations",
+    );
+    const support = buildPlatformNavigation({
+      modules: listRegisteredModules(),
+      grants: platformGrants("support"),
+    });
+    expect(find(support, "platform.operations")).toBeDefined();
+    const billing = buildPlatformNavigation({
+      modules: listRegisteredModules(),
+      grants: platformGrants("billing"),
+    });
+    expect(find(billing, "platform.operations")).toBeUndefined();
   });
 
   it("builds the partner console by partner role (D-PA-02)", () => {

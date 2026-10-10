@@ -13,6 +13,8 @@
  */
 
 import crypto from "node:crypto";
+import { appLog } from "@/lib/telemetry/log";
+
 import { redact } from "./redact";
 
 export type AppErrorCode =
@@ -156,15 +158,12 @@ export function toSafeError(
   if (options?.log !== false) {
     const errorName = err instanceof Error ? err.name : typeof err;
     const rawMessage = err instanceof Error ? err.message : String(err);
-    console.error(
-      JSON.stringify({
-        level: "error",
-        requestId: reqId,
-        code,
-        errorName,
-        message: redact(rawMessage),
-      }),
-    );
+    appLog.error("app.error", {
+      requestId: reqId,
+      code,
+      errorName,
+      message: redact(rawMessage),
+    });
   }
 
   return {

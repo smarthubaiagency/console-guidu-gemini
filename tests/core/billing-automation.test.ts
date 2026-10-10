@@ -64,6 +64,9 @@ describeDatabase("F3c: billing in jobs", requiredVars, () => {
   const status = async (id: string) =>
     (await admin.subscription.findUniqueOrThrow({ where: { id } })).status;
 
+  // Audit events are append-only: count only this run's.
+  const testStartedAt = new Date();
+
   async function cleanup() {
     await admin.$executeRawUnsafe(
       `delete from public.job_runs where kind like 'billing.%'`,
@@ -219,6 +222,7 @@ describeDatabase("F3c: billing in jobs", requiredVars, () => {
     >(
       `select actor_principal_type, origin, metadata from public.audit_events
        where resource_id in ('${subP}', '${subQ}') and action = 'billing.subscription.status'
+         and occurred_at >= '${testStartedAt.toISOString()}'
        order by occurred_at`,
     );
     expect(audits).toHaveLength(2);

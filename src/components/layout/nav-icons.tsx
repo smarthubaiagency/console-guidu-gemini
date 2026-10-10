@@ -1,5 +1,6 @@
 import { createElement } from "react";
 import {
+  Activity,
   Bot,
   Building2,
   Code2,
@@ -25,6 +26,7 @@ import {
 
 /** Allowlisted icons for generated navigation (Adendo §8.1). */
 const NAV_ICONS: Record<string, LucideIcon> = {
+  activity: Activity,
   bot: Bot,
   building: Building2,
   code: Code2,

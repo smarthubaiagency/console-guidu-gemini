@@ -7,6 +7,7 @@ import { cache } from "react";
 import { appConfig } from "@/core/config/app";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
+import { appLog } from "@/lib/telemetry/log";
 import { withPartnerContext } from "@/lib/prisma/with-partner-context";
 
 import { deriveBrandPalette, normalizeHexColor } from "./tokens";
@@ -101,9 +102,9 @@ export const getRequestBrand = cache(async (): Promise<Brand> => {
     partnerId = partner.partnerId;
     return await loadActiveBrand(prisma, partner.partnerId);
   } catch (error) {
-    console.error("brand: falling back to the environment brand", {
+    appLog.error("brand.fallback", {
       partnerId,
-      error: error instanceof Error ? error.name : "unknown",
+      errorName: error instanceof Error ? error.name : "unknown",
     });
     return environmentBrand(partnerId);
   }
