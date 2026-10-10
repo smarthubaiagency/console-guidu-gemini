@@ -1,3 +1,5 @@
+import { hostname } from "node:os";
+
 import { PrismaClient } from "@prisma/client";
 import { PgBoss, type Job } from "pg-boss";
 
@@ -15,6 +17,7 @@ import type {
   ContextTransaction,
   RequestContext,
 } from "@/lib/prisma/with-context";
+import { createLogger, type LogLevel } from "@/lib/telemetry/log";
 
 /**
  * Job worker (ADR 0002, F3a). Runs in its own process as `app_worker`:
@@ -39,6 +42,11 @@ import type {
  * their own narrow policies, one run per kind at a time. The scheduler
  * inserts their runs with a key per period (`on conflict do nothing`), so
  * repeated ticks and several workers start each period once.
+ *
+ * Observability (F3d): a heartbeat per instance and queue metrics per job
+ * kind go to tables only the platform reads (/platform/operations); `health`
+ * answers the worker's live/ready probes; logs are structured JSON lines
+ * with the jobId (docs/operacao/observabilidade.md).
  */
 
 export type WorkerOptions = Readonly<{
@@ -55,7 +63,17 @@ export type WorkerOptions = Readonly<{
   /** Clock of the scheduler (tests control it). */
   now?: () => Date;
   instanceName?: string;
+  heartbeatIntervalMs?: number;
+  metricsIntervalMs?: number;
   log?: (event: Record<string, unknown>) => void;
+}>;
+
+export type WorkerHealth = Readonly<{
+  live: boolean;
+  /** Started and the database answered recently. */
+  ready: boolean;
+  instanceName: string;
+  lastDatabaseOkAt: Date | null;
 }>;
 
 export type JobWorker = Readonly<{
@@ -65,6 +83,11 @@ export type JobWorker = Readonly<{
   dispatchOnce(): Promise<number>;
   /** Inserts the due scheduled runs now; returns how many were new. */
   scheduleOnce(): Promise<number>;
+  /** Records this instance as alive now. */
+  heartbeatOnce(): Promise<void>;
+  /** Publishes one snapshot of queue metrics; returns the rows written. */
+  publishMetricsOnce(): Promise<number>;
+  health(): WorkerHealth;
 }>;
 
 type RunRow = {
@@ -83,8 +106,22 @@ type RunRow = {
 
 const FINISHED = new Set(["succeeded", "skipped", "canceled", "failed"]);
 
-function defaultLog(event: Record<string, unknown>): void {
-  console.log(JSON.stringify({ level: "info", source: "worker", ...event }));
+const workerLog = createLogger("worker");
+const LEVELS = new Set<LogLevel>(["debug", "info", "warn", "error"]);
+
+function defaultLog(entry: Record<string, unknown>): void {
+  const { level, event, ...fields } = entry;
+  const lvl = LEVELS.has(level as LogLevel) ? (level as LogLevel) : "info";
+  workerLog[lvl](typeof event === "string" ? event : "worker.event", fields);
+}
+
+/** Default instance name: the host name, as the heartbeat table accepts. */
+function defaultInstanceName(): string {
+  const name = hostname()
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/^[^a-zA-Z0-9]+/, "")
+    .slice(0, 63);
+  return name || "worker";
 }
 
 /** pg-boss's database adapter shape (not exported by the package). */
@@ -110,6 +147,11 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     byKind.has(s.kind),
   );
   const clock = options.now ?? (() => new Date());
+  const instanceName = options.instanceName ?? defaultInstanceName();
+  const startedAt = new Date();
+  let started = false;
+  let lastDatabaseOkAt: Date | null = null;
+  const heartbeatInterval = options.heartbeatIntervalMs ?? 30_000;
   const prisma = new PrismaClient({
     datasources: { db: { url: options.databaseUrl } },
   });
@@ -120,7 +162,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     migrate: false,
     createSchema: false,
     application_name: "guidu-worker",
-    ...(options.instanceName ? { instanceName: options.instanceName } : {}),
+    instanceName,
   });
   boss.on("error", (error: Error) =>
     log({ level: "error", event: "pgboss.error", message: error.message }),
@@ -131,6 +173,8 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     Math.max(300, ...definitions.map((d) => d.expireInSeconds ?? 300)) * 1000;
   let dispatchTimer: NodeJS.Timeout | null = null;
   let scheduleTimer: NodeJS.Timeout | null = null;
+  let heartbeatTimer: NodeJS.Timeout | null = null;
+  let metricsTimer: NodeJS.Timeout | null = null;
   let dispatching: Promise<number> | null = null;
   let stopped = false;
 
@@ -204,6 +248,92 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
       }
     }
     return created;
+  }
+
+  async function heartbeatOnce(status: "running" | "stopped" = "running") {
+    await prisma.$executeRaw`
+      insert into public.worker_heartbeats
+        (instance_name, started_at, last_seen_at, status, concurrency, queues, version)
+      values (${instanceName}, ${startedAt}, now(), ${status},
+              ${options.concurrency ?? 4}, ${definitions.length},
+              ${process.env.GUIDU_VERSION ?? null})
+      on conflict (instance_name) do update
+      set started_at = excluded.started_at, last_seen_at = now(),
+          status = excluded.status, concurrency = excluded.concurrency,
+          queues = excluded.queues, version = excluded.version
+    `;
+    lastDatabaseOkAt = new Date();
+  }
+
+  async function publishMetricsOnce(): Promise<number> {
+    const kinds = definitions.map((d) => d.kind);
+    if (kinds.length === 0) return 0;
+    const queues = kinds.map(queueName);
+    const written = await prisma.$transaction(async (tx) => {
+      const inserted = await tx.$executeRaw`
+        with kinds as (select unnest(${kinds}::text[]) as kind),
+        runs as (
+          select kind,
+            count(*) filter (where status = 'pending') as pending,
+            count(*) filter (where status = 'queued') as queued,
+            count(*) filter (where status = 'running') as running,
+            count(*) filter (where status = 'succeeded' and finished_at >= now() - interval '24 hours') as succeeded_24h,
+            count(*) filter (where status = 'failed' and finished_at >= now() - interval '24 hours') as failed_24h,
+            count(*) filter (where status = 'skipped' and finished_at >= now() - interval '24 hours') as skipped_24h,
+            extract(epoch from now() - min(created_at) filter (where status = 'pending'))::integer
+              as oldest_pending_seconds,
+            (avg(extract(epoch from finished_at - started_at) * 1000)
+              filter (where status = 'succeeded' and finished_at >= now() - interval '24 hours'
+                      and started_at is not null))::integer as avg_ms,
+            (percentile_cont(0.95) within group (order by extract(epoch from finished_at - started_at) * 1000)
+              filter (where status = 'succeeded' and finished_at >= now() - interval '24 hours'
+                      and started_at is not null))::integer as p95_ms
+          from public.job_runs
+          where kind = any(${kinds}::text[])
+            and (status in ('pending', 'queued', 'running') or finished_at >= now() - interval '24 hours')
+          group by kind
+        ),
+        boss as (
+          select name,
+            count(*) filter (where state in ('created', 'retry')) as waiting,
+            count(*) filter (where state = 'active') as active
+          from pgboss.job
+          where name = any(${queues}::text[])
+          group by name
+        )
+        insert into public.queue_metrics
+          (instance_name, kind, pending, queued, running, succeeded_24h, failed_24h,
+           skipped_24h, oldest_pending_seconds, avg_duration_ms_24h, p95_duration_ms_24h,
+           boss_waiting, boss_active)
+        select ${instanceName}, k.kind,
+               coalesce(r.pending, 0), coalesce(r.queued, 0), coalesce(r.running, 0),
+               coalesce(r.succeeded_24h, 0), coalesce(r.failed_24h, 0), coalesce(r.skipped_24h, 0),
+               greatest(r.oldest_pending_seconds, 0), r.avg_ms, r.p95_ms,
+               coalesce(b.waiting, 0), coalesce(b.active, 0)
+        from kinds k
+        left join runs r on r.kind = k.kind
+        left join boss b on b.name = 'job/' || k.kind
+      `;
+      // Retention of 7 days (the policy allows deleting only older rows).
+      await tx.$executeRaw`
+        delete from public.queue_metrics where captured_at < now() - interval '7 days'
+      `;
+      return inserted;
+    });
+    lastDatabaseOkAt = new Date();
+    return written;
+  }
+
+  function health(): WorkerHealth {
+    const fresh =
+      lastDatabaseOkAt !== null &&
+      Date.now() - lastDatabaseOkAt.getTime() <= heartbeatInterval * 3;
+    return {
+      live: true,
+      ready: started && !stopped && fresh,
+      instanceName,
+      lastDatabaseOkAt,
+    };
   }
 
   async function recordFailure(
@@ -341,7 +471,11 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
         { timeout: maxRunMs, maxWait: 30_000 },
       );
       if (run) {
-        log({ event: "job.succeeded", jobRunId, kind: (run as RunRow).kind });
+        log({
+          event: "job.succeeded",
+          jobId: jobRunId,
+          kind: (run as RunRow).kind,
+        });
       }
     } catch (error) {
       if (!run) throw error;
@@ -357,7 +491,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
       log({
         level: outcome.action === "retry" ? "warn" : "info",
         event: `job.${outcome.action}`,
-        jobRunId,
+        jobId: jobRunId,
         kind: current.kind,
         attempt: job.retryCount + 1,
       });
@@ -369,6 +503,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
   async function start(): Promise<void> {
     stopped = false;
     await boss.start();
+    await heartbeatOnce();
     await boss.createQueue(DEAD_LETTER_QUEUE, { retryLimit: 0 });
     for (const definition of definitions) {
       const name = queueName(definition.kind);
@@ -399,6 +534,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
       if (stopped) return;
       try {
         await dispatchOnce();
+        lastDatabaseOkAt = new Date();
       } catch (error) {
         log({
           level: "error",
@@ -425,18 +561,70 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
       if (!stopped) scheduleTimer = setTimeout(scheduleTick, scheduleInterval);
     };
     if (schedules.length > 0) scheduleTimer = setTimeout(scheduleTick, 0);
-    log({ event: "worker.started", queues: definitions.map((d) => d.kind) });
+
+    const repeat = (
+      name: string,
+      intervalMs: number,
+      run: () => Promise<unknown>,
+      set: (timer: NodeJS.Timeout) => void,
+    ) => {
+      const tick = async () => {
+        if (stopped) return;
+        try {
+          await run();
+        } catch (error) {
+          log({
+            level: "error",
+            event: `${name}.error`,
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
+        if (!stopped) set(setTimeout(tick, intervalMs));
+      };
+      set(setTimeout(tick, intervalMs));
+    };
+    repeat("heartbeat", heartbeatInterval, heartbeatOnce, (t) => {
+      heartbeatTimer = t;
+    });
+    repeat(
+      "metrics",
+      options.metricsIntervalMs ?? 60_000,
+      publishMetricsOnce,
+      (t) => {
+        metricsTimer = t;
+      },
+    );
+    started = true;
+    log({
+      event: "worker.started",
+      instanceName,
+      queues: definitions.map((d) => d.kind),
+    });
   }
 
   async function stop(): Promise<void> {
     stopped = true;
     if (dispatchTimer) clearTimeout(dispatchTimer);
     if (scheduleTimer) clearTimeout(scheduleTimer);
+    if (heartbeatTimer) clearTimeout(heartbeatTimer);
+    if (metricsTimer) clearTimeout(metricsTimer);
     if (dispatching) await dispatching.catch(() => 0);
     await boss.stop({ graceful: true, timeout: 20_000 });
+    if (started) {
+      await heartbeatOnce("stopped").catch(() => undefined);
+    }
+    started = false;
     await prisma.$disconnect();
     log({ event: "worker.stopped" });
   }
 
-  return { start, stop, dispatchOnce, scheduleOnce };
+  return {
+    start,
+    stop,
+    dispatchOnce,
+    scheduleOnce,
+    heartbeatOnce: () => heartbeatOnce(),
+    publishMetricsOnce,
+    health,
+  };
 }

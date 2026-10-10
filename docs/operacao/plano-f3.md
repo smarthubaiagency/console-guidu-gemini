@@ -57,7 +57,7 @@ Fora desta etapa: não há criação de workspace pelo cliente, então a cota `c
 
 ### F3c — Cobrança em job (segunda metade da P5b)
 
-**Estado:** pronta para revisão. Migration `20261015090000_f3c_billing_automation.sql` (como `app_migrations`).
+**Estado:** concluída (PR #31), migration `20261015090000_f3c_billing_automation.sql` aplicada no dev.
 
 Entregue:
 
@@ -76,10 +76,21 @@ Aprendizados:
 
 ### F3d — Observabilidade
 
-- `/api/health/live` e `/api/health/ready` no web; equivalente no worker.
-- Métricas da fila publicadas pelo worker numa tabela que só a plataforma lê.
-- Tela `/platform/operations` com saúde, filas, falhas e consumo, com tamanho da amostra e "Sem dados".
-- Convenção de logs estruturados (requestId, jobId, sem segredos) com teste; documento de alertas.
+**Estado:** pronta para revisão. Migration `20261016090000_f3d_operations.sql` (como `app_migrations`). Detalhes em [observabilidade.md](observabilidade.md).
+
+Entregue:
+
+- **Logs estruturados:** `src/lib/telemetry/log.ts`, uma linha JSON por evento com `ts`, `level`, `source`, `event` e `requestId` (web) ou `jobId` (worker). Valores redigidos e campos com nome de segredo cortados. Erros do web (`toSafeError`), marca, auditoria e todo o worker passaram a usá-lo; um teste recusa `console.*` fora dele.
+- **Probes:** `/api/health/live` e `/api/health/ready` no web (banco em até 2 s, sem detalhes, sem cache). No worker, `/health/live` e `/health/ready` em `WORKER_HEALTH_PORT` (pronto quando iniciou e o banco respondeu nos últimos 90 s).
+- **Métricas:** o worker grava heartbeat por instância (30 s) e um retrato por tipo de job (60 s) em `worker_heartbeats` e `queue_metrics`. O retrato traz contagens de `job_runs` e do pg-boss, idade do pendente mais antigo e durações das últimas 24 h; fica 7 dias. Só o worker escreve; só owner, operations e support leem (permissão nova `platform.operations.read`, fora do papel billing).
+- **Tela `/platform/operations`** (menu "Operações"): saúde do banco e dos workers (em funcionamento, parado, sem sinal), filas com a idade do retrato, execuções de 24 h com a amostra, falhas de 7 dias com a mensagem segura. "Sem dados" quando o worker não publicou.
+- **Alertas:** tabela de alertas recomendados em [observabilidade.md](observabilidade.md), para configurar no provedor na F6/P7.
+- Testes: suíte SQL `operations-rls.sql`; unitários do logger (redação, campos fixos, correlação), da convenção de logs, das probes do web e do worker e dos rótulos da tela; integração `operations.test.ts` (heartbeat, retrato, falhas, worker parado, papéis); e2e das probes do web e da tela.
+
+Decisões desta etapa:
+
+- "Consumo" na tela é o volume de execuções de 24 h por tipo de job, com a amostra. O consumo por workspace (cotas) já está em "Consumo & Limites" da F3b.
+- O readiness do web não depende do worker: sem worker o web segue servindo e os jobs esperam em `job_runs`.
 
 ### F3e — Privacidade e recuperação
 
@@ -94,5 +105,7 @@ Aprendizados:
 ```bash
 WORKER_DATABASE_URL="postgresql://app_worker:<senha>@<host>:5432/postgres" pnpm worker
 ```
+
+Com `WORKER_HEALTH_PORT=8081`, as probes do worker respondem em `http://<host>:8081/health/live` e `/health/ready`. `WORKER_INSTANCE_NAME` dá o nome mostrado em `/platform/operations` (padrão: nome do host).
 
 O `app_worker` nasce sem senha. Em cada ambiente, defina com um papel que tenha ADMIN sobre ele (no dev, `postgres`): `alter role app_worker with password '<senha>';`.

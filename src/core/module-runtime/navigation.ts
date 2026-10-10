@@ -37,6 +37,7 @@ import {
 
 export type NavIconKey =
   | ModuleIconKey
+  | "activity"
   | "code"
   | "credit-card"
   | "gauge"
@@ -368,6 +369,7 @@ export function buildPlatformNavigation(
   const canReadPartners = input.grants("platform.partners.read");
   const canManageLegal = input.grants("platform.legal.manage");
   const canReadBilling = input.grants("platform.billing.read");
+  const canReadOperations = input.grants("platform.operations.read");
 
   return [
     {
@@ -426,6 +428,16 @@ export function buildPlatformNavigation(
                 label: "Cobrança",
                 href: "/platform/billing",
                 iconKey: "credit-card",
+              }),
+            ]
+          : []),
+        ...(canReadOperations
+          ? [
+              item({
+                id: "platform.operations",
+                label: "Operações",
+                href: "/platform/operations",
+                iconKey: "activity",
               }),
             ]
           : []),

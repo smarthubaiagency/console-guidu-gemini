@@ -91,6 +91,42 @@ model JobRun {
   @@map("job_runs")
 }
 
+/// Heartbeat of a worker instance (F3d); only the platform reads it.
+model WorkerHeartbeat {
+  instanceName String   @id @map("instance_name")
+  startedAt    DateTime @map("started_at") @db.Timestamptz()
+  lastSeenAt   DateTime @default(now()) @map("last_seen_at") @db.Timestamptz()
+  status       String   @default("running")
+  concurrency  Int
+  queues       Int
+  version      String?
+
+  @@map("worker_heartbeats")
+}
+
+/// Queue snapshot per job kind published by the worker (F3d), kept 7 days.
+model QueueMetric {
+  id                   BigInt   @id @default(autoincrement())
+  capturedAt           DateTime @default(now()) @map("captured_at") @db.Timestamptz()
+  instanceName         String   @map("instance_name")
+  kind                 String
+  pending              Int
+  queued               Int
+  running              Int
+  succeeded24h         Int      @map("succeeded_24h")
+  failed24h            Int      @map("failed_24h")
+  skipped24h           Int      @map("skipped_24h")
+  oldestPendingSeconds Int?     @map("oldest_pending_seconds")
+  avgDurationMs24h     Int?     @map("avg_duration_ms_24h")
+  p95DurationMs24h     Int?     @map("p95_duration_ms_24h")
+  bossWaiting          Int      @map("boss_waiting")
+  bossActive           Int      @map("boss_active")
+
+  @@index([capturedAt(sort: Desc)])
+  @@index([kind, capturedAt(sort: Desc)])
+  @@map("queue_metrics")
+}
+
 /// Provisional billing terms of decision 4 of the F3 plan (single row, F3c).
 model BillingSettings {
   id               Int      @id @default(1) @db.SmallInt

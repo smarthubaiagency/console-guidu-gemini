@@ -10,6 +10,7 @@
  *   - Denies non-admin accounts access via server guard.
  * - ADR 0012: the console moved from /admin to /platform; /admin is the
  *   partner console and requires a partner role.
+ * - F3d: /platform/operations shows health, queues, volume and failures.
  * ============================================================================
  */
 
@@ -70,6 +71,19 @@ test.describe("Platform Administration Governance Console", () => {
     await expect(
       page.getByRole("heading", { name: "Usuários da Plataforma" }),
     ).toBeVisible();
+
+    // Operations (F3d): health, queues, volume and failures, with "Sem
+    // dados" where the worker has not published yet.
+    await page.goto("/platform/operations");
+    await expect(
+      page.getByRole("heading", { name: "Operações" }),
+    ).toBeVisible();
+    await expect(page.getByTestId("operations-health")).toContainText(
+      "Banco de dados: respondendo",
+    );
+    await expect(page.getByTestId("operations-queues")).toBeVisible();
+    await expect(page.getByTestId("operations-volume")).toBeVisible();
+    await expect(page.getByTestId("operations-failures")).toBeVisible();
   });
 
   test("denies access to regular user with MFA who is not a platform admin", async ({

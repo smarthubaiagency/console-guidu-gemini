@@ -59,6 +59,8 @@ export const Permissions = {
   // Plans, floors, split rules and amounts due per partner (P5m).
   PLATFORM_BILLING_READ: "platform.billing.read",
   PLATFORM_BILLING_MANAGE: "platform.billing.manage",
+  // Health, queues, failures and job volume (/platform/operations, F3d).
+  PLATFORM_OPERATIONS_READ: "platform.operations.read",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
