@@ -13,6 +13,8 @@
  * - P4b: the owner offers a module, builds a template and registers a
  *   customer, whose owner accepts on the partner domain and lands in the
  *   workspace with the template module and the partner brand.
+ * - P4b2: terms published by the partner are accepted on the next access;
+ *   support access is requested, approved, used as viewer and revoked.
  * ============================================================================
  */
 
@@ -41,7 +43,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
   browser,
 }) => {
   // Three identities on two hosts: longer than the default budget.
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const stamp = Date.now().toString(36);
   const slug = `agencia-${stamp}`;
   const host = `${slug}.localhost`;
@@ -194,6 +196,58 @@ test("platform creates a partner whose owner runs the console on the partner dom
   await expect(
     customerPage.getByRole("link", { name: /Hello/ }).first(),
   ).toBeVisible();
+
+  // P4b2: the partner publishes terms; the customer accepts on next access.
+  await owner.goto("/admin/legal");
+  const publish = owner.getByTestId("publish-legal");
+  await publish.getByLabel("Título").fill("Termos da Agência E2E");
+  await publish.getByLabel("Texto").fill("Cláusula única de teste.");
+  await publish.getByRole("button", { name: "Publicar" }).click();
+  await expect(publish.getByRole("status")).toContainText(
+    "Versão 1 publicada.",
+  );
+
+  await customerPage.goto(`/app/${customerSlug}`);
+  await expect(customerPage).toHaveURL(/\/legal\/accept\?next=/);
+  await expect(customerPage.getByText("Termos da Agência E2E")).toBeVisible();
+  await customerPage.getByLabel("Li e aceito os documentos acima.").check();
+  await customerPage
+    .getByRole("button", { name: "Aceitar e continuar" })
+    .click();
+  await expect(customerPage).toHaveURL(new RegExp(`/app/${customerSlug}$`));
+
+  // P4b2: temporary support access, approved and revoked by the customer.
+  await owner.goto("/admin/support");
+  const support = owner.getByTestId("request-support");
+  await support.getByLabel("Motivo").fill("Ajudar na configuração inicial");
+  await support.getByRole("button", { name: "Pedir acesso" }).click();
+  await expect(support.getByRole("status")).toContainText("Pedido enviado");
+
+  await customerPage.goto(`/app/${customerSlug}/settings/support`);
+  const grants = customerPage.getByTestId("workspace-support-grants");
+  await expect(grants).toContainText("Ajudar na configuração inicial");
+  await grants.getByRole("button", { name: "Aprovar" }).click();
+  await expect(grants).toContainText("Aprovado até");
+
+  await owner.goto("/admin/support");
+  await owner.getByRole("link", { name: "Abrir workspace" }).click();
+  // The partner member also accepts the partner terms before /app.
+  await expect(owner).toHaveURL(/\/legal\/accept\?next=/);
+  await owner.getByLabel("Li e aceito os documentos acima.").check();
+  await owner.getByRole("button", { name: "Aceitar e continuar" }).click();
+  await expect(owner).toHaveURL(new RegExp(`/app/${customerSlug}$`));
+  await expect(
+    owner.getByRole("heading", { name: "Operação E2E" }),
+  ).toBeVisible();
+
+  await customerPage.reload();
+  await grants.getByRole("button", { name: "Revogar" }).click();
+  await expect(grants).toContainText("Encerrado");
+  const afterRevoke = await owner.evaluate(async (path) => {
+    const response = await fetch(path, { redirect: "manual" });
+    return response.status;
+  }, `/app/${customerSlug}`);
+  expect(afterRevoke).toBe(404);
 
   await customerContext.close();
   await partnerContext.close();

@@ -50,8 +50,65 @@ model Partner {
   invitations     PartnerInvitation[]
   offeredModules  PartnerOfferedModule[]
   templates       PartnerWorkspaceTemplate[]
+  legalDocuments  PartnerLegalDocument[]
+  supportGrants   PartnerSupportGrant[]
 
   @@map("partners")
+}
+
+/// Terms and privacy policy of a partner, versioned and insert-only (P4b2).
+model PartnerLegalDocument {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId          String            @map("partner_id") @db.Uuid
+  kind               String
+  version            Int
+  title              String
+  body               String
+  requiresAcceptance Boolean           @default(true) @map("requires_acceptance")
+  publishedBy        String?           @map("published_by") @db.Uuid
+  publishedAt        DateTime          @default(now()) @map("published_at") @db.Timestamptz()
+  partner            Partner           @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  acceptances        LegalAcceptance[]
+
+  @@unique([partnerId, kind, version])
+  @@map("partner_legal_documents")
+}
+
+/// Acceptance of one legal document version by one user (P4b2).
+model LegalAcceptance {
+  userId     String               @map("user_id") @db.Uuid
+  documentId String               @map("document_id") @db.Uuid
+  acceptedAt DateTime             @default(now()) @map("accepted_at") @db.Timestamptz()
+  document   PartnerLegalDocument @relation(fields: [documentId], references: [id], onDelete: Restrict)
+
+  @@id([userId, documentId])
+  @@map("legal_acceptances")
+}
+
+/// Temporary support access of a partner member to a customer (P4b2).
+model PartnerSupportGrant {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId      String    @map("partner_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String?   @map("workspace_id") @db.Uuid
+  workspaceSlug  String?   @map("workspace_slug")
+  granteeUserId  String    @map("grantee_user_id") @db.Uuid
+  granteeEmail   String    @map("grantee_email")
+  requestedBy    String    @map("requested_by") @db.Uuid
+  reason         String
+  durationHours  Int       @map("duration_hours")
+  status         String    @default("pending")
+  expiresAt      DateTime? @map("expires_at") @db.Timestamptz()
+  decidedBy      String?   @map("decided_by") @db.Uuid
+  decidedAt      DateTime? @map("decided_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  partner        Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([organizationId])
+  @@index([granteeUserId])
+  @@map("partner_support_grants")
 }
 
 /// Modules a partner offers to its customers (P4b).
@@ -213,6 +270,9 @@ model WorkspaceMember {
   userId         String    @map("user_id") @db.Uuid
   role           String
   status         String    @default("active")
+  /// Temporary support membership (P4b2): valid only while the grant is
+  /// approved and unexpired; the SQL membership helpers enforce it.
+  supportGrantId String?   @map("support_grant_id") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
   workspace      Workspace @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)

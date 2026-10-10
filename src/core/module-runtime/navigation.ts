@@ -280,6 +280,17 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
           href: `${base}/settings/usage`,
           iconKey: "gauge",
         }),
+        // Temporary partner support access (ADR 0012, P4b2): owner/admin.
+        ...(input.grants("workspace.members.manage")
+          ? [
+              item({
+                id: "core.support",
+                label: "Acesso de suporte",
+                href: `${base}/settings/support`,
+                iconKey: "hand",
+              }),
+            ]
+          : []),
       ],
     },
   ];
@@ -317,6 +328,7 @@ export function buildPlatformNavigation(
   const canReadModules = input.grants("platform.modules.read");
   const canManageBrand = input.grants("platform.brand.manage");
   const canReadPartners = input.grants("platform.partners.read");
+  const canManageLegal = input.grants("platform.legal.manage");
 
   return [
     {
@@ -365,6 +377,16 @@ export function buildPlatformNavigation(
                 label: "Parceiros",
                 href: "/platform/partners",
                 iconKey: "handshake",
+              }),
+            ]
+          : []),
+        ...(canManageLegal
+          ? [
+              item({
+                id: "platform.legal",
+                label: "Termos e privacidade",
+                href: "/platform/legal",
+                iconKey: "file-text",
               }),
             ]
           : []),
@@ -429,6 +451,26 @@ export function buildPartnerNavigation(grants: Grants): NavSection[] {
                 label: "Modelos de workspace",
                 href: "/admin/templates",
                 iconKey: "layers",
+              }),
+            ]
+          : []),
+        ...(grants("partner.support.request")
+          ? [
+              item({
+                id: "partner.support",
+                label: "Acesso de suporte",
+                href: "/admin/support",
+                iconKey: "hand",
+              }),
+            ]
+          : []),
+        ...(grants("partner.legal.manage")
+          ? [
+              item({
+                id: "partner.legal",
+                label: "Termos e privacidade",
+                href: "/admin/legal",
+                iconKey: "file-text",
               }),
             ]
           : []),
