@@ -32,7 +32,7 @@ import {
 } from "@/modules/registry";
 
 import {
-  buildAdminNavigation,
+  buildPlatformNavigation,
   buildAppNavigation,
   type NavSection,
 } from "./navigation";
@@ -75,10 +75,10 @@ export async function loadAppNavigation(
   });
 }
 
-export function loadAdminNavigation(
+export function loadPlatformNavigation(
   role: PlatformAdminRoleKey | null,
 ): NavSection[] {
-  return buildAdminNavigation({
+  return buildPlatformNavigation({
     modules: listRegisteredModules(),
     grants: platformGrants(role),
   });

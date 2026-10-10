@@ -48,7 +48,7 @@ export function AppHeader({
       <div className="flex items-center gap-3">
         {isPlatformAdmin && (
           <Link
-            href="/admin"
+            href="/platform"
             className="text-12 text-warning-text bg-warning-bg hover:bg-warning-border border-warning-border flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-medium transition"
           >
             <ShieldAlert className="text-warning-solid h-3.5 w-3.5" />

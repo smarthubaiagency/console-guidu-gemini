@@ -20,11 +20,15 @@ São **sete etapas**. P1 a P4 não dependem de nenhuma decisão comercial e pode
 
 ## P1 — `/admin` vira `/platform`
 
+**Estado:** concluída no PR #19.
+
 **Objetivo:** liberar `/admin` para o console do parceiro sem mudar comportamento.
 
 - Mover as rotas de `src/app/admin` para `src/app/platform` (painel, clientes, usuários, workspaces, módulos e configurações de módulos).
 - Atualizar `src/proxy.ts`, o guard de página, a navegação gerada (`buildAdminNavigation` → `buildPlatformNavigation`), os links do cabeçalho, as ações de módulos e os comentários que citam `/admin`.
 - `/admin` responde 404 até a P4.
+- **[Proposta]** A superfície MCP administrativa da ADR 0009, ainda não construída (F4), nasce como `/mcp/platform` em vez de `/mcp/admin`.
+- O valor `"admin"` do campo `destination` do manifesto de módulos continua significando o console da plataforma, para não mudar o contrato 1.0.0; a revisão fica para a P4.
 - Atualizar ADR 0005 (rotas) com nota de alteração pela ADR 0012.
 - Testes: unitários de navegação, `navigation-and-admin.test.ts`, e2e `platform-admin`, `auth-mfa` e `modules-hello-world` nas rotas novas.
 

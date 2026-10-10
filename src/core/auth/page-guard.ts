@@ -32,7 +32,7 @@ export function requireMfaPage(currentPath: string): Promise<Identity> {
 }
 
 /**
- * Server guard for internal administration pages (/admin).
+ * Server guard for internal administration pages (/platform).
  * Enforces both Multi-Factor Authentication (AAL2) and active membership
  * in platform_admin_members (spec Section 7 and 12).
  */

@@ -122,7 +122,7 @@ export async function saveHelloWorldAdminSettingsAction(
         defaultGreeting ? { defaultGreeting } : {},
       ),
     );
-    revalidatePath(`/admin/settings/modules/${MODULE_KEY}`);
+    revalidatePath(`/platform/settings/modules/${MODULE_KEY}`);
     revalidatePath("/app", "layout");
     return { success: true, message: "Política global salva." };
   } catch (err) {

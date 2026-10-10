@@ -9,12 +9,12 @@ import type { NavSection } from "@/core/module-runtime/navigation";
 import { activeNavItemId } from "./nav-active";
 import { NavIcon } from "./nav-icons";
 
-interface AdminSidebarProps {
+interface PlatformSidebarProps {
   /** Generated on the server from core entries and the module registry. */
   sections: readonly NavSection[];
 }
 
-export function AdminSidebar({ sections }: AdminSidebarProps) {
+export function PlatformSidebar({ sections }: PlatformSidebarProps) {
   const pathname = usePathname();
   const activeId = activeNavItemId(sections, pathname);
 

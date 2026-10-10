@@ -24,7 +24,7 @@ const RELEASE_LABELS: Record<string, string> = {
 
 /** Availability, beta, maintenance and rollout of modules (ADR 0005). */
 export default async function AdminModulesPage() {
-  const identity = await requirePlatformAdminPage("/admin/modules");
+  const identity = await requirePlatformAdminPage("/platform/modules");
   const admin = await getPlatformAdminMember(prisma, identity.userId);
   const grants = platformGrants(admin?.role ?? null);
 
@@ -72,7 +72,7 @@ export default async function AdminModulesPage() {
                 </div>
                 {hasAdminSettings && (
                   <Link
-                    href={`/admin/settings/modules/${manifest.moduleKey}`}
+                    href={`/platform/settings/modules/${manifest.moduleKey}`}
                     className="text-12 text-text-subtle hover:text-text mt-1 inline-block font-medium underline"
                   >
                     Política global de {manifest.displayName}

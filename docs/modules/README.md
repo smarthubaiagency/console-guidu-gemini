@@ -4,17 +4,17 @@ Implementação da F2 (ADRs [0005](../adr/0005-rotas-de-modulos.md) e [0006](../
 
 ## Peças
 
-| Peça                    | Onde                                                                                       | Papel                                                                                                                                                                                |
-| ----------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Manifesto               | `src/core/module-contracts/manifest.ts`                                                    | Schema Zod dos metadados seguros: rotas, navegação, settings, permissões, entitlements, dependências, `configurationSchema`, capacidades                                             |
-| Validação do registro   | `src/core/module-contracts/validate.ts`                                                    | Duplicidades, rotas fora do namespace ou em conflito, navegação para rota inexistente, permissões não declaradas, dependências ausentes e ciclos, versão de contrato e de plataforma |
-| Registro central        | `src/modules/registry.ts`                                                                  | Lista explícita dos manifestos; validado na importação, então um manifesto quebrado falha teste e build                                                                              |
-| Componentes de Settings | `src/modules/settings-components.ts`                                                       | Mapa estático `componentKey` → componente                                                                                                                                            |
-| Estado de acesso        | `src/core/module-runtime/state.ts`                                                         | Decisão única usada por menu, páginas, ações e serviços                                                                                                                              |
-| Navegação gerada        | `src/core/module-runtime/navigation.ts`                                                    | Sidebars do app e do admin montadas a partir do núcleo e do registro                                                                                                                 |
-| Configuração            | `src/core/module-runtime/settings.ts`                                                      | Serviços separados para workspace e global, com permissão, schema e auditoria                                                                                                        |
-| Hosts                   | `/app/[workspaceSlug]/settings/modules/[moduleKey]`, `/admin/settings/modules/[moduleKey]` | Resolvem contexto, estado e permissão e renderizam o componente do módulo                                                                                                            |
-| Índices                 | `/app/[workspaceSlug]/settings/modules`, `/admin/modules`                                  | Habilitação por workspace; disponibilidade global                                                                                                                                    |
+| Peça                    | Onde                                                                                          | Papel                                                                                                                                                                                |
+| ----------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Manifesto               | `src/core/module-contracts/manifest.ts`                                                       | Schema Zod dos metadados seguros: rotas, navegação, settings, permissões, entitlements, dependências, `configurationSchema`, capacidades                                             |
+| Validação do registro   | `src/core/module-contracts/validate.ts`                                                       | Duplicidades, rotas fora do namespace ou em conflito, navegação para rota inexistente, permissões não declaradas, dependências ausentes e ciclos, versão de contrato e de plataforma |
+| Registro central        | `src/modules/registry.ts`                                                                     | Lista explícita dos manifestos; validado na importação, então um manifesto quebrado falha teste e build                                                                              |
+| Componentes de Settings | `src/modules/settings-components.ts`                                                          | Mapa estático `componentKey` → componente                                                                                                                                            |
+| Estado de acesso        | `src/core/module-runtime/state.ts`                                                            | Decisão única usada por menu, páginas, ações e serviços                                                                                                                              |
+| Navegação gerada        | `src/core/module-runtime/navigation.ts`                                                       | Sidebars do app e do admin montadas a partir do núcleo e do registro                                                                                                                 |
+| Configuração            | `src/core/module-runtime/settings.ts`                                                         | Serviços separados para workspace e global, com permissão, schema e auditoria                                                                                                        |
+| Hosts                   | `/app/[workspaceSlug]/settings/modules/[moduleKey]`, `/platform/settings/modules/[moduleKey]` | Resolvem contexto, estado e permissão e renderizam o componente do módulo                                                                                                            |
+| Índices                 | `/app/[workspaceSlug]/settings/modules`, `/platform/modules`                                  | Habilitação por workspace; disponibilidade global                                                                                                                                    |
 
 ## Estado de um módulo
 
@@ -67,6 +67,6 @@ Avaliado nesta ordem; a primeira condição que bloqueia decide.
 ### Habilitação
 
 - [ ] Migration aplicada no dev depois do PR aprovado por Marcelo.
-- [ ] Disponibilidade global conferida em `/admin/modules`.
+- [ ] Disponibilidade global conferida em `/platform/modules`.
 - [ ] Habilitado primeiro em workspace de teste ou piloto.
 - [ ] Liberação por plano e rollout só depois da F3.

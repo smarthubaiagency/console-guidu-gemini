@@ -115,7 +115,7 @@ export async function setPlatformModuleAvailabilityAction(
         parsed.data.availability,
       ),
     );
-    revalidatePath("/admin", "layout");
+    revalidatePath("/platform", "layout");
     revalidatePath("/app", "layout");
     return { success: true, message: "Disponibilidade atualizada." };
   } catch (err) {

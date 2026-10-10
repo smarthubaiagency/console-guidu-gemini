@@ -15,11 +15,11 @@ import { getAdminMetrics } from "@/core/admin/platform";
 export const metadata: Metadata = { title: "Console de Administração" };
 
 export default async function AdminPage() {
-  const identity = await requirePlatformAdminPage("/admin");
+  const identity = await requirePlatformAdminPage("/platform");
   const metrics = await getAdminMetrics(prisma, identity.userId);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8" data-testid="admin-state">
+    <div className="mx-auto max-w-6xl space-y-8" data-testid="platform-state">
       {/* Header */}
       <div className="border-border border-b pb-5">
         <div className="text-12 text-warning-text mb-1 flex items-center gap-2 font-semibold tracking-wider uppercase">
@@ -52,7 +52,7 @@ export default async function AdminPage() {
           </div>
           <div className="border-border text-12 mt-4 flex items-center justify-between border-t pt-3">
             <Link
-              href="/admin/customers"
+              href="/platform/customers"
               className="text-warning-text hover:text-warning-text flex items-center gap-1 font-semibold"
             >
               <span>Gerenciar empresas</span>
@@ -78,7 +78,7 @@ export default async function AdminPage() {
           </div>
           <div className="border-border text-12 mt-4 flex items-center justify-between border-t pt-3">
             <Link
-              href="/admin/workspaces"
+              href="/platform/workspaces"
               className="text-warning-text hover:text-warning-text flex items-center gap-1 font-semibold"
             >
               <span>Ver workspaces</span>
@@ -104,7 +104,7 @@ export default async function AdminPage() {
           </div>
           <div className="border-border text-12 mt-4 flex items-center justify-between border-t pt-3">
             <Link
-              href="/admin/users"
+              href="/platform/users"
               className="text-warning-text hover:text-warning-text flex items-center gap-1 font-semibold"
             >
               <span>Listar usuários</span>
