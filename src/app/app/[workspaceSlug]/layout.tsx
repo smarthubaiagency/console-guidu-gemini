@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireUserPage } from "@/core/auth/page-guard";
+import { requireLegalAcceptance } from "@/core/legal/gate";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { listRequestUserWorkspaces } from "@/core/partners/request-context";
@@ -22,6 +23,7 @@ export default async function WorkspaceLayout({
   const { workspaceSlug } = await params;
   const currentPath = `/app/${workspaceSlug}`;
   const identity = await requireUserPage(currentPath);
+  await requireLegalAcceptance(identity, currentPath);
 
   // Validate user membership and resolve context
   let context;

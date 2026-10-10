@@ -50,6 +50,8 @@ export const Permissions = {
 
   // Brand of the house partner served on the platform hosts (ADR 0012, P3).
   PLATFORM_BRAND_MANAGE: "platform.brand.manage",
+  // Terms and privacy of the house partner (P4b2).
+  PLATFORM_LEGAL_MANAGE: "platform.legal.manage",
 
   // Partner management in the platform console (ADR 0012, P4).
   PLATFORM_PARTNERS_READ: "platform.partners.read",
@@ -62,6 +64,9 @@ export const Permissions = {
   PARTNER_BRAND_MANAGE: "partner.brand.manage",
   // Register customers, workspace templates and the module catalog (P4b).
   PARTNER_CUSTOMERS_MANAGE: "partner.customers.manage",
+  // Terms and privacy of the partner, and temporary support access (P4b2).
+  PARTNER_LEGAL_MANAGE: "partner.legal.manage",
+  PARTNER_SUPPORT_REQUEST: "partner.support.request",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

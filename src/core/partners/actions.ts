@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requireMfa, requireUser } from "@/core/auth/identity";
 import { prisma } from "@/lib/prisma/client";
+import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
 
@@ -28,7 +29,14 @@ import {
   setPartnerStatus,
 } from "./management";
 import { getPartnerMembership, updatePartnerMember } from "./members";
+import { resolveRequestWorkspaceContext } from "./request-context";
 import { getRequestOrigin, getRequestPartner } from "./resolve";
+import {
+  decideSupportGrant,
+  endOwnSupportGrant,
+  requestSupportAccess,
+  revokeSupportGrant,
+} from "./support";
 
 export type PartnerActionState = {
   success?: boolean;
@@ -497,6 +505,109 @@ export async function acceptPartnerInvitationAction(
       success: true,
       message: "Convite aceito.",
       ...(host?.partnerId === partnerId ? { redirectTo: "/admin" } : {}),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Temporary support access (P4b2)
+// ---------------------------------------------------------------------------
+
+export async function requestSupportAccessAction(
+  _prev: PartnerActionState,
+  formData: FormData,
+): Promise<PartnerActionState> {
+  try {
+    const actor = await partnerActor();
+    await withIdentityContext(
+      prisma,
+      actor.userId,
+      (tx) =>
+        requestSupportAccess(
+          tx,
+          { userId: actor.userId, partnerRole: actor.partnerRole },
+          actor.partnerId,
+          {
+            organizationId: text(formData, "organizationId"),
+            reason: text(formData, "reason"),
+            durationHours: text(formData, "durationHours"),
+          },
+        ),
+      { partnerId: actor.partnerId },
+    );
+    revalidatePath("/admin/support");
+    return {
+      success: true,
+      message:
+        "Pedido enviado. O cliente aprova nas configurações do workspace.",
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function endOwnSupportGrantAction(
+  _prev: PartnerActionState,
+  formData: FormData,
+): Promise<PartnerActionState> {
+  try {
+    const actor = await partnerActor();
+    const grantId = uuid.parse(text(formData, "grantId"));
+    await withIdentityContext(
+      prisma,
+      actor.userId,
+      (tx) =>
+        endOwnSupportGrant(
+          tx,
+          { userId: actor.userId },
+          actor.partnerId,
+          grantId,
+        ),
+      { partnerId: actor.partnerId },
+    );
+    revalidatePath("/admin/support");
+    return { success: true, message: "Acesso encerrado." };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** Customer side: approve, deny or revoke in the workspace (owner/admin). */
+export async function decideSupportGrantAction(
+  _prev: PartnerActionState,
+  formData: FormData,
+): Promise<PartnerActionState> {
+  try {
+    const identity = await requireUser();
+    const workspaceSlug = z
+      .string()
+      .min(1)
+      .parse(text(formData, "workspaceSlug"));
+    const grantId = uuid.parse(text(formData, "grantId"));
+    const decision = z
+      .enum(["approve", "deny", "revoke"])
+      .parse(text(formData, "decision"));
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
+    await withContext(prisma, context, (tx) =>
+      decision === "revoke"
+        ? revokeSupportGrant(tx, context, grantId)
+        : decideSupportGrant(tx, context, grantId, decision),
+    );
+    revalidatePath(`/app/${workspaceSlug}/settings/support`);
+    return {
+      success: true,
+      message:
+        decision === "approve"
+          ? "Acesso aprovado."
+          : decision === "deny"
+            ? "Pedido negado."
+            : "Acesso revogado.",
     };
   } catch (err) {
     return failure(err);

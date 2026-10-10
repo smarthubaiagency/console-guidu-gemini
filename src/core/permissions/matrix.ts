@@ -137,6 +137,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_MODULES_READ,
     Permissions.PLATFORM_MODULES_MANAGE,
     Permissions.PLATFORM_BRAND_MANAGE,
+    Permissions.PLATFORM_LEGAL_MANAGE,
     Permissions.PLATFORM_PARTNERS_READ,
     Permissions.PLATFORM_PARTNERS_MANAGE,
   ]),
@@ -144,6 +145,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_MODULES_READ,
     Permissions.PLATFORM_MODULES_MANAGE,
     Permissions.PLATFORM_BRAND_MANAGE,
+    Permissions.PLATFORM_LEGAL_MANAGE,
     Permissions.PLATFORM_PARTNERS_READ,
     Permissions.PLATFORM_PARTNERS_MANAGE,
   ]),
@@ -190,12 +192,16 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_CUSTOMERS_MANAGE,
     Permissions.PARTNER_MEMBERS_MANAGE,
     Permissions.PARTNER_BRAND_MANAGE,
+    Permissions.PARTNER_LEGAL_MANAGE,
+    Permissions.PARTNER_SUPPORT_REQUEST,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
     Permissions.PARTNER_CUSTOMERS_READ,
     Permissions.PARTNER_CUSTOMERS_MANAGE,
     Permissions.PARTNER_BRAND_MANAGE,
+    Permissions.PARTNER_LEGAL_MANAGE,
+    Permissions.PARTNER_SUPPORT_REQUEST,
   ]),
   partner_finance: new Set([
     Permissions.PARTNER_READ,
@@ -204,6 +210,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
   partner_support: new Set([
     Permissions.PARTNER_READ,
     Permissions.PARTNER_CUSTOMERS_READ,
+    Permissions.PARTNER_SUPPORT_REQUEST,
   ]),
 };
 

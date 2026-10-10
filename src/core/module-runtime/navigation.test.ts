@@ -160,6 +160,8 @@ describe("generated navigation", () => {
       "/admin/customers",
       "/admin/modules",
       "/admin/templates",
+      "/admin/support",
+      "/admin/legal",
       "/admin/members",
       "/admin/brand",
     ]);
@@ -167,6 +169,10 @@ describe("generated navigation", () => {
     const finance = buildPartnerNavigation(partnerGrants("partner_finance"));
     expect(find(finance, "partner.brand")).toBeUndefined();
     expect(find(finance, "partner.templates")).toBeUndefined();
+    expect(find(finance, "partner.support")).toBeUndefined();
+    const support = buildPartnerNavigation(partnerGrants("partner_support"));
+    expect(find(support, "partner.support")?.href).toBe("/admin/support");
+    expect(find(support, "partner.legal")).toBeUndefined();
     expect(find(finance, "partner.customers")?.href).toBe("/admin/customers");
 
     expect(

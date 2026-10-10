@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2, Layers, ArrowRight, ShieldCheck } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
+import { requireLegalAcceptance } from "@/core/legal/gate";
 import { prisma } from "@/lib/prisma/client";
 import { listRequestUserWorkspaces } from "@/core/partners/request-context";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
@@ -22,6 +23,7 @@ export const metadata: Metadata = { title: "Seus Workspaces" };
 export default async function AppPage() {
   const brand = await getRequestBrand();
   const identity = await requireUserPage("/app");
+  await requireLegalAcceptance(identity, "/app");
   const workspaces = await listRequestUserWorkspaces(prisma, identity.userId);
 
   // If the user has access to exactly one workspace, direct redirect

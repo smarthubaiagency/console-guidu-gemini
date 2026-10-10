@@ -114,7 +114,12 @@ Dividida em dois PRs, aprovados por Marcelo em 10/10/2026, junto com os papéis 
 
     O parceiro grava esses dados, mas continua sem ler o workspace ou o conteúdo dele. Até a P5, o cliente fica ativo assim que é cadastrado, e a suspensão de cliente entra com os estados de assinatura.
 
-  - **P4b2**, a seguir. Entrega termos e privacidade versionados com aceite, e acesso de suporte temporário.
+  - **P4b2**, implementada no PR da P4b2, com a migration `20261011120000_p4b2_legal_and_support.sql`, a aplicar no dev após aprovação. Entrega:
+    - **termos e privacidade por parceiro**, versionados e só de inclusão, publicados em `/admin/legal` e, para o parceiro da casa, em `/platform/legal`;
+    - **aceite:** o `/app` exige o aceite antes de entrar, e uma versão nova só pede novo aceite quando marcada como mudança relevante (a primeira sempre pede). O aceite guarda usuário, versão e data, sem IP nem navegador, até haver base legal (§20). As páginas públicas ficam em `/legal/terms` e `/legal/privacy`;
+    - **acesso de suporte temporário:** o membro do parceiro (owner, admin ou suporte; nunca financeiro) pede acesso com motivo e prazo de 1 a 72 horas. O owner ou admin do workspace aprova, nega ou revoga em Configurações → Acesso de suporte. A aprovação cria um vínculo de visualizador ligado à concessão, e os helpers de vínculo do RLS e o guard só o aceitam enquanto a concessão estiver aprovada e no prazo; vencimento e revogação valem na próxima requisição, sem tarefa agendada. O cliente vê o histórico, e cada passo é auditado.
+
+    Detalhe de segurança: políticas de `UPDATE` permissivas se combinam (o `USING` de uma com o `WITH CHECK` de outra). Por isso, cada `WITH CHECK` das concessões repete quem pode escrever. O teste SQL pegou o caso em que quem pediu aprovaria o próprio pedido.
 
 **Como ficou a P4a:**
 

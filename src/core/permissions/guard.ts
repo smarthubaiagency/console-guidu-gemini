@@ -102,6 +102,30 @@ async function handleCriticalPermissionDenial(
  *
  * @throws {PermissionDeniedError} when actor is not an active member or lacks permission.
  */
+/**
+ * A support membership (ADR 0012, P4b2) counts only while its grant is
+ * approved and unexpired. The SQL helpers apply the same rule to RLS; this
+ * keeps the application guard from trusting a stale row.
+ */
+async function isMembershipCurrent(
+  tx: ContextTransaction,
+  member: {
+    supportGrantId: string | null;
+    userId: string;
+    workspaceId: string;
+  },
+): Promise<boolean> {
+  if (!member.supportGrantId) return true;
+  const rows = await tx.$queryRaw<Array<{ valid: boolean }>>`
+    select private.support_grant_valid(
+      ${member.supportGrantId}::uuid,
+      ${member.userId}::uuid,
+      ${member.workspaceId}::uuid
+    ) as valid
+  `;
+  return rows[0]?.valid === true;
+}
+
 export async function requireWorkspacePermission(
   tx: ContextTransaction,
   ctx: RequestContext,
@@ -129,7 +153,8 @@ export async function requireWorkspacePermission(
     }),
   ]);
 
-  const isWsActive = wsMember?.status === "active";
+  const isWsActive =
+    wsMember?.status === "active" && (await isMembershipCurrent(tx, wsMember));
   const isOrgActive = orgMember?.status === "active";
   const orgRole = isOrgActive ? (orgMember.role as OrganizationRole) : null;
 
@@ -205,12 +230,10 @@ export async function getEffectiveWorkspaceRole(
     }),
   ]);
 
-  if (wsMember && wsMember.status === "active") {
-    return wsMember.role as WorkspaceRole;
-  }
-
-  if (wsMember && wsMember.status !== "active") {
-    return null;
+  if (wsMember) {
+    const current =
+      wsMember.status === "active" && (await isMembershipCurrent(tx, wsMember));
+    return current ? (wsMember.role as WorkspaceRole) : null;
   }
 
   if (
