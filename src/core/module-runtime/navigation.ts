@@ -4,7 +4,7 @@
  * Module: Generated Navigation (Adendo §8.1)
  *
  * Maintenance Rationale:
- * - Builds the app and admin navigation trees from core entries plus the
+ * - Builds the app and platform (/platform) navigation trees from core entries plus the
  *   registered manifests. Layouts render this tree; no layout keeps its own
  *   hand-written module list.
  * - App: state (gate, global availability, release, workspace enablement) and
@@ -283,14 +283,14 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
   ];
 }
 
-export type AdminNavigationInput = Readonly<{
+export type PlatformNavigationInput = Readonly<{
   modules: readonly RegisteredModule[];
   grants: Grants;
 }>;
 
-/** Admin sidebar: core entries plus global module settings. */
-export function buildAdminNavigation(
-  input: AdminNavigationInput,
+/** Platform console sidebar (/platform): core entries plus global module settings. */
+export function buildPlatformNavigation(
+  input: PlatformNavigationInput,
 ): NavSection[] {
   const settingsItems = input.modules
     .filter((mod) => mod.technicalGate())
@@ -304,7 +304,7 @@ export function buildAdminNavigation(
           value: item({
             id: entry.id,
             label: entry.label,
-            href: `/admin/settings/modules/${mod.manifest.moduleKey}`,
+            href: `/platform/settings/modules/${mod.manifest.moduleKey}`,
             iconKey: null,
           }),
         })),
@@ -316,40 +316,40 @@ export function buildAdminNavigation(
 
   return [
     {
-      id: "admin",
+      id: "platform",
       label: "Administração",
       items: [
         item({
-          id: "admin.overview",
+          id: "platform.overview",
           label: "Visão Geral",
-          href: "/admin",
+          href: "/platform",
           iconKey: "layout-dashboard",
           exact: true,
         }),
         item({
-          id: "admin.customers",
+          id: "platform.customers",
           label: "Clientes / Empresas",
-          href: "/admin/customers",
+          href: "/platform/customers",
           iconKey: "building",
         }),
         item({
-          id: "admin.workspaces",
+          id: "platform.workspaces",
           label: "Workspaces",
-          href: "/admin/workspaces",
+          href: "/platform/workspaces",
           iconKey: "layers",
         }),
         item({
-          id: "admin.users",
+          id: "platform.users",
           label: "Usuários da Plataforma",
-          href: "/admin/users",
+          href: "/platform/users",
           iconKey: "users",
         }),
         ...(canReadModules
           ? [
               item({
-                id: "admin.modules",
+                id: "platform.modules",
                 label: "Módulos",
-                href: "/admin/modules",
+                href: "/platform/modules",
                 iconKey: "puzzle",
               }),
             ]
@@ -359,7 +359,7 @@ export function buildAdminNavigation(
     ...(settingsItems.length > 0
       ? [
           {
-            id: "admin.settings",
+            id: "platform.settings",
             label: "Configurações de módulos",
             items: settingsItems,
           },

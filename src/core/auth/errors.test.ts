@@ -9,21 +9,21 @@ describe("AccessDeniedError", () => {
   });
 
   it("routes an anonymous visitor to login with the requested page", () => {
-    expect(new AccessDeniedError("unauthenticated", 401).route("/admin")).toBe(
-      "/login?next=%2Fadmin",
-    );
+    expect(
+      new AccessDeniedError("unauthenticated", 401).route("/platform"),
+    ).toBe("/login?next=%2Fplatform");
   });
 
   it("routes a missing factor to the challenge with the requested page", () => {
-    expect(new AccessDeniedError("mfa_required", 403).route("/admin")).toBe(
-      "/auth/mfa?next=%2Fadmin",
+    expect(new AccessDeniedError("mfa_required", 403).route("/platform")).toBe(
+      "/auth/mfa?next=%2Fplatform",
     );
   });
 
   it("gives a blocked identity nowhere to return to", () => {
-    expect(new AccessDeniedError("identity_blocked", 403).route("/admin")).toBe(
-      "/auth/suspended",
-    );
+    expect(
+      new AccessDeniedError("identity_blocked", 403).route("/platform"),
+    ).toBe("/auth/suspended");
   });
 
   it("is recognisable across module boundaries", () => {

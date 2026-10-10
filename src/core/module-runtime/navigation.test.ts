@@ -9,7 +9,7 @@ import { listRegisteredModules } from "@/modules/registry";
 import { listSettingsComponentKeys } from "@/modules/settings-components";
 
 import {
-  buildAdminNavigation,
+  buildPlatformNavigation,
   buildAppNavigation,
   type NavItem,
   type NavSection,
@@ -133,20 +133,20 @@ describe("generated navigation", () => {
   });
 
   it("builds admin settings by internal role", () => {
-    const owner = buildAdminNavigation({
+    const owner = buildPlatformNavigation({
       modules: listRegisteredModules(),
       grants: platformGrants("owner"),
     });
-    expect(find(owner, "admin.modules")?.href).toBe("/admin/modules");
+    expect(find(owner, "platform.modules")?.href).toBe("/platform/modules");
     expect(find(owner, "hello-world.admin")?.href).toBe(
-      "/admin/settings/modules/hello-world",
+      "/platform/settings/modules/hello-world",
     );
 
-    const none = buildAdminNavigation({
+    const none = buildPlatformNavigation({
       modules: listRegisteredModules(),
       grants: platformGrants(null),
     });
-    expect(find(none, "admin.modules")).toBeUndefined();
+    expect(find(none, "platform.modules")).toBeUndefined();
     expect(find(none, "hello-world.admin")).toBeUndefined();
   });
 

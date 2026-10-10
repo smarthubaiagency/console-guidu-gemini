@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Users } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
-import { listAdminUsers } from "@/core/admin/platform";
+import { listAdminOrganizations } from "@/core/admin/platform";
 
-export const metadata: Metadata = { title: "Usuários (Admin)" };
+export const metadata: Metadata = { title: "Clientes & Empresas (Admin)" };
 
-export default async function AdminUsersPage() {
-  const identity = await requirePlatformAdminPage("/admin/users");
-  const users = await listAdminUsers(prisma, identity.userId);
+export default async function AdminCustomersPage() {
+  const identity = await requirePlatformAdminPage("/platform/customers");
+  const organizations = await listAdminOrganizations(prisma, identity.userId);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -16,19 +16,19 @@ export default async function AdminUsersPage() {
         <div className="text-12 text-warning-text mb-1 flex items-center gap-2 font-semibold tracking-wider uppercase">
           <span>Administração</span>
           <span>/</span>
-          <span>Usuários</span>
+          <span>Clientes & Empresas</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-primary text-on-primary rounded-lg p-2">
-            <Users className="h-5 w-5" />
+            <Building2 className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-20 text-text font-bold tracking-tight">
-              Usuários da Plataforma
+              Empresas Contratantes
             </h1>
             <p className="text-12 text-text-secondary">
-              Perfis de usuários registrados e seus respectivos estados de
-              autorização.
+              Listagem global das organizações, capacidades contratadas e status
+              operacional.
             </p>
           </div>
         </div>
@@ -37,7 +37,7 @@ export default async function AdminUsersPage() {
       <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
         <div className="border-border bg-surface-sidebar flex items-center justify-between border-b px-5 py-3.5">
           <span className="text-12 text-text-subtle font-semibold">
-            Total de Usuários ({users.length})
+            Total de Organizações ({organizations.length})
           </span>
         </div>
 
@@ -45,44 +45,34 @@ export default async function AdminUsersPage() {
           <table className="text-12 w-full text-left">
             <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
               <tr>
-                <th className="px-5 py-3">Nome / Perfil</th>
+                <th className="px-5 py-3">Organização</th>
+                <th className="px-5 py-3">Assentos Máximos</th>
                 <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Cadastrado em</th>
+                <th className="px-5 py-3">Criado em</th>
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
-              {users.map((u) => (
-                <tr key={u.id} className="hover:bg-surface-hover">
+              {organizations.map((org) => (
+                <tr key={org.id} className="hover:bg-surface-hover">
                   <td className="px-5 py-3.5">
-                    <div className="text-text font-semibold">
-                      {u.fullName ?? "Sem nome cadastrado"}
-                    </div>
+                    <div className="text-text font-semibold">{org.name}</div>
                     <div className="text-11 text-text-tertiary font-mono">
-                      {u.id}
+                      {org.id}
                     </div>
                   </td>
+                  <td className="text-text-subtle px-5 py-3.5 font-medium">
+                    {org.maxSeats} assentos
+                  </td>
                   <td className="px-5 py-3.5">
-                    <span
-                      className={`text-11 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
-                        u.status === "active"
-                          ? "bg-success-bg text-success-text border-success-border border"
-                          : "bg-danger-bg text-danger-text border-danger-border border"
-                      }`}
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          u.status === "active"
-                            ? "bg-success-solid"
-                            : "bg-danger-solid"
-                        }`}
-                      />
-                      {u.status}
+                    <span className="bg-success-bg text-success-text border-success-border text-11 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
+                      <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
+                      {org.status}
                     </span>
                   </td>
                   <td className="text-text-secondary px-5 py-3.5">
                     {new Intl.DateTimeFormat("pt-BR", {
                       dateStyle: "short",
-                    }).format(u.createdAt)}
+                    }).format(org.createdAt)}
                   </td>
                 </tr>
               ))}

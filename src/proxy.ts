@@ -13,7 +13,7 @@ import { refreshSupabaseSession } from "@/lib/supabase/session";
  * request that slips past this file still gets 401/403 downstream.
  */
 
-const PROTECTED_PREFIXES = ["/app", "/admin"] as const;
+const PROTECTED_PREFIXES = ["/app", "/platform"] as const;
 const SIGNED_IN_ONLY_PREFIXES = ["/auth/mfa", "/invite"] as const;
 const SIGNED_OUT_ONLY_PATHS = ["/login", "/forgot-password"] as const;
 

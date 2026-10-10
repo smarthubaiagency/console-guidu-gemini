@@ -218,7 +218,7 @@ test.describe("Module contract — hello-world reference module", () => {
     await enableHelloWorld(page, wsSlug);
 
     // Global default greeting is inherited by a workspace without override.
-    await page.goto("/admin/modules");
+    await page.goto("/platform/modules");
     await expect(
       page.getByRole("heading", { name: "Módulos da Plataforma" }),
     ).toBeVisible();
@@ -238,7 +238,7 @@ test.describe("Module contract — hello-world reference module", () => {
     await expect(page.getByText("Herdada da política global")).toBeVisible();
 
     // Maintenance blocks the module pages; admin settings stay reachable.
-    await page.goto("/admin/modules");
+    await page.goto("/platform/modules");
     await page
       .getByLabel("Disponibilidade de Hello World")
       .selectOption("maintenance");
@@ -253,11 +253,11 @@ test.describe("Module contract — hello-world reference module", () => {
     await expect(
       page.getByRole("heading", { name: "Módulo em manutenção" }),
     ).toBeVisible();
-    await page.goto("/admin/settings/modules/hello-world");
+    await page.goto("/platform/settings/modules/hello-world");
     await expect(page.getByLabel("Saudação padrão global")).toBeVisible();
 
     // Restore global state for the rest of the suite.
-    await page.goto("/admin/modules");
+    await page.goto("/platform/modules");
     await page
       .getByLabel("Disponibilidade de Hello World")
       .selectOption("enabled");
@@ -267,7 +267,7 @@ test.describe("Module contract — hello-world reference module", () => {
         .getByRole("status")
         .filter({ hasText: "Disponibilidade atualizada." }),
     ).toBeVisible();
-    await page.goto("/admin/settings/modules/hello-world");
+    await page.goto("/platform/settings/modules/hello-world");
     await page.getByLabel("Saudação padrão global").fill("");
     await page.getByRole("button", { name: "Salvar política" }).click();
     await expect(

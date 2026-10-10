@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { createIdentity, makePlatformAdmin, signIn, uniqueEmail } from "./support/identity";
+import {
+  createIdentity,
+  makePlatformAdmin,
+  signIn,
+  uniqueEmail,
+} from "./support/identity";
 import { totpCode } from "./support/totp";
 
 test("administration is closed to a session without a second factor", async ({
@@ -13,18 +18,18 @@ test("administration is closed to a session without a second factor", async ({
   await expect(page).toHaveURL(/\/app$/);
 
   // The page guard sends the visitor to enrolment; the service answers 403.
-  const adminApi = await page.request.get("/api/v1/admin/session");
+  const adminApi = await page.request.get("/api/v1/platform/session");
   expect(adminApi.status()).toBe(403);
   expect(await adminApi.json()).toMatchObject({
     error: { code: "mfa_required" },
   });
 
-  await page.goto("/admin");
+  await page.goto("/platform");
   await expect(page).toHaveURL(/\/app\/account\/security\?reason=mfa-required/);
   await expect(page.getByTestId("mfa-required-state")).toBeVisible();
 });
 
-test("enrols TOTP, then requires it on the next sign-in and opens /admin", async ({
+test("enrols TOTP, then requires it on the next sign-in and opens /platform", async ({
   page,
   request,
 }) => {
@@ -52,8 +57,8 @@ test("enrols TOTP, then requires it on the next sign-in and opens /admin", async
   await expect(page.getByTestId("mfa-factors")).toBeVisible();
 
   // The session that enrolled the factor already carries aal2.
-  await page.goto("/admin");
-  await expect(page.getByTestId("admin-state")).toBeVisible();
+  await page.goto("/platform");
+  await expect(page.getByTestId("platform-state")).toBeVisible();
 
   await page.getByTestId("sign-out").click();
   await expect(page).toHaveURL(/\/login/);
@@ -74,10 +79,10 @@ test("enrols TOTP, then requires it on the next sign-in and opens /admin", async
   await page.getByRole("button", { name: "Confirmar" }).click();
   await expect(page).toHaveURL(/\/app$/);
 
-  await page.goto("/admin");
-  await expect(page.getByTestId("admin-identity")).toHaveText(email);
+  await page.goto("/platform");
+  await expect(page.getByTestId("platform-identity")).toHaveText(email);
 
-  const adminApi = await page.request.get("/api/v1/admin/session");
+  const adminApi = await page.request.get("/api/v1/platform/session");
   expect(adminApi.status()).toBe(200);
   expect(await adminApi.json()).toMatchObject({ mfaSatisfied: true });
 });

@@ -42,8 +42,8 @@ export const Permissions = {
   ORGANIZATION_MEMBERS_MANAGE: "organization.members.manage",
   ORGANIZATION_SETTINGS_UPDATE: "organization.settings.update",
 
-  // Platform administration of modules (ADR 0005: /admin/modules and
-  // /admin/settings/modules/[moduleKey]); granted by internal role, never by
+  // Platform administration of modules (ADR 0005: /platform/modules and
+  // /platform/settings/modules/[moduleKey]); granted by internal role, never by
   // workspace role.
   PLATFORM_MODULES_READ: "platform.modules.read",
   PLATFORM_MODULES_MANAGE: "platform.modules.manage",

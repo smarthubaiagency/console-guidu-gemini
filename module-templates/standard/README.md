@@ -29,7 +29,7 @@ Esta pasta é excluída do TypeScript, do ESLint e do build. Os arquivos não co
 - Estado e acesso: `assertModuleOperational`, `resolveModulePageAccess` (`src/core/module-runtime`).
 - Permissões: `requireWorkspacePermission`, que já entende as permissões declaradas no manifesto.
 - Configuração: `getWorkspaceModuleConfig`, `saveWorkspaceModuleConfig`, `getPlatformModuleConfig`, `savePlatformModuleConfig`, validadas pelo `configurationSchema`.
-- Navegação e Settings gerados pelo registro; hosts em `/app/[workspaceSlug]/settings/modules/[moduleKey]` e `/admin/settings/modules/[moduleKey]`.
+- Navegação e Settings gerados pelo registro; hosts em `/app/[workspaceSlug]/settings/modules/[moduleKey]` e `/platform/settings/modules/[moduleKey]`.
 - Auditoria: `recordAudit` na mesma transação da mudança.
 
 Alterar este modelo não atualiza módulos já criados. Cada manifesto registra `templateVersion`.

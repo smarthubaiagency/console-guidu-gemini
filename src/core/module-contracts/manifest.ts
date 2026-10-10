@@ -72,9 +72,14 @@ const label = z.string().trim().min(1).max(48);
 
 export const ModuleRouteSchema = z.object({
   routeKey: stableId,
+  /**
+   * "admin" is the platform console, served at `/platform` since ADR 0012.
+   * The value stays "admin" to keep contract 1.0.0 stable; any rename comes
+   * with the partner console (P4) and a contract version bump.
+   */
   destination: z.enum(["app", "admin"]),
   /**
-   * Path relative to `/app/[workspaceSlug]` or `/admin`, without leading
+   * Path relative to `/app/[workspaceSlug]` or `/platform`, without leading
    * slash. Static wrappers must exist in `src/app`; the manifest does not
    * create them.
    */

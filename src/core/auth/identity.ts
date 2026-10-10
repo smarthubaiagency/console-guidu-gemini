@@ -139,7 +139,7 @@ export function requireUser(): Promise<Identity> {
 
 /**
  * Requires an authenticated, non-blocked identity that also presented a second
- * factor. Mandatory for internal administration (`/admin`) and privileged
+ * factor. Mandatory for internal administration (`/platform`) and privileged
  * operations.
  */
 export function requireMfa(): Promise<Identity> {

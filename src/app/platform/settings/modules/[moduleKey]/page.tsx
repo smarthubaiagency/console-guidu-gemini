@@ -26,13 +26,13 @@ interface PageProps {
 }
 
 /**
- * Shared admin Settings host (ADR 0005, Adendo §8.2). Global settings remain
+ * Shared platform Settings host (/platform) (ADR 0005, Adendo §8.2). Global settings remain
  * reachable during maintenance or when the module is disabled for customers.
  */
 export default async function AdminModuleSettingsPage({ params }: PageProps) {
   const { moduleKey } = await params;
   const identity = await requirePlatformAdminPage(
-    `/admin/settings/modules/${moduleKey}`,
+    `/platform/settings/modules/${moduleKey}`,
   );
 
   const mod = getRegisteredModule(moduleKey);
