@@ -47,6 +47,9 @@ export const Permissions = {
   // workspace role.
   PLATFORM_MODULES_READ: "platform.modules.read",
   PLATFORM_MODULES_MANAGE: "platform.modules.manage",
+
+  // Brand of the house partner served on the platform hosts (ADR 0012, P3).
+  PLATFORM_BRAND_MANAGE: "platform.brand.manage",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

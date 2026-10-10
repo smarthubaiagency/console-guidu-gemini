@@ -136,10 +136,12 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
   owner: new Set([
     Permissions.PLATFORM_MODULES_READ,
     Permissions.PLATFORM_MODULES_MANAGE,
+    Permissions.PLATFORM_BRAND_MANAGE,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
     Permissions.PLATFORM_MODULES_MANAGE,
+    Permissions.PLATFORM_BRAND_MANAGE,
   ]),
   billing: new Set([Permissions.PLATFORM_MODULES_READ]),
   support: new Set([Permissions.PLATFORM_MODULES_READ]),

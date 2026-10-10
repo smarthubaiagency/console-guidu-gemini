@@ -6,7 +6,7 @@ import { safeInternalPath } from "@/core/auth/redirects";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AuthShell } from "@/shared/ui/auth-shell";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
-import { appConfig } from "@/core/config/app";
+import { getRequestBrand } from "@/core/brand/resolve";
 
 import { MfaChallengeForm } from "./mfa-challenge-form";
 
@@ -17,6 +17,7 @@ export default async function MfaPage({
 }: Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>) {
+  const brand = await getRequestBrand();
   const claims = await readSessionClaims();
   if (!claims?.sub) redirect("/login?next=%2Fauth%2Fmfa");
 
@@ -42,7 +43,8 @@ export default async function MfaPage({
     <AuthShell
       title="Verificação em duas etapas"
       description="Informe o código de seis dígitos do seu aplicativo autenticador."
-      appName={appConfig.name}
+      appName={brand.name}
+      logoUrl={brand.logoUrl}
       footer={<SignOutForm label="Entrar com outra conta" />}
     >
       <MfaChallengeForm factorId={factor.id} next={next} />

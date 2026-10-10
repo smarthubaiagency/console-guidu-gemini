@@ -99,6 +99,8 @@ export async function createInvitation(
     role: OrganizationRole | WorkspaceRole;
     workspaceId?: string | null;
     expiresInHours?: number;
+    /** Origin of the request host (ADR 0012); defaults to APP_URL. */
+    origin?: string;
   },
 ): Promise<{ invitation: InvitationItem; rawToken: string; inviteUrl: string }> {
   const {
@@ -225,7 +227,7 @@ export async function createInvitation(
     },
   );
 
-  const inviteUrl = `${appConfig.url}/invite/${rawToken}`;
+  const inviteUrl = `${params.origin ?? appConfig.url}/invite/${rawToken}`;
   return { invitation, rawToken, inviteUrl };
 }
 

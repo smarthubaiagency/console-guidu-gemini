@@ -147,6 +147,8 @@ describe("generated navigation", () => {
       grants: platformGrants(null),
     });
     expect(find(none, "platform.modules")).toBeUndefined();
+    expect(find(owner, "platform.brand")?.href).toBe("/platform/brand");
+    expect(find(none, "platform.brand")).toBeUndefined();
     expect(find(none, "hello-world.admin")).toBeUndefined();
   });
 

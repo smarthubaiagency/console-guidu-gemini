@@ -2,11 +2,16 @@ import type { PrismaClient } from "@prisma/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("next/headers", () => ({ headers: vi.fn() }));
-vi.mock("@/lib/prisma/client", () => ({ prisma: {} }));
+const { headers } = vi.hoisted(() => ({ headers: vi.fn() }));
+vi.mock("next/headers", () => ({ headers }));
+vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
+const { prisma } = vi.hoisted(() => ({
+  prisma: { $queryRaw: vi.fn() },
+}));
+vi.mock("@/lib/prisma/client", () => ({ prisma }));
 
 import { HOUSE_PARTNER_ID } from "./constants";
-import { resolvePartnerForHost } from "./resolve";
+import { getRequestOrigin, resolvePartnerForHost } from "./resolve";
 
 function fakeClient(rows: Array<{ partner_id: string }>) {
   const queryRaw = vi.fn().mockResolvedValue(rows);
@@ -59,5 +64,41 @@ describe("resolvePartnerForHost", () => {
     await expect(resolvePartnerForHost(client, "[::1]")).resolves.toBeNull();
     await expect(resolvePartnerForHost(client, null)).resolves.toBeNull();
     expect(queryRaw).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("getRequestOrigin", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  function requestFrom(host: string) {
+    headers.mockResolvedValue(new Headers({ host }));
+  }
+
+  it("uses APP_URL on platform hosts", async () => {
+    vi.stubEnv("APP_URL", "https://console.guidu.com.br");
+    requestFrom("console.guidu.com.br");
+    await expect(getRequestOrigin()).resolves.toBe(
+      "https://console.guidu.com.br",
+    );
+  });
+
+  it("uses https and the verified host on partner domains", async () => {
+    vi.stubEnv("APP_URL", "https://console.guidu.com.br");
+    prisma.$queryRaw.mockResolvedValueOnce([
+      { partner_id: "b0000000-0000-4000-8000-000000000001" },
+    ]);
+    requestFrom("app.agencia-b.com.br:8443");
+    await expect(getRequestOrigin()).resolves.toBe(
+      "https://app.agencia-b.com.br",
+    );
+  });
+
+  it("returns null for unknown hosts", async () => {
+    vi.stubEnv("APP_URL", "https://console.guidu.com.br");
+    prisma.$queryRaw.mockResolvedValueOnce([]);
+    requestFrom("evil.example.com");
+    await expect(getRequestOrigin()).resolves.toBeNull();
   });
 });

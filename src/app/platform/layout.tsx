@@ -4,13 +4,14 @@ import { getPlatformAdminMember } from "@/core/admin/platform";
 import { PlatformSidebar } from "@/components/layout/platform-sidebar";
 import { loadPlatformNavigation } from "@/core/module-runtime/loaders";
 import { PlatformHeader } from "@/components/layout/platform-header";
-import { appConfig } from "@/core/config/app";
+import { getRequestBrand } from "@/core/brand/resolve";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 export default async function AdminLayout({ children }: AdminLayoutProps) {
+  const brand = await getRequestBrand();
   const identity = await requirePlatformAdminPage("/platform");
   const adminInfo = await getPlatformAdminMember(prisma, identity.userId);
 
@@ -19,7 +20,8 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
       <PlatformHeader
         userEmail={identity.email}
         adminRole={adminInfo?.role}
-        appName={appConfig.name}
+        appName={brand.name}
+        logoUrl={brand.logoUrl}
       />
 
       <div className="flex flex-1 overflow-hidden">

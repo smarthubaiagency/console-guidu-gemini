@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { BrandMark } from "./brand-mark";
+
 /** Common frame for the identity pages: login, recovery, MFA and the states. */
 export function AuthShell({
   title,
@@ -7,17 +9,22 @@ export function AuthShell({
   children,
   footer,
   appName,
+  logoUrl,
 }: Readonly<{
   title: string;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
   appName?: string;
+  logoUrl?: string | null | undefined;
 }>) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-12">
       {appName ? (
-        <p className="text-text-secondary text-14 font-medium">{appName}</p>
+        <div className="flex items-center gap-2">
+          <BrandMark name={appName} logoUrl={logoUrl} />
+          <p className="text-text-secondary text-14 font-medium">{appName}</p>
+        </div>
       ) : null}
       <h1 className="text-30 mt-2 font-semibold tracking-tight">{title}</h1>
       {description ? (

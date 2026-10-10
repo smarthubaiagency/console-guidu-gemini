@@ -17,6 +17,7 @@ import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
+import { getRequestOrigin } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
@@ -76,6 +77,7 @@ export async function createInvitationAction(
       workspaceSlug,
     );
 
+    const origin = (await getRequestOrigin()) ?? undefined;
     const result = await withContext(prisma, context, async (tx) => {
       return createInvitation(tx, {
         organizationId: context.organizationId,
@@ -83,6 +85,7 @@ export async function createInvitationAction(
         email,
         role: role as OrganizationRole,
         workspaceId: context.workspaceId,
+        ...(origin ? { origin } : {}),
       });
     });
 

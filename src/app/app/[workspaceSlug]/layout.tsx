@@ -7,7 +7,7 @@ import { getPlatformAdminMember } from "@/core/admin/platform";
 import { loadAppNavigation } from "@/core/module-runtime/loaders";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
-import { appConfig } from "@/core/config/app";
+import { getRequestBrand } from "@/core/brand/resolve";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -18,6 +18,7 @@ export default async function WorkspaceLayout({
   children,
   params,
 }: WorkspaceLayoutProps) {
+  const brand = await getRequestBrand();
   const { workspaceSlug } = await params;
   const currentPath = `/app/${workspaceSlug}`;
   const identity = await requireUserPage(currentPath);
@@ -51,7 +52,8 @@ export default async function WorkspaceLayout({
         workspaces={workspaces}
         userEmail={identity.email}
         isPlatformAdmin={Boolean(platformAdmin)}
-        appName={appConfig.name}
+        appName={brand.name}
+        logoUrl={brand.logoUrl}
       />
 
       <div className="flex flex-1 overflow-hidden">
