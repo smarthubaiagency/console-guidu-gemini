@@ -211,7 +211,7 @@ export function McpKeysClient({
       {/* Modal / Create Key Form */}
       {capabilities.canCreate && isModalOpen && (
         <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="border-card-border bg-surface-card max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border p-6 shadow-xl">
+          <div className="border-card-border bg-surface-card max-h-full w-full max-w-lg overflow-y-auto rounded-2xl border p-6 shadow-xl">
             <div className="border-border flex items-center justify-between border-b pb-4">
               <div className="text-text text-14 flex items-center gap-2 font-semibold">
                 <Key className="text-text-subtle h-4 w-4" />
