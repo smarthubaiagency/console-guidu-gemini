@@ -6,7 +6,7 @@ import { z } from "zod";
 import { decodeCursor, pageOf } from "@/core/api/pagination";
 import { recordAudit } from "@/core/audit/record";
 import { assertWithinQuota, resolveQuota } from "@/core/entitlements/quotas";
-import { activeLocationIds } from "@/core/locations/service";
+import { activeLocationIds, toLocationView } from "@/core/locations/service";
 import { assertModuleOperational } from "@/core/module-runtime/state";
 import { requireWorkspacePermission } from "@/core/permissions/guard";
 import type {
@@ -15,6 +15,16 @@ import type {
 } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
+import {
+  AccommodationTypeInput,
+  NIGHT_UNIT,
+  RatePlanInput,
+  type SerializableAccommodationType,
+  type SerializableLodging,
+  type SerializableProperty,
+  type SerializableRatePlan,
+  toUcpLodgingProduct,
+} from "../../lodging";
 import { PortfolioPermissions, PortfolioQuotas } from "../../manifest";
 import { detailsSchema, isValidKind, ITEM_TYPES } from "../../verticals";
 import {
@@ -42,8 +52,10 @@ import {
  * repeats tenant and role. Input and output use the UCP names.
  *
  * Each `item_type` + `vertical` has its `details` extension, validated by
- * the schema declared in `../../verticals.ts` (F5b). Lodging follows the
- * UCP lodging model and arrives in F5c.
+ * the schema declared in `../../verticals.ts` (F5b). Lodging (F5c) follows
+ * the UCP lodging model: the item's single location is the property, and
+ * each variant prices one accommodation type under one rate plan
+ * (`../../lodging.ts`, services in `./lodging.ts`).
  */
 
 const MODULE_KEY = "portfolio";
@@ -60,7 +72,8 @@ const handleSchema = z
 
 const itemFields = {
   item_type: z.enum(ITEM_TYPES, {
-    error: "Categoria inválida (produto, serviço, imóvel ou evento).",
+    error:
+      "Categoria inválida (produto, serviço, imóvel, hospedagem ou evento).",
   }),
   vertical: z.string().regex(/^[a-z][a-z0-9_]{0,47}$/),
   details: z.record(z.string(), z.unknown()),
@@ -123,6 +136,9 @@ const variantShape = {
     .nullable()
     .optional(),
   allow_backorder: z.boolean(),
+  /** Lodging only: the accommodation type and rate plan it prices. */
+  accommodation_type_id: z.string().uuid().nullable().optional(),
+  rate_plan_id: z.string().uuid().nullable().optional(),
 };
 
 const VariantFields = z
@@ -180,6 +196,13 @@ export const ItemCreateInput = z
       .array(VariantInput)
       .min(1, "Informe ao menos uma variante.")
       .max(100),
+    /** Lodging only; by default one type named after the item and one plan. */
+    accommodation_types: z
+      .array(AccommodationTypeInput)
+      .min(1)
+      .max(50)
+      .optional(),
+    rate_plans: z.array(RatePlanInput).min(1).max(20).optional(),
   })
   .strict();
 
@@ -191,7 +214,24 @@ export const ItemUpdateInput = z
   .refine((v) => Object.keys(v).length > 0, "Nada para alterar.");
 
 export type VariantView = SerializableVariant &
-  Readonly<{ position: number; minStockAlert: number | null }>;
+  Readonly<{
+    position: number;
+    minStockAlert: number | null;
+    accommodationTypeId: string | null;
+    ratePlanId: string | null;
+  }>;
+
+export type AccommodationTypeView = SerializableAccommodationType &
+  Readonly<{ position: number }>;
+export type RatePlanView = SerializableRatePlan &
+  Readonly<{ position: number }>;
+
+/** Lodging part of an item (F5c); null on the other categories. */
+export type LodgingView = Readonly<{
+  property: SerializableLodging["property"];
+  accommodationTypes: AccommodationTypeView[];
+  ratePlans: RatePlanView[];
+}>;
 
 export type ItemView = SerializableItem &
   Readonly<{
@@ -213,10 +253,19 @@ export type ItemView = SerializableItem &
     createdAt: string;
     updatedAt: string;
     variants: VariantView[];
+    lodging: LodgingView | null;
   }>;
 
-type ItemRow = Prisma.PortfolioItemGetPayload<object>;
+const ITEM_INCLUDE = {
+  variants: true,
+  accommodationTypes: true,
+  ratePlans: true,
+} as const;
+
+type ItemRow = Prisma.PortfolioItemGetPayload<{ include: typeof ITEM_INCLUDE }>;
 type VariantRow = Prisma.PortfolioVariantGetPayload<object>;
+type TypeRow = Prisma.PortfolioAccommodationTypeGetPayload<object>;
+type PlanRow = Prisma.PortfolioRatePlanGetPayload<object>;
 
 function json<T>(value: Prisma.JsonValue | null, fallback: T): T {
   return (value ?? fallback) as T;
@@ -242,10 +291,49 @@ function toVariantView(row: VariantRow): VariantView {
     stockQuantity: row.stockQuantity,
     minStockAlert: row.minStockAlert,
     allowBackorder: row.allowBackorder,
+    accommodationTypeId: row.accommodationTypeId,
+    ratePlanId: row.ratePlanId,
   };
 }
 
-function toItemView(row: ItemRow, variants: VariantRow[]): ItemView {
+const byPosition = <T extends { position: number; createdAt: Date }>(
+  a: T,
+  b: T,
+) => a.position - b.position || +a.createdAt - +b.createdAt;
+
+function toTypeView(row: TypeRow): AccommodationTypeView {
+  return {
+    id: row.id,
+    position: row.position,
+    title: row.title,
+    description: row.description,
+    capacity: json(row.capacity, {}),
+    media: json(row.media, []),
+    accommodationKind: row.accommodationKind,
+    bedrooms: row.bedrooms,
+    bedsCount: row.bedsCount,
+    bathrooms: row.bathrooms,
+    amenities: row.amenities,
+  };
+}
+
+function toPlanView(row: PlanRow): RatePlanView {
+  return {
+    id: row.id,
+    position: row.position,
+    title: row.title,
+    description: row.description,
+    refundability: row.refundability as RatePlanView["refundability"],
+    cancellationPolicy: row.cancellationPolicy,
+    freeCancellationHours: row.freeCancellationHours,
+    board: row.board as RatePlanView["board"],
+  };
+}
+
+function toItemView(
+  row: ItemRow,
+  property: SerializableProperty | null,
+): ItemView {
   return {
     id: row.id,
     itemType: row.itemType,
@@ -277,18 +365,56 @@ function toItemView(row: ItemRow, variants: VariantRow[]): ItemView {
     aiSafetyRules: row.aiSafetyRules,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
-    variants: variants
-      .sort((a, b) => a.position - b.position || +a.createdAt - +b.createdAt)
-      .map(toVariantView),
+    variants: [...row.variants].sort(byPosition).map(toVariantView),
+    lodging:
+      row.itemType === "lodging"
+        ? {
+            property,
+            accommodationTypes: [...row.accommodationTypes]
+              .sort(byPosition)
+              .map(toTypeView),
+            ratePlans: [...row.ratePlans].sort(byPosition).map(toPlanView),
+          }
+        : null,
   };
+}
+
+/** Item views of rows, with the property of the lodging ones. */
+async function toItemViews(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  rows: ItemRow[],
+): Promise<ItemView[]> {
+  const propertyIds = rows.flatMap((r) =>
+    r.itemType === "lodging" && r.locationIds[0] ? [r.locationIds[0]] : [],
+  );
+  const locations = propertyIds.length
+    ? await tx.workspaceLocation.findMany({
+        where: { workspaceId: ctx.workspaceId, id: { in: propertyIds } },
+      })
+    : [];
+  const properties = new Map(
+    locations.map((l) => [l.id, toLocationView(l) as SerializableProperty]),
+  );
+  return rows.map((r) =>
+    toItemView(
+      r,
+      r.itemType === "lodging"
+        ? (properties.get(r.locationIds[0] ?? "") ?? null)
+        : null,
+    ),
+  );
 }
 
 /** UCP Product of an item view (null for quote items). */
 export function itemToUcp(item: ItemView): Record<string, unknown> | null {
-  return toUcpProduct(item, item.variants);
+  return item.lodging
+    ? toUcpLodgingProduct(item, item.variants, item.lodging)
+    : toUcpProduct(item, item.variants);
 }
 
-function invalid(error: z.ZodError): AppError {
+/** Shared with ./lodging.ts. */
+export function invalid(error: z.ZodError): AppError {
   const issue = error.issues[0];
   return new AppError({
     code: "invalid_input",
@@ -298,7 +424,7 @@ function invalid(error: z.ZodError): AppError {
   });
 }
 
-function notFound(what = "Item"): AppError {
+export function notFound(what = "Item"): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: `${what} não encontrado.`,
@@ -322,7 +448,101 @@ function parseDetails(
     requireAll: status === "active",
   }).safeParse(details ?? {});
   if (!parsed.success) throw invalid(parsed.error);
-  return parsed.data as Record<string, unknown>;
+  const data = parsed.data as Record<string, unknown>;
+  // UCP time_interval: opens and closes come together.
+  const quiet = data.quiet_hours as
+    { opens?: string; closes?: string } | undefined;
+  if (quiet && !quiet.opens !== !quiet.closes) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: "Informe o início e o fim do horário de silêncio.",
+    });
+  }
+  return data;
+}
+
+/**
+ * Why an active lodging item is not complete, or null. Activating needs
+ * the property (one location), accommodation types with capacity, a rate
+ * plan and every variant bound to a type and a plan.
+ */
+export function lodgingProblem(item: ItemView): string | null {
+  if (!item.lodging || item.status !== "active") return null;
+  if (item.locationIds.length !== 1) {
+    return "Escolha a propriedade (uma loja) antes de ativar a hospedagem.";
+  }
+  if (item.lodging.accommodationTypes.length === 0) {
+    return "Cadastre ao menos uma acomodação antes de ativar.";
+  }
+  if (item.lodging.accommodationTypes.some((t) => !t.capacity.total)) {
+    return "Informe a capacidade total de cada acomodação antes de ativar.";
+  }
+  if (item.lodging.ratePlans.length === 0) {
+    return "Cadastre ao menos uma tarifa antes de ativar.";
+  }
+  if (item.variants.some((v) => !v.accommodationTypeId || !v.ratePlanId)) {
+    return "Cada preço precisa de uma acomodação e de uma tarifa.";
+  }
+  return null;
+}
+
+/** Shared with ./lodging.ts: an active lodging item must stay complete. */
+export function assertLodgingReady(item: ItemView): ItemView {
+  const problem = lodgingProblem(item);
+  if (problem)
+    throw new AppError({ code: "invalid_input", safeMessage: problem });
+  return item;
+}
+
+function checkLodgingFields(
+  itemType: string,
+  locationIds: readonly string[] | undefined,
+  variants: readonly Readonly<{
+    accommodation_type_id?: string | null | undefined;
+    rate_plan_id?: string | null | undefined;
+  }>[],
+): void {
+  if (itemType === "lodging") {
+    if (locationIds && new Set(locationIds).size > 1) {
+      throw new AppError({
+        code: "invalid_input",
+        safeMessage: "Uma hospedagem fica em uma única propriedade (loja).",
+      });
+    }
+    return;
+  }
+  if (variants.some((v) => v.accommodation_type_id || v.rate_plan_id)) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: "Acomodação e tarifa existem só na hospedagem.",
+    });
+  }
+}
+
+/** The type and plan of a lodging variant must be of its own item. */
+function checkVariantLinks(
+  item: ItemView,
+  v: Readonly<{
+    accommodation_type_id?: string | null | undefined;
+    rate_plan_id?: string | null | undefined;
+  }>,
+): void {
+  checkLodgingFields(item.itemType, undefined, [v]);
+  if (!item.lodging) return;
+  if (
+    v.accommodation_type_id &&
+    !item.lodging.accommodationTypes.some(
+      (t) => t.id === v.accommodation_type_id,
+    )
+  ) {
+    throw notFound("Acomodação");
+  }
+  if (
+    v.rate_plan_id &&
+    !item.lodging.ratePlans.some((p) => p.id === v.rate_plan_id)
+  ) {
+    throw notFound("Tarifa");
+  }
 }
 
 /** URL-friendly handle from a title ("Camiseta Básica" -> "camiseta-basica"). */
@@ -396,7 +616,10 @@ async function checkLocations(
   }
 }
 
-async function lockWorkspace(tx: ContextTransaction, ctx: RequestContext) {
+export async function lockWorkspace(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+) {
   await tx.$executeRaw`select pg_advisory_xact_lock(hashtext(${`portfolio:${ctx.workspaceId}`}))`;
 }
 
@@ -440,7 +663,60 @@ function variantData(v: z.output<typeof VariantInput>) {
     stockQuantity: v.stock_quantity ?? null,
     minStockAlert: v.min_stock_alert ?? null,
     allowBackorder: v.allow_backorder,
+    accommodationTypeId: v.accommodation_type_id ?? null,
+    ratePlanId: v.rate_plan_id ?? null,
   };
+}
+
+/** Shared with ./lodging.ts. */
+export function accommodationTypeData(
+  t: Readonly<{
+    [K in keyof z.output<typeof AccommodationTypeInput>]?:
+      z.output<typeof AccommodationTypeInput>[K] | undefined;
+  }>,
+) {
+  return {
+    ...(t.title !== undefined ? { title: t.title } : {}),
+    ...(t.description !== undefined ? { description: t.description } : {}),
+    ...(t.capacity !== undefined ? { capacity: t.capacity } : {}),
+    ...(t.media !== undefined ? { media: t.media } : {}),
+    ...(t.accommodation_kind !== undefined
+      ? { accommodationKind: t.accommodation_kind }
+      : {}),
+    ...(t.bedrooms !== undefined ? { bedrooms: t.bedrooms } : {}),
+    ...(t.beds_count !== undefined ? { bedsCount: t.beds_count } : {}),
+    ...(t.bathrooms !== undefined ? { bathrooms: t.bathrooms } : {}),
+    ...(t.amenities !== undefined ? { amenities: t.amenities } : {}),
+  } as { title: string } & Omit<
+    Prisma.PortfolioAccommodationTypeUncheckedCreateInput,
+    "itemId" | "organizationId" | "workspaceId" | "createdBy"
+  >;
+}
+
+/** Shared with ./lodging.ts. */
+export function ratePlanData(
+  p: Readonly<{
+    [K in keyof z.output<typeof RatePlanInput>]?:
+      z.output<typeof RatePlanInput>[K] | undefined;
+  }>,
+) {
+  return {
+    ...(p.title !== undefined ? { title: p.title } : {}),
+    ...(p.description !== undefined ? { description: p.description } : {}),
+    ...(p.refundability !== undefined
+      ? { refundability: p.refundability }
+      : {}),
+    ...(p.cancellation_policy !== undefined
+      ? { cancellationPolicy: p.cancellation_policy }
+      : {}),
+    ...(p.free_cancellation_hours !== undefined
+      ? { freeCancellationHours: p.free_cancellation_hours }
+      : {}),
+    ...(p.board !== undefined ? { board: p.board } : {}),
+  } as { title: string } & Omit<
+    Prisma.PortfolioRatePlanUncheckedCreateInput,
+    "itemId" | "organizationId" | "workspaceId" | "createdBy"
+  >;
 }
 
 function skuConflict(error: unknown): never {
@@ -456,7 +732,7 @@ function skuConflict(error: unknown): never {
   throw error;
 }
 
-function audit(
+export function audit(
   tx: ContextTransaction,
   ctx: RequestContext,
   action: string,
@@ -512,13 +788,15 @@ export async function listItems(
   if (page.length === 0) return { items: [], nextCursor: null };
   const rows = await tx.portfolioItem.findMany({
     where: { workspaceId: ctx.workspaceId, id: { in: page.map((r) => r.id) } },
-    include: { variants: true },
+    include: ITEM_INCLUDE,
   });
-  const byId = new Map(rows.map((r) => [r.id, r]));
+  const views = new Map(
+    (await toItemViews(tx, ctx, rows)).map((v) => [v.id, v]),
+  );
   return {
     items: page.flatMap((p) => {
-      const row = byId.get(p.id);
-      return row ? [toItemView(row, row.variants)] : [];
+      const view = views.get(p.id);
+      return view ? [view] : [];
     }),
     nextCursor,
   };
@@ -534,13 +812,13 @@ export async function getItem(
   if (!z.string().uuid().safeParse(itemId).success) throw notFound();
   const row = await tx.portfolioItem.findFirst({
     where: { id: itemId, workspaceId: ctx.workspaceId },
-    include: { variants: true },
+    include: ITEM_INCLUDE,
   });
   if (!row) throw notFound();
-  return toItemView(row, row.variants);
+  return (await toItemViews(tx, ctx, [row]))[0]!;
 }
 
-async function writable(tx: ContextTransaction, ctx: RequestContext) {
+export async function writable(tx: ContextTransaction, ctx: RequestContext) {
   await assertModuleOperational(tx, ctx, MODULE_KEY, "write");
   await requireWorkspacePermission(tx, ctx, PortfolioPermissions.ITEMS_WRITE);
 }
@@ -557,6 +835,24 @@ export async function createItem(
   const d = parsed.data;
   const details = parseDetails(d.item_type, d.vertical, d.details, d.status);
   checkPrices(d.price_display, d.variants);
+  checkLodgingFields(d.item_type, d.location_ids, d.variants);
+  const lodging = d.item_type === "lodging";
+  if (!lodging && (d.accommodation_types || d.rate_plans)) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: "Acomodação e tarifa existem só na hospedagem.",
+    });
+  }
+  if (
+    lodging &&
+    d.variants.some((v) => v.accommodation_type_id || v.rate_plan_id)
+  ) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage:
+        "Na criação, os preços usam a primeira acomodação e a primeira tarifa.",
+    });
+  }
   await checkLocations(tx, ctx, d.location_ids);
   await lockWorkspace(tx, ctx);
   await assertQuotas(tx, ctx, 1, d.variants.length);
@@ -600,10 +896,48 @@ export async function createItem(
       },
     });
     itemId = item.id;
+    // Lodging: the types and plans first; the new variants price the first
+    // type under the first plan, per night.
+    let link: { accommodationTypeId: string; ratePlanId: string } | null = null;
+    if (lodging) {
+      const owner = {
+        itemId,
+        organizationId: ctx.organizationId,
+        workspaceId: ctx.workspaceId,
+        createdBy: ctx.userId,
+      };
+      const typeIds: string[] = [];
+      for (const [position, t] of (
+        d.accommodation_types ?? [
+          AccommodationTypeInput.parse({ title: d.title }),
+        ]
+      ).entries()) {
+        const created = await tx.portfolioAccommodationType.create({
+          data: { ...accommodationTypeData(t), position, ...owner },
+        });
+        typeIds.push(created.id);
+      }
+      const planIds: string[] = [];
+      for (const [position, p] of (
+        d.rate_plans ?? [RatePlanInput.parse({ title: "Tarifa padrão" })]
+      ).entries()) {
+        const created = await tx.portfolioRatePlan.create({
+          data: { ...ratePlanData(p), position, ...owner },
+        });
+        planIds.push(created.id);
+      }
+      link = { accommodationTypeId: typeIds[0]!, ratePlanId: planIds[0]! };
+    }
     for (const [position, v] of d.variants.entries()) {
       await tx.portfolioVariant.create({
         data: {
           ...variantData(v),
+          ...(link
+            ? {
+                ...link,
+                quantityUnit: v.quantity_unit ?? { ...NIGHT_UNIT },
+              }
+            : {}),
           position,
           itemId,
           organizationId: ctx.organizationId,
@@ -616,7 +950,7 @@ export async function createItem(
     skuConflict(error);
   }
   await audit(tx, ctx, "portfolio.item.create", "portfolio_item", itemId);
-  return getItem(tx, ctx, itemId);
+  return assertLodgingReady(await getItem(tx, ctx, itemId));
 }
 
 /** Changes only the fields sent; variants have their own services. */
@@ -639,6 +973,7 @@ export async function updateItem(
       })),
     );
   }
+  checkLodgingFields(current.itemType, d.location_ids, []);
   if (d.location_ids) await checkLocations(tx, ctx, d.location_ids);
   // Activating checks the required details, even when they were not sent.
   const status = d.status ?? current.status;
@@ -701,7 +1036,7 @@ export async function updateItem(
     skuConflict(error);
   }
   await audit(tx, ctx, "portfolio.item.update", "portfolio_item", current.id);
-  return getItem(tx, ctx, current.id);
+  return assertLodgingReady(await getItem(tx, ctx, current.id));
 }
 
 export async function addVariant(
@@ -714,6 +1049,7 @@ export async function addVariant(
   const parsed = VariantInput.safeParse(input);
   if (!parsed.success) throw invalid(parsed.error);
   const item = await getItem(tx, ctx, itemId);
+  checkVariantLinks(item, parsed.data);
   checkPrices(item.priceDisplay, [
     ...item.variants.map((v) => ({
       price: v.priceAmount === null ? null : { currency: v.currency },
@@ -728,6 +1064,9 @@ export async function addVariant(
     const created = await tx.portfolioVariant.create({
       data: {
         ...variantData(parsed.data),
+        ...(item.lodging && !parsed.data.quantity_unit
+          ? { quantityUnit: { ...NIGHT_UNIT } }
+          : {}),
         position,
         itemId: item.id,
         organizationId: ctx.organizationId,
@@ -746,7 +1085,7 @@ export async function addVariant(
     "portfolio_variant",
     variantId,
   );
-  return getItem(tx, ctx, item.id);
+  return assertLodgingReady(await getItem(tx, ctx, item.id));
 }
 
 export async function updateVariant(
@@ -763,6 +1102,7 @@ export async function updateVariant(
   const current = item.variants.find((v) => v.id === variantId);
   if (!current) throw notFound("Variante");
   const d = parsed.data;
+  checkVariantLinks(item, d);
   const merged = VariantInput.safeParse({
     title: d.title ?? current.title,
     sku: d.sku !== undefined ? d.sku : current.sku,
@@ -821,6 +1161,10 @@ export async function updateVariant(
     ...(d.allow_backorder !== undefined
       ? { allowBackorder: d.allow_backorder }
       : {}),
+    ...(d.accommodation_type_id !== undefined
+      ? { accommodationTypeId: d.accommodation_type_id }
+      : {}),
+    ...(d.rate_plan_id !== undefined ? { ratePlanId: d.rate_plan_id } : {}),
     updatedBy: ctx.userId,
   };
   try {
@@ -838,7 +1182,7 @@ export async function updateVariant(
     "portfolio_variant",
     variantId,
   );
-  return getItem(tx, ctx, item.id);
+  return assertLodgingReady(await getItem(tx, ctx, item.id));
 }
 
 /** Removes a variant; the last one of an item stays (UCP needs one). */

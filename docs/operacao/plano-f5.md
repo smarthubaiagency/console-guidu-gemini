@@ -82,8 +82,19 @@ Planejado:
 
 ### F5c — Hospedagem (UCP lodging)
 
-- Propriedade (Location), tipos de acomodação com capacidade, planos tarifários, política de cancelamento e regras da casa.
-- Só o cadastro. A reserva (`create_booking_session`…) depende de agenda e pagamento e fica para depois.
+**Estado:** pronta para revisão. A migration `20261023090000_f5c_lodging.sql` é aplicada como `app_migrations`.
+
+Entregue:
+
+- `portfolio_accommodation_types` (AccommodationType do UCP, com `capacity`) e `portfolio_rate_plans` (RatePlan, com a política de cancelamento e a alimentação), com RLS FORCE, assinatura, item imutável e uma trava que só aceita itens de hospedagem.
+- Variantes de hospedagem: preço da diária de uma acomodação numa tarifa (`accommodation_type_id` e `rate_plan_id`, com chaves estrangeiras compostas que mantêm as duas no mesmo item).
+- A propriedade é a loja do item (uma só). Regras da casa, taxa de limpeza, caução e comodidades no `details` da categoria `lodging`.
+- Ativar exige check-in e check-out, a propriedade, acomodações com capacidade, uma tarifa e todos os preços ligados.
+- Saída UCP: Product válido com `metadata` `co.guidu.portfolio.lodging` (Property, AccommodationType, RatePlan e `dev.ucp.lodging.policy.cancellation`), validados contra os schemas oficiais.
+- Telas: categoria Hospedagem na criação; no item, propriedade, acomodações, tarifas e preços por diária.
+- Testes: SQL `lodging-rls.sql`, unitário `portfolio-lodging.test.ts`, integração e e2e.
+
+Fora desta etapa: a reserva (`create_booking_session`…), que depende de agenda e pagamento.
 
 ### F5d — API e MCP no formato UCP
 

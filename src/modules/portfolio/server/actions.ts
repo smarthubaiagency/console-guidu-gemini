@@ -13,6 +13,7 @@ import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError, toSafeError } from "@/shared/errors";
 
+import { NIGHT_UNIT } from "../lodging";
 import { PortfolioQuotas } from "../manifest";
 import { SALE_UNITS } from "../ucp";
 import { detailsFromForm } from "../verticals";
@@ -23,6 +24,14 @@ import {
   updateItem,
   updateVariant,
 } from "./services/items";
+import {
+  addAccommodationType,
+  addRatePlan,
+  removeAccommodationType,
+  removeRatePlan,
+  updateAccommodationType,
+  updateRatePlan,
+} from "./services/lodging";
 
 /** Server actions of the Portfolio screens (F5a). */
 
@@ -100,7 +109,16 @@ function price(formData: FormData, name: string) {
 
 function variantFromForm(formData: FormData) {
   const unit = SALE_UNITS.find((u) => u.unit === str(formData, "unit"));
+  // Lodging (F5c): the nightly price of an accommodation type and a plan.
+  const lodging =
+    formData.get("lodging") === "1"
+      ? {
+          accommodation_type_id: str(formData, "accommodation_type_id") ?? null,
+          rate_plan_id: str(formData, "rate_plan_id") ?? null,
+        }
+      : null;
   return {
+    ...lodging,
     title: str(formData, "variant_title") ?? "Padrão",
     sku: str(formData, "sku") ?? null,
     barcodes: pairs(formData, "barcodes").map(([type, value]) =>
@@ -110,8 +128,9 @@ function variantFromForm(formData: FormData) {
     ),
     price: price(formData, "price"),
     list_price: price(formData, "list_price"),
-    quantity_unit:
-      unit && unit.unit !== "C62"
+    quantity_unit: lodging
+      ? { ...NIGHT_UNIT }
+      : unit && unit.unit !== "C62"
         ? { unit: unit.unit, display_text: unit.display_text }
         : null,
     options: (str(formData, "options") ?? "")
@@ -211,7 +230,7 @@ export async function updatePortfolioItemAction(
         tags: list(formData, "tags"),
         url: str(formData, "url") ?? null,
         fulfillment_methods: formData.getAll("fulfillment_methods"),
-        location_ids: formData.getAll("location_ids"),
+        location_ids: formData.getAll("location_ids").filter(Boolean),
         price_display: str(formData, "price_display") ?? "price",
         status: str(formData, "status") ?? "draft",
         visibility: str(formData, "visibility") ?? "public",
@@ -274,6 +293,130 @@ export async function updatePortfolioVariantAction(
         formData.get("remove") === "1"
           ? "Variante removida."
           : "Variante salva.",
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+function accommodationTypeFromForm(formData: FormData) {
+  const capacity = {
+    ...(int(formData, "capacity_adults") !== null
+      ? { adults: int(formData, "capacity_adults") }
+      : {}),
+    ...(int(formData, "capacity_children") !== null
+      ? { children: int(formData, "capacity_children") }
+      : {}),
+    ...(int(formData, "capacity_total") !== null
+      ? { total: int(formData, "capacity_total") }
+      : {}),
+  };
+  const ranges = pairs(formData, "child_age_ranges").map(([range, limit]) => {
+    const [min, max] = range.split("-").map((n) => Number.parseInt(n, 10));
+    return {
+      ages: { min, max: max ?? min },
+      ...(limit ? { limit: Number.parseInt(limit, 10) } : {}),
+    };
+  });
+  return {
+    title: str(formData, "type_title") ?? "",
+    description: str(formData, "type_description") ?? null,
+    accommodation_kind: str(formData, "accommodation_kind") ?? null,
+    capacity: ranges.length
+      ? { ...capacity, child_age_ranges: ranges }
+      : capacity,
+    bedrooms: int(formData, "bedrooms"),
+    beds_count: int(formData, "beds_count"),
+    bathrooms: int(formData, "bathrooms"),
+    amenities: formData.getAll("type_amenities").map(String),
+    media: pairs(formData, "type_media").map(([url, alt]) => ({
+      type: "image",
+      url,
+      ...(alt ? { alt_text: alt } : {}),
+    })),
+  };
+}
+
+function ratePlanFromForm(formData: FormData) {
+  return {
+    title: str(formData, "plan_title") ?? "",
+    description: str(formData, "plan_description") ?? null,
+    refundability: str(formData, "refundability") ?? "refundable",
+    cancellation_policy: str(formData, "cancellation_policy") ?? null,
+    free_cancellation_hours: int(formData, "free_cancellation_hours"),
+    board: str(formData, "board") ?? "room_only",
+  };
+}
+
+/** Adds, edits (`typeId`) or removes (`remove=1`) an accommodation type. */
+export async function saveAccommodationTypeAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const { workspaceSlug, ctx } = await context(formData);
+    const itemId = uuid(formData, "itemId");
+    const typeId = str(formData, "typeId");
+    const remove = formData.get("remove") === "1";
+    await withContext(prisma, ctx, (tx) =>
+      typeId === undefined
+        ? addAccommodationType(
+            tx,
+            ctx,
+            itemId,
+            accommodationTypeFromForm(formData),
+          )
+        : remove
+          ? removeAccommodationType(tx, ctx, itemId, typeId)
+          : updateAccommodationType(
+              tx,
+              ctx,
+              itemId,
+              typeId,
+              accommodationTypeFromForm(formData),
+            ),
+    );
+    revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    return {
+      success: true,
+      message:
+        typeId === undefined
+          ? "Acomodação adicionada."
+          : remove
+            ? "Acomodação removida."
+            : "Acomodação salva.",
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** Adds, edits (`planId`) or removes (`remove=1`) a rate plan. */
+export async function saveRatePlanAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const { workspaceSlug, ctx } = await context(formData);
+    const itemId = uuid(formData, "itemId");
+    const planId = str(formData, "planId");
+    const remove = formData.get("remove") === "1";
+    await withContext(prisma, ctx, (tx) =>
+      planId === undefined
+        ? addRatePlan(tx, ctx, itemId, ratePlanFromForm(formData))
+        : remove
+          ? removeRatePlan(tx, ctx, itemId, planId)
+          : updateRatePlan(tx, ctx, itemId, planId, ratePlanFromForm(formData)),
+    );
+    revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    return {
+      success: true,
+      message:
+        planId === undefined
+          ? "Tarifa adicionada."
+          : remove
+            ? "Tarifa removida."
+            : "Tarifa salva.",
     };
   } catch (err) {
     return failure(err);

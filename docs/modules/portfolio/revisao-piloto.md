@@ -134,6 +134,8 @@ O UCP não tem imóveis; é extensão inteira. As correções:
 
 `vertical = HOSTING` com `category = LODGING` é redundante: basta `item_type = lodging`.
 
+**Como ficou na F5c:** a propriedade é a loja do item (uma só); `accommodation_kind`, quartos, camas, banheiros e comodidades vão na extensão `co.guidu.portfolio.accommodation_type`; fumar, animais e festas ficaram como regras da casa no `details` (`smoking_allowed`, `pets_allowed`, `parties_allowed`), junto com os horários, a taxa de limpeza e a caução. Cada variante é o preço da diária de uma acomodação numa tarifa. Detalhes no [MODULE_SPEC](../../../src/modules/portfolio/MODULE_SPEC.md#3b-hospedagem-f5c).
+
 ### 4.5 Eventos (`event`)
 
 O UCP não tem eventos; é extensão. As correções:

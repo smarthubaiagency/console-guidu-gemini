@@ -921,41 +921,43 @@ model WorkspaceLocation {
 /// Item of the Portfolio module (F5a): UCP product fields, internal
 /// management and AI governance, and the vertical extension in `details`.
 model PortfolioItem {
-  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId     String             @map("organization_id") @db.Uuid
-  workspaceId        String             @map("workspace_id") @db.Uuid
-  itemType           String             @map("item_type")
-  vertical           String             @default("general")
+  id                 String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId     String                       @map("organization_id") @db.Uuid
+  workspaceId        String                       @map("workspace_id") @db.Uuid
+  itemType           String                       @map("item_type")
+  vertical           String                       @default("general")
   title              String
   handle             String
-  description        Json               @default("{}")
-  categories         Json               @default("[]")
-  media              Json               @default("[]")
-  tags               String[]           @default([])
+  description        Json                         @default("{}")
+  categories         Json                         @default("[]")
+  media              Json                         @default("[]")
+  tags               String[]                     @default([])
   url                String?
   rating             Json?
-  fulfillmentMethods String[]           @default([]) @map("fulfillment_methods")
-  locationIds        String[]           @default([]) @map("location_ids") @db.Uuid
-  policies           Json               @default("[]")
-  links              Json               @default("[]")
-  priceDisplay       String             @default("price") @map("price_display")
-  details            Json               @default("{}")
-  status             String             @default("draft")
-  visibility         String             @default("public")
-  priority           Int                @default(0)
-  isFeatured         Boolean            @default(false) @map("is_featured")
-  featuredRank       Int                @default(0) @map("featured_rank")
-  availabilityMode   String             @default("always") @map("availability_mode")
-  aiDiscoveryEnabled Boolean            @default(true) @map("ai_discovery_enabled")
-  aiKeywords         String[]           @default([]) @map("ai_keywords")
-  aiAliases          String[]           @default([]) @map("ai_aliases")
-  aiDoNotSay         String[]           @default([]) @map("ai_do_not_say")
-  aiSafetyRules      String?            @map("ai_safety_rules")
-  createdBy          String             @map("created_by") @db.Uuid
-  updatedBy          String?            @map("updated_by") @db.Uuid
-  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+  fulfillmentMethods String[]                     @default([]) @map("fulfillment_methods")
+  locationIds        String[]                     @default([]) @map("location_ids") @db.Uuid
+  policies           Json                         @default("[]")
+  links              Json                         @default("[]")
+  priceDisplay       String                       @default("price") @map("price_display")
+  details            Json                         @default("{}")
+  status             String                       @default("draft")
+  visibility         String                       @default("public")
+  priority           Int                          @default(0)
+  isFeatured         Boolean                      @default(false) @map("is_featured")
+  featuredRank       Int                          @default(0) @map("featured_rank")
+  availabilityMode   String                       @default("always") @map("availability_mode")
+  aiDiscoveryEnabled Boolean                      @default(true) @map("ai_discovery_enabled")
+  aiKeywords         String[]                     @default([]) @map("ai_keywords")
+  aiAliases          String[]                     @default([]) @map("ai_aliases")
+  aiDoNotSay         String[]                     @default([]) @map("ai_do_not_say")
+  aiSafetyRules      String?                      @map("ai_safety_rules")
+  createdBy          String                       @map("created_by") @db.Uuid
+  updatedBy          String?                      @map("updated_by") @db.Uuid
+  createdAt          DateTime                     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime                     @updatedAt @map("updated_at") @db.Timestamptz()
   variants           PortfolioVariant[]
+  accommodationTypes PortfolioAccommodationType[]
+  ratePlans          PortfolioRatePlan[]
 
   @@unique([workspaceId, handle])
   @@unique([id, workspaceId])
@@ -966,32 +968,87 @@ model PortfolioItem {
 
 /// Purchasable variant of a Portfolio item (UCP Variant); every item has one.
 model PortfolioVariant {
-  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId     String        @map("organization_id") @db.Uuid
-  workspaceId        String        @map("workspace_id") @db.Uuid
-  itemId             String        @map("item_id") @db.Uuid
-  position           Int           @default(0)
-  title              String
-  sku                String?
-  barcodes           Json          @default("[]")
-  priceAmount        BigInt?       @map("price_amount")
-  listPriceAmount    BigInt?       @map("list_price_amount")
-  currency           String        @default("BRL")
-  quantityUnit       Json?         @map("quantity_unit")
-  unitPrice          Json?         @map("unit_price")
-  options            Json          @default("[]")
-  media              Json          @default("[]")
-  availabilityStatus String        @default("in_stock") @map("availability_status")
-  trackInventory     Boolean       @default(false) @map("track_inventory")
-  stockQuantity      Int?          @map("stock_quantity")
-  minStockAlert      Int?          @map("min_stock_alert")
-  allowBackorder     Boolean       @default(false) @map("allow_backorder")
-  createdBy          String        @map("created_by") @db.Uuid
-  updatedBy          String?       @map("updated_by") @db.Uuid
-  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
-  item               PortfolioItem @relation(fields: [itemId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  id                  String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId      String        @map("organization_id") @db.Uuid
+  workspaceId         String        @map("workspace_id") @db.Uuid
+  itemId              String        @map("item_id") @db.Uuid
+  position            Int           @default(0)
+  title               String
+  sku                 String?
+  barcodes            Json          @default("[]")
+  priceAmount         BigInt?       @map("price_amount")
+  listPriceAmount     BigInt?       @map("list_price_amount")
+  currency            String        @default("BRL")
+  quantityUnit        Json?         @map("quantity_unit")
+  unitPrice           Json?         @map("unit_price")
+  options             Json          @default("[]")
+  media               Json          @default("[]")
+  availabilityStatus  String        @default("in_stock") @map("availability_status")
+  trackInventory      Boolean       @default(false) @map("track_inventory")
+  stockQuantity       Int?          @map("stock_quantity")
+  minStockAlert       Int?          @map("min_stock_alert")
+  allowBackorder      Boolean       @default(false) @map("allow_backorder")
+  /// Lodging (F5c): the accommodation type and rate plan this variant prices.
+  /// Composite foreign keys (with item_id) live in the migration.
+  accommodationTypeId String?       @map("accommodation_type_id") @db.Uuid
+  ratePlanId          String?       @map("rate_plan_id") @db.Uuid
+  createdBy           String        @map("created_by") @db.Uuid
+  updatedBy           String?       @map("updated_by") @db.Uuid
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+  item                PortfolioItem @relation(fields: [itemId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([itemId, position, createdAt])
   @@map("portfolio_variants")
+}
+
+/// UCP AccommodationType of a lodging item (F5c).
+model PortfolioAccommodationType {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId    String        @map("organization_id") @db.Uuid
+  workspaceId       String        @map("workspace_id") @db.Uuid
+  itemId            String        @map("item_id") @db.Uuid
+  position          Int           @default(0)
+  title             String
+  description       String?
+  capacity          Json          @default("{}")
+  media             Json          @default("[]")
+  accommodationKind String?       @map("accommodation_kind")
+  bedrooms          Int?
+  bedsCount         Int?          @map("beds_count")
+  bathrooms         Int?
+  amenities         String[]      @default([])
+  createdBy         String        @map("created_by") @db.Uuid
+  updatedBy         String?       @map("updated_by") @db.Uuid
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+  item              PortfolioItem @relation(fields: [itemId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([id, itemId])
+  @@index([itemId, position, createdAt])
+  @@map("portfolio_accommodation_types")
+}
+
+/// UCP RatePlan of a lodging item, with its cancellation policy (F5c).
+model PortfolioRatePlan {
+  id                    String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId        String        @map("organization_id") @db.Uuid
+  workspaceId           String        @map("workspace_id") @db.Uuid
+  itemId                String        @map("item_id") @db.Uuid
+  position              Int           @default(0)
+  title                 String
+  description           String?
+  refundability         String        @default("refundable")
+  cancellationPolicy    String?       @map("cancellation_policy")
+  freeCancellationHours Int?          @map("free_cancellation_hours")
+  board                 String        @default("room_only")
+  createdBy             String        @map("created_by") @db.Uuid
+  updatedBy             String?       @map("updated_by") @db.Uuid
+  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+  item                  PortfolioItem @relation(fields: [itemId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([id, itemId])
+  @@index([itemId, position, createdAt])
+  @@map("portfolio_rate_plans")
 }

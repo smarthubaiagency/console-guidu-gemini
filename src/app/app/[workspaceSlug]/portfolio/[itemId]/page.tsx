@@ -24,14 +24,23 @@ import {
   STATUS_LABELS,
   VariantFields,
 } from "@/modules/portfolio/components/fields";
+import {
+  AccommodationTypeFields,
+  ACCOMMODATION_KIND_LABELS,
+  BOARD_LABELS,
+  RatePlanFields,
+  REFUNDABILITY_LABELS,
+} from "@/modules/portfolio/components/lodging-fields";
 import { itemTypeLabel, verticalLabel } from "@/modules/portfolio/verticals";
 import { PortfolioPermissions } from "@/modules/portfolio/manifest";
 import {
   addPortfolioVariantAction,
+  saveAccommodationTypeAction,
+  saveRatePlanAction,
   updatePortfolioItemAction,
   updatePortfolioVariantAction,
 } from "@/modules/portfolio/server/actions";
-import { getItem, itemToUcp } from "@/modules/portfolio/server";
+import { getItem, itemToUcp, lodgingProblem } from "@/modules/portfolio/server";
 import { FULFILLMENT_METHODS, isUcpVisible } from "@/modules/portfolio/ucp";
 
 export const metadata: Metadata = { title: "Item do portfólio" };
@@ -40,7 +49,11 @@ interface PageProps {
   params: Promise<{ workspaceSlug: string; itemId: string }>;
 }
 
-/** One Portfolio item (F5a): UCP fields, governance, variants and preview. */
+/**
+ * One Portfolio item (F5a): UCP fields, governance, variants and preview.
+ * Lodging (F5c) adds the property, accommodation types and rate plans, and
+ * its variants are nightly prices.
+ */
 export default async function PortfolioItemPage({ params }: PageProps) {
   const { workspaceSlug, itemId } = await params;
   const identity = await requireUserPage(
@@ -81,6 +94,10 @@ export default async function PortfolioItemPage({ params }: PageProps) {
   const { item, locations, canWrite } = view;
   const ucp = itemToUcp(item);
   const visible = isUcpVisible(item);
+  const lodging = item.lodging;
+  const toActivate = lodging
+    ? lodgingProblem({ ...item, status: "active" })
+    : null;
   const hidden = (
     <>
       <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
@@ -257,12 +274,40 @@ export default async function PortfolioItemPage({ params }: PageProps) {
               </fieldset>
               <fieldset className="space-y-1 sm:col-span-2">
                 <legend className="text-12 text-text-subtle font-medium">
-                  Lojas onde está disponível
+                  {lodging
+                    ? "Propriedade (endereço da hospedagem)"
+                    : "Lojas onde está disponível"}
                 </legend>
                 {locations.length === 0 ? (
                   <p className="text-12 text-text-secondary">
                     Nenhuma loja cadastrada em Configurações › Lojas.
                   </p>
+                ) : lodging ? (
+                  <>
+                    <label className="text-12 text-text flex gap-2">
+                      <input
+                        type="radio"
+                        name="location_ids"
+                        value=""
+                        defaultChecked={item.locationIds.length === 0}
+                      />
+                      Nenhuma
+                    </label>
+                    {locations.map((l) => (
+                      <label
+                        key={l.id}
+                        className="text-12 text-text flex gap-2"
+                      >
+                        <input
+                          type="radio"
+                          name="location_ids"
+                          value={l.id}
+                          defaultChecked={item.locationIds[0] === l.id}
+                        />
+                        {l.name}
+                      </label>
+                    ))}
+                  </>
                 ) : (
                   locations.map((l) => (
                     <label key={l.id} className="text-12 text-text flex gap-2">
@@ -364,9 +409,130 @@ export default async function PortfolioItemPage({ params }: PageProps) {
           </ActionForm>
         </section>
 
+        {lodging ? (
+          <>
+            <section className={sectionClass} data-testid="accommodation-types">
+              <h2 className="text-14 text-text font-semibold">
+                Acomodações ({lodging.accommodationTypes.length})
+              </h2>
+              <p className="text-12 text-text-secondary">
+                Cada tipo de quarto ou unidade, com a capacidade de hóspedes.
+                {toActivate ? ` Para ativar: ${toActivate}` : ""}
+              </p>
+              <div className="divide-border divide-y">
+                {lodging.accommodationTypes.map((t) => (
+                  <div
+                    key={t.id}
+                    className="space-y-2 py-4"
+                    data-testid="accommodation-type"
+                  >
+                    <p className="text-12 text-text-secondary">
+                      <span className="text-text font-semibold">{t.title}</span>
+                      {t.accommodationKind
+                        ? ` · ${ACCOMMODATION_KIND_LABELS[t.accommodationKind as keyof typeof ACCOMMODATION_KIND_LABELS] ?? t.accommodationKind}`
+                        : ""}
+                      {t.capacity.total
+                        ? ` · até ${t.capacity.total} hóspedes`
+                        : " · capacidade não informada"}
+                    </p>
+                    <ActionForm
+                      action={saveAccommodationTypeAction}
+                      submitLabel="Salvar acomodação"
+                      className="space-y-3"
+                    >
+                      {hidden}
+                      <input type="hidden" name="typeId" value={t.id} />
+                      <AccommodationTypeFields type={t} />
+                    </ActionForm>
+                    {lodging.accommodationTypes.length > 1 ? (
+                      <ActionForm
+                        action={saveAccommodationTypeAction}
+                        submitLabel="Remover acomodação"
+                        tone="neutral"
+                      >
+                        {hidden}
+                        <input type="hidden" name="typeId" value={t.id} />
+                        <input type="hidden" name="remove" value="1" />
+                      </ActionForm>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+              <h3 className="text-12 text-text pt-2 font-semibold">
+                Nova acomodação
+              </h3>
+              <ActionForm
+                action={saveAccommodationTypeAction}
+                submitLabel="Adicionar acomodação"
+                className="space-y-3"
+                testId="add-accommodation-type"
+              >
+                {hidden}
+                <AccommodationTypeFields />
+              </ActionForm>
+            </section>
+
+            <section className={sectionClass} data-testid="rate-plans">
+              <h2 className="text-14 text-text font-semibold">
+                Tarifas ({lodging.ratePlans.length})
+              </h2>
+              <p className="text-12 text-text-secondary">
+                Condições comerciais: alimentação e política de cancelamento.
+              </p>
+              <div className="divide-border divide-y">
+                {lodging.ratePlans.map((p) => (
+                  <div
+                    key={p.id}
+                    className="space-y-2 py-4"
+                    data-testid="rate-plan"
+                  >
+                    <p className="text-12 text-text-secondary">
+                      <span className="text-text font-semibold">{p.title}</span>
+                      {` · ${BOARD_LABELS[p.board]} · ${REFUNDABILITY_LABELS[p.refundability]}`}
+                    </p>
+                    <ActionForm
+                      action={saveRatePlanAction}
+                      submitLabel="Salvar tarifa"
+                      className="space-y-3"
+                    >
+                      {hidden}
+                      <input type="hidden" name="planId" value={p.id} />
+                      <RatePlanFields plan={p} />
+                    </ActionForm>
+                    {lodging.ratePlans.length > 1 ? (
+                      <ActionForm
+                        action={saveRatePlanAction}
+                        submitLabel="Remover tarifa"
+                        tone="neutral"
+                      >
+                        {hidden}
+                        <input type="hidden" name="planId" value={p.id} />
+                        <input type="hidden" name="remove" value="1" />
+                      </ActionForm>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+              <h3 className="text-12 text-text pt-2 font-semibold">
+                Nova tarifa
+              </h3>
+              <ActionForm
+                action={saveRatePlanAction}
+                submitLabel="Adicionar tarifa"
+                className="space-y-3"
+                testId="add-rate-plan"
+              >
+                {hidden}
+                <RatePlanFields />
+              </ActionForm>
+            </section>
+          </>
+        ) : null}
+
         <section className={sectionClass}>
           <h2 className="text-14 text-text font-semibold">
-            Variantes ({item.variants.length})
+            {lodging ? "Preços por diária" : "Variantes"} (
+            {item.variants.length})
           </h2>
           <div className="divide-border divide-y">
             {item.variants.map((v, index) => (
@@ -383,7 +549,11 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 >
                   {hidden}
                   <input type="hidden" name="variantId" value={v.id} />
-                  <VariantFields variant={v} idPrefix={`variant-${index}`} />
+                  <VariantFields
+                    variant={v}
+                    idPrefix={`variant-${index}`}
+                    lodging={lodging}
+                  />
                 </ActionForm>
                 {item.variants.length > 1 ? (
                   <ActionForm
@@ -400,7 +570,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
             ))}
           </div>
           <h3 className="text-12 text-text pt-2 font-semibold">
-            Nova variante
+            {lodging ? "Novo preço" : "Nova variante"}
           </h3>
           <ActionForm
             action={addPortfolioVariantAction}
@@ -409,7 +579,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
             testId="add-variant"
           >
             {hidden}
-            <VariantFields idPrefix="new-variant" />
+            <VariantFields idPrefix="new-variant" lodging={lodging} />
           </ActionForm>
         </section>
       </fieldset>
