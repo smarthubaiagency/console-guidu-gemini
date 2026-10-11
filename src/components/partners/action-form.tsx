@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useActionState, useEffect, type ReactNode } from "react";
 
 import type { PartnerActionState } from "@/core/partners/actions";
@@ -31,6 +32,7 @@ export function ActionForm({
   testId?: string;
   tone?: "primary" | "neutral";
 }>) {
+  const t = useTranslations("common");
   const router = useRouter();
   const [state, formAction, pending] = useActionState(action, INITIAL);
 
@@ -51,7 +53,7 @@ export function ActionForm({
               : "border-border text-text-subtle hover:bg-surface-hover text-12 rounded-lg border px-3 py-2 font-semibold disabled:opacity-60"
           }
         >
-          {pending ? "Salvando..." : submitLabel}
+          {pending ? t("saving") : submitLabel}
         </button>
       </form>
       {state.error ? (
@@ -67,7 +69,7 @@ export function ActionForm({
       ) : null}
       {state.inviteUrl ? (
         <p className="text-12 text-text-subtle">
-          Link do convite (válido por 72 horas):{" "}
+          {t("inviteLink")}{" "}
           <code
             className="bg-surface-raised text-11 rounded-sm px-1.5 py-0.5 break-all"
             data-testid="partner-invite-url"

@@ -37,7 +37,10 @@ export function httpStatusFromCode(code: AppErrorCode): number {
   }
 }
 
-export function apiErrorResponse(err: unknown, requestId?: string): NextResponse {
+export function apiErrorResponse(
+  err: unknown,
+  requestId?: string,
+): NextResponse {
   const isAccessDenied =
     Boolean(err) &&
     typeof err === "object" &&
@@ -48,13 +51,13 @@ export function apiErrorResponse(err: unknown, requestId?: string): NextResponse
     ? (err as { reason?: string }).reason
     : undefined;
   const status = isAccessDenied
-    ? (err as { status?: number }).status ??
-      (reason === "unauthenticated" ? 401 : 403)
+    ? ((err as { status?: number }).status ??
+      (reason === "unauthenticated" ? 401 : 403))
     : httpStatusFromCode(safe.code);
 
   const errorPayload: { code: string; message: string; requestId: string } = {
     code: isAccessDenied
-      ? (err as { reason?: string }).reason ?? safe.code
+      ? ((err as { reason?: string }).reason ?? safe.code)
       : safe.code,
     message: safe.safeMessage,
     requestId: safe.requestId,

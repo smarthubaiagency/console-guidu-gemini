@@ -1,0 +1,52 @@
+{
+  "sections": {
+    "app": {
+      "platform": "Plataforma",
+      "settings": "Configuración"
+    },
+    "platform": {
+      "platform": "Administración",
+      "platform_settings": "Configuración"
+    },
+    "partner": {
+      "partner": "Socio"
+    }
+  },
+  "items": {
+    "core_overview": "Visión general",
+    "core_executions": "Ejecuciones",
+    "core_proposals": "Propuestas",
+    "core_team": "Equipo y miembros",
+    "core_general": "General",
+    "core_locations": "Tiendas",
+    "core_modules": "Módulos",
+    "core_credentials": "Credenciales BYOK",
+    "core_mcp": "Asistentes MCP",
+    "core_api": "API y webhooks",
+    "core_usage": "Consumo y límites",
+    "core_billing": "Plan y facturación",
+    "core_data": "Datos y privacidad",
+    "core_support": "Acceso de soporte",
+    "platform_overview": "Visión general",
+    "platform_customers": "Clientes / Empresas",
+    "platform_workspaces": "Workspaces",
+    "platform_users": "Usuarios de la plataforma",
+    "platform_modules": "Módulos",
+    "platform_partners": "Socios",
+    "platform_billing": "Facturación",
+    "platform_operations": "Operaciones",
+    "platform_api-keys": "Claves de API",
+    "platform_legal": "Términos y privacidad",
+    "platform_brand": "Marca",
+    "platform_languages": "Idiomas",
+    "partner_overview": "Visión general",
+    "partner_customers": "Clientes",
+    "partner_modules": "Módulos ofrecidos",
+    "partner_templates": "Plantillas de workspace",
+    "partner_billing": "Facturación",
+    "partner_support": "Acceso de soporte",
+    "partner_legal": "Términos y privacidad",
+    "partner_members": "Miembros",
+    "partner_brand": "Marca"
+  }
+}

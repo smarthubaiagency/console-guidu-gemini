@@ -1,0 +1,10 @@
+{
+  "title": "Language",
+  "personal": "My language",
+  "personalHint": "Applies to you in every workspace and on the platform. Without a choice, it follows each workspace's language.",
+  "followWorkspace": "Follow the workspace language",
+  "workspace": "Default language of the workspace",
+  "workspaceHint": "Applies to every member who has not chosen their own language.",
+  "followPlatform": "Follow the platform language",
+  "saved": "Language saved."
+}

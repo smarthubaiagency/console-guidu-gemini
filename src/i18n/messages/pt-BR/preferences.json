@@ -1,0 +1,10 @@
+{
+  "title": "Idioma",
+  "personal": "Meu idioma",
+  "personalHint": "Vale para você em todos os workspaces e na plataforma. Sem escolha, segue o idioma de cada workspace.",
+  "followWorkspace": "Seguir o idioma do workspace",
+  "workspace": "Idioma padrão do workspace",
+  "workspaceHint": "Vale para todos os membros que não escolheram o próprio idioma.",
+  "followPlatform": "Seguir o idioma da plataforma",
+  "saved": "Idioma salvo."
+}

@@ -11,9 +11,13 @@ import {
   unflattenMessages,
 } from "@/core/i18n/locales";
 import { workspaceSlugOf } from "@/core/i18n/path";
-import en from "@/i18n/messages/en.json";
-import es from "@/i18n/messages/es.json";
-import ptBR from "@/i18n/messages/pt-BR.json";
+import { readdirSync } from "node:fs";
+
+import { MESSAGE_FILES, NAMESPACES } from "@/i18n/messages";
+
+const ptBR = MESSAGE_FILES["pt-BR"] as Messages;
+const en = MESSAGE_FILES.en as Messages;
+const es = MESSAGE_FILES.es as Messages;
 
 describe("languages of the dashboard (I1)", () => {
   it("ships en and es with every key of the pt-BR source and its arguments", () => {
@@ -32,6 +36,16 @@ describe("languages of the dashboard (I1)", () => {
         );
         expect(balancedBraces(flat[key]!), `${code} ${key}`).toBe(true);
       }
+    }
+  });
+
+  it("registers every namespace file in the index (scripts/i18n-index.mjs)", () => {
+    for (const locale of ["pt-BR", "en", "es"]) {
+      const files = readdirSync(`src/i18n/messages/${locale}`)
+        .filter((f) => f.endsWith(".json"))
+        .map((f) => f.slice(0, -5))
+        .sort();
+      expect(files, locale).toEqual([...NAMESPACES]);
     }
   });
 

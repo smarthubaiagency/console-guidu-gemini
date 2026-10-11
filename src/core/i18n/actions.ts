@@ -11,7 +11,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { toSafeError } from "@/shared/errors";
+import { actionFailure } from "./errors";
 
 import {
   addLanguage,
@@ -27,14 +27,7 @@ import {
 
 type State = PartnerActionState;
 
-function failure(err: unknown): State {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
-}
+const failure = (err: unknown): Promise<State> => actionFailure(err);
 
 function str(formData: FormData, name: string): string | undefined {
   const value = formData.get(name);
