@@ -7,6 +7,10 @@ minimumReleaseAgeExclude:
   - playwright@1.64.0
   - shadcn@4.21.4
 allowBuilds:
+  # Pulled by next-intl (I1); both ship prebuilt binaries as optional
+  # dependencies, so their install scripts are not needed.
+  "@parcel/watcher": false
+  "@swc/core": false
   "@prisma/client": true
   "@prisma/engines": true
   esbuild: true
