@@ -71,6 +71,27 @@ Planejado:
 
 ### F4b — MCP do workspace (leitura)
 
+**Estado:** pronta para revisão. Sem migration. Guia de conexão em [mcp-conexao.md](mcp-conexao.md).
+
+Entregue:
+
+- `/mcp/workspace` com o SDK oficial `@modelcontextprotocol/sdk` 1.30.1 (fixado), Streamable HTTP sem sessão e respostas JSON.
+- Cada requisição é autenticada de novo pela chave, com a mesma entrada da REST: parceiro do host, chave, limite. Cada requisição monta um servidor novo, só com as ferramentas que os escopos e o papel atual permitem.
+- Oito ferramentas de leitura (§17.3), em `src/core/mcp/tools.ts`, com esquemas de entrada e de saída, escopo, permissão e risco. Elas chamam os serviços da REST, que conferem a permissão de novo.
+- As entradas são estritas e nunca recebem o workspace: um argumento a mais é recusado (AC10).
+- Cada chamada fica auditada como `mcp.tool.call`, com o resultado e o `requestId`.
+- Requisição sem chave recebe 401 com `WWW-Authenticate: Bearer`, `Origin` de outro host recebe 403 e `GET` recebe 405.
+- `/mcp/` saiu do matcher do proxy, como `/api/`.
+- A página Configurações › MCP ganhou a seção "Como conectar", com o endereço e os comandos para Claude Code e Codex.
+- Testes:
+  - unitários: filtro por escopo e papel, origem, entradas estritas;
+  - integração `mcp-workspace.test.ts` com o cliente oficial do SDK: lista filtrada, chamada fora da lista recusada, argumento forjado recusado, execução de outro workspace inexistente, auditoria, 401, 403, 405 e revogação;
+  - e2e `mcp.spec.ts`: chave criada pela tela, `initialize`, `tools/list` e `tools/call` no servidor real.
+
+Pendente: a validação com Claude Code e Codex instalados (decisão 5), a registrar no guia.
+
+Planejado:
+
 - `/mcp/workspace` com o SDK oficial (`@modelcontextprotocol/sdk`, versão fixada), Streamable HTTP sem estado e chave validada a cada requisição.
 - Ferramentas da §17.3: `get_workspace`, `get_workspace_overview`, `list_enabled_modules`, `get_module_status`, `get_usage_summary`, `list_executions`, `get_execution_status` e `list_workspace_members`.
 - Cada ferramenta tem entrada e saída em Zod, escopo exigido, permissão e classificação de risco. `tools/list` filtra pelo que a chave e o papel atual permitem, e `tools/call` confere tudo de novo. Nenhuma ferramenta genérica (SQL, shell, HTTP arbitrário).
