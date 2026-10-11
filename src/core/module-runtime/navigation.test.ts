@@ -81,7 +81,7 @@ describe("generated navigation", () => {
 
   it("keeps coming-soon modules as placeholders and hides gated ones", () => {
     const sections = app("viewer");
-    expect(find(sections, "catalog")?.badge).toBe("Em breve");
+    expect(find(sections, "google-business")?.badge).toBe("Em breve");
     expect(find(sections, "ai-agents")).toBeUndefined();
     vi.stubEnv("GUIDU_MODULE_HELLO_WORLD_ENABLED", "false");
     expect(
@@ -128,7 +128,7 @@ describe("generated navigation", () => {
     const states = { "hello-world": enabled };
     expect(
       find(
-        app("owner", states, {}, contract("active", ["catalog"])),
+        app("owner", states, {}, contract("active", ["portfolio"])),
         "hello-world",
       ),
     ).toBeUndefined();
@@ -169,7 +169,6 @@ describe("generated navigation", () => {
     );
     expect(ids).toEqual([
       "core.overview",
-      "catalog",
       "google-business",
       "hello-world",
       "core.executions",

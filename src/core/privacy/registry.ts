@@ -1,5 +1,6 @@
 import { aiAgentsDataContract } from "@/modules/ai-agents/data";
 import { crmDataContract } from "@/modules/crm/data";
+import { portfolioDataContract } from "@/modules/portfolio/data";
 import { helloWorldDataContract } from "@/modules/hello-world/data";
 
 import type { ModuleDataContract } from "./contract";
@@ -12,6 +13,7 @@ import type { ModuleDataContract } from "./contract";
 const CONTRACTS: readonly ModuleDataContract[] = [
   aiAgentsDataContract,
   crmDataContract,
+  portfolioDataContract,
   helloWorldDataContract,
 ];
 

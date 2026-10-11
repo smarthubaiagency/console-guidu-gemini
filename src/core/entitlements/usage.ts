@@ -6,11 +6,12 @@ import type {
   RequestContext,
 } from "@/lib/prisma/with-context";
 import { crmQuotaUsage } from "@/modules/crm/quotas";
+import { portfolioQuotaUsage } from "@/modules/portfolio/quotas";
 import { helloWorldQuotaUsage } from "@/modules/hello-world/quotas";
 import { listRegisteredModules } from "@/modules/registry";
 
 import { loadCompanyContract } from "./contract";
-import { manifestDefaultLimit, quotaFromContract } from "./quotas";
+import { defaultQuotaLimit, quotaFromContract } from "./quotas";
 import type { CompanyContract } from "./types";
 
 /**
@@ -27,6 +28,7 @@ type UsageCounter = Readonly<{
 /** Usage counters of module quotas, by explicit import (like jobs). */
 const MODULE_USAGE: Readonly<Record<string, UsageCounter>> = {
   ...crmQuotaUsage,
+  ...portfolioQuotaUsage,
   ...helloWorldQuotaUsage,
 };
 
@@ -81,7 +83,7 @@ export async function loadUsage(
       const quota = quotaFromContract(
         contract,
         entitlement.key,
-        manifestDefaultLimit(entitlement.key),
+        await defaultQuotaLimit(tx, entitlement.key),
       );
       rows.push({
         key: entitlement.key,

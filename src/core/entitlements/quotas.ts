@@ -11,8 +11,10 @@ import type { CompanyContract } from "./types";
 /**
  * Quotas (Especificação §18, F3b): checked in the transaction that creates
  * the resource, under the caller's lock. The limit comes from the company's
- * plan version (`limits`), else from the default declared by the module
- * manifest or the core, else there is none. Going over a lower limit after
+ * plan version (`limits`), else from the default set in the platform
+ * settings of the module (`platform_modules.config.quotaDefaults`, F5a),
+ * else from the default declared by the module manifest or the core, else
+ * there is none. Going over a lower limit after
  * a plan change deletes nothing: only new creations are refused.
  */
 
@@ -49,6 +51,43 @@ export function manifestDefaultLimit(key: string): number | null {
   return null;
 }
 
+/** Module that declares a quota key, if any. */
+function moduleOfQuota(key: string): string | null {
+  for (const mod of listRegisteredModules()) {
+    if (
+      mod.manifest.entitlements.some((e) => e.key === key && e.kind === "quota")
+    ) {
+      return mod.manifest.moduleKey;
+    }
+  }
+  return null;
+}
+
+/**
+ * Default limit of a module quota: the platform setting of the module when
+ * present (Plataforma › Configurações de módulos), else the manifest.
+ */
+export async function defaultQuotaLimit(
+  tx: ContextTransaction,
+  key: string,
+): Promise<number | null> {
+  const moduleKey = moduleOfQuota(key);
+  if (!moduleKey) return manifestDefaultLimit(key);
+  const row = await tx.platformModule.findUnique({
+    where: { moduleKey },
+    select: { config: true },
+  });
+  const defaults = (row?.config as { quotaDefaults?: unknown } | null)
+    ?.quotaDefaults;
+  const value =
+    defaults && typeof defaults === "object"
+      ? (defaults as Record<string, unknown>)[key]
+      : undefined;
+  return typeof value === "number" && Number.isInteger(value) && value >= 0
+    ? value
+    : manifestDefaultLimit(key);
+}
+
 export function quotaFromContract(
   contract: CompanyContract,
   key: string,
@@ -67,10 +106,16 @@ export async function resolveQuota(
   tx: ContextTransaction,
   organizationId: string,
   key: string,
-  defaultLimit: number | null = manifestDefaultLimit(key),
+  defaultLimit?: number | null,
 ): Promise<QuotaView> {
   const contract = await loadCompanyContract(tx, organizationId);
-  return quotaFromContract(contract, key, defaultLimit);
+  return quotaFromContract(
+    contract,
+    key,
+    defaultLimit === undefined
+      ? await defaultQuotaLimit(tx, key)
+      : defaultLimit,
+  );
 }
 
 export class QuotaExceededError extends AppError {

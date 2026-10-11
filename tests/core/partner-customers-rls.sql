@@ -36,7 +36,7 @@ begin
   insert into public.workspaces (id, organization_id, slug, name, status)
   values ('c0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 'cliente-1', 'Cliente 1', 'active');
   insert into public.workspace_modules (organization_id, workspace_id, module_key, status, updated_by)
-  values ('c0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000002', 'catalog', 'enabled',
+  values ('c0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000002', 'portfolio', 'enabled',
           'd0000000-0000-4000-8000-000000000004');
   insert into public.invitations (organization_id, workspace_id, email, role, token_hash, invited_by_user_id, status, expires_at)
   values ('c0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000002', 'dono@cliente.test', 'owner',
@@ -72,7 +72,7 @@ begin
   end;
   begin
     insert into public.workspace_modules (organization_id, workspace_id, module_key, status, updated_by)
-    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011', 'catalog', 'enabled',
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011', 'portfolio', 'enabled',
             'd0000000-0000-4000-8000-000000000004');
     raise exception 'workspace_modules: enabled a module for another partner''s workspace';
   exception when insufficient_privilege then null;
@@ -115,9 +115,9 @@ do $$
 begin
   perform set_config('app.user_id', 'd0000000-0000-4000-8000-000000000004', true);
   insert into public.partner_offered_modules (partner_id, module_key, created_by)
-  values ('b0000000-0000-4000-8000-000000000001', 'catalog', 'd0000000-0000-4000-8000-000000000004');
+  values ('b0000000-0000-4000-8000-000000000001', 'portfolio', 'd0000000-0000-4000-8000-000000000004');
   insert into public.partner_workspace_templates (partner_id, name, module_keys, created_by)
-  values ('b0000000-0000-4000-8000-000000000001', 'Padrão', array['catalog'], 'd0000000-0000-4000-8000-000000000004');
+  values ('b0000000-0000-4000-8000-000000000001', 'Padrão', array['portfolio'], 'd0000000-0000-4000-8000-000000000004');
 
   perform set_config('app.user_id', 'd0000000-0000-4000-8000-000000000005', true);
   if (select count(*) from public.partner_offered_modules) <> 1

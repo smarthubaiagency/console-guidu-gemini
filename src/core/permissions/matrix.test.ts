@@ -32,6 +32,7 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MODULES_MANAGE]: true,
         [Permissions.WORKSPACE_DATA_EXPORT]: true,
         [Permissions.WORKSPACE_PROPOSALS_REVIEW]: true,
+        [Permissions.WORKSPACE_LOCATIONS_MANAGE]: true,
         [Permissions.WORKSPACE_DELETE]: true,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
@@ -74,6 +75,7 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MODULES_MANAGE]: true,
         [Permissions.WORKSPACE_DATA_EXPORT]: true,
         [Permissions.WORKSPACE_PROPOSALS_REVIEW]: true,
+        [Permissions.WORKSPACE_LOCATIONS_MANAGE]: true,
         [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
@@ -116,6 +118,7 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
         [Permissions.WORKSPACE_DATA_EXPORT]: false,
         [Permissions.WORKSPACE_PROPOSALS_REVIEW]: false,
+        [Permissions.WORKSPACE_LOCATIONS_MANAGE]: false,
         [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
@@ -158,6 +161,7 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
         [Permissions.WORKSPACE_DATA_EXPORT]: false,
         [Permissions.WORKSPACE_PROPOSALS_REVIEW]: false,
+        [Permissions.WORKSPACE_LOCATIONS_MANAGE]: false,
         [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
@@ -212,8 +216,8 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(17);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(16);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(18);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(17);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(6);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(4);
     });
@@ -236,6 +240,7 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
         [Permissions.WORKSPACE_DATA_EXPORT]: false,
         [Permissions.WORKSPACE_PROPOSALS_REVIEW]: false,
+        [Permissions.WORKSPACE_LOCATIONS_MANAGE]: false,
         [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
@@ -278,6 +283,7 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
         [Permissions.WORKSPACE_DATA_EXPORT]: false,
         [Permissions.WORKSPACE_PROPOSALS_REVIEW]: false,
+        [Permissions.WORKSPACE_LOCATIONS_MANAGE]: false,
         [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,
@@ -320,6 +326,7 @@ describe("Permissions Matrix", () => {
         [Permissions.WORKSPACE_MODULES_MANAGE]: false,
         [Permissions.WORKSPACE_DATA_EXPORT]: false,
         [Permissions.WORKSPACE_PROPOSALS_REVIEW]: false,
+        [Permissions.WORKSPACE_LOCATIONS_MANAGE]: false,
         [Permissions.WORKSPACE_DELETE]: false,
         [Permissions.PLATFORM_MODULES_READ]: false,
         [Permissions.PLATFORM_MODULES_MANAGE]: false,

@@ -38,7 +38,7 @@ describe("module access by contract (decision 3)", () => {
         ),
       ).toBe("full");
       expect(
-        moduleContractAccess(subscribed(status, ["catalog"]), "hello-world"),
+        moduleContractAccess(subscribed(status, ["portfolio"]), "hello-world"),
       ).toBe("blocked");
     },
   );

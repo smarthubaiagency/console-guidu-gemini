@@ -27,6 +27,8 @@ export const Permissions = {
   WORKSPACE_DELETE: "workspace.delete",
   /** Review, approve and reject MCP proposals (F4d, §17.4). */
   WORKSPACE_PROPOSALS_REVIEW: "workspace.proposals.review",
+  /** Stores and properties of the business (UCP Location, F5a). */
+  WORKSPACE_LOCATIONS_MANAGE: "workspace.locations.manage",
 
   // BYOK Credentials Vault (Spec §16)
   CREDENTIALS_READ: "credentials.read",

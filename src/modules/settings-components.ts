@@ -22,10 +22,12 @@ import {
   HelloWorldAdminSettings,
   HelloWorldWorkspaceSettings,
 } from "@/modules/hello-world/server";
+import { PortfolioAdminSettings } from "@/modules/portfolio/server";
 
 const SETTINGS_COMPONENTS: Readonly<Record<string, ModuleSettingsComponent>> = {
   "hello-world.workspace-settings": HelloWorldWorkspaceSettings,
   "hello-world.admin-settings": HelloWorldAdminSettings,
+  "portfolio.admin-settings": PortfolioAdminSettings,
 };
 
 export function hasSettingsComponent(componentKey: string): boolean {

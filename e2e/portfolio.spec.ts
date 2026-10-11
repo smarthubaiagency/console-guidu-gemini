@@ -1,0 +1,104 @@
+/**
+ * ============================================================================
+ * File: e2e/portfolio.spec.ts
+ * Module: End-to-End Tests for the Portfolio module (F5a)
+ *
+ * Maintenance Rationale:
+ * - The owner enables the Portfolio, registers a store (UCP Location) in
+ *   Configurações › Lojas, creates a product with price and SKU, activates
+ *   it at the store, adds a second variant and sees the UCP preview.
+ * ============================================================================
+ */
+
+import { expect, test } from "@playwright/test";
+
+import {
+  createIdentity,
+  seedWorkspace,
+  signIn,
+  uniqueEmail,
+} from "./support/identity";
+
+test("owner registers a store and a product with variants in the Portfolio", async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(150_000);
+  const stamp = Date.now().toString(36);
+  const email = uniqueEmail("portfolio-owner");
+  const wsSlug = `port-${stamp}`;
+  await createIdentity(request, email);
+  await seedWorkspace(request, {
+    email,
+    orgName: `Portfólio ${stamp}`,
+    orgSlug: `port-org-${stamp}`,
+    wsName: `Workspace Portfólio ${stamp}`,
+    wsSlug,
+    role: "owner",
+  });
+  await signIn(page, email);
+
+  await page.goto(`/app/${wsSlug}/portfolio`);
+  await expect(
+    page.getByRole("heading", { name: "Módulo desabilitado" }),
+  ).toBeVisible();
+  await page.goto(`/app/${wsSlug}/settings/modules`);
+  await page.getByRole("button", { name: "Habilitar Portfólio" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+  ).toBeVisible();
+
+  // Store in the workspace settings.
+  await page.goto(`/app/${wsSlug}`);
+  await page.locator("aside").getByRole("link", { name: "Lojas" }).click();
+  const store = page.getByTestId("create-location");
+  await store.getByLabel("Nome da loja").fill("Loja Centro E2E");
+  await store.getByLabel("Cidade").fill("São Paulo");
+  await store.getByLabel("UF").fill("SP");
+  await store.getByLabel("Segunda abre").fill("09:00");
+  await store.getByLabel("Segunda fecha").fill("18:00");
+  await store.getByLabel("Estacionamento").check();
+  await store.getByRole("button", { name: "Cadastrar loja" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Loja Centro E2E" }),
+  ).toBeVisible();
+
+  // Product.
+  await page.locator("aside").getByRole("link", { name: "Portfólio" }).click();
+  const create = page.getByTestId("create-portfolio-item");
+  await create.getByLabel("Título").fill("Camiseta E2E");
+  await create.getByLabel("Descrição").fill("Algodão 100%.");
+  await create.getByLabel("SKU").fill(`CAM-${stamp}`);
+  await create.getByLabel("Preço (R$)").fill("49,90");
+  await create.getByRole("button", { name: "Criar item" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Camiseta E2E" }),
+  ).toBeVisible();
+
+  const edit = page.getByTestId("edit-portfolio-item");
+  await edit.getByLabel("Situação").selectOption("active");
+  await edit.getByLabel("No local / retirada").check();
+  await edit.getByLabel("Loja Centro E2E").check();
+  await edit.getByRole("button", { name: "Salvar item" }).click();
+  await expect(
+    edit.getByRole("status").filter({ hasText: "Item salvo." }),
+  ).toBeVisible();
+
+  const add = page.getByTestId("add-variant");
+  await add.getByLabel("Nome da variante").fill("Preta");
+  await add.getByLabel("Preço (R$)").fill("54,90");
+  await add.getByRole("button", { name: "Adicionar variante" }).click();
+  await expect(page.getByTestId("variant")).toHaveCount(2);
+
+  const preview = page.getByTestId("ucp-preview");
+  await expect(preview).toContainText("agentes compatíveis com o UCP");
+  await expect(preview).toContainText('"price_range"');
+  await expect(preview).toContainText(`CAM-${stamp}`);
+  await expect(preview).not.toContainText("ai_keywords");
+
+  await page.goto(`/app/${wsSlug}/portfolio`);
+  const list = page.getByTestId("portfolio-list");
+  await expect(list.getByRole("link", { name: "Camiseta E2E" })).toBeVisible();
+  await expect(list).toContainText("a partir de R$ 49,90");
+  await expect(list).toContainText("2 variantes");
+});
