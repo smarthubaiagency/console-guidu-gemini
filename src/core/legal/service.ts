@@ -161,6 +161,17 @@ const PublishSchema = z.object({
   requiresAcceptance: z.boolean(),
 });
 
+/** Message key of the first validation issue (Portuguese stays the fallback). */
+function publishIssueKey(
+  issue: z.core.$ZodIssue | undefined,
+): string | undefined {
+  if (!issue) return "legal.errors.invalidInput";
+  if (issue.code !== "too_small") return undefined;
+  if (issue.path[0] === "title") return "legal.errors.titleRequired";
+  if (issue.path[0] === "body") return "legal.errors.bodyRequired";
+  return undefined;
+}
+
 /** Publishes the next version of a document for the context partner. */
 export async function publishLegalDocument(
   tx: ContextTransaction,
@@ -176,9 +187,12 @@ export async function publishLegalDocument(
   if (!canPublish(actor)) throw new PermissionDeniedError();
   const parsed = PublishSchema.safeParse(input);
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const messageKey = publishIssueKey(issue);
     throw new AppError({
       code: "invalid_input",
-      safeMessage: parsed.error.issues[0]?.message ?? "Dados inválidos.",
+      safeMessage: issue?.message ?? "Dados inválidos.",
+      ...(messageKey ? { messageKey } : {}),
     });
   }
 

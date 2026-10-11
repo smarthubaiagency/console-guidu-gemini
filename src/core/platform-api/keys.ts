@@ -73,6 +73,12 @@ export const CreatePlatformKeyInput = z
   })
   .strict();
 
+/** Message keys of the schema's own messages; zod defaults keep their text. */
+const CREATE_ISSUE_KEYS: Readonly<Record<string, string>> = {
+  "Informe um nome.": "platformKeys.errors.nameRequired",
+  "Escolha ao menos um escopo.": "platformKeys.errors.scopesRequired",
+};
+
 type CreateActor = Readonly<{
   userId: string;
   role: PlatformAdminRoleKey | null;
@@ -88,10 +94,14 @@ export async function createPlatformApiKey(
   requireMfa(assurance);
   const parsed = CreatePlatformKeyInput.safeParse(input);
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const messageKey = issue
+      ? CREATE_ISSUE_KEYS[issue.message]
+      : "platformKeys.errors.invalidInput";
     throw new AppError({
       code: "invalid_input",
-      safeMessage:
-        parsed.error.issues[0]?.message ?? "Dados da chave inválidos.",
+      safeMessage: issue?.message ?? "Dados da chave inválidos.",
+      ...(messageKey ? { messageKey } : {}),
     });
   }
   const scopes = [...new Set(parsed.data.scopes)];
@@ -190,6 +200,7 @@ export async function revokePlatformApiKey(
     throw new AppError({
       code: "not_found",
       safeMessage: "Chave não encontrada ou já revogada.",
+      messageKey: "platformKeys.errors.keyNotFound",
     });
   }
   await recordAudit(

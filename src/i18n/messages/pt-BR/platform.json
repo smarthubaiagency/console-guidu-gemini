@@ -1,0 +1,58 @@
+{
+  "breadcrumb": "Administração",
+  "overview": {
+    "metaTitle": "Console de Administração",
+    "eyebrow": "Controle Interno da Plataforma",
+    "title": "Visão Geral Operacional",
+    "description": "Métricas consolidadas de clientes, ambientes e identidades sob governança central.",
+    "organizations": "Empresas / Clientes Ativos",
+    "organizationsUnit": "organizações",
+    "manageOrganizations": "Gerenciar empresas",
+    "workspaces": "Workspaces Ativos",
+    "workspacesUnit": "ambientes isolados",
+    "viewWorkspaces": "Ver workspaces",
+    "users": "Usuários Cadastrados",
+    "usersUnit": "identidades ativas",
+    "listUsers": "Listar usuários",
+    "securityTitle": "Isolamento e Segurança Operacional",
+    "securityText": "Sessão administrativa autenticada com AAL2 (TOTP verificado). Consultas globais de governança usam funções dedicadas security-definer auditadas no banco de dados.",
+    "healthy": "Operação Saudável"
+  },
+  "customers": {
+    "metaTitle": "Clientes & Empresas (Admin)",
+    "breadcrumb": "Clientes & Empresas",
+    "title": "Empresas Contratantes",
+    "description": "Listagem global das organizações, capacidades contratadas e status operacional.",
+    "total": "Total de Organizações ({count})",
+    "colOrganization": "Organização",
+    "colMaxSeats": "Assentos Máximos",
+    "colPlan": "Plano",
+    "colStatus": "Status",
+    "colCreatedAt": "Criado em",
+    "seats": "{count} assentos",
+    "legacyPlan": "Legado (sem assinatura)"
+  },
+  "workspaces": {
+    "metaTitle": "Workspaces (Admin)",
+    "breadcrumb": "Workspaces",
+    "title": "Workspaces da Plataforma",
+    "description": "Ambientes operacionais isolados vinculados a cada organização contratante.",
+    "total": "Total de Workspaces ({count})",
+    "colWorkspace": "Workspace",
+    "colSlug": "Slug",
+    "colOrganization": "Organização",
+    "colStatus": "Status",
+    "colCreatedAt": "Criado em"
+  },
+  "users": {
+    "metaTitle": "Usuários (Admin)",
+    "breadcrumb": "Usuários",
+    "title": "Usuários da Plataforma",
+    "description": "Perfis de usuários registrados e seus respectivos estados de autorização.",
+    "total": "Total de Usuários ({count})",
+    "colName": "Nome / Perfil",
+    "colStatus": "Status",
+    "colCreatedAt": "Cadastrado em",
+    "noName": "Sem nome cadastrado"
+  }
+}

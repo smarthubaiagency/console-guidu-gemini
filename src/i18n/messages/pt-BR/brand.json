@@ -1,0 +1,32 @@
+{
+  "platform": {
+    "metaTitle": "Marca (Admin)",
+    "breadcrumb": "Marca",
+    "title": "Marca da plataforma",
+    "description": "Nome, cor, logo e contatos exibidos nos domínios da plataforma e nos clientes diretos.",
+    "version": "Versão {version}",
+    "envBrand": "Marca do ambiente (APP_NAME), nenhuma versão salva"
+  },
+  "form": {
+    "displayName": "Nome exibido",
+    "primaryColor": "Cor primária (#rrggbb, opcional)",
+    "contrastHint": "As cores de texto e de destaque são calculadas para manter contraste mínimo de 4,5:1 nos temas claro e escuro.",
+    "supportEmail": "E-mail de suporte (opcional)",
+    "supportUrl": "Página de suporte (https, opcional)",
+    "logo": "Logo (PNG, JPEG ou WebP, até 256 KB)",
+    "removeLogo": "Remover o logo atual",
+    "saving": "Salvando...",
+    "save": "Salvar nova versão",
+    "reference": "(ref. {id})"
+  },
+  "saved": "Marca salva (versão {version}).",
+  "errors": {
+    "notFound": "Recurso não encontrado.",
+    "invalidInput": "Dados de marca inválidos.",
+    "invalidColor": "Use uma cor #rrggbb.",
+    "httpsRequired": "Use um endereço https://.",
+    "logoEmpty": "O arquivo do logo está vazio.",
+    "logoTooLarge": "O logo deve ter no máximo 256 KB.",
+    "logoUnsupportedType": "Use um logo PNG, JPEG ou WebP."
+  }
+}

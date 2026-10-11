@@ -109,6 +109,7 @@ async function applyPaymentPaid(
     throw new AppError({
       code: "conflict",
       safeMessage: "A assinatura está cancelada.",
+      messageKey: "billing.errors.subscriptionCanceled",
     });
   }
   if (event.data.amountCents !== subscription.amountCents) {

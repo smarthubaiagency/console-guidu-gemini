@@ -1,0 +1,142 @@
+{
+  "consoleTitle": "Partner console",
+  "breadcrumb": "Partner",
+  "roles": {
+    "partner_owner": "Owner",
+    "partner_admin": "Administrator",
+    "partner_finance": "Finance",
+    "partner_support": "Support"
+  },
+  "overview": {
+    "metaTitle": "Partner console",
+    "breadcrumb": "Overview",
+    "description": "Your role: {role}. The console shows partner data, never the content of customer workspaces.",
+    "customers": "Customer companies",
+    "activeMembers": "Active members"
+  },
+  "customers": {
+    "metaTitle": "Customers (Partner)",
+    "title": "Customers",
+    "description": "Companies served by this partner. The console shows only registration data, never the content of workspaces.",
+    "newTitle": "New customer",
+    "submit": "Register customer",
+    "company": "Company",
+    "ownerEmail": "Owner e-mail",
+    "workspaceName": "Workspace name",
+    "workspaceSlug": "Workspace address",
+    "slugPlaceholder": "example-company",
+    "template": "Workspace template",
+    "noTemplate": "No template (no modules enabled)",
+    "hint": "The owner receives an owner invitation, valid for 7 days, and signs in through your domain. Until billing (P5), the customer is active as soon as it is registered.",
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "inactive": "Inactive"
+    },
+    "since": "since {date}",
+    "empty": "No customers yet.",
+    "created": "Customer registered. Send the invitation to the owner."
+  },
+  "members": {
+    "metaTitle": "Members (Partner)",
+    "title": "Members",
+    "description": "People on the partner's team and their roles.",
+    "you": "(you)",
+    "inactive": "inactive",
+    "role": "Role",
+    "changeRole": "Change role",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "inviteTitle": "Invite member",
+    "pendingInvitation": "Pending invitation: {email} · {role}",
+    "revoke": "Revoke",
+    "generateInvite": "Create invitation",
+    "email": "E-mail",
+    "invitationCreated": "Invitation created.",
+    "invitationRevoked": "Invitation revoked.",
+    "updated": "Member updated."
+  },
+  "modules": {
+    "metaTitle": "Offered modules (Partner)",
+    "title": "Offered modules",
+    "description": "The modules you offer are included in your customers' workspace templates.",
+    "release": {
+      "beta": "Beta",
+      "available": "Available",
+      "maintenance": "Maintenance"
+    },
+    "offered": "offered",
+    "notOffered": "not offered",
+    "offer": "Offer",
+    "withdraw": "Withdraw",
+    "empty": "No modules available to offer in this environment.",
+    "offeredDone": "Module offered.",
+    "withdrawnDone": "Module withdrawn from the offer."
+  },
+  "templates": {
+    "metaTitle": "Workspace templates (Partner)",
+    "title": "Workspace templates",
+    "description": "Sets of modules applied to a new customer's first workspace.",
+    "noModules": "No modules",
+    "remove": "Remove",
+    "empty": "No templates yet.",
+    "newTitle": "New template",
+    "create": "Create template",
+    "name": "Name",
+    "modules": "Modules",
+    "offerHint": "Offer modules in \"Offered modules\" to include them in templates.",
+    "created": "Template created.",
+    "removed": "Template removed."
+  },
+  "brand": {
+    "metaTitle": "Brand (Partner)",
+    "title": "Brand",
+    "description": "Name, color, logo and contacts your customers see on your domains.",
+    "version": "Version {version}",
+    "noBrand": "No brand of your own yet: customers see the default brand"
+  },
+  "legal": {
+    "metaTitle": "Terms and privacy (Partner)",
+    "title": "Terms and privacy",
+    "description": "Your customers accept the current version on their first access, and again when you publish a relevant change."
+  },
+  "support": {
+    "metaTitle": "Support access (Partner)",
+    "title": "Support access",
+    "description": "To enter a customer's workspace, request access with a reason and a duration. The customer approves, sees the history and can revoke at any time. Access is read-only.",
+    "newTitle": "New request",
+    "submit": "Request access",
+    "customer": "Customer",
+    "duration": "Duration (hours, up to {max})",
+    "reason": "Reason",
+    "hours": "{hours} h",
+    "openWorkspace": "Open workspace",
+    "cancel": "Cancel",
+    "end": "End",
+    "empty": "No requests yet.",
+    "requested": "Request sent. The customer approves it in the workspace settings.",
+    "ended": "Access ended."
+  },
+  "errors": {
+    "partnerNotFound": "Partner not found.",
+    "invalidData": "Invalid data.",
+    "ownAccess": "You cannot change your own access.",
+    "invalidRole": "Invalid role.",
+    "invalidEmail": "Enter a valid e-mail.",
+    "moduleNotOfferable": "Module not available to offer.",
+    "templateNameRequired": "Enter the template name.",
+    "templateModulesNotOffered": "A template can only use modules offered by the partner.",
+    "templateNameTaken": "A template with this name already exists.",
+    "templateNotFound": "Template not found.",
+    "companyNameRequired": "Enter the company name.",
+    "workspaceNameRequired": "Enter the workspace name.",
+    "invalidWorkspaceSlug": "Workspace address: 3 to 48 lowercase letters, numbers or hyphens.",
+    "slugTaken": "This workspace address is already in use.",
+    "invitationUnavailable": "This invitation is no longer available.",
+    "chooseCustomer": "Choose the customer.",
+    "reasonTooShort": "Explain the reason in at least 10 characters.",
+    "durationTooShort": "Minimum duration is 1 hour.",
+    "durationTooLong": "Maximum duration is {max} hours.",
+    "openGrantExists": "You already have an open request or an active access for this customer."
+  }
+}

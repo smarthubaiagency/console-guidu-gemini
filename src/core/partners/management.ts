@@ -12,7 +12,7 @@ import type { PlatformAdminRoleKey } from "@/core/permissions/matrix";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import { invalidPartnerInput, partnerNotFound } from "./errors";
+import { partnerNotFound } from "./errors";
 import {
   normalizeHost,
   partnerSubdomainBase,
@@ -42,6 +42,28 @@ export type PartnerSummary = Readonly<{
 }>;
 
 const SLUG = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+
+/** Translation keys of the validation messages below (I3). */
+const INPUT_KEYS: Readonly<Record<string, string>> = {
+  "Dados inválidos.": "invalid",
+  "Informe o nome.": "nameRequired",
+  "Use letras minúsculas, números e hífen.": "slugFormat",
+};
+
+/** Invalid input with its `partners.errors.*` key; Portuguese stays the fallback. */
+function invalidInput(
+  message: string,
+  key?: string,
+  values?: Record<string, string>,
+): AppError {
+  const messageKey = key ?? INPUT_KEYS[message];
+  return new AppError({
+    code: "invalid_input",
+    safeMessage: message,
+    ...(messageKey ? { messageKey: `partners.errors.${messageKey}` } : {}),
+    ...(values ? { messageValues: values } : {}),
+  });
+}
 
 export const PartnerInputSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome.").max(120),
@@ -90,9 +112,7 @@ export async function createPartner(
   requirePlatformPermission(actor.role, Permissions.PLATFORM_PARTNERS_MANAGE);
   const parsed = PartnerInputSchema.safeParse(input);
   if (!parsed.success) {
-    throw invalidPartnerInput(
-      parsed.error.issues[0]?.message ?? "Dados inválidos.",
-    );
+    throw invalidInput(parsed.error.issues[0]?.message ?? "Dados inválidos.");
   }
 
   const existing = await tx.partner.findUnique({
@@ -103,6 +123,7 @@ export async function createPartner(
     throw new AppError({
       code: "conflict",
       safeMessage: "Já existe um parceiro com esse identificador.",
+      messageKey: "partners.errors.slugTaken",
     });
   }
 
@@ -128,6 +149,7 @@ async function requireManagedPartner(tx: ContextTransaction, id: string) {
     throw new AppError({
       code: "conflict",
       safeMessage: "O parceiro da casa não pode ser alterado aqui.",
+      messageKey: "partners.errors.houseLocked",
     });
   }
   return partner;
@@ -167,32 +189,37 @@ export async function addPartnerDomain(
   if (input.kind === "subdomain") {
     const base = partnerSubdomainBase(process.env);
     if (!base) {
-      throw invalidPartnerInput(
+      throw invalidInput(
         "Subdomínios da plataforma não estão configurados (PARTNER_SUBDOMAIN_BASE).",
+        "subdomainsUnconfigured",
       );
     }
     host = subdomainHost(input.host, base);
     if (!host) {
-      throw invalidPartnerInput(
+      throw invalidInput(
         `Informe só o nome do subdomínio, como agencia (vira agencia.${base}).`,
+        "subdomainNameOnly",
+        { base },
       );
     }
   } else {
     host = normalizeHost(input.host);
     if (!host || !host.includes(".")) {
-      throw invalidPartnerInput(
+      throw invalidInput(
         "Informe um domínio válido, como app.agencia.com.br.",
+        "invalidDomain",
       );
     }
   }
   if (platformHosts(process.env).has(host)) {
-    throw invalidPartnerInput("Esse domínio pertence à plataforma.");
+    throw invalidInput("Esse domínio pertence à plataforma.", "platformDomain");
   }
   const taken = await tx.partnerDomain.findUnique({ where: { host } });
   if (taken) {
     throw new AppError({
       code: "conflict",
       safeMessage: "Esse domínio já está cadastrado.",
+      messageKey: "partners.errors.domainTaken",
     });
   }
 

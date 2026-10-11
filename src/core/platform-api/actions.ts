@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { getPlatformAdminMember } from "@/core/admin/platform";
@@ -8,7 +9,8 @@ import { requireUser } from "@/core/auth/identity";
 import type { PlatformAdminRoleKey } from "@/core/permissions/matrix";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
-import { AppError, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError } from "@/shared/errors";
 
 import { withPlatformContext } from "./context";
 import { createPlatformApiKey, revokePlatformApiKey } from "./keys";
@@ -30,6 +32,7 @@ async function platformActor() {
     throw new AppError({
       code: "not_found",
       safeMessage: "Recurso não encontrado.",
+      messageKey: "platformKeys.errors.notFound",
     });
   }
   const identity = await requireUser();
@@ -43,9 +46,9 @@ async function platformActor() {
   };
 }
 
-function failure(err: unknown): PlatformKeyActionState {
-  const safe = toSafeError(err);
-  return { error: safe.safeMessage, requestId: safe.requestId };
+async function failure(err: unknown): Promise<PlatformKeyActionState> {
+  const { error, requestId } = await actionFailure(err);
+  return { error, requestId };
 }
 
 export async function createPlatformKeyAction(
@@ -70,9 +73,10 @@ export async function createPlatformKeyAction(
         ),
     );
     revalidatePath("/platform/api-keys");
+    const t = await getTranslations("platformKeys");
     return {
       success: true,
-      message: "Chave criada. Copie agora: ela não será mostrada de novo.",
+      message: t("created"),
       rawKey,
     };
   } catch (err) {
@@ -93,7 +97,8 @@ export async function revokePlatformKeyAction(
       (tx) => revokePlatformApiKey(tx, actor, keyId),
     );
     revalidatePath("/platform/api-keys");
-    return { success: true, message: "Chave revogada." };
+    const t = await getTranslations("platformKeys");
+    return { success: true, message: t("revoked") };
   } catch (err) {
     return failure(err);
   }

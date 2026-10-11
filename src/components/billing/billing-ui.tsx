@@ -1,6 +1,9 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
-import type { SubscriptionStatus } from "@/core/billing/subscriptions";
+import {
+  type SubscriptionStatus,
+  statusKey,
+} from "@/core/billing/subscriptions";
 
 /** Visual helpers shared by the billing pages (P5m). */
 
@@ -12,14 +15,6 @@ const TONES: Record<SubscriptionStatus, string> = {
   canceled: "border-border text-text-secondary",
 };
 
-const STATUS_KEYS: Record<SubscriptionStatus, string> = {
-  pending: "pending",
-  active: "active",
-  past_due: "pastDue",
-  suspended: "suspended",
-  canceled: "canceled",
-};
-
 export async function SubscriptionBadge({
   status,
 }: Readonly<{ status: SubscriptionStatus }>) {
@@ -29,7 +24,7 @@ export async function SubscriptionBadge({
       className={`text-11 rounded-full border px-2 py-0.5 font-semibold ${TONES[status]}`}
       data-testid="subscription-status"
     >
-      {t(`status.${STATUS_KEYS[status]}`)}
+      {t(`status.${statusKey(status)}`)}
     </span>
   );
 }
@@ -58,6 +53,13 @@ export async function calendarDateFormatter(): Promise<
     date ? format.dateTime(date, { dateStyle: "short", timeZone: "UTC" }) : "—";
 }
 
+/** Cents as BRL in the request language (the currency stays BRL). */
+export async function centsFormatter(): Promise<(cents: number) => string> {
+  const format = await getFormatter();
+  return (cents) =>
+    format.number(cents / 100, { style: "currency", currency: "BRL" });
+}
+
 /** Today in the yyyy-mm-dd form of date inputs. */
 export function todayInput(): string {
   return new Date().toISOString().slice(0, 10);
@@ -68,6 +70,7 @@ export function centsInput(cents: number): string {
   return (cents / 100).toFixed(2).replace(".", ",");
 }
 
+/** Portuguese label; see billingLabels for the request language. */
 export function intervalLabel(interval: string): string {
   return interval === "yearly" ? "ano" : "mês";
 }
@@ -79,6 +82,21 @@ export const METHOD_LABELS: Record<string, string> = {
   card: "Cartão",
   other: "Outro",
 };
+
+const METHOD_KEYS = new Set(Object.keys(METHOD_LABELS));
+
+/** intervalLabel and METHOD_LABELS in the request language (I3). */
+export async function billingLabels(): Promise<{
+  interval: (interval: string) => string;
+  method: (method: string) => string;
+}> {
+  const t = await getTranslations("billing.labels");
+  return {
+    interval: (interval) => t(interval === "yearly" ? "year" : "month"),
+    method: (method) =>
+      METHOD_KEYS.has(method) ? t(`methods.${method}`) : method,
+  };
+}
 
 export const sectionClass =
   "border-card-border bg-surface-card space-y-3 rounded-xl border p-4 shadow-xs";

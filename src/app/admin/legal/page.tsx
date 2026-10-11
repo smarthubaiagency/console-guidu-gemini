@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FileText } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { LegalEditor } from "@/components/legal/legal-editor";
 import { ModuleNotice } from "@/components/modules/module-notice";
@@ -11,7 +12,10 @@ import { partnerGrants } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Termos e privacidade (Parceiro)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partnerConsole");
+  return { title: t("legal.metaTitle") };
+}
 
 export default async function PartnerLegalPage() {
   const { identity, partner, membership } =
@@ -25,12 +29,13 @@ export default async function PartnerLegalPage() {
     (tx) => listLegalDocuments(tx, partner.partnerId),
     { partnerId: partner.partnerId },
   );
+  const t = await getTranslations("partnerConsole");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <ModulePageHeader
-        trail={["Parceiro", "Termos e privacidade"]}
-        title="Termos e privacidade"
-        description="Seus clientes aceitam a versão vigente no primeiro acesso, e de novo quando você publicar uma mudança relevante."
+        trail={[t("breadcrumb"), t("legal.title")]}
+        title={t("legal.title")}
+        description={t("legal.description")}
         icon={<FileText className="h-5 w-5" />}
       />
       <LegalEditor documents={documents} action={publishPartnerLegalAction} />

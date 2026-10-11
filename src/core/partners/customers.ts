@@ -17,7 +17,11 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { listRegisteredModules } from "@/modules/registry";
 import { AppError } from "@/shared/errors";
 
-import { invalidPartnerInput, partnerNotFound } from "./errors";
+import {
+  invalidPartnerInput,
+  invalidPartnerParse,
+  partnerNotFound,
+} from "./errors";
 
 /**
  * Customers registered by the partner, workspace templates and the partner's
@@ -85,7 +89,10 @@ export async function setModuleOffered(
 ): Promise<void> {
   requireCustomerManager(actor);
   if (!listOfferableModules().some((m) => m.moduleKey === moduleKey)) {
-    throw invalidPartnerInput("Módulo indisponível para oferta.");
+    throw invalidPartnerInput(
+      "Módulo indisponível para oferta.",
+      "moduleNotOfferable",
+    );
   }
 
   const current = await tx.partnerOfferedModule.findUnique({
@@ -117,6 +124,10 @@ const TemplateInputSchema = z.object({
   moduleKeys: z.array(z.string()).max(32),
 });
 
+const TEMPLATE_ISSUE_KEYS = {
+  "Informe o nome do modelo.": "templateNameRequired",
+} as const;
+
 export async function listWorkspaceTemplates(
   tx: ContextTransaction,
   partnerId: string,
@@ -141,14 +152,13 @@ export async function createWorkspaceTemplate(
     moduleKeys: [...new Set(input.moduleKeys)],
   });
   if (!parsed.success) {
-    throw invalidPartnerInput(
-      parsed.error.issues[0]?.message ?? "Dados inválidos.",
-    );
+    throw invalidPartnerParse(parsed.error, TEMPLATE_ISSUE_KEYS);
   }
   const offered = new Set(await listOfferedModuleKeys(tx, partnerId));
   if (parsed.data.moduleKeys.some((key) => !offered.has(key))) {
     throw invalidPartnerInput(
       "O modelo só pode usar módulos oferecidos pelo parceiro.",
+      "templateModulesNotOffered",
     );
   }
   const existing = await tx.partnerWorkspaceTemplate.findUnique({
@@ -159,6 +169,7 @@ export async function createWorkspaceTemplate(
     throw new AppError({
       code: "conflict",
       safeMessage: "Já existe um modelo com esse nome.",
+      messageKey: "partnerConsole.errors.templateNameTaken",
     });
   }
 
@@ -234,6 +245,14 @@ const CustomerInputSchema = z.object({
   planId: z.string().uuid().nullable(),
 });
 
+const CUSTOMER_ISSUE_KEYS = {
+  "Informe o nome da empresa.": "companyNameRequired",
+  "Informe o nome do workspace.": "workspaceNameRequired",
+  "Endereço do workspace: 3 a 48 letras minúsculas, números ou hífen.":
+    "invalidWorkspaceSlug",
+  "Informe um e-mail válido.": "invalidEmail",
+} as const;
+
 export type CustomerInput = Readonly<{
   organizationName: string;
   workspaceName: string;
@@ -278,9 +297,7 @@ export async function createPartnerCustomer(
     planId: input.planId || null,
   });
   if (!parsed.success) {
-    throw invalidPartnerInput(
-      parsed.error.issues[0]?.message ?? "Dados inválidos.",
-    );
+    throw invalidPartnerParse(parsed.error, CUSTOMER_ISSUE_KEYS);
   }
   const data = parsed.data;
 
@@ -290,7 +307,8 @@ export async function createPartnerCustomer(
       where: { id: data.templateId, partnerId },
       select: { moduleKeys: true },
     });
-    if (!template) throw invalidPartnerInput("Modelo não encontrado.");
+    if (!template)
+      throw invalidPartnerInput("Modelo não encontrado.", "templateNotFound");
     // A module withdrawn after the template was saved is not enabled.
     const offered = new Set(await listOfferedModuleKeys(tx, partnerId));
     moduleKeys = template.moduleKeys.filter((key) => offered.has(key));
@@ -317,6 +335,7 @@ export async function createPartnerCustomer(
       throw new AppError({
         code: "conflict",
         safeMessage: "Esse endereço de workspace já está em uso.",
+        messageKey: "partnerConsole.errors.slugTaken",
       });
     }
     throw error;

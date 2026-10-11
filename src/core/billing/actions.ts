@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
-import { getTranslations } from "next-intl/server";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
@@ -15,7 +15,7 @@ import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { AppError, toSafeError } from "@/shared/errors";
+import { AppError } from "@/shared/errors";
 
 import {
   createPlan,
@@ -29,15 +29,17 @@ import { simulateDemoCheckout } from "./customer";
 import { updateBillingTerms } from "./operations";
 import {
   changeSubscriptionStatus,
+  CheckoutNotReadyError,
   createPartnerPlan,
   recordManualPayment,
   saveBillingProfile,
   setCheckoutEnabled,
   setPartnerPlanStatus,
+  PREREQUISITE_KEYS,
   startSubscription,
 } from "./partner";
-import { formatCents, parseReais } from "./split";
-import { MANUAL_STATUS_TARGETS, statusLabel } from "./subscriptions";
+import { parseReais } from "./split";
+import { MANUAL_STATUS_TARGETS, statusKey } from "./subscriptions";
 
 /**
  * Server actions of billing (P5m): /platform/billing, /admin/billing and the
@@ -47,14 +49,22 @@ import { MANUAL_STATUS_TARGETS, statusLabel } from "./subscriptions";
 
 type State = PartnerActionState;
 
-function failure(err: unknown): State {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
+/** Success messages of the actions, in the person's language (I3). */
+function messages() {
+  return getTranslations("billing.actions");
 }
+
+/** Reais fields and the `billing.errors.*` key of their message. */
+const REAIS_FIELDS = {
+  minPrice: { label: "o piso", key: "amountMinPrice" },
+  minPlatformShare: { label: "o repasse mínimo", key: "amountMinShare" },
+  partnerBasePrice: {
+    label: "o valor base do parceiro",
+    key: "amountBasePrice",
+  },
+  price: { label: "o preço", key: "amountPrice" },
+  amount: { label: "o valor pago", key: "amountPaid" },
+} as const;
 
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -63,12 +73,14 @@ function text(formData: FormData, key: string): string {
 
 const uuid = z.string().uuid();
 
-function reais(formData: FormData, key: string, label: string): number {
+function reais(formData: FormData, key: keyof typeof REAIS_FIELDS): number {
   const cents = parseReais(text(formData, key));
   if (cents === null) {
+    const field = REAIS_FIELDS[key];
     throw new AppError({
       code: "invalid_input",
-      safeMessage: `Informe ${label} em reais, por exemplo 99,90.`,
+      safeMessage: `Informe ${field.label} em reais, por exemplo 99,90.`,
+      messageKey: `billing.errors.${field.key}`,
     });
   }
   return cents;
@@ -86,6 +98,7 @@ function quotaLimits(formData: FormData): Record<string, number> {
       throw new AppError({
         code: "invalid_input",
         safeMessage: "Limites precisam ser números inteiros.",
+        messageKey: "billing.errors.limitsInteger",
       });
     }
     limits[name.slice("limit.".length)] = number;
@@ -128,12 +141,10 @@ export async function createPlanAction(
       }),
     );
     revalidatePath("/platform/billing");
-    return {
-      success: true,
-      message: "Plano criado. Publique a primeira versão com os valores.",
-    };
+    const t = await messages();
+    return { success: true, message: t("planCreated") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -151,28 +162,18 @@ export async function publishPlanVersionAction(
         moduleKeys: formData
           .getAll("moduleKeys")
           .filter((v): v is string => typeof v === "string"),
-        minPriceCents: reais(formData, "minPrice", "o piso"),
-        minPlatformShareCents: reais(
-          formData,
-          "minPlatformShare",
-          "o repasse mínimo",
-        ),
-        partnerBasePriceCents: reais(
-          formData,
-          "partnerBasePrice",
-          "o valor base do parceiro",
-        ),
+        minPriceCents: reais(formData, "minPrice"),
+        minPlatformShareCents: reais(formData, "minPlatformShare"),
+        partnerBasePriceCents: reais(formData, "partnerBasePrice"),
         provisional: formData.get("provisional") === "on",
         limits: quotaLimits(formData),
       }),
     );
     revalidatePath("/platform/billing");
-    return {
-      success: true,
-      message: `Versão ${version} publicada. Assinaturas existentes continuam na versão delas.`,
-    };
+    const t = await messages();
+    return { success: true, message: t("versionPublished", { version }) };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -188,12 +189,13 @@ export async function setPlanStatusAction(
       .parse(text(formData, "status"));
     await inPlatform(actor, (tx) => setPlanStatus(tx, actor, planId, status));
     revalidatePath("/platform/billing");
+    const t = await messages();
     return {
       success: true,
-      message: status === "active" ? "Plano reativado." : "Plano retirado.",
+      message: t(status === "active" ? "planReactivated" : "planRetired"),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -211,12 +213,10 @@ export async function updateBillingTermsAction(
       }),
     );
     revalidatePath("/platform/billing");
-    return {
-      success: true,
-      message: "Prazos salvos. Valem a partir da próxima rotina diária.",
-    };
+    const t = await messages();
+    return { success: true, message: t("termsSaved") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -232,6 +232,7 @@ export async function publishSplitRuleAction(
       throw new AppError({
         code: "invalid_input",
         safeMessage: "Informe um percentual entre 0 e 100.",
+        messageKey: "billing.errors.percentRange",
       });
     }
     const { version } = await inPlatform(actor, (tx) =>
@@ -241,9 +242,10 @@ export async function publishSplitRuleAction(
       }),
     );
     revalidatePath("/platform/billing");
-    return { success: true, message: `Regra versão ${version} publicada.` };
+    const t = await messages();
+    return { success: true, message: t("rulePublished", { version }) };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -259,12 +261,13 @@ export async function setCheckoutBlockedAction(
       setCheckoutBlocked(tx, actor, partnerId, blocked),
     );
     revalidatePath("/platform/billing");
+    const t = await messages();
     return {
       success: true,
-      message: blocked ? "Checkout bloqueado." : "Checkout liberado.",
+      message: t(blocked ? "checkoutBlocked" : "checkoutUnblocked"),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -279,15 +282,13 @@ export async function refundPaymentAction(
       refundPayment(tx, actor, paymentId, text(formData, "reason") || null),
     );
     revalidatePath("/platform/billing");
+    const t = await messages();
     return {
       success: true,
-      message:
-        outcome === "duplicate"
-          ? "Esse pagamento já foi estornado."
-          : "Estorno registrado.",
+      message: t(outcome === "duplicate" ? "alreadyRefunded" : "refunded"),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -318,9 +319,10 @@ export async function saveBillingProfileAction(
       }),
     );
     revalidatePath("/admin/billing");
-    return { success: true, message: "Dados de cobrança salvos." };
+    const t = await messages();
+    return { success: true, message: t("profileSaved") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -330,7 +332,7 @@ export async function createPartnerPlanAction(
 ): Promise<State> {
   try {
     const actor = await partnerActor();
-    const priceCents = reais(formData, "price", "o preço");
+    const priceCents = reais(formData, "price");
     await inPartner(actor, (tx) =>
       createPartnerPlan(tx, actor, actor.partnerId, {
         planId: text(formData, "planId"),
@@ -339,12 +341,19 @@ export async function createPartnerPlanAction(
       }),
     );
     revalidatePath("/admin/billing");
+    const t = await messages();
+    const format = await getFormatter();
     return {
       success: true,
-      message: `Plano criado por ${formatCents(priceCents)}.`,
+      message: t("partnerPlanCreated", {
+        price: format.number(priceCents / 100, {
+          style: "currency",
+          currency: "BRL",
+        }),
+      }),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -362,12 +371,13 @@ export async function setPartnerPlanStatusAction(
       setPartnerPlanStatus(tx, actor, actor.partnerId, partnerPlanId, status),
     );
     revalidatePath("/admin/billing");
+    const t = await messages();
     return {
       success: true,
-      message: status === "active" ? "Plano reativado." : "Plano arquivado.",
+      message: t(status === "active" ? "planReactivated" : "planArchived"),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -384,13 +394,10 @@ export async function startSubscriptionAction(
       }),
     );
     revalidatePath("/admin/billing");
-    return {
-      success: true,
-      message:
-        "Assinatura aberta. Ela fica ativa com o primeiro pagamento registrado.",
-    };
+    const t = await messages();
+    return { success: true, message: t("subscriptionOpened") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -408,7 +415,7 @@ export async function recordManualPaymentAction(
     const result = await inPartner(actor, (tx) =>
       recordManualPayment(tx, actor, actor.partnerId, {
         subscriptionId: text(formData, "subscriptionId"),
-        amountCents: reais(formData, "amount", "o valor pago"),
+        amountCents: reais(formData, "amount"),
         method: text(formData, "method"),
         paidOn: text(formData, "paidOn"),
         note: text(formData, "note") || null,
@@ -417,15 +424,15 @@ export async function recordManualPaymentAction(
       }),
     );
     revalidatePath("/admin/billing");
+    const t = await messages();
     return {
       success: true,
-      message:
-        result.outcome === "duplicate"
-          ? "Esse pagamento já estava registrado."
-          : "Pagamento registrado.",
+      message: t(
+        result.outcome === "duplicate" ? "paymentDuplicate" : "paymentRecorded",
+      ),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -441,9 +448,15 @@ export async function changeSubscriptionStatusAction(
       changeSubscriptionStatus(tx, actor, actor.partnerId, subscriptionId, to),
     );
     revalidatePath("/admin/billing");
-    return { success: true, message: `Assinatura: ${statusLabel(to)}.` };
+    const t = await getTranslations("billing");
+    return {
+      success: true,
+      message: t("actions.subscriptionStatus", {
+        status: t(`status.${statusKey(to)}`),
+      }),
+    };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -458,14 +471,24 @@ export async function setCheckoutEnabledAction(
       setCheckoutEnabled(tx, actor, actor.partnerId, enabled),
     );
     revalidatePath("/admin/billing");
+    const t = await messages();
     return {
       success: true,
-      message: enabled
-        ? "Checkout ativado (demonstração: nada é cobrado)."
-        : "Checkout desativado.",
+      message: t(enabled ? "checkoutEnabled" : "checkoutDisabled"),
     };
   } catch (err) {
-    return failure(err);
+    if (err instanceof CheckoutNotReadyError) {
+      // The missing prerequisites, named in the person's language.
+      const failed = await actionFailure(err);
+      const t = await getTranslations("billing");
+      const missing = err.missing
+        .map((key) =>
+          t(`partner.prerequisites.${PREREQUISITE_KEYS[key]}`).toLowerCase(),
+        )
+        .join("; ");
+      return { ...failed, error: t("errors.checkoutMissing", { missing }) };
+    }
+    return actionFailure(err);
   }
 }
 

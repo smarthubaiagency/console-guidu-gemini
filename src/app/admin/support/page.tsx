@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Hand } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -9,7 +10,7 @@ import {
   inputClass,
   labelClass,
 } from "@/components/partners/action-form";
-import { supportStatusLabel } from "@/components/partners/support-status";
+import { supportStatusKey } from "@/components/partners/support-status";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import {
@@ -20,11 +21,17 @@ import { listPartnerCustomers } from "@/core/partners/members";
 import {
   listPartnerSupportGrants,
   MAX_SUPPORT_HOURS,
+  type SupportGrantView,
 } from "@/core/partners/support";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Acesso de suporte (Parceiro)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partnerConsole");
+  return { title: t("support.metaTitle") };
+}
+
+const DATE_TIME = { dateStyle: "short", timeStyle: "medium" } as const;
 
 /** Temporary support access requests of the partner (ADR 0012, P4b2). */
 export default async function PartnerSupportPage() {
@@ -44,26 +51,38 @@ export default async function PartnerSupportPage() {
     { partnerId: partner.partnerId },
   );
   const names = new Map(customers.map((c) => [c.id, c.name]));
+  const t = await getTranslations("partnerConsole");
+  const tAll = await getTranslations();
+  const format = await getFormatter();
+  const statusLabel = (grant: SupportGrantView): string => {
+    const status = supportStatusKey(grant);
+    if (!status) return grant.status;
+    return status.date
+      ? tAll(status.key, { date: format.dateTime(status.date, DATE_TIME) })
+      : tAll(status.key);
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={["Parceiro", "Acesso de suporte"]}
-        title="Acesso de suporte"
-        description="Para entrar no workspace de um cliente, peça acesso com o motivo e o prazo. O cliente aprova, vê o histórico e pode revogar a qualquer momento. O acesso é só de leitura."
+        trail={[t("breadcrumb"), t("support.title")]}
+        title={t("support.title")}
+        description={t("support.description")}
         icon={<Hand className="h-5 w-5" />}
       />
 
       <section className="border-card-border bg-surface-card space-y-3 rounded-xl border p-4 shadow-xs">
-        <h2 className="text-14 text-text font-semibold">Novo pedido</h2>
+        <h2 className="text-14 text-text font-semibold">
+          {t("support.newTitle")}
+        </h2>
         <ActionForm
           action={requestSupportAccessAction}
-          submitLabel="Pedir acesso"
+          submitLabel={t("support.submit")}
           className="grid gap-3 sm:grid-cols-2"
           testId="request-support"
         >
           <label className={labelClass}>
-            Cliente
+            {t("support.customer")}
             <select name="organizationId" required className={inputClass}>
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
@@ -73,7 +92,7 @@ export default async function PartnerSupportPage() {
             </select>
           </label>
           <label className={labelClass}>
-            Prazo (horas, até {MAX_SUPPORT_HOURS})
+            {t("support.duration", { max: MAX_SUPPORT_HOURS })}
             <input
               name="durationHours"
               type="number"
@@ -85,7 +104,7 @@ export default async function PartnerSupportPage() {
             />
           </label>
           <label className={`${labelClass} sm:col-span-2`}>
-            Motivo
+            {t("support.reason")}
             <textarea
               name="reason"
               required
@@ -109,11 +128,12 @@ export default async function PartnerSupportPage() {
           >
             <div>
               <div className="text-14 text-text font-semibold">
-                {names.get(grant.organizationId) ?? "Cliente"} ·{" "}
+                {names.get(grant.organizationId) ?? t("support.customer")} ·{" "}
                 {grant.granteeEmail}
               </div>
               <div className="text-12 text-text-secondary">
-                {supportStatusLabel(grant)} · {grant.durationHours} h ·{" "}
+                {statusLabel(grant)} ·{" "}
+                {t("support.hours", { hours: grant.durationHours })} ·{" "}
                 {grant.reason}
               </div>
             </div>
@@ -123,14 +143,16 @@ export default async function PartnerSupportPage() {
                   href={`/app/${grant.workspaceSlug}`}
                   className="text-12 text-text-subtle font-medium underline"
                 >
-                  Abrir workspace
+                  {t("support.openWorkspace")}
                 </Link>
               ) : null}
               {grant.status === "pending" || grant.active ? (
                 <ActionForm
                   action={endOwnSupportGrantAction}
                   submitLabel={
-                    grant.status === "pending" ? "Cancelar" : "Encerrar"
+                    grant.status === "pending"
+                      ? t("support.cancel")
+                      : t("support.end")
                   }
                   tone="neutral"
                 >
@@ -142,7 +164,7 @@ export default async function PartnerSupportPage() {
         ))}
         {grants.length === 0 ? (
           <li className="text-12 text-text-secondary p-4">
-            Nenhum pedido ainda.
+            {t("support.empty")}
           </li>
         ) : null}
       </ul>

@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import { LayoutDashboard } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import { partnerRoleLabel } from "@/components/partners/role-label";
+import { partnerRoleKey } from "@/components/partners/role-label";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Console do parceiro" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partnerConsole");
+  return { title: t("overview.metaTitle") };
+}
 
 export default async function PartnerOverviewPage() {
   const { identity, partner, membership } =
@@ -27,23 +31,33 @@ export default async function PartnerOverviewPage() {
     { partnerId: partner.partnerId },
   );
 
+  const t = await getTranslations("partnerConsole");
+  const tAll = await getTranslations();
+  const roleKey = partnerRoleKey(membership.role);
+
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="partner-console">
       <ModulePageHeader
-        trail={["Parceiro", "Visão Geral"]}
+        trail={[t("breadcrumb"), t("overview.breadcrumb")]}
         title={membership.partnerName}
-        description={`Seu papel: ${partnerRoleLabel(membership.role)}. O console mostra dados do parceiro, nunca o conteúdo dos workspaces dos clientes.`}
+        description={t("overview.description", {
+          role: roleKey ? tAll(roleKey) : membership.role,
+        })}
         icon={<LayoutDashboard className="h-5 w-5" />}
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="border-card-border bg-surface-card rounded-xl border p-4 shadow-xs">
-          <div className="text-12 text-text-secondary">Empresas clientes</div>
+          <div className="text-12 text-text-secondary">
+            {t("overview.customers")}
+          </div>
           <div className="text-30 text-text font-semibold">
             {counts.customers}
           </div>
         </div>
         <div className="border-card-border bg-surface-card rounded-xl border p-4 shadow-xs">
-          <div className="text-12 text-text-secondary">Membros ativos</div>
+          <div className="text-12 text-text-secondary">
+            {t("overview.activeMembers")}
+          </div>
           <div className="text-30 text-text font-semibold">
             {counts.members}
           </div>

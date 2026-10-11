@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Puzzle } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -14,13 +15,12 @@ import {
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Módulos oferecidos (Parceiro)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partnerConsole");
+  return { title: t("modules.metaTitle") };
+}
 
-const RELEASE_LABELS: Record<string, string> = {
-  beta: "Beta",
-  available: "Disponível",
-  maintenance: "Manutenção",
-};
+const RELEASE_KEYS = new Set(["beta", "available", "maintenance"]);
 
 /** Module catalog the partner offers to its customers (ADR 0012, P4b). */
 export default async function PartnerModulesPage() {
@@ -40,12 +40,14 @@ export default async function PartnerModulesPage() {
   );
   const modules = listOfferableModules();
 
+  const t = await getTranslations("partnerConsole");
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={["Parceiro", "Módulos oferecidos"]}
-        title="Módulos oferecidos"
-        description="Os módulos que você oferece entram nos modelos de workspace dos seus clientes."
+        trail={[t("breadcrumb"), t("modules.title")]}
+        title={t("modules.title")}
+        description={t("modules.description")}
         icon={<Puzzle className="h-5 w-5" />}
       />
       <ul
@@ -64,13 +66,17 @@ export default async function PartnerModulesPage() {
                   {mod.displayName}
                 </div>
                 <div className="text-12 text-text-secondary">
-                  {RELEASE_LABELS[mod.releaseStatus] ?? mod.releaseStatus} ·{" "}
-                  {isOffered ? "oferecido" : "não oferecido"}
+                  {RELEASE_KEYS.has(mod.releaseStatus)
+                    ? t(`modules.release.${mod.releaseStatus}`)
+                    : mod.releaseStatus}{" "}
+                  · {isOffered ? t("modules.offered") : t("modules.notOffered")}
                 </div>
               </div>
               <ActionForm
                 action={setModuleOfferedAction}
-                submitLabel={isOffered ? "Retirar" : "Oferecer"}
+                submitLabel={
+                  isOffered ? t("modules.withdraw") : t("modules.offer")
+                }
                 tone={isOffered ? "neutral" : "primary"}
               >
                 <input type="hidden" name="moduleKey" value={mod.moduleKey} />
@@ -85,7 +91,7 @@ export default async function PartnerModulesPage() {
         })}
         {modules.length === 0 ? (
           <li className="text-12 text-text-secondary p-4">
-            Nenhum módulo disponível para oferta neste ambiente.
+            {t("modules.empty")}
           </li>
         ) : null}
       </ul>

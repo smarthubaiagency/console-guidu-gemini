@@ -1,22 +1,29 @@
 import type { Metadata } from "next";
 import { Layers } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { listAdminWorkspaces } from "@/core/admin/platform";
 
-export const metadata: Metadata = { title: "Workspaces (Admin)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("platform.workspaces");
+  return { title: t("metaTitle") };
+}
 
 export default async function AdminWorkspacesPage() {
   const identity = await requirePlatformAdminPage("/platform/workspaces");
   const workspaces = await listAdminWorkspaces(prisma, identity.userId);
+  const t = await getTranslations("platform.workspaces");
+  const tPlatform = await getTranslations("platform");
+  const format = await getFormatter();
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="border-border border-b pb-5">
         <div className="text-12 text-warning-text mb-1 flex items-center gap-2 font-semibold tracking-wider uppercase">
-          <span>Administração</span>
+          <span>{tPlatform("breadcrumb")}</span>
           <span>/</span>
-          <span>Workspaces</span>
+          <span>{t("breadcrumb")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-primary text-on-primary rounded-lg p-2">
@@ -24,12 +31,9 @@ export default async function AdminWorkspacesPage() {
           </div>
           <div>
             <h1 className="text-20 text-text font-bold tracking-tight">
-              Workspaces da Plataforma
+              {t("title")}
             </h1>
-            <p className="text-12 text-text-secondary">
-              Ambientes operacionais isolados vinculados a cada organização
-              contratante.
-            </p>
+            <p className="text-12 text-text-secondary">{t("description")}</p>
           </div>
         </div>
       </div>
@@ -37,7 +41,7 @@ export default async function AdminWorkspacesPage() {
       <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
         <div className="border-border bg-surface-sidebar flex items-center justify-between border-b px-5 py-3.5">
           <span className="text-12 text-text-subtle font-semibold">
-            Total de Workspaces ({workspaces.length})
+            {t("total", { count: workspaces.length })}
           </span>
         </div>
 
@@ -45,11 +49,11 @@ export default async function AdminWorkspacesPage() {
           <table className="text-12 w-full text-left">
             <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
               <tr>
-                <th className="px-5 py-3">Workspace</th>
-                <th className="px-5 py-3">Slug</th>
-                <th className="px-5 py-3">Organização</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Criado em</th>
+                <th className="px-5 py-3">{t("colWorkspace")}</th>
+                <th className="px-5 py-3">{t("colSlug")}</th>
+                <th className="px-5 py-3">{t("colOrganization")}</th>
+                <th className="px-5 py-3">{t("colStatus")}</th>
+                <th className="px-5 py-3">{t("colCreatedAt")}</th>
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
@@ -74,9 +78,7 @@ export default async function AdminWorkspacesPage() {
                     </span>
                   </td>
                   <td className="text-text-secondary px-5 py-3.5">
-                    {new Intl.DateTimeFormat("pt-BR", {
-                      dateStyle: "short",
-                    }).format(ws.createdAt)}
+                    {format.dateTime(ws.createdAt, { dateStyle: "short" })}
                   </td>
                 </tr>
               ))}

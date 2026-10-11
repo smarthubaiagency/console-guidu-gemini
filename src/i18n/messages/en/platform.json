@@ -1,0 +1,58 @@
+{
+  "breadcrumb": "Administration",
+  "overview": {
+    "metaTitle": "Administration Console",
+    "eyebrow": "Platform Internal Control",
+    "title": "Operational Overview",
+    "description": "Consolidated metrics of customers, environments and identities under central governance.",
+    "organizations": "Active Companies / Customers",
+    "organizationsUnit": "organizations",
+    "manageOrganizations": "Manage companies",
+    "workspaces": "Active Workspaces",
+    "workspacesUnit": "isolated environments",
+    "viewWorkspaces": "View workspaces",
+    "users": "Registered Users",
+    "usersUnit": "active identities",
+    "listUsers": "List users",
+    "securityTitle": "Operational Isolation and Security",
+    "securityText": "Administrative session authenticated with AAL2 (TOTP verified). Global governance queries use dedicated, audited security-definer functions in the database.",
+    "healthy": "Healthy Operation"
+  },
+  "customers": {
+    "metaTitle": "Customers & Companies (Admin)",
+    "breadcrumb": "Customers & Companies",
+    "title": "Customer Companies",
+    "description": "Global list of organizations, contracted capacity and operational status.",
+    "total": "Total Organizations ({count})",
+    "colOrganization": "Organization",
+    "colMaxSeats": "Max Seats",
+    "colPlan": "Plan",
+    "colStatus": "Status",
+    "colCreatedAt": "Created on",
+    "seats": "{count} seats",
+    "legacyPlan": "Legacy (no subscription)"
+  },
+  "workspaces": {
+    "metaTitle": "Workspaces (Admin)",
+    "breadcrumb": "Workspaces",
+    "title": "Platform Workspaces",
+    "description": "Isolated operational environments linked to each customer organization.",
+    "total": "Total Workspaces ({count})",
+    "colWorkspace": "Workspace",
+    "colSlug": "Slug",
+    "colOrganization": "Organization",
+    "colStatus": "Status",
+    "colCreatedAt": "Created on"
+  },
+  "users": {
+    "metaTitle": "Users (Admin)",
+    "breadcrumb": "Users",
+    "title": "Platform Users",
+    "description": "Registered user profiles and their authorization states.",
+    "total": "Total Users ({count})",
+    "colName": "Name / Profile",
+    "colStatus": "Status",
+    "colCreatedAt": "Registered on",
+    "noName": "No name registered"
+  }
+}

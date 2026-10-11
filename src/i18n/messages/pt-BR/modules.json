@@ -59,6 +59,29 @@
     }
   },
   "errors": {
-    "invalidInput": "Dados inválidos."
+    "invalidInput": "Dados inválidos.",
+    "notFound": "Módulo não encontrado.",
+    "invalidConfig": "Configuração inválida para este módulo.",
+    "cannotEnable": "Este módulo ainda não pode ser habilitado.",
+    "notContracted": "O plano da sua empresa não inclui este módulo.",
+    "enableFirst": "Habilite o módulo antes de configurá-lo."
+  },
+  "platform": {
+    "metaTitle": "Módulos (Admin)",
+    "breadcrumb": "Módulos",
+    "title": "Módulos da Plataforma",
+    "description": "Estado de lançamento do código e disponibilidade global para os clientes.",
+    "versionLine": "v{version} · contrato {contract} · {release}",
+    "key": "key: {key}",
+    "globalPolicy": "Política global de {name}",
+    "settingsMetaTitle": "Configurações Globais do Módulo (Admin)",
+    "settingsBreadcrumb": "Configurações de módulos",
+    "settingsTitle": "{label} — política global"
+  },
+  "release": {
+    "coming_soon": "Em breve",
+    "beta": "Beta",
+    "available": "Disponível",
+    "maintenance": "Manutenção (código)"
   }
 }

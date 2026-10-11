@@ -1,0 +1,84 @@
+{
+  "trailAdmin": "Administration",
+  "trailPartners": "Partners",
+  "status": {
+    "active": "Active",
+    "suspended": "Suspended",
+    "inactive": "Inactive"
+  },
+  "roles": {
+    "partner_owner": "Owner",
+    "partner_admin": "Administrator",
+    "partner_finance": "Finance",
+    "partner_support": "Support"
+  },
+  "list": {
+    "metaTitle": "Partners (Admin)",
+    "title": "Partners",
+    "description": "Agencies that resell the platform under their own brand. The house partner serves direct customers.",
+    "newPartner": "New partner",
+    "create": "Create partner",
+    "name": "Name",
+    "slug": "Identifier",
+    "house": "House partner · ",
+    "members": "{count, plural, one {# member} other {# members}}"
+  },
+  "detail": {
+    "metaTitle": "Partner (Admin)",
+    "houseDescription": "House partner: the platform's brand and domains. Members can use the /admin console on the platform domain.",
+    "descriptionActive": "Identifier {slug} · active",
+    "descriptionSuspended": "Identifier {slug} · suspended",
+    "statusTitle": "Status",
+    "suspend": "Suspend partner",
+    "reactivate": "Reactivate partner",
+    "statusHint": "While suspended, the partner loses the console and its domains stop resolving.",
+    "domainsTitle": "Domains",
+    "customDomain": "Custom domain",
+    "subdomain": "Subdomain",
+    "domainStatus": {
+      "pending": "Pending",
+      "active": "Active",
+      "disabled": "Disabled"
+    },
+    "deactivate": "Disable",
+    "activate": "Activate",
+    "noDomains": "No domains registered.",
+    "addDomain": "Add domain",
+    "hostLabel": "Domain or subdomain name",
+    "hostPlaceholder": "app.agency.com or agency",
+    "kindLabel": "Type",
+    "kindSubdomain": "Platform subdomain",
+    "domainHint": "Custom domain: enter the full address. Platform subdomain: enter just the name, which becomes <code>name.{base}</code>. Until automatic DNS verification (P7), activating a domain is a manual decision recorded in the audit log.",
+    "baseMissing": "(base not configured)",
+    "membersTitle": "Members",
+    "memberInactive": " · inactive",
+    "noMembers": "No members yet. Invite the partner's owner.",
+    "pendingInvitation": "Pending invitation: {email} · {role}",
+    "revoke": "Revoke",
+    "invite": "Generate invitation",
+    "email": "Email",
+    "role": "Role"
+  },
+  "errors": {
+    "invalid": "Invalid data.",
+    "nameRequired": "Enter the name.",
+    "slugFormat": "Use lowercase letters, numbers and hyphens.",
+    "slugTaken": "A partner with this identifier already exists.",
+    "houseLocked": "The house partner cannot be changed here.",
+    "subdomainsUnconfigured": "Platform subdomains are not configured (PARTNER_SUBDOMAIN_BASE).",
+    "subdomainNameOnly": "Enter just the subdomain name, such as agency (it becomes agency.{base}).",
+    "invalidDomain": "Enter a valid domain, such as app.agency.com.",
+    "platformDomain": "This domain belongs to the platform.",
+    "domainTaken": "This domain is already registered."
+  },
+  "actions": {
+    "created": "Partner created.",
+    "reactivated": "Partner reactivated.",
+    "suspended": "Partner suspended.",
+    "domainAdded": "Domain added as pending.",
+    "domainActivated": "Domain activated.",
+    "domainDisabled": "Domain disabled.",
+    "inviteCreated": "Invitation generated.",
+    "inviteRevoked": "Invitation revoked."
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "trailAdmin": "Administración",
+  "trailPartners": "Socios",
+  "status": {
+    "active": "Activo",
+    "suspended": "Suspendido",
+    "inactive": "Inactivo"
+  },
+  "roles": {
+    "partner_owner": "Propietario",
+    "partner_admin": "Administrador",
+    "partner_finance": "Finanzas",
+    "partner_support": "Soporte"
+  },
+  "list": {
+    "metaTitle": "Socios (Admin)",
+    "title": "Socios",
+    "description": "Agencias que revenden la plataforma con su propia marca. El socio de la casa atiende a los clientes directos.",
+    "newPartner": "Nuevo socio",
+    "create": "Crear socio",
+    "name": "Nombre",
+    "slug": "Identificador",
+    "house": "Socio de la casa · ",
+    "members": "{count, plural, one {# miembro} other {# miembros}}"
+  },
+  "detail": {
+    "metaTitle": "Socio (Admin)",
+    "houseDescription": "Socio de la casa: marca y dominios de la plataforma. Los miembros pueden usar la consola /admin en el dominio de la plataforma.",
+    "descriptionActive": "Identificador {slug} · activo",
+    "descriptionSuspended": "Identificador {slug} · suspendido",
+    "statusTitle": "Estado",
+    "suspend": "Suspender socio",
+    "reactivate": "Reactivar socio",
+    "statusHint": "Mientras está suspendido, el socio pierde la consola y sus dominios dejan de resolverse.",
+    "domainsTitle": "Dominios",
+    "customDomain": "Dominio propio",
+    "subdomain": "Subdominio",
+    "domainStatus": {
+      "pending": "Pendiente",
+      "active": "Activo",
+      "disabled": "Desactivado"
+    },
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "noDomains": "No hay dominios registrados.",
+    "addDomain": "Registrar dominio",
+    "hostLabel": "Dominio o nombre del subdominio",
+    "hostPlaceholder": "app.agencia.com o agencia",
+    "kindLabel": "Tipo",
+    "kindSubdomain": "Subdominio de la plataforma",
+    "domainHint": "Dominio propio: ingresa la dirección completa. Subdominio de la plataforma: ingresa solo el nombre, que se convierte en <code>nombre.{base}</code>. Hasta la verificación automática de DNS (P7), activar un dominio es una decisión manual registrada en la auditoría.",
+    "baseMissing": "(base no configurada)",
+    "membersTitle": "Miembros",
+    "memberInactive": " · inactivo",
+    "noMembers": "Aún no hay miembros. Invita al propietario del socio.",
+    "pendingInvitation": "Invitación pendiente: {email} · {role}",
+    "revoke": "Revocar",
+    "invite": "Generar invitación",
+    "email": "Correo electrónico",
+    "role": "Rol"
+  },
+  "errors": {
+    "invalid": "Datos no válidos.",
+    "nameRequired": "Ingresa el nombre.",
+    "slugFormat": "Usa letras minúsculas, números y guiones.",
+    "slugTaken": "Ya existe un socio con ese identificador.",
+    "houseLocked": "El socio de la casa no se puede modificar aquí.",
+    "subdomainsUnconfigured": "Los subdominios de la plataforma no están configurados (PARTNER_SUBDOMAIN_BASE).",
+    "subdomainNameOnly": "Ingresa solo el nombre del subdominio, como agencia (se convierte en agencia.{base}).",
+    "invalidDomain": "Ingresa un dominio válido, como app.agencia.com.",
+    "platformDomain": "Ese dominio pertenece a la plataforma.",
+    "domainTaken": "Ese dominio ya está registrado."
+  },
+  "actions": {
+    "created": "Socio creado.",
+    "reactivated": "Socio reactivado.",
+    "suspended": "Socio suspendido.",
+    "domainAdded": "Dominio registrado como pendiente.",
+    "domainActivated": "Dominio activado.",
+    "domainDisabled": "Dominio desactivado.",
+    "inviteCreated": "Invitación generada.",
+    "inviteRevoked": "Invitación revocada."
+  }
+}

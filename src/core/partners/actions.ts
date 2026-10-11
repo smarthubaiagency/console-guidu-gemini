@@ -1,13 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { type AppErrorCode, toSafeError } from "@/shared/errors";
+import type { AppErrorCode } from "@/shared/errors";
 
 import { partnerActor, platformActor } from "./actors";
 import {
@@ -48,14 +50,15 @@ export type PartnerActionState = {
   redirectTo?: string;
 };
 
-function failure(err: unknown): PartnerActionState {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
-}
+/** Failed action, translated in the request language (I3). */
+const failure = (err: unknown): Promise<PartnerActionState> =>
+  actionFailure(err);
+
+/** Success messages of the partner console screens. */
+const consoleT = () => getTranslations("partnerConsole");
+
+/** Success messages of the platform partner screens (I3). */
+const platformT = () => getTranslations("partners.actions");
 
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -81,9 +84,10 @@ export async function createPartnerAction(
       }),
     );
     revalidatePath("/platform/partners");
+    const t = await platformT();
     return {
       success: true,
-      message: "Parceiro criado.",
+      message: t("created"),
       redirectTo: `/platform/partners/${id}`,
     };
   } catch (err) {
@@ -105,10 +109,10 @@ export async function setPartnerStatusAction(
       setPartnerStatus(tx, actor, partnerId, status),
     );
     revalidatePath(`/platform/partners/${partnerId}`);
+    const t = await platformT();
     return {
       success: true,
-      message:
-        status === "active" ? "Parceiro reativado." : "Parceiro suspenso.",
+      message: t(status === "active" ? "reactivated" : "suspended"),
     };
   } catch (err) {
     return failure(err);
@@ -130,7 +134,8 @@ export async function addPartnerDomainAction(
       }),
     );
     revalidatePath(`/platform/partners/${partnerId}`);
-    return { success: true, message: "Domínio cadastrado como pendente." };
+    const t = await platformT();
+    return { success: true, message: t("domainAdded") };
   } catch (err) {
     return failure(err);
   }
@@ -150,9 +155,10 @@ export async function setPartnerDomainStatusAction(
       setPartnerDomainStatus(tx, actor, text(formData, "host"), status),
     );
     revalidatePath(`/platform/partners/${partnerId}`);
+    const t = await platformT();
     return {
       success: true,
-      message: status === "active" ? "Domínio ativado." : "Domínio desativado.",
+      message: t(status === "active" ? "domainActivated" : "domainDisabled"),
     };
   } catch (err) {
     return failure(err);
@@ -192,9 +198,10 @@ export async function invitePartnerMemberFromPlatformAction(
       },
     );
     revalidatePath(`/platform/partners/${partnerId}`);
+    const t = await platformT();
     return {
       success: true,
-      message: "Convite gerado.",
+      message: t("inviteCreated"),
       inviteUrl: result.inviteUrl,
     };
   } catch (err) {
@@ -218,7 +225,8 @@ export async function revokePartnerInvitationFromPlatformAction(
       ),
     );
     revalidatePath(`/platform/partners/${partnerId}`);
-    return { success: true, message: "Convite revogado." };
+    const t = await platformT();
+    return { success: true, message: t("inviteRevoked") };
   } catch (err) {
     return failure(err);
   }
@@ -255,7 +263,7 @@ export async function invitePartnerMemberAction(
     revalidatePath("/admin/members");
     return {
       success: true,
-      message: "Convite gerado.",
+      message: (await consoleT())("members.invitationCreated"),
       inviteUrl: result.inviteUrl,
     };
   } catch (err) {
@@ -286,7 +294,10 @@ export async function revokePartnerInvitationAction(
       { partnerId: actor.partnerId },
     );
     revalidatePath("/admin/members");
-    return { success: true, message: "Convite revogado." };
+    return {
+      success: true,
+      message: (await consoleT())("members.invitationRevoked"),
+    };
   } catch (err) {
     return failure(err);
   }
@@ -318,7 +329,10 @@ export async function updatePartnerMemberAction(
       { partnerId: actor.partnerId },
     );
     revalidatePath("/admin/members");
-    return { success: true, message: "Membro atualizado." };
+    return {
+      success: true,
+      message: (await consoleT())("members.updated"),
+    };
   } catch (err) {
     return failure(err);
   }
@@ -353,7 +367,7 @@ export async function createPartnerCustomerAction(
     revalidatePath("/admin/customers");
     return {
       success: true,
-      message: "Cliente cadastrado. Envie o convite ao responsável.",
+      message: (await consoleT())("customers.created"),
       inviteUrl: result.inviteUrl,
     };
   } catch (err) {
@@ -384,7 +398,9 @@ export async function setModuleOfferedAction(
     revalidatePath("/admin/modules");
     return {
       success: true,
-      message: offered ? "Módulo oferecido." : "Módulo retirado da oferta.",
+      message: (await consoleT())(
+        offered ? "modules.offeredDone" : "modules.withdrawnDone",
+      ),
     };
   } catch (err) {
     return failure(err);
@@ -413,7 +429,10 @@ export async function createWorkspaceTemplateAction(
       { partnerId: actor.partnerId },
     );
     revalidatePath("/admin/templates");
-    return { success: true, message: "Modelo criado." };
+    return {
+      success: true,
+      message: (await consoleT())("templates.created"),
+    };
   } catch (err) {
     return failure(err);
   }
@@ -439,7 +458,10 @@ export async function deleteWorkspaceTemplateAction(
       { partnerId: actor.partnerId },
     );
     revalidatePath("/admin/templates");
-    return { success: true, message: "Modelo removido." };
+    return {
+      success: true,
+      message: (await consoleT())("templates.removed"),
+    };
   } catch (err) {
     return failure(err);
   }
@@ -467,7 +489,7 @@ export async function acceptPartnerInvitationAction(
     const host = await getRequestPartner();
     return {
       success: true,
-      message: "Convite aceito.",
+      message: (await getTranslations("invite.partner"))("acceptedMessage"),
       ...(host?.partnerId === partnerId ? { redirectTo: "/admin" } : {}),
     };
   } catch (err) {
@@ -504,8 +526,7 @@ export async function requestSupportAccessAction(
     revalidatePath("/admin/support");
     return {
       success: true,
-      message:
-        "Pedido enviado. O cliente aprova nas configurações do workspace.",
+      message: (await consoleT())("support.requested"),
     };
   } catch (err) {
     return failure(err);
@@ -532,7 +553,10 @@ export async function endOwnSupportGrantAction(
       { partnerId: actor.partnerId },
     );
     revalidatePath("/admin/support");
-    return { success: true, message: "Acesso encerrado." };
+    return {
+      success: true,
+      message: (await consoleT())("support.ended"),
+    };
   } catch (err) {
     return failure(err);
   }
@@ -566,12 +590,13 @@ export async function decideSupportGrantAction(
     revalidatePath(`/app/${workspaceSlug}/settings/support`);
     return {
       success: true,
-      message:
+      message: (await getTranslations("support"))(
         decision === "approve"
-          ? "Acesso aprovado."
+          ? "decisions.approved"
           : decision === "deny"
-            ? "Pedido negado."
-            : "Acesso revogado.",
+            ? "decisions.denied"
+            : "decisions.revoked",
+      ),
     };
   } catch (err) {
     return failure(err);

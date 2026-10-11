@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Handshake } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -9,12 +10,12 @@ import {
   inputClass,
   labelClass,
 } from "@/components/partners/action-form";
-import { partnerRoleLabel } from "@/components/partners/role-label";
 import { RoleSelect } from "@/components/partners/role-select";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { partnerSubdomainBase } from "@/core/partners/hosts";
 import { platformGrants } from "@/core/module-runtime/loaders";
+import { PARTNER_ROLES, type PartnerRoleKey } from "@/core/permissions/matrix";
 import {
   addPartnerDomainAction,
   invitePartnerMemberFromPlatformAction,
@@ -29,13 +30,13 @@ import {
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Parceiro (Admin)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partners.detail");
+  return { title: t("metaTitle") };
+}
 
-const DOMAIN_STATUS: Record<string, string> = {
-  pending: "Pendente",
-  active: "Ativo",
-  disabled: "Desativado",
-};
+const DOMAIN_STATUSES = new Set(["pending", "active", "disabled"]);
+const ROLES = new Set<string>(PARTNER_ROLES);
 
 /** One partner: status, domains, members and invitations (ADR 0012, P4a). */
 export default async function PlatformPartnerPage({
@@ -73,29 +74,42 @@ export default async function PlatformPartnerPage({
   const canManage = grants("platform.partners.manage");
   const subdomainBase = partnerSubdomainBase(process.env);
   const editable = canManage && !partner.isHouse;
+  const t = await getTranslations("partners");
+  const roleLabel = (role: string) =>
+    ROLES.has(role) ? t(`roles.${role}`) : role;
+  const roleLabels = Object.fromEntries(
+    PARTNER_ROLES.map((role) => [role, t(`roles.${role}`)]),
+  ) as Record<PartnerRoleKey, string>;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={["Administração", "Parceiros", partner.name]}
+        trail={[t("trailAdmin"), t("trailPartners"), partner.name]}
         title={partner.name}
         description={
           partner.isHouse
-            ? "Parceiro da casa: marca e domínios da plataforma. Membros podem usar o console /admin no domínio da plataforma."
-            : `Identificador ${partner.slug} · ${partner.status === "active" ? "ativo" : "suspenso"}`
+            ? t("detail.houseDescription")
+            : t(
+                partner.status === "active"
+                  ? "detail.descriptionActive"
+                  : "detail.descriptionSuspended",
+                { slug: partner.slug },
+              )
         }
         icon={<Handshake className="h-5 w-5" />}
       />
 
       {editable ? (
         <section className="border-card-border bg-surface-card rounded-xl border p-4 shadow-xs">
-          <h2 className="text-14 text-text mb-2 font-semibold">Situação</h2>
+          <h2 className="text-14 text-text mb-2 font-semibold">
+            {t("detail.statusTitle")}
+          </h2>
           <ActionForm
             action={setPartnerStatusAction}
             submitLabel={
               partner.status === "active"
-                ? "Suspender parceiro"
-                : "Reativar parceiro"
+                ? t("detail.suspend")
+                : t("detail.reactivate")
             }
             tone="neutral"
             testId="partner-status"
@@ -108,15 +122,16 @@ export default async function PlatformPartnerPage({
             />
           </ActionForm>
           <p className="text-11 text-text-tertiary mt-2">
-            Suspenso, o parceiro perde o console e os domínios dele deixam de
-            resolver.
+            {t("detail.statusHint")}
           </p>
         </section>
       ) : null}
 
       {!partner.isHouse ? (
         <section className="border-card-border bg-surface-card rounded-xl border p-4 shadow-xs">
-          <h2 className="text-14 text-text mb-3 font-semibold">Domínios</h2>
+          <h2 className="text-14 text-text mb-3 font-semibold">
+            {t("detail.domainsTitle")}
+          </h2>
           <ul className="divide-border mb-4 divide-y">
             {partner.domains.map((domain) => (
               <li
@@ -129,16 +144,21 @@ export default async function PlatformPartnerPage({
                   </div>
                   <div className="text-12 text-text-secondary">
                     {domain.kind === "custom"
-                      ? "Domínio próprio"
-                      : "Subdomínio"}{" "}
-                    · {DOMAIN_STATUS[domain.status] ?? domain.status}
+                      ? t("detail.customDomain")
+                      : t("detail.subdomain")}{" "}
+                    ·{" "}
+                    {DOMAIN_STATUSES.has(domain.status)
+                      ? t(`detail.domainStatus.${domain.status}`)
+                      : domain.status}
                   </div>
                 </div>
                 {editable ? (
                   <ActionForm
                     action={setPartnerDomainStatusAction}
                     submitLabel={
-                      domain.status === "active" ? "Desativar" : "Ativar"
+                      domain.status === "active"
+                        ? t("detail.deactivate")
+                        : t("detail.activate")
                     }
                     tone="neutral"
                   >
@@ -155,51 +175,52 @@ export default async function PlatformPartnerPage({
             ))}
             {partner.domains.length === 0 ? (
               <li className="text-12 text-text-secondary py-2">
-                Nenhum domínio cadastrado.
+                {t("detail.noDomains")}
               </li>
             ) : null}
           </ul>
           {editable ? (
             <ActionForm
               action={addPartnerDomainAction}
-              submitLabel="Cadastrar domínio"
+              submitLabel={t("detail.addDomain")}
               testId="add-domain"
             >
               <input type="hidden" name="partnerId" value={partner.id} />
               <label className={labelClass}>
-                Domínio ou nome do subdomínio
+                {t("detail.hostLabel")}
                 <input
                   name="host"
                   required
-                  placeholder="app.agencia.com.br ou agencia"
+                  placeholder={t("detail.hostPlaceholder")}
                   className={inputClass}
                 />
               </label>
               <label className={labelClass}>
-                Tipo
+                {t("detail.kindLabel")}
                 <select
                   name="kind"
                   defaultValue="custom"
                   className={inputClass}
                 >
-                  <option value="custom">Domínio próprio</option>
-                  <option value="subdomain">Subdomínio da plataforma</option>
+                  <option value="custom">{t("detail.customDomain")}</option>
+                  <option value="subdomain">{t("detail.kindSubdomain")}</option>
                 </select>
               </label>
             </ActionForm>
           ) : null}
           <p className="text-11 text-text-tertiary mt-2">
-            Domínio próprio: informe o endereço completo. Subdomínio da
-            plataforma: informe só o nome, que vira{" "}
-            <code>nome.{subdomainBase ?? "(base não configurada)"}</code>. Até a
-            verificação automática de DNS (P7), ativar um domínio é uma decisão
-            manual registrada na auditoria.
+            {t.rich("detail.domainHint", {
+              base: subdomainBase ?? t("detail.baseMissing"),
+              code: (chunks) => <code>{chunks}</code>,
+            })}
           </p>
         </section>
       ) : null}
 
       <section className="border-card-border bg-surface-card rounded-xl border p-4 shadow-xs">
-        <h2 className="text-14 text-text mb-3 font-semibold">Membros</h2>
+        <h2 className="text-14 text-text mb-3 font-semibold">
+          {t("detail.membersTitle")}
+        </h2>
         <ul
           className="divide-border mb-4 divide-y"
           data-testid="partner-members"
@@ -208,14 +229,14 @@ export default async function PlatformPartnerPage({
             <li key={member.userId} className="py-2">
               <div className="text-14 text-text">{member.email}</div>
               <div className="text-12 text-text-secondary">
-                {partnerRoleLabel(member.role)}
-                {member.status === "active" ? "" : " · inativo"}
+                {roleLabel(member.role)}
+                {member.status === "active" ? "" : t("detail.memberInactive")}
               </div>
             </li>
           ))}
           {members.length === 0 ? (
             <li className="text-12 text-text-secondary py-2">
-              Nenhum membro ainda. Convide o proprietário do parceiro.
+              {t("detail.noMembers")}
             </li>
           ) : null}
         </ul>
@@ -228,13 +249,15 @@ export default async function PlatformPartnerPage({
                 className="flex items-center justify-between gap-4 py-2"
               >
                 <div className="text-12 text-text-secondary">
-                  Convite pendente: {invitation.email} ·{" "}
-                  {partnerRoleLabel(invitation.role)}
+                  {t("detail.pendingInvitation", {
+                    email: invitation.email,
+                    role: roleLabel(invitation.role),
+                  })}
                 </div>
                 {canManage ? (
                   <ActionForm
                     action={revokePartnerInvitationFromPlatformAction}
-                    submitLabel="Revogar"
+                    submitLabel={t("detail.revoke")}
                     tone="neutral"
                   >
                     <input type="hidden" name="partnerId" value={partner.id} />
@@ -253,12 +276,12 @@ export default async function PlatformPartnerPage({
         {canManage ? (
           <ActionForm
             action={invitePartnerMemberFromPlatformAction}
-            submitLabel="Gerar convite"
+            submitLabel={t("detail.invite")}
             testId="invite-partner-member"
           >
             <input type="hidden" name="partnerId" value={partner.id} />
             <label className={labelClass}>
-              E-mail
+              {t("detail.email")}
               <input
                 name="email"
                 type="email"
@@ -266,7 +289,11 @@ export default async function PlatformPartnerPage({
                 className={inputClass}
               />
             </label>
-            <RoleSelect defaultValue="partner_owner" />
+            <RoleSelect
+              defaultValue="partner_owner"
+              label={t("detail.role")}
+              roleLabels={roleLabels}
+            />
           </ActionForm>
         ) : null}
       </section>

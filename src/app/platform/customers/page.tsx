@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { Building2 } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import {
   getPlatformAdminMember,
   listAdminOrganizations,
 } from "@/core/admin/platform";
-import {
-  statusLabel,
-  isSubscriptionStatus,
-} from "@/core/billing/subscriptions";
+import { isSubscriptionStatus } from "@/core/billing/subscriptions";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Clientes & Empresas (Admin)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("platform.customers");
+  return { title: t("metaTitle") };
+}
 
 export default async function AdminCustomersPage() {
   const identity = await requirePlatformAdminPage("/platform/customers");
@@ -36,14 +37,18 @@ export default async function AdminCustomersPage() {
       )
     : [];
   const planByOrg = new Map(plans.map((p) => [p.organizationId, p]));
+  const t = await getTranslations("platform.customers");
+  const tPlatform = await getTranslations("platform");
+  const tUsage = await getTranslations("usage");
+  const format = await getFormatter();
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="border-border border-b pb-5">
         <div className="text-12 text-warning-text mb-1 flex items-center gap-2 font-semibold tracking-wider uppercase">
-          <span>Administração</span>
+          <span>{tPlatform("breadcrumb")}</span>
           <span>/</span>
-          <span>Clientes & Empresas</span>
+          <span>{t("breadcrumb")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-primary text-on-primary rounded-lg p-2">
@@ -51,12 +56,9 @@ export default async function AdminCustomersPage() {
           </div>
           <div>
             <h1 className="text-20 text-text font-bold tracking-tight">
-              Empresas Contratantes
+              {t("title")}
             </h1>
-            <p className="text-12 text-text-secondary">
-              Listagem global das organizações, capacidades contratadas e status
-              operacional.
-            </p>
+            <p className="text-12 text-text-secondary">{t("description")}</p>
           </div>
         </div>
       </div>
@@ -64,7 +66,7 @@ export default async function AdminCustomersPage() {
       <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
         <div className="border-border bg-surface-sidebar flex items-center justify-between border-b px-5 py-3.5">
           <span className="text-12 text-text-subtle font-semibold">
-            Total de Organizações ({organizations.length})
+            {t("total", { count: organizations.length })}
           </span>
         </div>
 
@@ -72,11 +74,11 @@ export default async function AdminCustomersPage() {
           <table className="text-12 w-full text-left">
             <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
               <tr>
-                <th className="px-5 py-3">Organização</th>
-                <th className="px-5 py-3">Assentos Máximos</th>
-                <th className="px-5 py-3">Plano</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Criado em</th>
+                <th className="px-5 py-3">{t("colOrganization")}</th>
+                <th className="px-5 py-3">{t("colMaxSeats")}</th>
+                <th className="px-5 py-3">{t("colPlan")}</th>
+                <th className="px-5 py-3">{t("colStatus")}</th>
+                <th className="px-5 py-3">{t("colCreatedAt")}</th>
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
@@ -89,17 +91,17 @@ export default async function AdminCustomersPage() {
                     </div>
                   </td>
                   <td className="text-text-subtle px-5 py-3.5 font-medium">
-                    {org.maxSeats} assentos
+                    {t("seats", { count: org.maxSeats })}
                   </td>
                   <td className="text-text-subtle px-5 py-3.5">
                     {!canReadBilling
                       ? "—"
                       : (() => {
                           const plan = planByOrg.get(org.id);
-                          if (!plan) return "Legado (sem assinatura)";
+                          if (!plan) return t("legacyPlan");
                           return `${plan.planVersion.plan.name} · ${
                             isSubscriptionStatus(plan.status)
-                              ? statusLabel(plan.status)
+                              ? tUsage(`subscriptionStatus.${plan.status}`)
                               : plan.status
                           }`;
                         })()}
@@ -111,9 +113,7 @@ export default async function AdminCustomersPage() {
                     </span>
                   </td>
                   <td className="text-text-secondary px-5 py-3.5">
-                    {new Intl.DateTimeFormat("pt-BR", {
-                      dateStyle: "short",
-                    }).format(org.createdAt)}
+                    {format.dateTime(org.createdAt, { dateStyle: "short" })}
                   </td>
                 </tr>
               ))}

@@ -65,6 +65,7 @@
     "title": "Entrar em {partner}",
     "description": "Você foi convidado como {role}. Depois de aceitar, use o console do parceiro em /admin no domínio do parceiro.",
     "back": "Voltar",
-    "accept": "Aceitar convite"
+    "accept": "Aceitar convite",
+    "acceptedMessage": "Convite aceito."
   }
 }

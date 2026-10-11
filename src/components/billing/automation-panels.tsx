@@ -2,6 +2,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 
 import {
   calendarDateFormatter,
+  centsFormatter,
   sectionClass,
 } from "@/components/billing/billing-ui";
 import type {
@@ -18,8 +19,7 @@ export async function PayoutReportsSection({
   const t = await getTranslations("billing.payouts");
   const format = await getFormatter();
   const formatDate = await calendarDateFormatter();
-  const money = (cents: number) =>
-    format.number(cents / 100, { style: "currency", currency: "BRL" });
+  const money = await centsFormatter();
   const monthLabel = (date: Date) =>
     format.dateTime(date, { month: "long", year: "numeric", timeZone: "UTC" });
   return (

@@ -158,6 +158,7 @@ export async function createPlan(
     throw new AppError({
       code: "conflict",
       safeMessage: "Já existe um plano com essa chave.",
+      messageKey: "billing.errors.planKeyTaken",
     });
   }
   const plan = await tx.plan.create({

@@ -200,18 +200,36 @@ export async function getOperationsOverview(
   };
 }
 
-/** "há 3 min", "há 2 h": age of a timestamp for the page. */
-export function ageLabel(from: Date, now: Date = new Date()): string {
+export type AgeParts = Readonly<{
+  unit: "seconds" | "minutes" | "hours" | "days";
+  value: number;
+}>;
+
+/** Age of a timestamp in its display unit (translated by the page). */
+export function ageParts(from: Date, now: Date = new Date()): AgeParts {
   const seconds = Math.max(
     0,
     Math.round((now.getTime() - from.getTime()) / 1000),
   );
-  if (seconds < 60) return `há ${seconds} s`;
+  if (seconds < 60) return { unit: "seconds", value: seconds };
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `há ${minutes} min`;
+  if (minutes < 60) return { unit: "minutes", value: minutes };
   const hours = Math.round(minutes / 60);
-  if (hours < 48) return `há ${hours} h`;
-  return `há ${Math.round(hours / 24)} dias`;
+  if (hours < 48) return { unit: "hours", value: hours };
+  return { unit: "days", value: Math.round(hours / 24) };
+}
+
+const AGE_SUFFIX: Readonly<Record<AgeParts["unit"], string>> = {
+  seconds: "s",
+  minutes: "min",
+  hours: "h",
+  days: "dias",
+};
+
+/** "há 3 min", "há 2 h": age of a timestamp, in Portuguese. */
+export function ageLabel(from: Date, now: Date = new Date()): string {
+  const { unit, value } = ageParts(from, now);
+  return `há ${value} ${AGE_SUFFIX[unit]}`;
 }
 
 /** Duration in ms as "820 ms" or "3,4 s"; null as "—". */

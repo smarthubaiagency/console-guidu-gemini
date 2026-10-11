@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Palette } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { BrandForm } from "@/components/brand/brand-form";
 import { ModuleNotice } from "@/components/modules/module-notice";
@@ -10,7 +11,10 @@ import { getRequestBrand } from "@/core/brand/resolve";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { BrandMark } from "@/shared/ui/brand-mark";
 
-export const metadata: Metadata = { title: "Marca (Parceiro)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partnerConsole");
+  return { title: t("brand.metaTitle") };
+}
 
 /** Brand of the partner served on its domains (ADR 0012, P4a). */
 export default async function PartnerBrandPage() {
@@ -19,13 +23,14 @@ export default async function PartnerBrandPage() {
     return <ModuleNotice variant="denied" />;
   }
   const brand = await getRequestBrand();
+  const t = await getTranslations("partnerConsole");
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <ModulePageHeader
-        trail={["Parceiro", "Marca"]}
-        title="Marca"
-        description="Nome, cor, logo e contatos que os seus clientes veem nos seus domínios."
+        trail={[t("breadcrumb"), t("brand.title")]}
+        title={t("brand.title")}
+        description={t("brand.description")}
         icon={<Palette className="h-5 w-5" />}
       />
       <section className="border-card-border bg-surface-card flex items-center gap-3 rounded-xl border p-4 shadow-xs">
@@ -39,8 +44,8 @@ export default async function PartnerBrandPage() {
           </div>
           <div className="text-12 text-text-secondary">
             {brand.source === "partner"
-              ? `Versão ${brand.version}`
-              : "Ainda sem marca própria: os clientes veem a marca padrão"}
+              ? t("brand.version", { version: String(brand.version) })
+              : t("brand.noBrand")}
           </div>
         </div>
       </section>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Users } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -8,10 +9,11 @@ import {
   inputClass,
   labelClass,
 } from "@/components/partners/action-form";
-import { partnerRoleLabel } from "@/components/partners/role-label";
+import { partnerRoleKey } from "@/components/partners/role-label";
 import { RoleSelect } from "@/components/partners/role-select";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
+import { PARTNER_ROLES, type PartnerRoleKey } from "@/core/permissions/matrix";
 import {
   invitePartnerMemberAction,
   revokePartnerInvitationAction,
@@ -24,7 +26,10 @@ import {
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Membros (Parceiro)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partnerConsole");
+  return { title: t("members.metaTitle") };
+}
 
 /** Members of the partner; only the partner_owner manages them (P4a). */
 export default async function PartnerMembersPage() {
@@ -48,12 +53,22 @@ export default async function PartnerMembersPage() {
     { partnerId: partner.partnerId },
   );
 
+  const t = await getTranslations("partnerConsole");
+  const tAll = await getTranslations();
+  const roleLabel = (role: string) => {
+    const key = partnerRoleKey(role);
+    return key ? tAll(key) : role;
+  };
+  const roleLabels = Object.fromEntries(
+    PARTNER_ROLES.map((role) => [role, roleLabel(role)]),
+  ) as Record<PartnerRoleKey, string>;
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={["Parceiro", "Membros"]}
-        title="Membros"
-        description="Pessoas da equipe do parceiro e seus papéis."
+        trail={[t("breadcrumb"), t("members.title")]}
+        title={t("members.title")}
+        description={t("members.description")}
         icon={<Users className="h-5 w-5" />}
       />
 
@@ -71,27 +86,35 @@ export default async function PartnerMembersPage() {
               <div>
                 <div className="text-14 text-text font-semibold">
                   {member.email}
-                  {self ? " (você)" : ""}
+                  {self ? ` ${t("members.you")}` : ""}
                 </div>
                 <div className="text-12 text-text-secondary">
-                  {partnerRoleLabel(member.role)}
-                  {member.status === "active" ? "" : " · inativo"}
+                  {roleLabel(member.role)}
+                  {member.status === "active"
+                    ? ""
+                    : ` · ${t("members.inactive")}`}
                 </div>
               </div>
               {canManage && !self ? (
                 <div className="flex flex-wrap items-end gap-2">
                   <ActionForm
                     action={updatePartnerMemberAction}
-                    submitLabel="Alterar papel"
+                    submitLabel={t("members.changeRole")}
                     tone="neutral"
                   >
                     <input type="hidden" name="userId" value={member.userId} />
-                    <RoleSelect defaultValue={member.role} />
+                    <RoleSelect
+                      defaultValue={member.role}
+                      label={t("members.role")}
+                      roleLabels={roleLabels}
+                    />
                   </ActionForm>
                   <ActionForm
                     action={updatePartnerMemberAction}
                     submitLabel={
-                      member.status === "active" ? "Desativar" : "Reativar"
+                      member.status === "active"
+                        ? t("members.deactivate")
+                        : t("members.reactivate")
                     }
                     tone="neutral"
                   >
@@ -111,7 +134,9 @@ export default async function PartnerMembersPage() {
 
       {canManage ? (
         <section className="border-card-border bg-surface-card space-y-4 rounded-xl border p-4 shadow-xs">
-          <h2 className="text-14 text-text font-semibold">Convidar membro</h2>
+          <h2 className="text-14 text-text font-semibold">
+            {t("members.inviteTitle")}
+          </h2>
           {invitations.length > 0 ? (
             <ul className="divide-border divide-y">
               {invitations.map((invitation) => (
@@ -120,12 +145,14 @@ export default async function PartnerMembersPage() {
                   className="flex items-center justify-between gap-4 py-2"
                 >
                   <div className="text-12 text-text-secondary">
-                    Convite pendente: {invitation.email} ·{" "}
-                    {partnerRoleLabel(invitation.role)}
+                    {t("members.pendingInvitation", {
+                      email: invitation.email,
+                      role: roleLabel(invitation.role),
+                    })}
                   </div>
                   <ActionForm
                     action={revokePartnerInvitationAction}
-                    submitLabel="Revogar"
+                    submitLabel={t("members.revoke")}
                     tone="neutral"
                   >
                     <input
@@ -140,11 +167,11 @@ export default async function PartnerMembersPage() {
           ) : null}
           <ActionForm
             action={invitePartnerMemberAction}
-            submitLabel="Gerar convite"
+            submitLabel={t("members.generateInvite")}
             testId="invite-member"
           >
             <label className={labelClass}>
-              E-mail
+              {t("members.email")}
               <input
                 name="email"
                 type="email"
@@ -152,7 +179,7 @@ export default async function PartnerMembersPage() {
                 className={inputClass}
               />
             </label>
-            <RoleSelect />
+            <RoleSelect label={t("members.role")} roleLabels={roleLabels} />
           </ActionForm>
         </section>
       ) : null}

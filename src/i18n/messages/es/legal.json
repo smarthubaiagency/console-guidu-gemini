@@ -31,6 +31,15 @@
   "published": "Versión {version} publicada.",
   "errors": {
     "notFound": "Recurso no encontrado.",
-    "mustAgree": "Marca la casilla para aceptar los documentos."
+    "mustAgree": "Marca la casilla para aceptar los documentos.",
+    "invalidInput": "Datos no válidos.",
+    "titleRequired": "Ingresa el título.",
+    "bodyRequired": "Ingresa el texto."
+  },
+  "platform": {
+    "metaTitle": "Términos y privacidad (Admin)",
+    "breadcrumb": "Términos y privacidad",
+    "title": "Términos y privacidad de la plataforma",
+    "description": "Se aplican a los clientes directos, en los dominios de la plataforma."
   }
 }
