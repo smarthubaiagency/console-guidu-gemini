@@ -8,6 +8,7 @@ import { listApiKeys } from "@/core/credentials/api-keys";
 import { Permissions } from "@/core/permissions/catalog";
 import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
 import type { WorkspaceRole } from "@/core/permissions/roles";
+import { getRequestOrigin } from "@/core/partners/resolve";
 import { McpKeysClient, type McpKeysCapabilities } from "./mcp-keys-client";
 
 export const metadata: Metadata = {
@@ -18,7 +19,9 @@ interface McpSettingsPageProps {
   params: Promise<{ workspaceSlug: string }>;
 }
 
-export default async function McpSettingsPage({ params }: McpSettingsPageProps) {
+export default async function McpSettingsPage({
+  params,
+}: McpSettingsPageProps) {
   const { workspaceSlug } = await params;
   const currentPath = `/app/${workspaceSlug}/settings/mcp`;
   const identity = await requireUserPage(currentPath);
@@ -71,6 +74,9 @@ export default async function McpSettingsPage({ params }: McpSettingsPageProps) 
     },
   );
 
+  // Workspace MCP endpoint (F4b): the key decides the workspace.
+  const mcpUrl = `${(await getRequestOrigin()) ?? ""}/mcp/workspace`;
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="border-border border-b pb-5">
@@ -89,11 +95,40 @@ export default async function McpSettingsPage({ params }: McpSettingsPageProps) 
             </h1>
             <p className="text-12 text-text-secondary">
               Conforme ADR 0009: tokens pessoais com hash SHA-256 e expiração
-              obrigatória para conexões de desenvolvedor e assistentes de IA (Cursor, Claude Code, Codex).
+              obrigatória para conexões de desenvolvedor e assistentes de IA
+              (Cursor, Claude Code, Codex).
             </p>
           </div>
         </div>
       </div>
+
+      <section
+        className="border-card-border bg-surface-card space-y-2 rounded-xl border p-4 shadow-xs"
+        data-testid="mcp-connect"
+      >
+        <h2 className="text-14 text-text font-semibold">Como conectar</h2>
+        <p className="text-12 text-text-secondary">
+          Endereço do servidor MCP (Streamable HTTP):{" "}
+          <code className="text-text" data-testid="mcp-url">
+            {mcpUrl}
+          </code>
+          . Use uma chave deste workspace no cabeçalho{" "}
+          <code>Authorization: Bearer &lt;sua chave&gt;</code>. As ferramentas
+          disponíveis dependem dos escopos da chave e do seu papel; nenhuma
+          ferramenta altera dados.
+        </p>
+        <p className="text-12 text-text-secondary">Claude Code:</p>
+        <pre className="text-11 bg-surface-sidebar border-border overflow-x-auto rounded-lg border p-2">
+          {`claude mcp add --transport http guidu ${mcpUrl} \\\n  --header "Authorization: Bearer <SUA_CHAVE>"`}
+        </pre>
+        <p className="text-12 text-text-secondary">
+          Codex (<code>~/.codex/config.toml</code>, com a chave na variável{" "}
+          <code>GUIDU_MCP_TOKEN</code>):
+        </p>
+        <pre className="text-11 bg-surface-sidebar border-border overflow-x-auto rounded-lg border p-2">
+          {`[mcp_servers.guidu]\nurl = "${mcpUrl}"\nbearer_token_env_var = "GUIDU_MCP_TOKEN"`}
+        </pre>
+      </section>
 
       <McpKeysClient
         workspaceSlug={workspaceSlug}

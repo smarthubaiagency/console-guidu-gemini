@@ -290,3 +290,40 @@ export async function listWorkspaceMembers(
     };
   });
 }
+
+/** One execution of the workspace (F4b, `get_execution_status`). */
+export async function getWorkspaceExecution(
+  prisma: PrismaClient,
+  call: ApiCall,
+  executionId: string,
+) {
+  const ctx = ctxOf(call);
+  return withContext(prisma, ctx, async (tx) => {
+    await requireWorkspacePermission(tx, ctx, Permissions.WORKSPACE_READ);
+    const r = await tx.jobRun.findFirst({
+      where: { id: executionId, workspaceId: ctx.workspaceId },
+      select: {
+        id: true,
+        kind: true,
+        status: true,
+        attempts: true,
+        maxAttempts: true,
+        lastError: true,
+        createdAt: true,
+        startedAt: true,
+        finishedAt: true,
+      },
+    });
+    if (!r) {
+      throw new AppError({ code: "not_found", safeMessage: "Execução não encontrada." });
+    }
+    return {
+      data: {
+        ...r,
+        createdAt: r.createdAt.toISOString(),
+        startedAt: iso(r.startedAt),
+        finishedAt: iso(r.finishedAt),
+      },
+    };
+  });
+}

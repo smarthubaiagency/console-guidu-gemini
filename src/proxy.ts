@@ -26,8 +26,8 @@ const SIGNED_IN_ONLY_PREFIXES = [
 ] as const;
 const SIGNED_OUT_ONLY_PATHS = ["/login", "/forgot-password"] as const;
 /**
- * Served only on platform hosts (ADR 0012); 404 everywhere else. API routes
- * are outside the matcher, so /api/v1/platform checks the host itself.
+ * Served only on platform hosts (ADR 0012); 404 everywhere else. API and MCP
+ * routes are outside the matcher, so /api/v1/platform checks the host itself.
  */
 const PLATFORM_ONLY_PREFIXES = ["/platform"] as const;
 
@@ -84,6 +84,6 @@ export const config = {
   // `/api` routes must reach their own guard so they answer 401/403 instead of
   // being redirected to a login page.
   matcher: [
-    "/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!api/|mcp/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

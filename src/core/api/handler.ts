@@ -83,6 +83,7 @@ async function resolvePrincipal(
   deps: ApiDeps,
   partnerId: string,
   requestId: string,
+  origin: "api" | "mcp" = "api",
 ): Promise<ApiPrincipal> {
   const authorization = request.headers.get("authorization");
   if (authorization === null) {
@@ -97,7 +98,7 @@ async function resolvePrincipal(
   if (!match?.[1]) throw new InvalidApiKeyError(requestId);
   const { apiKey } = await authenticateApiKey(deps.prisma, match[1], {
     requestId,
-    origin: "api",
+    origin,
   });
   // A key works only on the hosts of its partner (pendência da P2).
   const reachable = await listUserWorkspaces(
@@ -153,6 +154,34 @@ async function resolveContext(
   );
 }
 
+/**
+ * Partner of the host and the principal of a request; shared by the REST
+ * API and the MCP (which accepts API keys only, ADR 0009).
+ */
+export async function authenticateRequest(
+  request: Request,
+  deps: ApiDeps,
+  requestId: string,
+  options: Readonly<{ allowSession: boolean; origin?: "api" | "mcp" }>,
+): Promise<{ partner: { partnerId: string }; principal: ApiPrincipal }> {
+  const partner = await resolvePartnerForHost(
+    deps.prisma,
+    requestHost((name) => request.headers.get(name)),
+  );
+  if (!partner) throw notFound();
+  if (!options.allowSession && request.headers.get("authorization") === null) {
+    throw new InvalidApiKeyError(requestId);
+  }
+  const principal = await resolvePrincipal(
+    request,
+    deps,
+    partner.partnerId,
+    requestId,
+    options.origin ?? "api",
+  );
+  return { partner, principal };
+}
+
 export async function handleApiRoute(
   request: Request,
   route: ApiRoute,
@@ -169,17 +198,11 @@ export async function handleApiRoute(
   });
 
   try {
-    const partner = await resolvePartnerForHost(
-      deps.prisma,
-      requestHost((name) => request.headers.get(name)),
-    );
-    if (!partner) throw notFound();
-
-    const principal = await resolvePrincipal(
+    const { partner, principal } = await authenticateRequest(
       request,
       deps,
-      partner.partnerId,
       requestId,
+      { allowSession: true },
     );
     if (
       principal.kind === "api_key" &&
