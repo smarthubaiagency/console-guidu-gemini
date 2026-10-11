@@ -16,6 +16,7 @@ describe("module registry", () => {
   it("registers the initial modules and the reference module", () => {
     expect(listRegisteredModules().map((m) => m.manifest.moduleKey)).toEqual([
       "catalog",
+      "crm",
       "google-business",
       "ai-agents",
       "hello-world",

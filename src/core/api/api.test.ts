@@ -85,11 +85,18 @@ describe("OpenAPI", () => {
     for (const route of Object.values(API_ROUTES)) {
       const op = (
         doc.paths[route.path] as Record<string, Record<string, unknown>>
-      ).get;
+      )[route.method.toLowerCase()];
       expect(op?.operationId).toBe(route.operationId);
       expect(op?.["x-required-scope"]).toBe(route.scope);
       expect(Object.keys(op?.responses as object)).toEqual(
-        expect.arrayContaining(["200", "401", "403", "404", "422", "429"]),
+        expect.arrayContaining([
+          String("successStatus" in route ? route.successStatus : 200),
+          "401",
+          "403",
+          "404",
+          "422",
+          "429",
+        ]),
       );
     }
   });

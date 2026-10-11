@@ -40,6 +40,7 @@ export const MODULE_ICON_KEYS = [
   "shopping-bag",
   "sparkles",
   "store",
+  "users",
 ] as const;
 
 export const MODULE_RELEASE_STATUSES = [

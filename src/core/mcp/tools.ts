@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
 import {
+  Contact,
   Execution,
   Member,
   ModuleStatus,
@@ -12,7 +13,9 @@ import {
 } from "@/core/api/contracts";
 import type { ApiCall } from "@/core/api/handler";
 import * as resources from "@/core/api/resources";
-import { Permissions, type Permission } from "@/core/permissions/catalog";
+import { Permissions, type PermissionKey } from "@/core/permissions/catalog";
+import { withContext } from "@/lib/prisma/with-context";
+import { getContact, listContacts } from "@/modules/crm/server";
 import { AppError } from "@/shared/errors";
 
 import type { WorkspaceScopeType } from "./scopes";
@@ -31,7 +34,9 @@ export type McpToolDefinition = Readonly<{
   title: string;
   description: string;
   scope: WorkspaceScopeType;
-  permission: Permission;
+  permission: PermissionKey;
+  /** Module the tool belongs to; listed only while the module is usable. */
+  moduleKey?: string;
   risk: "read";
   input: z.ZodObject;
   output: z.ZodObject;
@@ -202,5 +207,53 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
     output: items(Member),
     run: (prisma, call, input) =>
       pageOf(resources.listWorkspaceMembers(prisma, withQuery(call, input))),
+  },
+  {
+    name: "list_contacts",
+    title: "Contatos do CRM",
+    description:
+      "Contatos do módulo CRM, dos mais recentes; busca opcional por nome, e-mail ou empresa.",
+    scope: "crm:read",
+    permission: "crm.contacts.read",
+    moduleKey: "crm",
+    risk: "read",
+    input: z
+      .object({
+        search: z.string().max(100).optional().describe("Texto a buscar."),
+        limit: PageQuery.shape.limit.describe(
+          "Itens por página (1 a 100, padrão 25).",
+        ),
+        cursor: PageQuery.shape.cursor.describe(
+          "Cursor devolvido pela página anterior.",
+        ),
+      })
+      .strict(),
+    output: items(Contact),
+    run: async (prisma, call, input) => {
+      const ctx = call.context!;
+      const page = await withContext(prisma, ctx, (tx) =>
+        listContacts(tx, ctx, input),
+      );
+      return { items: page.items, nextCursor: page.nextCursor };
+    },
+  },
+  {
+    name: "get_contact",
+    title: "Contato do CRM",
+    description: "Um contato do módulo CRM, pelo id.",
+    scope: "crm:read",
+    permission: "crm.contacts.read",
+    moduleKey: "crm",
+    risk: "read",
+    input: z
+      .object({ contactId: z.string().uuid().describe("Id do contato.") })
+      .strict(),
+    output: Contact,
+    run: (prisma, call, input) => {
+      const ctx = call.context!;
+      return withContext(prisma, ctx, (tx) =>
+        getContact(tx, ctx, String(input.contactId)),
+      );
+    },
   },
 ];

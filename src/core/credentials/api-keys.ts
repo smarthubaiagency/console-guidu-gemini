@@ -113,7 +113,10 @@ export async function createApiKey(
     }
   }
 
-  if (workspaceRole === "viewer" && scopes.includes("proposals:write")) {
+  if (
+    workspaceRole === "viewer" &&
+    (scopes.includes("proposals:write") || scopes.includes("crm:write"))
+  ) {
     throw new PermissionDeniedError();
   }
 

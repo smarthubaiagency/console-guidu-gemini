@@ -60,6 +60,10 @@ export type ApiCall = Readonly<{
   /** Set for workspace routes. */
   context: RequestContext | null;
   query: Record<string, unknown>;
+  /** Parsed JSON body of POST and PATCH. */
+  body: unknown;
+  /** Path parameters besides the workspace (e.g. contactId). */
+  params: Readonly<Record<string, string | undefined>>;
 }>;
 
 export type ApiDeps = Readonly<{
@@ -185,7 +189,7 @@ export async function authenticateRequest(
 export async function handleApiRoute(
   request: Request,
   route: ApiRoute,
-  params: Readonly<{ id?: string }>,
+  params: Readonly<{ id?: string; [name: string]: string | undefined }>,
   deps: ApiDeps,
   run: (call: ApiCall) => Promise<unknown>,
 ): Promise<NextResponse> {
@@ -229,6 +233,46 @@ export async function handleApiRoute(
     if (!decision.allowed) throw new RateLimitedError(decision, requestId);
 
     let query: Record<string, unknown> = {};
+    // Writes with the browser session: JSON from this very host only, so a
+    // cross-site form cannot act with the person's cookies (CSRF).
+    if (route.method !== "GET" && principal.kind === "session") {
+      const json = (request.headers.get("content-type") ?? "").startsWith(
+        "application/json",
+      );
+      const origin = request.headers.get("origin");
+      const host =
+        request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+        request.headers.get("host");
+      let sameOrigin = true;
+      if (origin) {
+        try {
+          sameOrigin = new URL(origin).host === host;
+        } catch {
+          sameOrigin = false;
+        }
+      }
+      if (!json || !sameOrigin) {
+        throw new AppError({
+          code: "forbidden",
+          safeMessage: "Escrita pela sessão só com JSON do próprio site.",
+          requestId,
+        });
+      }
+    }
+
+    let body: unknown = undefined;
+    if (route.method !== "GET") {
+      try {
+        body = await request.json();
+      } catch {
+        throw new AppError({
+          code: "invalid_input",
+          safeMessage: "Corpo JSON inválido.",
+          requestId,
+        });
+      }
+    }
+
     if (route.query) {
       const parsed = route.query.safeParse(
         Object.fromEntries(new URL(request.url).searchParams),
@@ -249,9 +293,11 @@ export async function handleApiRoute(
       principal,
       context,
       query,
+      body,
+      params,
     });
     return NextResponse.json(route.response.parse(data), {
-      status: 200,
+      status: route.successStatus ?? 200,
       headers: headers(),
     });
   } catch (error) {

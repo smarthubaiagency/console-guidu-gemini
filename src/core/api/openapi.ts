@@ -7,8 +7,8 @@ import { API_ROUTES, type ApiRoute, ErrorBody } from "./contracts";
  * schemas the routes validate with; it cannot drift from the code.
  */
 
-const schema = (s: z.ZodType) =>
-  z.toJSONSchema(s, { io: "output", unrepresentable: "any" });
+const schema = (s: z.ZodType, io: "input" | "output" = "output") =>
+  z.toJSONSchema(s, { io, unrepresentable: "any" });
 
 const ERRORS: Record<string, string> = {
   "401": "Sem sessão, ou chave de API inválida, expirada ou revogada.",
@@ -29,6 +29,15 @@ function operation(route: ApiRoute) {
       schema: { type: "string", format: "uuid" },
     });
   }
+  if (route.path.includes("{contactId}")) {
+    parameters.push({
+      name: "contactId",
+      in: "path",
+      required: true,
+      description: "Id (UUID) do contato.",
+      schema: { type: "string", format: "uuid" },
+    });
+  }
   if (route.query) {
     for (const [name, field] of Object.entries(route.query.shape)) {
       parameters.push({
@@ -40,7 +49,7 @@ function operation(route: ApiRoute) {
     }
   }
   const responses: Record<string, unknown> = {
-    "200": {
+    [String(route.successStatus ?? 200)]: {
       description: "Sucesso.",
       content: { "application/json": { schema: schema(route.response) } },
     },
@@ -54,6 +63,16 @@ function operation(route: ApiRoute) {
     };
   }
   return {
+    ...(route.body
+      ? {
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": { schema: schema(route.body, "input") },
+            },
+          },
+        }
+      : {}),
     operationId: route.operationId,
     summary: route.summary,
     "x-required-scope": route.scope,

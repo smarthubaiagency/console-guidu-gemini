@@ -27,6 +27,9 @@ export const WorkspaceScope = {
   EXECUTIONS_READ: "executions:read",
   MEMBERS_READ: "members:read",
   PROPOSALS_WRITE: "proposals:write",
+  /** CRM module (F4c): read contacts; write them through the REST API. */
+  CRM_READ: "crm:read",
+  CRM_WRITE: "crm:write",
 } as const;
 
 export const WORKSPACE_SCOPES = [
@@ -36,6 +39,8 @@ export const WORKSPACE_SCOPES = [
   WorkspaceScope.EXECUTIONS_READ,
   WorkspaceScope.MEMBERS_READ,
   WorkspaceScope.PROPOSALS_WRITE,
+  WorkspaceScope.CRM_READ,
+  WorkspaceScope.CRM_WRITE,
 ] as const;
 
 export const WorkspaceScopeSchema = z.enum([
@@ -45,6 +50,8 @@ export const WorkspaceScopeSchema = z.enum([
   "executions:read",
   "members:read",
   "proposals:write",
+  "crm:read",
+  "crm:write",
 ]);
 
 export type WorkspaceScopeType = z.infer<typeof WorkspaceScopeSchema>;
@@ -60,10 +67,12 @@ export const READ_ONLY_SCOPES: readonly WorkspaceScopeType[] = Object.freeze([
   WorkspaceScope.USAGE_READ,
   WorkspaceScope.EXECUTIONS_READ,
   WorkspaceScope.MEMBERS_READ,
+  WorkspaceScope.CRM_READ,
 ]);
 
 export const WRITE_SCOPES: readonly WorkspaceScopeType[] = Object.freeze([
   WorkspaceScope.PROPOSALS_WRITE,
+  WorkspaceScope.CRM_WRITE,
 ]);
 
 export function isReadOnlyScope(scope: string): boolean {
@@ -111,6 +120,17 @@ export const SCOPE_DEFINITIONS: readonly ScopeDefinition[] = [
     id: "proposals:write",
     label: "Escrita de Propostas (proposals:write)",
     desc: "Permite ao assistente criar propostas operacionais sujeitas à aprovação humana.",
+    isWrite: true,
+  },
+  {
+    id: "crm:read",
+    label: "Contatos do CRM (crm:read)",
+    desc: "Leitura dos contatos do módulo CRM, quando o módulo está habilitado.",
+  },
+  {
+    id: "crm:write",
+    label: "Escrita de contatos do CRM (crm:write)",
+    desc: "Criar e editar contatos pela API REST. No MCP, a escrita passa por proposta.",
     isWrite: true,
   },
 ];

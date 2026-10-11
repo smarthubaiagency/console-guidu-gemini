@@ -821,3 +821,23 @@ model HelloWorldRecord {
   @@index([workspaceId, organizationId, createdAt(sort: Desc)])
   @@map("hello_world_records")
 }
+
+/// Contact of the CRM module (F4c); first object of the module.
+model CrmContact {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  name           String
+  email          String?
+  phone          String?
+  companyName    String?  @map("company_name")
+  jobTitle       String?  @map("job_title")
+  notes          String?
+  createdBy      String   @map("created_by") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([workspaceId, createdAt(sort: Desc), id(sort: Desc)])
+  @@map("crm_contacts")
+}

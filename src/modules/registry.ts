@@ -22,6 +22,7 @@ import { validateModuleRegistry } from "@/core/module-contracts/validate";
 
 import { aiAgentsManifest } from "./ai-agents/manifest";
 import { catalogManifest } from "./catalog/manifest";
+import { crmManifest } from "./crm/manifest";
 import { googleBusinessManifest } from "./google-business/manifest";
 import { helloWorldManifest } from "./hello-world/manifest";
 
@@ -33,6 +34,7 @@ type RegistryEntryInput = Readonly<{
 
 const ENTRIES: readonly RegistryEntryInput[] = [
   { manifest: catalogManifest },
+  { manifest: crmManifest },
   { manifest: googleBusinessManifest },
   {
     manifest: aiAgentsManifest,
@@ -66,7 +68,7 @@ const MODULES: ReadonlyMap<string, RegisteredModule> = new Map(
 );
 
 export type ModuleKey =
-  "catalog" | "google-business" | "ai-agents" | "hello-world";
+  "catalog" | "crm" | "google-business" | "ai-agents" | "hello-world";
 
 /** All registered modules, in registration order. */
 export function listRegisteredModules(): readonly RegisteredModule[] {

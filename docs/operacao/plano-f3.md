@@ -94,10 +94,10 @@ Decisões desta etapa:
 
 ### F3e — Privacidade e recuperação
 
-**Estado:** pronta para revisão. Duas migrations:
+**Estado:** concluída (PR #33), migrations aplicadas no dev:
 
-- `20261017090000_f3e_privacy.sql`, aplicar como `app_migrations`.
-- `20261017091000_f3e_mfa_audit.sql`, **aplicar como `postgres`**. No dev, `postgres` tem BYPASSRLS e o privilégio de gatilho em `auth.mfa_factors` (conferido em 17/10/2026). A migration para com mensagem clara se rodar com outro papel.
+- `20261017090000_f3e_privacy.sql`, como `app_migrations`.
+- `20261017091000_f3e_mfa_audit.sql`, como `postgres`. No dev, `postgres` tem BYPASSRLS e o privilégio de gatilho em `auth.mfa_factors` (conferido em 17/10/2026). A migration para com mensagem clara se rodar com outro papel.
 
 Decisões de 17/10/2026:
 

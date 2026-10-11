@@ -25,12 +25,10 @@ import { API_KEY_PREFIX, hashApiKey } from "@/core/credentials/api-keys";
 import { withContext, type RequestContext } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors/app-error";
 import { recordAudit } from "@/core/audit/record";
-import {
-  WorkspaceScopeSchema,
-  type WorkspaceScopeType,
-} from "./scopes";
+import { WorkspaceScopeSchema, type WorkspaceScopeType } from "./scopes";
 import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
 import { Permissions } from "@/core/permissions/catalog";
+import { workspaceRoleGrants } from "@/core/permissions/guard";
 import type { WorkspaceRole } from "@/core/permissions/roles";
 
 export class InvalidApiKeyError extends AppError {
@@ -200,7 +198,17 @@ export async function authenticateApiKey(
           throw new InvalidApiKeyError(requestId);
         }
       } else if (scope === "members:read") {
-        if (!hasWorkspaceRolePermission(role, Permissions.WORKSPACE_MEMBERS_READ)) {
+        if (
+          !hasWorkspaceRolePermission(role, Permissions.WORKSPACE_MEMBERS_READ)
+        ) {
+          throw new InvalidApiKeyError(requestId);
+        }
+      } else if (scope === "crm:read") {
+        if (!workspaceRoleGrants(role, "crm.contacts.read")) {
+          throw new InvalidApiKeyError(requestId);
+        }
+      } else if (scope === "crm:write") {
+        if (!workspaceRoleGrants(role, "crm.contacts.write")) {
           throw new InvalidApiKeyError(requestId);
         }
       } else if (scope === "proposals:write") {

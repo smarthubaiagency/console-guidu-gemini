@@ -8,6 +8,7 @@ vi.mock("server-only", () => ({}));
 
 import { API_ROUTES } from "@/core/api/contracts";
 import { type ApiCall, type ApiDeps, handleApiRoute } from "@/core/api/handler";
+import * as crm from "@/core/api/crm";
 import * as resources from "@/core/api/resources";
 import { API_KEY_PREFIX, hashApiKey } from "@/core/credentials/api-keys";
 import { AccessDeniedError } from "@/core/auth/errors";
@@ -35,6 +36,10 @@ const RUN: Record<
   getWorkspaceUsage: resources.getWorkspaceUsage,
   listWorkspaceExecutions: resources.listWorkspaceExecutions,
   listWorkspaceMembers: resources.listWorkspaceMembers,
+  listCrmContacts: crm.listCrmContacts,
+  createCrmContact: crm.createCrmContact,
+  getCrmContact: crm.getCrmContact,
+  updateCrmContact: crm.updateCrmContact,
 };
 
 describeDatabase("F4a: REST API v1", requiredVars, () => {

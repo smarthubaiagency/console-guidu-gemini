@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
 import { recordAudit } from "@/core/audit/record";
 import {
@@ -14,13 +15,16 @@ import {
   type RateDecision,
   rateLimitHeaders,
 } from "@/core/api/rate-limit";
-import { workspaceGrants } from "@/core/module-runtime/loaders";
+import {
+  loadWorkspaceModuleViews,
+  workspaceGrants,
+} from "@/core/module-runtime/loaders";
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { withContext, type RequestContext } from "@/lib/prisma/with-context";
 import { appLog } from "@/lib/telemetry/log";
 import { toSafeError } from "@/shared/errors";
 
-import type { Permission } from "@/core/permissions/catalog";
+import type { PermissionKey } from "@/core/permissions/catalog";
 
 import { MCP_WORKSPACE_TOOLS, type McpToolDefinition } from "./tools";
 
@@ -158,10 +162,14 @@ function register(
 /** Tools the key and the member's current role allow. */
 export function allowedTools(
   scopes: readonly string[],
-  granted: (permission: Permission) => boolean,
+  granted: (permission: PermissionKey) => boolean,
+  usableModules: ReadonlySet<string> = new Set(),
 ): McpToolDefinition[] {
   return MCP_WORKSPACE_TOOLS.filter(
-    (tool) => scopes.includes(tool.scope) && granted(tool.permission),
+    (tool) =>
+      scopes.includes(tool.scope) &&
+      granted(tool.permission) &&
+      (!tool.moduleKey || usableModules.has(tool.moduleKey)),
   );
 }
 
@@ -229,13 +237,22 @@ export async function handleMcpWorkspaceRequest(
     const role = await withContext(deps.prisma, ctx, (tx) =>
       getEffectiveWorkspaceRole(tx, ctx),
     );
-    const tools = allowedTools(principal.scopes, workspaceGrants(role));
+    // Module tools only while the module is enabled (or suspended: read).
+    const views = await loadWorkspaceModuleViews(deps.prisma, ctx, "");
+    const usable = new Set(
+      views.modules
+        .filter((m) => m.state === "enabled" || m.state === "suspended")
+        .map((m) => m.moduleKey),
+    );
+    const tools = allowedTools(principal.scopes, workspaceGrants(role), usable);
     const call: ApiCall = {
       requestId,
       partnerId: partner.partnerId,
       principal,
       context: ctx,
       query: {},
+      body: undefined,
+      params: {},
     };
 
     const server = new McpServer(SERVER_INFO, {
@@ -243,6 +260,13 @@ export async function handleMcpWorkspaceRequest(
       instructions: INSTRUCTIONS,
     });
     for (const tool of tools) register(server, tool, deps, call, ctx);
+    // The SDK only answers `tools/list` once a tool is registered; a key
+    // left with no usable tool gets an empty list, not "Method not found".
+    if (tools.length === 0) {
+      server.server.setRequestHandler(ListToolsRequestSchema, () => ({
+        tools: [],
+      }));
+    }
 
     // No sessionIdGenerator: stateless mode, every request stands alone.
     const transport = new WebStandardStreamableHTTPServerTransport({
