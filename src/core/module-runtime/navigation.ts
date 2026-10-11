@@ -44,6 +44,7 @@ export type NavIconKey =
   | "key"
   | "layers"
   | "play-circle"
+  | "inbox"
   | "building"
   | "handshake"
   | "palette"
@@ -258,6 +259,17 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
           href: `${base}/executions`,
           iconKey: "play-circle",
         }),
+        // Proposals of the assistants waiting for a person (F4d): owner/admin.
+        ...(input.grants("workspace.proposals.review")
+          ? [
+              item({
+                id: "core.proposals",
+                label: "Propostas",
+                href: `${base}/proposals`,
+                iconKey: "inbox",
+              }),
+            ]
+          : []),
       ],
     },
     {

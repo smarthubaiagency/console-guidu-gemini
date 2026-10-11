@@ -15,6 +15,12 @@ import type { ApiCall } from "@/core/api/handler";
 import * as resources from "@/core/api/resources";
 import { Permissions, type PermissionKey } from "@/core/permissions/catalog";
 import { withContext } from "@/lib/prisma/with-context";
+import { listProposalOperations } from "@/core/proposals/registry";
+import {
+  createProposal,
+  getProposal,
+  type ProposalView,
+} from "@/core/proposals/service";
 import { getContact, listContacts } from "@/modules/crm/server";
 import { AppError } from "@/shared/errors";
 
@@ -37,7 +43,8 @@ export type McpToolDefinition = Readonly<{
   permission: PermissionKey;
   /** Module the tool belongs to; listed only while the module is usable. */
   moduleKey?: string;
-  risk: "read";
+  /** `read` changes nothing; `propose` only records a proposal. */
+  risk: "read" | "propose";
   input: z.ZodObject;
   output: z.ZodObject;
   run(
@@ -73,6 +80,61 @@ async function pageOf(promise: Promise<unknown>) {
   };
   return { items: result.data, nextCursor: result.nextCursor };
 }
+
+const ProposalSummary = z.object({
+  proposalId: z.string().uuid(),
+  operation: z.string(),
+  targetId: z.string().uuid().nullable(),
+  payload: z.record(z.string(), z.unknown()),
+  status: z.enum([
+    "pending",
+    "approved",
+    "rejected",
+    "executed",
+    "failed",
+    "expired",
+  ]),
+  created: z.boolean().optional(),
+  expiresAt: z.string().datetime(),
+  reviewUrl: z.string().nullable(),
+  resourceId: z.string().uuid().nullable(),
+  errorCode: z.string().nullable(),
+});
+
+async function summarize(
+  prisma: PrismaClient,
+  call: ApiCall,
+  proposal: ProposalView,
+  created?: boolean,
+) {
+  const ctx = call.context!;
+  const workspace = await withContext(prisma, ctx, (tx) =>
+    tx.workspace.findUnique({
+      where: { id: ctx.workspaceId },
+      select: { slug: true },
+    }),
+  );
+  return {
+    proposalId: proposal.id,
+    operation: proposal.operation,
+    targetId: proposal.targetId,
+    payload: proposal.payload,
+    status: proposal.status,
+    ...(created === undefined ? {} : { created }),
+    expiresAt: proposal.expiresAt.toISOString(),
+    reviewUrl:
+      call.origin && workspace
+        ? `${call.origin}/app/${workspace.slug}/proposals/${proposal.id}`
+        : null,
+    resourceId: proposal.resourceId,
+    errorCode: proposal.errorCode,
+  };
+}
+
+const operationKeys = listProposalOperations().map((op) => op.key) as [
+  string,
+  ...string[],
+];
 
 const withQuery = (call: ApiCall, query: Record<string, unknown>): ApiCall => ({
   ...call,
@@ -254,6 +316,70 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
       return withContext(prisma, ctx, (tx) =>
         getContact(tx, ctx, String(input.contactId)),
       );
+    },
+  },
+  {
+    name: "propose_operation",
+    title: "Propor uma operação",
+    description:
+      "Propõe uma escrita para uma pessoa aprovar no GUIDU; nada é executado agora. " +
+      "Operações: crm.contacts.create (payload com name e, opcionais, email, phone, companyName, jobTitle, notes) " +
+      "e crm.contacts.update (targetId do contato e só os campos a mudar). " +
+      "Repetir com o mesmo idempotencyKey e o mesmo conteúdo devolve a mesma proposta; com outro conteúdo, conflito. " +
+      "Entregue o reviewUrl à pessoa e consulte depois com get_proposal.",
+    scope: "proposals:write",
+    permission: Permissions.WORKSPACE_READ,
+    risk: "propose",
+    input: z
+      .object({
+        operation: z.enum(operationKeys).describe("Operação a propor."),
+        targetId: z
+          .string()
+          .uuid()
+          .optional()
+          .describe("Id do registro, para operações de edição."),
+        payload: z
+          .record(z.string(), z.unknown())
+          .describe("Campos da operação."),
+        idempotencyKey: z
+          .string()
+          .min(1)
+          .max(128)
+          .describe("Chave única desta intenção, para reenvios seguros."),
+        reason: z
+          .string()
+          .max(500)
+          .optional()
+          .describe("Motivo, mostrado a quem aprova."),
+      })
+      .strict(),
+    output: ProposalSummary,
+    run: async (prisma, call, input) => {
+      const ctx = call.context!;
+      const { proposal, created } = await withContext(prisma, ctx, (tx) =>
+        createProposal(tx, ctx, input),
+      );
+      return summarize(prisma, call, proposal, created);
+    },
+  },
+  {
+    name: "get_proposal",
+    title: "Situação de uma proposta",
+    description:
+      "Situação de uma proposta feita com esta chave: pendente, aprovada, rejeitada, executada, com falha ou vencida.",
+    scope: "proposals:write",
+    permission: Permissions.WORKSPACE_READ,
+    risk: "read",
+    input: z
+      .object({ proposalId: z.string().uuid().describe("Id da proposta.") })
+      .strict(),
+    output: ProposalSummary,
+    run: async (prisma, call, input) => {
+      const ctx = call.context!;
+      const proposal = await withContext(prisma, ctx, (tx) =>
+        getProposal(tx, ctx, String(input.proposalId)),
+      );
+      return summarize(prisma, call, proposal);
     },
   },
 ];

@@ -180,83 +180,108 @@ export async function buildWorkspaceExport(
   now: Date = new Date(),
 ): Promise<Record<string, unknown>> {
   const where = { workspaceId: ctx.workspaceId };
-  const [workspace, members, invitations, apiKeys, credentials, modules, jobs] =
-    await Promise.all([
-      tx.workspace.findUniqueOrThrow({
-        where: { id: ctx.workspaceId },
-        select: { id: true, name: true, slug: true, createdAt: true },
-      }),
-      tx.workspaceMember.findMany({
-        where,
-        orderBy: { createdAt: "asc" },
-        select: { userId: true, role: true, status: true, createdAt: true },
-      }),
-      tx.invitation.findMany({
-        where,
-        orderBy: { createdAt: "asc" },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          expiresAt: true,
-          acceptedAt: true,
-        },
-      }),
-      tx.apiKey.findMany({
-        where,
-        orderBy: { createdAt: "asc" },
-        select: {
-          id: true,
-          name: true,
-          prefix: true,
-          scopes: true,
-          status: true,
-          userId: true,
-          createdAt: true,
-          expiresAt: true,
-          lastUsedAt: true,
-          revokedAt: true,
-        },
-      }),
-      tx.credential.findMany({
-        where,
-        orderBy: { createdAt: "asc" },
-        select: {
-          id: true,
-          provider: true,
-          purpose: true,
-          label: true,
-          maskedValue: true,
-          status: true,
-          createdAt: true,
-        },
-      }),
-      tx.workspaceModule.findMany({
-        where,
-        orderBy: { moduleKey: "asc" },
-        select: {
-          moduleKey: true,
-          status: true,
-          config: true,
-          updatedAt: true,
-        },
-      }),
-      tx.jobRun.findMany({
-        where,
-        orderBy: { createdAt: "asc" },
-        take: 5000,
-        select: {
-          id: true,
-          kind: true,
-          status: true,
-          attempts: true,
-          createdAt: true,
-          finishedAt: true,
-        },
-      }),
-    ]);
+  const [
+    workspace,
+    members,
+    invitations,
+    apiKeys,
+    credentials,
+    modules,
+    jobs,
+    proposals,
+  ] = await Promise.all([
+    tx.workspace.findUniqueOrThrow({
+      where: { id: ctx.workspaceId },
+      select: { id: true, name: true, slug: true, createdAt: true },
+    }),
+    tx.workspaceMember.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      select: { userId: true, role: true, status: true, createdAt: true },
+    }),
+    tx.invitation.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        expiresAt: true,
+        acceptedAt: true,
+      },
+    }),
+    tx.apiKey.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        name: true,
+        prefix: true,
+        scopes: true,
+        status: true,
+        userId: true,
+        createdAt: true,
+        expiresAt: true,
+        lastUsedAt: true,
+        revokedAt: true,
+      },
+    }),
+    tx.credential.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        provider: true,
+        purpose: true,
+        label: true,
+        maskedValue: true,
+        status: true,
+        createdAt: true,
+      },
+    }),
+    tx.workspaceModule.findMany({
+      where,
+      orderBy: { moduleKey: "asc" },
+      select: {
+        moduleKey: true,
+        status: true,
+        config: true,
+        updatedAt: true,
+      },
+    }),
+    tx.jobRun.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      take: 5000,
+      select: {
+        id: true,
+        kind: true,
+        status: true,
+        attempts: true,
+        createdAt: true,
+        finishedAt: true,
+      },
+    }),
+    tx.executionProposal.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        operation: true,
+        targetId: true,
+        payload: true,
+        reason: true,
+        status: true,
+        requestedBy: true,
+        decidedBy: true,
+        createdAt: true,
+        decidedAt: true,
+        executedAt: true,
+      },
+    }),
+  ]);
 
   const moduleData: Record<string, Record<string, ExportedRows>> = {};
   for (const contract of listModuleDataContracts()) {
@@ -275,6 +300,7 @@ export async function buildWorkspaceExport(
       credentials,
       modules,
       jobRuns: jobs,
+      proposals,
     },
     modules: moduleData,
     notes: [

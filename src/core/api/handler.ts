@@ -64,6 +64,8 @@ export type ApiCall = Readonly<{
   body: unknown;
   /** Path parameters besides the workspace (e.g. contactId). */
   params: Readonly<Record<string, string | undefined>>;
+  /** Public origin of the request host, for links (MCP proposals). */
+  origin?: string;
 }>;
 
 export type ApiDeps = Readonly<{

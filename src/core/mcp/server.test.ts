@@ -37,9 +37,12 @@ describe("workspace MCP (F4b)", () => {
     expect(allowedTools([], all)).toEqual([]);
   });
 
-  it("declares every tool as read-only with strict inputs and no workspace argument", () => {
+  it("declares every tool as read-only, except the proposal, with strict inputs and no workspace argument", () => {
     for (const tool of MCP_WORKSPACE_TOOLS) {
-      expect(tool.risk).toBe("read");
+      // Writes only by proposal (F4d): propose_operation records, never runs.
+      expect(tool.risk).toBe(
+        tool.name === "propose_operation" ? "propose" : "read",
+      );
       expect(Object.keys(tool.input.shape)).not.toContain("workspaceId");
       expect(tool.input.safeParse({ workspaceId: "x" }).success).toBe(false);
     }

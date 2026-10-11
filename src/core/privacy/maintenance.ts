@@ -41,6 +41,7 @@ export async function purgeWorkspace(
   const where = { workspaceId: workspace.id };
   const core: Array<[string, () => Promise<{ count: number }>]> = [
     ["workspace_exports", () => tx.workspaceExport.deleteMany({ where })],
+    ["execution_proposals", () => tx.executionProposal.deleteMany({ where })],
     ["job_runs", () => tx.jobRun.deleteMany({ where })],
     ["api_keys", () => tx.apiKey.deleteMany({ where })],
     ["credentials", () => tx.credential.deleteMany({ where })],
@@ -126,6 +127,18 @@ export async function runPrivacyMaintenance(
           where: {
             status: { in: ["succeeded", "failed", "skipped", "canceled"] },
             finishedAt: { lt: cutoff },
+          },
+        })
+      ).count;
+    } else if (policy.category === "execution_proposals") {
+      retentionDeleted += (
+        await tx.executionProposal.deleteMany({
+          where: {
+            OR: [
+              { status: { in: ["rejected", "executed", "failed"] } },
+              { expiresAt: { lt: new Date() } },
+            ],
+            createdAt: { lt: cutoff },
           },
         })
       ).count;

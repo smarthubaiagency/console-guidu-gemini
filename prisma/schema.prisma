@@ -841,3 +841,35 @@ model CrmContact {
   @@index([workspaceId, createdAt(sort: Desc), id(sort: Desc)])
   @@map("crm_contacts")
 }
+
+/// Operation an assistant proposed through the MCP, waiting for a person's
+/// approval (F4d, Especificação §17.4). Content immutable in the database.
+model ExecutionProposal {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  workspaceId     String    @map("workspace_id") @db.Uuid
+  requestedBy     String    @map("requested_by") @db.Uuid
+  apiKeyId        String?   @map("api_key_id") @db.Uuid
+  operation       String
+  targetId        String?   @map("target_id") @db.Uuid
+  payload         Json
+  payloadHash     String    @map("payload_hash")
+  resourceVersion String?   @map("resource_version")
+  reason          String?
+  idempotencyKey  String    @map("idempotency_key")
+  status          String    @default("pending")
+  expiresAt       DateTime  @map("expires_at") @db.Timestamptz()
+  decidedBy       String?   @map("decided_by") @db.Uuid
+  decidedAt       DateTime? @map("decided_at") @db.Timestamptz()
+  approvedHash    String?   @map("approved_hash")
+  executedAt      DateTime? @map("executed_at") @db.Timestamptz()
+  result          Json?
+  errorCode       String?   @map("error_code")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([workspaceId, idempotencyKey])
+  @@index([workspaceId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([workspaceId, status, expiresAt])
+  @@map("execution_proposals")
+}
