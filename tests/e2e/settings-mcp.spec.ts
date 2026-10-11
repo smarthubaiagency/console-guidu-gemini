@@ -127,7 +127,7 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await expect(
       page.getByText(/(Chave de API emitida com sucesso|Chave emitida com sucesso)/i),
     ).toBeVisible();
-    await expect(page.getByText(/gdu_live_/)).toBeVisible();
+    await expect(page.getByText(/gdu_live_[a-f0-9]{64}/)).toBeVisible();
 
     // Verify key appears in active list
     await expect(page.getByText(keyName)).toBeVisible();
@@ -172,7 +172,7 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await page.getByRole("button", { name: /Emitir Chave/i }).click();
 
     // Verify success banner and raw key presentation
-    await expect(page.getByText(/gdu_live_/)).toBeVisible();
+    await expect(page.getByText(/gdu_live_[a-f0-9]{64}/)).toBeVisible();
 
     // Verify key is listed with proposals:write scope badge
     await expect(page.getByText(keyName)).toBeVisible();

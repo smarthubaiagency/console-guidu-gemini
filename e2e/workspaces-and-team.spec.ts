@@ -73,6 +73,8 @@ test.describe("Workspace Navigation and Team Management", () => {
     await page.getByRole("button", { name: "Gerar Convite" }).click();
 
     // Verify feedback and pending invitations table contains the invited email
-    await expect(page.getByText(invitedEmail)).toBeVisible();
+    await expect(
+      page.getByRole("cell", { name: invitedEmail, exact: true }),
+    ).toBeVisible();
   });
 });
