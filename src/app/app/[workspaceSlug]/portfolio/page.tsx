@@ -25,12 +25,29 @@ import {
 import { PortfolioPermissions } from "@/modules/portfolio/manifest";
 import { createPortfolioItemAction } from "@/modules/portfolio/server/actions";
 import { listItems } from "@/modules/portfolio/server";
+import {
+  ITEM_TYPES,
+  itemTypeLabel,
+  listKinds,
+  verticalLabel,
+} from "@/modules/portfolio/verticals";
+
+function verticalLabelFor(itemType: string, vertical: string): string {
+  return vertical === "general"
+    ? itemTypeLabel(itemType)
+    : `${itemTypeLabel(itemType)} — ${verticalLabel(itemType, vertical)}`;
+}
 
 export const metadata: Metadata = { title: "Portfólio" };
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ q?: string; status?: string; cursor?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    type?: string;
+    cursor?: string;
+  }>;
 }
 
 const STATUSES = ["draft", "active", "inactive", "archived"] as const;
@@ -41,7 +58,7 @@ export default async function PortfolioPage({
   searchParams,
 }: PageProps) {
   const { workspaceSlug } = await params;
-  const { q, status, cursor } = await searchParams;
+  const { q, status, type, cursor } = await searchParams;
   const identity = await requireUserPage(`/app/${workspaceSlug}/portfolio`);
   let context;
   try {
@@ -55,6 +72,7 @@ export default async function PortfolioPage({
   }
   const search = typeof q === "string" ? q.slice(0, 100) : "";
   const statusFilter = STATUSES.find((s) => s === status);
+  const typeFilter = ITEM_TYPES.find((t) => t === type);
 
   const view = await withContext(prisma, context, async (tx) => {
     const access = await resolveModulePageAccess(
@@ -67,6 +85,7 @@ export default async function PortfolioPage({
     const page = await listItems(tx, context, {
       search: search || undefined,
       status: statusFilter,
+      item_type: typeFilter,
       cursor: typeof cursor === "string" ? cursor : undefined,
       limit: 50,
     });
@@ -114,6 +133,19 @@ export default async function PortfolioPage({
                 </option>
               ))}
             </select>
+            <select
+              name="type"
+              defaultValue={typeFilter ?? ""}
+              aria-label="Categoria"
+              className={inputClass}
+            >
+              <option value="">Todas as categorias</option>
+              {ITEM_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {itemTypeLabel(t)}
+                </option>
+              ))}
+            </select>
             <button
               type="submit"
               className="border-border text-12 text-text rounded-lg border px-4 py-2 font-semibold"
@@ -124,7 +156,7 @@ export default async function PortfolioPage({
 
           {view.items.length === 0 ? (
             <p className="text-12 text-text-secondary">
-              {search || statusFilter
+              {search || statusFilter || typeFilter
                 ? "Nenhum item encontrado."
                 : "Sem dados: nenhum item ainda."}
             </p>
@@ -150,6 +182,7 @@ export default async function PortfolioPage({
                       {item.title}
                     </Link>
                     <span className="text-12 text-text-secondary">
+                      {verticalLabelFor(item.itemType, item.vertical)} ·{" "}
                       {STATUS_LABELS[item.status]} ·{" "}
                       {item.priceDisplay === "quote"
                         ? "sob consulta"
@@ -164,7 +197,7 @@ export default async function PortfolioPage({
           )}
           {view.nextCursor ? (
             <Link
-              href={`${base}?${new URLSearchParams({ ...(search ? { q: search } : {}), ...(statusFilter ? { status: statusFilter } : {}), cursor: view.nextCursor })}`}
+              href={`${base}?${new URLSearchParams({ ...(search ? { q: search } : {}), ...(statusFilter ? { status: statusFilter } : {}), ...(typeFilter ? { type: typeFilter } : {}), cursor: view.nextCursor })}`}
               className="text-12 text-primary font-semibold"
             >
               Mais itens
@@ -172,7 +205,7 @@ export default async function PortfolioPage({
           ) : null}
 
           <section className={sectionClass}>
-            <h2 className="text-14 text-text font-semibold">Novo produto</h2>
+            <h2 className="text-14 text-text font-semibold">Novo item</h2>
             {view.readOnly ? (
               <p className="text-12 text-text-secondary">
                 Assinatura suspensa: o portfólio fica só para consulta.
@@ -190,7 +223,21 @@ export default async function PortfolioPage({
                   value={workspaceSlug}
                 />
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <label className={`${labelClass} sm:col-span-2`}>
+                  <label className={labelClass}>
+                    Categoria
+                    <select
+                      name="kind"
+                      defaultValue="product:general"
+                      className={inputClass}
+                    >
+                      {listKinds().map((k) => (
+                        <option key={k.value} value={k.value}>
+                          {k.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={labelClass}>
                     Título
                     <input
                       name="title"
@@ -225,8 +272,10 @@ export default async function PortfolioPage({
                 </div>
                 <VariantFields idPrefix="new" />
                 <p className="text-11 text-text-secondary">
-                  Outras categorias (serviço, imóvel, hospedagem, evento) chegam
-                  na próxima etapa.
+                  O item nasce como rascunho; os dados da categoria (por
+                  exemplo, quartos de um imóvel ou a data de um evento) são
+                  preenchidos na página do item. Hospedagem chega na próxima
+                  etapa.
                 </p>
               </ActionForm>
             ) : (

@@ -101,4 +101,29 @@ test("owner registers a store and a product with variants in the Portfolio", asy
   await expect(list.getByRole("link", { name: "Camiseta E2E" })).toBeVisible();
   await expect(list).toContainText("a partir de R$ 49,90");
   await expect(list).toContainText("2 variantes");
+
+  // A healthcare service (F5b): the vertical fields come from its schema.
+  const service = page.getByTestId("create-portfolio-item");
+  await service.getByLabel("Categoria").selectOption("service:healthcare");
+  await service.getByLabel("Título").fill("Consulta E2E");
+  await service.getByLabel("Preço (R$)").fill("250,00");
+  await service.getByRole("button", { name: "Criar item" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Consulta E2E" }),
+  ).toBeVisible();
+  const details = page.getByTestId("details-fields");
+  await details.getByLabel("Duração (minutos)").fill("50");
+  await details.getByLabel("Conselho profissional").selectOption("cro");
+  await details.getByLabel("Número do registro").fill("12345");
+  await details.getByLabel("Convênios aceitos").fill("Amil, Bradesco Saúde");
+  const serviceEdit = page.getByTestId("edit-portfolio-item");
+  await serviceEdit.getByLabel("Situação").selectOption("active");
+  await serviceEdit.getByRole("button", { name: "Salvar item" }).click();
+  await expect(
+    serviceEdit.getByRole("status").filter({ hasText: "Item salvo." }),
+  ).toBeVisible();
+  await expect(page.getByTestId("ucp-preview")).toContainText(
+    "co.guidu.portfolio.service.healthcare",
+  );
+  await expect(page.getByTestId("ucp-preview")).toContainText("Bradesco Saúde");
 });

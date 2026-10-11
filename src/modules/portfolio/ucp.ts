@@ -11,6 +11,13 @@ import { z } from "zod";
 /** Namespace of the GUIDU extensions (decision 6; GUIDU is provisional). */
 export const EXTENSION_NAMESPACE = "co.guidu";
 
+/** Key of the vertical details in the UCP `metadata` of a product (F5b). */
+export function extensionKey(itemType: string, vertical: string): string {
+  return vertical === "general"
+    ? `${EXTENSION_NAMESPACE}.portfolio.${itemType}`
+    : `${EXTENSION_NAMESPACE}.portfolio.${itemType}.${vertical}`;
+}
+
 const reverseDomain = z
   .string()
   .regex(/^[a-z][a-z0-9-]*(\.[a-z0-9_-]+)+$/, "Use um identificador reverso.");
@@ -162,6 +169,10 @@ export type SerializableItem = Readonly<{
   url: string | null;
   rating: z.infer<typeof UcpRating> | null;
   priceDisplay: "price" | "from" | "quote";
+  /** Kind and vertical extension (F5b); out through `metadata`. */
+  itemType?: string;
+  vertical?: string;
+  details?: Record<string, unknown>;
   status: string;
   visibility: string;
   aiDiscoveryEnabled: boolean;
@@ -286,5 +297,10 @@ export function toUcpProduct(
   }
   if (item.rating) product.rating = item.rating;
   if (item.tags.length) product.tags = item.tags;
+  if (item.itemType && item.details && Object.keys(item.details).length) {
+    product.metadata = {
+      [extensionKey(item.itemType, item.vertical ?? "general")]: item.details,
+    };
+  }
   return product;
 }

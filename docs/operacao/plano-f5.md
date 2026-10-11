@@ -64,6 +64,18 @@ Planejado:
 
 ### F5b — Verticais
 
+**Estado:** pronta para revisão. Sem migration: o `details` em JSONB e o `item_type` já existiam.
+
+Entregue:
+
+- `src/modules/portfolio/verticals.ts`: uma declaração por campo gera o schema Zod, o formulário e a leitura do formulário. Cobre produto, serviço (base, saúde, estética, beleza e corporativo), imobiliário (venda e aluguel) e evento, com as correções da revisão do piloto: snake_case, enums minúsculos, centavos e `Measure`.
+- Um rascunho pode ficar incompleto. Ativar exige os campos obrigatórios da vertical: operação e tipo do imóvel, início do evento.
+- Na saída UCP, os dados da vertical vão em `metadata` como `co.guidu.portfolio.<item_type>[.<vertical>]`, validados contra o schema oficial.
+- Telas: categoria escolhida na criação, campos da vertical na página do item e filtro por categoria na lista.
+- Testes: unitário `portfolio-verticals.test.ts`, integração (vertical errada, campo de outra vertical, camelCase do piloto, ativação sem obrigatórios, eventos com ingressos como variantes) e e2e de um serviço de saúde.
+
+Planejado:
+
 - Discriminated union de `details` para produto (marca, modelo, condição, peso e dimensões em `Measure`, garantia como política), serviço (base e saúde, estética, beleza, corporativo), imobiliário (venda e aluguel) e evento (ingressos como variantes, `starts_at` e `ends_at`).
 - Formulários dinâmicos por categoria e vertical.
 - Saída das extensões como `co.guidu.portfolio.<item_type>[.<vertical>]`.

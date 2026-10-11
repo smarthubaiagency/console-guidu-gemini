@@ -15,6 +15,7 @@ import { AppError, toSafeError } from "@/shared/errors";
 
 import { PortfolioQuotas } from "../manifest";
 import { SALE_UNITS } from "../ucp";
+import { detailsFromForm } from "../verticals";
 import {
   addVariant,
   createItem,
@@ -154,9 +155,13 @@ export async function createPortfolioItemAction(
   try {
     const { workspaceSlug, ctx } = await context(formData);
     const priceDisplay = str(formData, "price_display") ?? "price";
+    const [itemType, vertical] = (
+      str(formData, "kind") ?? "product:general"
+    ).split(":");
     const item = await withContext(prisma, ctx, (tx) =>
       createItem(tx, ctx, {
-        item_type: "product",
+        item_type: itemType,
+        vertical: vertical ?? "general",
         title: str(formData, "title") ?? "",
         description: { plain: str(formData, "description_plain") },
         price_display: priceDisplay,
@@ -218,6 +223,11 @@ export async function updatePortfolioItemAction(
         ai_aliases: list(formData, "ai_aliases"),
         ai_do_not_say: list(formData, "ai_do_not_say"),
         ai_safety_rules: str(formData, "ai_safety_rules") ?? null,
+        details: detailsFromForm(
+          str(formData, "item_type") ?? "",
+          str(formData, "vertical") ?? "",
+          formData,
+        ),
       }),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio`);

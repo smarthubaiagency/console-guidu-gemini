@@ -182,7 +182,7 @@ describeDatabase(
       await reject({ variants: [{ title: "Sem preço" }] });
       await reject({ variants: [] });
       await reject({
-        item_type: "service",
+        item_type: "lodging",
         variants: [{ title: "A", price: brl(1) }],
       });
       await reject({
@@ -350,6 +350,140 @@ describeDatabase(
           "enabled",
         );
       }
+    });
+
+    it("validates the details of each vertical and sends them through UCP metadata (F5b)", async () => {
+      const service = await run(owner, (tx) =>
+        createItem(tx, owner, {
+          item_type: "service",
+          vertical: "healthcare",
+          title: "Consulta odontológica",
+          status: "active",
+          fulfillment_methods: ["pickup", "digital"],
+          details: {
+            duration_minutes: 50,
+            professional_registry: {
+              type: "cro",
+              number: "12345",
+              region: "SP",
+            },
+            insurance_providers: ["Amil", "Bradesco Saúde"],
+            patient_type: "human",
+          },
+          variants: [
+            {
+              title: "Consulta",
+              price: brl(25000),
+              quantity_unit: { unit: "C62", display_text: "consulta" },
+            },
+          ],
+        }),
+      );
+      expect(service).toMatchObject({
+        itemType: "service",
+        vertical: "healthcare",
+      });
+      const ucp = itemToUcp(service)!;
+      expect(ucpErrors("shopping/types/product.json", ucp)).toEqual([]);
+      expect(ucp.metadata).toMatchObject({
+        "co.guidu.portfolio.service.healthcare": { duration_minutes: 50 },
+      });
+
+      // Wrong vertical, a field of another vertical, the pilot's camelCase.
+      for (const input of [
+        { item_type: "product", vertical: "healthcare" },
+        {
+          item_type: "service",
+          vertical: "healthcare",
+          details: { treated_areas: ["Rosto"] },
+        },
+        {
+          item_type: "service",
+          vertical: "aesthetics",
+          details: { treatedAreas: ["Rosto"] },
+        },
+      ]) {
+        await expect(
+          run(owner, (tx) =>
+            createItem(tx, owner, {
+              title: "Inválido",
+              variants: [{ title: "A", price: brl(1) }],
+              ...input,
+            }),
+          ),
+        ).rejects.toBeInstanceOf(AppError);
+      }
+
+      // A draft property may be incomplete; activating needs the required details.
+      const flat = await run(owner, (tx) =>
+        createItem(tx, owner, {
+          item_type: "real_estate",
+          title: "Apartamento 2 quartos",
+          details: { bedrooms: 2 },
+          variants: [
+            {
+              title: "Aluguel",
+              price: brl(320000),
+              quantity_unit: { unit: "MON", display_text: "mês" },
+            },
+          ],
+        }),
+      );
+      await expect(
+        run(owner, (tx) =>
+          updateItem(tx, owner, flat.id, { status: "active" }),
+        ),
+      ).rejects.toBeInstanceOf(AppError);
+      const active = await run(owner, (tx) =>
+        updateItem(tx, owner, flat.id, {
+          status: "active",
+          details: {
+            bedrooms: 2,
+            operation_type: "rent",
+            property_type: "apartment",
+            condo_fee: 85000,
+          },
+        }),
+      );
+      expect(active.details).toMatchObject({
+        operation_type: "rent",
+        condo_fee: 85000,
+      });
+      expect(
+        ucpErrors("shopping/types/product.json", itemToUcp(active)),
+      ).toEqual([]);
+
+      const event = await run(owner, (tx) =>
+        createItem(tx, owner, {
+          item_type: "event",
+          title: "Workshop de café",
+          status: "active",
+          details: {
+            starts_at: "2026-11-20T19:00:00-03:00",
+            topics: ["Espresso"],
+          },
+          variants: [
+            { title: "Individual", price: brl(9000) },
+            { title: "Dupla", price: brl(16000) },
+          ],
+        }),
+      );
+      expect(event.variants).toHaveLength(2);
+      await expect(
+        run(owner, (tx) =>
+          createItem(tx, owner, {
+            item_type: "event",
+            title: "Sem data",
+            status: "active",
+            variants: [{ title: "Individual", price: brl(1) }],
+          }),
+        ),
+      ).rejects.toBeInstanceOf(AppError);
+
+      const services = await run(owner, (tx) =>
+        listItems(tx, owner, { item_type: "service" }),
+      );
+      expect(services.items.map((i) => i.id)).toEqual([service.id]);
     });
 
     it("takes the default quota from the platform settings of the module", async () => {

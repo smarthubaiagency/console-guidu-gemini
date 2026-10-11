@@ -16,6 +16,7 @@ import type {
 import { AppError } from "@/shared/errors";
 
 import { PortfolioPermissions, PortfolioQuotas } from "../../manifest";
+import { detailsSchema, isValidKind, ITEM_TYPES } from "../../verticals";
 import {
   AVAILABILITY_STATUSES,
   FULFILLMENT_METHODS,
@@ -40,8 +41,9 @@ import {
  * one checks the module state, the permission and the quota, and RLS
  * repeats tenant and role. Input and output use the UCP names.
  *
- * F5a accepts `item_type = product` with the `general` vertical; the other
- * types and verticals arrive with their `details` validation in F5b/F5c.
+ * Each `item_type` + `vertical` has its `details` extension, validated by
+ * the schema declared in `../../verticals.ts` (F5b). Lodging follows the
+ * UCP lodging model and arrives in F5c.
  */
 
 const MODULE_KEY = "portfolio";
@@ -57,11 +59,11 @@ const handleSchema = z
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use letras minúsculas, números e hífen.");
 
 const itemFields = {
-  item_type: z.literal("product", {
-    error:
-      "Nesta etapa o Portfólio cadastra produtos; as demais categorias chegam na F5b.",
+  item_type: z.enum(ITEM_TYPES, {
+    error: "Categoria inválida (produto, serviço, imóvel ou evento).",
   }),
-  vertical: z.literal("general"),
+  vertical: z.string().regex(/^[a-z][a-z0-9_]{0,47}$/),
+  details: z.record(z.string(), z.unknown()),
   title: z.string().trim().min(1, "Informe o título.").max(200),
   handle: handleSchema,
   description: UcpDescription,
@@ -151,6 +153,7 @@ export const ItemCreateInput = z
     ...itemFields,
     handle: handleSchema.optional(),
     vertical: itemFields.vertical.default("general"),
+    details: itemFields.details.default({}),
     description: UcpDescription.default({}),
     categories: itemFields.categories.default([]),
     media: itemFields.media.default([]),
@@ -194,6 +197,7 @@ export type ItemView = SerializableItem &
   Readonly<{
     itemType: string;
     vertical: string;
+    details: Record<string, unknown>;
     fulfillmentMethods: string[];
     locationIds: string[];
     policies: z.infer<typeof UcpPolicy>[];
@@ -246,6 +250,7 @@ function toItemView(row: ItemRow, variants: VariantRow[]): ItemView {
     id: row.id,
     itemType: row.itemType,
     vertical: row.vertical,
+    details: json(row.details, {}),
     title: row.title,
     handle: row.handle,
     description: json(row.description, {}),
@@ -298,6 +303,26 @@ function notFound(what = "Item"): AppError {
     code: "not_found",
     safeMessage: `${what} não encontrado.`,
   });
+}
+
+/** Details of a kind, validated and normalized by its vertical schema. */
+function parseDetails(
+  itemType: string,
+  vertical: string,
+  details: unknown,
+  status: string,
+): Record<string, unknown> {
+  if (!isValidKind(itemType, vertical)) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: `Vertical "${vertical}" não existe para esta categoria.`,
+    });
+  }
+  const parsed = detailsSchema(itemType, vertical, {
+    requireAll: status === "active",
+  }).safeParse(details ?? {});
+  if (!parsed.success) throw invalid(parsed.error);
+  return parsed.data as Record<string, unknown>;
 }
 
 /** URL-friendly handle from a title ("Camiseta Básica" -> "camiseta-basica"). */
@@ -450,6 +475,7 @@ function audit(
 export const ListItemsQuery = z.object({
   search: z.string().trim().max(100).optional(),
   status: z.enum(["draft", "active", "inactive", "archived"]).optional(),
+  item_type: z.enum(ITEM_TYPES).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(25),
   cursor: z.string().max(200).optional(),
 });
@@ -475,6 +501,7 @@ export async function listItems(
     where workspace_id = ${ctx.workspaceId}::uuid
       and (${q.status ?? null}::text is null and status <> 'archived'
            or status = ${q.status ?? null}::text)
+      and (${q.item_type ?? null}::text is null or item_type = ${q.item_type ?? null}::text)
       and (${pattern}::text is null or title ilike ${pattern} or handle ilike ${pattern})
       and (${cursor === null}::boolean
            or (created_at, id) < (${cursor?.t ?? null}::timestamptz, ${cursor?.id ?? null}::uuid))
@@ -528,6 +555,7 @@ export async function createItem(
   const parsed = ItemCreateInput.safeParse(input);
   if (!parsed.success) throw invalid(parsed.error);
   const d = parsed.data;
+  const details = parseDetails(d.item_type, d.vertical, d.details, d.status);
   checkPrices(d.price_display, d.variants);
   await checkLocations(tx, ctx, d.location_ids);
   await lockWorkspace(tx, ctx);
@@ -543,6 +571,7 @@ export async function createItem(
         workspaceId: ctx.workspaceId,
         itemType: d.item_type,
         vertical: d.vertical,
+        details: details as Prisma.InputJsonObject,
         title: d.title,
         handle,
         description: d.description,
@@ -611,7 +640,22 @@ export async function updateItem(
     );
   }
   if (d.location_ids) await checkLocations(tx, ctx, d.location_ids);
+  // Activating checks the required details, even when they were not sent.
+  const status = d.status ?? current.status;
+  const details =
+    d.details !== undefined ||
+    (d.status === "active" && current.status !== "active")
+      ? parseDetails(
+          current.itemType,
+          current.vertical,
+          d.details ?? current.details,
+          status,
+        )
+      : undefined;
   const data: Prisma.PortfolioItemUpdateManyMutationInput = {
+    ...(details !== undefined
+      ? { details: details as Prisma.InputJsonObject }
+      : {}),
     ...(d.title !== undefined ? { title: d.title } : {}),
     ...(d.handle !== undefined ? { handle: d.handle } : {}),
     ...(d.description !== undefined ? { description: d.description } : {}),
