@@ -173,7 +173,17 @@ describe("generated navigation", () => {
       "google-business",
       "hello-world",
       "core.executions",
+      "core.proposals",
     ]);
+  });
+
+  it("shows the proposals to owner and admin only (F4d)", () => {
+    expect(find(app("owner"), "core.proposals")?.href).toBe(
+      "/app/acme/proposals",
+    );
+    expect(find(app("admin"), "core.proposals")).toBeDefined();
+    expect(find(app("editor"), "core.proposals")).toBeUndefined();
+    expect(find(app("viewer"), "core.proposals")).toBeUndefined();
   });
 
   it("builds admin settings by internal role", () => {

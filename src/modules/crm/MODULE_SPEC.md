@@ -67,7 +67,7 @@ Cota `crm.contacts` (contatos por workspace). Sem limite no plano, vale o padrã
 
 ## 8. Jobs, eventos e MCP
 
-Sem jobs nem eventos. MCP conforme a seção 5.
+Sem jobs nem eventos próprios. MCP conforme a seção 5. Desde a F4d, um assistente com `proposals:write` propõe `crm.contacts.create` e `crm.contacts.update` (`src/modules/crm/proposals.ts`); a proposta aprovada por owner ou admin roda pelo job `core.proposal-execute`, que chama os mesmos serviços desta especificação. A edição só executa sobre a versão do contato que a pessoa viu.
 
 ## 9. Critérios de aceite e testes
 

@@ -1,6 +1,7 @@
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
 import { workspaceExportJob } from "@/core/privacy/export";
 import { privacyJobs, privacySchedules } from "@/core/privacy/maintenance";
+import { proposalExecuteJob } from "@/core/proposals/service";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
 
 import type { JobDefinition, JobSchedule } from "./definition";
@@ -14,6 +15,7 @@ const DEFINITIONS = [
   ...billingJobs,
   ...privacyJobs,
   workspaceExportJob,
+  proposalExecuteJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
 

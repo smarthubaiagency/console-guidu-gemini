@@ -101,7 +101,7 @@ Planejado:
 
 ### F4c — Módulo CRM: contatos
 
-**Estado:** pronta para revisão. A migration `20261019090000_f4c_crm_contacts.sql` é aplicada como `app_migrations`. Especificação em [src/modules/crm/MODULE_SPEC.md](../../src/modules/crm/MODULE_SPEC.md).
+**Estado:** concluída (PR #36), migration `20261019090000_f4c_crm_contacts.sql` aplicada no dev. Especificação em [src/modules/crm/MODULE_SPEC.md](../../src/modules/crm/MODULE_SPEC.md).
 
 Entregue:
 
@@ -130,6 +130,30 @@ Planejado:
 - O módulo nasce extensível: leads, empresas, negócios e tarefas entram depois como novos objetos do mesmo módulo, cada um com a sua especificação.
 
 ### F4d — Propostas com aprovação humana
+
+**Estado:** pronta para revisão. A migration `20261020090000_f4d_execution_proposals.sql` é aplicada como `app_migrations`. Guia em [mcp-conexao.md](mcp-conexao.md#propostas-f4d).
+
+Entregue:
+
+- Tabela `execution_proposals` com RLS FORCE:
+  - só uma chave de API cria (`principal_type = api_key`), assinada pela pessoa e pela chave, com validade de até 24 horas;
+  - owner e admin veem todas; quem pediu vê as suas;
+  - um gatilho deixa o conteúdo imutável e só aceita as transições pendente → aprovada/rejeitada e aprovada → executada/com falha. A aprovação precisa ser de uma pessoa (sessão), assinada por ela e carregar o hash do conteúdo;
+  - entra na exclusão do workspace e na exportação, e ganhou a categoria de retenção `execution_proposals` (desligada, como as outras).
+- `src/core/proposals`:
+  - registro explícito de operações; o CRM declara `crm.contacts.create` e `crm.contacts.update`;
+  - hash SHA-256 do JSON canônico (workspace, operação, alvo, versão do registro e conteúdo normalizado);
+  - criar (idempotência por workspace; até 50 pendentes), aprovar (owner/admin, sessão, MFA, hash da tela, versão atual), rejeitar e executar;
+  - job `core.proposal-execute`, no contexto de quem aprovou, que reconfere validade, integridade, versão, módulo, permissão e cota. Recusas viram "não executada" com o motivo; o efeito e o novo estado ficam na mesma transação.
+- Permissão nova `workspace.proposals.review` (owner e admin) e a tela **Propostas** (`/app/[slug]/proposals`): pendentes e histórico, detalhe com valores atuais e propostos, motivo, impressão do hash, aprovar e rejeitar.
+- MCP: `propose_operation` (anotada como escrita, não destrutiva e idempotente) e `get_proposal`, com o escopo `proposals:write`. A resposta traz o link de revisão no host da requisição.
+- Auditoria: `proposal.create`, `proposal.approve`, `proposal.reject` e `proposal.execute`.
+- Testes:
+  - suíte SQL `proposals-rls.sql`;
+  - integração `proposals.test.ts`: MCP e idempotência, recusas (chave, sem MFA, viewer, hash errado), execução pelo worker uma só vez, proposta alterada e vencida (AC11), versão do contato e módulo desligado;
+  - e2e `proposals.spec.ts`: chave pela tela, proposta pelo MCP, aprovação com MFA, rejeição, worker e contato no CRM.
+
+Planejado:
 
 - `proposals:write` libera `propose_operation`, que só cria a proposta e nunca executa o efeito.
 - Operações iniciais: `crm.contacts.create` e `crm.contacts.update`.

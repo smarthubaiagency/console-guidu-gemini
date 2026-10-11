@@ -43,6 +43,7 @@ const ALL_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permissions.AI_AGENTS_USE,
   Permissions.AI_AGENTS_MANAGE,
   Permissions.WORKSPACE_DATA_EXPORT,
+  Permissions.WORKSPACE_PROPOSALS_REVIEW,
 ]);
 
 /** Owner only: deleting the workspace (F3e, decision of 17/10/2026). */
