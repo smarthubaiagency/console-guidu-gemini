@@ -20,9 +20,11 @@ import {
   formatMoney,
   FULFILLMENT_LABELS,
   PRICE_DISPLAY_LABELS,
+  DetailsFields,
   STATUS_LABELS,
   VariantFields,
 } from "@/modules/portfolio/components/fields";
+import { itemTypeLabel, verticalLabel } from "@/modules/portfolio/verticals";
 import { PortfolioPermissions } from "@/modules/portfolio/manifest";
 import {
   addPortfolioVariantAction,
@@ -91,7 +93,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
       <ModulePageHeader
         trail={["Módulos", "Portfólio", item.title]}
         title={item.title}
-        description={`${STATUS_LABELS[item.status]} · ${item.variants.length} ${item.variants.length === 1 ? "variante" : "variantes"} · endereço /${item.handle}`}
+        description={`${item.vertical === "general" ? itemTypeLabel(item.itemType) : `${itemTypeLabel(item.itemType)} — ${verticalLabel(item.itemType, item.vertical)}`} · ${STATUS_LABELS[item.status]} · ${item.variants.length} ${item.variants.length === 1 ? "variante" : "variantes"} · endereço /${item.handle}`}
         icon={<ShoppingBag className="h-5 w-5" />}
       />
 
@@ -105,6 +107,8 @@ export default async function PortfolioItemPage({ params }: PageProps) {
             testId="edit-portfolio-item"
           >
             {hidden}
+            <input type="hidden" name="item_type" value={item.itemType} />
+            <input type="hidden" name="vertical" value={item.vertical} />
             <div className="grid gap-3 sm:grid-cols-3">
               <label className={`${labelClass} sm:col-span-2`}>
                 Título
@@ -274,6 +278,19 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 )}
               </fieldset>
             </div>
+
+            <h3 className="text-12 text-text pt-2 font-semibold">
+              Dados de {itemTypeLabel(item.itemType).toLowerCase()}
+              {item.vertical === "general"
+                ? ""
+                : ` — ${verticalLabel(item.itemType, item.vertical)}`}{" "}
+              (* obrigatórios para ativar)
+            </h3>
+            <DetailsFields
+              itemType={item.itemType}
+              vertical={item.vertical}
+              details={item.details}
+            />
 
             <h3 className="text-12 text-text pt-2 font-semibold">
               Vitrine e agente de IA (uso interno; nunca sai pelo UCP)

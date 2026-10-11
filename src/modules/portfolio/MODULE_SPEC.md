@@ -1,6 +1,6 @@
 # Especificação do módulo Portfólio (`portfolio`)
 
-- **Versão:** 0.1.0 (F5a)
+- **Versão:** 0.2.0 (F5b)
 - **Estado:** beta. Substitui o placeholder "Catálogo" (decisão do Marcelo, 11/10/2026).
 - **Modelo de origem:** `module-templates/standard` 1.0.0
 - **Referências:** [plano da F5](../../../docs/operacao/plano-f5.md), [campos do UCP](../../../docs/modules/portfolio/ucp-campos.md) e [revisão do piloto](../../../docs/modules/portfolio/revisao-piloto.md).
@@ -42,11 +42,31 @@ Regras:
 - Uma trava no banco impede mudar o workspace, o autor, a data de criação e o item de uma variante.
 - Mídia: só URL nesta fase. O envio de arquivos chega quando o Storage for definido nas configurações da plataforma (F5e).
 
+## 3a. Categorias e verticais (F5b)
+
+O `details` de cada item é validado pelo schema da sua categoria (`item_type`) e vertical. A declaração fica em `src/modules/portfolio/verticals.ts` e gera o schema, o formulário e a leitura do formulário. Valem as convenções do UCP: snake_case, enums minúsculos, dinheiro em centavos e medidas como `Measure`.
+
+| Categoria     | Verticais                                                        | Campos principais                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product`     | `general`                                                        | `brand`, `model`, `condition`, `weight` (kg), `dimensions` (cm), `warranty_months`, `attributes`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `service`     | `general`, `healthcare`, `aesthetics`, `beauty`, `b2b_corporate` | Base: `duration_minutes`, `capacity`, `service_type`, `specialties`, `requirements`, `callout_fee`, `min_hours`, `includes_materials`, `min_notice_minutes`, `warranty_days`, `service_area`, `technical_notes`. Saúde: `professional_registry`, `insurance_providers`, `patient_type`, `prescriptions_included`, `emergency_service`. Estética: `treated_areas`, `contraindications`, `pre_care`, `post_care`, `sessions_recommended`, `session_interval_days`, `single_session_possible`, `recovery_time`, `has_discomfort`, `results_onset`. Beleza: `target_gender`, `target_age`, `scheduling_mode`, `maintenance_level`. Corporativo: `deliverables`, `contract_models`, `sla_hours`, `project_phases`, `tools_used` |
+| `real_estate` | `general`                                                        | `operation_type`\* (`sale`, `rent`), `property_type`\*, `usable_area` e `total_area` (m²), `bedrooms`, `suites`, `bathrooms`, `parking_spaces`, `condo_fee`, `property_tax`, `financing_available`, `furnished_status`, `amenities`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `event`       | `general`                                                        | `starts_at`\*, `ends_at` (RFC 3339), `is_recurring`, `recurrence`, `topics`, `speakers`, `age_rating`, `target_audience`, `capacity`; cada tipo de ingresso é uma variante                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+
+Regras das verticais:
+
+- `*` marca campo exigido só para **ativar** o item; um rascunho pode ficar incompleto.
+- Campo de outra vertical, ou no formato do piloto (camelCase, maiúsculas), é recusado.
+- `price_model` saiu dos serviços (decisão 4): o preço segue a unidade de venda da variante.
+- O aluguel temporário saiu do imóvel (decisão 5): vai para hospedagem.
+- A categoria `lodging` (hospedagem) chega na F5c, no desenho de hospedagem do UCP.
+
 ## 4. Saída UCP
 
 `toUcpProduct` (`src/modules/portfolio/ucp.ts`) gera o Product do UCP:
 
 - `price_range` e `list_price_range` calculados das variantes;
+- o `details` da vertical em `metadata`, sob `co.guidu.portfolio.<item_type>[.<vertical>]` (o UCP define `metadata` como dado próprio do negócio);
 - `options` derivadas das opções das variantes;
 - `availability` de cada variante calculada a partir da situação e do estoque interno (estoque zero vira `out_of_stock`, ou `backorder` quando o item vende sem estoque).
 

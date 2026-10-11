@@ -2,6 +2,7 @@ import { inputClass, labelClass } from "@/components/partners/action-form";
 
 import { AVAILABILITY_STATUSES, SALE_UNITS } from "../ucp";
 import type { VariantView } from "../server/services/items";
+import { fieldsFor, formValue, getPath } from "../verticals";
 
 /** Shared labels and form fields of the Portfolio screens (F5a). */
 
@@ -172,6 +173,130 @@ export function VariantFields({
         />
         Vender sem estoque (sob encomenda)
       </label>
+    </div>
+  );
+}
+
+/**
+ * Fields of the vertical extension (F5b), generated from the declaration
+ * in ../verticals.ts. Inputs are named `details.<key>`.
+ */
+export function DetailsFields({
+  itemType,
+  vertical,
+  details,
+}: Readonly<{
+  itemType: string;
+  vertical: string;
+  details: Record<string, unknown>;
+}>) {
+  const fields = fieldsFor(itemType, vertical);
+  if (fields.length === 0) return null;
+  return (
+    <div className="grid gap-3 sm:grid-cols-3" data-testid="details-fields">
+      {fields.map((spec) => {
+        const name = `details.${spec.key}`;
+        const value = getPath(details, spec.key);
+        const label = `${spec.label}${spec.required ? " *" : ""}`;
+        switch (spec.kind) {
+          case "bool":
+            return (
+              <label
+                key={name}
+                className="text-12 text-text flex items-center gap-2"
+              >
+                <input type="hidden" name={`${name}.present`} value="1" />
+                <input
+                  type="checkbox"
+                  name={name}
+                  defaultChecked={value === true}
+                />
+                {label}
+              </label>
+            );
+          case "enum":
+            return (
+              <label key={name} className={labelClass}>
+                {label}
+                <select
+                  name={name}
+                  defaultValue={typeof value === "string" ? value : ""}
+                  className={inputClass}
+                >
+                  <option value="">—</option>
+                  {spec.options.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            );
+          case "multi":
+            return (
+              <fieldset key={name} className="space-y-1 sm:col-span-3">
+                <legend className="text-12 text-text-subtle font-medium">
+                  {label}
+                </legend>
+                <div className="flex flex-wrap gap-3">
+                  {spec.options.map((o) => (
+                    <label
+                      key={o.value}
+                      className="text-12 text-text flex gap-2"
+                    >
+                      <input
+                        type="checkbox"
+                        name={name}
+                        value={o.value}
+                        defaultChecked={
+                          Array.isArray(value) && value.includes(o.value)
+                        }
+                      />
+                      {o.label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            );
+          case "textarea":
+          case "list":
+            return (
+              <label key={name} className={labelClass}>
+                {label}
+                <textarea
+                  name={name}
+                  rows={2}
+                  defaultValue={formValue(spec, value)}
+                  className={inputClass}
+                />
+              </label>
+            );
+          default:
+            return (
+              <label key={name} className={labelClass}>
+                {label}
+                <input
+                  name={name}
+                  type={
+                    spec.kind === "int"
+                      ? "number"
+                      : spec.kind === "datetime"
+                        ? "datetime-local"
+                        : "text"
+                  }
+                  inputMode={
+                    spec.kind === "money" || spec.kind === "measure"
+                      ? "decimal"
+                      : undefined
+                  }
+                  maxLength={spec.kind === "text" ? spec.max : undefined}
+                  defaultValue={formValue(spec, value)}
+                  className={inputClass}
+                />
+              </label>
+            );
+        }
+      })}
     </div>
   );
 }
