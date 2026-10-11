@@ -8,12 +8,18 @@ import { loadUsage } from "@/core/entitlements/usage";
 import { PermissionDeniedError } from "@/core/permissions/guard";
 import { withContext, type RequestContext } from "@/lib/prisma/with-context";
 import {
+  addAccommodationType,
+  addRatePlan,
   addVariant,
   createItem,
   getItem,
   itemToUcp,
   listItems,
+  removeAccommodationType,
+  removeRatePlan,
   removeVariant,
+  updateAccommodationType,
+  updateRatePlan,
   updateItem,
   updateVariant,
 } from "@/modules/portfolio/server";
@@ -63,6 +69,8 @@ describeDatabase(
     async function cleanup() {
       for (const t of [
         "portfolio_variants",
+        "portfolio_accommodation_types",
+        "portfolio_rate_plans",
         "portfolio_items",
         "workspace_locations",
       ]) {
@@ -182,7 +190,7 @@ describeDatabase(
       await reject({ variants: [{ title: "Sem preço" }] });
       await reject({ variants: [] });
       await reject({
-        item_type: "lodging",
+        item_type: "vehicle",
         variants: [{ title: "A", price: brl(1) }],
       });
       await reject({
@@ -484,6 +492,265 @@ describeDatabase(
         listItems(tx, owner, { item_type: "service" }),
       );
       expect(services.items.map((i) => i.id)).toEqual([service.id]);
+    });
+
+    it("registers lodging in the UCP lodging model (F5c)", async () => {
+      const inn = await run(owner, (tx) =>
+        createLocation(tx, owner, {
+          name: "Pousada Mar",
+          address: {
+            street_address: "Av. Beira-Mar, 100",
+            address_locality: "Ubatuba",
+            address_region: "SP",
+            address_country: "BR",
+          },
+          geo: { latitude: -23.43, longitude: -45.07 },
+        }),
+      );
+      const other = await run(owner, (tx) =>
+        createLocation(tx, owner, { name: "Outra pousada" }),
+      );
+
+      // Created as a draft with a default type and plan; the price is per night.
+      const draft = await run(owner, (tx) =>
+        createItem(tx, owner, {
+          item_type: "lodging",
+          title: "Pousada Mar",
+          details: { check_in_time: "14:00" },
+          variants: [{ title: "Diária", price: brl(45000) }],
+        }),
+      );
+      expect(draft.lodging?.accommodationTypes.map((t) => t.title)).toEqual([
+        "Pousada Mar",
+      ]);
+      expect(draft.lodging?.ratePlans.map((p) => p.title)).toEqual([
+        "Tarifa padrão",
+      ]);
+      expect(draft.variants[0]).toMatchObject({
+        accommodationTypeId: draft.lodging?.accommodationTypes[0]?.id,
+        ratePlanId: draft.lodging?.ratePlans[0]?.id,
+        quantityUnit: { unit: "DAY", display_text: "diária" },
+      });
+
+      // Activating needs the house rules, the property, capacity and links.
+      const activate = (input: Record<string, unknown>) =>
+        run(owner, (tx) =>
+          updateItem(tx, owner, draft.id, { status: "active", ...input }),
+        );
+      await expect(activate({})).rejects.toThrow(/check_out_time/);
+      const rules = {
+        check_in_time: "14:00",
+        check_out_time: "11:00",
+        quiet_hours: { opens: "22:00", closes: "08:00" },
+        pets_allowed: true,
+        cleaning_fee: 15000,
+        amenities: ["dev.ucp.amenity.wi_fi", "co.guidu.amenity.pool"],
+      };
+      await expect(
+        activate({ details: { ...rules, quiet_hours: { opens: "22:00" } } }),
+      ).rejects.toThrow(/silêncio/);
+      await expect(activate({ details: rules })).rejects.toThrow(/propriedade/);
+      await expect(
+        activate({ details: rules, location_ids: [inn.id, other.id] }),
+      ).rejects.toThrow(/única propriedade/);
+      await expect(
+        activate({ details: rules, location_ids: [inn.id] }),
+      ).rejects.toThrow(/capacidade/);
+
+      const typeId = draft.lodging!.accommodationTypes[0]!.id;
+      await run(owner, (tx) =>
+        updateAccommodationType(tx, owner, draft.id, typeId, {
+          title: "Suíte casal",
+          accommodation_kind: "suite",
+          capacity: {
+            adults: 2,
+            children: 1,
+            child_age_ranges: [{ ages: { min: 0, max: 11 }, limit: 1 }],
+            total: 3,
+          },
+          bedrooms: 1,
+          beds_count: 1,
+          bathrooms: 1,
+          amenities: ["co.guidu.amenity.air_conditioning"],
+        }),
+      );
+      await expect(
+        run(owner, (tx) =>
+          updateAccommodationType(tx, owner, draft.id, typeId, {
+            capacity: { adults: 4, total: 2 },
+          }),
+        ),
+      ).rejects.toBeInstanceOf(AppError);
+      const active = await activate({
+        details: rules,
+        location_ids: [inn.id],
+      });
+      expect(active.status).toBe("active");
+
+      // A second type and a non-refundable plan, priced as a new variant.
+      const withChalet = await run(owner, (tx) =>
+        addAccommodationType(tx, owner, draft.id, {
+          title: "Chalé família",
+          accommodation_kind: "chalet",
+          capacity: { adults: 4, children: 2, total: 5 },
+        }),
+      );
+      const chalet = withChalet.lodging!.accommodationTypes[1]!;
+      const withPlan = await run(owner, (tx) =>
+        addRatePlan(tx, owner, draft.id, {
+          title: "Não reembolsável com café",
+          refundability: "non_refundable",
+          board: "breakfast",
+        }),
+      );
+      const nonRefundable = withPlan.lodging!.ratePlans[1]!;
+      await run(owner, (tx) =>
+        updateRatePlan(
+          tx,
+          owner,
+          draft.id,
+          withPlan.lodging!.ratePlans[0]!.id,
+          { free_cancellation_hours: 48, title: "Flexível" },
+        ),
+      );
+      // An active item keeps every price bound to a type and a plan.
+      await expect(
+        run(owner, (tx) =>
+          addVariant(tx, owner, draft.id, {
+            title: "Sem vínculo",
+            price: brl(1),
+          }),
+        ),
+      ).rejects.toThrow(/acomodação e de uma tarifa/);
+      const priced = await run(owner, (tx) =>
+        addVariant(tx, owner, draft.id, {
+          title: "Chalé — não reembolsável",
+          price: brl(52000),
+          accommodation_type_id: chalet.id,
+          rate_plan_id: nonRefundable.id,
+        }),
+      );
+      expect(priced.variants[1]?.quantityUnit).toEqual({
+        unit: "DAY",
+        display_text: "diária",
+      });
+      // Types and plans of another item are refused.
+      const product = await run(owner, (tx) =>
+        createItem(tx, owner, {
+          item_type: "product",
+          title: "Toalha",
+          variants: [{ title: "A", price: brl(1) }],
+        }),
+      );
+      await expect(
+        run(owner, (tx) =>
+          updateVariant(tx, owner, product.id, product.variants[0]!.id, {
+            rate_plan_id: nonRefundable.id,
+          }),
+        ),
+      ).rejects.toThrow(/só na hospedagem/);
+      await expect(
+        run(owner, (tx) =>
+          addRatePlan(tx, owner, product.id, { title: "Tarifa" }),
+        ),
+      ).rejects.toThrow(/só na hospedagem/);
+      // A type or plan in use stays; an unused one can go.
+      await expect(
+        run(owner, (tx) =>
+          removeAccommodationType(tx, owner, draft.id, chalet.id),
+        ),
+      ).rejects.toThrow(/tem preços/);
+      const spare = await run(owner, (tx) =>
+        addRatePlan(tx, owner, draft.id, { title: "Sobra" }),
+      );
+      const afterRemove = await run(owner, (tx) =>
+        removeRatePlan(tx, owner, draft.id, spare.lodging!.ratePlans[2]!.id),
+      );
+      expect(afterRemove.lodging?.ratePlans).toHaveLength(2);
+      // The viewer reads only.
+      await expect(
+        run(viewer, (tx) =>
+          addRatePlan(tx, viewer, draft.id, { title: "Viewer" }),
+        ),
+      ).rejects.toBeInstanceOf(PermissionDeniedError);
+
+      // UCP: a valid Product; property, types and plans valid in the lodging schemas.
+      const item = await run(owner, (tx) => getItem(tx, owner, draft.id));
+      const ucp = itemToUcp(item) as Record<string, unknown>;
+      expect(ucpErrors("shopping/types/product.json", ucp)).toEqual([]);
+      const lodging = (ucp.metadata as Record<string, Record<string, unknown>>)[
+        "co.guidu.portfolio.lodging"
+      ]!;
+      expect(lodging).toMatchObject({
+        check_in_time: "14:00",
+        pets_allowed: true,
+        cleaning_fee: 15000,
+      });
+      expect(
+        ucpErrors("lodging/types/property.json", lodging.property),
+      ).toEqual([]);
+      expect(lodging.property).toMatchObject({
+        id: inn.id,
+        name: "Pousada Mar",
+        address: { address_locality: "Ubatuba" },
+      });
+      const types = lodging.accommodation_types as Record<string, unknown>[];
+      const plans = lodging.rate_plans as Record<string, unknown>[];
+      for (const t of types) {
+        expect(ucpErrors("lodging/types/accommodation_type.json", t)).toEqual(
+          [],
+        );
+      }
+      for (const p of plans) {
+        expect(ucpErrors("lodging/types/rate_plan.json", p)).toEqual([]);
+        for (const policy of p.policies as unknown[]) {
+          expect(
+            ucpErrors(
+              "lodging/policy_cancellation.json#/$defs/cancellation_item",
+              policy,
+            ),
+          ).toEqual([]);
+        }
+      }
+      expect(types[0]).toMatchObject({
+        title: "Suíte casal",
+        capacity: { adults: 2, total: 3 },
+        "co.guidu.portfolio.accommodation_type": {
+          accommodation_kind: "suite",
+        },
+      });
+      expect(plans[0]).toMatchObject({
+        title: "Flexível",
+        policies: [
+          {
+            type: "dev.ucp.lodging.policy.cancellation",
+            refundability: "refundable",
+            description: {
+              plain: "Cancelamento grátis até 48 horas antes do check-in.",
+            },
+          },
+        ],
+      });
+      const variants = ucp.variants as Record<string, unknown>[];
+      expect(variants[1]).toMatchObject({
+        options: [
+          { name: "Acomodação", label: "Chalé família" },
+          { name: "Tarifa", label: "Não reembolsável com café" },
+        ],
+        metadata: {
+          "co.guidu.portfolio.lodging": {
+            accommodation_type_id: chalet.id,
+            rate_plan_id: nonRefundable.id,
+          },
+        },
+      });
+      expect(JSON.stringify(ucp)).not.toContain("ai_");
+
+      const listed = await run(owner, (tx) =>
+        listItems(tx, owner, { item_type: "lodging" }),
+      );
+      expect(listed.items.map((i) => i.id)).toEqual([draft.id]);
+      expect(listed.items[0]?.lodging?.property?.id).toBe(inn.id);
     });
 
     it("takes the default quota from the platform settings of the module", async () => {

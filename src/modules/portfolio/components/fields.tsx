@@ -1,7 +1,7 @@
 import { inputClass, labelClass } from "@/components/partners/action-form";
 
 import { AVAILABILITY_STATUSES, SALE_UNITS } from "../ucp";
-import type { VariantView } from "../server/services/items";
+import type { LodgingView, VariantView } from "../server/services/items";
 import { fieldsFor, formValue, getPath } from "../verticals";
 
 /** Shared labels and form fields of the Portfolio screens (F5a). */
@@ -47,14 +47,64 @@ export function formatMoney(amount: number | null, currency = "BRL"): string {
   });
 }
 
-/** Fields of a variant (UCP Variant plus internal stock). */
+/**
+ * Fields of a variant (UCP Variant plus internal stock). In lodging (F5c)
+ * a variant is the nightly price of one accommodation type under one rate
+ * plan, chosen instead of the sale unit and the free options.
+ */
 export function VariantFields({
   variant,
   idPrefix,
-}: Readonly<{ variant?: VariantView; idPrefix: string }>) {
+  lodging,
+}: Readonly<{
+  variant?: VariantView;
+  idPrefix: string;
+  lodging?: LodgingView | null;
+}>) {
   const unit = variant?.quantityUnit?.unit ?? "C62";
   return (
     <div className="grid gap-3 sm:grid-cols-3">
+      {lodging ? (
+        <>
+          <input type="hidden" name="lodging" value="1" />
+          <label className={labelClass}>
+            Acomodação
+            <select
+              name="accommodation_type_id"
+              defaultValue={
+                variant?.accommodationTypeId ??
+                lodging.accommodationTypes[0]?.id ??
+                ""
+              }
+              className={inputClass}
+            >
+              <option value="">—</option>
+              {lodging.accommodationTypes.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={labelClass}>
+            Tarifa
+            <select
+              name="rate_plan_id"
+              defaultValue={
+                variant?.ratePlanId ?? lodging.ratePlans[0]?.id ?? ""
+              }
+              className={inputClass}
+            >
+              <option value="">—</option>
+              {lodging.ratePlans.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      ) : null}
       <label className={labelClass}>
         Nome da variante
         <input
@@ -73,18 +123,20 @@ export function VariantFields({
           className={inputClass}
         />
       </label>
+      {lodging ? null : (
+        <label className={labelClass}>
+          Unidade de venda
+          <select name="unit" defaultValue={unit} className={inputClass}>
+            {SALE_UNITS.map((u) => (
+              <option key={u.unit} value={u.unit}>
+                {u.display_text}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label className={labelClass}>
-        Unidade de venda
-        <select name="unit" defaultValue={unit} className={inputClass}>
-          {SALE_UNITS.map((u) => (
-            <option key={u.unit} value={u.unit}>
-              {u.display_text}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className={labelClass}>
-        Preço (R$)
+        {lodging ? "Preço da diária (R$)" : "Preço (R$)"}
         <input
           name="price"
           inputMode="decimal"
@@ -117,16 +169,18 @@ export function VariantFields({
           ))}
         </select>
       </label>
-      <label className={`${labelClass} sm:col-span-2`}>
-        Opções (ex.: Cor: Azul; Tamanho: M)
-        <input
-          name="options"
-          defaultValue={variant?.options
-            .map((o) => `${o.name}: ${o.label}`)
-            .join("; ")}
-          className={inputClass}
-        />
-      </label>
+      {lodging ? null : (
+        <label className={`${labelClass} sm:col-span-2`}>
+          Opções (ex.: Cor: Azul; Tamanho: M)
+          <input
+            name="options"
+            defaultValue={variant?.options
+              .map((o) => `${o.name}: ${o.label}`)
+              .join("; ")}
+            className={inputClass}
+          />
+        </label>
+      )}
       <label className={labelClass}>
         Códigos de barras (um por linha, ex.: EAN | 789…)
         <textarea
@@ -282,7 +336,9 @@ export function DetailsFields({
                       ? "number"
                       : spec.kind === "datetime"
                         ? "datetime-local"
-                        : "text"
+                        : spec.kind === "time"
+                          ? "time"
+                          : "text"
                   }
                   inputMode={
                     spec.kind === "money" || spec.kind === "measure"

@@ -7,6 +7,9 @@
  * - The owner enables the Portfolio, registers a store (UCP Location) in
  *   Configurações › Lojas, creates a product with price and SKU, activates
  *   it at the store, adds a second variant and sees the UCP preview.
+ * - Lodging (F5c): a property, an accommodation type with capacity, house
+ *   rules, a non-refundable rate plan and its nightly price, in the UCP
+ *   lodging shapes.
  * ============================================================================
  */
 
@@ -126,4 +129,103 @@ test("owner registers a store and a product with variants in the Portfolio", asy
     "co.guidu.portfolio.service.healthcare",
   );
   await expect(page.getByTestId("ucp-preview")).toContainText("Bradesco Saúde");
+});
+
+test("owner registers lodging with accommodation, rate plans and nightly prices", async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(150_000);
+  const stamp = Date.now().toString(36);
+  const email = uniqueEmail("lodging-owner");
+  const wsSlug = `lodg-${stamp}`;
+  await createIdentity(request, email);
+  await seedWorkspace(request, {
+    email,
+    orgName: `Hospedagem ${stamp}`,
+    orgSlug: `lodg-org-${stamp}`,
+    wsName: `Workspace Hospedagem ${stamp}`,
+    wsSlug,
+    role: "owner",
+  });
+  await signIn(page, email);
+
+  await page.goto(`/app/${wsSlug}/settings/modules`);
+  await page.getByRole("button", { name: "Habilitar Portfólio" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+  ).toBeVisible();
+
+  await page.goto(`/app/${wsSlug}/settings/locations`);
+  const store = page.getByTestId("create-location");
+  await store.getByLabel("Nome da loja").fill("Prédio Praia E2E");
+  await store.getByLabel("Cidade").fill("Ubatuba");
+  await store.getByLabel("UF").fill("SP");
+  await store.getByRole("button", { name: "Cadastrar loja" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Prédio Praia E2E" }),
+  ).toBeVisible();
+
+  await page.goto(`/app/${wsSlug}/portfolio`);
+  const create = page.getByTestId("create-portfolio-item");
+  await create.getByLabel("Categoria").selectOption("lodging:general");
+  await create.getByLabel("Título").fill("Pousada E2E");
+  await create.getByLabel("Preço (R$)").fill("450,00");
+  await create.getByRole("button", { name: "Criar item" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Pousada E2E" }),
+  ).toBeVisible();
+
+  // The default accommodation gets its name and capacity.
+  const type = page.getByTestId("accommodation-type").first();
+  await type.getByLabel("Nome da acomodação").fill("Suíte casal E2E");
+  await type.getByLabel("Tipo de espaço").selectOption("suite");
+  await type.getByLabel("Capacidade total").fill("3");
+  await type.getByLabel("Máximo de adultos").fill("2");
+  await type.getByRole("button", { name: "Salvar acomodação" }).click();
+  await expect(
+    type.getByRole("status").filter({ hasText: "Acomodação salva." }),
+  ).toBeVisible();
+
+  // House rules, property and activation.
+  const edit = page.getByTestId("edit-portfolio-item");
+  const details = page.getByTestId("details-fields");
+  await details.getByLabel("Check-in a partir de").fill("14:00");
+  await details.getByLabel("Check-out até").fill("11:00");
+  await details.getByLabel("Aceita animais").check();
+  await details.getByLabel("Taxa de limpeza (R$)").fill("150,00");
+  await edit.getByLabel("Prédio Praia E2E").check();
+  await edit.getByLabel("Situação").selectOption("active");
+  await edit.getByRole("button", { name: "Salvar item" }).click();
+  await expect(
+    edit.getByRole("status").filter({ hasText: "Item salvo." }),
+  ).toBeVisible();
+
+  // A non-refundable plan with its own nightly price.
+  const plan = page.getByTestId("add-rate-plan");
+  await plan.getByLabel("Nome da tarifa").fill("Não reembolsável E2E");
+  await plan
+    .locator('select[name="refundability"]')
+    .selectOption("non_refundable");
+  await plan.getByLabel("Alimentação").selectOption("breakfast");
+  await plan.getByRole("button", { name: "Adicionar tarifa" }).click();
+  await expect(page.getByTestId("rate-plan")).toHaveCount(2);
+
+  const price = page.getByTestId("add-variant");
+  await price.getByLabel("Tarifa").selectOption({
+    label: "Não reembolsável E2E",
+  });
+  await price.getByLabel("Nome da variante").fill("Suíte sem reembolso");
+  await price.getByLabel("Preço da diária (R$)").fill("380,00");
+  await price.getByRole("button", { name: "Adicionar variante" }).click();
+  await expect(page.getByTestId("variant")).toHaveCount(2);
+
+  const preview = page.getByTestId("ucp-preview");
+  await expect(preview).toContainText("agentes compatíveis com o UCP");
+  await expect(preview).toContainText("co.guidu.portfolio.lodging");
+  await expect(preview).toContainText("dev.ucp.lodging.policy.cancellation");
+  await expect(preview).toContainText('"non_refundable"');
+  await expect(preview).toContainText("Suíte casal E2E");
+  await expect(preview).toContainText("Prédio Praia E2E");
+  await expect(preview).toContainText('"diária"');
 });

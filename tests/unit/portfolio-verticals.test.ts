@@ -20,7 +20,7 @@ function form(entries: Record<string, string | string[]>): FormData {
 }
 
 describe("Portfolio verticals (F5b)", () => {
-  it("lists every kind of the pilot, corrected, and refuses lodging until F5c", () => {
+  it("lists every kind of the pilot, corrected, with lodging since F5c", () => {
     expect(listKinds().map((k) => k.value)).toEqual([
       "product:general",
       "service:general",
@@ -29,9 +29,11 @@ describe("Portfolio verticals (F5b)", () => {
       "service:beauty",
       "service:b2b_corporate",
       "real_estate:general",
+      "lodging:general",
       "event:general",
     ]);
-    expect(isValidKind("lodging", "general")).toBe(false);
+    expect(isValidKind("lodging", "general")).toBe(true);
+    expect(isValidKind("vehicle", "general")).toBe(false);
     expect(isValidKind("product", "healthcare")).toBe(false);
     // Every key is snake_case (UCP convention), nested keys included.
     for (const { value } of listKinds()) {

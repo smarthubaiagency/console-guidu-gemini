@@ -15,6 +15,7 @@ export const ITEM_TYPES = [
   "product",
   "service",
   "real_estate",
+  "lodging",
   "event",
 ] as const;
 export type ItemType = (typeof ITEM_TYPES)[number];
@@ -42,6 +43,7 @@ export type FieldSpec = Readonly<
         scale: number;
       }
     | { kind: "datetime" }
+    | { kind: "time" }
   )
 >;
 
@@ -423,6 +425,67 @@ const REAL_ESTATE: readonly FieldSpec[] = [
   },
 ];
 
+/**
+ * Lodging (F5c): the property's house rules, fees and amenities. The
+ * property is the item's location (UCP Property); accommodation types and
+ * rate plans have their own tables. Times use the UCP `time_interval`
+ * format (HH:MM, 24 h).
+ */
+const LODGING: readonly FieldSpec[] = [
+  {
+    key: "check_in_time",
+    label: "Check-in a partir de",
+    kind: "time",
+    required: true,
+  },
+  {
+    key: "check_out_time",
+    label: "Check-out até",
+    kind: "time",
+    required: true,
+  },
+  {
+    key: "quiet_hours.opens",
+    label: "Silêncio a partir de",
+    kind: "time",
+  },
+  { key: "quiet_hours.closes", label: "Silêncio até", kind: "time" },
+  {
+    key: "min_nights",
+    label: "Mínimo de diárias",
+    kind: "int",
+    min: 1,
+    max: 365,
+  },
+  { key: "smoking_allowed", label: "Permite fumar", kind: "bool" },
+  { key: "pets_allowed", label: "Aceita animais", kind: "bool" },
+  { key: "parties_allowed", label: "Permite festas e eventos", kind: "bool" },
+  {
+    key: "house_rules",
+    label: "Outras regras da casa (uma por linha)",
+    kind: "list",
+    max: 30,
+    each: 200,
+  },
+  { key: "cleaning_fee", label: "Taxa de limpeza (R$)", kind: "money" },
+  { key: "security_deposit", label: "Caução (R$)", kind: "money" },
+  {
+    key: "amenities",
+    label: "Comodidades da propriedade",
+    kind: "multi",
+    options: opts({
+      "dev.ucp.amenity.wi_fi": "Wi-Fi",
+      "dev.ucp.amenity.parking": "Estacionamento",
+      "co.guidu.amenity.pool": "Piscina",
+      "co.guidu.amenity.air_conditioning": "Ar-condicionado",
+      "co.guidu.amenity.kitchen": "Cozinha",
+      "co.guidu.amenity.laundry": "Lavanderia",
+      "co.guidu.amenity.barbecue": "Churrasqueira",
+      "co.guidu.amenity.accessibility": "Acessibilidade",
+    }),
+  },
+];
+
 const EVENT: readonly FieldSpec[] = [
   { key: "starts_at", label: "Início", kind: "datetime", required: true },
   { key: "ends_at", label: "Término", kind: "datetime" },
@@ -496,6 +559,11 @@ const CATALOG: Readonly<
   real_estate: {
     label: "Imóvel",
     base: REAL_ESTATE,
+    verticals: { general: { label: "Geral", fields: [] } },
+  },
+  lodging: {
+    label: "Hospedagem",
+    base: LODGING,
     verticals: { general: { label: "Geral", fields: [] } },
   },
   event: {
@@ -595,6 +663,10 @@ function fieldSchema(spec: FieldSpec): z.ZodType {
       );
     case "datetime":
       return z.string().datetime({ offset: true });
+    case "time":
+      return z
+        .string()
+        .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM (24 horas).");
   }
 }
 
@@ -721,6 +793,7 @@ export function detailsFromForm(
       case "text":
       case "textarea":
       case "enum":
+      case "time":
         setPath(details, spec.key, text);
         break;
       case "int":
