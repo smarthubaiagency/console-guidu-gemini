@@ -31,7 +31,7 @@ Critérios de saída:
   - Interno: `status`, `visibility`, `priority`, `is_featured`, `featured_rank`, `availability_mode`, `ai_discovery_enabled`, `ai_keywords`, `ai_aliases`, `ai_do_not_say`, `ai_safety_rules`.
   - `details` JSONB: extensão da vertical, validada pela discriminated union de `item_type` + `vertical`.
 - **`portfolio_variants`**: `title`, `sku`, `barcodes`, `price`, `list_price`, `quantity_unit`, `unit_price`, `options`, `media` e `availability`, mais o estoque interno (`track_inventory`, `stock_quantity`, `min_stock_alert`, `allow_backorder`).
-- **`portfolio_locations`**: lojas e propriedades no formato Location do UCP (endereço, geo, horários, exceções, fuso, `amenities`). Itens apontam para elas (retirada, atendimento no local, propriedade de hospedagem, local de evento).
+- **`workspace_locations`** (núcleo): lojas e propriedades no formato Location do UCP (endereço, geo, horários, exceções, fuso, `amenities`). Itens apontam para elas (retirada, atendimento no local, propriedade de hospedagem, local de evento).
 - **Hospedagem:** `portfolio_accommodation_types` (com `capacity`) e `portfolio_rate_plans`, ligados à propriedade.
 
 Tudo por workspace, com RLS FORCE, contrato de dados da F3e (exportação e exclusão), cota e auditoria, como no CRM.
@@ -41,10 +41,10 @@ Tudo por workspace, com RLS FORCE, contrato de dados da F3e (exportação e excl
 ### F5a — Base do Portfólio (produto simples)
 
 - Renomear o módulo `catalog` para `portfolio` (manifesto, rota `/app/[slug]/portfolio`, menu "Portfólio"). Hoje o catálogo é só um placeholder "em breve", sem dados.
-- Migration de `portfolio_items`, `portfolio_variants` e `portfolio_locations`.
+- Migration de `portfolio_items`, `portfolio_variants` e, no núcleo, `workspace_locations`.
 - Esquemas Zod do núcleo, da variante e da Location, nos nomes do UCP. O serializador UCP de Product e Variant é testado contra os JSON Schemas oficiais, copiados para `tests/fixtures/ucp` com o commit de origem.
 - Permissões `portfolio.items.read` e `portfolio.items.write`, cota de itens e de variantes, auditoria, exportação e exclusão.
-- Telas: lista com busca e filtros, criação e edição de item com variantes, lojas.
+- Telas: lista com busca e filtros, criação e edição de item com variantes (mídia por URL, com envio simulado) e, em Configurações do workspace, Lojas.
 - `item_type = product` com a vertical `general`.
 
 ### F5b — Verticais
@@ -63,25 +63,28 @@ Tudo por workspace, com RLS FORCE, contrato de dados da F3e (exportação e excl
 - REST e MCP do workspace: `search_catalog` (texto, categorias, faixa de preço, paginação), `lookup_catalog` (por IDs de produto, variante ou SKU) e `get_product` (com seleção de opções), com a saída validada contra o UCP.
 - Escopos novos nas chaves: `portfolio:read` e `portfolio:write`.
 - Itens `quote`, inativos ou com `ai_discovery_enabled = false` ficam fora.
-- Visão do nosso agente: leitura com os campos de governança (`ai_*`) e os itens sob consulta, separada da saída UCP (pergunta 3).
+- Visão do nosso agente: serviço interno para o módulo Agentes de IA e escopo `portfolio:agent` no MCP para agentes externos, com a governança (`ai_*`) e os itens sob consulta, separada da saída UCP.
 - Escrita pelo agente por proposta: `portfolio.items.create`, `portfolio.items.update` e `portfolio.variants.update` (preço e disponibilidade).
 
 ### F5e — Mídia
 
-- Envio de imagens para o Storage (pergunta 2), com tamanho, tipo e cota controlados; `media` aponta para a URL servida.
+- Envio de imagens para o Storage escolhido nas configurações da plataforma (Supabase ou Cloudflare R2), com tamanho, tipo e cota controlados. Espera essa definição; até lá a mídia é por URL com envio simulado.
 
 ## Fora da F5
 
 - Carrinho, checkout e pedido do UCP (vender pelo agente): dependem de pagamento (P6) e do fluxo de pedido.
 - Reserva de hospedagem e agenda de serviços.
 - Publicação no Perfil da Empresa no Google (módulo Google Business) e a pesquisa de preço local entre lojas: usam o Portfólio como fonte e entram com os seus módulos.
-- Perfil público `/.well-known/ucp` para agentes de fora sem chave (pergunta 4).
+- Perfil público `/.well-known/ucp` só de descoberta e o checkout próprio no guidu.chat (fase 2).
 
-## Perguntas antes da F5a
+## Respostas de Marcelo (11/10/2026)
 
-1. **Lojas (Location):** ficam no Portfólio ou no núcleo do workspace? Elas servem também ao Google Business e ao agente (horário de funcionamento). A proposta é o núcleo, porque são do negócio e não do Portfólio.
-2. **Imagens:** começamos só com URL (F5a a F5d) e o Storage entra na F5e, ou o envio precisa vir já na F5a? E onde fica o Storage: Supabase Storage do projeto dev ou outro?
-3. **Agente de atendimento:** o agente que vai usar o Portfólio é o módulo Agentes de IA (hoje congelado, C04) ou um agente externo conectado pelo MCP? Isso decide como entregamos a visão interna: serviço interno ou escopo de MCP próprio, por exemplo `portfolio:agent`.
-4. **UCP público:** em algum momento cada negócio publica `/.well-known/ucp` no domínio do parceiro, para qualquer agente comprar sem chave? Se sim, fica para uma fase própria, depois da F5.
-5. **Cotas provisórias:** sugestão de 1.000 itens e 10.000 variantes por workspace.
-6. **Ordem:** F5a → F5b → F5c → F5d → F5e?
+1. **Lojas no núcleo.** As Locations são do negócio e não do Portfólio. Ficam no núcleo do workspace (`workspace_locations`), usadas pelo Portfólio, pelo Google Business e pelo agente (horários). Entram na F5a.
+2. **Mídia simulada por enquanto.** `media` aceita URL e a tela usa um envio simulado. O provedor de Storage será escolhido nas configurações da plataforma (provavelmente Supabase ou Cloudflare R2); a F5e fica para quando houver essa definição.
+3. **Dois consumidores do agente.** O padrão é o módulo Agentes de IA, com um serviço interno que já inclui a governança (`ai_*`) e os itens sob consulta. Agentes externos entram pelo MCP: a saída UCP com `portfolio:read` e, para a visão de atendimento, o escopo `portfolio:agent`.
+4. **Descoberta sim, conversa e checkout nossos.** O Portfólio permite descoberta, mas a conversa é sempre com o agente orquestrador **guidu.bot**, e o checkout é sempre o nosso, no **guidu.chat** (fase 2). Por enquanto fica previsto:
+   - a saída UCP já traz `url` e `continue_url` apontando para o nosso fluxo (configurável);
+   - o perfil `/.well-known/ucp`, se publicado, anuncia só descoberta (`catalog.search` e `catalog.lookup`), sem `checkout` de terceiros;
+   - nada de checkout UCP para outras plataformas nesta fase.
+5. **Cotas** (sem resposta; ficam as provisórias): 1.000 itens e 10.000 variantes por workspace, em configuração do plano.
+6. **Ordem confirmada:** F5a → F5b → F5c → F5d; a F5e espera a escolha do Storage.
