@@ -35,10 +35,10 @@ describe("Module Availability", () => {
       }
     });
 
-    it("always returns false for catalog and google-business", () => {
+    it("returns false for coming-soon google-business and true for the portfolio", () => {
       vi.stubEnv("GUIDU_MODULE_AI_AGENTS_ENABLED", "true");
-      expect(isModuleTechnicallyAvailable("catalog")).toBe(false);
       expect(isModuleTechnicallyAvailable("google-business")).toBe(false);
+      expect(isModuleTechnicallyAvailable("portfolio")).toBe(true);
     });
   });
 
@@ -46,9 +46,6 @@ describe("Module Availability", () => {
     it("throws ModuleUnavailableError when module is not available", () => {
       delete process.env.GUIDU_MODULE_AI_AGENTS_ENABLED;
       expect(() => assertModuleAvailable("ai-agents")).toThrow(
-        ModuleUnavailableError,
-      );
-      expect(() => assertModuleAvailable("catalog")).toThrow(
         ModuleUnavailableError,
       );
       expect(() => assertModuleAvailable("google-business")).toThrow(

@@ -40,6 +40,21 @@ Tudo por workspace, com RLS FORCE, contrato de dados da F3e (exportação e excl
 
 ### F5a — Base do Portfólio (produto simples)
 
+**Estado:** pronta para revisão. A migration `20261022090000_f5a_portfolio.sql` é aplicada como `app_migrations`. Especificação em [MODULE_SPEC.md](../../src/modules/portfolio/MODULE_SPEC.md).
+
+Entregue:
+
+- O módulo `catalog` virou `portfolio` (Portfólio, beta), com rota `/app/[slug]/portfolio`. A migration renomeia a chave em todas as tabelas que a citam (estado do workspace e da plataforma, oferta e modelos do parceiro, planos). O placeholder antigo saiu.
+- Lojas no núcleo (`workspace_locations`, Location do UCP), em **Configurações › Lojas**, com permissão nova `workspace.locations.manage` (owner e admin). Entram na exportação e na exclusão do workspace.
+- `portfolio_items` e `portfolio_variants` com RLS FORCE, travas de imutabilidade, SKU e handle únicos, preço em centavos e variante obrigatória.
+- Serviços de item e variante (criar, editar, adicionar e remover variante), com estado do módulo, permissão, cotas e auditoria. Uma edição parcial muda só o que foi enviado.
+- Serializador UCP (`toUcpProduct`), validado nos testes contra os JSON Schemas oficiais copiados em `tests/fixtures/ucp` (commit `ad9950b`). A tela do item mostra a prévia da saída.
+- Telas: lista com busca e filtro de situação e criação de produto; item com dados UCP, entrega/atendimento, lojas, governança de IA e vitrine, e variantes. A mídia é só por URL, com o aviso de que o envio de arquivos chega com o Storage.
+- Cotas `portfolio.items` (1.000) e `portfolio.variants` (10.000). O padrão é configurável em **Plataforma › Configurações de módulos › Portfólio**, abaixo do limite do plano. O padrão da plataforma vale para qualquer módulo com cota.
+- Testes: unitário `portfolio-ucp.test.ts` (schema oficial), SQL `portfolio-rls.sql`, integração `portfolio.test.ts` e e2e `portfolio.spec.ts`.
+
+Planejado:
+
 - Renomear o módulo `catalog` para `portfolio` (manifesto, rota `/app/[slug]/portfolio`, menu "Portfólio"). Hoje o catálogo é só um placeholder "em breve", sem dados.
 - Migration de `portfolio_items`, `portfolio_variants` e, no núcleo, `workspace_locations`.
 - Esquemas Zod do núcleo, da variante e da Location, nos nomes do UCP. O serializador UCP de Product e Variant é testado contra os JSON Schemas oficiais, copiados para `tests/fixtures/ucp` com o commit de origem.

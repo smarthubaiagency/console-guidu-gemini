@@ -111,7 +111,7 @@ describeDatabase(
     it("refuses to enable a coming-soon module", async () => {
       await expect(
         withContext(prisma, contextA, (tx) =>
-          setWorkspaceModuleStatus(tx, contextA, "catalog", "enabled"),
+          setWorkspaceModuleStatus(tx, contextA, "google-business", "enabled"),
         ),
       ).rejects.toSatisfy(expectAppError("conflict"));
     });

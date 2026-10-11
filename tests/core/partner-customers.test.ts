@@ -101,7 +101,7 @@ describeDatabase(
       ).rejects.toSatisfy(isAppError("invalid_input"));
       await expect(
         inPartner(partnerOwner, (tx) =>
-          setModuleOffered(tx, owner, partnerId, "catalog", true),
+          setModuleOffered(tx, owner, partnerId, "google-business", true),
         ),
       ).rejects.toSatisfy(isAppError("invalid_input")); // "coming soon"
 
@@ -128,7 +128,7 @@ describeDatabase(
         inPartner(partnerOwner, (tx) =>
           createWorkspaceTemplate(tx, owner, partnerId, {
             name: "Errado",
-            moduleKeys: ["catalog"],
+            moduleKeys: ["google-business"],
           }),
         ),
       ).rejects.toSatisfy(isAppError("invalid_input"));

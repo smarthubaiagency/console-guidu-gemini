@@ -15,7 +15,7 @@ describe("module registry", () => {
 
   it("registers the initial modules and the reference module", () => {
     expect(listRegisteredModules().map((m) => m.manifest.moduleKey)).toEqual([
-      "catalog",
+      "portfolio",
       "crm",
       "google-business",
       "ai-agents",
@@ -33,7 +33,7 @@ describe("module registry", () => {
 
     vi.stubEnv("GUIDU_MODULE_HELLO_WORLD_ENABLED", "true");
     expect(helloWorld?.technicalGate()).toBe(true);
-    expect(getRegisteredModule("catalog")?.technicalGate()).toBe(true);
+    expect(getRegisteredModule("portfolio")?.technicalGate()).toBe(true);
   });
 
   it("resolves module permission defaults and denies unknown ones", () => {

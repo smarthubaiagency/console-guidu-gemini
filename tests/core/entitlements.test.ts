@@ -161,7 +161,7 @@ describeDatabase(
     });
 
     it("blocks a module outside the plan in services, settings and the worker", async () => {
-      await subscribe(await version(1, ["catalog"]), "active");
+      await subscribe(await version(1, ["portfolio"]), "active");
       expect(await state()).toBe("not_contracted");
       await expect(list()).rejects.toBeInstanceOf(ModuleUnavailableError);
       await expect(create("F3b fora do plano")).rejects.toThrow(

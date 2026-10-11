@@ -37,7 +37,7 @@ begin
   begin
     insert into public.workspace_modules (workspace_id, organization_id, module_key, status, updated_by)
     values ('a0000000-0000-4000-8000-000000000011', 'a0000000-0000-4000-8000-000000000010',
-            'catalog', 'enabled', 'a0000000-0000-4000-8000-000000000033');
+            'portfolio', 'enabled', 'a0000000-0000-4000-8000-000000000033');
   exception when insufficient_privilege then v_denied := true;
   end;
   if not v_denied then
@@ -61,7 +61,7 @@ begin
   begin
     insert into public.workspace_modules (workspace_id, organization_id, module_key, status, updated_by)
     values ('a0000000-0000-4000-8000-000000000011', 'a0000000-0000-4000-8000-000000000010',
-            'catalog', 'enabled', 'a0000000-0000-4000-8000-000000000033');
+            'portfolio', 'enabled', 'a0000000-0000-4000-8000-000000000033');
   exception when insufficient_privilege then v_denied := true;
   end;
   if not v_denied then
@@ -201,7 +201,7 @@ begin
 
   begin
     insert into public.platform_modules (module_key, availability, updated_by)
-    values ('catalog', 'disabled', 'a0000000-0000-4000-8000-000000000031');
+    values ('portfolio', 'disabled', 'a0000000-0000-4000-8000-000000000031');
   exception when insufficient_privilege then v_denied := true;
   end;
   if not v_denied then

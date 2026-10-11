@@ -41,6 +41,7 @@ export async function purgeWorkspace(
   const where = { workspaceId: workspace.id };
   const core: Array<[string, () => Promise<{ count: number }>]> = [
     ["workspace_exports", () => tx.workspaceExport.deleteMany({ where })],
+    ["workspace_locations", () => tx.workspaceLocation.deleteMany({ where })],
     ["execution_proposals", () => tx.executionProposal.deleteMany({ where })],
     ["job_runs", () => tx.jobRun.deleteMany({ where })],
     ["api_keys", () => tx.apiKey.deleteMany({ where })],

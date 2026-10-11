@@ -45,6 +45,7 @@ export type NavIconKey =
   | "layers"
   | "play-circle"
   | "inbox"
+  | "map-pin"
   | "building"
   | "handshake"
   | "palette"
@@ -287,6 +288,13 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
           label: "Geral",
           href: `${base}/settings/general`,
           iconKey: "settings",
+        }),
+        // Stores of the business (F5a, UCP Location): every member sees.
+        item({
+          id: "core.locations",
+          label: "Lojas",
+          href: `${base}/settings/locations`,
+          iconKey: "map-pin",
         }),
         item({
           id: "core.modules",

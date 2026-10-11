@@ -189,6 +189,7 @@ export async function buildWorkspaceExport(
     modules,
     jobs,
     proposals,
+    locations,
   ] = await Promise.all([
     tx.workspace.findUniqueOrThrow({
       where: { id: ctx.workspaceId },
@@ -281,6 +282,7 @@ export async function buildWorkspaceExport(
         executedAt: true,
       },
     }),
+    tx.workspaceLocation.findMany({ where, orderBy: { createdAt: "asc" } }),
   ]);
 
   const moduleData: Record<string, Record<string, ExportedRows>> = {};
@@ -301,6 +303,7 @@ export async function buildWorkspaceExport(
       modules,
       jobRuns: jobs,
       proposals,
+      locations,
     },
     modules: moduleData,
     notes: [
