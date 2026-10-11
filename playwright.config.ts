@@ -23,6 +23,9 @@ export default defineConfig({
   reporter: "html",
   use: {
     baseURL: RIG.appUrl,
+    // Visitors without a session get the browser language (I1); the suite
+    // plays a Brazilian user, so the browser speaks pt-BR.
+    locale: "pt-BR",
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
