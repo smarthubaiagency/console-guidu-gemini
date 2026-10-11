@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldAlert, User, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Languages, ShieldAlert, User, ShieldCheck } from "lucide-react";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 import { ThemeToggle } from "@/shared/ui/theme-toggle";
@@ -25,6 +26,7 @@ export function AppHeader({
   appName,
   logoUrl,
 }: AppHeaderProps) {
+  const t = useTranslations("shell");
   return (
     <header className="border-border bg-surface-card flex h-14 shrink-0 items-center justify-between border-b px-6">
       <div className="flex items-center gap-4">
@@ -42,7 +44,7 @@ export function AppHeader({
 
         <div className="bg-success-bg text-success-text text-11 border-success-border hidden items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium sm:flex">
           <span className="bg-success-solid h-1.5 w-1.5 animate-pulse rounded-full" />
-          <span>Ambiente Ativo</span>
+          <span>{t("activeEnvironment")}</span>
         </div>
       </div>
 
@@ -53,7 +55,7 @@ export function AppHeader({
             className="text-12 text-warning-text bg-warning-bg hover:bg-warning-border border-warning-border flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-medium transition"
           >
             <ShieldAlert className="text-warning-solid h-3.5 w-3.5" />
-            <span>Painel Admin</span>
+            <span>{t("adminPanel")}</span>
           </Link>
         )}
 
@@ -63,11 +65,19 @@ export function AppHeader({
         >
           <User className="text-text-secondary h-3.5 w-3.5" />
           <span className="max-w-email hidden truncate md:inline">
-            {userEmail ?? "Minha Conta"}
+            {userEmail ?? t("myAccount")}
           </span>
           <ShieldCheck className="text-success-solid h-3.5 w-3.5" />
         </Link>
 
+        <Link
+          href="/app/account/language"
+          aria-label={t("language")}
+          title={t("language")}
+          className="text-text-subtle hover:text-text border-border hover:border-border-strong bg-surface-sidebar flex items-center rounded-lg border px-2 py-1.5 transition"
+        >
+          <Languages className="h-3.5 w-3.5" />
+        </Link>
         <ThemeToggle />
         <SignOutForm />
       </div>

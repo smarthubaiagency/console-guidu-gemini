@@ -22,7 +22,15 @@
 
 import { PrismaClient } from "@prisma/client";
 import pg from "pg";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 vi.mock("server-only", () => ({}));
 
@@ -84,28 +92,31 @@ const contextViewer = {
   workspaceId: auditFixtures.workspaceId,
 };
 
-describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 & ADR 0009)", requiredVars, () => {
-  const prisma = new PrismaClient({
-    datasources: { db: { url: directUrl ?? pooledUrl ?? "" } },
-  });
+describeDatabase(
+  "Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 & ADR 0009)",
+  requiredVars,
+  () => {
+    const prisma = new PrismaClient({
+      datasources: { db: { url: directUrl ?? pooledUrl ?? "" } },
+    });
 
-  let adminClient: pg.Client | null = null;
+    let adminClient: pg.Client | null = null;
 
-  beforeAll(async () => {
-    await prisma.$connect();
-    if (adminUrl) {
-      adminClient = new pg.Client({
-        connectionString: adminUrl,
-        ssl:
-          adminUrl.includes("localhost") || adminUrl.includes("127.0.0.1")
-            ? false
-            : { rejectUnauthorized: false },
-      });
-      await adminClient.connect();
+    beforeAll(async () => {
+      await prisma.$connect();
+      if (adminUrl) {
+        adminClient = new pg.Client({
+          connectionString: adminUrl,
+          ssl:
+            adminUrl.includes("localhost") || adminUrl.includes("127.0.0.1")
+              ? false
+              : { rejectUnauthorized: false },
+        });
+        await adminClient.connect();
 
-      // Ensure seed fixtures are initialized
-      try {
-        await adminClient.query(`
+        // Ensure seed fixtures are initialized
+        try {
+          await adminClient.query(`
           insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
           values
             ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000031', 'authenticated', 'authenticated', 'audit-owner@test.guidu.co', '', now(), '{}', '{}', now(), now()),
@@ -114,11 +125,11 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
             ('00000000-0000-4000-8000-000000000000', 'e0000000-0000-4000-8000-000000000034', 'authenticated', 'authenticated', 'audit-target@test.guidu.co', '', now(), '{}', '{}', now(), now())
           on conflict (id) do nothing;
         `);
-      } catch {
-        // auth.users may not be writable by app_migrations in hosted environments; fixtures are pre-seeded
-      }
+        } catch {
+          // auth.users may not be writable by app_migrations in hosted environments; fixtures are pre-seeded
+        }
 
-      await adminClient.query(`
+        await adminClient.query(`
         alter table public.profiles no force row level security;
         alter table public.profiles disable row level security;
         alter table public.organizations no force row level security;
@@ -172,13 +183,13 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
         -- Allow table owner app_migrations to query audit_events for test assertions
         alter table public.audit_events no force row level security;
       `);
-    }
-  });
+      }
+    });
 
-  beforeEach(async () => {
-    if (adminClient) {
-      // Ensure target user is reset to member in org and not in workspace before each test
-      await adminClient.query(`
+    beforeEach(async () => {
+      if (adminClient) {
+        // Ensure target user is reset to member in org and not in workspace before each test
+        await adminClient.query(`
         alter table public.workspace_members no force row level security;
         alter table public.workspace_members disable row level security;
         alter table public.organization_members no force row level security;
@@ -194,434 +205,505 @@ describeDatabase("Append-Only Audit Trail (C11, Spec §6, §16, §20, §24 AC14 
         alter table public.organization_members enable row level security;
         alter table public.organization_members force row level security;
       `);
-    }
-  });
-
-  afterAll(async () => {
-    await prisma.$disconnect();
-    if (adminClient) {
-      try {
-        await adminClient.query("alter table public.audit_events force row level security;");
-      } catch {
-        // cleanup best effort
       }
-      await adminClient.end();
+    });
+
+    afterAll(async () => {
+      await prisma.$disconnect();
+      if (adminClient) {
+        try {
+          await adminClient.query(
+            "alter table public.audit_events force row level security;",
+          );
+        } catch {
+          // cleanup best effort
+        }
+        await adminClient.end();
+      }
+    });
+
+    async function getAuditEventCount(
+      action: string,
+      result = "success",
+    ): Promise<number> {
+      if (!adminClient)
+        throw new Error("adminClient is required to count audit_events");
+      const res = await adminClient.query<{ count: string }>(
+        "select count(*)::text as count from public.audit_events where action = $1 and result = $2 and organization_id = $3",
+        [action, result, auditFixtures.orgId],
+      );
+      return parseInt(res.rows[0]?.count ?? "0", 10);
     }
-  });
 
-  async function getAuditEventCount(action: string, result = "success"): Promise<number> {
-    if (!adminClient) throw new Error("adminClient is required to count audit_events");
-    const res = await adminClient.query<{ count: string }>(
-      "select count(*)::text as count from public.audit_events where action = $1 and result = $2 and organization_id = $3",
-      [action, result, auditFixtures.orgId],
-    );
-    return parseInt(res.rows[0]?.count ?? "0", 10);
-  }
+    async function getLatestAuditEvent(action: string, result = "success") {
+      if (!adminClient)
+        throw new Error("adminClient is required to inspect audit_events");
+      const res = await adminClient.query(
+        "select * from public.audit_events where action = $1 and result = $2 and organization_id = $3 order by occurred_at desc limit 1",
+        [action, result, auditFixtures.orgId],
+      );
+      return res.rows[0];
+    }
 
-  async function getLatestAuditEvent(action: string, result = "success") {
-    if (!adminClient) throw new Error("adminClient is required to inspect audit_events");
-    const res = await adminClient.query(
-      "select * from public.audit_events where action = $1 and result = $2 and organization_id = $3 order by occurred_at desc limit 1",
-      [action, result, auditFixtures.orgId],
-    );
-    return res.rows[0];
-  }
+    describe("Credentials Audit Trail (credentials.created, credentials.revoked)", () => {
+      it("records exactly 1 event on credential creation without exposing the raw secret", async () => {
+        const initialCount = await getAuditEventCount("credentials.created");
+        const rawSecret = "sk-super-secret-openai-api-key-999888";
 
-  describe("Credentials Audit Trail (credentials.created, credentials.revoked)", () => {
-    it("records exactly 1 event on credential creation without exposing the raw secret", async () => {
-      const initialCount = await getAuditEventCount("credentials.created");
-      const rawSecret = "sk-super-secret-openai-api-key-999888";
-
-      const created = await withContext(prisma, contextOwner, async (tx) => {
-        return registerCredential(tx, contextOwner, {
-          provider: "openai",
-          label: "Test OpenAI Key",
-          secret: rawSecret,
-          purpose: "chat",
+        const created = await withContext(prisma, contextOwner, async (tx) => {
+          return registerCredential(tx, contextOwner, {
+            provider: "openai",
+            label: "Test OpenAI Key",
+            secret: rawSecret,
+            purpose: "chat",
+          });
         });
+
+        const newCount = await getAuditEventCount("credentials.created");
+        expect(newCount).toBe(initialCount + 1);
+
+        const event = await getLatestAuditEvent("credentials.created");
+        expect(event.resource_type).toBe("credential");
+        expect(event.resource_id).toBe(created.id);
+        expect(event.actor_user_id).toBe(contextOwner.userId);
+        expect(event.workspace_id).toBe(contextOwner.workspaceId);
+        expect(event.organization_id).toBe(contextOwner.organizationId);
+
+        // Verify metadata strictly masks value and NEVER leaks raw secret
+        const metadataStr = JSON.stringify(event.metadata);
+        expect(metadataStr).not.toContain(rawSecret);
+        expect(event.metadata.maskedValue).toBe(created.maskedValue);
+        expect(event.metadata.provider).toBe("openai");
+        expect(event.metadata.purpose).toBe("chat");
       });
 
-      const newCount = await getAuditEventCount("credentials.created");
-      expect(newCount).toBe(initialCount + 1);
+      it("records exactly 1 event on credential revocation", async () => {
+        // Create first
+        const created = await withContext(prisma, contextOwner, async (tx) => {
+          return registerCredential(tx, contextOwner, {
+            provider: "anthropic",
+            label: "Revocable Anthropic Key",
+            secret: "sk-ant-temporary-secret-key-111222",
+          });
+        });
 
-      const event = await getLatestAuditEvent("credentials.created");
-      expect(event.resource_type).toBe("credential");
-      expect(event.resource_id).toBe(created.id);
-      expect(event.actor_user_id).toBe(contextOwner.userId);
-      expect(event.workspace_id).toBe(contextOwner.workspaceId);
-      expect(event.organization_id).toBe(contextOwner.organizationId);
+        const initialCount = await getAuditEventCount("credentials.revoked");
 
-      // Verify metadata strictly masks value and NEVER leaks raw secret
-      const metadataStr = JSON.stringify(event.metadata);
-      expect(metadataStr).not.toContain(rawSecret);
-      expect(event.metadata.maskedValue).toBe(created.maskedValue);
-      expect(event.metadata.provider).toBe("openai");
-      expect(event.metadata.purpose).toBe("chat");
+        await withContext(prisma, contextOwner, async (tx) => {
+          return revokeCredential(tx, contextOwner, created.id);
+        });
+
+        const newCount = await getAuditEventCount("credentials.revoked");
+        expect(newCount).toBe(initialCount + 1);
+
+        const event = await getLatestAuditEvent("credentials.revoked");
+        expect(event.resource_id).toBe(created.id);
+        expect(event.metadata.provider).toBe("anthropic");
+      });
     });
 
-    it("records exactly 1 event on credential revocation", async () => {
-      // Create first
-      const created = await withContext(prisma, contextOwner, async (tx) => {
-        return registerCredential(tx, contextOwner, {
-          provider: "anthropic",
-          label: "Revocable Anthropic Key",
-          secret: "sk-ant-temporary-secret-key-111222",
-        });
-      });
+    describe("API Keys Audit Trail (api_keys.created, api_keys.revoked)", () => {
+      it("records exactly 1 event on API key creation without exposing raw key", async () => {
+        const initialCount = await getAuditEventCount("api_keys.created");
 
-      const initialCount = await getAuditEventCount("credentials.revoked");
-
-      await withContext(prisma, contextOwner, async (tx) => {
-        return revokeCredential(tx, contextOwner, created.id);
-      });
-
-      const newCount = await getAuditEventCount("credentials.revoked");
-      expect(newCount).toBe(initialCount + 1);
-
-      const event = await getLatestAuditEvent("credentials.revoked");
-      expect(event.resource_id).toBe(created.id);
-      expect(event.metadata.provider).toBe("anthropic");
-    });
-  });
-
-  describe("API Keys Audit Trail (api_keys.created, api_keys.revoked)", () => {
-    it("records exactly 1 event on API key creation without exposing raw key", async () => {
-      const initialCount = await getAuditEventCount("api_keys.created");
-
-      const { apiKey, rawKey } = await withContext(prisma, contextOwner, async (tx) => {
-        return createApiKey(tx, contextOwner, {
-          name: "MCP Claude Assistant Key",
-          scopes: ["workspace:read", "proposals:write"],
-          expiresInDays: 30,
-        });
-      });
-
-      const newCount = await getAuditEventCount("api_keys.created");
-      expect(newCount).toBe(initialCount + 1);
-
-      const event = await getLatestAuditEvent("api_keys.created");
-      expect(event.resource_type).toBe("api_key");
-      expect(event.resource_id).toBe(apiKey.id);
-
-      // Verify rawKey is NEVER leaked in audit metadata
-      const metadataStr = JSON.stringify(event.metadata);
-      expect(metadataStr).not.toContain(rawKey);
-      expect(event.metadata.prefix).toBe(apiKey.prefix);
-      expect(event.metadata.scopes).toEqual(["workspace:read", "proposals:write"]);
-    });
-
-    it("records exactly 1 event on API key revocation", async () => {
-      const { apiKey } = await withContext(prisma, contextOwner, async (tx) => {
-        return createApiKey(tx, contextOwner, {
-          name: "Temporary API Key",
-        });
-      });
-
-      const initialCount = await getAuditEventCount("api_keys.revoked");
-
-      await withContext(prisma, contextOwner, async (tx) => {
-        return revokeApiKey(tx, contextOwner, apiKey.id);
-      });
-
-      const newCount = await getAuditEventCount("api_keys.revoked");
-      expect(newCount).toBe(initialCount + 1);
-
-      const event = await getLatestAuditEvent("api_keys.revoked");
-      expect(event.resource_id).toBe(apiKey.id);
-      expect(event.metadata.prefix).toBe(apiKey.prefix);
-    });
-  });
-
-  describe("Invitations Audit Trail (invitations.created, invitations.revoked, invitations.accepted)", () => {
-    it("records exactly 1 event on invitation creation without exposing full email", async () => {
-      const initialCount = await getAuditEventCount("invitations.created");
-      const candidateEmail = `audit_invite_${Date.now()}@guidu-partner.com`;
-
-      const result = await withContext(prisma, contextOwner, async (tx) => {
-        return createInvitation(tx, {
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          email: candidateEmail,
-          role: "viewer",
-          workspaceId: contextOwner.workspaceId,
-        });
-      });
-
-      const newCount = await getAuditEventCount("invitations.created");
-      expect(newCount).toBe(initialCount + 1);
-
-      const event = await getLatestAuditEvent("invitations.created");
-      expect(event.resource_type).toBe("invitation");
-      expect(event.resource_id).toBe(result.invitation.id);
-
-      // Full email must NOT appear; emailDomain is allowed
-      const metadataStr = JSON.stringify(event.metadata);
-      expect(metadataStr).not.toContain(candidateEmail);
-      expect(event.metadata.emailDomain).toBe("guidu-partner.com");
-      expect(event.metadata.role).toBe("viewer");
-    });
-
-    it("records exactly 1 event on invitation revocation", async () => {
-      const candidateEmail = `revoke_audit_${Date.now()}@guidu-corp.com`;
-      const created = await withContext(prisma, contextOwner, async (tx) => {
-        return createInvitation(tx, {
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          email: candidateEmail,
-          role: "viewer",
-          workspaceId: contextOwner.workspaceId,
-        });
-      });
-
-      const initialCount = await getAuditEventCount("invitations.revoked");
-
-      await withContext(prisma, contextOwner, async (tx) => {
-        return revokeInvitation(tx, {
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          invitationId: created.invitation.id,
-        });
-      });
-
-      const newCount = await getAuditEventCount("invitations.revoked");
-      expect(newCount).toBe(initialCount + 1);
-    });
-
-    it("records exactly 1 event on invitation acceptance", async () => {
-      const targetUser = auditFixtures.targetId;
-      const candidateEmail = "audit-target@test.guidu.co";
-
-      const created = await withContext(prisma, contextOwner, async (tx) => {
-        return createInvitation(tx, {
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          email: candidateEmail,
-          role: "viewer",
-          workspaceId: contextOwner.workspaceId,
-        });
-      });
-
-      const initialCount = await getAuditEventCount("invitations.accepted");
-
-      await acceptInvitation(prisma, {
-        rawToken: created.rawToken,
-        identity: {
-          userId: targetUser,
-          email: candidateEmail,
-          emailConfirmedAt: new Date().toISOString(),
-          mfaSatisfied: false,
-          profile: {
-            id: targetUser,
-            fullName: "Audit Target Member",
-            status: "active",
-            statusReason: null,
-            lastSignInAt: null,
+        const { apiKey, rawKey } = await withContext(
+          prisma,
+          contextOwner,
+          async (tx) => {
+            return createApiKey(tx, contextOwner, {
+              name: "MCP Claude Assistant Key",
+              scopes: ["workspace:read", "proposals:write"],
+              expiresInDays: 30,
+            });
           },
-        },
+        );
+
+        const newCount = await getAuditEventCount("api_keys.created");
+        expect(newCount).toBe(initialCount + 1);
+
+        const event = await getLatestAuditEvent("api_keys.created");
+        expect(event.resource_type).toBe("api_key");
+        expect(event.resource_id).toBe(apiKey.id);
+
+        // Verify rawKey is NEVER leaked in audit metadata
+        const metadataStr = JSON.stringify(event.metadata);
+        expect(metadataStr).not.toContain(rawKey);
+        expect(event.metadata.prefix).toBe(apiKey.prefix);
+        expect(event.metadata.scopes).toEqual([
+          "workspace:read",
+          "proposals:write",
+        ]);
       });
 
-      const newCount = await getAuditEventCount("invitations.accepted");
-      expect(newCount).toBe(initialCount + 1);
+      it("records exactly 1 event on API key revocation", async () => {
+        const { apiKey } = await withContext(
+          prisma,
+          contextOwner,
+          async (tx) => {
+            return createApiKey(tx, contextOwner, {
+              name: "Temporary API Key",
+            });
+          },
+        );
 
-      const event = await getLatestAuditEvent("invitations.accepted");
-      expect(event.resource_id).toBe(created.invitation.id);
-      expect(event.actor_user_id).toBe(targetUser);
-    });
-  });
+        const initialCount = await getAuditEventCount("api_keys.revoked");
 
-  describe("Membership Audit Trail (role_changed & removed)", () => {
-    it("records workspace_members.role_changed and workspace_members.removed", async () => {
-      const targetUser = auditFixtures.targetId;
-
-      // Ensure membership exists in workspace
-      await withContext(prisma, contextOwner, async (tx) => {
-        await addWorkspaceMember(tx, {
-          workspaceId: contextOwner.workspaceId,
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          targetUserId: targetUser,
-          role: "viewer",
+        await withContext(prisma, contextOwner, async (tx) => {
+          return revokeApiKey(tx, contextOwner, apiKey.id);
         });
+
+        const newCount = await getAuditEventCount("api_keys.revoked");
+        expect(newCount).toBe(initialCount + 1);
+
+        const event = await getLatestAuditEvent("api_keys.revoked");
+        expect(event.resource_id).toBe(apiKey.id);
+        expect(event.metadata.prefix).toBe(apiKey.prefix);
       });
-
-      // 1. Update role
-      const initialRoleChangedCount = await getAuditEventCount("workspace_members.role_changed");
-
-      await withContext(prisma, contextOwner, async (tx) => {
-        return updateWorkspaceMemberRole(tx, {
-          workspaceId: contextOwner.workspaceId,
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          targetUserId: targetUser,
-          newRole: "editor",
-        });
-      });
-
-      const newRoleChangedCount = await getAuditEventCount("workspace_members.role_changed");
-      expect(newRoleChangedCount).toBe(initialRoleChangedCount + 1);
-
-      const roleEvent = await getLatestAuditEvent("workspace_members.role_changed");
-      expect(roleEvent.metadata.from).toBe("viewer");
-      expect(roleEvent.metadata.to).toBe("editor");
-      expect(roleEvent.metadata.targetUserId).toBe(targetUser);
-
-      // 2. Remove workspace member
-      const initialRemovedCount = await getAuditEventCount("workspace_members.removed");
-
-      await withContext(prisma, contextOwner, async (tx) => {
-        return removeWorkspaceMember(tx, {
-          workspaceId: contextOwner.workspaceId,
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          targetUserId: targetUser,
-        });
-      });
-
-      const newRemovedCount = await getAuditEventCount("workspace_members.removed");
-      expect(newRemovedCount).toBe(initialRemovedCount + 1);
-
-      const removedEvent = await getLatestAuditEvent("workspace_members.removed");
-      expect(removedEvent.metadata.targetUserId).toBe(targetUser);
-      expect(removedEvent.metadata.role).toBe("editor");
     });
 
-    it("records organization_members.role_changed", async () => {
-      const initialCount = await getAuditEventCount("organization_members.role_changed");
-      const targetUser = auditFixtures.targetId;
+    describe("Invitations Audit Trail (invitations.created, invitations.revoked, invitations.accepted)", () => {
+      it("records exactly 1 event on invitation creation without exposing full email", async () => {
+        const initialCount = await getAuditEventCount("invitations.created");
+        const candidateEmail = `audit_invite_${Date.now()}@guidu-partner.com`;
 
-      await withContext(prisma, contextOwner, async (tx) => {
-        return updateOrganizationMemberRole(tx, {
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          targetUserId: targetUser,
-          newRole: "admin",
-        });
-      });
-
-      const newCount = await getAuditEventCount("organization_members.role_changed");
-      expect(newCount).toBe(initialCount + 1);
-
-      const event = await getLatestAuditEvent("organization_members.role_changed");
-      expect(event.metadata.targetUserId).toBe(targetUser);
-      expect(event.metadata.from).toBe("member");
-      expect(event.metadata.to).toBe("admin");
-    });
-
-    it("records organization_members.removed", async () => {
-      const initialCount = await getAuditEventCount("organization_members.removed");
-      const targetUser = auditFixtures.targetId;
-
-      await withContext(prisma, contextOwner, async (tx) => {
-        return removeOrganizationMember(tx, {
-          organizationId: contextOwner.organizationId,
-          actorId: contextOwner.userId,
-          targetUserId: targetUser,
-        });
-      });
-
-      const newCount = await getAuditEventCount("organization_members.removed");
-      expect(newCount).toBe(initialCount + 1);
-
-      const event = await getLatestAuditEvent("organization_members.removed");
-      expect(event.metadata.targetUserId).toBe(targetUser);
-      expect(event.metadata.role).toBe("member");
-    });
-  });
-
-  describe("Transaction Rollback Guarantee (§20, AC14)", () => {
-    it("rolls back the audit event completely if the domain mutation transaction fails", async () => {
-      const initialSuccessCount = await getAuditEventCount("credentials.created");
-
-      // Attempt to register credential with intentionally failing post-mutation step
-      await expect(
-        withContext(prisma, contextOwner, async (tx) => {
-          await registerCredential(tx, contextOwner, {
-            provider: "openai",
-            label: "Doomed Credential",
-            secret: "sk-doomed-secret-999",
+        const result = await withContext(prisma, contextOwner, async (tx) => {
+          return createInvitation(tx, {
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            email: candidateEmail,
+            role: "viewer",
+            workspaceId: contextOwner.workspaceId,
           });
-          // Deliberate simulated transaction failure
-          throw new Error("Simulated downstream operational crash");
-        }),
-      ).rejects.toThrow("Simulated downstream operational crash");
+        });
 
-      // Verify NO audit event was committed
-      const afterCount = await getAuditEventCount("credentials.created");
-      expect(afterCount).toBe(initialSuccessCount);
-    });
-  });
+        const newCount = await getAuditEventCount("invitations.created");
+        expect(newCount).toBe(initialCount + 1);
 
-  describe("Security Denial Audit Trail (credentials.manage, workspace.members.manage, api_keys.revoke_any)", () => {
-    it("records result = 'denied' in dedicated transaction when credentials.manage is denied", async () => {
-      const initialDeniedCount = await getAuditEventCount("credentials.manage", "denied");
+        const event = await getLatestAuditEvent("invitations.created");
+        expect(event.resource_type).toBe("invitation");
+        expect(event.resource_id).toBe(result.invitation.id);
 
-      await expect(
-        withContext(prisma, contextViewer, async (tx) => {
-          return registerCredential(tx, contextViewer, {
-            provider: "openai",
-            label: "Unauthorized Key",
-            secret: "sk-unauthorized-secret-000",
+        // Full email must NOT appear; emailDomain is allowed
+        const metadataStr = JSON.stringify(event.metadata);
+        expect(metadataStr).not.toContain(candidateEmail);
+        expect(event.metadata.emailDomain).toBe("guidu-partner.com");
+        expect(event.metadata.role).toBe("viewer");
+      });
+
+      it("records exactly 1 event on invitation revocation", async () => {
+        const candidateEmail = `revoke_audit_${Date.now()}@guidu-corp.com`;
+        const created = await withContext(prisma, contextOwner, async (tx) => {
+          return createInvitation(tx, {
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            email: candidateEmail,
+            role: "viewer",
+            workspaceId: contextOwner.workspaceId,
           });
-        }),
-      ).rejects.toThrow(PermissionDeniedError);
+        });
 
-      const newDeniedCount = await getAuditEventCount("credentials.manage", "denied");
-      expect(newDeniedCount).toBe(initialDeniedCount + 1);
+        const initialCount = await getAuditEventCount("invitations.revoked");
 
-      const event = await getLatestAuditEvent("credentials.manage", "denied");
-      expect(event.actor_user_id).toBe(contextViewer.userId);
-      expect(event.result).toBe("denied");
-      expect(event.resource_type).toBe("credential");
+        await withContext(prisma, contextOwner, async (tx) => {
+          return revokeInvitation(tx, {
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            invitationId: created.invitation.id,
+          });
+        });
+
+        const newCount = await getAuditEventCount("invitations.revoked");
+        expect(newCount).toBe(initialCount + 1);
+      });
+
+      it("records exactly 1 event on invitation acceptance", async () => {
+        const targetUser = auditFixtures.targetId;
+        const candidateEmail = "audit-target@test.guidu.co";
+
+        const created = await withContext(prisma, contextOwner, async (tx) => {
+          return createInvitation(tx, {
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            email: candidateEmail,
+            role: "viewer",
+            workspaceId: contextOwner.workspaceId,
+          });
+        });
+
+        const initialCount = await getAuditEventCount("invitations.accepted");
+
+        await acceptInvitation(prisma, {
+          rawToken: created.rawToken,
+          identity: {
+            userId: targetUser,
+            email: candidateEmail,
+            emailConfirmedAt: new Date().toISOString(),
+            mfaSatisfied: false,
+            profile: {
+              id: targetUser,
+              fullName: "Audit Target Member",
+              status: "active",
+              statusReason: null,
+              lastSignInAt: null,
+            },
+          },
+        });
+
+        const newCount = await getAuditEventCount("invitations.accepted");
+        expect(newCount).toBe(initialCount + 1);
+
+        const event = await getLatestAuditEvent("invitations.accepted");
+        expect(event.resource_id).toBe(created.invitation.id);
+        expect(event.actor_user_id).toBe(targetUser);
+      });
     });
 
-    it("records result = 'denied' when workspace.members.manage is denied", async () => {
-      const initialDeniedCount = await getAuditEventCount("workspace.members.manage", "denied");
+    describe("Membership Audit Trail (role_changed & removed)", () => {
+      it("records workspace_members.role_changed and workspace_members.removed", async () => {
+        const targetUser = auditFixtures.targetId;
 
-      await expect(
-        withContext(prisma, contextViewer, async (tx) => {
+        // Ensure membership exists in workspace
+        await withContext(prisma, contextOwner, async (tx) => {
+          await addWorkspaceMember(tx, {
+            workspaceId: contextOwner.workspaceId,
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            targetUserId: targetUser,
+            role: "viewer",
+          });
+        });
+
+        // 1. Update role
+        const initialRoleChangedCount = await getAuditEventCount(
+          "workspace_members.role_changed",
+        );
+
+        await withContext(prisma, contextOwner, async (tx) => {
           return updateWorkspaceMemberRole(tx, {
-            workspaceId: contextViewer.workspaceId,
-            organizationId: contextViewer.organizationId,
-            actorId: contextViewer.userId,
-            targetUserId: contextOwner.userId,
+            workspaceId: contextOwner.workspaceId,
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            targetUserId: targetUser,
             newRole: "editor",
           });
-        }),
-      ).rejects.toThrow(PermissionDeniedError);
-
-      const newDeniedCount = await getAuditEventCount("workspace.members.manage", "denied");
-      expect(newDeniedCount).toBe(initialDeniedCount + 1);
-
-      const event = await getLatestAuditEvent("workspace.members.manage", "denied");
-      expect(event.result).toBe("denied");
-      expect(event.resource_type).toBe("workspace_member");
-    });
-
-    it("records result = 'denied' when api_keys.revoke_any is denied to non-admin", async () => {
-      // 1. Create key as owner
-      const { apiKey } = await withContext(prisma, contextOwner, async (tx) => {
-        return createApiKey(tx, contextOwner, {
-          name: "Owner Private Key",
         });
+
+        const newRoleChangedCount = await getAuditEventCount(
+          "workspace_members.role_changed",
+        );
+        expect(newRoleChangedCount).toBe(initialRoleChangedCount + 1);
+
+        const roleEvent = await getLatestAuditEvent(
+          "workspace_members.role_changed",
+        );
+        expect(roleEvent.metadata.from).toBe("viewer");
+        expect(roleEvent.metadata.to).toBe("editor");
+        expect(roleEvent.metadata.targetUserId).toBe(targetUser);
+
+        // 2. Remove workspace member
+        const initialRemovedCount = await getAuditEventCount(
+          "workspace_members.removed",
+        );
+
+        await withContext(prisma, contextOwner, async (tx) => {
+          return removeWorkspaceMember(tx, {
+            workspaceId: contextOwner.workspaceId,
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            targetUserId: targetUser,
+          });
+        });
+
+        const newRemovedCount = await getAuditEventCount(
+          "workspace_members.removed",
+        );
+        expect(newRemovedCount).toBe(initialRemovedCount + 1);
+
+        const removedEvent = await getLatestAuditEvent(
+          "workspace_members.removed",
+        );
+        expect(removedEvent.metadata.targetUserId).toBe(targetUser);
+        expect(removedEvent.metadata.role).toBe("editor");
       });
 
-      const initialDeniedCount = await getAuditEventCount("api_keys.revoke_any", "denied");
+      it("records organization_members.role_changed", async () => {
+        const initialCount = await getAuditEventCount(
+          "organization_members.role_changed",
+        );
+        const targetUser = auditFixtures.targetId;
 
-      // 2. Member without revoke_any (editor in workspace, admin in org) attempts to revoke owner's key
-      // Wait: in guard, requireWorkspacePermission checks if user is admin in workspace
-      // contextEditor is editor in workspace, not admin.
-      await expect(
-        withContext(prisma, contextEditor, async (tx) => {
-          return revokeApiKey(tx, contextEditor, apiKey.id);
-        }),
-      ).rejects.toThrow(PermissionDeniedError);
+        await withContext(prisma, contextOwner, async (tx) => {
+          return updateOrganizationMemberRole(tx, {
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            targetUserId: targetUser,
+            newRole: "admin",
+          });
+        });
 
-      const newDeniedCount = await getAuditEventCount("api_keys.revoke_any", "denied");
-      expect(newDeniedCount).toBe(initialDeniedCount + 1);
+        const newCount = await getAuditEventCount(
+          "organization_members.role_changed",
+        );
+        expect(newCount).toBe(initialCount + 1);
 
-      const event = await getLatestAuditEvent("api_keys.revoke_any", "denied");
-      expect(event.result).toBe("denied");
-      expect(event.resource_id).toBe(apiKey.id);
+        const event = await getLatestAuditEvent(
+          "organization_members.role_changed",
+        );
+        expect(event.metadata.targetUserId).toBe(targetUser);
+        expect(event.metadata.from).toBe("member");
+        expect(event.metadata.to).toBe("admin");
+      });
+
+      it("records organization_members.removed", async () => {
+        const initialCount = await getAuditEventCount(
+          "organization_members.removed",
+        );
+        const targetUser = auditFixtures.targetId;
+
+        await withContext(prisma, contextOwner, async (tx) => {
+          return removeOrganizationMember(tx, {
+            organizationId: contextOwner.organizationId,
+            actorId: contextOwner.userId,
+            targetUserId: targetUser,
+          });
+        });
+
+        const newCount = await getAuditEventCount(
+          "organization_members.removed",
+        );
+        expect(newCount).toBe(initialCount + 1);
+
+        const event = await getLatestAuditEvent("organization_members.removed");
+        expect(event.metadata.targetUserId).toBe(targetUser);
+        expect(event.metadata.role).toBe("member");
+      });
     });
-  });
-});
+
+    describe("Transaction Rollback Guarantee (§20, AC14)", () => {
+      it("rolls back the audit event completely if the domain mutation transaction fails", async () => {
+        const initialSuccessCount = await getAuditEventCount(
+          "credentials.created",
+        );
+
+        // Attempt to register credential with intentionally failing post-mutation step
+        await expect(
+          withContext(prisma, contextOwner, async (tx) => {
+            await registerCredential(tx, contextOwner, {
+              provider: "openai",
+              label: "Doomed Credential",
+              secret: "sk-doomed-secret-999",
+            });
+            // Deliberate simulated transaction failure
+            throw new Error("Simulated downstream operational crash");
+          }),
+        ).rejects.toThrow("Simulated downstream operational crash");
+
+        // Verify NO audit event was committed
+        const afterCount = await getAuditEventCount("credentials.created");
+        expect(afterCount).toBe(initialSuccessCount);
+      });
+    });
+
+    describe("Security Denial Audit Trail (credentials.manage, workspace.members.manage, api_keys.revoke_any)", () => {
+      it("records result = 'denied' in dedicated transaction when credentials.manage is denied", async () => {
+        const initialDeniedCount = await getAuditEventCount(
+          "credentials.manage",
+          "denied",
+        );
+
+        await expect(
+          withContext(prisma, contextViewer, async (tx) => {
+            return registerCredential(tx, contextViewer, {
+              provider: "openai",
+              label: "Unauthorized Key",
+              secret: "sk-unauthorized-secret-000",
+            });
+          }),
+        ).rejects.toThrow(PermissionDeniedError);
+
+        const newDeniedCount = await getAuditEventCount(
+          "credentials.manage",
+          "denied",
+        );
+        expect(newDeniedCount).toBe(initialDeniedCount + 1);
+
+        const event = await getLatestAuditEvent("credentials.manage", "denied");
+        expect(event.actor_user_id).toBe(contextViewer.userId);
+        expect(event.result).toBe("denied");
+        expect(event.resource_type).toBe("credential");
+      });
+
+      it("records result = 'denied' when workspace.members.manage is denied", async () => {
+        const initialDeniedCount = await getAuditEventCount(
+          "workspace.members.manage",
+          "denied",
+        );
+
+        await expect(
+          withContext(prisma, contextViewer, async (tx) => {
+            return updateWorkspaceMemberRole(tx, {
+              workspaceId: contextViewer.workspaceId,
+              organizationId: contextViewer.organizationId,
+              actorId: contextViewer.userId,
+              targetUserId: contextOwner.userId,
+              newRole: "editor",
+            });
+          }),
+        ).rejects.toThrow(PermissionDeniedError);
+
+        const newDeniedCount = await getAuditEventCount(
+          "workspace.members.manage",
+          "denied",
+        );
+        expect(newDeniedCount).toBe(initialDeniedCount + 1);
+
+        const event = await getLatestAuditEvent(
+          "workspace.members.manage",
+          "denied",
+        );
+        expect(event.result).toBe("denied");
+        expect(event.resource_type).toBe("workspace_member");
+      });
+
+      it("records result = 'denied' when api_keys.revoke_any is denied to non-admin", async () => {
+        // 1. Create key as owner
+        const { apiKey } = await withContext(
+          prisma,
+          contextOwner,
+          async (tx) => {
+            return createApiKey(tx, contextOwner, {
+              name: "Owner Private Key",
+            });
+          },
+        );
+
+        const initialDeniedCount = await getAuditEventCount(
+          "api_keys.revoke_any",
+          "denied",
+        );
+
+        // 2. Member without revoke_any (editor in workspace, admin in org) attempts to revoke owner's key
+        // Wait: in guard, requireWorkspacePermission checks if user is admin in workspace
+        // contextEditor is editor in workspace, not admin.
+        await expect(
+          withContext(prisma, contextEditor, async (tx) => {
+            return revokeApiKey(tx, contextEditor, apiKey.id);
+          }),
+        ).rejects.toThrow(PermissionDeniedError);
+
+        const newDeniedCount = await getAuditEventCount(
+          "api_keys.revoke_any",
+          "denied",
+        );
+        expect(newDeniedCount).toBe(initialDeniedCount + 1);
+
+        const event = await getLatestAuditEvent(
+          "api_keys.revoke_any",
+          "denied",
+        );
+        expect(event.result).toBe("denied");
+        expect(event.resource_id).toBe(apiKey.id);
+      });
+    });
+  },
+);

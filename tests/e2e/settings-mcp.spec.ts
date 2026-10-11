@@ -53,16 +53,24 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
 
     await expect(page.getByText(/Configurações/i).first()).toBeVisible();
     await expect(
-      page.getByText(/(Assistentes conectados \(MCP\)|Assistentes MCP)/i).first(),
+      page
+        .getByText(/(Assistentes conectados \(MCP\)|Assistentes MCP)/i)
+        .first(),
     ).toBeVisible();
 
     // Verify empty state or table container
     await expect(
-      page.getByText(/(Nenhuma chave emitida|Chaves de API Emitidas \(0\)|Nenhum assistente conectado)/i).first(),
+      page
+        .getByText(
+          /(Nenhuma chave emitida|Chaves de API Emitidas \(0\)|Nenhum assistente conectado)/i,
+        )
+        .first(),
     ).toBeVisible();
 
     // Verify creation button is accessible to owner
-    await expect(page.getByRole("button", { name: "Emitir Nova Chave" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Emitir Nova Chave" }),
+    ).toBeVisible();
   });
 
   test("Tier 1: Creates new MCP key with default scopes (workspace:read + modules:read)", async ({
@@ -89,7 +97,10 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
 
     // Verify modal is open
     await expect(
-      page.getByRole("heading", { name: /Emitir Nova Chave/i }).or(page.getByText(/Emitir Nova Chave/i)).first(),
+      page
+        .getByRole("heading", { name: /Emitir Nova Chave/i })
+        .or(page.getByText(/Emitir Nova Chave/i))
+        .first(),
     ).toBeVisible();
 
     // Fill key name / application label
@@ -97,17 +108,32 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await page.getByPlaceholder(/Conector Cursor|Nome da Chave/i).fill(keyName);
 
     // Verify default scopes are checked and write scope is unchecked
-    const wsReadCheckbox = page.locator('input[type="checkbox"][value="workspace:read"], input[type="checkbox"]:has-text("workspace:read")').or(
-      page.locator('label:has-text("workspace:read") input[type="checkbox"]')
-    ).first();
+    const wsReadCheckbox = page
+      .locator(
+        'input[type="checkbox"][value="workspace:read"], input[type="checkbox"]:has-text("workspace:read")',
+      )
+      .or(
+        page.locator('label:has-text("workspace:read") input[type="checkbox"]'),
+      )
+      .first();
 
-    const modReadCheckbox = page.locator('input[type="checkbox"][value="modules:read"], input[type="checkbox"]:has-text("modules:read")').or(
-      page.locator('label:has-text("modules:read") input[type="checkbox"]')
-    ).first();
+    const modReadCheckbox = page
+      .locator(
+        'input[type="checkbox"][value="modules:read"], input[type="checkbox"]:has-text("modules:read")',
+      )
+      .or(page.locator('label:has-text("modules:read") input[type="checkbox"]'))
+      .first();
 
-    const propWriteCheckbox = page.locator('input[type="checkbox"][value="proposals:write"], input[type="checkbox"]:has-text("proposals:write")').or(
-      page.locator('label:has-text("proposals:write") input[type="checkbox"]')
-    ).first();
+    const propWriteCheckbox = page
+      .locator(
+        'input[type="checkbox"][value="proposals:write"], input[type="checkbox"]:has-text("proposals:write")',
+      )
+      .or(
+        page.locator(
+          'label:has-text("proposals:write") input[type="checkbox"]',
+        ),
+      )
+      .first();
 
     // If explicit scope checkboxes exist, check their default state
     if (await wsReadCheckbox.isVisible().catch(() => false)) {
@@ -125,7 +151,9 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
 
     // Verify success feedback and single-reveal raw key
     await expect(
-      page.getByText(/(Chave de API emitida com sucesso|Chave emitida com sucesso)/i),
+      page.getByText(
+        /(Chave de API emitida com sucesso|Chave emitida com sucesso)/i,
+      ),
     ).toBeVisible();
     await expect(page.getByText(/gdu_live_[a-f0-9]{64}/)).toBeVisible();
 
@@ -160,7 +188,9 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await page.getByPlaceholder(/Conector Cursor|Nome da Chave/i).fill(keyName);
 
     // Locate proposals:write checkbox / label
-    const propWriteLabel = page.getByText(/proposals:write|Escrita de Propostas/i).first();
+    const propWriteLabel = page
+      .getByText(/proposals:write|Escrita de Propostas/i)
+      .first();
     await propWriteLabel.click();
 
     // Verify mandatory warning alert appears in UI
@@ -199,23 +229,35 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await page.goto(`/app/${wsSlug}/settings/mcp`);
 
     await page.getByRole("button", { name: "Emitir Nova Chave" }).click();
-    await page.getByPlaceholder(/Conector Cursor|Nome da Chave/i).fill("Temporary Reveal Key");
+    await page
+      .getByPlaceholder(/Conector Cursor|Nome da Chave/i)
+      .fill("Temporary Reveal Key");
     await page.getByRole("button", { name: /Emitir Chave/i }).click();
 
     // Single reveal banner visible with explicit notice
     await expect(
-      page.getByText(/(nunca mais poderá ser visualizado|não poderá ser recuperada|armazene-o com segurança)/i),
+      page.getByText(
+        /(nunca mais poderá ser visualizado|não poderá ser recuperada|armazene-o com segurança)/i,
+      ),
     ).toBeVisible();
 
     // Copy button exists
-    const copyButton = page.getByRole("button", { name: /Copiar Chave|Copiar/i });
+    const copyButton = page.getByRole("button", {
+      name: /Copiar Chave|Copiar/i,
+    });
     await expect(copyButton).toBeVisible();
 
     // Capture the raw key text
-    const rawKeyText = await page.getByText(/gdu_live_[a-f0-9]{64}/).innerText().catch(async () => {
-      const match = await page.locator("text=/gdu_live_/").first().innerText();
-      return match;
-    });
+    const rawKeyText = await page
+      .getByText(/gdu_live_[a-f0-9]{64}/)
+      .innerText()
+      .catch(async () => {
+        const match = await page
+          .locator("text=/gdu_live_/")
+          .first()
+          .innerText();
+        return match;
+      });
     expect(rawKeyText).toContain("gdu_live_");
 
     // Click copy button
@@ -263,18 +305,26 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
 
     // Handle browser confirm dialog or custom confirmation modal
     page.once("dialog", async (dialog) => {
-      expect(dialog.message()).toMatch(/(Revogar|perderão o acesso imediatamente)/i);
+      expect(dialog.message()).toMatch(
+        /(Revogar|perderão o acesso imediatamente)/i,
+      );
       await dialog.accept();
     });
 
     // Click revoke button (trash or action button)
-    const revokeButton = page.getByRole("button", { name: /Revogar chave|Revogar/i }).or(
-      page.locator('button[title*="Revogar"], button[aria-label*="Revogar"]').first()
-    );
+    const revokeButton = page
+      .getByRole("button", { name: /Revogar chave|Revogar/i })
+      .or(
+        page
+          .locator('button[title*="Revogar"], button[aria-label*="Revogar"]')
+          .first(),
+      );
     await revokeButton.click();
 
     // If custom modal confirmation exists instead of dialog:
-    const confirmModalButton = page.getByRole("button", { name: /Confirmar Revogação|Sim, revogar/i });
+    const confirmModalButton = page.getByRole("button", {
+      name: /Confirmar Revogação|Sim, revogar/i,
+    });
     if (await confirmModalButton.isVisible().catch(() => false)) {
       await confirmModalButton.click();
     }
@@ -303,32 +353,47 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await page.goto(`/app/${wsSlug}/settings/mcp`);
 
     // Viewer CAN see page and "Emitir Nova Chave" button for read-only keys
-    await expect(page.getByRole("button", { name: "Emitir Nova Chave" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Emitir Nova Chave" }),
+    ).toBeVisible();
 
     // Open creation modal
     await page.getByRole("button", { name: "Emitir Nova Chave" }).click();
 
     // Verify proposals:write checkbox is disabled or blocked for viewer
-    const propWriteInput = page.locator('input[type="checkbox"][value="proposals:write"]').or(
-      page.locator('label:has-text("proposals:write") input[type="checkbox"]')
-    ).first();
+    const propWriteInput = page
+      .locator('input[type="checkbox"][value="proposals:write"]')
+      .or(
+        page.locator(
+          'label:has-text("proposals:write") input[type="checkbox"]',
+        ),
+      )
+      .first();
 
     if (await propWriteInput.isVisible().catch(() => false)) {
       await expect(propWriteInput).toBeDisabled();
     } else {
       // Alternatively, proposals:write is not shown or clearly marked as restricted
-      const writeDisabledNotice = page.getByText(/Sem permissão para emitir escrita|Apenas leitura para visualizador|proposals:write/i).first();
+      const writeDisabledNotice = page
+        .getByText(
+          /Sem permissão para emitir escrita|Apenas leitura para visualizador|proposals:write/i,
+        )
+        .first();
       await expect(writeDisabledNotice).toBeVisible();
     }
 
     // Viewer creates key with allowed read scopes
     const viewerKeyName = "Viewer Read-Only Assistant";
-    await page.getByPlaceholder(/Conector Cursor|Nome da Chave/i).fill(viewerKeyName);
+    await page
+      .getByPlaceholder(/Conector Cursor|Nome da Chave/i)
+      .fill(viewerKeyName);
     await page.getByRole("button", { name: /Emitir Chave/i }).click();
 
     // Creation succeeds for read scopes
     await expect(
-      page.getByText(/(Chave de API emitida com sucesso|Chave emitida com sucesso)/i),
+      page.getByText(
+        /(Chave de API emitida com sucesso|Chave emitida com sucesso)/i,
+      ),
     ).toBeVisible();
     await expect(page.getByText(viewerKeyName)).toBeVisible();
   });

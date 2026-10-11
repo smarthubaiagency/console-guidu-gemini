@@ -19,7 +19,15 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 vi.mock("server-only", () => ({}));
 
@@ -55,7 +63,10 @@ import { describeDatabase } from "../prisma-rls/describe-database";
 
 const pooledUrl = process.env.DATABASE_URL;
 const directUrl = process.env.DIRECT_DATABASE_URL;
-const requiredVars = { DATABASE_URL: pooledUrl, DIRECT_DATABASE_URL: directUrl };
+const requiredVars = {
+  DATABASE_URL: pooledUrl,
+  DIRECT_DATABASE_URL: directUrl,
+};
 
 // Synthetic fixtures defined in tests/core/membership-seed.sql
 const fixtures = {
@@ -104,636 +115,644 @@ function createTestIdentity(params: {
   };
 }
 
-describeDatabase("core membership, RBAC & invitations (AC03, AC04, AC06)", requiredVars, () => {
-  const prisma = new PrismaClient({ datasourceUrl: pooledUrl! });
+describeDatabase(
+  "core membership, RBAC & invitations (AC03, AC04, AC06)",
+  requiredVars,
+  () => {
+    const prisma = new PrismaClient({ datasourceUrl: pooledUrl! });
 
-  beforeAll(async () => {
-    await prisma.$connect();
-  });
-
-  afterAll(async () => {
-    await prisma.$disconnect();
-  });
-
-  beforeEach(async () => {
-    await withContext(prisma, ownerContext, async (tx) => {
-      await tx.organization.update({
-        where: { id: fixtures.orgId },
-        data: { maxSeats: 10 },
-      });
-      await tx.invitation.deleteMany({
-        where: { organizationId: fixtures.orgId },
-      });
-      await tx.organizationMember.deleteMany({
-        where: {
-          organizationId: fixtures.orgId,
-          userId: { not: fixtures.ownerId },
-        },
-      });
+    beforeAll(async () => {
+      await prisma.$connect();
     });
-  });
 
-  describe("AC04: Protection of the Last Active Owner", () => {
-    it("refuses to demote the sole active organization owner", async () => {
+    afterAll(async () => {
+      await prisma.$disconnect();
+    });
+
+    beforeEach(async () => {
       await withContext(prisma, ownerContext, async (tx) => {
-        // Ensure sole owner state
+        await tx.organization.update({
+          where: { id: fixtures.orgId },
+          data: { maxSeats: 10 },
+        });
+        await tx.invitation.deleteMany({
+          where: { organizationId: fixtures.orgId },
+        });
         await tx.organizationMember.deleteMany({
           where: {
             organizationId: fixtures.orgId,
             userId: { not: fixtures.ownerId },
           },
         });
-
-        // Demoting the sole owner must throw LastOwnerCannotBeRemovedError
-        await expect(
-          updateOrganizationMemberRole(tx, {
-            organizationId: fixtures.orgId,
-            actorId: fixtures.ownerId,
-            targetUserId: fixtures.ownerId,
-            newRole: "admin",
-          }),
-        ).rejects.toThrow(LastOwnerCannotBeRemovedError);
       });
     });
 
-    it("refuses to remove the sole active organization owner", async () => {
-      await withContext(prisma, ownerContext, async (tx) => {
-        await expect(
-          removeOrganizationMember(tx, {
-            organizationId: fixtures.orgId,
-            actorId: fixtures.ownerId,
-            targetUserId: fixtures.ownerId,
-          }),
-        ).rejects.toThrow(LastOwnerCannotBeRemovedError);
-      });
-    });
+    describe("AC04: Protection of the Last Active Owner", () => {
+      it("refuses to demote the sole active organization owner", async () => {
+        await withContext(prisma, ownerContext, async (tx) => {
+          // Ensure sole owner state
+          await tx.organizationMember.deleteMany({
+            where: {
+              organizationId: fixtures.orgId,
+              userId: { not: fixtures.ownerId },
+            },
+          });
 
-    it("enforces last-owner invariant via database trigger on direct SQL execution", async () => {
-      await withContext(prisma, ownerContext, async (tx) => {
-        // Direct SQL update attempting to bypass application service
-        await expect(
-          tx.$executeRaw`
+          // Demoting the sole owner must throw LastOwnerCannotBeRemovedError
+          await expect(
+            updateOrganizationMemberRole(tx, {
+              organizationId: fixtures.orgId,
+              actorId: fixtures.ownerId,
+              targetUserId: fixtures.ownerId,
+              newRole: "admin",
+            }),
+          ).rejects.toThrow(LastOwnerCannotBeRemovedError);
+        });
+      });
+
+      it("refuses to remove the sole active organization owner", async () => {
+        await withContext(prisma, ownerContext, async (tx) => {
+          await expect(
+            removeOrganizationMember(tx, {
+              organizationId: fixtures.orgId,
+              actorId: fixtures.ownerId,
+              targetUserId: fixtures.ownerId,
+            }),
+          ).rejects.toThrow(LastOwnerCannotBeRemovedError);
+        });
+      });
+
+      it("enforces last-owner invariant via database trigger on direct SQL execution", async () => {
+        await withContext(prisma, ownerContext, async (tx) => {
+          // Direct SQL update attempting to bypass application service
+          await expect(
+            tx.$executeRaw`
             update public.organization_members
             set role = 'admin'
             where organization_id = ${fixtures.orgId}::uuid
               and user_id = ${fixtures.ownerId}::uuid
           `,
-        ).rejects.toThrow(/Cannot remove, revoke or demote the last active owner/);
+          ).rejects.toThrow(
+            /Cannot remove, revoke or demote the last active owner/,
+          );
+        });
       });
-    });
 
-    it("allows demoting an owner once a co-owner exists", async () => {
-      await withContext(prisma, ownerContext, async (tx) => {
-        // 1. Add admin user as second owner
-        await tx.organizationMember.upsert({
-          where: {
-            organizationId_userId: {
+      it("allows demoting an owner once a co-owner exists", async () => {
+        await withContext(prisma, ownerContext, async (tx) => {
+          // 1. Add admin user as second owner
+          await tx.organizationMember.upsert({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.adminId,
+              },
+            },
+            update: { role: "owner", status: "active" },
+            create: {
               organizationId: fixtures.orgId,
               userId: fixtures.adminId,
+              role: "owner",
+              status: "active",
             },
-          },
-          update: { role: "owner", status: "active" },
-          create: {
-            organizationId: fixtures.orgId,
-            userId: fixtures.adminId,
-            role: "owner",
-            status: "active",
-          },
-        });
+          });
 
-        // Switch contextual actor to adminId (who is now co-owner)
-        await tx.$executeRaw`select set_config('app.user_id', ${fixtures.adminId}, true)`;
+          // Switch contextual actor to adminId (who is now co-owner)
+          await tx.$executeRaw`select set_config('app.user_id', ${fixtures.adminId}, true)`;
 
-        // 2. Now demoting original owner succeeds because another active owner exists
-        const updated = await updateOrganizationMemberRole(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.adminId,
-          targetUserId: fixtures.ownerId,
-          newRole: "admin",
-        });
-        expect(updated.role).toBe("admin");
-
-        // 3. Demoting the remaining owner fails again
-        await expect(
-          updateOrganizationMemberRole(tx, {
+          // 2. Now demoting original owner succeeds because another active owner exists
+          const updated = await updateOrganizationMemberRole(tx, {
             organizationId: fixtures.orgId,
             actorId: fixtures.adminId,
-            targetUserId: fixtures.adminId,
+            targetUserId: fixtures.ownerId,
             newRole: "admin",
-          }),
-        ).rejects.toThrow(LastOwnerCannotBeRemovedError);
+          });
+          expect(updated.role).toBe("admin");
 
-        // 4. Restore original owner
-        await updateOrganizationMemberRole(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.adminId,
-          targetUserId: fixtures.ownerId,
-          newRole: "owner",
-        });
-
-        // Restore context to ownerId for cleanup
-        await tx.$executeRaw`select set_config('app.user_id', ${fixtures.ownerId}, true)`;
-
-        // Clean up second owner
-        await tx.organizationMember.delete({
-          where: {
-            organizationId_userId: {
+          // 3. Demoting the remaining owner fails again
+          await expect(
+            updateOrganizationMemberRole(tx, {
               organizationId: fixtures.orgId,
-              userId: fixtures.adminId,
+              actorId: fixtures.adminId,
+              targetUserId: fixtures.adminId,
+              newRole: "admin",
+            }),
+          ).rejects.toThrow(LastOwnerCannotBeRemovedError);
+
+          // 4. Restore original owner
+          await updateOrganizationMemberRole(tx, {
+            organizationId: fixtures.orgId,
+            actorId: fixtures.adminId,
+            targetUserId: fixtures.ownerId,
+            newRole: "owner",
+          });
+
+          // Restore context to ownerId for cleanup
+          await tx.$executeRaw`select set_config('app.user_id', ${fixtures.ownerId}, true)`;
+
+          // Clean up second owner
+          await tx.organizationMember.delete({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.adminId,
+              },
             },
-          },
+          });
         });
       });
     });
-  });
 
-  describe("AC04: Privilege Escalation Controls", () => {
-    it("denies an admin from promoting a member to owner", async () => {
-      await withContext(prisma, ownerContext, async (tx) => {
-        // Add admin
-        await tx.organizationMember.upsert({
-          where: {
-            organizationId_userId: {
+    describe("AC04: Privilege Escalation Controls", () => {
+      it("denies an admin from promoting a member to owner", async () => {
+        await withContext(prisma, ownerContext, async (tx) => {
+          // Add admin
+          await tx.organizationMember.upsert({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.adminId,
+              },
+            },
+            update: { role: "admin", status: "active" },
+            create: {
               organizationId: fixtures.orgId,
               userId: fixtures.adminId,
+              role: "admin",
+              status: "active",
             },
-          },
-          update: { role: "admin", status: "active" },
-          create: {
-            organizationId: fixtures.orgId,
-            userId: fixtures.adminId,
-            role: "admin",
-            status: "active",
-          },
-        });
+          });
 
-        // Add regular user
-        await tx.organizationMember.upsert({
-          where: {
-            organizationId_userId: {
+          // Add regular user
+          await tx.organizationMember.upsert({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.users[0],
+              },
+            },
+            update: { role: "member", status: "active" },
+            create: {
               organizationId: fixtures.orgId,
               userId: fixtures.users[0],
+              role: "member",
+              status: "active",
             },
-          },
-          update: { role: "member", status: "active" },
-          create: {
+          });
+
+          // Admin attempting to promote user to owner
+          await expect(
+            updateOrganizationMemberRole(tx, {
+              organizationId: fixtures.orgId,
+              actorId: fixtures.adminId,
+              targetUserId: fixtures.users[0],
+              newRole: "owner",
+            }),
+          ).rejects.toThrow(InsufficientRoleError);
+
+          // Clean up
+          await tx.organizationMember.deleteMany({
+            where: {
+              organizationId: fixtures.orgId,
+              userId: { in: [fixtures.adminId, fixtures.users[0]] },
+            },
+          });
+        });
+      });
+
+      it("denies an admin from inviting someone with the owner role", async () => {
+        await withContext(prisma, ownerContext, async (tx) => {
+          await tx.organizationMember.upsert({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.adminId,
+              },
+            },
+            update: { role: "admin", status: "active" },
+            create: {
+              organizationId: fixtures.orgId,
+              userId: fixtures.adminId,
+              role: "admin",
+              status: "active",
+            },
+          });
+
+          // Admin attempting to issue an owner invitation
+          await expect(
+            createInvitation(tx, {
+              organizationId: fixtures.orgId,
+              actorId: fixtures.adminId,
+              email: "external-owner@test.guidu.co",
+              role: "owner",
+            }),
+          ).rejects.toThrow(InsufficientRoleError);
+
+          await tx.organizationMember.delete({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.adminId,
+              },
+            },
+          });
+        });
+      });
+    });
+
+    describe("AC06: Expirable Tokens & Invitation Lifecycle", () => {
+      it("generates high-entropy token and stores only SHA-256 hash, accepting with verified confirmed identity", async () => {
+        let createdRawToken = "";
+        await withContext(prisma, ownerContext, async (tx) => {
+          const { invitation, rawToken } = await createInvitation(tx, {
             organizationId: fixtures.orgId,
-            userId: fixtures.users[0],
+            actorId: fixtures.ownerId,
+            email: "crypto-check@test.guidu.co",
             role: "member",
-            status: "active",
-          },
+          });
+
+          createdRawToken = rawToken;
+          expect(rawToken).toHaveLength(64); // 32 bytes hex
+          expect(invitation.tokenHash).toBe(hashInvitationToken(rawToken));
+          expect(invitation.status).toBe("pending");
         });
 
-        // Admin attempting to promote user to owner
-        await expect(
-          updateOrganizationMemberRole(tx, {
-            organizationId: fixtures.orgId,
-            actorId: fixtures.adminId,
-            targetUserId: fixtures.users[0],
-            newRole: "owner",
-          }),
-        ).rejects.toThrow(InsufficientRoleError);
-
-        // Clean up
-        await tx.organizationMember.deleteMany({
-          where: {
-            organizationId: fixtures.orgId,
-            userId: { in: [fixtures.adminId, fixtures.users[0]] },
-          },
-        });
-      });
-    });
-
-    it("denies an admin from inviting someone with the owner role", async () => {
-      await withContext(prisma, ownerContext, async (tx) => {
-        await tx.organizationMember.upsert({
-          where: {
-            organizationId_userId: {
-              organizationId: fixtures.orgId,
-              userId: fixtures.adminId,
-            },
-          },
-          update: { role: "admin", status: "active" },
-          create: {
-            organizationId: fixtures.orgId,
-            userId: fixtures.adminId,
-            role: "admin",
-            status: "active",
-          },
-        });
-
-        // Admin attempting to issue an owner invitation
-        await expect(
-          createInvitation(tx, {
-            organizationId: fixtures.orgId,
-            actorId: fixtures.adminId,
-            email: "external-owner@test.guidu.co",
-            role: "owner",
-          }),
-        ).rejects.toThrow(InsufficientRoleError);
-
-        await tx.organizationMember.delete({
-          where: {
-            organizationId_userId: {
-              organizationId: fixtures.orgId,
-              userId: fixtures.adminId,
-            },
-          },
-        });
-      });
-    });
-  });
-
-  describe("AC06: Expirable Tokens & Invitation Lifecycle", () => {
-    it("generates high-entropy token and stores only SHA-256 hash, accepting with verified confirmed identity", async () => {
-      let createdRawToken = "";
-      await withContext(prisma, ownerContext, async (tx) => {
-        const { invitation, rawToken } = await createInvitation(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          email: "crypto-check@test.guidu.co",
-          role: "member",
-        });
-
-        createdRawToken = rawToken;
-        expect(rawToken).toHaveLength(64); // 32 bytes hex
-        expect(invitation.tokenHash).toBe(hashInvitationToken(rawToken));
-        expect(invitation.status).toBe("pending");
-      });
-
-      // Verification via acceptInvitation with verified matching identity
-      const result = await acceptInvitation(prisma, {
-        rawToken: createdRawToken,
-        identity: createTestIdentity({
-          userId: fixtures.users[1],
-          email: "crypto-check@test.guidu.co",
-        }),
-      });
-      expect(result.invitation.status).toBe("accepted");
-
-      // Clean up accepted member
-      await withContext(prisma, ownerContext, async (tx) => {
-        await tx.organizationMember.delete({
-          where: {
-            organizationId_userId: {
-              organizationId: fixtures.orgId,
-              userId: fixtures.users[1],
-            },
-          },
-        });
-      });
-    });
-
-    it("refuses acceptance when recipient email does not match, throwing InvitationRecipientMismatchError without creating membership", async () => {
-      let candidateRawToken = "";
-      await withContext(prisma, ownerContext, async (tx) => {
-        const { rawToken } = await createInvitation(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          email: "destinatario-correto@test.guidu.co",
-          role: "member",
-        });
-        candidateRawToken = rawToken;
-      });
-
-      // Different user with different email attempts to accept
-      await expect(
-        acceptInvitation(prisma, {
-          rawToken: candidateRawToken,
+        // Verification via acceptInvitation with verified matching identity
+        const result = await acceptInvitation(prisma, {
+          rawToken: createdRawToken,
           identity: createTestIdentity({
-            userId: fixtures.users[2],
-            email: "outro-usuario@test.guidu.co",
+            userId: fixtures.users[1],
+            email: "crypto-check@test.guidu.co",
           }),
-        }),
-      ).rejects.toThrow(InvitationRecipientMismatchError);
-
-      // Verify no membership was created for the mismatched user
-      await withContext(prisma, ownerContext, async (tx) => {
-        const member = await tx.organizationMember.findUnique({
-          where: {
-            organizationId_userId: {
-              organizationId: fixtures.orgId,
-              userId: fixtures.users[2],
-            },
-          },
         });
-        expect(member).toBeNull();
+        expect(result.invitation.status).toBe("accepted");
+
+        // Clean up accepted member
+        await withContext(prisma, ownerContext, async (tx) => {
+          await tx.organizationMember.delete({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.users[1],
+              },
+            },
+          });
+        });
+      });
+
+      it("refuses acceptance when recipient email does not match, throwing InvitationRecipientMismatchError without creating membership", async () => {
+        let candidateRawToken = "";
+        await withContext(prisma, ownerContext, async (tx) => {
+          const { rawToken } = await createInvitation(tx, {
+            organizationId: fixtures.orgId,
+            actorId: fixtures.ownerId,
+            email: "destinatario-correto@test.guidu.co",
+            role: "member",
+          });
+          candidateRawToken = rawToken;
+        });
+
+        // Different user with different email attempts to accept
+        await expect(
+          acceptInvitation(prisma, {
+            rawToken: candidateRawToken,
+            identity: createTestIdentity({
+              userId: fixtures.users[2],
+              email: "outro-usuario@test.guidu.co",
+            }),
+          }),
+        ).rejects.toThrow(InvitationRecipientMismatchError);
+
+        // Verify no membership was created for the mismatched user
+        await withContext(prisma, ownerContext, async (tx) => {
+          const member = await tx.organizationMember.findUnique({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.users[2],
+              },
+            },
+          });
+          expect(member).toBeNull();
+
+          // Clean up invitation
+          await tx.invitation.deleteMany({
+            where: {
+              organizationId: fixtures.orgId,
+              email: "destinatario-correto@test.guidu.co",
+            },
+          });
+        });
+      });
+
+      it("refuses acceptance when recipient email is not confirmed, throwing InvitationEmailUnconfirmedError", async () => {
+        let candidateRawToken = "";
+        await withContext(prisma, ownerContext, async (tx) => {
+          const { rawToken } = await createInvitation(tx, {
+            organizationId: fixtures.orgId,
+            actorId: fixtures.ownerId,
+            email: "unconfirmed-user@test.guidu.co",
+            role: "member",
+          });
+          candidateRawToken = rawToken;
+        });
+
+        // User with matching email but unconfirmed email status attempts to accept
+        await expect(
+          acceptInvitation(prisma, {
+            rawToken: candidateRawToken,
+            identity: createTestIdentity({
+              userId: fixtures.users[3],
+              email: "unconfirmed-user@test.guidu.co",
+              emailConfirmedAt: null,
+            }),
+          }),
+        ).rejects.toThrow(InvitationEmailUnconfirmedError);
 
         // Clean up invitation
-        await tx.invitation.deleteMany({
-          where: {
+        await withContext(prisma, ownerContext, async (tx) => {
+          await tx.invitation.deleteMany({
+            where: {
+              organizationId: fixtures.orgId,
+              email: "unconfirmed-user@test.guidu.co",
+            },
+          });
+        });
+      });
+
+      it("refuses acceptance of an expired invitation", async () => {
+        let expiredRawToken = "";
+        await withContext(prisma, ownerContext, async (tx) => {
+          const { rawToken } = await createInvitation(tx, {
             organizationId: fixtures.orgId,
-            email: "destinatario-correto@test.guidu.co",
-          },
-        });
-      });
-    });
-
-    it("refuses acceptance when recipient email is not confirmed, throwing InvitationEmailUnconfirmedError", async () => {
-      let candidateRawToken = "";
-      await withContext(prisma, ownerContext, async (tx) => {
-        const { rawToken } = await createInvitation(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          email: "unconfirmed-user@test.guidu.co",
-          role: "member",
-        });
-        candidateRawToken = rawToken;
-      });
-
-      // User with matching email but unconfirmed email status attempts to accept
-      await expect(
-        acceptInvitation(prisma, {
-          rawToken: candidateRawToken,
-          identity: createTestIdentity({
-            userId: fixtures.users[3],
-            email: "unconfirmed-user@test.guidu.co",
-            emailConfirmedAt: null,
-          }),
-        }),
-      ).rejects.toThrow(InvitationEmailUnconfirmedError);
-
-      // Clean up invitation
-      await withContext(prisma, ownerContext, async (tx) => {
-        await tx.invitation.deleteMany({
-          where: {
-            organizationId: fixtures.orgId,
-            email: "unconfirmed-user@test.guidu.co",
-          },
-        });
-      });
-    });
-
-    it("refuses acceptance of an expired invitation", async () => {
-      let expiredRawToken = "";
-      await withContext(prisma, ownerContext, async (tx) => {
-        const { rawToken } = await createInvitation(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          email: "expired-check@test.guidu.co",
-          role: "member",
-          expiresInHours: -1, // Expired 1 hour ago
-        });
-        expiredRawToken = rawToken;
-      });
-
-      await expect(
-        acceptInvitation(prisma, {
-          rawToken: expiredRawToken,
-          identity: createTestIdentity({
-            userId: fixtures.users[2],
+            actorId: fixtures.ownerId,
             email: "expired-check@test.guidu.co",
-          }),
-        }),
-      ).rejects.toThrow(InvitationExpiredError);
-    });
+            role: "member",
+            expiresInHours: -1, // Expired 1 hour ago
+          });
+          expiredRawToken = rawToken;
+        });
 
-    it("refuses acceptance of a revoked invitation", async () => {
-      let revokedRawToken = "";
-      await withContext(prisma, ownerContext, async (tx) => {
-        const { invitation, rawToken } = await createInvitation(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          email: "revoked-check@test.guidu.co",
-          role: "member",
-        });
-        await revokeInvitation(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          invitationId: invitation.id,
-        });
-        revokedRawToken = rawToken;
+        await expect(
+          acceptInvitation(prisma, {
+            rawToken: expiredRawToken,
+            identity: createTestIdentity({
+              userId: fixtures.users[2],
+              email: "expired-check@test.guidu.co",
+            }),
+          }),
+        ).rejects.toThrow(InvitationExpiredError);
       });
 
-      await expect(
-        acceptInvitation(prisma, {
-          rawToken: revokedRawToken,
-          identity: createTestIdentity({
-            userId: fixtures.users[3],
+      it("refuses acceptance of a revoked invitation", async () => {
+        let revokedRawToken = "";
+        await withContext(prisma, ownerContext, async (tx) => {
+          const { invitation, rawToken } = await createInvitation(tx, {
+            organizationId: fixtures.orgId,
+            actorId: fixtures.ownerId,
             email: "revoked-check@test.guidu.co",
-          }),
-        }),
-      ).rejects.toThrow(InvitationRevokedError);
-    });
-
-    it("refuses duplicate acceptance of an already accepted invitation", async () => {
-      let rawTokenToReuse = "";
-      await withContext(prisma, ownerContext, async (tx) => {
-        const { rawToken } = await createInvitation(tx, {
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          email: "reuse-check@test.guidu.co",
-          role: "member",
+            role: "member",
+          });
+          await revokeInvitation(tx, {
+            organizationId: fixtures.orgId,
+            actorId: fixtures.ownerId,
+            invitationId: invitation.id,
+          });
+          revokedRawToken = rawToken;
         });
-        rawTokenToReuse = rawToken;
+
+        await expect(
+          acceptInvitation(prisma, {
+            rawToken: revokedRawToken,
+            identity: createTestIdentity({
+              userId: fixtures.users[3],
+              email: "revoked-check@test.guidu.co",
+            }),
+          }),
+        ).rejects.toThrow(InvitationRevokedError);
       });
 
-      // First accept: OK
-      await acceptInvitation(prisma, {
-        rawToken: rawTokenToReuse,
-        identity: createTestIdentity({
-          userId: fixtures.users[4],
-          email: "reuse-check@test.guidu.co",
-        }),
-      });
+      it("refuses duplicate acceptance of an already accepted invitation", async () => {
+        let rawTokenToReuse = "";
+        await withContext(prisma, ownerContext, async (tx) => {
+          const { rawToken } = await createInvitation(tx, {
+            organizationId: fixtures.orgId,
+            actorId: fixtures.ownerId,
+            email: "reuse-check@test.guidu.co",
+            role: "member",
+          });
+          rawTokenToReuse = rawToken;
+        });
 
-      // Second accept with same token: rejected
-      await expect(
-        acceptInvitation(prisma, {
+        // First accept: OK
+        await acceptInvitation(prisma, {
           rawToken: rawTokenToReuse,
           identity: createTestIdentity({
             userId: fixtures.users[4],
             email: "reuse-check@test.guidu.co",
           }),
-        }),
-      ).rejects.toThrow(InvitationAlreadyAcceptedError);
-
-      // Clean up
-      await withContext(prisma, ownerContext, async (tx) => {
-        await tx.organizationMember.delete({
-          where: {
-            organizationId_userId: {
-              organizationId: fixtures.orgId,
-              userId: fixtures.users[4],
-            },
-          },
-        });
-      });
-    });
-  });
-
-  describe("AC06: Atomic Seat Quota Concurrency", () => {
-    it("serializes concurrent invitations under race condition, respecting max_seats", async () => {
-      // Setup: Organization Quota Test has max_seats = 3.
-      // Currently has 1 active member (fixtures.ownerId).
-      // Available seats = 3 - 1 = 2 seats!
-      // We will issue 5 invitations to 5 different users, and attempt to accept
-      // all 5 simultaneously in parallel using Promise.allSettled.
-      // Exactly 2 MUST succeed and exactly 3 MUST fail with SeatLimitExceededError!
-
-      const candidateTokens: string[] = [];
-
-      await withContext(prisma, ownerContext, async (tx) => {
-        // Reset organization seats to exactly 3
-        await tx.organization.update({
-          where: { id: fixtures.orgId },
-          data: { maxSeats: 3 },
         });
 
-        // Ensure only owner is a member
-        await tx.organizationMember.deleteMany({
-          where: {
-            organizationId: fixtures.orgId,
-            userId: { not: fixtures.ownerId },
-          },
-        });
-
-        // Clear any old invitations for this org
-        await tx.invitation.deleteMany({
-          where: { organizationId: fixtures.orgId },
-        });
-
-        // For the concurrency test on accept, create 5 pending invitations
-        // by temporarily bumping seats during generation
-        await tx.organization.update({
-          where: { id: fixtures.orgId },
-          data: { maxSeats: 10 },
-        });
-
-        for (let i = 0; i < 5; i++) {
-          const { rawToken } = await createInvitation(tx, {
-            organizationId: fixtures.orgId,
-            actorId: fixtures.ownerId,
-            email: `concurrency-candidate-${i}@test.guidu.co`,
-            role: "member",
-          });
-          candidateTokens.push(rawToken);
-        }
-
-        // Restore target quota to 3 (meaning only 2 seats remain available!)
-        await tx.organization.update({
-          where: { id: fixtures.orgId },
-          data: { maxSeats: 3 },
-        });
-      });
-
-      // Concurrent accept execution
-      const candidateUserIds = fixtures.users.slice(0, 5);
-      const results = await Promise.allSettled(
-        candidateTokens.map((rawToken, idx) =>
+        // Second accept with same token: rejected
+        await expect(
           acceptInvitation(prisma, {
-            rawToken,
+            rawToken: rawTokenToReuse,
             identity: createTestIdentity({
-              userId: candidateUserIds[idx]!,
-              email: `concurrency-candidate-${idx}@test.guidu.co`,
+              userId: fixtures.users[4],
+              email: "reuse-check@test.guidu.co",
             }),
           }),
-        ),
-      );
+        ).rejects.toThrow(InvitationAlreadyAcceptedError);
 
-      const fulfilled = results.filter((r) => r.status === "fulfilled");
-      const rejected = results.filter((r) => r.status === "rejected");
-
-      // Invariant AC06: Exactly 2 seats available -> exactly 2 fulfilled!
-      expect(fulfilled).toHaveLength(2);
-      expect(rejected).toHaveLength(3);
-
-      for (const rej of rejected) {
-        const error = (rej as PromiseRejectedResult).reason;
-        expect(error).toBeInstanceOf(SeatLimitExceededError);
-      }
-
-      // Verify total active members in database is strictly 3 (1 owner + 2 accepted)
-      await withContext(prisma, ownerContext, async (tx) => {
-        const members = await listOrganizationMembers(tx, fixtures.orgId);
-        expect(members).toHaveLength(3);
-
-        // Clean up candidates
-        await tx.organizationMember.deleteMany({
-          where: {
-            organizationId: fixtures.orgId,
-            userId: { not: fixtures.ownerId },
-          },
-        });
-        await tx.invitation.deleteMany({
-          where: { organizationId: fixtures.orgId },
+        // Clean up
+        await withContext(prisma, ownerContext, async (tx) => {
+          await tx.organizationMember.delete({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: fixtures.users[4],
+              },
+            },
+          });
         });
       });
     });
-  });
 
-  describe("AC03: Workspace Member Lifecycle & Revocation", () => {
-    it("adds and removes workspace member, immediately revoking access", async () => {
-      const targetUser = fixtures.users[0];
+    describe("AC06: Atomic Seat Quota Concurrency", () => {
+      it("serializes concurrent invitations under race condition, respecting max_seats", async () => {
+        // Setup: Organization Quota Test has max_seats = 3.
+        // Currently has 1 active member (fixtures.ownerId).
+        // Available seats = 3 - 1 = 2 seats!
+        // We will issue 5 invitations to 5 different users, and attempt to accept
+        // all 5 simultaneously in parallel using Promise.allSettled.
+        // Exactly 2 MUST succeed and exactly 3 MUST fail with SeatLimitExceededError!
 
-      await withContext(prisma, ownerContext, async (tx) => {
-        // Target must first be an organization member
-        await tx.organizationMember.create({
-          data: {
-            organizationId: fixtures.orgId,
-            userId: targetUser,
-            role: "member",
-            status: "active",
-          },
+        const candidateTokens: string[] = [];
+
+        await withContext(prisma, ownerContext, async (tx) => {
+          // Reset organization seats to exactly 3
+          await tx.organization.update({
+            where: { id: fixtures.orgId },
+            data: { maxSeats: 3 },
+          });
+
+          // Ensure only owner is a member
+          await tx.organizationMember.deleteMany({
+            where: {
+              organizationId: fixtures.orgId,
+              userId: { not: fixtures.ownerId },
+            },
+          });
+
+          // Clear any old invitations for this org
+          await tx.invitation.deleteMany({
+            where: { organizationId: fixtures.orgId },
+          });
+
+          // For the concurrency test on accept, create 5 pending invitations
+          // by temporarily bumping seats during generation
+          await tx.organization.update({
+            where: { id: fixtures.orgId },
+            data: { maxSeats: 10 },
+          });
+
+          for (let i = 0; i < 5; i++) {
+            const { rawToken } = await createInvitation(tx, {
+              organizationId: fixtures.orgId,
+              actorId: fixtures.ownerId,
+              email: `concurrency-candidate-${i}@test.guidu.co`,
+              role: "member",
+            });
+            candidateTokens.push(rawToken);
+          }
+
+          // Restore target quota to 3 (meaning only 2 seats remain available!)
+          await tx.organization.update({
+            where: { id: fixtures.orgId },
+            data: { maxSeats: 3 },
+          });
         });
 
-        // Add to workspace
-        const added = await addWorkspaceMember(tx, {
-          workspaceId: fixtures.workspaceId,
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          targetUserId: targetUser,
-          role: "editor",
-        });
-        expect(added.role).toBe("editor");
-
-        // Verify visible in workspace members list
-        const listAfterAdd = await listWorkspaceMembers(
-          tx,
-          fixtures.workspaceId,
-          fixtures.orgId,
+        // Concurrent accept execution
+        const candidateUserIds = fixtures.users.slice(0, 5);
+        const results = await Promise.allSettled(
+          candidateTokens.map((rawToken, idx) =>
+            acceptInvitation(prisma, {
+              rawToken,
+              identity: createTestIdentity({
+                userId: candidateUserIds[idx]!,
+                email: `concurrency-candidate-${idx}@test.guidu.co`,
+              }),
+            }),
+          ),
         );
-        expect(listAfterAdd.some((m) => m.userId === targetUser)).toBe(true);
 
-        // Remove from workspace
-        await removeWorkspaceMember(tx, {
-          workspaceId: fixtures.workspaceId,
-          organizationId: fixtures.orgId,
-          actorId: fixtures.ownerId,
-          targetUserId: targetUser,
+        const fulfilled = results.filter((r) => r.status === "fulfilled");
+        const rejected = results.filter((r) => r.status === "rejected");
+
+        // Invariant AC06: Exactly 2 seats available -> exactly 2 fulfilled!
+        expect(fulfilled).toHaveLength(2);
+        expect(rejected).toHaveLength(3);
+
+        for (const rej of rejected) {
+          const error = (rej as PromiseRejectedResult).reason;
+          expect(error).toBeInstanceOf(SeatLimitExceededError);
+        }
+
+        // Verify total active members in database is strictly 3 (1 owner + 2 accepted)
+        await withContext(prisma, ownerContext, async (tx) => {
+          const members = await listOrganizationMembers(tx, fixtures.orgId);
+          expect(members).toHaveLength(3);
+
+          // Clean up candidates
+          await tx.organizationMember.deleteMany({
+            where: {
+              organizationId: fixtures.orgId,
+              userId: { not: fixtures.ownerId },
+            },
+          });
+          await tx.invitation.deleteMany({
+            where: { organizationId: fixtures.orgId },
+          });
         });
+      });
+    });
 
-        // Verify immediately absent (AC03)
-        const listAfterRemove = await listWorkspaceMembers(
-          tx,
-          fixtures.workspaceId,
-          fixtures.orgId,
-        );
-        expect(listAfterRemove.some((m) => m.userId === targetUser)).toBe(false);
+    describe("AC03: Workspace Member Lifecycle & Revocation", () => {
+      it("adds and removes workspace member, immediately revoking access", async () => {
+        const targetUser = fixtures.users[0];
 
-        // Clean up org membership
-        await tx.organizationMember.delete({
-          where: {
-            organizationId_userId: {
+        await withContext(prisma, ownerContext, async (tx) => {
+          // Target must first be an organization member
+          await tx.organizationMember.create({
+            data: {
               organizationId: fixtures.orgId,
               userId: targetUser,
+              role: "member",
+              status: "active",
             },
-          },
-        });
-      });
-    });
+          });
 
-    it("refuses to remove the sole active workspace owner (isSelf)", async () => {
-      await withContext(prisma, ownerContext, async (tx) => {
-        await expect(
-          removeWorkspaceMember(tx, {
+          // Add to workspace
+          const added = await addWorkspaceMember(tx, {
             workspaceId: fixtures.workspaceId,
             organizationId: fixtures.orgId,
             actorId: fixtures.ownerId,
-            targetUserId: fixtures.ownerId,
-          }),
-        ).rejects.toThrow(LastOwnerCannotBeRemovedError);
+            targetUserId: targetUser,
+            role: "editor",
+          });
+          expect(added.role).toBe("editor");
+
+          // Verify visible in workspace members list
+          const listAfterAdd = await listWorkspaceMembers(
+            tx,
+            fixtures.workspaceId,
+            fixtures.orgId,
+          );
+          expect(listAfterAdd.some((m) => m.userId === targetUser)).toBe(true);
+
+          // Remove from workspace
+          await removeWorkspaceMember(tx, {
+            workspaceId: fixtures.workspaceId,
+            organizationId: fixtures.orgId,
+            actorId: fixtures.ownerId,
+            targetUserId: targetUser,
+          });
+
+          // Verify immediately absent (AC03)
+          const listAfterRemove = await listWorkspaceMembers(
+            tx,
+            fixtures.workspaceId,
+            fixtures.orgId,
+          );
+          expect(listAfterRemove.some((m) => m.userId === targetUser)).toBe(
+            false,
+          );
+
+          // Clean up org membership
+          await tx.organizationMember.delete({
+            where: {
+              organizationId_userId: {
+                organizationId: fixtures.orgId,
+                userId: targetUser,
+              },
+            },
+          });
+        });
+      });
+
+      it("refuses to remove the sole active workspace owner (isSelf)", async () => {
+        await withContext(prisma, ownerContext, async (tx) => {
+          await expect(
+            removeWorkspaceMember(tx, {
+              workspaceId: fixtures.workspaceId,
+              organizationId: fixtures.orgId,
+              actorId: fixtures.ownerId,
+              targetUserId: fixtures.ownerId,
+            }),
+          ).rejects.toThrow(LastOwnerCannotBeRemovedError);
+        });
       });
     });
-  });
-});
+  },
+);

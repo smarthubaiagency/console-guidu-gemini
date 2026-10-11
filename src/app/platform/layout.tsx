@@ -5,6 +5,8 @@ import { PlatformSidebar } from "@/components/layout/platform-sidebar";
 import { loadPlatformNavigation } from "@/core/module-runtime/loaders";
 import { PlatformHeader } from "@/components/layout/platform-header";
 import { getRequestBrand } from "@/core/brand/resolve";
+import { translateNavigation } from "@/core/i18n/navigation";
+import { getTranslations } from "next-intl/server";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
   const brand = await getRequestBrand();
   const identity = await requirePlatformAdminPage("/platform");
   const adminInfo = await getPlatformAdminMember(prisma, identity.userId);
+  const t = await getTranslations("nav");
 
   return (
     <div className="bg-surface-hover text-text flex min-h-screen flex-col">
@@ -26,7 +29,11 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 
       <div className="flex flex-1 overflow-hidden">
         <PlatformSidebar
-          sections={loadPlatformNavigation(adminInfo?.role ?? null)}
+          sections={translateNavigation(
+            loadPlatformNavigation(adminInfo?.role ?? null),
+            "platform",
+            t,
+          )}
         />
         <main className="bg-surface-sidebar flex-1 overflow-y-auto p-6 md:p-8">
           {children}

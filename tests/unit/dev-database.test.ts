@@ -52,8 +52,7 @@ describe("assertDevDatabase (ADR 0008, ADR 0010)", () => {
     expect(resultLocalhost.user).toBe("postgres");
 
     // 4. 127.0.0.1
-    const ipUrl =
-      "postgresql://app_runtime:secret@127.0.0.1:54329/postgres";
+    const ipUrl = "postgresql://app_runtime:secret@127.0.0.1:54329/postgres";
     const resultIp = assertDevDatabase(ipUrl);
     expect(resultIp.host).toBe("127.0.0.1");
     expect(resultIp.user).toBe("app_runtime");

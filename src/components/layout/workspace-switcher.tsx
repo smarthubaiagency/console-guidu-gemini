@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, ChevronDown, Check, Layers } from "lucide-react";
@@ -18,6 +19,7 @@ export function WorkspaceSwitcher({
   currentSlug,
   workspaces,
 }: WorkspaceSwitcherProps) {
+  const t = useTranslations("shell");
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,7 +57,7 @@ export function WorkspaceSwitcher({
             {activeWorkspace?.workspaceName ?? currentSlug}
           </span>
           <span className="text-11 text-text-secondary">
-            {activeWorkspace?.organizationName ?? "Organização"}
+            {activeWorkspace?.organizationName ?? t("organization")}
           </span>
         </div>
         <ChevronDown className="text-text-tertiary ml-1 h-3.5 w-3.5" />

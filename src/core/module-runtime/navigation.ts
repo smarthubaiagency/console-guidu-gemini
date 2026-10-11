@@ -49,6 +49,7 @@ export type NavIconKey =
   | "building"
   | "handshake"
   | "palette"
+  | "languages"
   | "users";
 
 export type NavItem = Readonly<{
@@ -402,6 +403,7 @@ export function buildPlatformNavigation(
   const canManageLegal = input.grants("platform.legal.manage");
   const canReadBilling = input.grants("platform.billing.read");
   const canReadOperations = input.grants("platform.operations.read");
+  const canManageLanguages = input.grants("platform.languages.manage");
 
   return [
     {
@@ -503,12 +505,26 @@ export function buildPlatformNavigation(
           : []),
       ],
     },
-    ...(settingsItems.length > 0
+    // Configurações: languages of the dashboard (I1) and the global
+    // settings of each module.
+    ...(canManageLanguages || settingsItems.length > 0
       ? [
           {
             id: "platform.settings",
-            label: "Configurações de módulos",
-            items: settingsItems,
+            label: "Configurações",
+            items: [
+              ...(canManageLanguages
+                ? [
+                    item({
+                      id: "platform.languages",
+                      label: "Idiomas",
+                      href: "/platform/settings/languages",
+                      iconKey: "languages" as const,
+                    }),
+                  ]
+                : []),
+              ...settingsItems,
+            ],
           },
         ]
       : []),

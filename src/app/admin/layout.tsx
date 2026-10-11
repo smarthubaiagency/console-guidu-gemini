@@ -5,6 +5,8 @@ import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { getRequestBrand } from "@/core/brand/resolve";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { buildPartnerNavigation } from "@/core/module-runtime/navigation";
+import { translateNavigation } from "@/core/i18n/navigation";
+import { getTranslations } from "next-intl/server";
 
 /** Partner console (ADR 0012): host selects the partner, role selects pages. */
 export default async function PartnerConsoleLayout({
@@ -12,6 +14,7 @@ export default async function PartnerConsoleLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const brand = await getRequestBrand();
   const { identity, membership } = await requirePartnerConsolePage("/admin");
+  const t = await getTranslations("nav");
 
   return (
     <div className="bg-surface-hover text-text flex min-h-screen flex-col">
@@ -23,7 +26,11 @@ export default async function PartnerConsoleLayout({
       />
       <div className="flex flex-1 overflow-hidden">
         <PlatformSidebar
-          sections={buildPartnerNavigation(partnerGrants(membership.role))}
+          sections={translateNavigation(
+            buildPartnerNavigation(partnerGrants(membership.role)),
+            "partner",
+            t,
+          )}
           title="Console do parceiro"
           subtitle={membership.partnerName}
         />

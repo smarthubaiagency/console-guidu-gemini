@@ -49,32 +49,40 @@ describe("authenticateApiKey Unit & Mock Suite (ADR 0009 & C12)", () => {
   const createMockPrisma = (overrides?: MockOverrides) => {
     const tx = {
       profile: {
-        findUnique: vi.fn().mockResolvedValue(
-          overrides?.profile !== undefined
-            ? overrides.profile
-            : { status: "active" },
-        ),
+        findUnique: vi
+          .fn()
+          .mockResolvedValue(
+            overrides?.profile !== undefined
+              ? overrides.profile
+              : { status: "active" },
+          ),
       },
       workspace: {
-        findUnique: vi.fn().mockResolvedValue(
-          overrides?.workspace !== undefined
-            ? overrides.workspace
-            : { status: "active" },
-        ),
+        findUnique: vi
+          .fn()
+          .mockResolvedValue(
+            overrides?.workspace !== undefined
+              ? overrides.workspace
+              : { status: "active" },
+          ),
       },
       workspaceMember: {
-        findUnique: vi.fn().mockResolvedValue(
-          overrides?.member !== undefined
-            ? overrides.member
-            : { role: "owner", status: "active" },
-        ),
+        findUnique: vi
+          .fn()
+          .mockResolvedValue(
+            overrides?.member !== undefined
+              ? overrides.member
+              : { role: "owner", status: "active" },
+          ),
       },
       apiKey: {
-        findUnique: vi.fn().mockResolvedValue(
-          overrides?.apiKey !== undefined
-            ? overrides.apiKey
-            : { lastUsedAt: null },
-        ),
+        findUnique: vi
+          .fn()
+          .mockResolvedValue(
+            overrides?.apiKey !== undefined
+              ? overrides.apiKey
+              : { lastUsedAt: null },
+          ),
         update: vi.fn().mockResolvedValue({}),
       },
       auditEvent: {
@@ -86,11 +94,13 @@ describe("authenticateApiKey Unit & Mock Suite (ADR 0009 & C12)", () => {
     return {
       tx,
       prisma: {
-        $queryRaw: vi.fn().mockResolvedValue(
-          overrides?.queryRawRows !== undefined
-            ? overrides.queryRawRows
-            : [mockKeyRecord],
-        ),
+        $queryRaw: vi
+          .fn()
+          .mockResolvedValue(
+            overrides?.queryRawRows !== undefined
+              ? overrides.queryRawRows
+              : [mockKeyRecord],
+          ),
         $transaction: vi.fn().mockImplementation(async (cb) => cb(tx)),
       } as unknown as Parameters<typeof authenticateApiKey>[0],
     };
@@ -122,34 +132,34 @@ describe("authenticateApiKey Unit & Mock Suite (ADR 0009 & C12)", () => {
   describe("Anti-oracle uniform error behavior", () => {
     it("returns exact same error for nonexistent key", async () => {
       const { prisma } = createMockPrisma({ queryRawRows: [] });
-      await expect(
-        authenticateApiKey(prisma, validRawKey),
-      ).rejects.toSatisfy((err: unknown) => {
-        expect(err).toBeInstanceOf(InvalidApiKeyError);
-        const appErr = err as InvalidApiKeyError;
-        expect(appErr.code).toBe("unauthenticated");
-        expect(appErr.safeMessage).toBe(
-          "Chave de API inválida, expirada ou revogada.",
-        );
-        return true;
-      });
+      await expect(authenticateApiKey(prisma, validRawKey)).rejects.toSatisfy(
+        (err: unknown) => {
+          expect(err).toBeInstanceOf(InvalidApiKeyError);
+          const appErr = err as InvalidApiKeyError;
+          expect(appErr.code).toBe("unauthenticated");
+          expect(appErr.safeMessage).toBe(
+            "Chave de API inválida, expirada ou revogada.",
+          );
+          return true;
+        },
+      );
     });
 
     it("returns exact same error for revoked key", async () => {
       const { prisma } = createMockPrisma({
         queryRawRows: [{ ...mockKeyRecord, status: "revoked" }],
       });
-      await expect(
-        authenticateApiKey(prisma, validRawKey),
-      ).rejects.toSatisfy((err: unknown) => {
-        expect(err).toBeInstanceOf(InvalidApiKeyError);
-        const appErr = err as InvalidApiKeyError;
-        expect(appErr.code).toBe("unauthenticated");
-        expect(appErr.safeMessage).toBe(
-          "Chave de API inválida, expirada ou revogada.",
-        );
-        return true;
-      });
+      await expect(authenticateApiKey(prisma, validRawKey)).rejects.toSatisfy(
+        (err: unknown) => {
+          expect(err).toBeInstanceOf(InvalidApiKeyError);
+          const appErr = err as InvalidApiKeyError;
+          expect(appErr.code).toBe("unauthenticated");
+          expect(appErr.safeMessage).toBe(
+            "Chave de API inválida, expirada ou revogada.",
+          );
+          return true;
+        },
+      );
     });
 
     it("returns exact same error for expired key", async () => {
@@ -161,17 +171,17 @@ describe("authenticateApiKey Unit & Mock Suite (ADR 0009 & C12)", () => {
           },
         ],
       });
-      await expect(
-        authenticateApiKey(prisma, validRawKey),
-      ).rejects.toSatisfy((err: unknown) => {
-        expect(err).toBeInstanceOf(InvalidApiKeyError);
-        const appErr = err as InvalidApiKeyError;
-        expect(appErr.code).toBe("unauthenticated");
-        expect(appErr.safeMessage).toBe(
-          "Chave de API inválida, expirada ou revogada.",
-        );
-        return true;
-      });
+      await expect(authenticateApiKey(prisma, validRawKey)).rejects.toSatisfy(
+        (err: unknown) => {
+          expect(err).toBeInstanceOf(InvalidApiKeyError);
+          const appErr = err as InvalidApiKeyError;
+          expect(appErr.code).toBe("unauthenticated");
+          expect(appErr.safeMessage).toBe(
+            "Chave de API inválida, expirada ou revogada.",
+          );
+          return true;
+        },
+      );
     });
 
     it("returns exact same error for invalid scopes in record", async () => {
@@ -183,9 +193,9 @@ describe("authenticateApiKey Unit & Mock Suite (ADR 0009 & C12)", () => {
           },
         ],
       });
-      await expect(
-        authenticateApiKey(prisma, validRawKey),
-      ).rejects.toThrow(InvalidApiKeyError);
+      await expect(authenticateApiKey(prisma, validRawKey)).rejects.toThrow(
+        InvalidApiKeyError,
+      );
     });
   });
 
@@ -194,27 +204,27 @@ describe("authenticateApiKey Unit & Mock Suite (ADR 0009 & C12)", () => {
       const { prisma } = createMockPrisma({
         profile: { status: "blocked" },
       });
-      await expect(
-        authenticateApiKey(prisma, validRawKey),
-      ).rejects.toThrow(InvalidApiKeyError);
+      await expect(authenticateApiKey(prisma, validRawKey)).rejects.toThrow(
+        InvalidApiKeyError,
+      );
     });
 
     it("rejects when workspace is inactive", async () => {
       const { prisma } = createMockPrisma({
         workspace: { status: "suspended" },
       });
-      await expect(
-        authenticateApiKey(prisma, validRawKey),
-      ).rejects.toThrow(InvalidApiKeyError);
+      await expect(authenticateApiKey(prisma, validRawKey)).rejects.toThrow(
+        InvalidApiKeyError,
+      );
     });
 
     it("rejects when workspace member is inactive or removed (AC03)", async () => {
       const { prisma } = createMockPrisma({
         member: { role: "owner", status: "inactive" },
       });
-      await expect(
-        authenticateApiKey(prisma, validRawKey),
-      ).rejects.toThrow(InvalidApiKeyError);
+      await expect(authenticateApiKey(prisma, validRawKey)).rejects.toThrow(
+        InvalidApiKeyError,
+      );
     });
 
     it("rejects when viewer attempts to authenticate with proposals:write scope", async () => {
@@ -227,9 +237,9 @@ describe("authenticateApiKey Unit & Mock Suite (ADR 0009 & C12)", () => {
         ],
         member: { role: "viewer", status: "active" },
       });
-      await expect(
-        authenticateApiKey(prisma, validRawKey),
-      ).rejects.toThrow(InvalidApiKeyError);
+      await expect(authenticateApiKey(prisma, validRawKey)).rejects.toThrow(
+        InvalidApiKeyError,
+      );
     });
   });
 

@@ -72,6 +72,9 @@ export const Permissions = {
   PLATFORM_CUSTOMERS_READ: "platform.customers.read",
   // Health, queues, failures and job volume (/platform/operations, F3d).
   PLATFORM_OPERATIONS_READ: "platform.operations.read",
+  // Languages and texts of the dashboard (I1, Plataforma › Configurações ›
+  // Idiomas).
+  PLATFORM_LANGUAGES_MANAGE: "platform.languages.manage",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
