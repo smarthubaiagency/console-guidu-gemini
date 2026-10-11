@@ -143,6 +143,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
 > = {
   owner: new Set([
     Permissions.PLATFORM_MODULES_READ,
+    Permissions.PLATFORM_CUSTOMERS_READ,
     Permissions.PLATFORM_MODULES_MANAGE,
     Permissions.PLATFORM_BRAND_MANAGE,
     Permissions.PLATFORM_LEGAL_MANAGE,
@@ -154,6 +155,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
+    Permissions.PLATFORM_CUSTOMERS_READ,
     Permissions.PLATFORM_MODULES_MANAGE,
     Permissions.PLATFORM_BRAND_MANAGE,
     Permissions.PLATFORM_LEGAL_MANAGE,
@@ -164,12 +166,14 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
   ]),
   billing: new Set([
     Permissions.PLATFORM_MODULES_READ,
+    Permissions.PLATFORM_CUSTOMERS_READ,
     Permissions.PLATFORM_PARTNERS_READ,
     Permissions.PLATFORM_BILLING_READ,
     Permissions.PLATFORM_BILLING_MANAGE,
   ]),
   support: new Set([
     Permissions.PLATFORM_MODULES_READ,
+    Permissions.PLATFORM_CUSTOMERS_READ,
     Permissions.PLATFORM_PARTNERS_READ,
     Permissions.PLATFORM_OPERATIONS_READ,
   ]),

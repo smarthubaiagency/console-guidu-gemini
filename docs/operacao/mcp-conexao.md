@@ -43,6 +43,24 @@ Operações aceitas nesta versão:
 
 O `idempotencyKey` é obrigatório e único por workspace: o mesmo valor com o mesmo conteúdo devolve a mesma proposta, e com outro conteúdo dá conflito. Cada workspace aceita até 50 propostas pendentes.
 
+## Plataforma (F4e)
+
+A equipe interna tem um MCP próprio, separado do workspace:
+
+| Item         | Valor                                                                              |
+| ------------ | ---------------------------------------------------------------------------------- |
+| Endereço     | `https://<host da plataforma>/mcp/platform` (não existe nos hosts dos parceiros)   |
+| Autenticação | `Authorization: Bearer gdu_admin_…`, criada em Plataforma › Chaves de API, com MFA |
+| Validade     | Até 90 dias; a chave para de valer se a pessoa perder o papel interno              |
+| REST         | `/api/v1/platform/customers`, `/customers/{id}`, `/health` e `/failed-jobs`        |
+
+| Escopo                  | Ferramentas                               | Papéis internos             |
+| ----------------------- | ----------------------------------------- | --------------------------- |
+| `admin:customers:read`  | `list_customers`, `get_customer_summary`  | todos                       |
+| `admin:operations:read` | `get_platform_health`, `list_failed_jobs` | owner, operations e support |
+
+Só leitura. A chave administrativa não vale no MCP nem nas rotas de workspace, e a chave de workspace não vale aqui (AC09). No Claude Code: `claude mcp add --transport http guidu-plataforma https://<host>/mcp/platform --header "Authorization: Bearer <CHAVE_ADMIN>"`.
+
 ## Claude Code
 
 ```bash

@@ -873,3 +873,23 @@ model ExecutionProposal {
   @@index([workspaceId, status, expiresAt])
   @@map("execution_proposals")
 }
+
+/// Administrative API/MCP key of an internal role member (F4e). Hash only;
+/// never valid on workspace routes (AC09).
+model PlatformApiKey {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  name       String
+  prefix     String
+  keyHash    String    @unique @map("key_hash")
+  scopes     String[]
+  status     String    @default("active")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz()
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz()
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("platform_api_keys")
+}
