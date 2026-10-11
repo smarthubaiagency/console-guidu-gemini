@@ -9,6 +9,8 @@ import { loadAppNavigation } from "@/core/module-runtime/loaders";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
 import { getRequestBrand } from "@/core/brand/resolve";
+import { translateNavigation } from "@/core/i18n/navigation";
+import { getTranslations } from "next-intl/server";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -45,7 +47,11 @@ export default async function WorkspaceLayout({
   const platformAdmin = await getPlatformAdminMember(prisma, identity.userId);
 
   // Generated from core entries and the module registry (Adendo §8.1).
-  const navigation = await loadAppNavigation(prisma, context, workspaceSlug);
+  const navigation = translateNavigation(
+    await loadAppNavigation(prisma, context, workspaceSlug),
+    "app",
+    await getTranslations("nav"),
+  );
 
   return (
     <div className="bg-surface-hover text-text flex min-h-screen flex-col">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HelpCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { NavItem, NavSection } from "@/core/module-runtime/navigation";
 
@@ -73,6 +74,7 @@ function NavLink({
 }
 
 export function AppSidebar({ sections }: AppSidebarProps) {
+  const t = useTranslations("shell");
   const pathname = usePathname();
   const activeId = activeNavItemId(sections, pathname);
 
@@ -99,7 +101,7 @@ export function AppSidebar({ sections }: AppSidebarProps) {
         <div className="text-12 text-text-secondary flex items-center justify-between px-3 py-2">
           <span className="flex items-center gap-2">
             <HelpCircle className="text-text-tertiary h-4 w-4" />
-            <span>Documentação</span>
+            <span>{t("documentation")}</span>
           </span>
           <span className="text-10 bg-surface-strong text-text-subtle rounded-sm px-1.5 py-0.5">
             v1.0

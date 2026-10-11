@@ -41,19 +41,19 @@ test.describe("MCP & API Sidebar Navigation and Breadcrumbs", () => {
     await page.goto(`/app/${wsSlug}`);
 
     // Verify presence of "Assistentes MCP" in sidebar
-    const mcpSidebarLink = page.getByRole("link", {
-      name: /(Assistentes MCP|Assistentes conectados \(MCP\))/i,
-    }).or(
-      page.locator(`aside a[href*="/settings/mcp"]`).first()
-    );
+    const mcpSidebarLink = page
+      .getByRole("link", {
+        name: /(Assistentes MCP|Assistentes conectados \(MCP\))/i,
+      })
+      .or(page.locator(`aside a[href*="/settings/mcp"]`).first());
     await expect(mcpSidebarLink).toBeVisible();
 
     // Verify presence of "API e Webhooks" in sidebar
-    const apiSidebarLink = page.getByRole("link", {
-      name: /(API e Webhooks|Chaves de API)/i,
-    }).or(
-      page.locator(`aside a[href*="/settings/api"]`).first()
-    );
+    const apiSidebarLink = page
+      .getByRole("link", {
+        name: /(API e Webhooks|Chaves de API)/i,
+      })
+      .or(page.locator(`aside a[href*="/settings/api"]`).first());
     await expect(apiSidebarLink).toBeVisible();
 
     // Click "Assistentes MCP" and verify landing page & URL
@@ -64,7 +64,9 @@ test.describe("MCP & API Sidebar Navigation and Breadcrumbs", () => {
     // Verify breadcrumbs on /settings/mcp
     await expect(page.getByText(/Configurações/i).first()).toBeVisible();
     await expect(
-      page.getByText(/(Assistentes conectados \(MCP\)|Assistentes MCP)/i).first(),
+      page
+        .getByText(/(Assistentes conectados \(MCP\)|Assistentes MCP)/i)
+        .first(),
     ).toBeVisible();
 
     // From /settings/mcp, click "API e Webhooks" in sidebar
@@ -102,13 +104,23 @@ test.describe("MCP & API Sidebar Navigation and Breadcrumbs", () => {
     await expect(page).toHaveURL(new RegExp(`/app/${wsSlug}/settings/mcp`));
 
     // Breadcrumb verification
-    await expect(page.locator("nav, div").filter({ hasText: /Configurações/i }).first()).toBeVisible();
+    await expect(
+      page
+        .locator("nav, div")
+        .filter({ hasText: /Configurações/i })
+        .first(),
+    ).toBeVisible();
 
     // Direct navigation to /settings/api
     await page.goto(`/app/${wsSlug}/settings/api`);
     await expect(page).toHaveURL(new RegExp(`/app/${wsSlug}/settings/api`));
 
     // Breadcrumb verification
-    await expect(page.locator("nav, div").filter({ hasText: /Configurações/i }).first()).toBeVisible();
+    await expect(
+      page
+        .locator("nav, div")
+        .filter({ hasText: /Configurações/i })
+        .first(),
+    ).toBeVisible();
   });
 });

@@ -153,6 +153,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_BILLING_READ,
     Permissions.PLATFORM_BILLING_MANAGE,
     Permissions.PLATFORM_OPERATIONS_READ,
+    Permissions.PLATFORM_LANGUAGES_MANAGE,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -164,6 +165,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_PARTNERS_MANAGE,
     Permissions.PLATFORM_BILLING_READ,
     Permissions.PLATFORM_OPERATIONS_READ,
+    Permissions.PLATFORM_LANGUAGES_MANAGE,
   ]),
   billing: new Set([
     Permissions.PLATFORM_MODULES_READ,

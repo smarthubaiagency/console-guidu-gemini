@@ -16,6 +16,8 @@ model Profile {
   id                  String         @id @db.Uuid
   fullName            String?        @map("full_name")
   preferences         Json           @default("{}")
+  /// Language of the person (I1); wins over the workspace default.
+  locale              String?
   status              String         @default("active")
   statusReason        String?        @map("status_reason")
   statusChangedAt     DateTime       @default(now()) @map("status_changed_at") @db.Timestamptz()
@@ -583,6 +585,8 @@ model Workspace {
   organizationId      String             @map("organization_id") @db.Uuid
   slug                String             @unique
   name                String
+  /// Default language of the dashboard (I1); null follows the platform.
+  defaultLocale       String?            @map("default_locale")
   status              String             @default("active")
   /// F3e: logical deletion with a 30-day grace period, then a tombstone.
   deletionRequestedAt DateTime?          @map("deletion_requested_at") @db.Timestamptz()
@@ -1051,4 +1055,32 @@ model PortfolioRatePlan {
   @@unique([id, itemId])
   @@index([itemId, position, createdAt])
   @@map("portfolio_rate_plans")
+}
+
+/// Languages of the dashboard (I1), managed in Plataforma › Configurações › Idiomas.
+model PlatformLanguage {
+  code      String   @id
+  name      String
+  status    String   @default("draft")
+  isDefault Boolean  @default(false) @map("is_default")
+  position  Int      @default(0)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedBy String?  @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("platform_languages")
+}
+
+/// Edits of the platform over the texts shipped in the code (I1).
+model PlatformTranslation {
+  locale    String
+  key       String
+  value     String
+  origin    String   @default("manual")
+  updatedBy String?  @map("updated_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@id([locale, key])
+  @@map("platform_translations")
 }

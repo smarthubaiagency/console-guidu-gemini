@@ -30,13 +30,17 @@ import { ProviderError } from "@/core/agents/providers/executor";
 describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07)", () => {
   describe("Secret and PII Redaction (redact)", () => {
     it("redacts OpenAI / generic sk- API keys", () => {
-      const input = "Failed with key sk-proj-1234567890abcdef1234567890 and more";
+      const input =
+        "Failed with key sk-proj-1234567890abcdef1234567890 and more";
       expect(redact(input)).toBe("Failed with key sk-[REDACTED] and more");
     });
 
     it("redacts Anthropic sk-ant- keys", () => {
-      const input = "Using credential sk-ant-api03-abcdef1234567890 in execution";
-      expect(redact(input)).toBe("Using credential sk-ant-[REDACTED] in execution");
+      const input =
+        "Using credential sk-ant-api03-abcdef1234567890 in execution";
+      expect(redact(input)).toBe(
+        "Using credential sk-ant-[REDACTED] in execution",
+      );
     });
 
     it("redacts Google AIza keys", () => {
@@ -45,7 +49,8 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
     });
 
     it("redacts GUIDU API keys (gdu_live_)", () => {
-      const input = "Provided token gdu_live_0123456789abcdef1234567890 expired";
+      const input =
+        "Provided token gdu_live_0123456789abcdef1234567890 expired";
       expect(redact(input)).toBe("Provided token gdu_live_[REDACTED] expired");
     });
 
@@ -66,7 +71,9 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
 
     it("partially masks email addresses to protect PII", () => {
       const input = "Invitation sent to marcelo.silva@company.org with token";
-      expect(redact(input)).toBe("Invitation sent to m***@company.org with token");
+      expect(redact(input)).toBe(
+        "Invitation sent to m***@company.org with token",
+      );
     });
 
     it("redacts nested objects and arrays in redactData", () => {
@@ -119,7 +126,9 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
       const err = new InsufficientRoleError("workspace.edit", "admin");
       const safe = toSafeError(err, "req-4", { log: false });
       expect(safe.code).toBe("forbidden");
-      expect(safe.safeMessage).toBe("Papel insuficiente para executar esta operação.");
+      expect(safe.safeMessage).toBe(
+        "Papel insuficiente para executar esta operação.",
+      );
     });
 
     it("maps WorkspaceNotFoundError to not_found", () => {
@@ -133,31 +142,58 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
       const err = new SeatLimitExceededError("org-1", 5, 5);
       const safe = toSafeError(err, "req-6", { log: false });
       expect(safe.code).toBe("conflict");
-      expect(safe.safeMessage).toBe("O limite de vagas desta organização foi atingido.");
+      expect(safe.safeMessage).toBe(
+        "O limite de vagas desta organização foi atingido.",
+      );
     });
 
     it("maps invitation errors to safe Portuguese messages", () => {
-      expect(toSafeError(new InvitationNotFoundError(), undefined, { log: false }).safeMessage).toBe("Convite não encontrado ou inválido.");
-      expect(toSafeError(new InvitationNotFoundError(), undefined, { log: false }).code).toBe("not_found");
+      expect(
+        toSafeError(new InvitationNotFoundError(), undefined, { log: false })
+          .safeMessage,
+      ).toBe("Convite não encontrado ou inválido.");
+      expect(
+        toSafeError(new InvitationNotFoundError(), undefined, { log: false })
+          .code,
+      ).toBe("not_found");
 
-      expect(toSafeError(new InvitationExpiredError(), undefined, { log: false }).safeMessage).toBe("Este convite expirou.");
-      expect(toSafeError(new InvitationExpiredError(), undefined, { log: false }).code).toBe("conflict");
+      expect(
+        toSafeError(new InvitationExpiredError(), undefined, { log: false })
+          .safeMessage,
+      ).toBe("Este convite expirou.");
+      expect(
+        toSafeError(new InvitationExpiredError(), undefined, { log: false })
+          .code,
+      ).toBe("conflict");
 
-      expect(toSafeError(new InvitationRevokedError(), undefined, { log: false }).safeMessage).toBe("Este convite foi revogado por um administrador.");
-      expect(toSafeError(new InvitationAlreadyAcceptedError(), undefined, { log: false }).safeMessage).toBe("Este convite já foi aceito.");
-      expect(toSafeError(new InvitationRecipientMismatchError(), undefined, { log: false }).safeMessage).toBe(
-        "Este convite foi enviado para outro e-mail.",
-      );
-      expect(toSafeError(new InvitationEmailUnconfirmedError(), undefined, { log: false }).safeMessage).toBe(
-        "O seu e-mail precisa estar confirmado para aceitar o convite.",
-      );
+      expect(
+        toSafeError(new InvitationRevokedError(), undefined, { log: false })
+          .safeMessage,
+      ).toBe("Este convite foi revogado por um administrador.");
+      expect(
+        toSafeError(new InvitationAlreadyAcceptedError(), undefined, {
+          log: false,
+        }).safeMessage,
+      ).toBe("Este convite já foi aceito.");
+      expect(
+        toSafeError(new InvitationRecipientMismatchError(), undefined, {
+          log: false,
+        }).safeMessage,
+      ).toBe("Este convite foi enviado para outro e-mail.");
+      expect(
+        toSafeError(new InvitationEmailUnconfirmedError(), undefined, {
+          log: false,
+        }).safeMessage,
+      ).toBe("O seu e-mail precisa estar confirmado para aceitar o convite.");
     });
 
     it("maps LastOwnerCannotBeRemovedError to conflict", () => {
       const err = new LastOwnerCannotBeRemovedError("org-1");
       const safe = toSafeError(err, "req-7", { log: false });
       expect(safe.code).toBe("conflict");
-      expect(safe.safeMessage).toBe("Não é permitido alterar ou remover o último proprietário.");
+      expect(safe.safeMessage).toBe(
+        "Não é permitido alterar ou remover o último proprietário.",
+      );
     });
 
     it("maps ModuleUnavailableError to unavailable", () => {
@@ -180,11 +216,15 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
       const err = new ProviderError("anthropic", 500);
       const safe = toSafeError(err, "req-10", { log: false });
       expect(safe.code).toBe("provider_error");
-      expect(safe.safeMessage).toBe("Falha na comunicação com o provedor de IA.");
+      expect(safe.safeMessage).toBe(
+        "Falha na comunicação com o provedor de IA.",
+      );
     });
 
     it("maps unknown errors to internal without leaking internal messages or secrets", () => {
-      const internalErr = new Error("Database deadlock at postgresql://user:secret@host/db with key sk-1234567890abcdef");
+      const internalErr = new Error(
+        "Database deadlock at postgresql://user:secret@host/db with key sk-1234567890abcdef",
+      );
       const safe = toSafeError(internalErr, "req-11", { log: false });
       expect(safe.code).toBe("internal");
       expect(safe.safeMessage).toBe("Não foi possível concluir a operação.");
@@ -194,7 +234,9 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
 
   describe("Server Error Logging without Secret Leakage", () => {
     it("redacts secrets and prints structured JSON when logging errors", () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const leakError = new Error(
         "Failed request with API key sk-ant-api03-ultra-secret and email user@example.com",

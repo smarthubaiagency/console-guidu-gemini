@@ -1,6 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { safeInternalPath } from "@/core/auth/redirects";
+import { PATH_HEADER } from "@/core/i18n/path";
 import {
   normalizeHost,
   platformHosts,
@@ -51,7 +52,13 @@ export default async function proxy(request: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
-  const { response, claims } = await refreshSupabaseSession(request);
+  // The path, for the language of the workspace (I1). Always overwritten,
+  // so a client cannot choose it; it only picks a language anyway.
+  const forwarded = new Headers(request.headers);
+  forwarded.set(PATH_HEADER, pathname);
+  const { response, claims } = await refreshSupabaseSession(
+    new NextRequest(request, { headers: forwarded }),
+  );
   const signedIn = Boolean(claims?.sub);
 
   if (

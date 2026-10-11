@@ -3,6 +3,9 @@ import localFont from "next/font/local";
 import { ThemeProvider } from "@/shared/ui/theme-provider";
 import { BrandTokens } from "@/shared/ui/brand-tokens";
 import { getRequestBrand } from "@/core/brand/resolve";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
+import { clientMessages } from "@/core/i18n/client-messages";
 import "./globals.css";
 
 const outfit = localFont({
@@ -27,13 +30,22 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const brand = await getRequestBrand();
+  const locale = await getLocale();
+  const messages = await getMessages();
   return (
-    <html lang="pt-BR" className={outfit.variable} suppressHydrationWarning>
+    <html lang={locale} className={outfit.variable} suppressHydrationWarning>
       <head>
         <BrandTokens palette={brand.palette} />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        {/* Only the namespaces of browser components reach the client. */}
+        <NextIntlClientProvider
+          locale={locale}
+          messages={clientMessages(messages)}
+          timeZone="America/Sao_Paulo"
+        >
+          <ThemeProvider>{children}</ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

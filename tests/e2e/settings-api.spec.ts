@@ -56,12 +56,20 @@ test.describe("API & Webhooks (/settings/api)", () => {
     await expect(page.getByTestId("api-routes")).toContainText(
       "GET /workspaces/{id}",
     );
-    await expect(page.getByText(/Em breve: avisos da plataforma/i)).toBeVisible();
+    await expect(
+      page.getByText(/Em breve: avisos da plataforma/i),
+    ).toBeVisible();
 
     // Verify STRICT ABSENCE of dummy metrics / fake charts (Specification Section 11 & AGENTS.md)
     // There should be NO synthetic request counters, fake uptime percentages, or mock charts.
-    await expect(page.locator("canvas, svg.recharts-surface, .recharts-responsive-container")).toHaveCount(0);
-    await expect(page.getByText(/99\.9% uptime|12,450 requisições|Taxa de Sucesso: 100%/i)).not.toBeVisible();
+    await expect(
+      page.locator(
+        "canvas, svg.recharts-surface, .recharts-responsive-container",
+      ),
+    ).toHaveCount(0);
+    await expect(
+      page.getByText(/99\.9% uptime|12,450 requisições|Taxa de Sucesso: 100%/i),
+    ).not.toBeVisible();
   });
 
   test("Tier 1 & 3: Provides informational link directing developers to /settings/mcp", async ({
@@ -84,9 +92,11 @@ test.describe("API & Webhooks (/settings/api)", () => {
     await page.goto(`/app/${wsSlug}/settings/api`);
 
     // Verify presence of informational link to /settings/mcp
-    const mcpLink = page.getByRole("link", {
-      name: /(Assistentes MCP|Assistentes conectados|Configurar assistentes MCP|Ir para MCP)/i,
-    }).first();
+    const mcpLink = page
+      .getByRole("link", {
+        name: /(Assistentes MCP|Assistentes conectados|Configurar assistentes MCP|Ir para MCP)/i,
+      })
+      .first();
 
     await expect(mcpLink).toBeVisible();
 
@@ -124,6 +134,8 @@ test.describe("API & Webhooks (/settings/api)", () => {
 
     // Viewer can view the developer page without 403 or error
     await expect(page.getByTestId("api-routes")).toBeVisible();
-    await expect(page.getByText(/Acesso Negado|PermissionDenied/i)).not.toBeVisible();
+    await expect(
+      page.getByText(/Acesso Negado|PermissionDenied/i),
+    ).not.toBeVisible();
   });
 });

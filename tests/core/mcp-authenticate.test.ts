@@ -26,8 +26,7 @@ import { withContext } from "@/lib/prisma/with-context";
 import { describeDatabase } from "../prisma-rls/describe-database.js";
 import { contextA, contextB, contextMultiOrgInA } from "./fixtures";
 
-const databaseUrl =
-  process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
+const databaseUrl = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
 const adminUrl = process.env.MIGRATION_DATABASE_URL ?? process.env.ADMIN_URL;
 const requiredVars = { DATABASE_URL: databaseUrl, ADMIN_URL: adminUrl };
 
@@ -39,9 +38,7 @@ describeDatabase(
       datasources: {
         db: {
           url:
-            process.env.DIRECT_DATABASE_URL ??
-            process.env.DATABASE_URL ??
-            "",
+            process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL ?? "",
         },
       },
     });
@@ -101,15 +98,15 @@ describeDatabase(
       });
 
       // Revoked key returns InvalidApiKeyError
-      await expect(
-        authenticateApiKey(prisma, rawKey),
-      ).rejects.toThrow(InvalidApiKeyError);
+      await expect(authenticateApiKey(prisma, rawKey)).rejects.toThrow(
+        InvalidApiKeyError,
+      );
 
       // Nonexistent key returns exact same InvalidApiKeyError
       const nonexistentKey = `gdu_live_${"f".repeat(64)}`;
-      await expect(
-        authenticateApiKey(prisma, nonexistentKey),
-      ).rejects.toThrow(InvalidApiKeyError);
+      await expect(authenticateApiKey(prisma, nonexistentKey)).rejects.toThrow(
+        InvalidApiKeyError,
+      );
     });
 
     it("vínculo desativado no workspace bloqueia o próximo uso da chave (AC03)", async () => {
@@ -143,9 +140,9 @@ describeDatabase(
       });
 
       // 3. Next authentication attempt immediately fails (AC03)
-      await expect(
-        authenticateApiKey(prisma, rawKey),
-      ).rejects.toThrow(InvalidApiKeyError);
+      await expect(authenticateApiKey(prisma, rawKey)).rejects.toThrow(
+        InvalidApiKeyError,
+      );
 
       // Restore member status
       await withContext(prisma, contextA, async (tx) => {

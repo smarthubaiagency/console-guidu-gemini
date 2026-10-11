@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { NavSection } from "@/core/module-runtime/navigation";
 
@@ -19,9 +20,12 @@ interface PlatformSidebarProps {
 
 export function PlatformSidebar({
   sections,
-  title = "Admin Console",
-  subtitle = "Governança & Auditoria",
+  title,
+  subtitle,
 }: PlatformSidebarProps) {
+  const t = useTranslations("shell");
+  title ??= t("adminConsole");
+  subtitle ??= t("governance");
   const pathname = usePathname();
   const activeId = activeNavItemId(sections, pathname);
 
@@ -84,7 +88,7 @@ export function PlatformSidebar({
           className="text-12 text-text-inverse-secondary hover:text-text-inverse hover:bg-surface-inverse-hover flex items-center gap-2 rounded-lg px-3 py-2 transition"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Voltar ao App de Cliente</span>
+          <span>{t("backToApp")}</span>
         </Link>
       </div>
     </aside>

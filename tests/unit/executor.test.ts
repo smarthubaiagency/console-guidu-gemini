@@ -21,24 +21,26 @@ describe("AI Provider Network Dispatcher & Secret Security (C10, Spec §16, AC07
       let capturedUrl = "";
       let capturedHeaders: Record<string, string> = {};
 
-      global.fetch = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
-        capturedUrl = url;
-        capturedHeaders = (init?.headers as Record<string, string>) ?? {};
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            candidates: [
-              {
-                content: {
-                  parts: [{ text: "Hello from Gemini!" }],
+      global.fetch = vi
+        .fn()
+        .mockImplementation(async (url: string, init?: RequestInit) => {
+          capturedUrl = url;
+          capturedHeaders = (init?.headers as Record<string, string>) ?? {};
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              candidates: [
+                {
+                  content: {
+                    parts: [{ text: "Hello from Gemini!" }],
+                  },
                 },
-              },
-            ],
-            usageMetadata: { totalTokenCount: 42 },
-          }),
-        } as unknown as Response;
-      });
+              ],
+              usageMetadata: { totalTokenCount: 42 },
+            }),
+          } as unknown as Response;
+        });
 
       const result = await executeProviderPrompt({
         provider: "gemini",
@@ -66,7 +68,8 @@ describe("AI Provider Network Dispatcher & Secret Security (C10, Spec §16, AC07
       const sensitiveResponseBody = JSON.stringify({
         error: {
           code: 403,
-          message: "API key invalid or leaked in https://service?key=AIzaSyD_secretKey",
+          message:
+            "API key invalid or leaked in https://service?key=AIzaSyD_secretKey",
           status: "PERMISSION_DENIED",
         },
       });
@@ -111,17 +114,19 @@ describe("AI Provider Network Dispatcher & Secret Security (C10, Spec §16, AC07
       const apiKey = "sk-proj-superSecretOpenAIKey";
       let capturedHeaders: Record<string, string> = {};
 
-      global.fetch = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
-        capturedHeaders = (init?.headers as Record<string, string>) ?? {};
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            choices: [{ message: { content: "OpenAI response" } }],
-            usage: { total_tokens: 25 },
-          }),
-        } as unknown as Response;
-      });
+      global.fetch = vi
+        .fn()
+        .mockImplementation(async (_url: string, init?: RequestInit) => {
+          capturedHeaders = (init?.headers as Record<string, string>) ?? {};
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              choices: [{ message: { content: "OpenAI response" } }],
+              usage: { total_tokens: 25 },
+            }),
+          } as unknown as Response;
+        });
 
       const result = await executeProviderPrompt({
         provider: "openai",
@@ -157,17 +162,19 @@ describe("AI Provider Network Dispatcher & Secret Security (C10, Spec §16, AC07
       const apiKey = "sk-ant-api03-superSecretAnthropicKey";
       let capturedHeaders: Record<string, string> = {};
 
-      global.fetch = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
-        capturedHeaders = (init?.headers as Record<string, string>) ?? {};
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            content: [{ text: "Claude response" }],
-            usage: { input_tokens: 10, output_tokens: 15 },
-          }),
-        } as unknown as Response;
-      });
+      global.fetch = vi
+        .fn()
+        .mockImplementation(async (_url: string, init?: RequestInit) => {
+          capturedHeaders = (init?.headers as Record<string, string>) ?? {};
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              content: [{ text: "Claude response" }],
+              usage: { input_tokens: 10, output_tokens: 15 },
+            }),
+          } as unknown as Response;
+        });
 
       const result = await executeProviderPrompt({
         provider: "anthropic",

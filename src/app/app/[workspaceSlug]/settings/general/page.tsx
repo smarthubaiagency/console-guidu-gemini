@@ -4,6 +4,16 @@ import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { getTranslations } from "next-intl/server";
+import {
+  ActionForm,
+  inputClass,
+  labelClass,
+} from "@/components/partners/action-form";
+import { saveWorkspaceLanguageAction } from "@/core/i18n/actions";
+import { activeLanguages } from "@/core/i18n/store";
+import { workspaceRoleGrants } from "@/core/permissions/guard";
+import type { WorkspaceRole } from "@/core/permissions/roles";
 
 export const metadata: Metadata = { title: "Configurações Gerais" };
 
@@ -24,7 +34,7 @@ export default async function GeneralSettingsPage({
     workspaceSlug,
   );
 
-  const { workspace, organization } = await withContext(
+  const { workspace, organization, role } = await withContext(
     prisma,
     context,
     async (tx) => {
@@ -34,9 +44,23 @@ export default async function GeneralSettingsPage({
       const org = await tx.organization.findUnique({
         where: { id: context.organizationId },
       });
-      return { workspace: ws, organization: org };
+      const member = await tx.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: context.workspaceId,
+            userId: identity.userId,
+          },
+        },
+        select: { role: true },
+      });
+      return { workspace: ws, organization: org, role: member?.role };
     },
   );
+  const t = await getTranslations("preferences");
+  const languages = await activeLanguages();
+  const canEdit = role
+    ? workspaceRoleGrants(role as WorkspaceRole, "workspace.settings.update")
+    : false;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -97,6 +121,43 @@ export default async function GeneralSettingsPage({
             {workspace?.id}
           </div>
         </div>
+      </div>
+
+      {/* Default language of the dashboard (I1). */}
+      <div
+        className="border-card-border bg-surface-card space-y-3 rounded-xl border p-6 shadow-xs"
+        data-testid="workspace-language"
+      >
+        <h2 className="text-14 text-text font-semibold">{t("workspace")}</h2>
+        <p className="text-12 text-text-secondary">{t("workspaceHint")}</p>
+        {canEdit ? (
+          <ActionForm
+            action={saveWorkspaceLanguageAction}
+            submitLabel={t("title")}
+          >
+            <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
+            <label className={labelClass}>
+              {t("workspace")}
+              <select
+                name="locale"
+                defaultValue={workspace?.defaultLocale ?? ""}
+                className={inputClass}
+              >
+                <option value="">{t("followPlatform")}</option>
+                {languages.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </ActionForm>
+        ) : (
+          <p className="text-14 text-text font-medium">
+            {languages.find((l) => l.code === workspace?.defaultLocale)?.name ??
+              t("followPlatform")}
+          </p>
+        )}
       </div>
     </div>
   );
