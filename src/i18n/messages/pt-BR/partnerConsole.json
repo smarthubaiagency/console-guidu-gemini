@@ -1,0 +1,142 @@
+{
+  "consoleTitle": "Console do parceiro",
+  "breadcrumb": "Parceiro",
+  "roles": {
+    "partner_owner": "Proprietário",
+    "partner_admin": "Administrador",
+    "partner_finance": "Financeiro",
+    "partner_support": "Suporte"
+  },
+  "overview": {
+    "metaTitle": "Console do parceiro",
+    "breadcrumb": "Visão Geral",
+    "description": "Seu papel: {role}. O console mostra dados do parceiro, nunca o conteúdo dos workspaces dos clientes.",
+    "customers": "Empresas clientes",
+    "activeMembers": "Membros ativos"
+  },
+  "customers": {
+    "metaTitle": "Clientes (Parceiro)",
+    "title": "Clientes",
+    "description": "Empresas atendidas por este parceiro. O console mostra só os dados cadastrais, nunca o conteúdo dos workspaces.",
+    "newTitle": "Novo cliente",
+    "submit": "Cadastrar cliente",
+    "company": "Empresa",
+    "ownerEmail": "E-mail do responsável",
+    "workspaceName": "Nome do workspace",
+    "workspaceSlug": "Endereço do workspace",
+    "slugPlaceholder": "empresa-exemplo",
+    "template": "Modelo de workspace",
+    "noTemplate": "Sem modelo (nenhum módulo habilitado)",
+    "hint": "O responsável recebe um convite de proprietário, válido por 7 dias, e entra pelo seu domínio. Até a cobrança (P5), o cliente fica ativo assim que é cadastrado.",
+    "status": {
+      "active": "Ativa",
+      "suspended": "Suspensa",
+      "inactive": "Inativa"
+    },
+    "since": "desde {date}",
+    "empty": "Nenhum cliente ainda.",
+    "created": "Cliente cadastrado. Envie o convite ao responsável."
+  },
+  "members": {
+    "metaTitle": "Membros (Parceiro)",
+    "title": "Membros",
+    "description": "Pessoas da equipe do parceiro e seus papéis.",
+    "you": "(você)",
+    "inactive": "inativo",
+    "role": "Papel",
+    "changeRole": "Alterar papel",
+    "deactivate": "Desativar",
+    "reactivate": "Reativar",
+    "inviteTitle": "Convidar membro",
+    "pendingInvitation": "Convite pendente: {email} · {role}",
+    "revoke": "Revogar",
+    "generateInvite": "Gerar convite",
+    "email": "E-mail",
+    "invitationCreated": "Convite gerado.",
+    "invitationRevoked": "Convite revogado.",
+    "updated": "Membro atualizado."
+  },
+  "modules": {
+    "metaTitle": "Módulos oferecidos (Parceiro)",
+    "title": "Módulos oferecidos",
+    "description": "Os módulos que você oferece entram nos modelos de workspace dos seus clientes.",
+    "release": {
+      "beta": "Beta",
+      "available": "Disponível",
+      "maintenance": "Manutenção"
+    },
+    "offered": "oferecido",
+    "notOffered": "não oferecido",
+    "offer": "Oferecer",
+    "withdraw": "Retirar",
+    "empty": "Nenhum módulo disponível para oferta neste ambiente.",
+    "offeredDone": "Módulo oferecido.",
+    "withdrawnDone": "Módulo retirado da oferta."
+  },
+  "templates": {
+    "metaTitle": "Modelos de workspace (Parceiro)",
+    "title": "Modelos de workspace",
+    "description": "Conjuntos de módulos aplicados ao primeiro workspace de um cliente novo.",
+    "noModules": "Sem módulos",
+    "remove": "Remover",
+    "empty": "Nenhum modelo ainda.",
+    "newTitle": "Novo modelo",
+    "create": "Criar modelo",
+    "name": "Nome",
+    "modules": "Módulos",
+    "offerHint": "Ofereça módulos em \"Módulos oferecidos\" para incluí-los em modelos.",
+    "created": "Modelo criado.",
+    "removed": "Modelo removido."
+  },
+  "brand": {
+    "metaTitle": "Marca (Parceiro)",
+    "title": "Marca",
+    "description": "Nome, cor, logo e contatos que os seus clientes veem nos seus domínios.",
+    "version": "Versão {version}",
+    "noBrand": "Ainda sem marca própria: os clientes veem a marca padrão"
+  },
+  "legal": {
+    "metaTitle": "Termos e privacidade (Parceiro)",
+    "title": "Termos e privacidade",
+    "description": "Seus clientes aceitam a versão vigente no primeiro acesso, e de novo quando você publicar uma mudança relevante."
+  },
+  "support": {
+    "metaTitle": "Acesso de suporte (Parceiro)",
+    "title": "Acesso de suporte",
+    "description": "Para entrar no workspace de um cliente, peça acesso com o motivo e o prazo. O cliente aprova, vê o histórico e pode revogar a qualquer momento. O acesso é só de leitura.",
+    "newTitle": "Novo pedido",
+    "submit": "Pedir acesso",
+    "customer": "Cliente",
+    "duration": "Prazo (horas, até {max})",
+    "reason": "Motivo",
+    "hours": "{hours} h",
+    "openWorkspace": "Abrir workspace",
+    "cancel": "Cancelar",
+    "end": "Encerrar",
+    "empty": "Nenhum pedido ainda.",
+    "requested": "Pedido enviado. O cliente aprova nas configurações do workspace.",
+    "ended": "Acesso encerrado."
+  },
+  "errors": {
+    "partnerNotFound": "Parceiro não encontrado.",
+    "invalidData": "Dados inválidos.",
+    "ownAccess": "Você não pode alterar o seu próprio acesso.",
+    "invalidRole": "Papel inválido.",
+    "invalidEmail": "Informe um e-mail válido.",
+    "moduleNotOfferable": "Módulo indisponível para oferta.",
+    "templateNameRequired": "Informe o nome do modelo.",
+    "templateModulesNotOffered": "O modelo só pode usar módulos oferecidos pelo parceiro.",
+    "templateNameTaken": "Já existe um modelo com esse nome.",
+    "templateNotFound": "Modelo não encontrado.",
+    "companyNameRequired": "Informe o nome da empresa.",
+    "workspaceNameRequired": "Informe o nome do workspace.",
+    "invalidWorkspaceSlug": "Endereço do workspace: 3 a 48 letras minúsculas, números ou hífen.",
+    "slugTaken": "Esse endereço de workspace já está em uso.",
+    "invitationUnavailable": "Este convite não está mais disponível.",
+    "chooseCustomer": "Escolha o cliente.",
+    "reasonTooShort": "Explique o motivo em pelo menos 10 caracteres.",
+    "durationTooShort": "Prazo mínimo de 1 hora.",
+    "durationTooLong": "Prazo máximo de {max} horas.",
+    "openGrantExists": "Você já tem um pedido aberto ou um acesso vigente para esse cliente."
+  }
+}

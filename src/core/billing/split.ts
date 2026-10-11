@@ -33,6 +33,8 @@ export function belowFloor(minPriceCents: number): AppError {
   return new AppError({
     code: "invalid_input",
     safeMessage: `O preço não pode ficar abaixo do piso de ${formatCents(minPriceCents)}.`,
+    messageKey: "billing.errors.belowFloor",
+    messageValues: { floor: minPriceCents / 100 },
   });
 }
 
@@ -54,6 +56,7 @@ export function computeSplit(input: SplitInput): Shares {
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Valores de cobrança inválidos.",
+      messageKey: "billing.errors.invalidValues",
     });
   }
   if (priceCents < minPriceCents) throw belowFloor(minPriceCents);
@@ -65,6 +68,7 @@ export function computeSplit(input: SplitInput): Shares {
     throw new AppError({
       code: "invalid_input",
       safeMessage: "O repasse mínimo da plataforma é maior que o preço.",
+      messageKey: "billing.errors.minShareAbovePrice",
     });
   }
   return { platformShareCents, partnerShareCents };

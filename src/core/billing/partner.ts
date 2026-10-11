@@ -217,6 +217,7 @@ export async function createPartnerPlan(
     throw new AppError({
       code: "conflict",
       safeMessage: "Já existe um plano seu com esse nome.",
+      messageKey: "billing.errors.partnerPlanNameTaken",
     });
   }
   const plan = await tx.partnerPlan.create({
@@ -375,6 +376,7 @@ export async function startSubscription(
     throw new AppError({
       code: "conflict",
       safeMessage: "Esse cliente já tem uma assinatura aberta.",
+      messageKey: "billing.errors.subscriptionOpen",
     });
   }
   // The partner_admin has no read access to subscriptions: no RETURNING.
@@ -612,6 +614,33 @@ export type CheckoutPrerequisite = Readonly<{
   requiredNow: boolean;
 }>;
 
+/** Key of each prerequisite under `billing.partner.prerequisites` (I3). */
+export const PREREQUISITE_KEYS: Readonly<
+  Record<CheckoutPrerequisite["key"], string>
+> = {
+  not_blocked: "notBlocked",
+  partner_plan: "partnerPlan",
+  legal: "legal",
+  recipient: "recipient",
+  split_provider: "splitProvider",
+};
+
+/**
+ * The switch stays off while required prerequisites are missing. The keys
+ * let the action name them in the person's language (I3).
+ */
+export class CheckoutNotReadyError extends AppError {
+  readonly missing: readonly CheckoutPrerequisite["key"][];
+  constructor(missing: readonly CheckoutPrerequisite[]) {
+    super({
+      code: "invalid_input",
+      safeMessage: `Para ativar o checkout falta: ${missing.map((p) => p.label.toLowerCase()).join("; ")}.`,
+    });
+    this.name = "CheckoutNotReadyError";
+    this.missing = missing.map((p) => p.key);
+  }
+}
+
 export async function checkoutPrerequisites(
   tx: ContextTransaction,
   partnerId: string,
@@ -692,11 +721,7 @@ export async function setCheckoutEnabled(
     const missing = (await checkoutPrerequisites(tx, partnerId)).filter(
       (p) => p.requiredNow && !p.met,
     );
-    if (missing.length > 0) {
-      throw invalidBillingInput(
-        `Para ativar o checkout falta: ${missing.map((p) => p.label.toLowerCase()).join("; ")}.`,
-      );
-    }
+    if (missing.length > 0) throw new CheckoutNotReadyError(missing);
   }
   await tx.partner.update({
     where: { id: partnerId },

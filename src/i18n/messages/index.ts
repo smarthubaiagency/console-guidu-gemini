@@ -4,6 +4,7 @@ import ptBR_account from "./pt-BR/account.json";
 import ptBR_api from "./pt-BR/api.json";
 import ptBR_auth from "./pt-BR/auth.json";
 import ptBR_billing from "./pt-BR/billing.json";
+import ptBR_brand from "./pt-BR/brand.json";
 import ptBR_common from "./pt-BR/common.json";
 import ptBR_credentials from "./pt-BR/credentials.json";
 import ptBR_errors from "./pt-BR/errors.json";
@@ -16,7 +17,12 @@ import ptBR_locations from "./pt-BR/locations.json";
 import ptBR_mcp from "./pt-BR/mcp.json";
 import ptBR_modules from "./pt-BR/modules.json";
 import ptBR_nav from "./pt-BR/nav.json";
+import ptBR_operations from "./pt-BR/operations.json";
 import ptBR_overview from "./pt-BR/overview.json";
+import ptBR_partnerConsole from "./pt-BR/partnerConsole.json";
+import ptBR_partners from "./pt-BR/partners.json";
+import ptBR_platform from "./pt-BR/platform.json";
+import ptBR_platformKeys from "./pt-BR/platformKeys.json";
 import ptBR_preferences from "./pt-BR/preferences.json";
 import ptBR_privacy from "./pt-BR/privacy.json";
 import ptBR_proposals from "./pt-BR/proposals.json";
@@ -30,6 +36,7 @@ import en_account from "./en/account.json";
 import en_api from "./en/api.json";
 import en_auth from "./en/auth.json";
 import en_billing from "./en/billing.json";
+import en_brand from "./en/brand.json";
 import en_common from "./en/common.json";
 import en_credentials from "./en/credentials.json";
 import en_errors from "./en/errors.json";
@@ -42,7 +49,12 @@ import en_locations from "./en/locations.json";
 import en_mcp from "./en/mcp.json";
 import en_modules from "./en/modules.json";
 import en_nav from "./en/nav.json";
+import en_operations from "./en/operations.json";
 import en_overview from "./en/overview.json";
+import en_partnerConsole from "./en/partnerConsole.json";
+import en_partners from "./en/partners.json";
+import en_platform from "./en/platform.json";
+import en_platformKeys from "./en/platformKeys.json";
 import en_preferences from "./en/preferences.json";
 import en_privacy from "./en/privacy.json";
 import en_proposals from "./en/proposals.json";
@@ -56,6 +68,7 @@ import es_account from "./es/account.json";
 import es_api from "./es/api.json";
 import es_auth from "./es/auth.json";
 import es_billing from "./es/billing.json";
+import es_brand from "./es/brand.json";
 import es_common from "./es/common.json";
 import es_credentials from "./es/credentials.json";
 import es_errors from "./es/errors.json";
@@ -68,7 +81,12 @@ import es_locations from "./es/locations.json";
 import es_mcp from "./es/mcp.json";
 import es_modules from "./es/modules.json";
 import es_nav from "./es/nav.json";
+import es_operations from "./es/operations.json";
 import es_overview from "./es/overview.json";
+import es_partnerConsole from "./es/partnerConsole.json";
+import es_partners from "./es/partners.json";
+import es_platform from "./es/platform.json";
+import es_platformKeys from "./es/platformKeys.json";
 import es_preferences from "./es/preferences.json";
 import es_privacy from "./es/privacy.json";
 import es_proposals from "./es/proposals.json";
@@ -86,6 +104,7 @@ export const MESSAGE_FILES = {
     api: ptBR_api,
     auth: ptBR_auth,
     billing: ptBR_billing,
+    brand: ptBR_brand,
     common: ptBR_common,
     credentials: ptBR_credentials,
     errors: ptBR_errors,
@@ -98,7 +117,12 @@ export const MESSAGE_FILES = {
     mcp: ptBR_mcp,
     modules: ptBR_modules,
     nav: ptBR_nav,
+    operations: ptBR_operations,
     overview: ptBR_overview,
+    partnerConsole: ptBR_partnerConsole,
+    partners: ptBR_partners,
+    platform: ptBR_platform,
+    platformKeys: ptBR_platformKeys,
     preferences: ptBR_preferences,
     privacy: ptBR_privacy,
     proposals: ptBR_proposals,
@@ -114,6 +138,7 @@ export const MESSAGE_FILES = {
     api: en_api,
     auth: en_auth,
     billing: en_billing,
+    brand: en_brand,
     common: en_common,
     credentials: en_credentials,
     errors: en_errors,
@@ -126,7 +151,12 @@ export const MESSAGE_FILES = {
     mcp: en_mcp,
     modules: en_modules,
     nav: en_nav,
+    operations: en_operations,
     overview: en_overview,
+    partnerConsole: en_partnerConsole,
+    partners: en_partners,
+    platform: en_platform,
+    platformKeys: en_platformKeys,
     preferences: en_preferences,
     privacy: en_privacy,
     proposals: en_proposals,
@@ -142,6 +172,7 @@ export const MESSAGE_FILES = {
     api: es_api,
     auth: es_auth,
     billing: es_billing,
+    brand: es_brand,
     common: es_common,
     credentials: es_credentials,
     errors: es_errors,
@@ -154,7 +185,12 @@ export const MESSAGE_FILES = {
     mcp: es_mcp,
     modules: es_modules,
     nav: es_nav,
+    operations: es_operations,
     overview: es_overview,
+    partnerConsole: es_partnerConsole,
+    partners: es_partners,
+    platform: es_platform,
+    platformKeys: es_platformKeys,
     preferences: es_preferences,
     privacy: es_privacy,
     proposals: es_proposals,
@@ -172,6 +208,7 @@ export const NAMESPACES = [
   "api",
   "auth",
   "billing",
+  "brand",
   "common",
   "credentials",
   "errors",
@@ -184,7 +221,12 @@ export const NAMESPACES = [
   "mcp",
   "modules",
   "nav",
+  "operations",
   "overview",
+  "partnerConsole",
+  "partners",
+  "platform",
+  "platformKeys",
   "preferences",
   "privacy",
   "proposals",

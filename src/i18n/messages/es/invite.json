@@ -65,6 +65,7 @@
     "title": "Unirse a {partner}",
     "description": "Te invitaron como {role}. Después de aceptar, usa la consola del socio en /admin en el dominio del socio.",
     "back": "Volver",
-    "accept": "Aceptar invitación"
+    "accept": "Aceptar invitación",
+    "acceptedMessage": "Invitación aceptada."
   }
 }

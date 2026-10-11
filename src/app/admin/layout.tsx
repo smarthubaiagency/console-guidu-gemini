@@ -1,6 +1,6 @@
 import { PlatformHeader } from "@/components/layout/platform-header";
 import { PlatformSidebar } from "@/components/layout/platform-sidebar";
-import { partnerRoleLabel } from "@/components/partners/role-label";
+import { partnerRoleKey } from "@/components/partners/role-label";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { getRequestBrand } from "@/core/brand/resolve";
 import { partnerGrants } from "@/core/module-runtime/loaders";
@@ -15,12 +15,15 @@ export default async function PartnerConsoleLayout({
   const brand = await getRequestBrand();
   const { identity, membership } = await requirePartnerConsolePage("/admin");
   const t = await getTranslations("nav");
+  const tc = await getTranslations("partnerConsole");
+  const tAll = await getTranslations();
+  const roleKey = partnerRoleKey(membership.role);
 
   return (
     <div className="bg-surface-hover text-text flex min-h-screen flex-col">
       <PlatformHeader
         userEmail={identity.email}
-        adminRole={partnerRoleLabel(membership.role)}
+        adminRole={roleKey ? tAll(roleKey) : membership.role}
         appName={brand.name}
         logoUrl={brand.logoUrl}
       />
@@ -31,7 +34,7 @@ export default async function PartnerConsoleLayout({
             "partner",
             t,
           )}
-          title="Console do parceiro"
+          title={tc("consoleTitle")}
           subtitle={membership.partnerName}
         />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>

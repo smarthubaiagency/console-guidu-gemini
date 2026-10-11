@@ -21,5 +21,10 @@
   "errors": {
     "alreadyDecided": "This request has already been decided.",
     "alreadyMember": "This person is already a member of this workspace."
+  },
+  "decisions": {
+    "approved": "Access approved.",
+    "denied": "Request denied.",
+    "revoked": "Access revoked."
   }
 }

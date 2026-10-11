@@ -107,10 +107,13 @@ export async function updatePartnerMember(
 ): Promise<void> {
   if (actor.partnerRole !== "partner_owner") throw new PermissionDeniedError();
   if (actor.userId === userId) {
-    throw invalidPartnerInput("Você não pode alterar o seu próprio acesso.");
+    throw invalidPartnerInput(
+      "Você não pode alterar o seu próprio acesso.",
+      "ownAccess",
+    );
   }
   if (change.role !== undefined && !isPartnerRole(change.role)) {
-    throw invalidPartnerInput("Papel inválido.");
+    throw invalidPartnerInput("Papel inválido.", "invalidRole");
   }
 
   const member = await tx.partnerMember.findUnique({

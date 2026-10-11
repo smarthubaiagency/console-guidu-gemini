@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Layers } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -22,7 +23,10 @@ import {
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Modelos de workspace (Parceiro)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partnerConsole");
+  return { title: t("templates.metaTitle") };
+}
 
 /** Workspace templates of the partner (ADR 0012, P4b). */
 export default async function PartnerTemplatesPage() {
@@ -45,12 +49,14 @@ export default async function PartnerTemplatesPage() {
     listOfferableModules().map((m) => [m.moduleKey, m.displayName]),
   );
 
+  const t = await getTranslations("partnerConsole");
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={["Parceiro", "Modelos de workspace"]}
-        title="Modelos de workspace"
-        description="Conjuntos de módulos aplicados ao primeiro workspace de um cliente novo."
+        trail={[t("breadcrumb"), t("templates.title")]}
+        title={t("templates.title")}
+        description={t("templates.description")}
         icon={<Layers className="h-5 w-5" />}
       />
 
@@ -72,12 +78,12 @@ export default async function PartnerTemplatesPage() {
                   ? template.moduleKeys
                       .map((key) => names.get(key) ?? key)
                       .join(", ")
-                  : "Sem módulos"}
+                  : t("templates.noModules")}
               </div>
             </div>
             <ActionForm
               action={deleteWorkspaceTemplateAction}
-              submitLabel="Remover"
+              submitLabel={t("templates.remove")}
               tone="neutral"
             >
               <input type="hidden" name="templateId" value={template.id} />
@@ -86,26 +92,28 @@ export default async function PartnerTemplatesPage() {
         ))}
         {templates.length === 0 ? (
           <li className="text-12 text-text-secondary p-4">
-            Nenhum modelo ainda.
+            {t("templates.empty")}
           </li>
         ) : null}
       </ul>
 
       <section className="border-card-border bg-surface-card space-y-3 rounded-xl border p-4 shadow-xs">
-        <h2 className="text-14 text-text font-semibold">Novo modelo</h2>
+        <h2 className="text-14 text-text font-semibold">
+          {t("templates.newTitle")}
+        </h2>
         <ActionForm
           action={createWorkspaceTemplateAction}
-          submitLabel="Criar modelo"
+          submitLabel={t("templates.create")}
           className="space-y-3"
           testId="create-template"
         >
           <label className={labelClass}>
-            Nome
+            {t("templates.name")}
             <input name="name" required maxLength={80} className={inputClass} />
           </label>
           <fieldset className="space-y-1">
             <legend className="text-12 text-text-subtle font-medium">
-              Módulos
+              {t("templates.modules")}
             </legend>
             {offeredKeys.map((key) => (
               <label
@@ -118,8 +126,7 @@ export default async function PartnerTemplatesPage() {
             ))}
             {offeredKeys.length === 0 ? (
               <p className="text-12 text-text-secondary">
-                Ofereça módulos em &quot;Módulos oferecidos&quot; para
-                incluí-los em modelos.
+                {t("templates.offerHint")}
               </p>
             ) : null}
           </fieldset>

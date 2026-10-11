@@ -47,6 +47,7 @@ function requireModule(moduleKey: string): RegisteredModule {
     throw new AppError({
       code: "not_found",
       safeMessage: "Módulo não encontrado.",
+      messageKey: "modules.errors.notFound",
     });
   }
   return mod;
@@ -56,6 +57,7 @@ function invalidConfig(): AppError {
   return new AppError({
     code: "invalid_input",
     safeMessage: "Configuração inválida para este módulo.",
+    messageKey: "modules.errors.invalidConfig",
   });
 }
 
@@ -97,6 +99,7 @@ export async function setWorkspaceModuleStatus(
     throw new AppError({
       code: "conflict",
       safeMessage: "Este módulo ainda não pode ser habilitado.",
+      messageKey: "modules.errors.cannotEnable",
     });
   }
   // Disabling is always allowed; enabling needs the module in the plan.
@@ -104,6 +107,7 @@ export async function setWorkspaceModuleStatus(
     throw new AppError({
       code: "conflict",
       safeMessage: "O plano da sua empresa não inclui este módulo.",
+      messageKey: "modules.errors.notContracted",
     });
   }
 
@@ -175,6 +179,7 @@ export async function saveWorkspaceModuleConfig(
     throw new AppError({
       code: "conflict",
       safeMessage: "Habilite o módulo antes de configurá-lo.",
+      messageKey: "modules.errors.enableFirst",
     });
   }
 

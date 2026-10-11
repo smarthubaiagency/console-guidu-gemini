@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Puzzle } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -17,9 +18,10 @@ import {
   renderSettingsComponent,
 } from "@/modules/settings-components";
 
-export const metadata: Metadata = {
-  title: "Configurações Globais do Módulo (Admin)",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("modules.platform");
+  return { title: t("settingsMetaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ moduleKey: string }>;
@@ -59,16 +61,18 @@ export default async function AdminModuleSettingsPage({ params }: PageProps) {
         getPlatformModuleConfig(tx, moduleKey),
       )
     : {};
+  const t = await getTranslations("modules.platform");
+  const tPlatform = await getTranslations("platform");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
         trail={[
-          "Administração",
-          "Configurações de módulos",
+          tPlatform("breadcrumb"),
+          t("settingsBreadcrumb"),
           mod.manifest.displayName,
         ]}
-        title={`${entry.label} — política global`}
+        title={t("settingsTitle", { label: entry.label })}
         description={mod.manifest.description}
         icon={<Puzzle className="h-5 w-5" />}
       />

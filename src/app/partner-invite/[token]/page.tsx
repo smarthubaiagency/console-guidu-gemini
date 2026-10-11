@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { ActionForm } from "@/components/partners/action-form";
-import { partnerRoleLabel } from "@/components/partners/role-label";
+import { partnerRoleKey } from "@/components/partners/role-label";
 import { readIdentity } from "@/core/auth/identity";
 import { getRequestBrand } from "@/core/brand/resolve";
 import { acceptPartnerInvitationAction } from "@/core/partners/actions";
@@ -60,10 +60,14 @@ export default async function PartnerInvitePage({
     );
   }
 
+  const roleKey = partnerRoleKey(view.role);
+  const tAll = await getTranslations();
   return (
     <AuthShell
       title={t("title", { partner: view.partnerName })}
-      description={t("description", { role: partnerRoleLabel(view.role) })}
+      description={t("description", {
+        role: roleKey ? tAll(roleKey) : view.role,
+      })}
       appName={brand.name}
       logoUrl={brand.logoUrl}
       footer={<Link href="/app">{t("back")}</Link>}

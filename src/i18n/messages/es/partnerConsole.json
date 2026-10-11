@@ -1,0 +1,142 @@
+{
+  "consoleTitle": "Consola del socio",
+  "breadcrumb": "Socio",
+  "roles": {
+    "partner_owner": "Propietario",
+    "partner_admin": "Administrador",
+    "partner_finance": "Finanzas",
+    "partner_support": "Soporte"
+  },
+  "overview": {
+    "metaTitle": "Consola del socio",
+    "breadcrumb": "Visión general",
+    "description": "Tu rol: {role}. La consola muestra datos del socio, nunca el contenido de los workspaces de los clientes.",
+    "customers": "Empresas clientes",
+    "activeMembers": "Miembros activos"
+  },
+  "customers": {
+    "metaTitle": "Clientes (Socio)",
+    "title": "Clientes",
+    "description": "Empresas atendidas por este socio. La consola muestra solo los datos de registro, nunca el contenido de los workspaces.",
+    "newTitle": "Nuevo cliente",
+    "submit": "Registrar cliente",
+    "company": "Empresa",
+    "ownerEmail": "Correo del responsable",
+    "workspaceName": "Nombre del workspace",
+    "workspaceSlug": "Dirección del workspace",
+    "slugPlaceholder": "empresa-ejemplo",
+    "template": "Plantilla de workspace",
+    "noTemplate": "Sin plantilla (ningún módulo habilitado)",
+    "hint": "El responsable recibe una invitación de propietario, válida por 7 días, e ingresa por tu dominio. Hasta la facturación (P5), el cliente queda activo en cuanto se registra.",
+    "status": {
+      "active": "Activa",
+      "suspended": "Suspendida",
+      "inactive": "Inactiva"
+    },
+    "since": "desde {date}",
+    "empty": "Aún no hay clientes.",
+    "created": "Cliente registrado. Envía la invitación al responsable."
+  },
+  "members": {
+    "metaTitle": "Miembros (Socio)",
+    "title": "Miembros",
+    "description": "Personas del equipo del socio y sus roles.",
+    "you": "(tú)",
+    "inactive": "inactivo",
+    "role": "Rol",
+    "changeRole": "Cambiar rol",
+    "deactivate": "Desactivar",
+    "reactivate": "Reactivar",
+    "inviteTitle": "Invitar miembro",
+    "pendingInvitation": "Invitación pendiente: {email} · {role}",
+    "revoke": "Revocar",
+    "generateInvite": "Generar invitación",
+    "email": "Correo electrónico",
+    "invitationCreated": "Invitación generada.",
+    "invitationRevoked": "Invitación revocada.",
+    "updated": "Miembro actualizado."
+  },
+  "modules": {
+    "metaTitle": "Módulos ofrecidos (Socio)",
+    "title": "Módulos ofrecidos",
+    "description": "Los módulos que ofreces se incluyen en las plantillas de workspace de tus clientes.",
+    "release": {
+      "beta": "Beta",
+      "available": "Disponible",
+      "maintenance": "Mantenimiento"
+    },
+    "offered": "ofrecido",
+    "notOffered": "no ofrecido",
+    "offer": "Ofrecer",
+    "withdraw": "Retirar",
+    "empty": "No hay módulos disponibles para ofrecer en este entorno.",
+    "offeredDone": "Módulo ofrecido.",
+    "withdrawnDone": "Módulo retirado de la oferta."
+  },
+  "templates": {
+    "metaTitle": "Plantillas de workspace (Socio)",
+    "title": "Plantillas de workspace",
+    "description": "Conjuntos de módulos aplicados al primer workspace de un cliente nuevo.",
+    "noModules": "Sin módulos",
+    "remove": "Eliminar",
+    "empty": "Aún no hay plantillas.",
+    "newTitle": "Nueva plantilla",
+    "create": "Crear plantilla",
+    "name": "Nombre",
+    "modules": "Módulos",
+    "offerHint": "Ofrece módulos en \"Módulos ofrecidos\" para incluirlos en plantillas.",
+    "created": "Plantilla creada.",
+    "removed": "Plantilla eliminada."
+  },
+  "brand": {
+    "metaTitle": "Marca (Socio)",
+    "title": "Marca",
+    "description": "Nombre, color, logo y contactos que tus clientes ven en tus dominios.",
+    "version": "Versión {version}",
+    "noBrand": "Aún sin marca propia: los clientes ven la marca predeterminada"
+  },
+  "legal": {
+    "metaTitle": "Términos y privacidad (Socio)",
+    "title": "Términos y privacidad",
+    "description": "Tus clientes aceptan la versión vigente en el primer acceso, y de nuevo cuando publiques un cambio relevante."
+  },
+  "support": {
+    "metaTitle": "Acceso de soporte (Socio)",
+    "title": "Acceso de soporte",
+    "description": "Para entrar al workspace de un cliente, solicita acceso con el motivo y el plazo. El cliente aprueba, ve el historial y puede revocarlo en cualquier momento. El acceso es solo de lectura.",
+    "newTitle": "Nueva solicitud",
+    "submit": "Solicitar acceso",
+    "customer": "Cliente",
+    "duration": "Plazo (horas, hasta {max})",
+    "reason": "Motivo",
+    "hours": "{hours} h",
+    "openWorkspace": "Abrir workspace",
+    "cancel": "Cancelar",
+    "end": "Finalizar",
+    "empty": "Aún no hay solicitudes.",
+    "requested": "Solicitud enviada. El cliente la aprueba en la configuración del workspace.",
+    "ended": "Acceso finalizado."
+  },
+  "errors": {
+    "partnerNotFound": "Socio no encontrado.",
+    "invalidData": "Datos no válidos.",
+    "ownAccess": "No puedes cambiar tu propio acceso.",
+    "invalidRole": "Rol no válido.",
+    "invalidEmail": "Ingresa un correo electrónico válido.",
+    "moduleNotOfferable": "Módulo no disponible para ofrecer.",
+    "templateNameRequired": "Ingresa el nombre de la plantilla.",
+    "templateModulesNotOffered": "La plantilla solo puede usar módulos ofrecidos por el socio.",
+    "templateNameTaken": "Ya existe una plantilla con ese nombre.",
+    "templateNotFound": "Plantilla no encontrada.",
+    "companyNameRequired": "Ingresa el nombre de la empresa.",
+    "workspaceNameRequired": "Ingresa el nombre del workspace.",
+    "invalidWorkspaceSlug": "Dirección del workspace: de 3 a 48 letras minúsculas, números o guiones.",
+    "slugTaken": "Esa dirección de workspace ya está en uso.",
+    "invitationUnavailable": "Esta invitación ya no está disponible.",
+    "chooseCustomer": "Elige el cliente.",
+    "reasonTooShort": "Explica el motivo en al menos 10 caracteres.",
+    "durationTooShort": "Plazo mínimo de 1 hora.",
+    "durationTooLong": "Plazo máximo de {max} horas.",
+    "openGrantExists": "Ya tienes una solicitud abierta o un acceso vigente para ese cliente."
+  }
+}

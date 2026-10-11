@@ -17,7 +17,7 @@ import type {
 } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import { invalidPartnerInput, partnerNotFound } from "./errors";
+import { invalidPartnerParse, partnerNotFound } from "./errors";
 
 /**
  * Temporary support access (ADR 0012, P4b2; especificação §12).
@@ -106,6 +106,16 @@ const RequestSchema = z.object({
     .max(MAX_SUPPORT_HOURS, `Prazo máximo de ${MAX_SUPPORT_HOURS} horas.`),
 });
 
+const REQUEST_ISSUE_KEYS = {
+  "Escolha o cliente.": "chooseCustomer",
+  "Explique o motivo em pelo menos 10 caracteres.": "reasonTooShort",
+  "Prazo mínimo de 1 hora.": "durationTooShort",
+  [`Prazo máximo de ${MAX_SUPPORT_HOURS} horas.`]: [
+    "durationTooLong",
+    { max: MAX_SUPPORT_HOURS },
+  ],
+} as const;
+
 export async function requestSupportAccess(
   tx: ContextTransaction,
   actor: SupportRequester,
@@ -127,9 +137,7 @@ export async function requestSupportAccess(
   }
   const parsed = RequestSchema.safeParse(input);
   if (!parsed.success) {
-    throw invalidPartnerInput(
-      parsed.error.issues[0]?.message ?? "Dados inválidos.",
-    );
+    throw invalidPartnerParse(parsed.error, REQUEST_ISSUE_KEYS);
   }
 
   const [member, organization] = await Promise.all([
@@ -161,6 +169,7 @@ export async function requestSupportAccess(
       code: "conflict",
       safeMessage:
         "Você já tem um pedido aberto ou um acesso vigente para esse cliente.",
+      messageKey: "partnerConsole.errors.openGrantExists",
     });
   }
 

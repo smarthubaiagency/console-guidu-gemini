@@ -31,6 +31,15 @@
   "published": "Versão {version} publicada.",
   "errors": {
     "notFound": "Recurso não encontrado.",
-    "mustAgree": "Marque a caixa para aceitar os documentos."
+    "mustAgree": "Marque a caixa para aceitar os documentos.",
+    "invalidInput": "Dados inválidos.",
+    "titleRequired": "Informe o título.",
+    "bodyRequired": "Informe o texto."
+  },
+  "platform": {
+    "metaTitle": "Termos e privacidade (Admin)",
+    "breadcrumb": "Termos e privacidade",
+    "title": "Termos e privacidade da plataforma",
+    "description": "Valem para os clientes diretos, nos domínios da plataforma."
   }
 }

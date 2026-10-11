@@ -1,0 +1,63 @@
+{
+  "metaTitle": "Operations (Admin)",
+  "breadcrumb": "Operations",
+  "title": "Operations",
+  "description": "Health of the web and the workers, queues, failures and execution volume. Queue numbers come from the worker every minute; each one shows the sample it came from.",
+  "age": "{unit, select, seconds {{value} s ago} minutes {{value} min ago} hours {{value} h ago} other {{value} days ago}}",
+  "durationMs": "{value} ms",
+  "durationSeconds": "{value} s",
+  "workerState": {
+    "online": "Running",
+    "stopped": "Stopped",
+    "silent": "No signal"
+  },
+  "health": {
+    "title": "Health",
+    "database": "Database:",
+    "dbResponding": "responding ({ms} ms on this query)",
+    "dbNoResponse": "no response",
+    "workers": "Workers:",
+    "workersNone": "No data — no worker has reported a signal.",
+    "workersOnline": "{online} of {total} running",
+    "workerLine": "last signal {age} · since {since} · {concurrency} at a time · {queues, plural, one {# queue} other {# queues}}",
+    "workerVersion": "version {version}"
+  },
+  "queues": {
+    "title": "Queues",
+    "capturedFresh": "Captured {age}.",
+    "capturedStale": "Captured {age} — out of date: the worker has not published for more than 5 minutes.",
+    "totals": "Waiting {waiting} · running {running}.",
+    "line": "pending {pending} · queued {queued} · running {running}",
+    "oldest": "oldest pending for {seconds} s",
+    "boss": "pg-boss: {waiting} waiting, {active} active",
+    "empty": "No data — the worker has not published metrics yet."
+  },
+  "volume": {
+    "title": "Executions in the last 24 hours",
+    "summary": "Sample: {sample, plural, one {# finished execution} other {# finished executions}} · {succeeded} succeeded · {failed} failed · {skipped} skipped.",
+    "queue": "{succeeded} succeeded · {failed} failed · {skipped} skipped · average duration {avg} · p95 {p95} (sample {sample})",
+    "empty": "No data."
+  },
+  "failures": {
+    "title": "Failures in the last 7 days",
+    "scope": {
+      "platform": "platform",
+      "workspace": "workspace"
+    },
+    "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+    "empty": "No failures recorded."
+  },
+  "privacy": {
+    "title": "Privacy",
+    "text": "Retention by category: off until the legal team sets the rules; the change comes through a migration. Workspace deletions are completed by the daily routine after a 30-day grace period.",
+    "retentionOn": "on: {days} days",
+    "retentionOff": "off (waiting for the legal team)",
+    "retentionRestricted": "restricted process, no automatic removal",
+    "deletionsTitle": "Workspace deletions",
+    "requestedAt": "requested on {date}",
+    "purgedAt": "completed on {date}",
+    "canceled": "canceled",
+    "scheduledFor": "scheduled for {date}",
+    "deletionsEmpty": "No deletions requested."
+  }
+}

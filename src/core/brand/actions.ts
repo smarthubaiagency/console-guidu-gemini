@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requireMfa } from "@/core/auth/identity";
@@ -8,7 +9,8 @@ import { getPartnerMembership } from "@/core/partners/members";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 
 import { MAX_LOGO_BYTES } from "./logo";
 import { saveBrandVersion, type LogoChange } from "./service";
@@ -34,6 +36,7 @@ async function logoChangeFrom(formData: FormData): Promise<LogoChange> {
     throw new AppError({
       code: "invalid_input",
       safeMessage: "O logo deve ter no máximo 256 KB.",
+      messageKey: "brand.errors.logoTooLarge",
     });
   }
   return { kind: "replace", bytes: new Uint8Array(await file.arrayBuffer()) };
@@ -54,6 +57,7 @@ export async function saveBrandAction(
       throw new AppError({
         code: "not_found",
         safeMessage: "Recurso não encontrado.",
+        messageKey: "brand.errors.notFound",
       });
     }
     const admin = await getPlatformAdminMember(prisma, identity.userId);
@@ -82,14 +86,10 @@ export async function saveBrandAction(
     );
 
     revalidatePath("/", "layout");
-    return { success: true, message: `Marca salva (versão ${version}).` };
+    const t = await getTranslations("brand");
+    return { success: true, message: t("saved", { version }) };
   } catch (err) {
-    const safe = toSafeError(err);
-    return {
-      error: safe.safeMessage,
-      code: safe.code,
-      requestId: safe.requestId,
-    };
+    return actionFailure(err);
   }
 }
 
@@ -108,6 +108,7 @@ export async function savePartnerBrandAction(
       throw new AppError({
         code: "not_found",
         safeMessage: "Recurso não encontrado.",
+        messageKey: "brand.errors.notFound",
       });
     }
     const membership = await getPartnerMembership(
@@ -137,13 +138,9 @@ export async function savePartnerBrandAction(
     );
 
     revalidatePath("/", "layout");
-    return { success: true, message: `Marca salva (versão ${version}).` };
+    const t = await getTranslations("brand");
+    return { success: true, message: t("saved", { version }) };
   } catch (err) {
-    const safe = toSafeError(err);
-    return {
-      error: safe.safeMessage,
-      code: safe.code,
-      requestId: safe.requestId,
-    };
+    return actionFailure(err);
   }
 }

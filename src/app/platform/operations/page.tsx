@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Activity } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 import { sectionClass } from "@/components/billing/billing-ui";
 import { ModuleNotice } from "@/components/modules/module-notice";
@@ -9,8 +10,7 @@ import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { checkReadiness } from "@/core/operations/health";
 import {
-  ageLabel,
-  durationLabel,
+  ageParts,
   getOperationsOverview,
   getPrivacyOverview,
   type WorkerView,
@@ -19,33 +19,16 @@ import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Operações (Admin)" };
-
-const WORKER_STATE: Record<
-  WorkerView["state"],
-  { label: string; tone: string }
-> = {
-  online: {
-    label: "Em funcionamento",
-    tone: "bg-success-bg text-success-text border-success-border",
-  },
-  stopped: {
-    label: "Parado",
-    tone: "border-border text-text-secondary",
-  },
-  silent: {
-    label: "Sem sinal",
-    tone: "bg-danger-bg text-danger-text border-danger-border",
-  },
-};
-
-function formatDateTime(date: Date): string {
-  return date.toLocaleString("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "America/Sao_Paulo",
-  });
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("operations");
+  return { title: t("metaTitle") };
 }
+
+const WORKER_TONE: Record<WorkerView["state"], string> = {
+  online: "bg-success-bg text-success-text border-success-border",
+  stopped: "border-border text-text-secondary",
+  silent: "bg-danger-bg text-danger-text border-danger-border",
+};
 
 /**
  * Operations (F3d): health of the web and the workers, queues per job kind,
@@ -85,33 +68,58 @@ export default async function PlatformOperationsPage() {
   const { metrics, generatedAt: now } = data;
   const online = data.workers.filter((w) => w.state === "online").length;
 
+  const t = await getTranslations("operations");
+  const tPlatform = await getTranslations("platform");
+  const format = await getFormatter();
+  const formatDateTime = (date: Date): string =>
+    format.dateTime(date, {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "America/Sao_Paulo",
+    });
+  const ageLabel = (from: Date): string => t("age", ageParts(from, now));
+  const durationLabel = (ms: number | null): string => {
+    if (ms === null) return "—";
+    if (ms < 1000) return t("durationMs", { value: ms });
+    return t("durationSeconds", {
+      value: format.number(ms / 1000, { maximumFractionDigits: 1 }),
+    });
+  };
+
   return (
     <div
       className="mx-auto max-w-5xl space-y-6"
       data-testid="platform-operations"
     >
       <ModulePageHeader
-        trail={["Administração", "Operações"]}
-        title="Operações"
-        description="Saúde do web e dos workers, filas, falhas e volume de execuções. Os números de fila vêm do worker a cada minuto; cada um mostra a amostra de onde saiu."
+        trail={[tPlatform("breadcrumb"), t("breadcrumb")]}
+        title={t("title")}
+        description={t("description")}
         icon={<Activity className="h-5 w-5" />}
       />
 
       {/* Health */}
       <section className={sectionClass} data-testid="operations-health">
-        <h2 className="text-14 text-text font-semibold">Saúde</h2>
+        <h2 className="text-14 text-text font-semibold">{t("health.title")}</h2>
         <ul className="text-12 text-text-secondary space-y-1">
           <li>
-            <span className="text-text font-semibold">Banco de dados:</span>{" "}
+            <span className="text-text font-semibold">
+              {t("health.database")}
+            </span>{" "}
             {readiness.ready
-              ? `respondendo (${readiness.latencyMs} ms nesta consulta)`
-              : "sem resposta"}
+              ? t("health.dbResponding", { ms: readiness.latencyMs })
+              : t("health.dbNoResponse")}
           </li>
           <li>
-            <span className="text-text font-semibold">Workers:</span>{" "}
+            <span className="text-text font-semibold">
+              {t("health.workers")}
+            </span>{" "}
             {data.workers.length === 0
-              ? "Sem dados — nenhum worker registrou sinal."
-              : `${online} de ${data.workers.length} em funcionamento`}
+              ? t("health.workersNone")
+              : t("health.workersOnline", {
+                  online,
+                  total: data.workers.length,
+                })}
           </li>
         </ul>
         {data.workers.length > 0 ? (
@@ -128,15 +136,20 @@ export default async function PlatformOperationsPage() {
                   {w.instanceName}
                 </span>
                 <span
-                  className={`text-11 rounded-full border px-2 py-0.5 font-semibold ${WORKER_STATE[w.state].tone}`}
+                  className={`text-11 rounded-full border px-2 py-0.5 font-semibold ${WORKER_TONE[w.state]}`}
                 >
-                  {WORKER_STATE[w.state].label}
+                  {t(`workerState.${w.state}`)}
                 </span>
                 <span>
-                  último sinal {ageLabel(w.lastSeenAt, now)} · desde{" "}
-                  {formatDateTime(w.startedAt)} · {w.concurrency} por vez ·{" "}
-                  {w.queues} fila(s)
-                  {w.version ? ` · versão ${w.version}` : ""}
+                  {t("health.workerLine", {
+                    age: ageLabel(w.lastSeenAt),
+                    since: formatDateTime(w.startedAt),
+                    concurrency: w.concurrency,
+                    queues: w.queues,
+                  })}
+                  {w.version
+                    ? ` · ${t("health.workerVersion", { version: w.version })}`
+                    : ""}
                 </span>
               </li>
             ))}
@@ -146,32 +159,43 @@ export default async function PlatformOperationsPage() {
 
       {/* Queues */}
       <section className={sectionClass} data-testid="operations-queues">
-        <h2 className="text-14 text-text font-semibold">Filas</h2>
+        <h2 className="text-14 text-text font-semibold">{t("queues.title")}</h2>
         {metrics.capturedAt ? (
           <p className="text-12 text-text-secondary">
-            Capturado {ageLabel(metrics.capturedAt, now)}
-            {metrics.stale
-              ? " — desatualizado: o worker não publica há mais de 5 minutos."
-              : "."}{" "}
-            Aguardando {metrics.totals.waiting} · em execução{" "}
-            {metrics.totals.running}.
+            {t(
+              metrics.stale ? "queues.capturedStale" : "queues.capturedFresh",
+              {
+                age: ageLabel(metrics.capturedAt),
+              },
+            )}{" "}
+            {t("queues.totals", {
+              waiting: metrics.totals.waiting,
+              running: metrics.totals.running,
+            })}
           </p>
         ) : null}
         <ul className="divide-border divide-y">
           {metrics.queues.map((q) => (
             <li key={q.kind} className="text-12 text-text-secondary py-2">
-              <span className="text-text font-semibold">{q.kind}</span> ·
-              pendentes {q.pending} · na fila {q.queued} · em execução{" "}
-              {q.running}
+              <span className="text-text font-semibold">{q.kind}</span> ·{" "}
+              {t("queues.line", {
+                pending: q.pending,
+                queued: q.queued,
+                running: q.running,
+              })}
               {q.oldestPendingSeconds !== null
-                ? ` · pendente mais antigo há ${q.oldestPendingSeconds} s`
+                ? ` · ${t("queues.oldest", { seconds: q.oldestPendingSeconds })}`
                 : ""}{" "}
-              · pg-boss: {q.bossWaiting} aguardando, {q.bossActive} ativos
+              ·{" "}
+              {t("queues.boss", {
+                waiting: q.bossWaiting,
+                active: q.bossActive,
+              })}
             </li>
           ))}
           {metrics.queues.length === 0 ? (
             <li className="text-12 text-text-secondary py-2">
-              Sem dados — o worker ainda não publicou métricas.
+              {t("queues.empty")}
             </li>
           ) : null}
         </ul>
@@ -179,16 +203,16 @@ export default async function PlatformOperationsPage() {
 
       {/* Volume */}
       <section className={sectionClass} data-testid="operations-volume">
-        <h2 className="text-14 text-text font-semibold">
-          Execuções nas últimas 24 horas
-        </h2>
+        <h2 className="text-14 text-text font-semibold">{t("volume.title")}</h2>
         {metrics.totals.sample24h > 0 ? (
           <>
             <p className="text-12 text-text-secondary">
-              Amostra: {metrics.totals.sample24h} execução(ões) concluídas ·{" "}
-              {metrics.totals.succeeded24h} com sucesso ·{" "}
-              {metrics.totals.failed24h} com falha · {metrics.totals.skipped24h}{" "}
-              ignoradas.
+              {t("volume.summary", {
+                sample: metrics.totals.sample24h,
+                succeeded: metrics.totals.succeeded24h,
+                failed: metrics.totals.failed24h,
+                skipped: metrics.totals.skipped24h,
+              })}
             </p>
             <ul className="divide-border divide-y">
               {metrics.queues
@@ -196,37 +220,45 @@ export default async function PlatformOperationsPage() {
                 .map((q) => (
                   <li key={q.kind} className="text-12 text-text-secondary py-2">
                     <span className="text-text font-semibold">{q.kind}</span> ·{" "}
-                    {q.succeeded24h} sucesso · {q.failed24h} falha ·{" "}
-                    {q.skipped24h} ignoradas · duração média{" "}
-                    {durationLabel(q.avgDurationMs24h)} · p95{" "}
-                    {durationLabel(q.p95DurationMs24h)} (amostra {q.sample24h})
+                    {t("volume.queue", {
+                      succeeded: q.succeeded24h,
+                      failed: q.failed24h,
+                      skipped: q.skipped24h,
+                      avg: durationLabel(q.avgDurationMs24h),
+                      p95: durationLabel(q.p95DurationMs24h),
+                      sample: q.sample24h,
+                    })}
                   </li>
                 ))}
             </ul>
           </>
         ) : (
-          <p className="text-12 text-text-secondary">Sem dados.</p>
+          <p className="text-12 text-text-secondary">{t("volume.empty")}</p>
         )}
       </section>
 
       {/* Failures */}
       <section className={sectionClass} data-testid="operations-failures">
         <h2 className="text-14 text-text font-semibold">
-          Falhas dos últimos 7 dias
+          {t("failures.title")}
         </h2>
         <ul className="divide-border divide-y">
           {data.failures.map((f) => (
             <li key={f.id} className="text-12 text-text-secondary py-2">
               <span className="text-text font-semibold">{f.kind}</span> ·{" "}
-              {f.scope === "platform" ? "plataforma" : "workspace"} ·{" "}
-              {f.attempts} tentativa(s) ·{" "}
+              {t(
+                f.scope === "platform"
+                  ? "failures.scope.platform"
+                  : "failures.scope.workspace",
+              )}{" "}
+              · {t("failures.attempts", { count: f.attempts })} ·{" "}
               {f.finishedAt ? formatDateTime(f.finishedAt) : "—"}
               {f.lastError ? ` · ${f.lastError}` : ""}
             </li>
           ))}
           {data.failures.length === 0 ? (
             <li className="text-12 text-text-secondary py-2">
-              Nenhuma falha registrada.
+              {t("failures.empty")}
             </li>
           ) : null}
         </ul>
@@ -234,27 +266,25 @@ export default async function PlatformOperationsPage() {
 
       {/* Privacy (F3e) */}
       <section className={sectionClass} data-testid="operations-privacy">
-        <h2 className="text-14 text-text font-semibold">Privacidade</h2>
-        <p className="text-12 text-text-secondary">
-          Retenção por categoria: desligada até as regras do jurídico; a mudança
-          vem por migration. Exclusões de workspace são concluídas pela rotina
-          diária depois de 30 dias de carência.
-        </p>
+        <h2 className="text-14 text-text font-semibold">
+          {t("privacy.title")}
+        </h2>
+        <p className="text-12 text-text-secondary">{t("privacy.text")}</p>
         <ul className="divide-border divide-y" data-testid="retention-policies">
           {privacy.retention.map((r) => (
             <li key={r.category} className="text-12 text-text-secondary py-2">
               <span className="text-text font-semibold">{r.category}</span> ·{" "}
               {r.description} ·{" "}
               {r.enabled
-                ? `ligada: ${r.retainDays} dias`
+                ? t("privacy.retentionOn", { days: r.retainDays ?? "—" })
                 : r.automated
-                  ? "desligada (aguardando o jurídico)"
-                  : "processo restrito, sem remoção automática"}
+                  ? t("privacy.retentionOff")
+                  : t("privacy.retentionRestricted")}
             </li>
           ))}
         </ul>
         <h3 className="text-12 text-text font-semibold">
-          Exclusões de workspace
+          {t("privacy.deletionsTitle")}
         </h3>
         <ul
           className="divide-border divide-y"
@@ -266,17 +296,25 @@ export default async function PlatformOperationsPage() {
               className="text-12 text-text-secondary py-2"
             >
               <span className="text-text font-semibold">{d.workspaceName}</span>{" "}
-              · pedida em {formatDateTime(d.requestedAt)} ·{" "}
+              ·{" "}
+              {t("privacy.requestedAt", {
+                date: formatDateTime(d.requestedAt),
+              })}{" "}
+              ·{" "}
               {d.state === "purged"
-                ? `concluída em ${d.purgedAt ? formatDateTime(d.purgedAt) : "—"}`
+                ? t("privacy.purgedAt", {
+                    date: d.purgedAt ? formatDateTime(d.purgedAt) : "—",
+                  })
                 : d.state === "canceled"
-                  ? "cancelada"
-                  : `agendada para ${formatDateTime(d.purgeAfter)}`}
+                  ? t("privacy.canceled")
+                  : t("privacy.scheduledFor", {
+                      date: formatDateTime(d.purgeAfter),
+                    })}
             </li>
           ))}
           {privacy.deletions.length === 0 ? (
             <li className="text-12 text-text-secondary py-2">
-              Nenhuma exclusão pedida.
+              {t("privacy.deletionsEmpty")}
             </li>
           ) : null}
         </ul>

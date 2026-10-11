@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FileText } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { LegalEditor } from "@/components/legal/legal-editor";
 import { ModuleNotice } from "@/components/modules/module-notice";
@@ -13,7 +14,10 @@ import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Termos e privacidade (Admin)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("legal.platform");
+  return { title: t("metaTitle") };
+}
 
 /** Terms and privacy of the house partner (ADR 0012, P4b2). */
 export default async function PlatformLegalPage() {
@@ -31,12 +35,14 @@ export default async function PlatformLegalPage() {
         { partnerId: partner.partnerId },
       )
     : [];
+  const t = await getTranslations("legal.platform");
+  const tPlatform = await getTranslations("platform");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <ModulePageHeader
-        trail={["Administração", "Termos e privacidade"]}
-        title="Termos e privacidade da plataforma"
-        description="Valem para os clientes diretos, nos domínios da plataforma."
+        trail={[tPlatform("breadcrumb"), t("breadcrumb")]}
+        title={t("title")}
+        description={t("description")}
         icon={<FileText className="h-5 w-5" />}
       />
       <LegalEditor documents={documents} action={publishPlatformLegalAction} />

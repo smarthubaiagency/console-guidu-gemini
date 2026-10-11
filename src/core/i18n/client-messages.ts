@@ -17,6 +17,8 @@ export const CLIENT_NAMESPACES = [
   "modules",
   "credentials",
   "mcp",
+  "brand",
+  "platformKeys",
 ] as const;
 
 export function clientMessages(

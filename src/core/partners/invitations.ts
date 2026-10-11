@@ -17,7 +17,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import { invalidPartnerInput, partnerNotFound } from "./errors";
+import { invalidPartnerParse, partnerNotFound } from "./errors";
 
 /** Partner invitations (ADR 0012, P4a): the only way to join a partner. */
 
@@ -38,6 +38,10 @@ const InvitationInputSchema = z.object({
     .max(254),
   role: z.enum(PARTNER_ROLES as [PartnerRoleKey, ...PartnerRoleKey[]]),
 });
+
+const INVITATION_ISSUE_KEYS = {
+  "Informe um e-mail válido.": "invalidEmail",
+} as const;
 
 function canInvite(actor: InvitingActor): boolean {
   return (
@@ -61,9 +65,7 @@ export async function createPartnerInvitation(
   if (!canInvite(actor)) throw new PermissionDeniedError();
   const parsed = InvitationInputSchema.safeParse(input);
   if (!parsed.success) {
-    throw invalidPartnerInput(
-      parsed.error.issues[0]?.message ?? "Dados inválidos.",
-    );
+    throw invalidPartnerParse(parsed.error, INVITATION_ISSUE_KEYS);
   }
 
   const partner = await tx.partner.findUnique({
@@ -224,12 +226,14 @@ export async function acceptPartnerInvitation(
       throw new AppError({
         code: "conflict",
         safeMessage: "Este convite não está mais disponível.",
+        messageKey: "partnerConsole.errors.invitationUnavailable",
       });
     }
     if (!sameEmail(identity, invitation.email)) {
       throw new AppError({
         code: "forbidden",
         safeMessage: "Este convite foi enviado para outro e-mail.",
+        messageKey: "errors.invitationRecipientMismatch",
       });
     }
     if (!identity.emailConfirmedAt) {
@@ -237,6 +241,7 @@ export async function acceptPartnerInvitation(
         code: "forbidden",
         safeMessage:
           "O seu e-mail precisa estar confirmado para aceitar o convite.",
+        messageKey: "errors.invitationEmailUnconfirmed",
       });
     }
 

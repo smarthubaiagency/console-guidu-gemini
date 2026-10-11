@@ -65,6 +65,7 @@
     "title": "Join {partner}",
     "description": "You were invited as {role}. After accepting, use the partner console at /admin on the partner domain.",
     "back": "Back",
-    "accept": "Accept invitation"
+    "accept": "Accept invitation",
+    "acceptedMessage": "Invitation accepted."
   }
 }

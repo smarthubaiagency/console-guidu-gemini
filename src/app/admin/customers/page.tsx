@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Building2 } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -16,13 +17,12 @@ import { listPartnerCustomers } from "@/core/partners/members";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Clientes (Parceiro)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("partnerConsole");
+  return { title: t("customers.metaTitle") };
+}
 
-const STATUS_LABELS: Record<string, string> = {
-  active: "Ativa",
-  suspended: "Suspensa",
-  inactive: "Inativa",
-};
+const STATUS_KEYS = new Set(["active", "suspended", "inactive"]);
 
 /** Companies of the partner: metadata only (ADR 0012, P4a). */
 export default async function PartnerCustomersPage() {
@@ -46,25 +46,30 @@ export default async function PartnerCustomersPage() {
     { partnerId: partner.partnerId },
   );
 
+  const t = await getTranslations("partnerConsole");
+  const format = await getFormatter();
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={["Parceiro", "Clientes"]}
-        title="Clientes"
-        description="Empresas atendidas por este parceiro. O console mostra só os dados cadastrais, nunca o conteúdo dos workspaces."
+        trail={[t("breadcrumb"), t("customers.title")]}
+        title={t("customers.title")}
+        description={t("customers.description")}
         icon={<Building2 className="h-5 w-5" />}
       />
       {canManage ? (
         <section className="border-card-border bg-surface-card space-y-3 rounded-xl border p-4 shadow-xs">
-          <h2 className="text-14 text-text font-semibold">Novo cliente</h2>
+          <h2 className="text-14 text-text font-semibold">
+            {t("customers.newTitle")}
+          </h2>
           <ActionForm
             action={createPartnerCustomerAction}
-            submitLabel="Cadastrar cliente"
+            submitLabel={t("customers.submit")}
             className="grid gap-3 sm:grid-cols-2"
             testId="create-customer"
           >
             <label className={labelClass}>
-              Empresa
+              {t("customers.company")}
               <input
                 name="organizationName"
                 required
@@ -73,7 +78,7 @@ export default async function PartnerCustomersPage() {
               />
             </label>
             <label className={labelClass}>
-              E-mail do responsável
+              {t("customers.ownerEmail")}
               <input
                 name="ownerEmail"
                 type="email"
@@ -82,7 +87,7 @@ export default async function PartnerCustomersPage() {
               />
             </label>
             <label className={labelClass}>
-              Nome do workspace
+              {t("customers.workspaceName")}
               <input
                 name="workspaceName"
                 required
@@ -91,19 +96,19 @@ export default async function PartnerCustomersPage() {
               />
             </label>
             <label className={labelClass}>
-              Endereço do workspace
+              {t("customers.workspaceSlug")}
               <input
                 name="workspaceSlug"
                 required
                 pattern="[a-z0-9][a-z0-9-]{1,46}[a-z0-9]"
-                placeholder="empresa-exemplo"
+                placeholder={t("customers.slugPlaceholder")}
                 className={inputClass}
               />
             </label>
             <label className={labelClass}>
-              Modelo de workspace
+              {t("customers.template")}
               <select name="templateId" defaultValue="" className={inputClass}>
-                <option value="">Sem modelo (nenhum módulo habilitado)</option>
+                <option value="">{t("customers.noTemplate")}</option>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.name}
@@ -112,11 +117,7 @@ export default async function PartnerCustomersPage() {
               </select>
             </label>
           </ActionForm>
-          <p className="text-11 text-text-tertiary">
-            O responsável recebe um convite de proprietário, válido por 7 dias,
-            e entra pelo seu domínio. Até a cobrança (P5), o cliente fica ativo
-            assim que é cadastrado.
-          </p>
+          <p className="text-11 text-text-tertiary">{t("customers.hint")}</p>
         </section>
       ) : null}
 
@@ -133,14 +134,21 @@ export default async function PartnerCustomersPage() {
               {customer.name}
             </div>
             <div className="text-12 text-text-secondary">
-              {STATUS_LABELS[customer.status] ?? customer.status} · desde{" "}
-              {customer.createdAt.toLocaleDateString("pt-BR")}
+              {STATUS_KEYS.has(customer.status)
+                ? t(`customers.status.${customer.status}`)
+                : customer.status}{" "}
+              ·{" "}
+              {t("customers.since", {
+                date: format.dateTime(customer.createdAt, {
+                  dateStyle: "short",
+                }),
+              })}
             </div>
           </li>
         ))}
         {customers.length === 0 ? (
           <li className="text-12 text-text-secondary p-4">
-            Nenhum cliente ainda.
+            {t("customers.empty")}
           </li>
         ) : null}
       </ul>

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { CreditCard } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 import {
+  billingLabels,
+  calendarDateFormatter,
+  centsFormatter,
   centsInput,
-  formatDate,
-  intervalLabel,
-  METHOD_LABELS,
   ProvisionalBadge,
   sectionClass,
 } from "@/components/billing/billing-ui";
@@ -43,14 +44,16 @@ import {
   listNotificationDeliveries,
   listPayoutReports,
 } from "@/core/billing/operations";
-import { formatCents } from "@/core/billing/split";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { listRegisteredModules } from "@/modules/registry";
 
-export const metadata: Metadata = { title: "Cobrança (Admin)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("billing.platform");
+  return { title: t("metaTitle") };
+}
 
 /**
  * Platform billing (P5m, D-PA-14): base plans and insert-only versions,
@@ -102,40 +105,48 @@ export default async function PlatformBillingPage() {
   const orgNames = new Map(data.organizations.map((o) => [o.id, o.name]));
   const modules = listRegisteredModules().map((m) => m.manifest);
   const quotaKeys = listQuotaKeys();
+  const tb = await getTranslations("billing");
+  const t = await getTranslations("billing.platform");
+  const format = await getFormatter();
+  const formatDate = await calendarDateFormatter();
+  const formatCents = await centsFormatter();
+  const labels = await billingLabels();
 
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="platform-billing">
       <ModulePageHeader
-        trail={["Administração", "Cobrança"]}
-        title="Cobrança"
-        description="Planos base, pisos, repasses e valores devidos por parceiro. Mudanças criam novas versões e não alteram assinaturas existentes."
+        trail={[t("trailAdmin"), t("trailBilling")]}
+        title={t("title")}
+        description={t("description")}
         icon={<CreditCard className="h-5 w-5" />}
       />
 
       {/* Totals per partner */}
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">Por parceiro</h2>
+        <h2 className="text-14 text-text font-semibold">{t("byPartner")}</h2>
         <ul className="divide-border divide-y" data-testid="partner-totals">
-          {data.totals.map((t) => {
-            const p = partnerById.get(t.partnerId);
+          {data.totals.map((total) => {
+            const p = partnerById.get(total.partnerId);
             return (
               <li
-                key={t.partnerId}
+                key={total.partnerId}
                 className="flex flex-wrap items-center justify-between gap-3 py-2"
               >
                 <div className="text-12 text-text-secondary">
                   <span className="text-text font-semibold">
-                    {t.partnerName}
+                    {total.partnerName}
                   </span>{" "}
-                  · recebido {formatCents(t.receivedCents)} · estornado{" "}
-                  {formatCents(t.refundedCents)} · plataforma{" "}
-                  {formatCents(t.platformNetCents)} · a repassar ao parceiro{" "}
-                  {formatCents(t.partnerNetCents)} · {t.openSubscriptions}{" "}
-                  assinatura(s) aberta(s)
+                  {t("totalsLine", {
+                    received: formatCents(total.receivedCents),
+                    refunded: formatCents(total.refundedCents),
+                    platform: formatCents(total.platformNetCents),
+                    partner: formatCents(total.partnerNetCents),
+                    open: total.openSubscriptions,
+                  })}
                   {p?.checkoutBlocked
-                    ? " · checkout bloqueado"
+                    ? t("checkoutBlockedTag")
                     : p?.checkoutEnabled
-                      ? " · checkout ligado (demonstração)"
+                      ? t("checkoutOnTag")
                       : ""}
                 </div>
                 {canBlock && p && !p.isHouse ? (
@@ -143,8 +154,8 @@ export default async function PlatformBillingPage() {
                     action={setCheckoutBlockedAction}
                     submitLabel={
                       p.checkoutBlocked
-                        ? "Liberar checkout"
-                        : "Bloquear checkout"
+                        ? t("unblockCheckout")
+                        : t("blockCheckout")
                     }
                     tone="neutral"
                   >
@@ -165,27 +176,24 @@ export default async function PlatformBillingPage() {
       {/* Overdue terms (F3c) */}
       <section className={sectionClass} data-testid="billing-terms">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-14 text-text font-semibold">
-            Prazos de cobrança
-          </h2>
+          <h2 className="text-14 text-text font-semibold">{t("termsTitle")}</h2>
           {data.terms.provisional ? <ProvisionalBadge /> : null}
         </div>
         <p className="text-12 text-text-secondary">
-          Sem pagamento registrado, a assinatura passa a &quot;em atraso&quot;{" "}
-          {data.terms.pastDueAfterDays} dia(s) depois do vencimento e a
-          &quot;suspensa&quot; {data.terms.suspendAfterDays} dia(s) depois
-          disso. A rotina diária do worker aplica os prazos e avisa o parceiro;
-          uma mudança vale a partir da próxima execução.
+          {t("termsText", {
+            pastDue: data.terms.pastDueAfterDays,
+            suspend: data.terms.suspendAfterDays,
+          })}
         </p>
         {canManage ? (
           <ActionForm
             action={updateBillingTermsAction}
-            submitLabel="Salvar prazos"
+            submitLabel={t("saveTerms")}
             className="grid gap-3 sm:grid-cols-3"
             testId="billing-terms-form"
           >
             <label className={labelClass}>
-              Tolerância até &quot;em atraso&quot; (dias)
+              {t("pastDueLabel")}
               <input
                 name="pastDueAfterDays"
                 required
@@ -195,7 +203,7 @@ export default async function PlatformBillingPage() {
               />
             </label>
             <label className={labelClass}>
-              Carência até &quot;suspensa&quot; (dias)
+              {t("suspendLabel")}
               <input
                 name="suspendAfterDays"
                 required
@@ -210,7 +218,7 @@ export default async function PlatformBillingPage() {
                 name="provisional"
                 defaultChecked={data.terms.provisional}
               />
-              Prazos provisórios
+              {t("provisionalTerms")}
             </label>
           </ActionForm>
         ) : null}
@@ -221,7 +229,7 @@ export default async function PlatformBillingPage() {
 
       {/* Plans */}
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">Planos base</h2>
+        <h2 className="text-14 text-text font-semibold">{t("plansTitle")}</h2>
         <ul className="divide-border divide-y" data-testid="platform-plans">
           {data.plans.map((plan) => {
             const current = plan.versions[0];
@@ -233,27 +241,35 @@ export default async function PlatformBillingPage() {
                       {plan.name}
                     </span>
                     <span>({plan.key})</span>
-                    {plan.status === "retired" ? <span>· retirado</span> : null}
+                    {plan.status === "retired" ? (
+                      <span>{t("retiredTag")}</span>
+                    ) : null}
                     {current ? (
                       <span>
-                        v{current.version} · piso{" "}
-                        {formatCents(current.minPriceCents)} · repasse mínimo{" "}
-                        {formatCents(current.minPlatformShareCents)} · valor
-                        base {formatCents(current.partnerBasePriceCents)}/
-                        {intervalLabel(current.billingInterval)}
+                        {t("versionLine", {
+                          version: current.version,
+                          floor: formatCents(current.minPriceCents),
+                          minShare: formatCents(current.minPlatformShareCents),
+                          base: formatCents(current.partnerBasePriceCents),
+                          interval: labels.interval(current.billingInterval),
+                        })}
                         {current.moduleKeys.length
-                          ? ` · módulos: ${current.moduleKeys.join(", ")}`
+                          ? t("modulesList", {
+                              modules: current.moduleKeys.join(", "),
+                            })
                           : current.provisional
-                            ? " · módulos a definir (não restringe)"
-                            : " · nenhum módulo"}
+                            ? t("modulesTbd")
+                            : t("noModules")}
                         {Object.keys(current.limits).length
-                          ? ` · limites: ${Object.entries(current.limits)
-                              .map(([k, v]) => `${k} ${v}`)
-                              .join(", ")}`
+                          ? t("limitsList", {
+                              limits: Object.entries(current.limits)
+                                .map(([k, v]) => `${k} ${v}`)
+                                .join(", "),
+                            })
                           : ""}
                       </span>
                     ) : (
-                      <span>sem versão publicada</span>
+                      <span>{t("noVersion")}</span>
                     )}
                     {current?.provisional ? <ProvisionalBadge /> : null}
                   </div>
@@ -261,7 +277,9 @@ export default async function PlatformBillingPage() {
                     <ActionForm
                       action={setPlanStatusAction}
                       submitLabel={
-                        plan.status === "active" ? "Retirar" : "Reativar"
+                        plan.status === "active"
+                          ? t("retire")
+                          : tb("console.reactivate")
                       }
                       tone="neutral"
                     >
@@ -277,17 +295,17 @@ export default async function PlatformBillingPage() {
                 {canManage ? (
                   <details className="border-border rounded-lg border p-3">
                     <summary className="text-12 text-text-subtle cursor-pointer font-semibold">
-                      Publicar nova versão
+                      {t("publishVersion")}
                     </summary>
                     <ActionForm
                       action={publishPlanVersionAction}
-                      submitLabel="Publicar versão"
+                      submitLabel={t("publishVersionSubmit")}
                       className="mt-3 grid gap-3 sm:grid-cols-3"
                       testId={`publish-version-${plan.key}`}
                     >
                       <input type="hidden" name="planId" value={plan.id} />
                       <label className={labelClass}>
-                        Piso (R$)
+                        {t("floorLabel")}
                         <input
                           name="minPrice"
                           required
@@ -299,7 +317,7 @@ export default async function PlatformBillingPage() {
                         />
                       </label>
                       <label className={labelClass}>
-                        Repasse mínimo (R$)
+                        {t("minShareLabel")}
                         <input
                           name="minPlatformShare"
                           required
@@ -313,7 +331,7 @@ export default async function PlatformBillingPage() {
                         />
                       </label>
                       <label className={labelClass}>
-                        Valor base do parceiro (R$)
+                        {t("basePriceLabel")}
                         <input
                           name="partnerBasePrice"
                           required
@@ -327,18 +345,18 @@ export default async function PlatformBillingPage() {
                         />
                       </label>
                       <label className={labelClass}>
-                        Periodicidade
+                        {t("intervalLabel")}
                         <select
                           name="billingInterval"
                           defaultValue={current?.billingInterval ?? "monthly"}
                           className={inputClass}
                         >
-                          <option value="monthly">Mensal</option>
-                          <option value="yearly">Anual</option>
+                          <option value="monthly">{t("monthly")}</option>
+                          <option value="yearly">{t("yearly")}</option>
                         </select>
                       </label>
                       <fieldset className={`${labelClass} sm:col-span-2`}>
-                        Módulos incluídos
+                        {t("modulesLabel")}
                         <div className="flex flex-wrap gap-3">
                           {modules.map((m) => (
                             <label
@@ -360,7 +378,7 @@ export default async function PlatformBillingPage() {
                       </fieldset>
                       {quotaKeys.map((quota) => (
                         <label key={quota.key} className={labelClass}>
-                          Limite {quota.key} (vazio = padrão)
+                          {t("limitLabel", { key: quota.key })}
                           <input
                             name={`limit.${quota.key}`}
                             inputMode="numeric"
@@ -380,7 +398,7 @@ export default async function PlatformBillingPage() {
                           name="provisional"
                           defaultChecked={current?.provisional ?? true}
                         />
-                        Valores provisórios (aguardando o Comercial)
+                        {t("provisionalValues")}
                       </label>
                     </ActionForm>
                   </details>
@@ -392,12 +410,12 @@ export default async function PlatformBillingPage() {
         {canManage ? (
           <ActionForm
             action={createPlanAction}
-            submitLabel="Criar plano"
+            submitLabel={tb("console.createPlan")}
             className="grid gap-3 sm:grid-cols-2"
             testId="create-plan"
           >
             <label className={labelClass}>
-              Nome
+              {tb("console.name")}
               <input
                 name="name"
                 required
@@ -406,7 +424,7 @@ export default async function PlatformBillingPage() {
               />
             </label>
             <label className={labelClass}>
-              Chave (letras minúsculas e hífen)
+              {t("keyLabel")}
               <input
                 name="key"
                 required
@@ -420,9 +438,7 @@ export default async function PlatformBillingPage() {
 
       {/* Split rules */}
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">
-          Regras de divisão (modo cliente paga)
-        </h2>
+        <h2 className="text-14 text-text font-semibold">{t("splitTitle")}</h2>
         <ul
           className="text-12 text-text-secondary space-y-1"
           data-testid="split-rules"
@@ -430,27 +446,28 @@ export default async function PlatformBillingPage() {
           {data.rules.map((rule) => (
             <li key={rule.id}>
               {rule.partnerId
-                ? (partnerById.get(rule.partnerId)?.name ?? "Parceiro")
-                : "Padrão"}{" "}
-              · v{rule.version} · plataforma{" "}
-              {(rule.platformPercentBp / 100).toLocaleString("pt-BR")}% · desde{" "}
-              {formatDate(rule.createdAt)}
+                ? (partnerById.get(rule.partnerId)?.name ??
+                  t("partnerFallback"))
+                : t("ruleDefault")}{" "}
+              {t("ruleLine", {
+                version: rule.version,
+                percent: format.number(rule.platformPercentBp / 100),
+                date: formatDate(rule.createdAt),
+              })}
             </li>
           ))}
         </ul>
         {canManage ? (
           <ActionForm
             action={publishSplitRuleAction}
-            submitLabel="Publicar regra"
+            submitLabel={t("publishRule")}
             className="grid gap-3 sm:grid-cols-2"
             testId="publish-split-rule"
           >
             <label className={labelClass}>
-              Aplica a
+              {t("appliesTo")}
               <select name="partnerId" className={inputClass}>
-                <option value="">
-                  Padrão (todos os parceiros sem regra própria)
-                </option>
+                <option value="">{t("defaultOption")}</option>
                 {data.partners
                   .filter((p) => !p.isHouse)
                   .map((p) => (
@@ -461,7 +478,7 @@ export default async function PlatformBillingPage() {
               </select>
             </label>
             <label className={labelClass}>
-              Percentual da plataforma (%)
+              {t("percentLabel")}
               <input
                 name="platformPercent"
                 required
@@ -475,7 +492,9 @@ export default async function PlatformBillingPage() {
 
       {/* Payments */}
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">Pagamentos recentes</h2>
+        <h2 className="text-14 text-text font-semibold">
+          {t("paymentsTitle")}
+        </h2>
         <ul className="divide-border divide-y" data-testid="platform-payments">
           {data.payments.map((payment) => (
             <li
@@ -484,14 +503,16 @@ export default async function PlatformBillingPage() {
             >
               <div className="text-12 text-text-secondary">
                 <span className="text-text font-semibold">
-                  {partnerById.get(payment.partnerId)?.name ?? "Parceiro"}
+                  {partnerById.get(payment.partnerId)?.name ??
+                    t("partnerFallback")}
                 </span>{" "}
-                · {orgNames.get(payment.organizationId) ?? "Cliente"} ·{" "}
-                {payment.kind === "refund" ? "Estorno de " : ""}
+                ·{" "}
+                {orgNames.get(payment.organizationId) ??
+                  tb("console.customerFallback")}{" "}
+                · {payment.kind === "refund" ? tb("console.refundOf") : ""}
                 {formatCents(payment.amountCents)} ·{" "}
-                {METHOD_LABELS[payment.method] ?? payment.method} ·{" "}
-                {formatDate(payment.paidOn)}
-                {payment.refunded ? " · estornado" : ""}
+                {labels.method(payment.method)} · {formatDate(payment.paidOn)}
+                {payment.refunded ? tb("console.refunded") : ""}
               </div>
               <div className="flex items-center gap-2">
                 {payment.hasEvidence ? (
@@ -499,7 +520,7 @@ export default async function PlatformBillingPage() {
                     href={`/platform/billing/evidence/${payment.id}`}
                     className="text-12 text-text-subtle font-medium underline"
                   >
-                    Comprovante
+                    {tb("console.evidence")}
                   </a>
                 ) : null}
                 {canManage &&
@@ -507,15 +528,15 @@ export default async function PlatformBillingPage() {
                 !payment.refunded ? (
                   <ActionForm
                     action={refundPaymentAction}
-                    submitLabel="Estornar"
+                    submitLabel={t("refund")}
                     tone="neutral"
                   >
                     <input type="hidden" name="paymentId" value={payment.id} />
                     <input
                       name="reason"
-                      placeholder="Motivo"
+                      placeholder={t("reasonPlaceholder")}
                       maxLength={500}
-                      aria-label="Motivo do estorno"
+                      aria-label={t("reasonLabel")}
                       className={inputClass}
                     />
                   </ActionForm>
@@ -525,7 +546,7 @@ export default async function PlatformBillingPage() {
           ))}
           {data.payments.length === 0 ? (
             <li className="text-12 text-text-secondary py-2">
-              Nenhum pagamento ainda.
+              {t("noPayments")}
             </li>
           ) : null}
         </ul>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Palette } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { BrandForm } from "@/components/brand/brand-form";
 import { ModuleNotice } from "@/components/modules/module-notice";
@@ -11,7 +12,10 @@ import { platformGrants } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
 import { BrandMark } from "@/shared/ui/brand-mark";
 
-export const metadata: Metadata = { title: "Marca (Admin)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("brand.platform");
+  return { title: t("metaTitle") };
+}
 
 /**
  * Brand of the house partner, served on the platform hosts (ADR 0012, P3).
@@ -26,13 +30,15 @@ export default async function PlatformBrandPage() {
   }
 
   const brand = await getRequestBrand();
+  const t = await getTranslations("brand.platform");
+  const tPlatform = await getTranslations("platform");
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <ModulePageHeader
-        trail={["Administração", "Marca"]}
-        title="Marca da plataforma"
-        description="Nome, cor, logo e contatos exibidos nos domínios da plataforma e nos clientes diretos."
+        trail={[tPlatform("breadcrumb"), t("breadcrumb")]}
+        title={t("title")}
+        description={t("description")}
         icon={<Palette className="h-5 w-5" />}
       />
 
@@ -47,8 +53,8 @@ export default async function PlatformBrandPage() {
           </div>
           <div className="text-12 text-text-secondary">
             {brand.source === "partner"
-              ? `Versão ${brand.version}`
-              : "Marca do ambiente (APP_NAME), nenhuma versão salva"}
+              ? t("version", { version: brand.version ?? "" })
+              : t("envBrand")}
           </div>
         </div>
       </section>

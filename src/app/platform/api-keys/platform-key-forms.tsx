@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import {
@@ -14,11 +15,14 @@ const INPUT =
 const LABEL = "text-12 text-text-subtle flex flex-col gap-1 font-medium";
 
 function Feedback({ state }: Readonly<{ state: PlatformKeyActionState }>) {
+  const t = useTranslations("platformKeys.form");
   if (state.error) {
     return (
       <p role="alert" className="text-12 text-danger-text">
         {state.error}
-        {state.requestId ? ` (ref. ${state.requestId.slice(0, 8)})` : ""}
+        {state.requestId
+          ? ` ${t("reference", { id: state.requestId.slice(0, 8) })}`
+          : ""}
       </p>
     );
   }
@@ -46,6 +50,7 @@ export function CreatePlatformKeyForm({
 }: Readonly<{
   scopes: readonly Readonly<{ id: string; label: string; desc: string }>[];
 }>) {
+  const t = useTranslations("platformKeys.form");
   const [state, action, pending] = useActionState(
     createPlatformKeyAction,
     INITIAL,
@@ -58,11 +63,11 @@ export function CreatePlatformKeyForm({
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={LABEL}>
-          Nome da chave
+          {t("name")}
           <input name="name" required maxLength={80} className={INPUT} />
         </label>
         <label className={LABEL}>
-          Validade (dias, até 90)
+          {t("expiresInDays")}
           <input
             name="expiresInDays"
             type="number"
@@ -75,7 +80,7 @@ export function CreatePlatformKeyForm({
       </div>
       <fieldset className="space-y-2">
         <legend className="text-12 text-text-subtle font-medium">
-          Escopos
+          {t("scopes")}
         </legend>
         {scopes.map((scope) => (
           <label key={scope.id} className="text-12 text-text flex gap-2">
@@ -92,7 +97,7 @@ export function CreatePlatformKeyForm({
         disabled={pending}
         className="bg-primary text-on-primary text-12 rounded-lg px-3 py-2 font-semibold disabled:opacity-60"
       >
-        Criar chave
+        {t("create")}
       </button>
       <Feedback state={state} />
     </form>
@@ -102,6 +107,7 @@ export function CreatePlatformKeyForm({
 export function RevokePlatformKeyButton({
   keyId,
 }: Readonly<{ keyId: string }>) {
+  const t = useTranslations("platformKeys.form");
   const [state, action, pending] = useActionState(
     revokePlatformKeyAction,
     INITIAL,
@@ -114,7 +120,7 @@ export function RevokePlatformKeyButton({
         disabled={pending}
         className="border-border text-text-subtle hover:bg-surface-hover text-12 rounded-lg border px-3 py-1.5 font-semibold disabled:opacity-60"
       >
-        Revogar
+        {t("revoke")}
       </button>
       {state.error ? (
         <span role="alert" className="text-12 text-danger-text">

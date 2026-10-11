@@ -57,8 +57,17 @@ export function assertTransition(
     throw new AppError({
       code: "conflict",
       safeMessage: `A assinatura não pode passar de "${statusLabel(from)}" para "${statusLabel(to)}".`,
+      messageKey: "billing.errors.invalidTransition",
+      messageValues: { from, to },
     });
   }
+}
+
+/** Key of the status under `billing.status` (I3); see statusLabel. */
+export function statusKey(
+  status: SubscriptionStatus,
+): "pending" | "active" | "pastDue" | "suspended" | "canceled" {
+  return status === "past_due" ? "pastDue" : status;
 }
 
 export function statusLabel(status: SubscriptionStatus): string {

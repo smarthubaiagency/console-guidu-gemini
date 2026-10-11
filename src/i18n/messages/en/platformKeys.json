@@ -1,0 +1,45 @@
+{
+  "metaTitle": "API keys (Admin)",
+  "breadcrumb": "API keys",
+  "title": "Platform API keys",
+  "description": "Administrative keys for the /api/v1/platform API and the /mcp/platform MCP. Read only, on the platform hosts only; they never work on workspace routes.",
+  "newKey": "New key",
+  "newKeyHint": "The key is shown only once. It works while you hold an internal role that allows the chosen scopes.",
+  "keys": "Keys ({count})",
+  "status": {
+    "active": "Active",
+    "revoked": "Revoked",
+    "expired": "Expired"
+  },
+  "expires": "expires on {date}",
+  "lastUsed": "last used {date}",
+  "notMine": "someone else's",
+  "empty": "No keys yet.",
+  "form": {
+    "name": "Key name",
+    "expiresInDays": "Validity (days, up to 90)",
+    "scopes": "Scopes",
+    "create": "Create key",
+    "revoke": "Revoke",
+    "reference": "(ref. {id})"
+  },
+  "scopes": {
+    "admin_customers_read": {
+      "label": "Customers (admin:customers:read)",
+      "desc": "Companies with minimal commercial data: status, workspaces and plan (plan only for those who read billing)."
+    },
+    "admin_operations_read": {
+      "label": "Operations (admin:operations:read)",
+      "desc": "Health of the worker and queues, and failed jobs, with no customer content."
+    }
+  },
+  "created": "Key created. Copy it now: it will not be shown again.",
+  "revoked": "Key revoked.",
+  "errors": {
+    "notFound": "Resource not found.",
+    "invalidInput": "Invalid key data.",
+    "nameRequired": "Enter a name.",
+    "scopesRequired": "Choose at least one scope.",
+    "keyNotFound": "Key not found or already revoked."
+  }
+}

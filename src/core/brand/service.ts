@@ -74,6 +74,18 @@ const LOGO_ERRORS = {
   unsupported_type: "Use um logo PNG, JPEG ou WebP.",
 } as const;
 
+const LOGO_ERROR_KEYS = {
+  empty: "brand.errors.logoEmpty",
+  too_large: "brand.errors.logoTooLarge",
+  unsupported_type: "brand.errors.logoUnsupportedType",
+} as const;
+
+/** Message keys of the schema's own messages; zod defaults keep their text. */
+const ISSUE_KEYS: Readonly<Record<string, string>> = {
+  "Use uma cor #rrggbb.": "brand.errors.invalidColor",
+  "Use um endereço https://.": "brand.errors.httpsRequired",
+};
+
 /**
  * Who saves a brand: platform owner/operations (any context partner) or the
  * partner_owner/partner_admin of the context partner (P4a).
@@ -115,10 +127,14 @@ export async function saveBrandVersion(
 
   const parsed = BrandInputSchema.safeParse(input);
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const messageKey = issue
+      ? ISSUE_KEYS[issue.message]
+      : "brand.errors.invalidInput";
     throw new AppError({
       code: "invalid_input",
-      safeMessage:
-        parsed.error.issues[0]?.message ?? "Dados de marca inválidos.",
+      safeMessage: issue?.message ?? "Dados de marca inválidos.",
+      ...(messageKey ? { messageKey } : {}),
     });
   }
 
@@ -129,6 +145,7 @@ export async function saveBrandVersion(
       throw new AppError({
         code: "invalid_input",
         safeMessage: LOGO_ERRORS[check.reason],
+        messageKey: LOGO_ERROR_KEYS[check.reason],
       });
     }
     logo = { bytes: logoChange.bytes, mime: check.mime };

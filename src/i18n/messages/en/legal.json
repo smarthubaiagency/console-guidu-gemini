@@ -31,6 +31,15 @@
   "published": "Version {version} published.",
   "errors": {
     "notFound": "Resource not found.",
-    "mustAgree": "Check the box to accept the documents."
+    "mustAgree": "Check the box to accept the documents.",
+    "invalidInput": "Invalid data.",
+    "titleRequired": "Enter the title.",
+    "bodyRequired": "Enter the text."
+  },
+  "platform": {
+    "metaTitle": "Terms and privacy (Admin)",
+    "breadcrumb": "Terms and privacy",
+    "title": "Platform terms and privacy",
+    "description": "They apply to direct customers, on the platform domains."
   }
 }

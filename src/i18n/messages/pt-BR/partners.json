@@ -1,0 +1,84 @@
+{
+  "trailAdmin": "Administração",
+  "trailPartners": "Parceiros",
+  "status": {
+    "active": "Ativo",
+    "suspended": "Suspenso",
+    "inactive": "Inativo"
+  },
+  "roles": {
+    "partner_owner": "Proprietário",
+    "partner_admin": "Administrador",
+    "partner_finance": "Financeiro",
+    "partner_support": "Suporte"
+  },
+  "list": {
+    "metaTitle": "Parceiros (Admin)",
+    "title": "Parceiros",
+    "description": "Agências que revendem a plataforma com a própria marca. O parceiro da casa atende os clientes diretos.",
+    "newPartner": "Novo parceiro",
+    "create": "Criar parceiro",
+    "name": "Nome",
+    "slug": "Identificador",
+    "house": "Parceiro da casa · ",
+    "members": "{count} membro(s)"
+  },
+  "detail": {
+    "metaTitle": "Parceiro (Admin)",
+    "houseDescription": "Parceiro da casa: marca e domínios da plataforma. Membros podem usar o console /admin no domínio da plataforma.",
+    "descriptionActive": "Identificador {slug} · ativo",
+    "descriptionSuspended": "Identificador {slug} · suspenso",
+    "statusTitle": "Situação",
+    "suspend": "Suspender parceiro",
+    "reactivate": "Reativar parceiro",
+    "statusHint": "Suspenso, o parceiro perde o console e os domínios dele deixam de resolver.",
+    "domainsTitle": "Domínios",
+    "customDomain": "Domínio próprio",
+    "subdomain": "Subdomínio",
+    "domainStatus": {
+      "pending": "Pendente",
+      "active": "Ativo",
+      "disabled": "Desativado"
+    },
+    "deactivate": "Desativar",
+    "activate": "Ativar",
+    "noDomains": "Nenhum domínio cadastrado.",
+    "addDomain": "Cadastrar domínio",
+    "hostLabel": "Domínio ou nome do subdomínio",
+    "hostPlaceholder": "app.agencia.com.br ou agencia",
+    "kindLabel": "Tipo",
+    "kindSubdomain": "Subdomínio da plataforma",
+    "domainHint": "Domínio próprio: informe o endereço completo. Subdomínio da plataforma: informe só o nome, que vira <code>nome.{base}</code>. Até a verificação automática de DNS (P7), ativar um domínio é uma decisão manual registrada na auditoria.",
+    "baseMissing": "(base não configurada)",
+    "membersTitle": "Membros",
+    "memberInactive": " · inativo",
+    "noMembers": "Nenhum membro ainda. Convide o proprietário do parceiro.",
+    "pendingInvitation": "Convite pendente: {email} · {role}",
+    "revoke": "Revogar",
+    "invite": "Gerar convite",
+    "email": "E-mail",
+    "role": "Papel"
+  },
+  "errors": {
+    "invalid": "Dados inválidos.",
+    "nameRequired": "Informe o nome.",
+    "slugFormat": "Use letras minúsculas, números e hífen.",
+    "slugTaken": "Já existe um parceiro com esse identificador.",
+    "houseLocked": "O parceiro da casa não pode ser alterado aqui.",
+    "subdomainsUnconfigured": "Subdomínios da plataforma não estão configurados (PARTNER_SUBDOMAIN_BASE).",
+    "subdomainNameOnly": "Informe só o nome do subdomínio, como agencia (vira agencia.{base}).",
+    "invalidDomain": "Informe um domínio válido, como app.agencia.com.br.",
+    "platformDomain": "Esse domínio pertence à plataforma.",
+    "domainTaken": "Esse domínio já está cadastrado."
+  },
+  "actions": {
+    "created": "Parceiro criado.",
+    "reactivated": "Parceiro reativado.",
+    "suspended": "Parceiro suspenso.",
+    "domainAdded": "Domínio cadastrado como pendente.",
+    "domainActivated": "Domínio ativado.",
+    "domainDisabled": "Domínio desativado.",
+    "inviteCreated": "Convite gerado.",
+    "inviteRevoked": "Convite revogado."
+  }
+}

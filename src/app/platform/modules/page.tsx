@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Puzzle } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -13,14 +14,10 @@ import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { listRegisteredModules } from "@/modules/registry";
 
-export const metadata: Metadata = { title: "Módulos (Admin)" };
-
-const RELEASE_LABELS: Record<string, string> = {
-  coming_soon: "Em breve",
-  beta: "Beta",
-  available: "Disponível",
-  maintenance: "Manutenção (código)",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("modules.platform");
+  return { title: t("metaTitle") };
+}
 
 /** Availability, beta, maintenance and rollout of modules (ADR 0005). */
 export default async function AdminModulesPage() {
@@ -32,6 +29,8 @@ export default async function AdminModulesPage() {
     return <ModuleNotice variant="denied" />;
   }
   const canManage = grants("platform.modules.manage");
+  const t = await getTranslations("modules");
+  const tPlatform = await getTranslations("platform");
 
   const states = await withIdentityContext(prisma, identity.userId, (tx) =>
     loadPlatformModuleStates(tx),
@@ -41,9 +40,9 @@ export default async function AdminModulesPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={["Administração", "Módulos"]}
-        title="Módulos da Plataforma"
-        description="Estado de lançamento do código e disponibilidade global para os clientes."
+        trail={[tPlatform("breadcrumb"), t("platform.breadcrumb")]}
+        title={t("platform.title")}
+        description={t("platform.description")}
         icon={<Puzzle className="h-5 w-5" />}
       />
       <ul className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs">
@@ -63,19 +62,23 @@ export default async function AdminModulesPage() {
                   {manifest.displayName}
                 </div>
                 <div className="text-12 text-text-secondary">
-                  v{manifest.moduleVersion} · contrato{" "}
-                  {manifest.contractVersion} ·{" "}
-                  {RELEASE_LABELS[manifest.releaseStatus]}
+                  {t("platform.versionLine", {
+                    version: manifest.moduleVersion,
+                    contract: manifest.contractVersion,
+                    release: t(`release.${manifest.releaseStatus}`),
+                  })}
                 </div>
                 <div className="text-11 text-text-tertiary font-mono">
-                  key: {manifest.moduleKey}
+                  {t("platform.key", { key: manifest.moduleKey })}
                 </div>
                 {hasAdminSettings && (
                   <Link
                     href={`/platform/settings/modules/${manifest.moduleKey}`}
                     className="text-12 text-text-subtle hover:text-text mt-1 inline-block font-medium underline"
                   >
-                    Política global de {manifest.displayName}
+                    {t("platform.globalPolicy", {
+                      name: manifest.displayName,
+                    })}
                   </Link>
                 )}
               </div>

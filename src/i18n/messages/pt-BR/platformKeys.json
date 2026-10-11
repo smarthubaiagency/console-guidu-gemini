@@ -1,0 +1,45 @@
+{
+  "metaTitle": "Chaves de API (Admin)",
+  "breadcrumb": "Chaves de API",
+  "title": "Chaves de API da plataforma",
+  "description": "Chaves administrativas para a API /api/v1/platform e o MCP /mcp/platform. Só leitura, só nos hosts da plataforma; nunca valem nas rotas de workspace.",
+  "newKey": "Nova chave",
+  "newKeyHint": "A chave aparece uma vez só. Ela vale enquanto você tiver um papel interno que permita os escopos escolhidos.",
+  "keys": "Chaves ({count})",
+  "status": {
+    "active": "Ativa",
+    "revoked": "Revogada",
+    "expired": "Vencida"
+  },
+  "expires": "vence em {date}",
+  "lastUsed": "último uso {date}",
+  "notMine": "de outra pessoa",
+  "empty": "Nenhuma chave ainda.",
+  "form": {
+    "name": "Nome da chave",
+    "expiresInDays": "Validade (dias, até 90)",
+    "scopes": "Escopos",
+    "create": "Criar chave",
+    "revoke": "Revogar",
+    "reference": "(ref. {id})"
+  },
+  "scopes": {
+    "admin_customers_read": {
+      "label": "Clientes (admin:customers:read)",
+      "desc": "Empresas com dados comerciais mínimos: situação, workspaces e plano (plano só para quem lê cobrança)."
+    },
+    "admin_operations_read": {
+      "label": "Operações (admin:operations:read)",
+      "desc": "Saúde do worker e das filas e jobs com falha, sem conteúdo de cliente."
+    }
+  },
+  "created": "Chave criada. Copie agora: ela não será mostrada de novo.",
+  "revoked": "Chave revogada.",
+  "errors": {
+    "notFound": "Recurso não encontrado.",
+    "invalidInput": "Dados da chave inválidos.",
+    "nameRequired": "Informe um nome.",
+    "scopesRequired": "Escolha ao menos um escopo.",
+    "keyNotFound": "Chave não encontrada ou já revogada."
+  }
+}

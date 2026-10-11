@@ -59,6 +59,29 @@
     }
   },
   "errors": {
-    "invalidInput": "Invalid data."
+    "invalidInput": "Invalid data.",
+    "notFound": "Module not found.",
+    "invalidConfig": "Invalid configuration for this module.",
+    "cannotEnable": "This module cannot be enabled yet.",
+    "notContracted": "Your company's plan does not include this module.",
+    "enableFirst": "Enable the module before configuring it."
+  },
+  "platform": {
+    "metaTitle": "Modules (Admin)",
+    "breadcrumb": "Modules",
+    "title": "Platform Modules",
+    "description": "Code release status and global availability for customers.",
+    "versionLine": "v{version} · contract {contract} · {release}",
+    "key": "key: {key}",
+    "globalPolicy": "Global policy for {name}",
+    "settingsMetaTitle": "Global Module Settings (Admin)",
+    "settingsBreadcrumb": "Module settings",
+    "settingsTitle": "{label} — global policy"
+  },
+  "release": {
+    "coming_soon": "Coming soon",
+    "beta": "Beta",
+    "available": "Available",
+    "maintenance": "Maintenance (code)"
   }
 }

@@ -77,6 +77,24 @@ Fica em português até as próximas etapas:
 - **Plataforma e console do parceiro**, incluindo o papel e o aceite do convite de parceiro: I3.
 - **Textos que são dados:** mensagens gravadas pelo worker, validações do zod e o nome da comodidade guardado na loja.
 
+## I3 — Plataforma e console do parceiro
+
+**Estado:** pronta para revisão. Sem migration.
+
+Entregue:
+
+- **Plataforma:** visão geral, clientes, workspaces, usuários, módulos e as configurações globais, operações, chaves de API (com os escopos), termos e marca.
+- **Parceiros e cobrança na plataforma:** lista e detalhe dos parceiros (domínios, membros, convites), planos, pisos, repasse, assinaturas, pagamentos manuais e avisos.
+- **Console do parceiro (`/admin`):** visão geral, clientes, membros, módulos oferecidos, modelos de workspace, marca, termos, acesso de suporte e cobrança (preços, perfil, assinaturas, pagamentos e o interruptor do checkout).
+- **Aceite do convite de parceiro.**
+- **Erros e mensagens de sucesso** desses serviços com chave de tradução, inclusive as validações de cobrança, parceiros, marca, termos e chaves de plataforma.
+- **Datas, valores (BRL) e percentuais** pelo idioma da pessoa.
+
+Fica em português até as próximas etapas ou por ser dado:
+
+- **Nomes, descrições e campos de configuração dos módulos** (manifestos): I4.
+- **Dados mostrados como estão gravados:** descrições de retenção, situações brutas de empresa, workspace e usuário, e mensagens padrão do zod sem texto próprio.
+
 ## Pendências do Marcelo
 
 - Provedor da tradução automática (I6).

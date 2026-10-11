@@ -2,12 +2,13 @@ import { randomUUID } from "node:crypto";
 
 import type { Metadata } from "next";
 import { CreditCard } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import {
+  billingLabels,
+  calendarDateFormatter,
+  centsFormatter,
   centsInput,
-  formatDate,
-  intervalLabel,
-  METHOD_LABELS,
   ProvisionalBadge,
   sectionClass,
   SubscriptionBadge,
@@ -45,26 +46,23 @@ import {
   listCustomerSubscriptions,
   listPartnerPlans,
   MAX_EVIDENCE_BYTES,
+  PREREQUISITE_KEYS,
 } from "@/core/billing/partner";
 import { PAYMENT_METHODS } from "@/core/billing/provider";
-import { formatCents } from "@/core/billing/split";
 import {
   canTransition,
   MANUAL_STATUS_TARGETS,
-  statusLabel,
+  statusKey,
 } from "@/core/billing/subscriptions";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Cobrança (Parceiro)" };
-
-const STATUS_ACTIONS: Record<(typeof MANUAL_STATUS_TARGETS)[number], string> = {
-  past_due: "Marcar em atraso",
-  suspended: "Suspender",
-  canceled: "Cancelar",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("billing.partner");
+  return { title: t("metaTitle") };
+}
 
 /**
  * Partner billing (P5m, D-PA-14): partner pays mode with manual records.
@@ -110,20 +108,25 @@ export default async function PartnerBillingPage() {
   );
   const checkoutOn = Boolean(data.partnerRow?.checkoutEnabled);
   const blocked = Boolean(data.partnerRow?.checkoutBlocked);
+  const tb = await getTranslations("billing");
+  const t = await getTranslations("billing.partner");
+  const formatDate = await calendarDateFormatter();
+  const formatCents = await centsFormatter();
+  const labels = await billingLabels();
 
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="partner-billing">
       <ModulePageHeader
-        trail={["Parceiro", "Cobrança"]}
-        title="Cobrança"
-        description="Modo parceiro paga: você ativa o plano de cada cliente e registra as mensalidades pagas à plataforma, com comprovante. A cobrança automática chega com o provedor de pagamento."
+        trail={[t("trailPartner"), t("trailBilling")]}
+        title={t("title")}
+        description={t("description")}
         icon={<CreditCard className="h-5 w-5" />}
       />
 
       {/* Customers and subscriptions */}
       <section className={sectionClass}>
         <h2 className="text-14 text-text font-semibold">
-          Clientes e assinaturas
+          {t("customersTitle")}
         </h2>
         <ul className="divide-border divide-y" data-testid="billing-customers">
           {data.customers.map((row) => (
@@ -137,15 +140,20 @@ export default async function PartnerBillingPage() {
                     <div className="text-12 text-text-secondary flex flex-wrap items-center gap-2">
                       <SubscriptionBadge status={row.subscription.status} />
                       <span>
-                        {row.subscription.planName} v
-                        {row.subscription.planVersion} ·{" "}
-                        {formatCents(row.subscription.amountCents)}/
-                        {intervalLabel(row.subscription.billingInterval)}
+                        {t("subscriptionLine", {
+                          plan: row.subscription.planName,
+                          version: row.subscription.planVersion,
+                          amount: formatCents(row.subscription.amountCents),
+                          interval: labels.interval(
+                            row.subscription.billingInterval,
+                          ),
+                        })}
                       </span>
                       {row.subscription.currentPeriodEnd ? (
                         <span>
-                          · pago até{" "}
-                          {formatDate(row.subscription.currentPeriodEnd)}
+                          {t("paidUntil", {
+                            date: formatDate(row.subscription.currentPeriodEnd),
+                          })}
                         </span>
                       ) : null}
                       {row.subscription.provisional ? (
@@ -154,7 +162,7 @@ export default async function PartnerBillingPage() {
                     </div>
                   ) : (
                     <div className="text-12 text-text-secondary">
-                      Sem plano · legado: módulos e limites como antes
+                      {t("noPlan")}
                     </div>
                   )}
                 </div>
@@ -167,7 +175,7 @@ export default async function PartnerBillingPage() {
                       <ActionForm
                         key={to}
                         action={changeSubscriptionStatusAction}
-                        submitLabel={STATUS_ACTIONS[to]}
+                        submitLabel={t(`statusActions.${statusKey(to)}`)}
                         tone="neutral"
                       >
                         <input
@@ -184,7 +192,7 @@ export default async function PartnerBillingPage() {
               {canManage && !row.subscription && data.plans.length > 0 ? (
                 <ActionForm
                   action={startSubscriptionAction}
-                  submitLabel="Abrir assinatura"
+                  submitLabel={t("openSubscription")}
                   testId={`start-subscription-${row.organizationId}`}
                 >
                   <input
@@ -193,13 +201,20 @@ export default async function PartnerBillingPage() {
                     value={row.organizationId}
                   />
                   <label className={labelClass}>
-                    Plano
+                    {t("plan")}
                     <select name="planId" className={inputClass}>
                       {data.plans.map((plan) => (
                         <option key={plan.id} value={plan.id}>
                           {plan.name}
                           {plan.versions[0]
-                            ? ` · ${formatCents(plan.versions[0].partnerBasePriceCents)}/${intervalLabel(plan.versions[0].billingInterval)}`
+                            ? t("planOptionPrice", {
+                                price: formatCents(
+                                  plan.versions[0].partnerBasePriceCents,
+                                ),
+                                interval: labels.interval(
+                                  plan.versions[0].billingInterval,
+                                ),
+                              })
                             : ""}
                         </option>
                       ))}
@@ -211,11 +226,11 @@ export default async function PartnerBillingPage() {
               {canManage && row.subscription ? (
                 <details className="border-border rounded-lg border p-3">
                   <summary className="text-12 text-text-subtle cursor-pointer font-semibold">
-                    Registrar pagamento
+                    {t("recordPayment")}
                   </summary>
                   <ActionForm
                     action={recordManualPaymentAction}
-                    submitLabel="Registrar pagamento"
+                    submitLabel={t("recordPayment")}
                     className="mt-3 grid gap-3 sm:grid-cols-2"
                     testId={`record-payment-${row.organizationId}`}
                   >
@@ -230,7 +245,7 @@ export default async function PartnerBillingPage() {
                       value={randomUUID()}
                     />
                     <label className={labelClass}>
-                      Valor pago (R$)
+                      {t("amountPaid")}
                       <input
                         name="amount"
                         required
@@ -240,7 +255,7 @@ export default async function PartnerBillingPage() {
                       />
                     </label>
                     <label className={labelClass}>
-                      Data do pagamento
+                      {t("paidOn")}
                       <input
                         name="paidOn"
                         type="date"
@@ -251,18 +266,19 @@ export default async function PartnerBillingPage() {
                       />
                     </label>
                     <label className={labelClass}>
-                      Meio
+                      {t("method")}
                       <select name="method" className={inputClass}>
                         {PAYMENT_METHODS.map((method) => (
                           <option key={method} value={method}>
-                            {METHOD_LABELS[method]}
+                            {labels.method(method)}
                           </option>
                         ))}
                       </select>
                     </label>
                     <label className={labelClass}>
-                      Comprovante (PDF, PNG, JPEG ou WebP, até{" "}
-                      {Math.round(MAX_EVIDENCE_BYTES / 1024)} KB)
+                      {t("evidenceLabel", {
+                        kb: Math.round(MAX_EVIDENCE_BYTES / 1024),
+                      })}
                       <input
                         name="evidence"
                         type="file"
@@ -272,7 +288,7 @@ export default async function PartnerBillingPage() {
                       />
                     </label>
                     <label className={`${labelClass} sm:col-span-2`}>
-                      Observação (opcional)
+                      {t("note")}
                       <input
                         name="note"
                         maxLength={500}
@@ -286,7 +302,7 @@ export default async function PartnerBillingPage() {
           ))}
           {data.customers.length === 0 ? (
             <li className="text-12 text-text-secondary py-3">
-              Nenhum cliente ainda.
+              {t("noCustomers")}
             </li>
           ) : null}
         </ul>
@@ -295,7 +311,7 @@ export default async function PartnerBillingPage() {
       {/* Payments */}
       <section className={sectionClass}>
         <h2 className="text-14 text-text font-semibold">
-          Pagamentos registrados
+          {t("paymentsTitle")}
         </h2>
         <ul className="divide-border divide-y" data-testid="billing-payments">
           {data.payments.map((payment) => (
@@ -305,30 +321,33 @@ export default async function PartnerBillingPage() {
             >
               <div className="text-12 text-text-secondary">
                 <span className="text-text font-semibold">
-                  {names.get(payment.organizationId) ?? "Cliente"}
+                  {names.get(payment.organizationId) ??
+                    tb("console.customerFallback")}
                 </span>{" "}
-                · {payment.kind === "refund" ? "Estorno de " : ""}
+                · {payment.kind === "refund" ? tb("console.refundOf") : ""}
                 {formatCents(payment.amountCents)} ·{" "}
-                {METHOD_LABELS[payment.method] ?? payment.method} ·{" "}
-                {formatDate(payment.paidOn)}
+                {labels.method(payment.method)} · {formatDate(payment.paidOn)}
                 {payment.periodStart
-                  ? ` · período ${formatDate(payment.periodStart)} a ${formatDate(payment.periodEnd)}`
+                  ? t("period", {
+                      start: formatDate(payment.periodStart),
+                      end: formatDate(payment.periodEnd),
+                    })
                   : ""}
-                {payment.refunded ? " · estornado" : ""}
+                {payment.refunded ? tb("console.refunded") : ""}
               </div>
               {payment.hasEvidence ? (
                 <a
                   href={`/admin/billing/evidence/${payment.id}`}
                   className="text-12 text-text-subtle font-medium underline"
                 >
-                  Comprovante
+                  {tb("console.evidence")}
                 </a>
               ) : null}
             </li>
           ))}
           {data.payments.length === 0 ? (
             <li className="text-12 text-text-secondary py-2">
-              Nenhum pagamento registrado.
+              {t("noPayments")}
             </li>
           ) : null}
         </ul>
@@ -341,20 +360,22 @@ export default async function PartnerBillingPage() {
       <section className={sectionClass} data-testid="checkout-switch">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-14 text-text font-semibold">Ativar checkout</h2>
+            <h2 className="text-14 text-text font-semibold">
+              {t("checkoutTitle")}
+            </h2>
             <p className="text-12 text-text-secondary">
               {blocked
-                ? "Bloqueado pela plataforma."
+                ? t("checkoutBlocked")
                 : checkoutOn
-                  ? "Ligado: seus clientes veem um checkout de demonstração, que não cobra nada."
-                  : "Desligado: seus clientes não veem checkout."}
+                  ? t("checkoutOn")
+                  : t("checkoutOff")}
             </p>
           </div>
           {canManage && !blocked ? (
             <ActionForm
               action={setCheckoutEnabledAction}
               submitLabel={
-                checkoutOn ? "Desativar checkout" : "Ativar checkout"
+                checkoutOn ? t("disableCheckout") : t("enableCheckout")
               }
               tone={checkoutOn ? "neutral" : "primary"}
             >
@@ -372,10 +393,9 @@ export default async function PartnerBillingPage() {
               key={p.key}
               className={p.met ? "text-success-text" : "text-text-secondary"}
             >
-              {p.met ? "✓" : "○"} {p.label}
-              {!p.met && !p.requiredNow
-                ? " — pendente, exigido quando o provedor for ativado"
-                : ""}
+              {p.met ? "✓" : "○"}{" "}
+              {t(`prerequisites.${PREREQUISITE_KEYS[p.key]}`)}
+              {!p.met && !p.requiredNow ? t("requiredLater") : ""}
             </li>
           ))}
         </ul>
@@ -383,13 +403,8 @@ export default async function PartnerBillingPage() {
 
       {/* Partner plans */}
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">
-          Seus planos (preço ao cliente)
-        </h2>
-        <p className="text-12 text-text-secondary">
-          Usados no checkout. O preço não pode ficar abaixo do piso do plano
-          base.
-        </p>
+        <h2 className="text-14 text-text font-semibold">{t("plansTitle")}</h2>
+        <p className="text-12 text-text-secondary">{t("plansDescription")}</p>
         <ul className="divide-border divide-y" data-testid="partner-plans">
           {data.partnerPlans.map((plan) => (
             <li
@@ -398,16 +413,22 @@ export default async function PartnerBillingPage() {
             >
               <div className="text-12 text-text-secondary">
                 <span className="text-text font-semibold">{plan.name}</span> ·{" "}
-                {formatCents(plan.priceCents)}/
-                {intervalLabel(plan.billingInterval)} · base {plan.planName} v
-                {plan.planVersion} (piso {formatCents(plan.minPriceCents)})
-                {plan.status === "archived" ? " · arquivado" : ""}
+                {t("planLine", {
+                  price: formatCents(plan.priceCents),
+                  interval: labels.interval(plan.billingInterval),
+                  plan: plan.planName,
+                  version: plan.planVersion,
+                  floor: formatCents(plan.minPriceCents),
+                })}
+                {plan.status === "archived" ? t("archivedTag") : ""}
               </div>
               {canManage ? (
                 <ActionForm
                   action={setPartnerPlanStatusAction}
                   submitLabel={
-                    plan.status === "active" ? "Arquivar" : "Reativar"
+                    plan.status === "active"
+                      ? t("archive")
+                      : tb("console.reactivate")
                   }
                   tone="neutral"
                 >
@@ -422,33 +443,33 @@ export default async function PartnerBillingPage() {
             </li>
           ))}
           {data.partnerPlans.length === 0 ? (
-            <li className="text-12 text-text-secondary py-2">
-              Nenhum plano seu ainda.
-            </li>
+            <li className="text-12 text-text-secondary py-2">{t("noPlans")}</li>
           ) : null}
         </ul>
         {canManage && data.plans.length > 0 ? (
           <ActionForm
             action={createPartnerPlanAction}
-            submitLabel="Criar plano"
+            submitLabel={tb("console.createPlan")}
             className="grid gap-3 sm:grid-cols-3"
             testId="create-partner-plan"
           >
             <label className={labelClass}>
-              Plano base
+              {t("basePlan")}
               <select name="planId" className={inputClass}>
                 {data.plans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
                     {plan.name}
                     {plan.versions[0]
-                      ? ` (piso ${formatCents(plan.versions[0].minPriceCents)})`
+                      ? t("basePlanFloor", {
+                          floor: formatCents(plan.versions[0].minPriceCents),
+                        })
                       : ""}
                   </option>
                 ))}
               </select>
             </label>
             <label className={labelClass}>
-              Nome
+              {tb("console.name")}
               <input
                 name="name"
                 required
@@ -457,7 +478,7 @@ export default async function PartnerBillingPage() {
               />
             </label>
             <label className={labelClass}>
-              Preço (R$)
+              {t("price")}
               <input
                 name="price"
                 required
@@ -471,23 +492,24 @@ export default async function PartnerBillingPage() {
 
       {/* Billing profile */}
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">Dados de cobrança</h2>
+        <h2 className="text-14 text-text font-semibold">{t("profileTitle")}</h2>
         <p className="text-12 text-text-secondary">
-          Seus dados como pagador da plataforma. Provedor:{" "}
-          {data.profile?.provider === "manual" || !data.profile
-            ? "registro manual"
-            : data.profile.provider}
-          .
+          {t("profileText", {
+            provider:
+              data.profile?.provider === "manual" || !data.profile
+                ? t("manualProvider")
+                : data.profile.provider,
+          })}
         </p>
         {canManage ? (
           <ActionForm
             action={saveBillingProfileAction}
-            submitLabel="Salvar dados"
+            submitLabel={t("saveProfile")}
             className="grid gap-3 sm:grid-cols-3"
             testId="billing-profile"
           >
             <label className={labelClass}>
-              Razão social
+              {t("legalName")}
               <input
                 name="legalName"
                 required
@@ -497,7 +519,7 @@ export default async function PartnerBillingPage() {
               />
             </label>
             <label className={labelClass}>
-              CNPJ
+              {t("taxId")}
               <input
                 name="taxId"
                 required
@@ -506,7 +528,7 @@ export default async function PartnerBillingPage() {
               />
             </label>
             <label className={labelClass}>
-              E-mail financeiro
+              {t("billingEmail")}
               <input
                 name="billingEmail"
                 type="email"
@@ -522,20 +544,23 @@ export default async function PartnerBillingPage() {
             {data.profile.billingEmail}
           </p>
         ) : (
-          <p className="text-12 text-text-secondary">Não cadastrados.</p>
+          <p className="text-12 text-text-secondary">{t("notRegistered")}</p>
         )}
       </section>
 
       <p className="text-11 text-text-secondary">
-        Situações: {MANUAL_STATUS_TARGETS.map(statusLabel).join(", ")} são
-        marcadas por você; a assinatura fica ativa com cada pagamento
-        registrado.
+        {t("statusNote", {
+          statuses: MANUAL_STATUS_TARGETS.map((s) =>
+            tb(`status.${statusKey(s)}`),
+          ).join(", "),
+        })}
       </p>
       <p className="text-11 text-text-secondary" data-testid="billing-terms">
-        Sem pagamento registrado, a assinatura fica em atraso{" "}
-        {data.terms.pastDueAfterDays} dia(s) depois do vencimento e é suspensa{" "}
-        {data.terms.suspendAfterDays} dia(s) depois disso, automaticamente.
-        {data.terms.provisional ? " Prazos provisórios." : ""}
+        {t("termsNote", {
+          pastDue: data.terms.pastDueAfterDays,
+          suspend: data.terms.suspendAfterDays,
+        })}
+        {data.terms.provisional ? t("provisionalTerms") : ""}
       </p>
     </div>
   );

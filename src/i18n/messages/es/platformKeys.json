@@ -1,0 +1,45 @@
+{
+  "metaTitle": "Claves de API (Admin)",
+  "breadcrumb": "Claves de API",
+  "title": "Claves de API de la plataforma",
+  "description": "Claves administrativas para la API /api/v1/platform y el MCP /mcp/platform. Solo lectura, solo en los hosts de la plataforma; nunca valen en las rutas de workspace.",
+  "newKey": "Nueva clave",
+  "newKeyHint": "La clave aparece una sola vez. Vale mientras tengas un rol interno que permita los alcances elegidos.",
+  "keys": "Claves ({count})",
+  "status": {
+    "active": "Activa",
+    "revoked": "Revocada",
+    "expired": "Vencida"
+  },
+  "expires": "vence el {date}",
+  "lastUsed": "último uso {date}",
+  "notMine": "de otra persona",
+  "empty": "Aún no hay claves.",
+  "form": {
+    "name": "Nombre de la clave",
+    "expiresInDays": "Validez (días, hasta 90)",
+    "scopes": "Alcances",
+    "create": "Crear clave",
+    "revoke": "Revocar",
+    "reference": "(ref. {id})"
+  },
+  "scopes": {
+    "admin_customers_read": {
+      "label": "Clientes (admin:customers:read)",
+      "desc": "Empresas con datos comerciales mínimos: situación, workspaces y plan (plan solo para quien lee la facturación)."
+    },
+    "admin_operations_read": {
+      "label": "Operaciones (admin:operations:read)",
+      "desc": "Salud del worker y de las colas, y jobs con falla, sin contenido de clientes."
+    }
+  },
+  "created": "Clave creada. Cópiala ahora: no se volverá a mostrar.",
+  "revoked": "Clave revocada.",
+  "errors": {
+    "notFound": "Recurso no encontrado.",
+    "invalidInput": "Datos de la clave no válidos.",
+    "nameRequired": "Ingresa un nombre.",
+    "scopesRequired": "Elige al menos un alcance.",
+    "keyNotFound": "Clave no encontrada o ya revocada."
+  }
+}

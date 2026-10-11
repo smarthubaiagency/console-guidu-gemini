@@ -1,0 +1,63 @@
+{
+  "metaTitle": "Operações (Admin)",
+  "breadcrumb": "Operações",
+  "title": "Operações",
+  "description": "Saúde do web e dos workers, filas, falhas e volume de execuções. Os números de fila vêm do worker a cada minuto; cada um mostra a amostra de onde saiu.",
+  "age": "{unit, select, seconds {há {value} s} minutes {há {value} min} hours {há {value} h} other {há {value} dias}}",
+  "durationMs": "{value} ms",
+  "durationSeconds": "{value} s",
+  "workerState": {
+    "online": "Em funcionamento",
+    "stopped": "Parado",
+    "silent": "Sem sinal"
+  },
+  "health": {
+    "title": "Saúde",
+    "database": "Banco de dados:",
+    "dbResponding": "respondendo ({ms} ms nesta consulta)",
+    "dbNoResponse": "sem resposta",
+    "workers": "Workers:",
+    "workersNone": "Sem dados — nenhum worker registrou sinal.",
+    "workersOnline": "{online} de {total} em funcionamento",
+    "workerLine": "último sinal {age} · desde {since} · {concurrency} por vez · {queues} fila(s)",
+    "workerVersion": "versão {version}"
+  },
+  "queues": {
+    "title": "Filas",
+    "capturedFresh": "Capturado {age}.",
+    "capturedStale": "Capturado {age} — desatualizado: o worker não publica há mais de 5 minutos.",
+    "totals": "Aguardando {waiting} · em execução {running}.",
+    "line": "pendentes {pending} · na fila {queued} · em execução {running}",
+    "oldest": "pendente mais antigo há {seconds} s",
+    "boss": "pg-boss: {waiting} aguardando, {active} ativos",
+    "empty": "Sem dados — o worker ainda não publicou métricas."
+  },
+  "volume": {
+    "title": "Execuções nas últimas 24 horas",
+    "summary": "Amostra: {sample} execução(ões) concluídas · {succeeded} com sucesso · {failed} com falha · {skipped} ignoradas.",
+    "queue": "{succeeded} sucesso · {failed} falha · {skipped} ignoradas · duração média {avg} · p95 {p95} (amostra {sample})",
+    "empty": "Sem dados."
+  },
+  "failures": {
+    "title": "Falhas dos últimos 7 dias",
+    "scope": {
+      "platform": "plataforma",
+      "workspace": "workspace"
+    },
+    "attempts": "{count} tentativa(s)",
+    "empty": "Nenhuma falha registrada."
+  },
+  "privacy": {
+    "title": "Privacidade",
+    "text": "Retenção por categoria: desligada até as regras do jurídico; a mudança vem por migration. Exclusões de workspace são concluídas pela rotina diária depois de 30 dias de carência.",
+    "retentionOn": "ligada: {days} dias",
+    "retentionOff": "desligada (aguardando o jurídico)",
+    "retentionRestricted": "processo restrito, sem remoção automática",
+    "deletionsTitle": "Exclusões de workspace",
+    "requestedAt": "pedida em {date}",
+    "purgedAt": "concluída em {date}",
+    "canceled": "cancelada",
+    "scheduledFor": "agendada para {date}",
+    "deletionsEmpty": "Nenhuma exclusão pedida."
+  }
+}

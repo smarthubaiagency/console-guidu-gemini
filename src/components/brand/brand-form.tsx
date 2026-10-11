@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { saveBrandAction, type BrandActionState } from "@/core/brand/actions";
@@ -31,13 +32,14 @@ export function BrandForm({
   /** Platform (default) or partner console save action. */
   action?: BrandAction;
 }>) {
+  const t = useTranslations("brand.form");
   const [state, action, pending] = useActionState(saveAction, INITIAL);
 
   return (
     <form action={action} className="space-y-4" data-testid="brand-form">
       <div className="space-y-1">
         <label htmlFor="displayName" className={label}>
-          Nome exibido
+          {t("displayName")}
         </label>
         <input
           id="displayName"
@@ -51,7 +53,7 @@ export function BrandForm({
 
       <div className="space-y-1">
         <label htmlFor="primaryColor" className={label}>
-          Cor primária (#rrggbb, opcional)
+          {t("primaryColor")}
         </label>
         <input
           id="primaryColor"
@@ -61,16 +63,13 @@ export function BrandForm({
           defaultValue={defaults.primaryColor}
           className={field}
         />
-        <p className="text-11 text-text-tertiary">
-          As cores de texto e de destaque são calculadas para manter contraste
-          mínimo de 4,5:1 nos temas claro e escuro.
-        </p>
+        <p className="text-11 text-text-tertiary">{t("contrastHint")}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <label htmlFor="supportEmail" className={label}>
-            E-mail de suporte (opcional)
+            {t("supportEmail")}
           </label>
           <input
             id="supportEmail"
@@ -82,7 +81,7 @@ export function BrandForm({
         </div>
         <div className="space-y-1">
           <label htmlFor="supportUrl" className={label}>
-            Página de suporte (https, opcional)
+            {t("supportUrl")}
           </label>
           <input
             id="supportUrl"
@@ -96,7 +95,7 @@ export function BrandForm({
 
       <div className="space-y-1">
         <label htmlFor="logo" className={label}>
-          Logo (PNG, JPEG ou WebP, até 256 KB)
+          {t("logo")}
         </label>
         <input
           id="logo"
@@ -108,7 +107,7 @@ export function BrandForm({
         {hasLogo ? (
           <label className="text-12 text-text-subtle flex items-center gap-2">
             <input type="checkbox" name="removeLogo" />
-            Remover o logo atual
+            {t("removeLogo")}
           </label>
         ) : null}
       </div>
@@ -119,12 +118,14 @@ export function BrandForm({
           disabled={pending}
           className="bg-primary text-on-primary text-12 rounded-lg px-4 py-2 font-semibold disabled:opacity-60"
         >
-          {pending ? "Salvando..." : "Salvar nova versão"}
+          {pending ? t("saving") : t("save")}
         </button>
         {state.error ? (
           <p role="alert" className="text-12 text-danger-text">
             {state.error}
-            {state.requestId ? ` (ref. ${state.requestId.slice(0, 8)})` : ""}
+            {state.requestId
+              ? ` ${t("reference", { id: state.requestId.slice(0, 8) })}`
+              : ""}
           </p>
         ) : null}
         {state.message ? (

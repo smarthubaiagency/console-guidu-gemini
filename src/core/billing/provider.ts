@@ -137,6 +137,7 @@ export class ProviderNotConfiguredError extends AppError {
     super({
       code: "unavailable",
       safeMessage: "Provedor de pagamento não configurado.",
+      messageKey: "billing.errors.providerNotConfigured",
     });
     this.name = "ProviderNotConfiguredError";
     this.provider = provider;
@@ -149,6 +150,7 @@ export class ProviderUnsupportedError extends AppError {
     super({
       code: "invalid_input",
       safeMessage: "Operação não disponível para este provedor de pagamento.",
+      messageKey: "billing.errors.providerUnsupported",
     });
     this.name = "ProviderUnsupportedError";
     this.provider = provider;

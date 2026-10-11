@@ -1,0 +1,32 @@
+{
+  "platform": {
+    "metaTitle": "Brand (Admin)",
+    "breadcrumb": "Brand",
+    "title": "Platform brand",
+    "description": "Name, color, logo and contacts shown on the platform domains and to direct customers.",
+    "version": "Version {version}",
+    "envBrand": "Environment brand (APP_NAME), no version saved"
+  },
+  "form": {
+    "displayName": "Display name",
+    "primaryColor": "Primary color (#rrggbb, optional)",
+    "contrastHint": "Text and accent colors are calculated to keep a minimum contrast of 4.5:1 in the light and dark themes.",
+    "supportEmail": "Support email (optional)",
+    "supportUrl": "Support page (https, optional)",
+    "logo": "Logo (PNG, JPEG or WebP, up to 256 KB)",
+    "removeLogo": "Remove the current logo",
+    "saving": "Saving...",
+    "save": "Save new version",
+    "reference": "(ref. {id})"
+  },
+  "saved": "Brand saved (version {version}).",
+  "errors": {
+    "notFound": "Resource not found.",
+    "invalidInput": "Invalid brand data.",
+    "invalidColor": "Use a #rrggbb color.",
+    "httpsRequired": "Use an https:// address.",
+    "logoEmpty": "The logo file is empty.",
+    "logoTooLarge": "The logo must be at most 256 KB.",
+    "logoUnsupportedType": "Use a PNG, JPEG or WebP logo."
+  }
+}

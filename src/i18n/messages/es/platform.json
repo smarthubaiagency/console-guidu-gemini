@@ -1,0 +1,58 @@
+{
+  "breadcrumb": "Administración",
+  "overview": {
+    "metaTitle": "Consola de Administración",
+    "eyebrow": "Control Interno de la Plataforma",
+    "title": "Visión General Operativa",
+    "description": "Métricas consolidadas de clientes, entornos e identidades bajo gobernanza central.",
+    "organizations": "Empresas / Clientes Activos",
+    "organizationsUnit": "organizaciones",
+    "manageOrganizations": "Gestionar empresas",
+    "workspaces": "Workspaces Activos",
+    "workspacesUnit": "entornos aislados",
+    "viewWorkspaces": "Ver workspaces",
+    "users": "Usuarios Registrados",
+    "usersUnit": "identidades activas",
+    "listUsers": "Listar usuarios",
+    "securityTitle": "Aislamiento y Seguridad Operativa",
+    "securityText": "Sesión administrativa autenticada con AAL2 (TOTP verificado). Las consultas globales de gobernanza usan funciones security-definer dedicadas y auditadas en la base de datos.",
+    "healthy": "Operación Saludable"
+  },
+  "customers": {
+    "metaTitle": "Clientes y Empresas (Admin)",
+    "breadcrumb": "Clientes y Empresas",
+    "title": "Empresas Contratantes",
+    "description": "Listado global de las organizaciones, capacidades contratadas y estado operativo.",
+    "total": "Total de Organizaciones ({count})",
+    "colOrganization": "Organización",
+    "colMaxSeats": "Asientos Máximos",
+    "colPlan": "Plan",
+    "colStatus": "Estado",
+    "colCreatedAt": "Creado el",
+    "seats": "{count} asientos",
+    "legacyPlan": "Heredado (sin suscripción)"
+  },
+  "workspaces": {
+    "metaTitle": "Workspaces (Admin)",
+    "breadcrumb": "Workspaces",
+    "title": "Workspaces de la Plataforma",
+    "description": "Entornos operativos aislados vinculados a cada organización contratante.",
+    "total": "Total de Workspaces ({count})",
+    "colWorkspace": "Workspace",
+    "colSlug": "Slug",
+    "colOrganization": "Organización",
+    "colStatus": "Estado",
+    "colCreatedAt": "Creado el"
+  },
+  "users": {
+    "metaTitle": "Usuarios (Admin)",
+    "breadcrumb": "Usuarios",
+    "title": "Usuarios de la Plataforma",
+    "description": "Perfiles de usuarios registrados y sus respectivos estados de autorización.",
+    "total": "Total de Usuarios ({count})",
+    "colName": "Nombre / Perfil",
+    "colStatus": "Estado",
+    "colCreatedAt": "Registrado el",
+    "noName": "Sin nombre registrado"
+  }
+}
