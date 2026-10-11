@@ -220,6 +220,9 @@ describe("generated navigation", () => {
       grants: platformGrants("billing"),
     });
     expect(find(billing, "platform.operations")).toBeUndefined();
+    // Administrative keys (F4e): every internal role creates their own.
+    expect(find(billing, "platform.api-keys")?.href).toBe("/platform/api-keys");
+    expect(find(support, "platform.api-keys")).toBeDefined();
   });
 
   it("builds the partner console by partner role (D-PA-02)", () => {

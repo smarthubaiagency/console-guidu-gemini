@@ -465,6 +465,14 @@ export function buildPlatformNavigation(
               }),
             ]
           : []),
+        // Administrative keys of the platform API and MCP (F4e): every
+        // internal role member creates their own.
+        item({
+          id: "platform.api-keys",
+          label: "Chaves de API",
+          href: "/platform/api-keys",
+          iconKey: "key",
+        }),
         ...(canManageLegal
           ? [
               item({

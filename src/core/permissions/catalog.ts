@@ -65,6 +65,9 @@ export const Permissions = {
   // Plans, floors, split rules and amounts due per partner (P5m).
   PLATFORM_BILLING_READ: "platform.billing.read",
   PLATFORM_BILLING_MANAGE: "platform.billing.manage",
+  // Customer companies with minimal commercial data (/platform/customers,
+  // API and MCP of the platform, F4e).
+  PLATFORM_CUSTOMERS_READ: "platform.customers.read",
   // Health, queues, failures and job volume (/platform/operations, F3d).
   PLATFORM_OPERATIONS_READ: "platform.operations.read",
 

@@ -131,7 +131,7 @@ Planejado:
 
 ### F4d — Propostas com aprovação humana
 
-**Estado:** pronta para revisão. A migration `20261020090000_f4d_execution_proposals.sql` é aplicada como `app_migrations`. Guia em [mcp-conexao.md](mcp-conexao.md#propostas-f4d).
+**Estado:** concluída (PR #37), migration `20261020090000_f4d_execution_proposals.sql` aplicada no dev. Guia em [mcp-conexao.md](mcp-conexao.md#propostas-f4d).
 
 Entregue:
 
@@ -163,6 +163,29 @@ Planejado:
 - Testes: AC11 (proposta alterada ou vencida não executa, e reexecução não duplica).
 
 ### F4e — API e MCP da plataforma
+
+**Estado:** pronta para revisão. A migration `20261021090000_f4e_platform_api_keys.sql` é aplicada como `app_migrations`. Guia em [mcp-conexao.md](mcp-conexao.md#plataforma-f4e).
+
+Entregue:
+
+- Tabela `platform_api_keys`, separada das chaves de workspace, com RLS FORCE:
+  - chave `gdu_admin_…` guardada só por hash, com validade obrigatória de até 90 dias;
+  - cada membro com papel interno cria e vê as suas; o owner da plataforma vê e revoga todas;
+  - um gatilho deixa tudo imutável, menos a revogação e o último uso;
+  - busca por hash só pela função `private.resolve_platform_api_key`.
+- Criação em **Plataforma › Chaves de API** (`/platform/api-keys`), com MFA e só com os escopos que o papel permite. A cada requisição a chave é reconferida: situação, validade, perfil, papel interno ativo e escopos ainda permitidos. Perder o papel invalida a chave na hora.
+- Permissão nova `platform.customers.read` (os quatro papéis internos). `admin:customers:read` usa essa permissão; `admin:operations:read` usa `platform.operations.read` (owner, operations e support).
+- REST em `/api/v1/platform` (não `/api/v1/admin`, porque `/admin` já é o console do parceiro e `/api/v1/platform/session` já existia): `/customers`, `/customers/{id}`, `/health` e `/failed-jobs`. Aceita a chave administrativa ou a sessão de um membro com papel interno e MFA, só nos hosts da plataforma (outros hosts respondem 404).
+- MCP em `/mcp/platform`, só com chave: `list_customers`, `get_customer_summary`, `get_platform_health` e `list_failed_jobs`, filtradas pelos escopos e pelo papel atual. Nenhuma escrita.
+- Dados mínimos: empresa (situação, assentos, número de workspaces e plano, este só para quem lê cobrança); saúde (workers, filas e totais de 24 horas); jobs com falha (tipo, tentativas, data e o erro seguro do worker, nunca o conteúdo do job).
+- AC09 nos dois sentidos: a chave administrativa é recusada nas rotas e no MCP de workspace, e a chave de workspace é recusada na API e no MCP da plataforma.
+- Auditoria: `platform_api_keys.create`, `.revoke`, `.used` e `mcp.tool.call`.
+- Testes:
+  - suíte SQL `platform-api-keys-rls.sql`;
+  - integração `platform-api.test.ts`: criação (MFA, papel, escopos), leitura por escopo e papel, AC09, host de parceiro, sessão com e sem MFA, ferramentas do MCP, papel perdido e chave revogada;
+  - e2e `platform-api.spec.ts`: chave pela tela, REST, MCP, AC09 e revogação.
+
+Planejado:
 
 - Chaves administrativas: exigem papel interno ativo e MFA na criação e nunca valem nas rotas de workspace (AC09).
 - `/api/v1/admin` e `/mcp/platform`, com `admin:customers:read` (dados comerciais mínimos) e `admin:operations:read` (saúde e jobs com falha, sem conteúdo de cliente).
