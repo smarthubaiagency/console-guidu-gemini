@@ -5,6 +5,7 @@ import type {
   ContextTransaction,
   RequestContext,
 } from "@/lib/prisma/with-context";
+import { crmQuotaUsage } from "@/modules/crm/quotas";
 import { helloWorldQuotaUsage } from "@/modules/hello-world/quotas";
 import { listRegisteredModules } from "@/modules/registry";
 
@@ -25,6 +26,7 @@ type UsageCounter = Readonly<{
 
 /** Usage counters of module quotas, by explicit import (like jobs). */
 const MODULE_USAGE: Readonly<Record<string, UsageCounter>> = {
+  ...crmQuotaUsage,
   ...helloWorldQuotaUsage,
 };
 

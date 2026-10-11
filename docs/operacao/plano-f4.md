@@ -37,7 +37,7 @@ Falta:
 
 ### F4a — Base da API REST
 
-**Estado:** pronta para revisão. A migration `20261018090000_f4a_api_rate_limits.sql` é aplicada como `app_migrations`.
+**Estado:** concluída (PR #34), migration `20261018090000_f4a_api_rate_limits.sql` aplicada no dev.
 
 Entregue:
 
@@ -71,7 +71,7 @@ Planejado:
 
 ### F4b — MCP do workspace (leitura)
 
-**Estado:** pronta para revisão. Sem migration. Guia de conexão em [mcp-conexao.md](mcp-conexao.md).
+**Estado:** concluída (PR #35), sem migration. Guia de conexão em [mcp-conexao.md](mcp-conexao.md).
 
 Entregue:
 
@@ -100,6 +100,24 @@ Planejado:
 - Guia de conexão para Claude Code e Codex (URL, cabeçalho, limitações).
 
 ### F4c — Módulo CRM: contatos
+
+**Estado:** pronta para revisão. A migration `20261019090000_f4c_crm_contacts.sql` é aplicada como `app_migrations`. Especificação em [src/modules/crm/MODULE_SPEC.md](../../src/modules/crm/MODULE_SPEC.md).
+
+Entregue:
+
+- Módulo `crm` (beta) em `src/modules/crm`: manifesto, menu "CRM › Contatos", permissões `crm.contacts.read` (todos os papéis) e `crm.contacts.write` (owner, admin e editor), cota `crm.contacts` (5.000 por workspace quando o plano não define), contrato de dados da F3e e uso medido em Consumo & Limites.
+- Tabela `crm_contacts` com RLS FORCE: membros leem, owner, admin e editor criam e editam, e cada linha guarda quem criou e quem alterou por último. Um gatilho mantém workspace, autor e data de criação imutáveis. Não há exclusão nesta etapa.
+- Os serviços conferem o estado do módulo (desabilitado bloqueia; suspenso deixa só a leitura), a permissão e a cota, nesta ordem, e auditam `crm.contact.create` e `crm.contact.update`. Telas, REST e MCP usam os mesmos serviços.
+- Telas `/app/[slug]/crm/contacts` (lista, busca e criação) e `/app/[slug]/crm/contacts/[id]` (edição, ou consulta para quem só lê).
+- REST: `GET` e `POST /workspaces/{id}/crm/contacts`, `GET` e `PATCH .../{contactId}`, no OpenAPI. A camada de entrada passou a aceitar corpo JSON (422 para campo desconhecido) e, na sessão do navegador, só aceita escrita em JSON e da mesma origem (CSRF).
+- Escopos novos nas chaves: `crm:read` (leitura) e `crm:write` (escrita só pela REST). Chave de viewer não recebe escopo de escrita.
+- MCP: `list_contacts` e `get_contact`, com `crm:read`, só enquanto o módulo está habilitado ou suspenso. Uma chave sem nenhuma ferramenta utilizável recebe lista vazia em `tools/list`.
+- Testes:
+  - suíte SQL `crm-rls.sql` (job `db`);
+  - integração `crm.test.ts`: serviços, viewer, AC08 (módulo desabilitado bloqueia tela, REST e MCP), REST com escopos, CSRF e outro workspace;
+  - e2e `crm.spec.ts`: habilitar o módulo, adicionar, editar e buscar contato.
+
+Planejado:
 
 - Manifesto `crm`, com rotas, menu, permissões (`crm.contacts.read` e `crm.contacts.write`), cota de contatos por workspace e capacidade `export`.
 - Tabela `crm_contacts` por workspace, com RLS:
