@@ -129,6 +129,182 @@ export const ContactListQuery = z.object({
   cursor: z.string().max(200).optional(),
 });
 
+// ---------------------------------------------------------------------------
+// Portfolio (F5d): UCP catalog, our agent's view and item writes
+// ---------------------------------------------------------------------------
+
+const ucpObject = z.looseObject({});
+const UcpEnvelope = z.looseObject({
+  version: z.string(),
+  status: z.enum(["success", "error"]).optional(),
+  capabilities: z.record(z.string(), z.array(ucpObject)).optional(),
+});
+const ucpFilters = z
+  .looseObject({
+    categories: z.array(z.string()).optional(),
+    price: z
+      .looseObject({
+        min: z.number().int().optional(),
+        max: z.number().int().optional(),
+      })
+      .optional(),
+  })
+  .optional();
+
+/** Documentation shapes of the UCP catalog; the services validate. */
+export const UcpSearchBody = z.looseObject({
+  query: z.string().max(200).optional(),
+  filters: ucpFilters,
+  pagination: z
+    .looseObject({
+      cursor: z.string().optional(),
+      limit: z.number().int().min(1).optional(),
+    })
+    .optional(),
+  context: ucpObject.optional(),
+});
+export const UcpLookupBody = z.looseObject({
+  ids: z.array(z.string()).min(1).max(50),
+  filters: ucpFilters,
+});
+export const UcpGetProductBody = z.looseObject({
+  id: z.string(),
+  selected: z
+    .array(z.looseObject({ name: z.string(), label: z.string() }))
+    .optional(),
+  preferences: z.array(z.string()).optional(),
+  filters: ucpFilters,
+});
+
+/** UCP responses: the envelope, products and messages, as the protocol says. */
+export const UcpSearchResponse = z.looseObject({
+  ucp: UcpEnvelope,
+  products: z.array(ucpObject),
+  pagination: z
+    .looseObject({
+      has_next_page: z.boolean(),
+      cursor: z.string().optional(),
+      total_count: z.number().int().optional(),
+    })
+    .optional(),
+  messages: z.array(ucpObject).optional(),
+});
+export const UcpLookupResponse = z.looseObject({
+  ucp: UcpEnvelope,
+  products: z.array(ucpObject),
+  messages: z.array(ucpObject).optional(),
+});
+export const UcpProductResponse = z.looseObject({
+  ucp: UcpEnvelope,
+  product: ucpObject.optional(),
+  messages: z.array(ucpObject).optional(),
+});
+
+const jsonRecord = z.record(z.string(), z.unknown());
+
+export const AgentPortfolioItem = z.object({
+  id,
+  handle: z.string(),
+  title: z.string(),
+  item_type: z.string(),
+  vertical: z.string(),
+  description: jsonRecord,
+  price_display: z.enum(["price", "from", "quote"]),
+  ucp_visible: z.boolean(),
+  product: jsonRecord.nullable(),
+  quote_variants: z.array(
+    z.object({
+      id,
+      title: z.string(),
+      options: z.array(z.object({ name: z.string(), label: z.string() })),
+    }),
+  ),
+  details: jsonRecord,
+  location_ids: z.array(id),
+  governance: z.object({
+    keywords: z.array(z.string()),
+    aliases: z.array(z.string()),
+    do_not_say: z.array(z.string()),
+    safety_rules: z.string().nullable(),
+  }),
+});
+
+export const AgentPortfolioQuery = z.object({
+  query: z.string().max(200).optional(),
+  item_type: z
+    .enum(["product", "service", "real_estate", "lodging", "event"])
+    .optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  cursor: z.string().max(200).optional(),
+});
+
+export const PortfolioVariant = z.object({
+  id,
+  position: z.number().int(),
+  title: z.string(),
+  sku: z.string().nullable(),
+  barcodes: z.array(jsonRecord),
+  priceAmount: z.number().int().nullable(),
+  listPriceAmount: z.number().int().nullable(),
+  currency: z.string(),
+  quantityUnit: jsonRecord.nullable(),
+  options: z.array(jsonRecord),
+  media: z.array(jsonRecord),
+  availabilityStatus: z.string(),
+  trackInventory: z.boolean(),
+  stockQuantity: z.number().int().nullable(),
+  minStockAlert: z.number().int().nullable(),
+  allowBackorder: z.boolean(),
+  accommodationTypeId: id.nullable(),
+  ratePlanId: id.nullable(),
+});
+
+/** An item as its owner manages it (internal fields included). */
+export const PortfolioItem = z.object({
+  id,
+  itemType: z.string(),
+  vertical: z.string(),
+  title: z.string(),
+  handle: z.string(),
+  description: jsonRecord,
+  categories: z.array(jsonRecord),
+  media: z.array(jsonRecord),
+  tags: z.array(z.string()),
+  url: z.string().nullable(),
+  rating: jsonRecord.nullable(),
+  fulfillmentMethods: z.array(z.string()),
+  locationIds: z.array(id),
+  policies: z.array(jsonRecord),
+  links: z.array(jsonRecord),
+  priceDisplay: z.string(),
+  status: z.string(),
+  visibility: z.string(),
+  priority: z.number().int(),
+  isFeatured: z.boolean(),
+  featuredRank: z.number().int(),
+  availabilityMode: z.string(),
+  aiDiscoveryEnabled: z.boolean(),
+  aiKeywords: z.array(z.string()),
+  aiAliases: z.array(z.string()),
+  aiDoNotSay: z.array(z.string()),
+  aiSafetyRules: z.string().nullable(),
+  details: jsonRecord,
+  variants: z.array(PortfolioVariant),
+  lodging: jsonRecord.nullable(),
+  createdAt: timestamp,
+  updatedAt: timestamp,
+});
+
+/** Documentation shapes of the writes; the Portfolio services validate. */
+export const PortfolioItemCreateBody = z.looseObject({
+  item_type: z.enum(["product", "service", "real_estate", "lodging", "event"]),
+  vertical: z.string().optional(),
+  title: z.string().min(1).max(200),
+  variants: z.array(z.looseObject({ title: z.string() })).min(1),
+});
+export const PortfolioItemUpdateBody = z.looseObject({});
+export const PortfolioVariantUpdateBody = z.looseObject({});
+
 export const ErrorBody = z.object({
   error: z.object({
     code: z.string(),
@@ -146,7 +322,7 @@ export const list = <T extends z.ZodType>(item: T) =>
 export type ApiRoute = Readonly<{
   operationId: string;
   method: "GET" | "POST" | "PATCH";
-  /** OpenAPI path, with `{id}` for the workspace and `{contactId}`. */
+  /** OpenAPI path, with `{id}` for the workspace and the record ids. */
   path: string;
   summary: string;
   /** Scope an API key needs; sessions use the role permissions only. */
@@ -267,6 +443,92 @@ export const API_ROUTES = {
     workspaceScoped: true,
     body: ContactUpdateBody,
     response: one(Contact),
+  },
+  searchPortfolioCatalog: {
+    operationId: "searchPortfolioCatalog",
+    method: "POST",
+    path: "/workspaces/{id}/portfolio/catalog/search",
+    summary:
+      "UCP search_catalog: busca no Portfólio (texto, categorias, faixa de preço, paginação). Só itens ativos, públicos e com preço.",
+    scope: "portfolio:read",
+    workspaceScoped: true,
+    body: UcpSearchBody,
+    response: UcpSearchResponse,
+  },
+  lookupPortfolioCatalog: {
+    operationId: "lookupPortfolioCatalog",
+    method: "POST",
+    path: "/workspaces/{id}/portfolio/catalog/lookup",
+    summary:
+      "UCP lookup_catalog: até 50 ids de produto, variante, SKU ou handle; os não encontrados voltam em messages.",
+    scope: "portfolio:read",
+    workspaceScoped: true,
+    body: UcpLookupBody,
+    response: UcpLookupResponse,
+  },
+  getPortfolioCatalogProduct: {
+    operationId: "getPortfolioCatalogProduct",
+    method: "POST",
+    path: "/workspaces/{id}/portfolio/catalog/product",
+    summary:
+      "UCP get_product: um produto, com seleção de opções e disponibilidade; não encontrado volta com ucp.status = error.",
+    scope: "portfolio:read",
+    workspaceScoped: true,
+    body: UcpGetProductBody,
+    response: UcpProductResponse,
+  },
+  searchPortfolioForAgent: {
+    operationId: "searchPortfolioForAgent",
+    method: "GET",
+    path: "/workspaces/{id}/portfolio/agent/items",
+    summary:
+      "Visão do agente de atendimento: itens liberados para a IA, inclusive sob consulta, com as regras da IA.",
+    scope: "portfolio:agent",
+    workspaceScoped: true,
+    query: AgentPortfolioQuery,
+    response: page(AgentPortfolioItem),
+  },
+  getPortfolioItemForAgent: {
+    operationId: "getPortfolioItemForAgent",
+    method: "GET",
+    path: "/workspaces/{id}/portfolio/agent/items/{itemId}",
+    summary: "Um item na visão do agente de atendimento.",
+    scope: "portfolio:agent",
+    workspaceScoped: true,
+    response: one(AgentPortfolioItem),
+  },
+  createPortfolioItem: {
+    operationId: "createPortfolioItem",
+    method: "POST",
+    path: "/workspaces/{id}/portfolio/items",
+    summary:
+      "Cria um item com suas variantes (campos do UCP; respeita as cotas e as regras da vertical).",
+    scope: "portfolio:write",
+    workspaceScoped: true,
+    body: PortfolioItemCreateBody,
+    successStatus: 201,
+    response: one(PortfolioItem),
+  },
+  updatePortfolioItem: {
+    operationId: "updatePortfolioItem",
+    method: "PATCH",
+    path: "/workspaces/{id}/portfolio/items/{itemId}",
+    summary: "Altera os campos enviados de um item.",
+    scope: "portfolio:write",
+    workspaceScoped: true,
+    body: PortfolioItemUpdateBody,
+    response: one(PortfolioItem),
+  },
+  updatePortfolioVariant: {
+    operationId: "updatePortfolioVariant",
+    method: "PATCH",
+    path: "/workspaces/{id}/portfolio/items/{itemId}/variants/{variantId}",
+    summary:
+      "Altera os campos enviados de uma variante (preço, disponibilidade, estoque…).",
+    scope: "portfolio:write",
+    workspaceScoped: true,
+    body: PortfolioVariantUpdateBody,
+    response: one(PortfolioItem),
   },
 } as const satisfies Record<string, ApiRoute>;
 

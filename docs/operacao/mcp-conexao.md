@@ -15,15 +15,19 @@ Etapas F4b a F4d do [plano da F4](plano-f4.md). O GUIDU expõe um servidor MCP p
 
 Ferramentas por escopo:
 
-| Escopo            | Ferramentas                                 |
-| ----------------- | ------------------------------------------- |
-| `workspace:read`  | `get_workspace`, `get_workspace_overview`   |
-| `modules:read`    | `list_enabled_modules`, `get_module_status` |
-| `usage:read`      | `get_usage_summary`                         |
-| `executions:read` | `list_executions`, `get_execution_status`   |
-| `members:read`    | `list_workspace_members`                    |
-| `crm:read`        | `list_contacts`, `get_contact` (módulo CRM) |
-| `proposals:write` | `propose_operation`, `get_proposal`         |
+| Escopo            | Ferramentas                                                                |
+| ----------------- | -------------------------------------------------------------------------- |
+| `workspace:read`  | `get_workspace`, `get_workspace_overview`                                  |
+| `modules:read`    | `list_enabled_modules`, `get_module_status`                                |
+| `usage:read`      | `get_usage_summary`                                                        |
+| `executions:read` | `list_executions`, `get_execution_status`                                  |
+| `members:read`    | `list_workspace_members`                                                   |
+| `crm:read`        | `list_contacts`, `get_contact` (módulo CRM)                                |
+| `portfolio:read`  | `search_catalog`, `lookup_catalog`, `get_product` (Portfólio, formato UCP) |
+| `portfolio:agent` | `search_portfolio`, `get_portfolio_item` (visão do agente de atendimento)  |
+| `proposals:write` | `propose_operation`, `get_proposal`                                        |
+
+As ferramentas do catálogo seguem o binding MCP do UCP (release 2026-08-25): os argumentos são `meta` (com `ucp-agent.profile`, opcional aqui) e `catalog` (o pedido da capacidade), e a resposta é o envelope do UCP em `structuredContent`. Só saem itens ativos, públicos, liberados para a IA e com preço. A visão do agente (`portfolio:agent`) inclui os itens sob consulta e as regras da IA de cada item, que o agente deve respeitar. `portfolio:write` vale só na API REST; no MCP a escrita no Portfólio é por proposta.
 
 ## Propostas (F4d)
 
@@ -36,10 +40,13 @@ Com `proposals:write`, o assistente pede uma escrita com `propose_operation` e n
 
 Operações aceitas nesta versão:
 
-| Operação              | Alvo          | Conteúdo                                                                     |
-| --------------------- | ------------- | ---------------------------------------------------------------------------- |
-| `crm.contacts.create` | —             | `name` e, opcionais, `email`, `phone`, `companyName`, `jobTitle`, `notes`    |
-| `crm.contacts.update` | id do contato | Só os campos a mudar; se o contato mudar antes da execução, ela não acontece |
+| Operação                    | Alvo           | Conteúdo                                                                                                      |
+| --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
+| `crm.contacts.create`       | —              | `name` e, opcionais, `email`, `phone`, `companyName`, `jobTitle`, `notes`                                     |
+| `crm.contacts.update`       | id do contato  | Só os campos a mudar; se o contato mudar antes da execução, ela não acontece                                  |
+| `portfolio.items.create`    | —              | Como na API: `item_type`, `title`, `variants` (com `price` em centavos) e, opcionais, os demais campos do UCP |
+| `portfolio.items.update`    | id do item     | Só os campos a mudar; ativar exige os campos obrigatórios da vertical                                         |
+| `portfolio.variants.update` | id da variante | Só `price`, `list_price`, `availability_status` e `stock_quantity`                                            |
 
 O `idempotencyKey` é obrigatório e único por workspace: o mesmo valor com o mesmo conteúdo devolve a mesma proposta, e com outro conteúdo dá conflito. Cada workspace aceita até 50 propostas pendentes.
 

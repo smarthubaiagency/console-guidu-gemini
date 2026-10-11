@@ -9,6 +9,7 @@ vi.mock("server-only", () => ({}));
 import { API_ROUTES } from "@/core/api/contracts";
 import { type ApiCall, type ApiDeps, handleApiRoute } from "@/core/api/handler";
 import * as crm from "@/core/api/crm";
+import * as portfolio from "@/core/api/portfolio";
 import * as resources from "@/core/api/resources";
 import { API_KEY_PREFIX, hashApiKey } from "@/core/credentials/api-keys";
 import { AccessDeniedError } from "@/core/auth/errors";
@@ -40,6 +41,14 @@ const RUN: Record<
   createCrmContact: crm.createCrmContact,
   getCrmContact: crm.getCrmContact,
   updateCrmContact: crm.updateCrmContact,
+  searchPortfolioCatalog: portfolio.searchPortfolioCatalog,
+  lookupPortfolioCatalog: portfolio.lookupPortfolioCatalog,
+  getPortfolioCatalogProduct: portfolio.getPortfolioCatalogProduct,
+  searchPortfolioForAgent: portfolio.searchPortfolioForAgent,
+  getPortfolioItemForAgent: portfolio.getPortfolioItemForAgent,
+  createPortfolioItem: portfolio.createPortfolioItem,
+  updatePortfolioItem: portfolio.updatePortfolioItem,
+  updatePortfolioVariant: portfolio.updatePortfolioVariant,
 };
 
 describeDatabase("F4a: REST API v1", requiredVars, () => {

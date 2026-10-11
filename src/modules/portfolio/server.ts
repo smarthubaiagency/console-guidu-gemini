@@ -23,6 +23,15 @@ export {
   type VariantView,
 } from "./server/services/items";
 export {
+  agentGetItem,
+  type AgentItem,
+  agentSearch,
+  getCatalogProduct,
+  lookupCatalog,
+  MAX_LOOKUP_IDS,
+  searchCatalog,
+} from "./server/services/catalog";
+export {
   addAccommodationType,
   addRatePlan,
   removeAccommodationType,

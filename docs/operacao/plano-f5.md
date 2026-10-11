@@ -98,6 +98,18 @@ Fora desta etapa: a reserva (`create_booking_session`…), que depende de agenda
 
 ### F5d — API e MCP no formato UCP
 
+**Estado:** pronta para revisão. A migration `20261024090000_f5d_portfolio_scopes.sql` só amplia o catálogo de escopos das chaves; é aplicada como `app_migrations`.
+
+Entregue:
+
+- Catálogo UCP (release `2026-08-25`): `search_catalog`, `lookup_catalog` e `get_product` na REST (`POST /api/v1/workspaces/{id}/portfolio/catalog/{search,lookup,product}`) e no MCP, com o corpo e a resposta do protocolo, validados contra os schemas oficiais.
+- Escopos `portfolio:read` (catálogo UCP), `portfolio:agent` (visão do agente) e `portfolio:write` (escrita pela REST). As chaves revalidam o papel a cada uso; viewer não recebe `portfolio:write`.
+- Visão do agente: serviço interno para o módulo Agentes de IA e, para agentes externos, REST e MCP (`search_portfolio`, `get_portfolio_item`) com itens sob consulta e as regras da IA.
+- Propostas: `portfolio.items.create`, `portfolio.items.update` e `portfolio.variants.update` (preço e disponibilidade).
+- Testes: integração `portfolio-catalog.test.ts` (filtros, paginação, consulta com `inputs`, seleção de opções, não encontrado, escopos, MCP, módulo desabilitado e propostas aprovadas).
+
+Planejado:
+
 - REST e MCP do workspace: `search_catalog` (texto, categorias, faixa de preço, paginação), `lookup_catalog` (por IDs de produto, variante ou SKU) e `get_product` (com seleção de opções), com a saída validada contra o UCP.
 - Escopos novos nas chaves: `portfolio:read` e `portfolio:write`.
 - Itens `quote`, inativos ou com `ai_discovery_enabled = false` ficam fora.

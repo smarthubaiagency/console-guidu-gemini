@@ -21,7 +21,10 @@
 import "server-only";
 
 import crypto from "node:crypto";
-import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
+import type {
+  ContextTransaction,
+  RequestContext,
+} from "@/lib/prisma/with-context";
 import { Permissions } from "@/core/permissions/catalog";
 import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
 import {
@@ -30,7 +33,10 @@ import {
   requireWorkspacePermission,
 } from "@/core/permissions/guard";
 import { recordAudit, recordAuditDenied } from "@/core/audit/record";
-import { WorkspaceScopeSchema, DEFAULT_WORKSPACE_SCOPES } from "@/core/mcp/scopes";
+import {
+  WorkspaceScopeSchema,
+  DEFAULT_WORKSPACE_SCOPES,
+} from "@/core/mcp/scopes";
 
 export const API_KEY_PREFIX = "gdu_live_";
 
@@ -60,7 +66,11 @@ export function hashApiKey(rawKey: string): string {
 /**
  * Generates a high-entropy API key using CSPRNG.
  */
-export function generateApiKey(): { rawKey: string; keyHash: string; prefix: string } {
+export function generateApiKey(): {
+  rawKey: string;
+  keyHash: string;
+  prefix: string;
+} {
   const entropy = crypto.randomBytes(32).toString("hex");
   const rawKey = `${API_KEY_PREFIX}${entropy}`;
   const keyHash = hashApiKey(rawKey);
@@ -115,7 +125,9 @@ export async function createApiKey(
 
   if (
     workspaceRole === "viewer" &&
-    (scopes.includes("proposals:write") || scopes.includes("crm:write"))
+    (scopes.includes("proposals:write") ||
+      scopes.includes("crm:write") ||
+      scopes.includes("portfolio:write"))
   ) {
     throw new PermissionDeniedError();
   }

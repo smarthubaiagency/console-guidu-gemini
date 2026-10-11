@@ -406,6 +406,29 @@ async function toItemViews(
   );
 }
 
+/**
+ * Item views of the given ids, in that order (catalog and agent, F5d).
+ * The caller checks the module state and the permission.
+ */
+export async function loadItemViews(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  ids: readonly string[],
+): Promise<ItemView[]> {
+  if (ids.length === 0) return [];
+  const rows = await tx.portfolioItem.findMany({
+    where: { workspaceId: ctx.workspaceId, id: { in: [...ids] } },
+    include: ITEM_INCLUDE,
+  });
+  const views = new Map(
+    (await toItemViews(tx, ctx, rows)).map((v) => [v.id, v]),
+  );
+  return ids.flatMap((id) => {
+    const view = views.get(id);
+    return view ? [view] : [];
+  });
+}
+
 /** UCP Product of an item view (null for quote items). */
 export function itemToUcp(item: ItemView): Record<string, unknown> | null {
   return item.lodging
