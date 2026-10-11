@@ -1,0 +1,17 @@
+{
+  "security": {
+    "metadataTitle": "Seguridad de la cuenta",
+    "title": "Seguridad",
+    "mfaRequired": "Esta área requiere verificación en dos pasos. Activa una aplicación de autenticación para continuar.",
+    "mfaTitle": "Verificación en dos pasos",
+    "mfaDescription": "Aplicación de autenticación (TOTP). Obligatoria para la administración interna de la plataforma.",
+    "authenticatorApp": "Aplicación de autenticación",
+    "remove": "Eliminar",
+    "start": "Activar verificación en dos pasos",
+    "keyTitle": "Clave para la aplicación de autenticación",
+    "keyHint": "Registra esta clave e ingresa el código generado.",
+    "code": "Código de seis dígitos",
+    "confirm": "Confirmar activación",
+    "enabled": "Verificación en dos pasos activada."
+  }
+}

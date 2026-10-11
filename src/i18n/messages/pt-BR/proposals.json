@@ -1,0 +1,156 @@
+{
+  "metaTitle": "Propostas",
+  "metaTitleOne": "Proposta",
+  "trail": {
+    "platform": "Plataforma",
+    "proposals": "Propostas",
+    "proposal": "Proposta"
+  },
+  "status": {
+    "pending": "Aguardando decisão",
+    "approved": "Aprovada, na fila",
+    "rejected": "Rejeitada",
+    "executed": "Executada",
+    "failed": "Não executada",
+    "expired": "Vencida"
+  },
+  "errorReasons": {
+    "expired": "a proposta venceu antes da execução",
+    "tampered": "o conteúdo não confere com o aprovado",
+    "stale": "o registro mudou depois da proposta",
+    "not_found": "o registro não existe mais",
+    "forbidden": "a permissão mudou",
+    "unavailable": "o módulo não está disponível",
+    "quota_exceeded": "o limite do plano foi atingido",
+    "invalid_input": "os dados não são mais válidos",
+    "unknown_operation": "a operação não existe nesta versão"
+  },
+  "operations": {
+    "crm_contacts_create": {
+      "label": "Adicionar contato",
+      "fields": {
+        "name": "Nome",
+        "email": "E-mail",
+        "phone": "Telefone",
+        "companyName": "Empresa",
+        "jobTitle": "Cargo",
+        "notes": "Observações"
+      }
+    },
+    "crm_contacts_update": {
+      "label": "Editar contato",
+      "fields": {
+        "name": "Nome",
+        "email": "E-mail",
+        "phone": "Telefone",
+        "companyName": "Empresa",
+        "jobTitle": "Cargo",
+        "notes": "Observações"
+      }
+    },
+    "portfolio_items_create": {
+      "label": "Adicionar item ao portfólio",
+      "fields": {
+        "title": "Título",
+        "item_type": "Categoria",
+        "vertical": "Vertical",
+        "description": "Descrição",
+        "price_display": "Exibição do preço",
+        "status": "Situação",
+        "visibility": "Visibilidade",
+        "categories": "Categorias",
+        "tags": "Tags",
+        "url": "Página",
+        "media": "Imagens",
+        "fulfillment_methods": "Entrega ou atendimento",
+        "location_ids": "Lojas",
+        "details": "Dados da vertical",
+        "variants": "Variantes",
+        "ai_keywords": "Palavras-chave para a IA",
+        "ai_aliases": "Sinônimos",
+        "ai_do_not_say": "A IA nunca deve dizer",
+        "ai_safety_rules": "Regras de segurança para a IA",
+        "ai_discovery_enabled": "A IA pode sugerir"
+      }
+    },
+    "portfolio_items_update": {
+      "label": "Editar item do portfólio",
+      "fields": {
+        "title": "Título",
+        "item_type": "Categoria",
+        "vertical": "Vertical",
+        "description": "Descrição",
+        "price_display": "Exibição do preço",
+        "status": "Situação",
+        "visibility": "Visibilidade",
+        "categories": "Categorias",
+        "tags": "Tags",
+        "url": "Página",
+        "media": "Imagens",
+        "fulfillment_methods": "Entrega ou atendimento",
+        "location_ids": "Lojas",
+        "details": "Dados da vertical",
+        "variants": "Variantes",
+        "ai_keywords": "Palavras-chave para a IA",
+        "ai_aliases": "Sinônimos",
+        "ai_do_not_say": "A IA nunca deve dizer",
+        "ai_safety_rules": "Regras de segurança para a IA",
+        "ai_discovery_enabled": "A IA pode sugerir"
+      }
+    },
+    "portfolio_variants_update": {
+      "label": "Mudar preço ou disponibilidade",
+      "fields": {
+        "price": "Preço",
+        "list_price": "Preço cheio",
+        "availability_status": "Disponibilidade",
+        "stock_quantity": "Estoque"
+      }
+    }
+  },
+  "list": {
+    "description": "Escritas pedidas por assistentes conectados pelo MCP. Nada acontece sem a aprovação de uma pessoa.",
+    "awaiting": "Aguardando decisão ({count})",
+    "noneWaiting": "Nenhuma proposta esperando.",
+    "history": "Histórico",
+    "noHistory": "Sem histórico ainda.",
+    "rowMeta": "{status} · pedida em {date}"
+  },
+  "detail": {
+    "description": "Pedida por um assistente com chave de API. Confira o conteúdo antes de decidir.",
+    "meta": "· pedida em {createdAt}{byMe, select, yes { por uma chave sua} other {}} · vence em {expiresAt}",
+    "reason": "Motivo informado:",
+    "field": "Campo",
+    "current": "Atual",
+    "proposed": "Proposto",
+    "hash": "Impressão do conteúdo:",
+    "viewRecord": "Ver o registro",
+    "notExecuted": "Não executada: {reason}.",
+    "runsInBackground": "A execução roda em segundo plano; acompanhe em <link>Execuções</link>.",
+    "recordChanged": "O registro mudou depois da proposta; ela não pode ser aprovada. Rejeite e peça ao assistente uma nova.",
+    "mfaNeeded": "Aprovar pede a verificação em duas etapas nesta sessão. Ative ou confirme em Segurança da conta.",
+    "approve": "Aprovar e executar",
+    "reject": "Rejeitar"
+  },
+  "actions": {
+    "approved": "Proposta aprovada. A execução entrou na fila.",
+    "rejected": "Proposta rejeitada."
+  },
+  "errors": {
+    "notFound": "Proposta não encontrada.",
+    "humanDecides": "Só uma pessoa decide uma proposta, pela tela do workspace.",
+    "createdByAssistants": "Propostas são criadas por assistentes, com chave de API.",
+    "invalidProposal": "Proposta inválida.",
+    "unknownOperation": "Operação desconhecida: {operation}.",
+    "needsTarget": "Esta operação precisa de targetId.",
+    "noTarget": "Esta operação não recebe targetId.",
+    "idempotencyReused": "Esta chave de idempotência já foi usada com outro conteúdo.",
+    "tooManyPending": "Há propostas demais esperando decisão neste workspace. Aguarde as aprovações.",
+    "alreadyDecided": "Esta proposta já foi decidida.",
+    "expired": "A proposta venceu. Peça ao assistente uma nova.",
+    "contentMismatch": "O conteúdo não é o que estava na tela. Abra a proposta de novo.",
+    "contentTampered": "O conteúdo da proposta não confere com o registrado.",
+    "unknownOperationVersion": "Operação desconhecida nesta versão.",
+    "recordChanged": "O registro mudou depois da proposta. Peça ao assistente uma nova."
+  }
+}

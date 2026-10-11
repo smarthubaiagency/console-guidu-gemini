@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   Key,
   Plus,
@@ -44,6 +45,9 @@ export function McpKeysClient({
   currentUserId,
   userRole,
 }: McpKeysClientProps) {
+  const t = useTranslations("mcp");
+  const format = useFormatter();
+  const scopeKey = (id: string) => `scopes.${id.replace(/:/g, "_")}`;
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<ApiKeyActionState | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -95,11 +99,7 @@ export function McpKeysClient({
   };
 
   const handleRevoke = (apiKeyId: string, keyName: string) => {
-    if (
-      !confirm(
-        `Revogar a chave "${keyName}"? Todas as conexões e assistentes ativos usando esta chave perderão o acesso imediatamente.`,
-      )
-    ) {
+    if (!confirm(t("confirmRevoke", { name: keyName }))) {
       return;
     }
 
@@ -141,7 +141,7 @@ export function McpKeysClient({
           <div className="flex items-center justify-between">
             <div className="text-14 flex items-center gap-2 font-bold">
               <CheckCircle2 className="text-success-solid h-4 w-4" />
-              <span>Chave de API emitida com sucesso</span>
+              <span>{t("issuedTitle")}</span>
             </div>
             <button
               type="button"
@@ -151,11 +151,7 @@ export function McpKeysClient({
               ×
             </button>
           </div>
-          <p className="text-text-subtle">
-            Copie o token abaixo e armazene-o com segurança. Por motivos de
-            conformidade, ele nunca mais poderá ser visualizado após fechar esta
-            mensagem.
-          </p>
+          <p className="text-text-subtle">{t("issuedNotice")}</p>
           {feedback.rawKey && (
             <div className="bg-surface-card border-success-border mt-2 flex items-center justify-between gap-3 rounded-lg border p-3 shadow-xs">
               <div className="text-12 text-text truncate font-mono font-semibold select-all">
@@ -169,12 +165,12 @@ export function McpKeysClient({
                 {copiedKey === feedback.rawKey ? (
                   <>
                     <Check className="h-3.5 w-3.5" />
-                    <span>Copiada!</span>
+                    <span>{t("copied")}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="h-3.5 w-3.5" />
-                    <span>Copiar Chave</span>
+                    <span>{t("copyKey")}</span>
                   </>
                 )}
               </button>
@@ -188,11 +184,10 @@ export function McpKeysClient({
         <div>
           <h2 className="text-16 text-text flex items-center gap-2 font-semibold">
             <Bot className="text-text-secondary h-4 w-4" />
-            <span>Conexão de Assistentes</span>
+            <span>{t("connectionTitle")}</span>
           </h2>
           <p className="text-12 text-text-secondary mt-0.5">
-            Conforme ADR 0009: chaves emitidas pela plataforma com expiração
-            obrigatória e hash seguro SHA-256 para assistentes de IA (Cursor, Claude Code, Codex).
+            {t("connectionDescription")}
           </p>
         </div>
 
@@ -203,7 +198,7 @@ export function McpKeysClient({
             className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
           >
             <Plus className="h-4 w-4" />
-            <span>Emitir Nova Chave</span>
+            <span>{t("newKey")}</span>
           </button>
         )}
       </div>
@@ -215,7 +210,7 @@ export function McpKeysClient({
             <div className="border-border flex items-center justify-between border-b pb-4">
               <div className="text-text text-14 flex items-center gap-2 font-semibold">
                 <Key className="text-text-subtle h-4 w-4" />
-                <span>Emitir Nova Chave</span>
+                <span>{t("newKey")}</span>
               </div>
               <button
                 type="button"
@@ -229,12 +224,12 @@ export function McpKeysClient({
             <form onSubmit={handleCreateKey} className="mt-4 space-y-4">
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Nome da Chave / Aplicação
+                  {t("nameLabel")}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Conector Cursor / Claude Code"
+                  placeholder={t("namePlaceholder")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
@@ -243,7 +238,7 @@ export function McpKeysClient({
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Escopos de Acesso Permitidos (catálogo §17.3)
+                  {t("scopesLabel")}
                 </label>
                 <div className="space-y-2">
                   {SCOPE_DEFINITIONS.map((sc) => {
@@ -256,7 +251,7 @@ export function McpKeysClient({
                         key={sc.id}
                         className={`flex cursor-pointer items-start gap-3 rounded-lg border p-2.5 transition ${
                           isDisabled
-                            ? "border-border bg-surface-raised opacity-60 cursor-not-allowed"
+                            ? "border-border bg-surface-raised cursor-not-allowed opacity-60"
                             : isChecked
                               ? "border-focus-ring bg-surface-raised"
                               : "border-border hover:bg-surface-hover"
@@ -271,20 +266,26 @@ export function McpKeysClient({
                           className="mt-0.5 rounded-sm"
                         />
                         <div>
-                          <div className="text-12 text-text font-medium flex items-center gap-1.5">
-                            <span>{sc.label}</span>
+                          <div className="text-12 text-text flex items-center gap-1.5 font-medium">
+                            <span>
+                              {t.has(`${scopeKey(sc.id)}.label`)
+                                ? t(`${scopeKey(sc.id)}.label`)
+                                : sc.label}
+                            </span>
                             {isWrite && (
-                              <span className="text-10 bg-warning-bg text-warning-text border border-warning-border rounded-xs px-1 py-0.5 font-semibold">
-                                Escrita
+                              <span className="text-10 bg-warning-bg text-warning-text border-warning-border rounded-xs border px-1 py-0.5 font-semibold">
+                                {t("write")}
                               </span>
                             )}
                           </div>
                           <div className="text-11 text-text-secondary">
-                            {sc.desc}
+                            {t.has(`${scopeKey(sc.id)}.desc`)
+                              ? t(`${scopeKey(sc.id)}.desc`)
+                              : sc.desc}
                           </div>
                           {isDisabled && (
                             <div className="text-10 text-danger-text mt-0.5 font-medium">
-                              Apenas leitura para visualizador (sem permissão de escrita)
+                              {t("viewerReadOnly")}
                             </div>
                           )}
                         </div>
@@ -296,11 +297,9 @@ export function McpKeysClient({
                 {/* Mandatory Warning for proposals:write */}
                 {hasWriteScopeSelected && (
                   <div className="border-warning-border bg-warning-bg text-11 text-warning-text mt-3 flex items-start gap-2 rounded-lg border p-3 font-medium">
-                    <AlertTriangle className="text-warning-text h-4 w-4 shrink-0 mt-0.5" />
+                    <AlertTriangle className="text-warning-text mt-0.5 h-4 w-4 shrink-0" />
                     <div>
-                      <span>
-                        Atenção: este escopo permite ao assistente propor alterações que exigirão aprovação humana na plataforma.
-                      </span>
+                      <span>{t("writeWarning")}</span>
                     </div>
                   </div>
                 )}
@@ -308,18 +307,20 @@ export function McpKeysClient({
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Período de Validade (Expiração Obrigatória)
+                  {t("expiryLabel")}
                 </label>
                 <select
                   value={expiresInDays}
                   onChange={(e) => setExpiresInDays(Number(e.target.value))}
                   className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
                 >
-                  <option value={30}>30 dias</option>
-                  <option value={60}>60 dias</option>
-                  <option value={90}>90 dias (Recomendado)</option>
-                  <option value={180}>180 dias</option>
-                  <option value={365}>365 dias (1 ano)</option>
+                  <option value={30}>{t("days", { days: 30 })}</option>
+                  <option value={60}>{t("days", { days: 60 })}</option>
+                  <option value={90}>
+                    {t("daysRecommended", { days: 90 })}
+                  </option>
+                  <option value={180}>{t("days", { days: 180 })}</option>
+                  <option value={365}>{t("daysOneYear", { days: 365 })}</option>
                 </select>
               </div>
 
@@ -329,14 +330,14 @@ export function McpKeysClient({
                   onClick={() => setIsModalOpen(false)}
                   className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
                 >
-                  Cancelar
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={isPending || scopes.length === 0}
                   className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
                 >
-                  {isPending ? "Emitindo..." : "Emitir Chave"}
+                  {isPending ? t("issuing") : t("issue")}
                 </button>
               </div>
             </form>
@@ -348,30 +349,27 @@ export function McpKeysClient({
       <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
         <div className="border-border flex items-center justify-between border-b px-5 py-4">
           <h3 className="text-14 text-text font-semibold">
-            Chaves de API Emitidas ({apiKeys.length})
+            {t("keysTitle", { count: apiKeys.length })}
           </h3>
-          <span className="text-12 text-text-tertiary">
-            Identificação por prefixo e auditoria de uso
-          </span>
+          <span className="text-12 text-text-tertiary">{t("keysNotice")}</span>
         </div>
 
         {apiKeys.length === 0 ? (
           <div className="text-12 text-text-tertiary p-8 text-center">
-            Nenhuma chave emitida para este workspace. Crie uma chave para
-            conectar assistentes MCP (Cursor, Claude Code, etc.).
+            {t("empty")}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="text-12 w-full text-left">
               <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
                 <tr>
-                  <th className="px-5 py-3">Nome</th>
-                  <th className="px-5 py-3">Prefixo</th>
-                  <th className="px-5 py-3">Escopos</th>
-                  <th className="px-5 py-3">Expira em</th>
-                  <th className="px-5 py-3">Último uso</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Ações</th>
+                  <th className="px-5 py-3">{t("colName")}</th>
+                  <th className="px-5 py-3">{t("colPrefix")}</th>
+                  <th className="px-5 py-3">{t("colScopes")}</th>
+                  <th className="px-5 py-3">{t("colExpires")}</th>
+                  <th className="px-5 py-3">{t("colLastUsed")}</th>
+                  <th className="px-5 py-3">{t("colStatus")}</th>
+                  <th className="px-5 py-3 text-right">{t("colActions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
@@ -388,9 +386,9 @@ export function McpKeysClient({
                         {item.scopes.map((sc) => (
                           <span
                             key={sc}
-                            className={`rounded-xs px-1.5 py-0.5 font-mono text-10 ${
+                            className={`text-10 rounded-xs px-1.5 py-0.5 font-mono ${
                               sc === "proposals:write"
-                                ? "bg-warning-bg text-warning-text border border-warning-border font-medium"
+                                ? "bg-warning-bg text-warning-text border-warning-border border font-medium"
                                 : "bg-surface-hover text-text-subtle"
                             }`}
                           >
@@ -400,17 +398,17 @@ export function McpKeysClient({
                       </div>
                     </td>
                     <td className="text-text-secondary px-5 py-3.5">
-                      {new Intl.DateTimeFormat("pt-BR", {
+                      {format.dateTime(new Date(item.expiresAt), {
                         dateStyle: "short",
-                      }).format(new Date(item.expiresAt))}
+                      })}
                     </td>
                     <td className="text-text-secondary px-5 py-3.5">
                       {item.lastUsedAt
-                        ? new Intl.DateTimeFormat("pt-BR", {
+                        ? format.dateTime(new Date(item.lastUsedAt), {
                             dateStyle: "short",
                             timeStyle: "short",
-                          }).format(new Date(item.lastUsedAt))
-                        : "Nunca usada"}
+                          })
+                        : t("neverUsed")}
                     </td>
                     <td className="px-5 py-3.5">
                       <span
@@ -423,7 +421,9 @@ export function McpKeysClient({
                         {item.status === "active" && (
                           <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                         )}
-                        {item.status === "active" ? "Ativa" : "Revogada"}
+                        {item.status === "active"
+                          ? t("statusActive")
+                          : t("statusRevoked")}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
@@ -433,7 +433,7 @@ export function McpKeysClient({
                           disabled={isPending}
                           onClick={() => handleRevoke(item.id, item.name)}
                           className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
-                          title="Revogar chave"
+                          title={t("revokeTitle")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

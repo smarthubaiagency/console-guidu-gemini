@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { ActionForm } from "@/components/partners/action-form";
 import { partnerRoleLabel } from "@/components/partners/role-label";
@@ -13,17 +14,19 @@ import { AuthShell, ErrorNotice } from "@/shared/ui/auth-shell";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Convite de parceiro" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("invite");
+  return { title: t("partner.metadataTitle") };
+}
 
+/** Key (in `invite.partner.status`) of each unavailable state. */
 const MESSAGES: Record<string, string> = {
-  not_found: "Convite não encontrado ou inválido.",
-  accepted: "Este convite já foi aceito.",
-  revoked: "Este convite foi revogado.",
-  expired: "Este convite expirou. Peça um novo convite.",
-  recipient_mismatch:
-    "Este convite foi enviado para outro e-mail. Entre com a conta convidada.",
-  email_unconfirmed:
-    "O seu e-mail precisa estar confirmado para aceitar o convite.",
+  not_found: "notFound",
+  accepted: "accepted",
+  revoked: "revoked",
+  expired: "expired",
+  recipient_mismatch: "recipientMismatch",
+  email_unconfirmed: "emailUnconfirmed",
 };
 
 /** Accepts an invitation to join a partner (ADR 0012, P4a). */
@@ -32,6 +35,7 @@ export default async function PartnerInvitePage({
 }: Readonly<{ params: Promise<{ token: string }> }>) {
   const brand = await getRequestBrand();
   const { token } = await params;
+  const t = await getTranslations("invite.partner");
   const identity = await readIdentity();
   if (!identity) {
     redirect(`/login?next=${encodeURIComponent(`/partner-invite/${token}`)}`);
@@ -44,13 +48,13 @@ export default async function PartnerInvitePage({
   if (view.status !== "valid") {
     return (
       <AuthShell
-        title="Convite indisponível"
+        title={t("unavailableTitle")}
         appName={brand.name}
         logoUrl={brand.logoUrl}
         footer={<SignOutForm />}
       >
         <ErrorNotice testId="partner-invite-error">
-          {MESSAGES[view.status]}
+          {t(`status.${MESSAGES[view.status] ?? "notFound"}`)}
         </ErrorNotice>
       </AuthShell>
     );
@@ -58,15 +62,15 @@ export default async function PartnerInvitePage({
 
   return (
     <AuthShell
-      title={`Entrar em ${view.partnerName}`}
-      description={`Você foi convidado como ${partnerRoleLabel(view.role)}. Depois de aceitar, use o console do parceiro em /admin no domínio do parceiro.`}
+      title={t("title", { partner: view.partnerName })}
+      description={t("description", { role: partnerRoleLabel(view.role) })}
       appName={brand.name}
       logoUrl={brand.logoUrl}
-      footer={<Link href="/app">Voltar</Link>}
+      footer={<Link href="/app">{t("back")}</Link>}
     >
       <ActionForm
         action={acceptPartnerInvitationAction}
-        submitLabel="Aceitar convite"
+        submitLabel={t("accept")}
         testId="accept-partner-invite"
       >
         <input type="hidden" name="token" value={token} />

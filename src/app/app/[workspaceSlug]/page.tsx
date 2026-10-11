@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   PlayCircle,
@@ -8,6 +7,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
@@ -15,10 +15,12 @@ import { navIcon } from "@/components/layout/nav-icons";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { resolveSeatLimit } from "@/core/entitlements/quotas";
+import { moduleStateLabelKey } from "@/core/module-runtime/state";
 
-export const metadata: Metadata = {
-  title: "Dashboard do Workspace",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("overview");
+  return { title: t("metaTitle") };
+}
 
 interface WorkspacePageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -26,6 +28,8 @@ interface WorkspacePageProps {
 
 export default async function WorkspacePage({ params }: WorkspacePageProps) {
   const { workspaceSlug } = await params;
+  const t = await getTranslations("overview");
+  const tModules = await getTranslations("modules");
   const identity = await requireUserPage(`/app/${workspaceSlug}`);
   const context = await resolveRequestWorkspaceContext(
     prisma,
@@ -92,16 +96,17 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
           ? `/app/${workspaceSlug}/settings/modules`
           : view.href,
       icon: navIcon(view.iconKey),
-      status: view.stateLabel,
+      status: tModules(
+        `states.${moduleStateLabelKey(view.state, view.releaseStatus)}`,
+      ),
       statusColor: STATE_COLORS[view.state] ?? STATE_COLORS.not_enabled,
     })),
     {
-      title: "Execuções de Jobs",
-      description:
-        "Histórico de rotinas em segundo plano, retentativas e logs.",
+      title: t("jobsTitle"),
+      description: t("jobsDescription"),
       href: `/app/${workspaceSlug}/executions`,
       icon: PlayCircle,
-      status: "Sem dados",
+      status: t("noData"),
       statusColor: "bg-surface-hover text-text-subtle border-border",
     },
   ];
@@ -119,19 +124,17 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
       <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 md:flex-row md:items-center">
         <div>
           <div className="text-12 text-text-secondary flex items-center gap-2 font-medium">
-            <span>{organization?.name ?? "Organização"}</span>
+            <span>{organization?.name ?? t("organization")}</span>
             <span>•</span>
             <span className="text-success-solid flex items-center gap-1">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Ativo
+              {t("active")}
             </span>
           </div>
           <h1 className="text-24 text-text mt-1 font-bold tracking-tight">
             {workspace?.name ?? workspaceSlug}
           </h1>
-          <p className="text-14 text-text-secondary mt-1">
-            Ambiente de trabalho isolado e operacional sob isolamento RLS.
-          </p>
+          <p className="text-14 text-text-secondary mt-1">{t("subtitle")}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -140,14 +143,14 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
             className="border-border bg-surface-card text-12 text-text-subtle hover:bg-surface-hover flex items-center gap-2 rounded-lg border px-3.5 py-2 font-semibold shadow-xs transition"
           >
             <Users className="text-text-secondary h-4 w-4" />
-            <span>Gerenciar Equipe</span>
+            <span>{t("manageTeam")}</span>
           </Link>
           <Link
             href={`/app/${workspaceSlug}/settings/general`}
             className="bg-primary text-12 text-on-primary hover:bg-primary-hover flex items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
           >
             <Settings className="h-4 w-4" />
-            <span>Configurações</span>
+            <span>{t("settings")}</span>
           </Link>
         </div>
       </div>
@@ -157,14 +160,14 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
         <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-12 text-text-secondary font-medium">
-              Assentos do Plano
+              {t("seatsTitle")}
             </span>
             <Users className="text-text-tertiary h-4 w-4" />
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-24 text-text font-bold">{totalOccupied}</span>
             <span className="text-12 text-text-secondary">
-              de {maxSeats} contratados
+              {t("seatsOf", { max: maxSeats })}
             </span>
           </div>
           <progress
@@ -173,43 +176,43 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
             }`}
             value={seatsPercentage}
             max={100}
-            aria-label="Assentos ocupados"
+            aria-label={t("seatsOccupied")}
           />
           <p className="text-11 text-text-secondary mt-2">
-            {memberCount} membros ativos • {pendingInvitesCount} convites
-            pendentes
+            {t("seatsDetail", {
+              members: memberCount,
+              invites: pendingInvitesCount,
+            })}
           </p>
         </div>
 
         <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-12 text-text-secondary font-medium">
-              Isolamento & Segurança
+              {t("isolationTitle")}
             </span>
             <CheckCircle2 className="text-success-solid h-4 w-4" />
           </div>
           <div className="text-18 text-text mt-3 font-bold">
-            RLS Ativo & Forçado
+            {t("isolationValue")}
           </div>
           <p className="text-12 text-text-secondary mt-1">
-            Todas as consultas de domínio são contextualizadas via Prisma com
-            RLS garantido.
+            {t("isolationDescription")}
           </p>
         </div>
 
         <div className="border-card-border bg-surface-card rounded-xl border p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-12 text-text-secondary font-medium">
-              Status Operacional
+              {t("statusTitle")}
             </span>
             <AlertCircle className="text-text-tertiary h-4 w-4" />
           </div>
           <div className="text-18 text-text mt-3 font-bold">
-            Nenhum Incidente
+            {t("statusValue")}
           </div>
           <p className="text-12 text-text-secondary mt-1">
-            Serviços em conformidade com o padrão de observabilidade e métricas
-            reais.
+            {t("statusDescription")}
           </p>
         </div>
       </div>
@@ -218,10 +221,10 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-14 text-text-secondary font-semibold tracking-wider uppercase">
-            Módulos da Plataforma
+            {t("modulesTitle")}
           </h2>
           <span className="text-12 text-text-tertiary">
-            Módulos habilitados e integrados
+            {t("modulesSubtitle")}
           </span>
         </div>
 
@@ -261,7 +264,7 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
                     href={mod.href}
                     className="text-12 text-text-subtle hover:text-text flex items-center gap-1 font-medium transition"
                   >
-                    <span>Acessar</span>
+                    <span>{t("access")}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>

@@ -101,6 +101,7 @@ export function checkoutUnavailable(): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: "Checkout indisponível.",
+    messageKey: "billing.errors.checkoutUnavailable",
   });
 }
 

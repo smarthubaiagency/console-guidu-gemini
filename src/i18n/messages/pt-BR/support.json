@@ -1,0 +1,25 @@
+{
+  "metaTitle": "Acesso de suporte",
+  "breadcrumbSettings": "Configurações",
+  "title": "Acesso de suporte",
+  "description": "Pedidos da equipe do seu parceiro para ver este workspace. A aprovação vale só para este workspace, como visualizador, até o prazo pedido.",
+  "status": {
+    "approvedUntil": "Aprovado até {date}",
+    "expired": "Expirado",
+    "pending": "Aguardando o cliente",
+    "denied": "Negado",
+    "revoked": "Encerrado"
+  },
+  "hours": "{hours} h",
+  "requestedOn": "pedido em {date}",
+  "workspace": "workspace {slug}",
+  "reason": "Motivo: {reason}",
+  "approve": "Aprovar",
+  "deny": "Negar",
+  "revoke": "Revogar",
+  "empty": "Nenhum pedido de acesso de suporte.",
+  "errors": {
+    "alreadyDecided": "Esse pedido já foi decidido.",
+    "alreadyMember": "Essa pessoa já é membro deste workspace."
+  }
+}

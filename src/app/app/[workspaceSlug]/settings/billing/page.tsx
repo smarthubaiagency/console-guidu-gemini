@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CreditCard } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import {
-  formatDate,
+  calendarDateFormatter,
   sectionClass,
   SubscriptionBadge,
 } from "@/components/billing/billing-ui";
@@ -18,7 +19,10 @@ import { isPermissionDeniedError } from "@/core/permissions/guard";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
-export const metadata: Metadata = { title: "Plano e cobrança" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("billing");
+  return { title: t("metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -57,6 +61,8 @@ export default async function WorkspaceBillingPage({ params }: PageProps) {
   const subscription = view.subscription;
   // Without a brand of its own the partner is still named, not the platform.
   const billedBy = brand.source === "partner" ? brand.name : view.partnerName;
+  const t = await getTranslations("billing");
+  const formatDate = await calendarDateFormatter();
 
   return (
     <div
@@ -64,9 +70,9 @@ export default async function WorkspaceBillingPage({ params }: PageProps) {
       data-testid="workspace-billing"
     >
       <ModulePageHeader
-        trail={["Configurações", "Plano e cobrança"]}
-        title="Plano e cobrança"
-        description="O plano contratado pela sua empresa e a situação da assinatura."
+        trail={[t("breadcrumbSettings"), t("title")]}
+        title={t("title")}
+        description={t("description")}
         icon={<CreditCard className="h-5 w-5" />}
       />
 
@@ -75,32 +81,34 @@ export default async function WorkspaceBillingPage({ params }: PageProps) {
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-14 text-text font-semibold">
-                Plano {subscription.planName}
+                {t("planName", { name: subscription.planName })}
               </span>
               <SubscriptionBadge status={subscription.status} />
             </div>
             {subscription.currentPeriodEnd ? (
               <p className="text-12 text-text-secondary">
-                Período pago até {formatDate(subscription.currentPeriodEnd)}.
+                {t("paidUntil", {
+                  date: formatDate(subscription.currentPeriodEnd),
+                })}
               </p>
             ) : null}
             {subscription.status === "pending" ? (
               <p className="text-12 text-text-secondary">
-                A assinatura será ativada quando o pagamento for confirmado.
+                {t("pendingNotice")}
               </p>
             ) : null}
           </div>
         ) : (
-          <p className="text-12 text-text-secondary">
-            Sua empresa ainda não tem plano.
-          </p>
+          <p className="text-12 text-text-secondary">{t("noPlan")}</p>
         )}
         {!subscription || subscription.mode === "partner_pays" ? (
           <p className="text-12 text-text-subtle" data-testid="billing-contact">
-            A cobrança é feita por {billedBy}. Para mudar de plano ou tratar de
-            pagamentos, fale com {billedBy}
-            {brand.supportEmail ? ` pelo e-mail ${brand.supportEmail}` : ""}
-            {brand.supportUrl ? ` ou em ${brand.supportUrl}` : ""}.
+            {t("contact", { billedBy })}
+            {brand.supportEmail
+              ? t("contactEmail", { email: brand.supportEmail })
+              : ""}
+            {brand.supportUrl ? t("contactUrl", { url: brand.supportUrl }) : ""}
+            {t("contactEnd")}
           </p>
         ) : null}
       </section>
@@ -108,16 +116,14 @@ export default async function WorkspaceBillingPage({ params }: PageProps) {
       {view.checkoutAvailable ? (
         <section className={sectionClass}>
           <h2 className="text-14 text-text font-semibold">
-            Contratar pelo checkout
+            {t("checkoutTitle")}
           </h2>
-          <p className="text-12 text-text-secondary">
-            O checkout ainda é uma demonstração: nada é cobrado.
-          </p>
+          <p className="text-12 text-text-secondary">{t("checkoutDemo")}</p>
           <Link
             href={`/app/${workspaceSlug}/settings/billing/checkout`}
             className="text-12 text-text-subtle font-medium underline"
           >
-            Abrir checkout de demonstração
+            {t("openCheckout")}
           </Link>
         </section>
       ) : null}

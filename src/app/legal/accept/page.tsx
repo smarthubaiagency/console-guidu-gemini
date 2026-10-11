@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AcceptLegalForm } from "@/components/legal/accept-form";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { safeInternalPath } from "@/core/auth/redirects";
 import { getRequestBrand } from "@/core/brand/resolve";
-import { LEGAL_KIND_LABELS, pendingLegalDocuments } from "@/core/legal/service";
+import { pendingLegalDocuments } from "@/core/legal/service";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
@@ -14,7 +15,10 @@ import { AuthShell } from "@/shared/ui/auth-shell";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Aceite dos termos" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("legal");
+  return { title: t("accept.metadataTitle") };
+}
 
 /** Acceptance of the host partner's pending terms and privacy (P4b2). */
 export default async function AcceptLegalPage({
@@ -34,11 +38,12 @@ export default async function AcceptLegalPage({
     { partnerId: partner.partnerId },
   );
   if (pending.length === 0) redirect(next);
+  const t = await getTranslations("legal");
 
   return (
     <AuthShell
-      title="Antes de continuar"
-      description={`Para usar ${brand.name}, aceite os documentos abaixo.`}
+      title={t("accept.title")}
+      description={t("accept.description", { appName: brand.name })}
       appName={brand.name}
       logoUrl={brand.logoUrl}
       footer={<SignOutForm />}
@@ -53,14 +58,19 @@ export default async function AcceptLegalPage({
               {document.title}
             </h2>
             <p className="text-12 text-text-secondary">
-              {LEGAL_KIND_LABELS[document.kind]} · versão {document.version} ·{" "}
-              <Link
-                href={`/legal/${document.kind}`}
-                target="_blank"
-                className="underline"
-              >
-                abrir em nova aba
-              </Link>
+              {t.rich("accept.meta", {
+                kind: t(`kinds.${document.kind}`),
+                version: document.version,
+                link: (chunks) => (
+                  <Link
+                    href={`/legal/${document.kind}`}
+                    target="_blank"
+                    className="underline"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
             </p>
             <div className="text-12 text-text-subtle mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap">
               {document.body}

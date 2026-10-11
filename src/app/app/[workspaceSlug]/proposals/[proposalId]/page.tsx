@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Inbox } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
-import { formatDate, sectionClass } from "@/components/billing/billing-ui";
+import { sectionClass } from "@/components/billing/billing-ui";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
@@ -15,16 +15,15 @@ import {
   approveProposalAction,
   rejectProposalAction,
 } from "@/core/proposals/actions";
-import {
-  displayValue,
-  PROPOSAL_ERROR_LABELS,
-  PROPOSAL_STATUS_LABELS,
-} from "@/core/proposals/labels";
+import { displayValue } from "@/core/proposals/labels";
 import { getProposal, loadProposalTarget } from "@/core/proposals/service";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
-export const metadata: Metadata = { title: "Proposta" };
+export async function generateMetadata() {
+  const t = await getTranslations("proposals");
+  return { title: t("metaTitleOne") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string; proposalId: string }>;
@@ -62,10 +61,27 @@ export default async function ProposalPage({ params }: PageProps) {
   if (view.kind === "denied") return <ModuleNotice variant="denied" />;
   if (view.kind === "missing") notFound();
   const { proposal, operation, current, currentVersion } = view;
+  const t = await getTranslations("proposals");
+  const format = await getFormatter();
   const base = `/app/${workspaceSlug}`;
+  const opKey = `operations.${proposal.operation.replaceAll(".", "_")}`;
+  const operationLabel = operation
+    ? t.has(`${opKey}.label`)
+      ? t(`${opKey}.label`)
+      : operation.label
+    : null;
   const fields =
-    operation?.fields ??
-    Object.keys(proposal.payload).map((key) => ({ key, label: key }));
+    operation?.fields.map((f) => ({
+      key: f.key,
+      label: t.has(`${opKey}.fields.${f.key}`)
+        ? t(`${opKey}.fields.${f.key}`)
+        : f.label,
+    })) ?? Object.keys(proposal.payload).map((key) => ({ key, label: key }));
+  const errorReasonKey = `errorReasons.${proposal.errorCode ?? ""}`;
+  const errorReason =
+    proposal.errorCode && t.has(errorReasonKey)
+      ? t(errorReasonKey)
+      : proposal.errorCode;
   const shown = fields.filter((f) => f.key in proposal.payload);
   const changed =
     proposal.targetId !== null &&
@@ -76,9 +92,13 @@ export default async function ProposalPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="proposal">
       <ModulePageHeader
-        trail={["Plataforma", "Propostas", operation?.label ?? "Proposta"]}
-        title={operation?.label ?? proposal.operation}
-        description="Pedida por um assistente com chave de API. Confira o conteúdo antes de decidir."
+        trail={[
+          t("trail.platform"),
+          t("trail.proposals"),
+          operationLabel ?? t("trail.proposal"),
+        ]}
+        title={operationLabel ?? proposal.operation}
+        description={t("detail.description")}
         icon={<Inbox className="h-5 w-5" />}
       />
 
@@ -88,30 +108,35 @@ export default async function ProposalPage({ params }: PageProps) {
             className="text-text font-semibold"
             data-testid="proposal-status"
           >
-            {PROPOSAL_STATUS_LABELS[proposal.status]}
+            {t(`status.${proposal.status}`)}
           </span>{" "}
-          · pedida em {formatDate(proposal.createdAt)}
-          {proposal.requestedByMe ? " por uma chave sua" : ""} · vence em{" "}
-          {proposal.expiresAt.toLocaleString("pt-BR", {
-            timeZone: "America/Sao_Paulo",
-            dateStyle: "short",
-            timeStyle: "short",
+          {t("detail.meta", {
+            createdAt: format.dateTime(proposal.createdAt, {
+              dateStyle: "short",
+              timeZone: "UTC",
+            }),
+            byMe: proposal.requestedByMe ? "yes" : "no",
+            expiresAt: format.dateTime(proposal.expiresAt, {
+              timeZone: "America/Sao_Paulo",
+              dateStyle: "short",
+              timeStyle: "short",
+            }),
           })}
         </p>
         {proposal.reason ? (
           <p className="text-12 text-text">
-            <span className="font-semibold">Motivo informado:</span>{" "}
+            <span className="font-semibold">{t("detail.reason")}</span>{" "}
             {proposal.reason}
           </p>
         ) : null}
         <table className="text-12 w-full" data-testid="proposal-fields">
           <thead>
             <tr className="text-text-secondary text-left">
-              <th className="py-2 pr-3 font-medium">Campo</th>
+              <th className="py-2 pr-3 font-medium">{t("detail.field")}</th>
               {proposal.targetId ? (
-                <th className="py-2 pr-3 font-medium">Atual</th>
+                <th className="py-2 pr-3 font-medium">{t("detail.current")}</th>
               ) : null}
-              <th className="py-2 font-medium">Proposto</th>
+              <th className="py-2 font-medium">{t("detail.proposed")}</th>
             </tr>
           </thead>
           <tbody className="divide-border divide-y">
@@ -131,7 +156,7 @@ export default async function ProposalPage({ params }: PageProps) {
           </tbody>
         </table>
         <p className="text-11 text-text-secondary">
-          Impressão do conteúdo:{" "}
+          {t("detail.hash")}{" "}
           <code data-testid="proposal-hash">
             {proposal.payloadHash.slice(0, 16)}
           </code>
@@ -141,24 +166,23 @@ export default async function ProposalPage({ params }: PageProps) {
             href={`${base}/${operation.resourcePath(proposal.resourceId)}`}
             className="text-12 text-primary font-semibold"
           >
-            Ver o registro
+            {t("detail.viewRecord")}
           </Link>
         ) : null}
         {proposal.status === "failed" ? (
           <p className="text-12 text-danger-text" data-testid="proposal-error">
-            Não executada:{" "}
-            {PROPOSAL_ERROR_LABELS[proposal.errorCode ?? ""] ??
-              proposal.errorCode}
-            .
+            {t("detail.notExecuted", { reason: errorReason ?? "" })}
           </p>
         ) : null}
         {proposal.status === "approved" ? (
           <p className="text-12 text-text-secondary">
-            A execução roda em segundo plano; acompanhe em{" "}
-            <Link href={`${base}/executions`} className="underline">
-              Execuções
-            </Link>
-            .
+            {t.rich("detail.runsInBackground", {
+              link: (chunks) => (
+                <Link href={`${base}/executions`} className="underline">
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         ) : null}
       </section>
@@ -167,20 +191,18 @@ export default async function ProposalPage({ params }: PageProps) {
         <section className={sectionClass} data-testid="proposal-decision">
           {changed ? (
             <p className="text-12 bg-warning-bg text-warning-text border-warning-border rounded-lg border p-3">
-              O registro mudou depois da proposta; ela não pode ser aprovada.
-              Rejeite e peça ao assistente uma nova.
+              {t("detail.recordChanged")}
             </p>
           ) : null}
           {!identity.mfaSatisfied ? (
             <p className="text-12 bg-warning-bg text-warning-text border-warning-border rounded-lg border p-3">
-              Aprovar pede a verificação em duas etapas nesta sessão. Ative ou
-              confirme em Segurança da conta.
+              {t("detail.mfaNeeded")}
             </p>
           ) : null}
           <div className="flex flex-wrap gap-3">
             <ActionForm
               action={approveProposalAction}
-              submitLabel="Aprovar e executar"
+              submitLabel={t("detail.approve")}
               testId="approve-proposal"
             >
               <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
@@ -193,7 +215,7 @@ export default async function ProposalPage({ params }: PageProps) {
             </ActionForm>
             <ActionForm
               action={rejectProposalAction}
-              submitLabel="Rejeitar"
+              submitLabel={t("detail.reject")}
               tone="neutral"
               testId="reject-proposal"
             >

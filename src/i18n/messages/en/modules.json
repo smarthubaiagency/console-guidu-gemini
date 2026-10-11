@@ -1,0 +1,64 @@
+{
+  "metaTitle": "Workspace Modules",
+  "settingsMetaTitle": "Module Settings",
+  "breadcrumbSettings": "Settings",
+  "breadcrumbModules": "Modules",
+  "title": "Module Enablement and Status",
+  "description": "Modules registered on the platform, their status in this workspace and access to their settings.",
+  "manageHint": "Only workspace owners and administrators can enable or disable modules.",
+  "configure": "Configure {name}",
+  "states": {
+    "comingSoon": "Coming soon",
+    "maintenance": "Maintenance",
+    "notEnabled": "Disabled",
+    "notContracted": "Not contracted",
+    "suspended": "Read only",
+    "beta": "Beta",
+    "active": "Active",
+    "unavailable": "Unavailable"
+  },
+  "enable": "Enable",
+  "disable": "Disable",
+  "enableModule": "Enable {name}",
+  "disableModule": "Disable {name}",
+  "reference": "(ref. {id})",
+  "availabilityOf": "Availability of {name}",
+  "availability": {
+    "enabled": "Available",
+    "maintenance": "Maintenance",
+    "disabled": "Disabled for customers"
+  },
+  "apply": "Apply",
+  "enabled": "Module enabled.",
+  "disabled": "Module disabled.",
+  "availabilityUpdated": "Availability updated.",
+  "notice": {
+    "denied": {
+      "title": "Access denied",
+      "text": "You do not have permission to access this area."
+    },
+    "maintenance": {
+      "title": "Module under maintenance",
+      "text": "This module's operations are temporarily suspended."
+    },
+    "not_enabled": {
+      "title": "Module disabled",
+      "text": "This module is not enabled in this workspace."
+    },
+    "not_contracted": {
+      "title": "Module not contracted",
+      "text": "Your company's plan does not include this module. Talk to whoever manages your plan."
+    },
+    "suspended": {
+      "title": "Subscription suspended",
+      "text": "This module is read-only while the subscription is suspended."
+    },
+    "unavailable": {
+      "title": "Module Unavailable",
+      "text": "This module is not available at this stage of the platform."
+    }
+  },
+  "errors": {
+    "invalidInput": "Invalid data."
+  }
+}

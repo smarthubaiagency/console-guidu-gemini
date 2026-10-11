@@ -1,0 +1,35 @@
+{
+  "metaTitle": "Data and privacy",
+  "breadcrumbSettings": "Settings",
+  "title": "Data and privacy",
+  "description": "Export all the data in this workspace or request its deletion.",
+  "mfaNotice": "Exporting and deleting require two-step verification in this session. Turn it on or confirm it in Account security.",
+  "exportTitle": "Export",
+  "exportDescription": "A JSON file with members, invitations, API keys and credentials (without secrets), modules, executions and the data of each module. It is generated in the background and stays available for 24 hours; the download link is valid for 15 minutes and can be generated again by reloading the page.",
+  "generateExport": "Generate export",
+  "exportStatus": {
+    "pending": "Queued",
+    "running": "Generating",
+    "ready": "Ready",
+    "failed": "Failed",
+    "expired": "Expired"
+  },
+  "requestedOn": "requested on {date}",
+  "availableUntil": "available until {date}",
+  "download": "Download",
+  "noExports": "No exports yet.",
+  "deleteTitle": "Delete workspace",
+  "deleteDescription": "The workspace is locked for everyone as soon as the deletion is scheduled. For {days} days you can cancel it from the workspace list. After that, the data, members, keys, credentials and files are permanently erased; only the record that the workspace existed and was deleted remains, along with the audit log. Backup copies follow their own retention period and do not become accessible again. Export first if you need the data.",
+  "scheduleDeletion": "Schedule deletion",
+  "confirmSlug": "Type {slug} to confirm",
+  "exportRequested": "Export requested. It will be ready in a few minutes and will appear here for 24 hours.",
+  "deletionScheduled": "Deletion scheduled. You can cancel it within 30 days.",
+  "deletionCanceled": "Deletion canceled. The workspace is back.",
+  "errors": {
+    "confirmSlug": "Type \"{slug}\" to confirm the deletion.",
+    "deletionNotFound": "Deletion not found or already completed.",
+    "mfaRequired": "Confirm two-step verification to continue.",
+    "exportInProgress": "There is already an export in progress in this workspace.",
+    "exportNotFound": "Export not found or expired."
+  }
+}

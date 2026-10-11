@@ -1,14 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
-import { toSafeError } from "@/shared/errors";
 
 import { retryJobRun } from "./service";
 
@@ -33,13 +34,9 @@ export async function retryJobRunAction(
       retryJobRun(tx, context, jobRunId),
     );
     revalidatePath(`/app/${workspaceSlug}/executions`);
-    return { success: true, message: "Execução enviada de novo para a fila." };
+    const t = await getTranslations("executions");
+    return { success: true, message: t("retried") };
   } catch (err) {
-    const safe = toSafeError(err);
-    return {
-      error: safe.safeMessage,
-      code: safe.code,
-      requestId: safe.requestId,
-    };
+    return actionFailure(err);
   }
 }

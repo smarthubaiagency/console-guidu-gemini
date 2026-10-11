@@ -1,0 +1,17 @@
+{
+  "security": {
+    "metadataTitle": "Account security",
+    "title": "Security",
+    "mfaRequired": "This area requires two-step verification. Set up an authenticator app to continue.",
+    "mfaTitle": "Two-step verification",
+    "mfaDescription": "Authenticator app (TOTP). Required for internal platform administration.",
+    "authenticatorApp": "Authenticator app",
+    "remove": "Remove",
+    "start": "Turn on two-step verification",
+    "keyTitle": "Key for the authenticator app",
+    "keyHint": "Add this key and enter the generated code.",
+    "code": "Six-digit code",
+    "confirm": "Confirm activation",
+    "enabled": "Two-step verification turned on."
+  }
+}

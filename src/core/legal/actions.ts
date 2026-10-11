@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requireMfa, requireUser } from "@/core/auth/identity";
@@ -10,7 +11,8 @@ import { getPartnerMembership } from "@/core/partners/members";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 
 import { acceptPendingLegalDocuments, publishLegalDocument } from "./service";
 
@@ -27,20 +29,19 @@ function text(formData: FormData, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
-function failure(err: unknown): LegalActionState {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
-}
+const failure = (err: unknown): Promise<LegalActionState> => actionFailure(err);
 
 function notFound(): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: "Recurso não encontrado.",
+    messageKey: "legal.errors.notFound",
   });
+}
+
+async function published(version: number): Promise<LegalActionState> {
+  const t = await getTranslations("legal");
+  return { success: true, message: t("published", { version }) };
 }
 
 function publishInput(formData: FormData) {
@@ -78,7 +79,7 @@ export async function publishPlatformLegalAction(
       { partnerId: partner.partnerId },
     );
     revalidatePath("/platform/legal");
-    return { success: true, message: `Versão ${version} publicada.` };
+    return await published(version);
   } catch (err) {
     return failure(err);
   }
@@ -111,7 +112,7 @@ export async function publishPartnerLegalAction(
       { partnerId: partner.partnerId },
     );
     revalidatePath("/admin/legal");
-    return { success: true, message: `Versão ${version} publicada.` };
+    return await published(version);
   } catch (err) {
     return failure(err);
   }
@@ -134,6 +135,7 @@ export async function acceptLegalDocumentsAction(
       throw new AppError({
         code: "invalid_input",
         safeMessage: "Marque a caixa para aceitar os documentos.",
+        messageKey: "legal.errors.mustAgree",
       });
     }
     await withIdentityContext(

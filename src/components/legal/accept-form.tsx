@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import {
@@ -10,6 +11,7 @@ import {
 const INITIAL: LegalActionState = {};
 
 export function AcceptLegalForm({ next }: Readonly<{ next: string }>) {
+  const t = useTranslations("legal.accept");
   const [state, action, pending] = useActionState(
     acceptLegalDocumentsAction,
     INITIAL,
@@ -19,14 +21,14 @@ export function AcceptLegalForm({ next }: Readonly<{ next: string }>) {
       <input type="hidden" name="next" value={next} />
       <label className="text-14 text-text flex items-start gap-2">
         <input type="checkbox" name="agree" required className="mt-1" />
-        Li e aceito os documentos acima.
+        {t("agree")}
       </label>
       <button
         type="submit"
         disabled={pending}
         className="bg-primary text-on-primary text-14 rounded-lg px-4 py-2 font-semibold disabled:opacity-60"
       >
-        {pending ? "Registrando..." : "Aceitar e continuar"}
+        {pending ? t("submitting") : t("submit")}
       </button>
       {state.error ? (
         <p role="alert" className="text-12 text-danger-text">

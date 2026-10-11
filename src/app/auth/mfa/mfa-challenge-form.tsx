@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { EMPTY_FORM_STATE } from "@/core/auth/form-state";
@@ -12,6 +13,7 @@ export function MfaChallengeForm({
   factorId,
   next,
 }: Readonly<{ factorId: string; next: string }>) {
+  const t = useTranslations("auth.mfa");
   const [state, action, pending] = useActionState(
     verifyMfaChallenge,
     EMPTY_FORM_STATE,
@@ -22,7 +24,7 @@ export function MfaChallengeForm({
       <input type="hidden" name="factorId" value={factorId} />
       <input type="hidden" name="next" value={next} />
       <Field
-        label="Código do aplicativo autenticador"
+        label={t("code")}
         name="code"
         inputMode="numeric"
         autoComplete="one-time-code"
@@ -30,7 +32,7 @@ export function MfaChallengeForm({
         required
       />
       {state.error ? <ErrorNotice>{state.error}</ErrorNotice> : null}
-      <SubmitButton pending={pending}>Confirmar</SubmitButton>
+      <SubmitButton pending={pending}>{t("submit")}</SubmitButton>
     </form>
   );
 }

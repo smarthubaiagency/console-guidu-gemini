@@ -84,18 +84,32 @@ export const ProposeInput = z
   })
   .strict();
 
-function invalid(message: string): AppError {
-  return new AppError({ code: "invalid_input", safeMessage: message });
+function invalid(
+  message: string,
+  key?: string,
+  messageValues?: Record<string, string | number>,
+): AppError {
+  return new AppError({
+    code: "invalid_input",
+    safeMessage: message,
+    ...(key ? { messageKey: `proposals.errors.${key}` } : {}),
+    ...(messageValues ? { messageValues } : {}),
+  });
 }
 
-function conflict(message: string): AppError {
-  return new AppError({ code: "conflict", safeMessage: message });
+function conflict(message: string, key: string): AppError {
+  return new AppError({
+    code: "conflict",
+    safeMessage: message,
+    messageKey: `proposals.errors.${key}`,
+  });
 }
 
 function notFound(): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: "Proposta não encontrada.",
+    messageKey: "proposals.errors.notFound",
   });
 }
 
@@ -167,6 +181,7 @@ function requirePerson(ctx: RequestContext): void {
     throw new AppError({
       code: "forbidden",
       safeMessage: "Só uma pessoa decide uma proposta, pela tela do workspace.",
+      messageKey: "proposals.errors.humanDecides",
     });
   }
 }
@@ -181,21 +196,27 @@ export async function createProposal(
     throw new AppError({
       code: "forbidden",
       safeMessage: "Propostas são criadas por assistentes, com chave de API.",
+      messageKey: "proposals.errors.createdByAssistants",
     });
   }
   const parsed = ProposeInput.safeParse(input);
   if (!parsed.success) {
-    throw invalid(parsed.error.issues[0]?.message ?? "Proposta inválida.");
+    const issue = parsed.error.issues[0]?.message;
+    throw issue
+      ? invalid(issue)
+      : invalid("Proposta inválida.", "invalidProposal");
   }
   const { operation, targetId, idempotencyKey, reason } = parsed.data;
   const op = getProposalOperation(operation);
-  if (!op) throw invalid(`Operação desconhecida: ${operation}.`);
+  if (!op) {
+    throw invalid(`Operação desconhecida: ${operation}.`, "unknownOperation", {
+      operation,
+    });
+  }
   if (op.needsTarget !== Boolean(targetId)) {
-    throw invalid(
-      op.needsTarget
-        ? "Esta operação precisa de targetId."
-        : "Esta operação não recebe targetId.",
-    );
+    throw op.needsTarget
+      ? invalid("Esta operação precisa de targetId.", "needsTarget")
+      : invalid("Esta operação não recebe targetId.", "noTarget");
   }
   await assertModuleOperational(tx, ctx, op.moduleKey, "write");
   await requireWorkspacePermission(tx, ctx, op.permission);
@@ -219,6 +240,7 @@ export async function createProposal(
     if (existing.payloadHash !== payloadHash) {
       throw conflict(
         "Esta chave de idempotência já foi usada com outro conteúdo.",
+        "idempotencyReused",
       );
     }
     return { proposal: toView(existing, ctx), created: false };
@@ -235,6 +257,7 @@ export async function createProposal(
       code: "rate_limited",
       safeMessage:
         "Há propostas demais esperando decisão neste workspace. Aguarde as aprovações.",
+      messageKey: "proposals.errors.tooManyPending",
     });
   }
 
@@ -368,20 +391,32 @@ export async function approveProposal(
   const row = await lockProposal(tx, ctx, proposalId);
   if (!row) throw notFound();
   if (row.status !== "pending")
-    throw conflict("Esta proposta já foi decidida.");
+    throw conflict("Esta proposta já foi decidida.", "alreadyDecided");
   if (row.expiresAt.getTime() <= Date.now()) {
-    throw conflict("A proposta venceu. Peça ao assistente uma nova.");
+    throw conflict(
+      "A proposta venceu. Peça ao assistente uma nova.",
+      "expired",
+    );
   }
   if (input.payloadHash !== row.payloadHash) {
     throw conflict(
       "O conteúdo não é o que estava na tela. Abra a proposta de novo.",
+      "contentMismatch",
     );
   }
   if (hashOf(row) !== row.payloadHash) {
-    throw conflict("O conteúdo da proposta não confere com o registrado.");
+    throw conflict(
+      "O conteúdo da proposta não confere com o registrado.",
+      "contentTampered",
+    );
   }
   const op = getProposalOperation(row.operation);
-  if (!op) throw invalid("Operação desconhecida nesta versão.");
+  if (!op) {
+    throw invalid(
+      "Operação desconhecida nesta versão.",
+      "unknownOperationVersion",
+    );
+  }
   await assertModuleOperational(tx, ctx, op.moduleKey, "write");
   await requireWorkspacePermission(tx, ctx, op.permission);
   if (row.targetId) {
@@ -389,6 +424,7 @@ export async function approveProposal(
     if (current !== row.resourceVersion) {
       throw conflict(
         "O registro mudou depois da proposta. Peça ao assistente uma nova.",
+        "recordChanged",
       );
     }
   }
@@ -433,7 +469,7 @@ export async function rejectProposal(
   const row = await lockProposal(tx, ctx, proposalId);
   if (!row) throw notFound();
   if (row.status !== "pending")
-    throw conflict("Esta proposta já foi decidida.");
+    throw conflict("Esta proposta já foi decidida.", "alreadyDecided");
   const updated = await tx.executionProposal.update({
     where: { id: row.id },
     data: { status: "rejected", decidedBy: ctx.userId, decidedAt: new Date() },

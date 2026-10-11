@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Code2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { sectionClass } from "@/components/billing/billing-ui";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -11,9 +12,10 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { getRequestOrigin } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 
-export const metadata: Metadata = {
-  title: "API e Webhooks — Configurações",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("api");
+  return { title: t("metaTitle") };
+}
 
 interface ApiSettingsPageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -39,52 +41,55 @@ export default async function ApiSettingsPage({
   const base = `${origin}/api/v1`;
   const limits = configuredRateLimits();
   const routes = Object.values(API_ROUTES) as ApiRoute[];
+  const t = await getTranslations("api");
+  const code = (chunks: React.ReactNode) => <code>{chunks}</code>;
+  const codeText = (chunks: React.ReactNode) => (
+    <code className="text-text">{chunks}</code>
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="api-settings">
       <ModulePageHeader
-        trail={["Configurações", "API e Webhooks"]}
-        title="API e Webhooks"
-        description="API REST v1 para integrar este workspace a outros sistemas."
+        trail={[t("breadcrumbSettings"), t("title")]}
+        title={t("title")}
+        description={t("description")}
         icon={<Code2 className="h-5 w-5" />}
       />
 
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">Como conectar</h2>
+        <h2 className="text-14 text-text font-semibold">{t("howToConnect")}</h2>
         <ul className="text-12 text-text-secondary space-y-1">
+          <li>{t.rich("baseUrl", { base, code: codeText })}</li>
           <li>
-            Endereço base: <code className="text-text">{base}</code>
-          </li>
-          <li>
-            Id deste workspace:{" "}
+            {t("workspaceId")}{" "}
             <code className="text-text" data-testid="api-workspace-id">
               {context.workspaceId}
             </code>
           </li>
           <li>
-            Autenticação: cabeçalho{" "}
-            <code className="text-text">Authorization: Bearer gdu_live_…</code>{" "}
-            com uma chave criada em{" "}
-            <Link
-              href={`/app/${workspaceSlug}/settings/mcp`}
-              className="text-primary inline-flex items-center gap-1 font-semibold"
-            >
-              Configurações › MCP <ArrowRight className="h-3 w-3" />
-            </Link>
-            . A chave vale só para este workspace e para os escopos marcados
-            nela, e só neste endereço.
+            {t.rich("auth", {
+              code: codeText,
+              link: (chunks) => (
+                <Link
+                  href={`/app/${workspaceSlug}/settings/mcp`}
+                  className="text-primary inline-flex items-center gap-1 font-semibold"
+                >
+                  {chunks} <ArrowRight className="h-3 w-3" />
+                </Link>
+              ),
+            })}
           </li>
           <li>
-            Limites provisórios por minuto: {limits.key} por chave,{" "}
-            {limits.user} por pessoa e {limits.workspace} por workspace. Acima
-            disso a resposta é 429 com <code>Retry-After</code>.
+            {t.rich("limits", {
+              key: limits.key,
+              user: limits.user,
+              workspace: limits.workspace,
+              code,
+            })}
           </li>
+          <li>{t.rich("errors", { code })}</li>
           <li>
-            Erros trazem <code>code</code>, <code>message</code> e{" "}
-            <code>requestId</code>; informe o requestId ao suporte.
-          </li>
-          <li>
-            Contrato completo:{" "}
+            {t("contract")}{" "}
             <a
               href={`${base}/openapi.json`}
               className="text-primary font-semibold"
@@ -96,7 +101,7 @@ export default async function ApiSettingsPage({
       </section>
 
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">Rotas disponíveis</h2>
+        <h2 className="text-14 text-text font-semibold">{t("routesTitle")}</h2>
         <ul className="divide-border divide-y" data-testid="api-routes">
           {routes.map((route) => (
             <li
@@ -106,18 +111,20 @@ export default async function ApiSettingsPage({
               <code className="text-text font-semibold">
                 {route.method} {route.path}
               </code>{" "}
-              · escopo <code>{route.scope}</code> · {route.summary}
+              · {t("scope")} <code>{route.scope}</code> ·{" "}
+              {t.has(`routes.${route.operationId}`)
+                ? t(`routes.${route.operationId}`)
+                : route.summary}
             </li>
           ))}
         </ul>
       </section>
 
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">Webhooks</h2>
-        <p className="text-12 text-text-secondary">
-          Em breve: avisos da plataforma para um endereço seu quando algo
-          acontecer neste workspace.
-        </p>
+        <h2 className="text-14 text-text font-semibold">
+          {t("webhooksTitle")}
+        </h2>
+        <p className="text-12 text-text-secondary">{t("webhooksSoon")}</p>
       </section>
     </div>
   );

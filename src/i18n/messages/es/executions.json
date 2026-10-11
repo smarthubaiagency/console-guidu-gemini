@@ -1,0 +1,35 @@
+{
+  "metaTitle": "Ejecuciones de jobs",
+  "trail": {
+    "operation": "Operación",
+    "executions": "Ejecuciones"
+  },
+  "title": "Ejecuciones y rutinas asíncronas",
+  "description": "Tareas en segundo plano de este workspace. Cada ejecución vuelve a verificar los permisos de quien la pidió antes de actuar.",
+  "status": {
+    "pending": "En cola",
+    "queued": "En cola",
+    "running": "En ejecución",
+    "succeeded": "Completada",
+    "failed": "Falló",
+    "skipped": "Omitida",
+    "canceled": "Cancelada"
+  },
+  "runMeta": "Solicitada el {createdAt}{finished, select, yes { · terminó el {finishedAt}} other {}} · intentos {attempts}/{maxAttempts}",
+  "retry": "Reprocesar",
+  "retried": "Ejecución enviada de nuevo a la cola.",
+  "emptyTitle": "Sin ejecuciones registradas",
+  "emptyDescription": "Las tareas solicitadas por módulos e integraciones aparecen aquí.",
+  "jobs": {
+    "billing_daily-transitions": "Marca las suscripciones como vencidas o suspendidas según los plazos y avisa al socio.",
+    "billing_payout-report": "Genera el informe de pagos del mes cerrado por socio.",
+    "core_workspace-export": "Genera la exportación de los datos del workspace.",
+    "privacy_daily-maintenance": "Concluye las eliminaciones de workspace vencidas, expira exportaciones y aplica la retención activada.",
+    "core_proposal-execute": "Ejecuta una propuesta aprobada, verificando de nuevo validez, contenido, versión y permisos.",
+    "hello-world_create-record": "Crea un registro de ejemplo en segundo plano."
+  },
+  "errors": {
+    "invalidJobData": "Datos del job no válidos.",
+    "onlyFailedRetry": "Solo las ejecuciones con fallo pueden reprocesarse."
+  }
+}

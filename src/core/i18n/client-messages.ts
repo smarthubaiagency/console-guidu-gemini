@@ -5,7 +5,19 @@ import type { AbstractIntlMessages } from "next-intl";
  * message; the client receives only these, so the page payload does not
  * grow with each translated screen.
  */
-export const CLIENT_NAMESPACES = ["common", "shell"] as const;
+export const CLIENT_NAMESPACES = [
+  "common",
+  "shell",
+  "ui",
+  "auth",
+  "invite",
+  "legal",
+  "account",
+  "team",
+  "modules",
+  "credentials",
+  "mcp",
+] as const;
 
 export function clientMessages(
   messages: AbstractIntlMessages,

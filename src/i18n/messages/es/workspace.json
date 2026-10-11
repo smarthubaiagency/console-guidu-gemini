@@ -1,0 +1,11 @@
+{
+  "metaTitle": "Configuración General",
+  "breadcrumbSettings": "Configuración",
+  "breadcrumbGeneral": "General",
+  "title": "Configuración del Workspace",
+  "description": "Identificación del entorno, organización y parámetros operativos.",
+  "name": "Nombre del Workspace",
+  "slug": "Slug de Enrutamiento",
+  "organization": "Organización Contratante",
+  "uuid": "Identificador UUID"
+}

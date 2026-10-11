@@ -1,0 +1,70 @@
+{
+  "team": {
+    "metadataTitle": "Team invitation",
+    "goToDashboard": "Go to dashboard",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Administrator",
+      "editor": "Editor",
+      "viewer": "Viewer",
+      "member": "Member"
+    },
+    "notFound": {
+      "title": "Invalid invitation",
+      "description": "The invitation link you opened is invalid or was not found.",
+      "notice": "Invitation not found or invalid."
+    },
+    "expired": {
+      "title": "Invitation expired",
+      "description": "This invitation has expired and can no longer be used.",
+      "notice": "This invitation has expired. Ask the administrator to send a new invitation."
+    },
+    "revoked": {
+      "title": "Invitation revoked",
+      "description": "This invitation was canceled by an administrator.",
+      "notice": "This invitation was revoked by an administrator."
+    },
+    "accepted": {
+      "title": "Invitation already accepted",
+      "description": "This invitation has already been used.",
+      "notice": "You have already accepted this invitation."
+    },
+    "mismatch": {
+      "title": "Different recipient",
+      "description": "You are signed in with a different account from the one the invitation was sent to.",
+      "notice": "This invitation was sent to another email.",
+      "hint": "You are signed in as <strong>{email}</strong>. To accept this invitation, sign out of this account and sign in with the invited email."
+    },
+    "unconfirmed": {
+      "title": "Email not confirmed",
+      "description": "Email confirmation required.",
+      "notice": "Your email must be confirmed to accept the invitation."
+    },
+    "valid": {
+      "title": "Team invitation",
+      "description": "You have been invited to join an organization.",
+      "signedInAs": "Signed in as <strong>{email}</strong>",
+      "organization": "Organization",
+      "workspace": "Workspace",
+      "role": "Assigned role",
+      "accept": "Accept Invitation",
+      "accepting": "Accepting invitation..."
+    }
+  },
+  "partner": {
+    "metadataTitle": "Partner invitation",
+    "unavailableTitle": "Invitation unavailable",
+    "status": {
+      "notFound": "Invitation not found or invalid.",
+      "accepted": "This invitation has already been accepted.",
+      "revoked": "This invitation was revoked.",
+      "expired": "This invitation has expired. Ask for a new invitation.",
+      "recipientMismatch": "This invitation was sent to another email. Sign in with the invited account.",
+      "emailUnconfirmed": "Your email must be confirmed to accept the invitation."
+    },
+    "title": "Join {partner}",
+    "description": "You were invited as {role}. After accepting, use the partner console at /admin on the partner domain.",
+    "back": "Back",
+    "accept": "Accept invitation"
+  }
+}

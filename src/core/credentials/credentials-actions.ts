@@ -1,20 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 import {
   registerCredential,
   revokeCredential,
   type AIProvider,
   type CredentialPurpose,
 } from "./vault";
-import { validateProviderKeyFormat } from "./providers";
+import { AI_PROVIDERS, validateProviderKeyFormat } from "./providers";
 
 export type CredentialActionState = {
   success?: boolean;
@@ -23,6 +25,26 @@ export type CredentialActionState = {
   code?: AppErrorCode;
   requestId?: string;
 };
+
+/** Message key of a rejected key format, mirroring validateProviderKeyFormat. */
+function keyFormatMessage(
+  provider: AIProvider,
+  secret: string,
+): { messageKey: string; messageValues?: Record<string, string> } {
+  const trimmed = secret.trim();
+  if (trimmed.length < 15) {
+    return { messageKey: "credentials.errors.keyTooShort" };
+  }
+  const meta = AI_PROVIDERS[provider];
+  if (!meta) return { messageKey: "credentials.errors.unknownProvider" };
+  if (meta.keyPrefix && !trimmed.startsWith(meta.keyPrefix)) {
+    return {
+      messageKey: "credentials.errors.keyWrongPrefix",
+      messageValues: { provider: meta.name, prefix: meta.keyPrefix },
+    };
+  }
+  return { messageKey: "credentials.errors.invalidKeyFormat" };
+}
 
 const RegisterInput = z.object({
   workspaceSlug: z.string().min(1),
@@ -45,13 +67,13 @@ export async function registerCredentialAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Dados inválidos para o registro da credencial.",
+        messageKey: "credentials.errors.invalidRegister",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, provider, label, secret, purpose } = parsed.data;
@@ -59,18 +81,22 @@ export async function registerCredentialAction(
   // Validate format
   const formatCheck = validateProviderKeyFormat(provider as AIProvider, secret);
   if (!formatCheck.valid) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: formatCheck.error ?? "Formato de chave inválido.",
+        ...keyFormatMessage(provider as AIProvider, secret),
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   try {
     const identity = await requireUser();
-    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
 
     await withContext(prisma, context, async (tx) => {
       return registerCredential(tx, context, {
@@ -83,13 +109,13 @@ export async function registerCredentialAction(
 
     revalidatePath(`/app/${workspaceSlug}/settings/credentials`);
 
+    const t = await getTranslations("credentials");
     return {
       success: true,
-      message: `Credencial '${label}' registrada com sucesso e protegida no cofre.`,
+      message: t("registered", { label }),
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }
 
@@ -108,20 +134,24 @@ export async function revokeCredentialAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Identificador de credencial inválido.",
+        messageKey: "credentials.errors.invalidCredentialId",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, credentialId } = parsed.data;
 
   try {
     const identity = await requireUser();
-    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
 
     await withContext(prisma, context, async (tx) => {
       return revokeCredential(tx, context, credentialId);
@@ -129,12 +159,12 @@ export async function revokeCredentialAction(
 
     revalidatePath(`/app/${workspaceSlug}/settings/credentials`);
 
+    const t = await getTranslations("credentials");
     return {
       success: true,
-      message: "Credencial revogada com sucesso.",
+      message: t("revoked"),
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }

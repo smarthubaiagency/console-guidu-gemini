@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { sectionClass } from "@/components/billing/billing-ui";
 import { LocationFields } from "@/components/locations/location-fields";
@@ -15,7 +15,10 @@ import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
-export const metadata: Metadata = { title: "Lojas" };
+export async function generateMetadata() {
+  const t = await getTranslations("locations");
+  return { title: t("metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -47,18 +50,19 @@ export default async function LocationsPage({ params }: PageProps) {
     }),
   );
   const base = `/app/${workspaceSlug}/settings/locations`;
+  const t = await getTranslations("locations");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="locations">
       <ModulePageHeader
-        trail={["Configurações", "Lojas"]}
-        title="Lojas"
-        description="Lojas e endereços de atendimento do negócio, com horários. O Portfólio, o Google e o agente usam estes dados."
+        trail={[t("breadcrumbSettings"), t("title")]}
+        title={t("title")}
+        description={t("description")}
         icon={<MapPin className="h-5 w-5" />}
       />
       <section className={sectionClass}>
         <h2 className="text-14 text-text font-semibold">
-          Lojas ({locations.length})
+          {t("listTitle", { count: locations.length })}
         </h2>
         <ul className="divide-border divide-y" data-testid="location-list">
           {locations.map((l) => (
@@ -76,23 +80,23 @@ export default async function LocationsPage({ params }: PageProps) {
                 {[l.address.address_locality, l.address.address_region]
                   .filter(Boolean)
                   .join(" / ")}
-                {l.status === "inactive" ? " · desativada" : ""}
+                {l.status === "inactive" ? ` · ${t("inactiveSuffix")}` : ""}
               </span>
             </li>
           ))}
           {locations.length === 0 ? (
-            <li className="text-12 text-text-secondary py-2">
-              Nenhuma loja ainda.
-            </li>
+            <li className="text-12 text-text-secondary py-2">{t("empty")}</li>
           ) : null}
         </ul>
       </section>
       {canManage ? (
         <section className={sectionClass}>
-          <h2 className="text-14 text-text font-semibold">Nova loja</h2>
+          <h2 className="text-14 text-text font-semibold">
+            {t("newLocation")}
+          </h2>
           <ActionForm
             action={createLocationAction}
-            submitLabel="Cadastrar loja"
+            submitLabel={t("create")}
             className="space-y-3"
             testId="create-location"
           >

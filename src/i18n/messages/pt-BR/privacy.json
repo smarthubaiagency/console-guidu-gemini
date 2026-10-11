@@ -1,0 +1,35 @@
+{
+  "metaTitle": "Dados e privacidade",
+  "breadcrumbSettings": "Configurações",
+  "title": "Dados e privacidade",
+  "description": "Exporte todos os dados deste workspace ou peça a exclusão dele.",
+  "mfaNotice": "Exportar e excluir pedem a verificação em duas etapas nesta sessão. Ative ou confirme em Segurança da conta.",
+  "exportTitle": "Exportação",
+  "exportDescription": "Um arquivo JSON com membros, convites, chaves de API e credenciais (sem segredos), módulos, execuções e os dados de cada módulo. Ele é gerado em segundo plano e fica disponível por 24 horas; o link de download vale 15 minutos e pode ser gerado de novo recarregando a página.",
+  "generateExport": "Gerar exportação",
+  "exportStatus": {
+    "pending": "Na fila",
+    "running": "Gerando",
+    "ready": "Pronta",
+    "failed": "Falhou",
+    "expired": "Expirada"
+  },
+  "requestedOn": "pedida em {date}",
+  "availableUntil": "disponível até {date}",
+  "download": "Baixar",
+  "noExports": "Nenhuma exportação ainda.",
+  "deleteTitle": "Excluir workspace",
+  "deleteDescription": "O workspace fica bloqueado para todos assim que a exclusão é agendada. Durante {days} dias você pode cancelar na lista de workspaces. Depois disso os dados, membros, chaves, credenciais e arquivos são apagados de forma definitiva; fica só o registro de que o workspace existiu e foi excluído, e a auditoria. Cópias de backup seguem o prazo próprio e não voltam a ficar acessíveis. Exporte antes se precisar dos dados.",
+  "scheduleDeletion": "Agendar exclusão",
+  "confirmSlug": "Digite {slug} para confirmar",
+  "exportRequested": "Exportação pedida. Ela fica pronta em alguns minutos e aparece aqui por 24 horas.",
+  "deletionScheduled": "Exclusão agendada. Você pode cancelar em até 30 dias.",
+  "deletionCanceled": "Exclusão cancelada. O workspace voltou.",
+  "errors": {
+    "confirmSlug": "Digite \"{slug}\" para confirmar a exclusão.",
+    "deletionNotFound": "Exclusão não encontrada ou já concluída.",
+    "mfaRequired": "Confirme a verificação em duas etapas para continuar.",
+    "exportInProgress": "Já existe uma exportação em andamento neste workspace.",
+    "exportNotFound": "Exportação não encontrada ou expirada."
+  }
+}

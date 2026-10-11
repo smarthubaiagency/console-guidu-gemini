@@ -1,16 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { toSafeError } from "@/shared/errors";
 
 import { cancelWorkspaceDeletion, requestWorkspaceDeletion } from "./deletion";
 import { requestWorkspaceExport } from "./export";
@@ -19,14 +20,7 @@ import { requestWorkspaceExport } from "./export";
 
 type State = PartnerActionState;
 
-function failure(err: unknown): State {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
-}
+const failure = (err: unknown): Promise<State> => actionFailure(err);
 
 const slug = z.string().min(1).max(64);
 
@@ -56,8 +50,7 @@ export async function requestWorkspaceExportAction(
     revalidatePath(`/app/${workspaceSlug}/settings/data`);
     return {
       success: true,
-      message:
-        "Exportação pedida. Ela fica pronta em alguns minutos e aparece aqui por 24 horas.",
+      message: (await getTranslations("privacy"))("exportRequested"),
     };
   } catch (err) {
     return failure(err);
@@ -81,7 +74,7 @@ export async function requestWorkspaceDeletionAction(
     );
     return {
       success: true,
-      message: "Exclusão agendada. Você pode cancelar em até 30 dias.",
+      message: (await getTranslations("privacy"))("deletionScheduled"),
       redirectTo: "/app?exclusao=agendada",
     };
   } catch (err) {
@@ -109,7 +102,7 @@ export async function cancelWorkspaceDeletionAction(
     revalidatePath("/app");
     return {
       success: true,
-      message: "Exclusão cancelada. O workspace voltou.",
+      message: (await getTranslations("privacy"))("deletionCanceled"),
     };
   } catch (err) {
     return failure(err);

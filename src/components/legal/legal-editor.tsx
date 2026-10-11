@@ -1,14 +1,12 @@
+import { useFormatter, useTranslations } from "next-intl";
+
 import {
   ActionForm,
   inputClass,
   labelClass,
 } from "@/components/partners/action-form";
 import type { PartnerActionState } from "@/core/partners/actions";
-import {
-  LEGAL_KIND_LABELS,
-  LEGAL_KINDS,
-  type LegalDocumentView,
-} from "@/core/legal/service";
+import { LEGAL_KINDS, type LegalDocumentView } from "@/core/legal/service";
 
 type Action = (
   prev: PartnerActionState,
@@ -20,6 +18,8 @@ export function LegalEditor({
   documents,
   action,
 }: Readonly<{ documents: readonly LegalDocumentView[]; action: Action }>) {
+  const t = useTranslations("legal");
+  const format = useFormatter();
   return (
     <div className="space-y-6">
       <ul
@@ -29,44 +29,54 @@ export function LegalEditor({
         {documents.map((doc) => (
           <li key={doc.id} className="p-4">
             <div className="text-14 text-text font-semibold">
-              {LEGAL_KIND_LABELS[doc.kind]} · versão {doc.version}
+              {t("editor.version", {
+                kind: t(`kinds.${doc.kind}`),
+                version: doc.version,
+              })}
             </div>
             <div className="text-12 text-text-secondary">
-              {doc.title} · {doc.publishedAt.toLocaleDateString("pt-BR")} ·{" "}
-              {doc.requiresAcceptance ? "exige aceite" : "sem novo aceite"}
+              {doc.title} ·{" "}
+              {format.dateTime(doc.publishedAt, {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })}{" "}
+              ·{" "}
+              {doc.requiresAcceptance
+                ? t("editor.requiresAcceptance")
+                : t("editor.noNewAcceptance")}
             </div>
           </li>
         ))}
         {documents.length === 0 ? (
           <li className="text-12 text-text-secondary p-4">
-            Nenhum documento publicado. Sem documentos, ninguém precisa aceitar
-            termos para entrar.
+            {t("editor.empty")}
           </li>
         ) : null}
       </ul>
 
       <section className="border-card-border bg-surface-card space-y-3 rounded-xl border p-4 shadow-xs">
         <h2 className="text-14 text-text font-semibold">
-          Publicar nova versão
+          {t("editor.publishTitle")}
         </h2>
         <ActionForm
           action={action}
-          submitLabel="Publicar"
+          submitLabel={t("editor.publish")}
           className="space-y-3"
           testId="publish-legal"
         >
           <label className={labelClass}>
-            Documento
+            {t("editor.document")}
             <select name="kind" defaultValue="terms" className={inputClass}>
               {LEGAL_KINDS.map((kind) => (
                 <option key={kind} value={kind}>
-                  {LEGAL_KIND_LABELS[kind]}
+                  {t(`kinds.${kind}`)}
                 </option>
               ))}
             </select>
           </label>
           <label className={labelClass}>
-            Título
+            {t("editor.title")}
             <input
               name="title"
               required
@@ -75,7 +85,7 @@ export function LegalEditor({
             />
           </label>
           <label className={labelClass}>
-            Texto
+            {t("editor.body")}
             <textarea
               name="body"
               required
@@ -86,8 +96,7 @@ export function LegalEditor({
           </label>
           <label className="text-14 text-text flex items-center gap-2">
             <input type="checkbox" name="requiresAcceptance" defaultChecked />
-            Mudança relevante: exigir novo aceite (a primeira versão sempre
-            exige)
+            {t("editor.requiresAcceptanceLabel")}
           </label>
         </ActionForm>
       </section>

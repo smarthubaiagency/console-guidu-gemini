@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { ShieldCheck } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
-import { formatDate, sectionClass } from "@/components/billing/billing-ui";
+import {
+  calendarDateFormatter,
+  sectionClass,
+} from "@/components/billing/billing-ui";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import {
@@ -18,26 +22,24 @@ import {
   requestWorkspaceExportAction,
 } from "@/core/privacy/actions";
 import { DELETION_GRACE_DAYS } from "@/core/privacy/deletion";
-import { type ExportStatus, listWorkspaceExports } from "@/core/privacy/export";
+import { listWorkspaceExports } from "@/core/privacy/export";
 import { exportDownloadHref } from "@/core/privacy/links";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
-export const metadata: Metadata = { title: "Dados e privacidade" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("privacy");
+  return { title: t("metaTitle") };
+}
 
-const STATUS_LABELS: Record<ExportStatus, string> = {
-  pending: "Na fila",
-  running: "Gerando",
-  ready: "Pronta",
-  failed: "Falhou",
-  expired: "Expirada",
-};
-
-function formatSize(bytes: number | null): string {
+function formatSize(
+  bytes: number | null,
+  formatNumber: (value: number) => string,
+): string {
   if (bytes === null) return "—";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;
+  return `${formatNumber(bytes / 1024 / 1024)} MB`;
 }
 
 interface DataPageProps {
@@ -69,36 +71,38 @@ export default async function WorkspaceDataPage({ params }: DataPageProps) {
   const canExport = grants("workspace.data.export");
   const canDelete = grants("workspace.delete");
   if (!canExport && !canDelete) return <ModuleNotice variant="denied" />;
+  const t = await getTranslations("privacy");
+  const format = await getFormatter();
+  const formatDate = await calendarDateFormatter();
+  const formatNumber = (value: number) =>
+    format.number(value, { maximumFractionDigits: 1 });
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="workspace-data">
       <ModulePageHeader
-        trail={["Configurações", "Dados e privacidade"]}
-        title="Dados e privacidade"
-        description="Exporte todos os dados deste workspace ou peça a exclusão dele."
+        trail={[t("breadcrumbSettings"), t("title")]}
+        title={t("title")}
+        description={t("description")}
         icon={<ShieldCheck className="h-5 w-5" />}
       />
 
       {!identity.mfaSatisfied ? (
         <p className="text-12 bg-warning-bg text-warning-text border-warning-border rounded-lg border p-3">
-          Exportar e excluir pedem a verificação em duas etapas nesta sessão.
-          Ative ou confirme em Segurança da conta.
+          {t("mfaNotice")}
         </p>
       ) : null}
 
       {canExport ? (
         <section className={sectionClass} data-testid="workspace-exports">
-          <h2 className="text-14 text-text font-semibold">Exportação</h2>
+          <h2 className="text-14 text-text font-semibold">
+            {t("exportTitle")}
+          </h2>
           <p className="text-12 text-text-secondary">
-            Um arquivo JSON com membros, convites, chaves de API e credenciais
-            (sem segredos), módulos, execuções e os dados de cada módulo. Ele é
-            gerado em segundo plano e fica disponível por 24 horas; o link de
-            download vale 15 minutos e pode ser gerado de novo recarregando a
-            página.
+            {t("exportDescription")}
           </p>
           <ActionForm
             action={requestWorkspaceExportAction}
-            submitLabel="Gerar exportação"
+            submitLabel={t("generateExport")}
             testId="request-export"
           >
             <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
@@ -115,12 +119,18 @@ export default async function WorkspaceDataPage({ params }: DataPageProps) {
                     className="text-text font-semibold"
                     data-testid="export-status"
                   >
-                    {STATUS_LABELS[e.status]}
+                    {t(`exportStatus.${e.status}`)}
                   </span>{" "}
-                  · pedida em {formatDate(e.createdAt)} ·{" "}
-                  {formatSize(e.fileSize)}
+                  · {t("requestedOn", { date: formatDate(e.createdAt) })} ·{" "}
+                  {formatSize(e.fileSize, formatNumber)}
                   {e.status === "ready" && e.expiresAt
-                    ? ` · disponível até ${e.expiresAt.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })}`
+                    ? ` · ${t("availableUntil", {
+                        date: format.dateTime(e.expiresAt, {
+                          timeZone: "America/Sao_Paulo",
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        }),
+                      })}`
                     : ""}
                   {e.error ? ` · ${e.error}` : ""}
                 </span>
@@ -133,14 +143,14 @@ export default async function WorkspaceDataPage({ params }: DataPageProps) {
                     )}
                     className="text-12 text-text-subtle font-medium underline"
                   >
-                    Baixar
+                    {t("download")}
                   </a>
                 ) : null}
               </li>
             ))}
             {exports.length === 0 ? (
               <li className="text-12 text-text-secondary py-2">
-                Nenhuma exportação ainda.
+                {t("noExports")}
               </li>
             ) : null}
           </ul>
@@ -149,26 +159,22 @@ export default async function WorkspaceDataPage({ params }: DataPageProps) {
 
       {canDelete ? (
         <section className={sectionClass} data-testid="workspace-deletion">
-          <h2 className="text-14 text-text font-semibold">Excluir workspace</h2>
+          <h2 className="text-14 text-text font-semibold">
+            {t("deleteTitle")}
+          </h2>
           <p className="text-12 text-text-secondary">
-            O workspace fica bloqueado para todos assim que a exclusão é
-            agendada. Durante {DELETION_GRACE_DAYS} dias você pode cancelar na
-            lista de workspaces. Depois disso os dados, membros, chaves,
-            credenciais e arquivos são apagados de forma definitiva; fica só o
-            registro de que o workspace existiu e foi excluído, e a auditoria.
-            Cópias de backup seguem o prazo próprio e não voltam a ficar
-            acessíveis. Exporte antes se precisar dos dados.
+            {t("deleteDescription", { days: DELETION_GRACE_DAYS })}
           </p>
           <ActionForm
             action={requestWorkspaceDeletionAction}
-            submitLabel="Agendar exclusão"
+            submitLabel={t("scheduleDeletion")}
             tone="neutral"
             className="grid gap-3 sm:grid-cols-2"
             testId="request-deletion"
           >
             <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
             <label className={labelClass}>
-              Digite {workspaceSlug} para confirmar
+              {t("confirmSlug", { slug: workspaceSlug })}
               <input
                 name="confirmSlug"
                 required

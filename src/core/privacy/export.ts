@@ -49,6 +49,7 @@ export function requireMfa(assurance: Assurance): void {
     throw new AppError({
       code: "forbidden",
       safeMessage: "Confirme a verificação em duas etapas para continuar.",
+      messageKey: "privacy.errors.mfaRequired",
     });
   }
 }
@@ -70,6 +71,7 @@ export async function requestWorkspaceExport(
     throw new AppError({
       code: "conflict",
       safeMessage: "Já existe uma exportação em andamento neste workspace.",
+      messageKey: "privacy.errors.exportInProgress",
     });
   }
   const created = await tx.workspaceExport.create({
@@ -153,6 +155,7 @@ export async function loadExportFile(
     throw new AppError({
       code: "not_found",
       safeMessage: "Exportação não encontrada ou expirada.",
+      messageKey: "privacy.errors.exportNotFound",
     });
   }
   await recordAudit(tx, ctx, {

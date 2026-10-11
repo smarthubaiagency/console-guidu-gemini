@@ -161,11 +161,27 @@ export function toLocationView(row: Row): LocationView {
 
 function invalid(error: z.ZodError): AppError {
   const issue = error.issues[0];
+  if (!issue) {
+    return new AppError({
+      code: "invalid_input",
+      safeMessage: "Dados da loja inválidos.",
+      messageKey: "locations.errors.invalid",
+    });
+  }
+  const field = issue.path.join(".");
+  // The field path and the validation message are kept as they are (I2).
   return new AppError({
     code: "invalid_input",
-    safeMessage: issue
-      ? `${issue.path.join(".") || "loja"}: ${issue.message}`
-      : "Dados da loja inválidos.",
+    safeMessage: `${field || "loja"}: ${issue.message}`,
+    ...(field
+      ? {
+          messageKey: "locations.errors.invalidField",
+          messageValues: { field, message: issue.message },
+        }
+      : {
+          messageKey: "locations.errors.invalidLocation",
+          messageValues: { message: issue.message },
+        }),
   });
 }
 
@@ -173,6 +189,7 @@ function notFound(): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: "Loja não encontrada.",
+    messageKey: "locations.errors.notFound",
   });
 }
 

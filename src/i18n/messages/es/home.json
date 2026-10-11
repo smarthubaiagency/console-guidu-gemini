@@ -1,0 +1,15 @@
+{
+  "metaTitle": "Tus Workspaces",
+  "accountSecurity": "Seguridad de la Cuenta",
+  "title": "Selecciona tu Workspace",
+  "subtitle": "Elige el entorno de trabajo al que quieres acceder para comenzar.",
+  "scheduledDeletions": "Eliminaciones programadas",
+  "scheduledDeletion": "<name>{workspace}</name> · bloqueado; los datos se borrarán el {date}",
+  "cancelDeletion": "Cancelar eliminación",
+  "emptyTitle": "Ningún workspace asignado",
+  "emptyDescription": "Tu cuenta está activa, pero todavía no te agregaron a ningún workspace de tu organización. Solicita una invitación a tu administrador.",
+  "manageSecurity": "Gestionar la seguridad y el MFA de tu cuenta",
+  "roleLabel": "Rol:",
+  "access": "Acceder",
+  "footer": "{name} Plataforma SaaS Modular • Aislamiento Multiempresa RLS"
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { EMPTY_FORM_STATE } from "@/core/auth/form-state";
@@ -9,6 +10,7 @@ import { Field, SubmitButton } from "@/shared/ui/form";
 import { completePasswordReset } from "./actions";
 
 export function ResetPasswordForm() {
+  const t = useTranslations("auth.resetPassword");
   const [state, action, pending] = useActionState(
     completePasswordReset,
     EMPTY_FORM_STATE,
@@ -17,22 +19,22 @@ export function ResetPasswordForm() {
   return (
     <form action={action} className="space-y-4" noValidate>
       <Field
-        label="Nova senha"
+        label={t("password")}
         name="password"
         type="password"
         autoComplete="new-password"
         required
-        hint="Pelo menos 12 caracteres."
+        hint={t("passwordHint")}
       />
       <Field
-        label="Confirme a nova senha"
+        label={t("confirmation")}
         name="confirmation"
         type="password"
         autoComplete="new-password"
         required
       />
       {state.error ? <ErrorNotice>{state.error}</ErrorNotice> : null}
-      <SubmitButton pending={pending}>Salvar nova senha</SubmitButton>
+      <SubmitButton pending={pending}>{t("submit")}</SubmitButton>
     </form>
   );
 }

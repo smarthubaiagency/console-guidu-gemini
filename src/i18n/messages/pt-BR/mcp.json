@@ -1,0 +1,99 @@
+{
+  "metaTitle": "Assistentes conectados (MCP) — Configurações",
+  "breadcrumbSettings": "Configurações",
+  "title": "Assistentes conectados (MCP)",
+  "description": "Conforme ADR 0009: tokens pessoais com hash SHA-256 e expiração obrigatória para conexões de desenvolvedor e assistentes de IA (Cursor, Claude Code, Codex).",
+  "howToConnect": "Como conectar",
+  "serverUrl": "Endereço do servidor MCP (Streamable HTTP): <urlCode>{url}</urlCode>. Use uma chave deste workspace no cabeçalho <code>{header}</code>. As ferramentas disponíveis dependem dos escopos da chave e do seu papel; nenhuma ferramenta altera dados.",
+  "headerKeyPlaceholder": "sua chave",
+  "commandKeyPlaceholder": "SUA_CHAVE",
+  "claudeCode": "Claude Code:",
+  "codex": "Codex (<code>~/.codex/config.toml</code>, com a chave na variável <code>GUIDU_MCP_TOKEN</code>):",
+  "confirmRevoke": "Revogar a chave \"{name}\"? Todas as conexões e assistentes ativos usando esta chave perderão o acesso imediatamente.",
+  "issuedTitle": "Chave de API emitida com sucesso",
+  "issuedNotice": "Copie o token abaixo e armazene-o com segurança. Por motivos de conformidade, ele nunca mais poderá ser visualizado após fechar esta mensagem.",
+  "copied": "Copiada!",
+  "copyKey": "Copiar Chave",
+  "connectionTitle": "Conexão de Assistentes",
+  "connectionDescription": "Conforme ADR 0009: chaves emitidas pela plataforma com expiração obrigatória e hash seguro SHA-256 para assistentes de IA (Cursor, Claude Code, Codex).",
+  "newKey": "Emitir Nova Chave",
+  "nameLabel": "Nome da Chave / Aplicação",
+  "namePlaceholder": "Ex: Conector Cursor / Claude Code",
+  "scopesLabel": "Escopos de Acesso Permitidos (catálogo §17.3)",
+  "write": "Escrita",
+  "viewerReadOnly": "Apenas leitura para visualizador (sem permissão de escrita)",
+  "writeWarning": "Atenção: este escopo permite ao assistente propor alterações que exigirão aprovação humana na plataforma.",
+  "expiryLabel": "Período de Validade (Expiração Obrigatória)",
+  "days": "{days} dias",
+  "daysRecommended": "{days} dias (Recomendado)",
+  "daysOneYear": "{days} dias (1 ano)",
+  "cancel": "Cancelar",
+  "issuing": "Emitindo...",
+  "issue": "Emitir Chave",
+  "keysTitle": "Chaves de API Emitidas ({count})",
+  "keysNotice": "Identificação por prefixo e auditoria de uso",
+  "empty": "Nenhuma chave emitida para este workspace. Crie uma chave para conectar assistentes MCP (Cursor, Claude Code, etc.).",
+  "colName": "Nome",
+  "colPrefix": "Prefixo",
+  "colScopes": "Escopos",
+  "colExpires": "Expira em",
+  "colLastUsed": "Último uso",
+  "colStatus": "Status",
+  "colActions": "Ações",
+  "neverUsed": "Nunca usada",
+  "statusActive": "Ativa",
+  "statusRevoked": "Revogada",
+  "revokeTitle": "Revogar chave",
+  "issued": "Chave ''{name}'' emitida com sucesso. Guarde o segredo exibido abaixo.",
+  "revoked": "Chave de API revogada com sucesso.",
+  "errors": {
+    "invalidCreate": "Dados inválidos para emissão da chave de API.",
+    "invalidKeyId": "Identificador de chave inválido."
+  },
+  "scopes": {
+    "workspace_read": {
+      "label": "Visão Geral do Workspace (workspace:read)",
+      "desc": "Acesso de leitura a informações básicas e visão geral do workspace."
+    },
+    "modules_read": {
+      "label": "Estado dos Módulos (modules:read)",
+      "desc": "Consulta aos módulos habilitados e seus respectivos status operacionais."
+    },
+    "usage_read": {
+      "label": "Consumo e Cotas (usage:read)",
+      "desc": "Visualização do sumário de consumo, sem acesso a segredos ou conteúdo restrito."
+    },
+    "executions_read": {
+      "label": "Execuções e Jobs (executions:read)",
+      "desc": "Listagem e status de tarefas e execuções no workspace."
+    },
+    "members_read": {
+      "label": "Lista de Membros (members:read)",
+      "desc": "Consulta aos membros e vínculos associados ao workspace."
+    },
+    "proposals_write": {
+      "label": "Escrita de Propostas (proposals:write)",
+      "desc": "Permite ao assistente criar propostas operacionais sujeitas à aprovação humana."
+    },
+    "crm_read": {
+      "label": "Contatos do CRM (crm:read)",
+      "desc": "Leitura dos contatos do módulo CRM, quando o módulo está habilitado."
+    },
+    "crm_write": {
+      "label": "Escrita de contatos do CRM (crm:write)",
+      "desc": "Criar e editar contatos pela API REST. No MCP, a escrita passa por proposta."
+    },
+    "portfolio_read": {
+      "label": "Catálogo do Portfólio (portfolio:read)",
+      "desc": "Busca e consulta dos itens no formato UCP (search_catalog, lookup_catalog, get_product). Só itens ativos, públicos e com preço."
+    },
+    "portfolio_agent": {
+      "label": "Portfólio para o agente de atendimento (portfolio:agent)",
+      "desc": "Visão do agente: inclui itens sob consulta e as regras da IA (palavras-chave, o que nunca dizer, segurança)."
+    },
+    "portfolio_write": {
+      "label": "Escrita no Portfólio (portfolio:write)",
+      "desc": "Criar e editar itens e variantes pela API REST. No MCP, a escrita passa por proposta."
+    }
+  }
+}

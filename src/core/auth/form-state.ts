@@ -11,7 +11,8 @@ export const EMPTY_FORM_STATE: AuthFormState = {};
 /**
  * Messages shown to visitors. They are deliberately vague about whether an
  * e-mail exists or which half of the credentials failed (specification
- * section 15: never reveal another account's existence).
+ * section 15: never reveal another account's existence). Portuguese source;
+ * each one has a key under `auth.errors` / `auth.messages` (I2).
  */
 export const AUTH_MESSAGES = {
   invalidCredentials: "E-mail ou senha inválidos.",
@@ -24,4 +25,5 @@ export const AUTH_MESSAGES = {
     "O link de recuperação é inválido ou expirou. Peça um novo.",
   invalidMfaCode: "Código inválido ou expirado.",
   weakPassword: "Use uma senha com pelo menos 12 caracteres.",
+  passwordMismatch: "As senhas não coincidem.",
 } as const;

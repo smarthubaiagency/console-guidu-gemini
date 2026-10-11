@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2, Layers, ArrowRight, ShieldCheck } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { requireLegalAcceptance } from "@/core/legal/gate";
 import { prisma } from "@/lib/prisma/client";
@@ -15,7 +15,10 @@ import { listScheduledDeletions } from "@/core/privacy/deletion";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
-export const metadata: Metadata = { title: "Seus Workspaces" };
+export async function generateMetadata() {
+  const t = await getTranslations("home");
+  return { title: t("metaTitle") };
+}
 
 /**
  * Landing router for an authenticated identity at `/app`.
@@ -44,13 +47,17 @@ export default async function AppPage() {
   if (workspaces.length === 1 && singleWorkspace && scheduled.length === 0) {
     redirect(`/app/${singleWorkspace.workspaceSlug}`);
   }
+  const t = await getTranslations("home");
+  const format = await getFormatter();
 
   return (
     <div className="bg-surface-raised flex min-h-screen flex-col justify-between">
       <header className="border-border bg-surface-card flex items-center justify-between border-b px-6 py-4">
         <div className="flex items-center gap-3">
           <BrandMark name={brand.name} logoUrl={brand.logoUrl} size="md" />
-          <span className="text-text font-bold tracking-tight">{brand.name}</span>
+          <span className="text-text font-bold tracking-tight">
+            {brand.name}
+          </span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -65,7 +72,7 @@ export default async function AppPage() {
             className="text-12 text-text-subtle hover:text-text border-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5"
           >
             <ShieldCheck className="text-success-solid h-3.5 w-3.5" />
-            <span>Segurança da Conta</span>
+            <span>{t("accountSecurity")}</span>
           </Link>
           <SignOutForm />
         </div>
@@ -74,11 +81,9 @@ export default async function AppPage() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
         <div className="mb-8 text-center">
           <h1 className="text-24 text-text font-bold tracking-tight">
-            Selecione seu Workspace
+            {t("title")}
           </h1>
-          <p className="text-14 text-text-secondary mt-1">
-            Escolha o ambiente de trabalho que deseja acessar para iniciar.
-          </p>
+          <p className="text-14 text-text-secondary mt-1">{t("subtitle")}</p>
         </div>
 
         {scheduled.length > 0 ? (
@@ -87,7 +92,7 @@ export default async function AppPage() {
             data-testid="scheduled-deletions"
           >
             <h2 className="text-14 text-warning-text font-semibold">
-              Exclusões agendadas
+              {t("scheduledDeletions")}
             </h2>
             <ul className="space-y-3">
               {scheduled.map((d) => (
@@ -96,15 +101,22 @@ export default async function AppPage() {
                   className="text-12 text-warning-text flex flex-wrap items-center justify-between gap-3"
                 >
                   <span>
-                    <span className="font-semibold">{d.workspaceName}</span> ·
-                    bloqueado; os dados serão apagados em{" "}
-                    {d.purgeAfter.toLocaleDateString("pt-BR", {
-                      timeZone: "America/Sao_Paulo",
+                    {t.rich("scheduledDeletion", {
+                      workspace: d.workspaceName,
+                      date: format.dateTime(d.purgeAfter, {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        timeZone: "America/Sao_Paulo",
+                      }),
+                      name: (chunks) => (
+                        <span className="font-semibold">{chunks}</span>
+                      ),
                     })}
                   </span>
                   <ActionForm
                     action={cancelWorkspaceDeletionAction}
-                    submitLabel="Cancelar exclusão"
+                    submitLabel={t("cancelDeletion")}
                     tone="neutral"
                     testId={`cancel-deletion-${d.workspaceSlug}`}
                   >
@@ -126,19 +138,17 @@ export default async function AppPage() {
               <Layers className="h-6 w-6" />
             </div>
             <h2 className="text-16 text-text mt-4 font-semibold">
-              Nenhum workspace atribuído
+              {t("emptyTitle")}
             </h2>
             <p className="text-12 text-text-secondary mx-auto mt-2 max-w-sm leading-relaxed">
-              Sua conta está ativa, mas você ainda não foi adicionado a nenhum
-              workspace da sua organização. Solicite um convite ao seu
-              administrador.
+              {t("emptyDescription")}
             </p>
             <div className="mt-6">
               <Link
                 href="/app/account/security"
                 className="text-12 text-text hover:text-text-subtle font-semibold underline"
               >
-                Gerenciar segurança e MFA da sua conta
+                {t("manageSecurity")}
               </Link>
             </div>
           </div>
@@ -159,7 +169,7 @@ export default async function AppPage() {
                       {ws.workspaceName}
                     </h3>
                     <p className="text-12 text-text-secondary">
-                      {ws.organizationName} • Papel:{" "}
+                      {ws.organizationName} • {t("roleLabel")}{" "}
                       <span className="text-text-subtle font-medium capitalize">
                         {ws.workspaceRole}
                       </span>
@@ -168,7 +178,7 @@ export default async function AppPage() {
                 </div>
 
                 <div className="text-12 text-text-secondary group-hover:text-text flex items-center gap-1 font-semibold transition">
-                  <span>Acessar</span>
+                  <span>{t("access")}</span>
                   <ArrowRight className="h-4 w-4" />
                 </div>
               </Link>
@@ -178,7 +188,7 @@ export default async function AppPage() {
       </main>
 
       <footer className="border-border bg-surface-card text-12 text-text-tertiary border-t py-4 text-center">
-        {brand.name} Plataforma SaaS Modular • Isolamento Multiempresa RLS
+        {t("footer", { name: brand.name })}
       </footer>
     </div>
   );

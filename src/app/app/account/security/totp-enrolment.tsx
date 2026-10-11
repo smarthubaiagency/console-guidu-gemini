@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState, useState, useTransition } from "react";
 
 import { ErrorNotice, SuccessNotice } from "@/shared/ui/auth-shell";
@@ -9,6 +10,7 @@ import { confirmTotpEnrolment, startTotpEnrolment } from "./actions";
 import { EMPTY_ENROLMENT, type EnrolmentState } from "./enrolment-state";
 
 export function TotpEnrolment() {
+  const t = useTranslations("account.security");
   const [started, setStarted] = useState<EnrolmentState | null>(null);
   const [starting, startEnrolment] = useTransition();
   const [state, action, pending] = useActionState(
@@ -36,7 +38,7 @@ export function TotpEnrolment() {
           }
           className="bg-primary text-14 text-on-primary rounded-md px-3 py-2 font-medium disabled:opacity-60"
         >
-          Ativar verificação em duas etapas
+          {t("start")}
         </button>
         {error ? <ErrorNotice>{error}</ErrorNotice> : null}
       </div>
@@ -47,10 +49,8 @@ export function TotpEnrolment() {
     <form action={action} className="space-y-4" noValidate>
       <input type="hidden" name="factorId" value={factorId} />
       <div className="border-border-strong text-14 rounded-md border p-3">
-        <p className="font-medium">Chave para o aplicativo autenticador</p>
-        <p className="text-text-secondary mt-1">
-          Cadastre esta chave e informe o código gerado.
-        </p>
+        <p className="font-medium">{t("keyTitle")}</p>
+        <p className="text-text-secondary mt-1">{t("keyHint")}</p>
         <code
           data-testid="totp-secret"
           className="text-12 mt-2 block font-mono break-all"
@@ -59,7 +59,7 @@ export function TotpEnrolment() {
         </code>
       </div>
       <Field
-        label="Código de seis dígitos"
+        label={t("code")}
         name="code"
         inputMode="numeric"
         autoComplete="one-time-code"
@@ -67,7 +67,7 @@ export function TotpEnrolment() {
         required
       />
       {error ? <ErrorNotice>{error}</ErrorNotice> : null}
-      <SubmitButton pending={pending}>Confirmar ativação</SubmitButton>
+      <SubmitButton pending={pending}>{t("confirm")}</SubmitButton>
     </form>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { ErrorNotice } from "@/shared/ui/auth-shell";
 import { acceptInvitationAction, type AcceptInvitationState } from "./actions";
 
 export function InviteForm({ rawToken }: Readonly<{ rawToken: string }>) {
+  const t = useTranslations("invite.team.valid");
   const [isPending, startTransition] = useTransition();
   const [state, setState] = useState<AcceptInvitationState | null>(null);
 
@@ -27,9 +29,9 @@ export function InviteForm({ rawToken }: Readonly<{ rawToken: string }>) {
       <button
         type="submit"
         disabled={isPending}
-        className="bg-primary text-on-primary hover:bg-primary-hover focus:outline-focus-ring flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-14 font-medium transition disabled:opacity-50"
+        className="bg-primary text-on-primary hover:bg-primary-hover focus:outline-focus-ring text-14 flex w-full items-center justify-center rounded-lg px-4 py-2.5 font-medium transition disabled:opacity-50"
       >
-        {isPending ? "Aceitando convite..." : "Aceitar Convite"}
+        {isPending ? t("accepting") : t("accept")}
       </button>
     </form>
   );

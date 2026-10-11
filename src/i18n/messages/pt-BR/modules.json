@@ -1,0 +1,64 @@
+{
+  "metaTitle": "Módulos do Workspace",
+  "settingsMetaTitle": "Configurações do Módulo",
+  "breadcrumbSettings": "Configurações",
+  "breadcrumbModules": "Módulos",
+  "title": "Habilitação e Estado dos Módulos",
+  "description": "Módulos registrados na plataforma, seu estado neste workspace e o acesso às configurações.",
+  "manageHint": "Somente proprietários e administradores do workspace habilitam ou desabilitam módulos.",
+  "configure": "Configurar {name}",
+  "states": {
+    "comingSoon": "Em breve",
+    "maintenance": "Manutenção",
+    "notEnabled": "Desabilitado",
+    "notContracted": "Não contratado",
+    "suspended": "Só leitura",
+    "beta": "Beta",
+    "active": "Ativo",
+    "unavailable": "Indisponível"
+  },
+  "enable": "Habilitar",
+  "disable": "Desabilitar",
+  "enableModule": "Habilitar {name}",
+  "disableModule": "Desabilitar {name}",
+  "reference": "(ref. {id})",
+  "availabilityOf": "Disponibilidade de {name}",
+  "availability": {
+    "enabled": "Disponível",
+    "maintenance": "Manutenção",
+    "disabled": "Desativado para clientes"
+  },
+  "apply": "Aplicar",
+  "enabled": "Módulo habilitado.",
+  "disabled": "Módulo desabilitado.",
+  "availabilityUpdated": "Disponibilidade atualizada.",
+  "notice": {
+    "denied": {
+      "title": "Acesso negado",
+      "text": "Você não tem permissão para acessar esta área."
+    },
+    "maintenance": {
+      "title": "Módulo em manutenção",
+      "text": "As operações deste módulo estão suspensas temporariamente."
+    },
+    "not_enabled": {
+      "title": "Módulo desabilitado",
+      "text": "Este módulo não está habilitado neste workspace."
+    },
+    "not_contracted": {
+      "title": "Módulo não contratado",
+      "text": "O plano da sua empresa não inclui este módulo. Fale com quem cuida do seu plano."
+    },
+    "suspended": {
+      "title": "Assinatura suspensa",
+      "text": "Este módulo está disponível só para consulta enquanto a assinatura estiver suspensa."
+    },
+    "unavailable": {
+      "title": "Módulo Indisponível",
+      "text": "Este módulo não está disponível nesta etapa da plataforma."
+    }
+  },
+  "errors": {
+    "invalidInput": "Dados inválidos."
+  }
+}

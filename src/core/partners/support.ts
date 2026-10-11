@@ -281,6 +281,7 @@ export async function decideSupportGrant(
     throw new AppError({
       code: "conflict",
       safeMessage: "Esse pedido já foi decidido.",
+      messageKey: "support.errors.alreadyDecided",
     });
   }
 
@@ -304,6 +305,7 @@ export async function decideSupportGrant(
       throw new AppError({
         code: "conflict",
         safeMessage: "Essa pessoa já é membro deste workspace.",
+        messageKey: "support.errors.alreadyMember",
       });
     }
     const workspace = await tx.workspace.findUnique({

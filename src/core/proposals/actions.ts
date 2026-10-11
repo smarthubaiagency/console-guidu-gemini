@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
@@ -12,7 +14,6 @@ import {
   type RequestContext,
   withContext,
 } from "@/lib/prisma/with-context";
-import { toSafeError } from "@/shared/errors";
 
 import { approveProposal, rejectProposal } from "./service";
 
@@ -50,15 +51,6 @@ async function decide(
   revalidatePath(`/app/${workspaceSlug}/proposals`);
 }
 
-function failure(err: unknown): State {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
-}
-
 export async function approveProposalAction(
   _prev: State,
   formData: FormData,
@@ -71,12 +63,10 @@ export async function approveProposalAction(
     await decide(formData, (tx, context, id, mfaVerified) =>
       approveProposal(tx, context, id, { payloadHash }, { mfaVerified }),
     );
-    return {
-      success: true,
-      message: "Proposta aprovada. A execução entrou na fila.",
-    };
+    const t = await getTranslations("proposals");
+    return { success: true, message: t("actions.approved") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -88,8 +78,9 @@ export async function rejectProposalAction(
     await decide(formData, (tx, context, id) =>
       rejectProposal(tx, context, id),
     );
-    return { success: true, message: "Proposta rejeitada." };
+    const t = await getTranslations("proposals");
+    return { success: true, message: t("actions.rejected") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }

@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma/client";
 import { requireUser } from "@/core/auth/identity";
 import { acceptInvitation } from "@/core/organizations/invitations";
-import { type AppErrorCode, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import type { AppErrorCode } from "@/shared/errors";
 
 export type AcceptInvitationState = {
   error?: string;
@@ -28,8 +29,7 @@ export async function acceptInvitationAction(
       targetPath = `/app/${result.workspaceSlug}`;
     }
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 
   redirect(targetPath);

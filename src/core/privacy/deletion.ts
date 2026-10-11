@@ -34,6 +34,8 @@ export async function requestWorkspaceDeletion(
     throw new AppError({
       code: "invalid_input",
       safeMessage: `Digite "${workspace.slug}" para confirmar a exclusão.`,
+      messageKey: "privacy.errors.confirmSlug",
+      messageValues: { slug: workspace.slug },
     });
   }
   const rows = await tx.$queryRaw<{ id: string }[]>`
@@ -101,6 +103,7 @@ export async function cancelWorkspaceDeletion(
     throw new AppError({
       code: "not_found",
       safeMessage: "Exclusão não encontrada ou já concluída.",
+      messageKey: "privacy.errors.deletionNotFound",
     });
   }
   await recordAudit(

@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Users } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
@@ -17,9 +17,10 @@ import {
   type TeamCapabilities,
 } from "./team-client";
 
-export const metadata: Metadata = {
-  title: "Gestão de Equipe e Membros",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("team");
+  return { title: t("metaTitle") };
+}
 
 interface TeamPageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -104,6 +105,8 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
     };
   });
 
+  const t = await getTranslations("team");
+  const format = await getFormatter();
   const profileMap = new Map(profiles.map((p) => [p.id, p]));
 
   const currentUserMember = members.find((m) => m.userId === identity.userId);
@@ -115,12 +118,12 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
       userId: m.userId,
       name:
         prof?.fullName ??
-        (m.userId === identity.userId ? (identity.email ?? "Você") : "Membro"),
+        (m.userId === identity.userId
+          ? (identity.email ?? t("you"))
+          : t("memberFallback")),
       role: m.role,
       status: m.status,
-      joinedAt: new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(
-        new Date(m.createdAt),
-      ),
+      joinedAt: format.dateTime(new Date(m.createdAt), { dateStyle: "short" }),
       isCurrentUser: m.userId === identity.userId,
     };
   });
@@ -130,19 +133,19 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
     email: i.email,
     role: i.role,
     status: i.status,
-    expiresAt: new Intl.DateTimeFormat("pt-BR", {
+    expiresAt: format.dateTime(new Date(i.expiresAt), {
       dateStyle: "short",
       timeStyle: "short",
-    }).format(new Date(i.expiresAt)),
+    }),
   }));
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="border-border border-b pb-5">
         <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>Configurações</span>
+          <span>{t("breadcrumbSettings")}</span>
           <span>/</span>
-          <span>Equipe & Membros</span>
+          <span>{t("breadcrumbTeam")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
@@ -150,12 +153,9 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
           </div>
           <div>
             <h1 className="text-20 text-text font-bold tracking-tight">
-              Equipe e Permissões de Acesso
+              {t("title")}
             </h1>
-            <p className="text-12 text-text-secondary">
-              Gerencie colaboradores, atribua papéis administrativos e emita
-              convites seguros.
-            </p>
+            <p className="text-12 text-text-secondary">{t("description")}</p>
           </div>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
         workspaceSlug={workspaceSlug}
         currentUserId={identity.userId}
         currentUserRole={currentUserRole}
-        organizationName={organization?.name ?? "Organização"}
+        organizationName={organization?.name ?? t("organizationFallback")}
         maxSeats={seatLimit}
         members={memberDisplays}
         invitations={invitationDisplays}

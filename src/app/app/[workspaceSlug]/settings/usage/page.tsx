@@ -1,28 +1,33 @@
-import type { Metadata } from "next";
 import { Gauge } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { sectionClass } from "@/components/billing/billing-ui";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { requireUserPage } from "@/core/auth/page-guard";
-import { statusLabel } from "@/core/billing/subscriptions";
 import { loadUsage, type UsageRow } from "@/core/entitlements/usage";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
-export const metadata: Metadata = { title: "Consumo & Limites" };
+export async function generateMetadata() {
+  const t = await getTranslations("usage");
+  return { title: t("metaTitle") };
+}
 
 interface UsagePageProps {
   params: Promise<{ workspaceSlug: string }>;
 }
 
-const SOURCE_LABELS: Record<UsageRow["source"], string> = {
-  plan: "limite do plano",
-  default: "limite padrão",
-  none: "sem limite",
+/** Rows of the platform itself have a translated label (I2). */
+const ROW_LABEL_KEYS: Record<string, string> = {
+  "core.seats": "rows.coreSeats",
 };
 
-function UsageMeter({ row }: { row: UsageRow }) {
+type Translate = Awaited<ReturnType<typeof getTranslations<"usage">>>;
+
+function UsageMeter({ row, t }: { row: UsageRow; t: Translate }) {
+  const labelKey = ROW_LABEL_KEYS[row.key];
+  const label = labelKey ? t(labelKey) : row.label;
   const percent =
     row.used !== null && row.limit
       ? Math.min(100, Math.round((row.used / row.limit) * 100))
@@ -31,10 +36,10 @@ function UsageMeter({ row }: { row: UsageRow }) {
   return (
     <li className="space-y-2 py-3" data-testid={`usage-${row.key}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-14 text-text font-semibold">{row.label}</span>
+        <span className="text-14 text-text font-semibold">{label}</span>
         <span className="text-14 text-text font-bold" data-testid="usage-value">
           {row.used === null
-            ? "Sem dados"
+            ? t("noData")
             : row.limit === null
               ? `${row.used}`
               : `${row.used} / ${row.limit}`}
@@ -45,15 +50,15 @@ function UsageMeter({ row }: { row: UsageRow }) {
           className={`progress-bar ${over ? "text-danger-solid" : "text-primary"}`}
           value={percent}
           max={100}
-          aria-label={row.label}
+          aria-label={label}
         />
       ) : null}
       <div className="text-12 text-text-secondary">
-        {row.scope === "organization" ? "Empresa" : "Este workspace"} ·{" "}
-        {SOURCE_LABELS[row.source]}
-        {over
-          ? " · acima do limite: nada foi apagado, mas novos itens ficam bloqueados"
-          : ""}
+        {row.scope === "organization"
+          ? t("scope.organization")
+          : t("scope.workspace")}{" "}
+        · {t(`source.${row.source}`)}
+        {over ? ` · ${t("overLimit")}` : ""}
       </div>
     </li>
   );
@@ -77,32 +82,35 @@ export default async function UsagePage({ params }: UsagePageProps) {
     loadUsage(tx, context),
   );
   const contract = usage.contract;
+  const t = await getTranslations("usage");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="usage-page">
       <ModulePageHeader
-        trail={["Configurações", "Consumo & Limites"]}
-        title="Consumo, cotas e capacidade"
-        description="Uso medido da empresa e deste workspace frente aos limites do plano."
+        trail={[t("breadcrumbSettings"), t("breadcrumbUsage")]}
+        title={t("title")}
+        description={t("description")}
         icon={<Gauge className="h-5 w-5" />}
       />
 
       <section className={sectionClass} data-testid="usage-plan">
-        <h2 className="text-14 text-text font-semibold">Plano</h2>
+        <h2 className="text-14 text-text font-semibold">{t("plan")}</h2>
         <p className="text-12 text-text-secondary">
           {contract.kind === "legacy"
-            ? "Sem assinatura: módulos e limites seguem como antes (legado)."
-            : `${contract.planName} (versão ${contract.planVersion}) · ${statusLabel(contract.status)}${
-                contract.provisional ? " · valores provisórios" : ""
-              }`}
+            ? t("legacy")
+            : `${t("planSummary", {
+                name: contract.planName,
+                version: contract.planVersion,
+                status: t(`subscriptionStatus.${contract.status}`),
+              })}${contract.provisional ? ` · ${t("provisional")}` : ""}`}
         </p>
       </section>
 
       <section className={sectionClass}>
-        <h2 className="text-14 text-text font-semibold">Limites</h2>
+        <h2 className="text-14 text-text font-semibold">{t("limits")}</h2>
         <ul className="divide-border divide-y">
           {usage.rows.map((row) => (
-            <UsageMeter key={row.key} row={row} />
+            <UsageMeter key={row.key} row={row} t={t} />
           ))}
         </ul>
       </section>

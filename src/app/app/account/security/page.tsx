@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { requireUserPage } from "@/core/auth/page-guard";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -8,7 +9,10 @@ import { SignOutForm } from "@/shared/ui/sign-out-form";
 import { unenrolTotpFactor } from "./actions";
 import { TotpEnrolment } from "./totp-enrolment";
 
-export const metadata: Metadata = { title: "Segurança da conta" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("account");
+  return { title: t("security.metadataTitle") };
+}
 
 export default async function AccountSecurityPage({
   searchParams,
@@ -19,6 +23,7 @@ export default async function AccountSecurityPage({
   // signed-out visitors; the decision is made here.
   const identity = await requireUserPage("/app/account/security");
 
+  const t = await getTranslations("account.security");
   const params = await searchParams;
   const mfaRequired = params.reason === "mfa-required";
 
@@ -31,7 +36,7 @@ export default async function AccountSecurityPage({
     <main className="mx-auto w-full max-w-2xl px-6 py-12">
       <header className="flex items-start justify-between gap-6">
         <div>
-          <h1 className="text-30 font-semibold tracking-tight">Segurança</h1>
+          <h1 className="text-30 font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-text-secondary text-14 mt-2">
             {identity.email ?? identity.userId}
           </p>
@@ -42,17 +47,15 @@ export default async function AccountSecurityPage({
       {mfaRequired ? (
         <div className="mt-6">
           <ErrorNotice testId="mfa-required-state">
-            Esta área exige verificação em duas etapas. Ative um aplicativo
-            autenticador para continuar.
+            {t("mfaRequired")}
           </ErrorNotice>
         </div>
       ) : null}
 
       <section className="mt-10">
-        <h2 className="text-18 font-medium">Verificação em duas etapas</h2>
+        <h2 className="text-18 font-medium">{t("mfaTitle")}</h2>
         <p className="text-text-secondary text-14 mt-2">
-          Aplicativo autenticador (TOTP). Obrigatório para a administração
-          interna da plataforma.
+          {t("mfaDescription")}
         </p>
 
         <div className="mt-6">
@@ -63,13 +66,11 @@ export default async function AccountSecurityPage({
                   key={factor.id}
                   className="border-border-strong text-14 flex items-center justify-between rounded-md border px-3 py-2"
                 >
-                  <span>
-                    {factor.friendly_name ?? "Aplicativo autenticador"}
-                  </span>
+                  <span>{factor.friendly_name ?? t("authenticatorApp")}</span>
                   <form action={unenrolTotpFactor}>
                     <input type="hidden" name="factorId" value={factor.id} />
                     <button type="submit" className="underline">
-                      Remover
+                      {t("remove")}
                     </button>
                   </form>
                 </li>

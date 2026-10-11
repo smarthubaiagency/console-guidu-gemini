@@ -1,0 +1,156 @@
+{
+  "metaTitle": "Proposals",
+  "metaTitleOne": "Proposal",
+  "trail": {
+    "platform": "Platform",
+    "proposals": "Proposals",
+    "proposal": "Proposal"
+  },
+  "status": {
+    "pending": "Awaiting decision",
+    "approved": "Approved, queued",
+    "rejected": "Rejected",
+    "executed": "Executed",
+    "failed": "Not executed",
+    "expired": "Expired"
+  },
+  "errorReasons": {
+    "expired": "the proposal expired before running",
+    "tampered": "the content does not match what was approved",
+    "stale": "the record changed after the proposal",
+    "not_found": "the record no longer exists",
+    "forbidden": "the permission changed",
+    "unavailable": "the module is not available",
+    "quota_exceeded": "the plan limit was reached",
+    "invalid_input": "the data is no longer valid",
+    "unknown_operation": "the operation does not exist in this version"
+  },
+  "operations": {
+    "crm_contacts_create": {
+      "label": "Add contact",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "companyName": "Company",
+        "jobTitle": "Job title",
+        "notes": "Notes"
+      }
+    },
+    "crm_contacts_update": {
+      "label": "Edit contact",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "companyName": "Company",
+        "jobTitle": "Job title",
+        "notes": "Notes"
+      }
+    },
+    "portfolio_items_create": {
+      "label": "Add item to the portfolio",
+      "fields": {
+        "title": "Title",
+        "item_type": "Category",
+        "vertical": "Vertical",
+        "description": "Description",
+        "price_display": "Price display",
+        "status": "Status",
+        "visibility": "Visibility",
+        "categories": "Categories",
+        "tags": "Tags",
+        "url": "Page",
+        "media": "Images",
+        "fulfillment_methods": "Delivery or service",
+        "location_ids": "Stores",
+        "details": "Vertical details",
+        "variants": "Variants",
+        "ai_keywords": "Keywords for the AI",
+        "ai_aliases": "Synonyms",
+        "ai_do_not_say": "The AI must never say",
+        "ai_safety_rules": "Safety rules for the AI",
+        "ai_discovery_enabled": "The AI may suggest"
+      }
+    },
+    "portfolio_items_update": {
+      "label": "Edit portfolio item",
+      "fields": {
+        "title": "Title",
+        "item_type": "Category",
+        "vertical": "Vertical",
+        "description": "Description",
+        "price_display": "Price display",
+        "status": "Status",
+        "visibility": "Visibility",
+        "categories": "Categories",
+        "tags": "Tags",
+        "url": "Page",
+        "media": "Images",
+        "fulfillment_methods": "Delivery or service",
+        "location_ids": "Stores",
+        "details": "Vertical details",
+        "variants": "Variants",
+        "ai_keywords": "Keywords for the AI",
+        "ai_aliases": "Synonyms",
+        "ai_do_not_say": "The AI must never say",
+        "ai_safety_rules": "Safety rules for the AI",
+        "ai_discovery_enabled": "The AI may suggest"
+      }
+    },
+    "portfolio_variants_update": {
+      "label": "Change price or availability",
+      "fields": {
+        "price": "Price",
+        "list_price": "List price",
+        "availability_status": "Availability",
+        "stock_quantity": "Stock"
+      }
+    }
+  },
+  "list": {
+    "description": "Writes requested by assistants connected through the MCP. Nothing happens without a person's approval.",
+    "awaiting": "Awaiting decision ({count})",
+    "noneWaiting": "No proposals waiting.",
+    "history": "History",
+    "noHistory": "No history yet.",
+    "rowMeta": "{status} · requested on {date}"
+  },
+  "detail": {
+    "description": "Requested by an assistant with an API key. Check the content before deciding.",
+    "meta": "· requested on {createdAt}{byMe, select, yes { by one of your keys} other {}} · expires on {expiresAt}",
+    "reason": "Stated reason:",
+    "field": "Field",
+    "current": "Current",
+    "proposed": "Proposed",
+    "hash": "Content fingerprint:",
+    "viewRecord": "View the record",
+    "notExecuted": "Not executed: {reason}.",
+    "runsInBackground": "The run happens in the background; follow it in <link>Runs</link>.",
+    "recordChanged": "The record changed after the proposal; it cannot be approved. Reject it and ask the assistant for a new one.",
+    "mfaNeeded": "Approving requires two-step verification in this session. Turn it on or confirm it in Account security.",
+    "approve": "Approve and run",
+    "reject": "Reject"
+  },
+  "actions": {
+    "approved": "Proposal approved. The run is queued.",
+    "rejected": "Proposal rejected."
+  },
+  "errors": {
+    "notFound": "Proposal not found.",
+    "humanDecides": "Only a person decides on a proposal, through the workspace screen.",
+    "createdByAssistants": "Proposals are created by assistants, with an API key.",
+    "invalidProposal": "Invalid proposal.",
+    "unknownOperation": "Unknown operation: {operation}.",
+    "needsTarget": "This operation needs a targetId.",
+    "noTarget": "This operation does not take a targetId.",
+    "idempotencyReused": "This idempotency key was already used with different content.",
+    "tooManyPending": "Too many proposals are awaiting a decision in this workspace. Wait for the approvals.",
+    "alreadyDecided": "This proposal has already been decided.",
+    "expired": "The proposal expired. Ask the assistant for a new one.",
+    "contentMismatch": "The content is not what was on the screen. Open the proposal again.",
+    "contentTampered": "The proposal content does not match what was recorded.",
+    "unknownOperationVersion": "Unknown operation in this version.",
+    "recordChanged": "The record changed after the proposal. Ask the assistant for a new one."
+  }
+}

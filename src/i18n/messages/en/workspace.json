@@ -1,0 +1,11 @@
+{
+  "metaTitle": "General Settings",
+  "breadcrumbSettings": "Settings",
+  "breadcrumbGeneral": "General",
+  "title": "Workspace Settings",
+  "description": "Workspace identification, organization and operational parameters.",
+  "name": "Workspace Name",
+  "slug": "Routing Slug",
+  "organization": "Contracting Organization",
+  "uuid": "UUID Identifier"
+}

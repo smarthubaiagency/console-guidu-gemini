@@ -1,7 +1,6 @@
-import {
-  statusLabel,
-  type SubscriptionStatus,
-} from "@/core/billing/subscriptions";
+import { getFormatter, getTranslations } from "next-intl/server";
+
+import type { SubscriptionStatus } from "@/core/billing/subscriptions";
 
 /** Visual helpers shared by the billing pages (P5m). */
 
@@ -13,24 +12,34 @@ const TONES: Record<SubscriptionStatus, string> = {
   canceled: "border-border text-text-secondary",
 };
 
-export function SubscriptionBadge({
+const STATUS_KEYS: Record<SubscriptionStatus, string> = {
+  pending: "pending",
+  active: "active",
+  past_due: "pastDue",
+  suspended: "suspended",
+  canceled: "canceled",
+};
+
+export async function SubscriptionBadge({
   status,
 }: Readonly<{ status: SubscriptionStatus }>) {
+  const t = await getTranslations("billing");
   return (
     <span
       className={`text-11 rounded-full border px-2 py-0.5 font-semibold ${TONES[status]}`}
       data-testid="subscription-status"
     >
-      {statusLabel(status)}
+      {t(`status.${STATUS_KEYS[status]}`)}
     </span>
   );
 }
 
 /** Values the Commercial team has not confirmed yet (D-PA-11). */
-export function ProvisionalBadge() {
+export async function ProvisionalBadge() {
+  const t = await getTranslations("billing");
   return (
     <span className="bg-warning-bg text-warning-text border-warning-border text-11 rounded-full border px-2 py-0.5 font-semibold">
-      Provisório
+      {t("provisional")}
     </span>
   );
 }
@@ -38,6 +47,15 @@ export function ProvisionalBadge() {
 /** Calendar dates are stored at midnight UTC. */
 export function formatDate(date: Date | null | undefined): string {
   return date ? date.toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
+}
+
+/** formatDate in the request language. */
+export async function calendarDateFormatter(): Promise<
+  (date: Date | null | undefined) => string
+> {
+  const format = await getFormatter();
+  return (date) =>
+    date ? format.dateTime(date, { dateStyle: "short", timeZone: "UTC" }) : "—";
 }
 
 /** Today in the yyyy-mm-dd form of date inputs. */

@@ -1,0 +1,70 @@
+{
+  "team": {
+    "metadataTitle": "Convite de equipe",
+    "goToDashboard": "Ir para o painel",
+    "roles": {
+      "owner": "Proprietário",
+      "admin": "Administrador",
+      "editor": "Editor",
+      "viewer": "Visualizador",
+      "member": "Membro"
+    },
+    "notFound": {
+      "title": "Convite inválido",
+      "description": "O link de convite acessado é inválido ou não foi encontrado.",
+      "notice": "Convite não encontrado ou inválido."
+    },
+    "expired": {
+      "title": "Convite expirado",
+      "description": "Este convite expirou e não pode mais ser utilizado.",
+      "notice": "Este convite expirou. Peça ao administrador para enviar um novo convite."
+    },
+    "revoked": {
+      "title": "Convite revogado",
+      "description": "Este convite foi cancelado por um administrador.",
+      "notice": "Este convite foi revogado por um administrador."
+    },
+    "accepted": {
+      "title": "Convite já aceito",
+      "description": "Este convite já foi utilizado anteriormente.",
+      "notice": "Você já aceitou este convite."
+    },
+    "mismatch": {
+      "title": "Destinatário diferente",
+      "description": "Você está conectado com uma conta diferente daquela para a qual o convite foi enviado.",
+      "notice": "Este convite foi enviado para outro e-mail.",
+      "hint": "Você está conectado como <strong>{email}</strong>. Para aceitar este convite, saia desta conta e entre com o e-mail convidado."
+    },
+    "unconfirmed": {
+      "title": "E-mail não confirmado",
+      "description": "Confirmação de e-mail obrigatória.",
+      "notice": "O seu e-mail precisa estar confirmado para aceitar o convite."
+    },
+    "valid": {
+      "title": "Convite de equipe",
+      "description": "Você foi convidado para participar de uma organização.",
+      "signedInAs": "Conectado como <strong>{email}</strong>",
+      "organization": "Organização",
+      "workspace": "Workspace",
+      "role": "Papel atribuído",
+      "accept": "Aceitar Convite",
+      "accepting": "Aceitando convite..."
+    }
+  },
+  "partner": {
+    "metadataTitle": "Convite de parceiro",
+    "unavailableTitle": "Convite indisponível",
+    "status": {
+      "notFound": "Convite não encontrado ou inválido.",
+      "accepted": "Este convite já foi aceito.",
+      "revoked": "Este convite foi revogado.",
+      "expired": "Este convite expirou. Peça um novo convite.",
+      "recipientMismatch": "Este convite foi enviado para outro e-mail. Entre com a conta convidada.",
+      "emailUnconfirmed": "O seu e-mail precisa estar confirmado para aceitar o convite."
+    },
+    "title": "Entrar em {partner}",
+    "description": "Você foi convidado como {role}. Depois de aceitar, use o console do parceiro em /admin no domínio do parceiro.",
+    "back": "Voltar",
+    "accept": "Aceitar convite"
+  }
+}

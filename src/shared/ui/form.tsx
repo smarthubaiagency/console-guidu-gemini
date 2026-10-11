@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * Labelled input. The hint is wired with `aria-describedby` instead of living
@@ -44,13 +45,14 @@ export function SubmitButton({
   children,
   pending = false,
 }: Readonly<{ children: ReactNode; pending?: boolean }>) {
+  const t = useTranslations("ui");
   return (
     <button
       type="submit"
       disabled={pending}
       className="bg-primary text-14 text-on-primary w-full rounded-md px-3 py-2 font-medium disabled:opacity-60"
     >
-      {pending ? "Enviando…" : children}
+      {pending ? t("submitPending") : children}
     </button>
   );
 }

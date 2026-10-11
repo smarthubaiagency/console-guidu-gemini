@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { AUTH_MESSAGES } from "@/core/auth/form-state";
 import { requireUser } from "@/core/auth/identity";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { AppError, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError } from "@/shared/errors";
 
 import type { EnrolmentState } from "./enrolment-state";
 
@@ -24,13 +26,13 @@ export async function startTotpEnrolment(): Promise<EnrolmentState> {
   });
 
   if (error || !data) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "unavailable",
         safeMessage: AUTH_MESSAGES.unavailable,
+        messageKey: "auth.errors.unavailable",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   return {
@@ -39,6 +41,15 @@ export async function startTotpEnrolment(): Promise<EnrolmentState> {
     secret: data.totp.secret,
   };
 }
+
+const invalidMfaCode = () =>
+  actionFailure(
+    new AppError({
+      code: "invalid_input",
+      safeMessage: AUTH_MESSAGES.invalidMfaCode,
+      messageKey: "auth.errors.invalidMfaCode",
+    }),
+  );
 
 const ConfirmInput = z.object({
   factorId: z.string().min(1),
@@ -61,13 +72,7 @@ export async function confirmTotpEnrolment(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
-      new AppError({
-        code: "invalid_input",
-        safeMessage: AUTH_MESSAGES.invalidMfaCode,
-      }),
-    );
-    return { ...previous, error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return { ...previous, ...(await invalidMfaCode()) };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -76,13 +81,7 @@ export async function confirmTotpEnrolment(
     factorId: parsed.data.factorId,
   });
   if (challenge.error || !challenge.data) {
-    const safe = toSafeError(
-      new AppError({
-        code: "invalid_input",
-        safeMessage: AUTH_MESSAGES.invalidMfaCode,
-      }),
-    );
-    return { ...previous, error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return { ...previous, ...(await invalidMfaCode()) };
   }
 
   const { error } = await supabase.auth.mfa.verify({
@@ -92,17 +91,13 @@ export async function confirmTotpEnrolment(
   });
 
   if (error) {
-    const safe = toSafeError(
-      new AppError({
-        code: "invalid_input",
-        safeMessage: AUTH_MESSAGES.invalidMfaCode,
-      }),
-    );
-    return { ...previous, error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return { ...previous, ...(await invalidMfaCode()) };
   }
 
   revalidatePath("/app/account/security");
-  return { message: "Verificação em duas etapas ativada." };
+  return {
+    message: (await getTranslations("account"))("security.enabled"),
+  };
 }
 
 const UnenrolInput = z.object({ factorId: z.string().min(1) });

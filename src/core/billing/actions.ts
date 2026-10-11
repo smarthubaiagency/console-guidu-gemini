@@ -3,9 +3,11 @@
 import { randomUUID } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import { partnerActor, platformActor } from "@/core/partners/actors";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
@@ -482,6 +484,7 @@ export async function simulateDemoCheckoutAction(
       throw new AppError({
         code: "not_found",
         safeMessage: "Checkout indisponível.",
+        messageKey: "billing.errors.checkoutUnavailable",
       });
     const workspaceSlug = z
       .string()
@@ -500,11 +503,12 @@ export async function simulateDemoCheckoutAction(
         uuid.parse(text(formData, "partnerPlanId")),
       ),
     );
+    const t = await getTranslations("billing.checkout");
     return {
       success: true,
-      message: `Demonstração concluída para o plano ${result.planName}: nenhuma cobrança foi feita.`,
+      message: t("done", { plan: result.planName }),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
