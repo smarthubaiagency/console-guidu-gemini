@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   setPlatformModuleAvailabilityAction,
@@ -11,11 +12,14 @@ import {
 const INITIAL: ModuleActionState = {};
 
 function Feedback({ state }: { state: ModuleActionState }) {
+  const t = useTranslations("modules");
   if (state.error) {
     return (
       <p role="alert" className="text-11 text-danger-text">
         {state.error}
-        {state.requestId ? ` (ref. ${state.requestId.slice(0, 8)})` : ""}
+        {state.requestId
+          ? ` ${t("reference", { id: state.requestId.slice(0, 8) })}`
+          : ""}
       </p>
     );
   }
@@ -41,6 +45,8 @@ export function WorkspaceModuleToggle({
   moduleName: string;
   enabled: boolean;
 }) {
+  const t = useTranslations("modules");
+  const tCommon = useTranslations("common");
   const [state, action, pending] = useActionState(
     setWorkspaceModuleStatusAction,
     INITIAL,
@@ -57,14 +63,16 @@ export function WorkspaceModuleToggle({
       <button
         type="submit"
         disabled={pending}
-        aria-label={`${enabled ? "Desabilitar" : "Habilitar"} ${moduleName}`}
+        aria-label={t(enabled ? "disableModule" : "enableModule", {
+          name: moduleName,
+        })}
         className={`text-12 rounded-lg border px-3 py-1.5 font-semibold transition disabled:opacity-60 ${
           enabled
             ? "border-border text-text-subtle hover:bg-surface-hover"
             : "bg-primary text-on-primary border-primary"
         }`}
       >
-        {pending ? "Salvando..." : enabled ? "Desabilitar" : "Habilitar"}
+        {pending ? tCommon("saving") : enabled ? t("disable") : t("enable")}
       </button>
       <Feedback state={state} />
     </form>
@@ -81,6 +89,8 @@ export function PlatformAvailabilityForm({
   moduleName: string;
   availability: "enabled" | "maintenance" | "disabled";
 }) {
+  const t = useTranslations("modules");
+  const tCommon = useTranslations("common");
   const [state, action, pending] = useActionState(
     setPlatformModuleAvailabilityAction,
     INITIAL,
@@ -90,7 +100,7 @@ export function PlatformAvailabilityForm({
       <input type="hidden" name="moduleKey" value={moduleKey} />
       <div className="flex items-center gap-2">
         <label className="sr-only" htmlFor={`availability-${moduleKey}`}>
-          Disponibilidade de {moduleName}
+          {t("availabilityOf", { name: moduleName })}
         </label>
         <select
           id={`availability-${moduleKey}`}
@@ -98,16 +108,16 @@ export function PlatformAvailabilityForm({
           defaultValue={availability}
           className="border-border bg-surface-card text-12 text-text rounded-lg border px-2 py-1.5"
         >
-          <option value="enabled">Disponível</option>
-          <option value="maintenance">Manutenção</option>
-          <option value="disabled">Desativado para clientes</option>
+          <option value="enabled">{t("availability.enabled")}</option>
+          <option value="maintenance">{t("availability.maintenance")}</option>
+          <option value="disabled">{t("availability.disabled")}</option>
         </select>
         <button
           type="submit"
           disabled={pending}
           className="bg-primary text-on-primary text-12 rounded-lg px-3 py-1.5 font-semibold disabled:opacity-60"
         >
-          {pending ? "Salvando..." : "Aplicar"}
+          {pending ? tCommon("saving") : t("apply")}
         </button>
       </div>
       <Feedback state={state} />

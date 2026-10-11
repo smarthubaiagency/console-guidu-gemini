@@ -1,0 +1,17 @@
+{
+  "security": {
+    "metadataTitle": "Segurança da conta",
+    "title": "Segurança",
+    "mfaRequired": "Esta área exige verificação em duas etapas. Ative um aplicativo autenticador para continuar.",
+    "mfaTitle": "Verificação em duas etapas",
+    "mfaDescription": "Aplicativo autenticador (TOTP). Obrigatório para a administração interna da plataforma.",
+    "authenticatorApp": "Aplicativo autenticador",
+    "remove": "Remover",
+    "start": "Ativar verificação em duas etapas",
+    "keyTitle": "Chave para o aplicativo autenticador",
+    "keyHint": "Cadastre esta chave e informe o código gerado.",
+    "code": "Código de seis dígitos",
+    "confirm": "Confirmar ativação",
+    "enabled": "Verificação em duas etapas ativada."
+  }
+}

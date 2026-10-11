@@ -1,0 +1,60 @@
+{
+  "metaTitle": "Stores",
+  "detailMetaTitle": "Store",
+  "breadcrumbSettings": "Settings",
+  "title": "Stores",
+  "description": "The business's stores and service addresses, with opening hours. The Portfolio, Google and the agent use this data.",
+  "listTitle": "Stores ({count})",
+  "inactiveSuffix": "deactivated",
+  "empty": "No stores yet.",
+  "newLocation": "New store",
+  "create": "Add store",
+  "inactiveDescription": "Store deactivated: it does not appear in the Portfolio or to the agent.",
+  "detailDescription": "Store data in the UCP protocol format.",
+  "save": "Save store",
+  "deactivate": "Deactivate store",
+  "reactivate": "Reactivate store",
+  "created": "Store added.",
+  "reactivated": "Store reactivated.",
+  "deactivated": "Store deactivated.",
+  "saved": "Store saved.",
+  "fields": {
+    "name": "Store name",
+    "streetAddress": "Address",
+    "extendedAddress": "Address line 2",
+    "locality": "City",
+    "region": "State",
+    "postalCode": "Postal code",
+    "country": "Country (code)",
+    "phone": "Phone (+55…)",
+    "timezone": "Time zone",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "hours": "Opening hours (leave closed days empty)",
+    "opens": "{day} opens",
+    "closes": "{day} closes",
+    "amenities": "Amenities"
+  },
+  "days": {
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday"
+  },
+  "amenities": {
+    "parking": "Parking",
+    "wiFi": "Wi-Fi",
+    "inStorePickup": "In-store pickup",
+    "curbsidePickup": "Curbside pickup",
+    "accessibility": "Accessibility"
+  },
+  "errors": {
+    "invalid": "Invalid store data.",
+    "invalidField": "{field}: {message}",
+    "invalidLocation": "store: {message}",
+    "notFound": "Store not found."
+  }
+}

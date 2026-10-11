@@ -1,0 +1,36 @@
+{
+  "kinds": {
+    "terms": "Términos de uso",
+    "privacy": "Política de privacidad"
+  },
+  "document": {
+    "metadataTitle": "Documentos legales",
+    "meta": "{kind} · versión {version} · {date}"
+  },
+  "accept": {
+    "metadataTitle": "Aceptación de los términos",
+    "title": "Antes de continuar",
+    "description": "Para usar {appName}, acepta los documentos a continuación.",
+    "meta": "{kind} · versión {version} · <link>abrir en una pestaña nueva</link>",
+    "agree": "Leí y acepto los documentos anteriores.",
+    "submit": "Aceptar y continuar",
+    "submitting": "Registrando..."
+  },
+  "editor": {
+    "version": "{kind} · versión {version}",
+    "requiresAcceptance": "requiere aceptación",
+    "noNewAcceptance": "sin nueva aceptación",
+    "empty": "Ningún documento publicado. Sin documentos, nadie necesita aceptar términos para entrar.",
+    "publishTitle": "Publicar nueva versión",
+    "publish": "Publicar",
+    "document": "Documento",
+    "title": "Título",
+    "body": "Texto",
+    "requiresAcceptanceLabel": "Cambio relevante: exigir nueva aceptación (la primera versión siempre la exige)"
+  },
+  "published": "Versión {version} publicada.",
+  "errors": {
+    "notFound": "Recurso no encontrado.",
+    "mustAgree": "Marca la casilla para aceptar los documentos."
+  }
+}

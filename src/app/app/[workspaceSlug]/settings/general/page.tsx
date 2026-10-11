@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { Settings } from "lucide-react";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
@@ -15,7 +14,10 @@ import { activeLanguages } from "@/core/i18n/store";
 import { workspaceRoleGrants } from "@/core/permissions/guard";
 import type { WorkspaceRole } from "@/core/permissions/roles";
 
-export const metadata: Metadata = { title: "Configurações Gerais" };
+export async function generateMetadata() {
+  const t = await getTranslations("workspace");
+  return { title: t("metaTitle") };
+}
 
 interface GeneralPageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -57,6 +59,7 @@ export default async function GeneralSettingsPage({
     },
   );
   const t = await getTranslations("preferences");
+  const tw = await getTranslations("workspace");
   const languages = await activeLanguages();
   const canEdit = role
     ? workspaceRoleGrants(role as WorkspaceRole, "workspace.settings.update")
@@ -66,9 +69,9 @@ export default async function GeneralSettingsPage({
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="border-border border-b pb-5">
         <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>Configurações</span>
+          <span>{tw("breadcrumbSettings")}</span>
           <span>/</span>
-          <span>Geral</span>
+          <span>{tw("breadcrumbGeneral")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
@@ -76,11 +79,9 @@ export default async function GeneralSettingsPage({
           </div>
           <div>
             <h1 className="text-20 text-text font-bold tracking-tight">
-              Configurações do Workspace
+              {tw("title")}
             </h1>
-            <p className="text-12 text-text-secondary">
-              Identificação do ambiente, organização e parâmetros operacionais.
-            </p>
+            <p className="text-12 text-text-secondary">{tw("description")}</p>
           </div>
         </div>
       </div>
@@ -88,7 +89,7 @@ export default async function GeneralSettingsPage({
       <div className="border-card-border bg-surface-card space-y-4 rounded-xl border p-6 shadow-xs">
         <div>
           <label className="text-12 text-text-secondary block font-medium">
-            Nome do Workspace
+            {tw("name")}
           </label>
           <div className="text-14 text-text mt-1 font-semibold">
             {workspace?.name}
@@ -97,7 +98,7 @@ export default async function GeneralSettingsPage({
 
         <div>
           <label className="text-12 text-text-secondary block font-medium">
-            Slug de Roteamento
+            {tw("slug")}
           </label>
           <div className="text-12 text-text-subtle bg-surface-raised mt-1 inline-block rounded-sm px-2 py-1 font-mono">
             {workspace?.slug}
@@ -106,7 +107,7 @@ export default async function GeneralSettingsPage({
 
         <div>
           <label className="text-12 text-text-secondary block font-medium">
-            Organização Contratante
+            {tw("organization")}
           </label>
           <div className="text-14 text-text mt-1 font-medium">
             {organization?.name}
@@ -115,7 +116,7 @@ export default async function GeneralSettingsPage({
 
         <div>
           <label className="text-12 text-text-secondary block font-medium">
-            Identificador UUID
+            {tw("uuid")}
           </label>
           <div className="text-12 text-text-secondary mt-1 font-mono">
             {workspace?.id}

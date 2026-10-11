@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { readSessionClaims } from "@/core/auth/identity";
 import { AuthShell } from "@/shared/ui/auth-shell";
@@ -7,7 +8,10 @@ import { getRequestBrand } from "@/core/brand/resolve";
 
 import { ResetPasswordForm } from "./reset-password-form";
 
-export const metadata: Metadata = { title: "Definir nova senha" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth");
+  return { title: t("resetPassword.title") };
+}
 
 export default async function ResetPasswordPage() {
   const brand = await getRequestBrand();
@@ -15,11 +19,12 @@ export default async function ResetPasswordPage() {
   // consumed, already used or expired.
   const claims = await readSessionClaims();
   if (!claims?.sub) redirect("/login?error=recovery");
+  const t = await getTranslations("auth.resetPassword");
 
   return (
     <AuthShell
-      title="Definir nova senha"
-      description="Escolha a senha que você vai usar para entrar."
+      title={t("title")}
+      description={t("description")}
       appName={brand.name}
       logoUrl={brand.logoUrl}
     >

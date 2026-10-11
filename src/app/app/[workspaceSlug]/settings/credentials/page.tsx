@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { KeyRound } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
@@ -13,9 +14,10 @@ import {
   type CredentialsCapabilities,
 } from "./credentials-client";
 
-export const metadata: Metadata = {
-  title: "Credenciais e Provedores de IA (BYOK)",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("credentials");
+  return { title: t("metaTitle") };
+}
 
 interface CredentialsPageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -27,6 +29,7 @@ export default async function CredentialsSettingsPage({
   const { workspaceSlug } = await params;
   const currentPath = `/app/${workspaceSlug}/settings/credentials`;
   const identity = await requireUserPage(currentPath);
+  const t = await getTranslations("credentials");
 
   const context = await resolveRequestWorkspaceContext(
     prisma,
@@ -57,9 +60,7 @@ export default async function CredentialsSettingsPage({
         ? hasWorkspaceRolePermission(wsRole, Permissions.CREDENTIALS_MANAGE)
         : false;
 
-      const creds = canRead
-        ? await listWorkspaceCredentials(tx, context)
-        : [];
+      const creds = canRead ? await listWorkspaceCredentials(tx, context) : [];
 
       return {
         credentials: creds,
@@ -75,9 +76,9 @@ export default async function CredentialsSettingsPage({
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="border-border border-b pb-5">
         <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>Configurações</span>
+          <span>{t("breadcrumbSettings")}</span>
           <span>/</span>
-          <span>Credenciais BYOK</span>
+          <span>{t("breadcrumbCurrent")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
@@ -85,12 +86,9 @@ export default async function CredentialsSettingsPage({
           </div>
           <div>
             <h1 className="text-20 text-text font-bold tracking-tight">
-              Credenciais de Provedores de IA (BYOK)
+              {t("title")}
             </h1>
-            <p className="text-12 text-text-secondary">
-              Conecte chaves de API da OpenAI, Google Gemini e Anthropic com
-              cifragem AES-256-GCM em repouso.
-            </p>
+            <p className="text-12 text-text-secondary">{t("description")}</p>
           </div>
         </div>
       </div>

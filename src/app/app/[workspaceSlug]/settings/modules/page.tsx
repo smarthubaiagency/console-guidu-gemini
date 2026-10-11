@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Puzzle } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { WorkspaceModuleToggle } from "@/components/modules/module-status-forms";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -8,9 +8,13 @@ import { NavIcon } from "@/components/layout/nav-icons";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
+import { moduleStateLabelKey } from "@/core/module-runtime/state";
 import { prisma } from "@/lib/prisma/client";
 
-export const metadata: Metadata = { title: "Módulos do Workspace" };
+export async function generateMetadata() {
+  const t = await getTranslations("modules");
+  return { title: t("metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -39,21 +43,19 @@ export default async function ModulesSettingsPage({ params }: PageProps) {
     context,
     workspaceSlug,
   );
+  const t = await getTranslations("modules");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={["Configurações", "Módulos"]}
-        title="Habilitação e Estado dos Módulos"
-        description="Módulos registrados na plataforma, seu estado neste workspace e o acesso às configurações."
+        trail={[t("breadcrumbSettings"), t("breadcrumbModules")]}
+        title={t("title")}
+        description={t("description")}
         icon={<Puzzle className="h-5 w-5" />}
       />
 
       {!canManage && (
-        <p className="text-12 text-text-secondary">
-          Somente proprietários e administradores do workspace habilitam ou
-          desabilitam módulos.
-        </p>
+        <p className="text-12 text-text-secondary">{t("manageHint")}</p>
       )}
 
       <ul className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs">
@@ -81,7 +83,7 @@ export default async function ModulesSettingsPage({ params }: PageProps) {
                     href={`/app/${workspaceSlug}/settings/modules/${m.moduleKey}`}
                     className="text-12 text-text-subtle hover:text-text mt-1 inline-block font-medium underline"
                   >
-                    Configurar {m.displayName}
+                    {t("configure", { name: m.displayName })}
                   </Link>
                 )}
               </div>
@@ -92,7 +94,7 @@ export default async function ModulesSettingsPage({ params }: PageProps) {
                   STATE_STYLES[m.state] ?? STATE_STYLES.not_enabled
                 }`}
               >
-                {m.stateLabel}
+                {t(`states.${moduleStateLabelKey(m.state, m.releaseStatus)}`)}
               </span>
               {m.canToggle && (
                 <WorkspaceModuleToggle

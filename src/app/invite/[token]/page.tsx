@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { readIdentity } from "@/core/auth/identity";
 import { getRequestBrand } from "@/core/brand/resolve";
@@ -12,24 +13,18 @@ import { InviteForm } from "./invite-form";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Convite de equipe",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("invite");
+  return { title: t("team.metadataTitle") };
+}
 
-function formatRoleName(role?: string): string {
-  switch (role) {
-    case "owner":
-      return "Proprietário";
-    case "admin":
-      return "Administrador";
-    case "editor":
-      return "Editor";
-    case "viewer":
-      return "Visualizador";
-    case "member":
-    default:
-      return "Membro";
-  }
+const ROLES = ["owner", "admin", "editor", "viewer", "member"] as const;
+
+/** Key (in `invite.team.roles`) of a role; unknown roles read as member. */
+function roleKey(role?: string): (typeof ROLES)[number] {
+  return (ROLES as readonly string[]).includes(role ?? "")
+    ? (role as (typeof ROLES)[number])
+    : "member";
 }
 
 export default async function InviteTokenPage({
@@ -40,6 +35,7 @@ export default async function InviteTokenPage({
   const brand = await getRequestBrand();
   const { token } = await params;
   const identity = await readIdentity();
+  const t = await getTranslations("invite.team");
 
   // 1. Sem sessão: redireciona para login preservando o next
   if (!identity) {
@@ -53,18 +49,18 @@ export default async function InviteTokenPage({
   if (details.status === "not_found") {
     return (
       <AuthShell
-        title="Convite inválido"
-        description="O link de convite acessado é inválido ou não foi encontrado."
+        title={t("notFound.title")}
+        description={t("notFound.description")}
         appName={brand.name}
         logoUrl={brand.logoUrl}
         footer={
-          <Link href="/app" className="underline text-14">
-            Ir para o painel
+          <Link href="/app" className="text-14 underline">
+            {t("goToDashboard")}
           </Link>
         }
       >
         <ErrorNotice testId="invite-not-found">
-          Convite não encontrado ou inválido.
+          {t("notFound.notice")}
         </ErrorNotice>
       </AuthShell>
     );
@@ -73,19 +69,17 @@ export default async function InviteTokenPage({
   if (details.status === "expired") {
     return (
       <AuthShell
-        title="Convite expirado"
-        description="Este convite expirou e não pode mais ser utilizado."
+        title={t("expired.title")}
+        description={t("expired.description")}
         appName={brand.name}
         logoUrl={brand.logoUrl}
         footer={
-          <Link href="/app" className="underline text-14">
-            Ir para o painel
+          <Link href="/app" className="text-14 underline">
+            {t("goToDashboard")}
           </Link>
         }
       >
-        <ErrorNotice testId="invite-expired">
-          Este convite expirou. Peça ao administrador para enviar um novo convite.
-        </ErrorNotice>
+        <ErrorNotice testId="invite-expired">{t("expired.notice")}</ErrorNotice>
       </AuthShell>
     );
   }
@@ -93,19 +87,17 @@ export default async function InviteTokenPage({
   if (details.status === "revoked") {
     return (
       <AuthShell
-        title="Convite revogado"
-        description="Este convite foi cancelado por um administrador."
+        title={t("revoked.title")}
+        description={t("revoked.description")}
         appName={brand.name}
         logoUrl={brand.logoUrl}
         footer={
-          <Link href="/app" className="underline text-14">
-            Ir para o painel
+          <Link href="/app" className="text-14 underline">
+            {t("goToDashboard")}
           </Link>
         }
       >
-        <ErrorNotice testId="invite-revoked">
-          Este convite foi revogado por um administrador.
-        </ErrorNotice>
+        <ErrorNotice testId="invite-revoked">{t("revoked.notice")}</ErrorNotice>
       </AuthShell>
     );
   }
@@ -113,18 +105,18 @@ export default async function InviteTokenPage({
   if (details.status === "already_accepted") {
     return (
       <AuthShell
-        title="Convite já aceito"
-        description="Este convite já foi utilizado anteriormente."
+        title={t("accepted.title")}
+        description={t("accepted.description")}
         appName={brand.name}
         logoUrl={brand.logoUrl}
         footer={
-          <Link href="/app" className="underline text-14">
-            Ir para o painel
+          <Link href="/app" className="text-14 underline">
+            {t("goToDashboard")}
           </Link>
         }
       >
         <SuccessNotice testId="invite-accepted">
-          Você já aceitou este convite.
+          {t("accepted.notice")}
         </SuccessNotice>
       </AuthShell>
     );
@@ -133,14 +125,14 @@ export default async function InviteTokenPage({
   if (details.status === "recipient_mismatch") {
     return (
       <AuthShell
-        title="Destinatário diferente"
-        description="Você está conectado com uma conta diferente daquela para a qual o convite foi enviado."
+        title={t("mismatch.title")}
+        description={t("mismatch.description")}
         appName={brand.name}
         logoUrl={brand.logoUrl}
         footer={
-          <div className="flex items-center gap-4 text-14">
+          <div className="text-14 flex items-center gap-4">
             <Link href="/app" className="underline">
-              Ir para o painel
+              {t("goToDashboard")}
             </Link>
             <SignOutForm />
           </div>
@@ -148,12 +140,15 @@ export default async function InviteTokenPage({
       >
         <div className="space-y-4">
           <ErrorNotice testId="invite-mismatch">
-            Este convite foi enviado para outro e-mail.
+            {t("mismatch.notice")}
           </ErrorNotice>
           <p className="text-12 text-text-secondary">
-            Você está conectado como{" "}
-            <span className="font-medium text-text">{identity.email}</span>. Para
-            aceitar este convite, saia desta conta e entre com o e-mail convidado.
+            {t.rich("mismatch.hint", {
+              email: identity.email ?? "",
+              strong: (chunks) => (
+                <span className="text-text font-medium">{chunks}</span>
+              ),
+            })}
           </p>
         </div>
       </AuthShell>
@@ -163,21 +158,21 @@ export default async function InviteTokenPage({
   if (details.status === "email_unconfirmed") {
     return (
       <AuthShell
-        title="E-mail não confirmado"
-        description="Confirmação de e-mail obrigatória."
+        title={t("unconfirmed.title")}
+        description={t("unconfirmed.description")}
         appName={brand.name}
         logoUrl={brand.logoUrl}
         footer={
-          <div className="flex items-center gap-4 text-14">
+          <div className="text-14 flex items-center gap-4">
             <Link href="/app" className="underline">
-              Ir para o painel
+              {t("goToDashboard")}
             </Link>
             <SignOutForm />
           </div>
         }
       >
         <ErrorNotice testId="invite-unconfirmed">
-          O seu e-mail precisa estar confirmado para aceitar o convite.
+          {t("unconfirmed.notice")}
         </ErrorNotice>
       </AuthShell>
     );
@@ -186,47 +181,52 @@ export default async function InviteTokenPage({
   // Estado Válido: Apresenta organização, workspace, papel e botão de aceite
   return (
     <AuthShell
-      title="Convite de equipe"
-      description="Você foi convidado para participar de uma organização."
+      title={t("valid.title")}
+      description={t("valid.description")}
       appName={brand.name}
       logoUrl={brand.logoUrl}
       footer={
-        <div className="flex items-center justify-between text-12 text-text-tertiary">
+        <div className="text-12 text-text-tertiary flex items-center justify-between">
           <span>
-            Conectado como <span className="text-text font-medium">{identity.email}</span>
+            {t.rich("valid.signedInAs", {
+              email: identity.email ?? "",
+              strong: (chunks) => (
+                <span className="text-text font-medium">{chunks}</span>
+              ),
+            })}
           </span>
           <SignOutForm />
         </div>
       }
     >
       <div className="space-y-6">
-        <div className="border border-card-border bg-surface-card rounded-xl p-5 shadow-xs space-y-3">
+        <div className="border-card-border bg-surface-card space-y-3 rounded-xl border p-5 shadow-xs">
           <div>
-            <span className="text-11 text-text-tertiary uppercase tracking-wider font-semibold">
-              Organização
+            <span className="text-11 text-text-tertiary font-semibold tracking-wider uppercase">
+              {t("valid.organization")}
             </span>
-            <p className="text-16 font-semibold text-text">
+            <p className="text-16 text-text font-semibold">
               {details.organizationName}
             </p>
           </div>
 
           {details.workspaceName && (
             <div>
-              <span className="text-11 text-text-tertiary uppercase tracking-wider font-semibold">
-                Workspace
+              <span className="text-11 text-text-tertiary font-semibold tracking-wider uppercase">
+                {t("valid.workspace")}
               </span>
-              <p className="text-14 font-medium text-text">
+              <p className="text-14 text-text font-medium">
                 {details.workspaceName}
               </p>
             </div>
           )}
 
           <div>
-            <span className="text-11 text-text-tertiary uppercase tracking-wider font-semibold">
-              Papel atribuído
+            <span className="text-11 text-text-tertiary font-semibold tracking-wider uppercase">
+              {t("valid.role")}
             </span>
-            <p className="text-14 font-medium text-text">
-              {formatRoleName(details.role)}
+            <p className="text-14 text-text font-medium">
+              {t(`roles.${roleKey(details.role)}`)}
             </p>
           </div>
         </div>

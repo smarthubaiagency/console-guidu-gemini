@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { EMPTY_FORM_STATE } from "@/core/auth/form-state";
@@ -10,6 +11,7 @@ import { Field, SubmitButton } from "@/shared/ui/form";
 import { requestPasswordRecovery } from "./actions";
 
 export function ForgotPasswordForm() {
+  const t = useTranslations("auth.forgotPassword");
   const [state, action, pending] = useActionState(
     requestPasswordRecovery,
     EMPTY_FORM_STATE,
@@ -18,17 +20,17 @@ export function ForgotPasswordForm() {
   return (
     <form action={action} className="space-y-4" noValidate>
       <Field
-        label="E-mail"
+        label={t("email")}
         name="email"
         type="email"
         autoComplete="username"
         required
       />
       {state.message ? <SuccessNotice>{state.message}</SuccessNotice> : null}
-      <SubmitButton pending={pending}>Enviar link de recuperação</SubmitButton>
+      <SubmitButton pending={pending}>{t("submit")}</SubmitButton>
       <p className="text-14">
         <Link href="/login" className="underline">
-          Voltar para entrar
+          {t("backToLogin")}
         </Link>
       </p>
     </form>

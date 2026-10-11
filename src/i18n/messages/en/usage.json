@@ -1,0 +1,33 @@
+{
+  "metaTitle": "Usage & Limits",
+  "breadcrumbSettings": "Settings",
+  "breadcrumbUsage": "Usage & Limits",
+  "title": "Usage, quotas and capacity",
+  "description": "Measured usage of the company and of this workspace against the plan limits.",
+  "plan": "Plan",
+  "legacy": "No subscription: modules and limits work as before (legacy).",
+  "planSummary": "{name} (version {version}) · {status}",
+  "provisional": "provisional values",
+  "subscriptionStatus": {
+    "pending": "Awaiting payment",
+    "active": "Active",
+    "past_due": "Past due",
+    "suspended": "Suspended",
+    "canceled": "Canceled"
+  },
+  "limits": "Limits",
+  "noData": "No data",
+  "scope": {
+    "organization": "Company",
+    "workspace": "This workspace"
+  },
+  "source": {
+    "plan": "plan limit",
+    "default": "default limit",
+    "none": "no limit"
+  },
+  "overLimit": "over the limit: nothing was deleted, but new items are blocked",
+  "rows": {
+    "coreSeats": "Company seats (active members)"
+  }
+}

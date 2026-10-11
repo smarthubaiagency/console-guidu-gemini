@@ -7,9 +7,7 @@ import { readSessionClaims } from "@/core/auth/identity";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { appLog } from "@/lib/telemetry/log";
-import en from "@/i18n/messages/en.json";
-import es from "@/i18n/messages/es.json";
-import ptBR from "@/i18n/messages/pt-BR.json";
+import { MESSAGE_FILES } from "@/i18n/messages";
 
 import {
   type BuiltInLocale,
@@ -31,13 +29,9 @@ import { PATH_HEADER, workspaceSlugOf } from "./path";
  * memory; saving in that screen clears this process at once.
  */
 
-const FILES: Record<BuiltInLocale, Messages> = {
-  "pt-BR": ptBR,
-  en,
-  es,
-};
+const FILES: Record<BuiltInLocale, Messages> = MESSAGE_FILES;
 
-export const SOURCE_MESSAGES: Messages = ptBR;
+export const SOURCE_MESSAGES: Messages = FILES["pt-BR"];
 
 export function fileMessages(locale: string): Messages | null {
   return isBuiltInLocale(locale) ? FILES[locale] : null;

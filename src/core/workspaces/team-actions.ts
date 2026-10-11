@@ -6,13 +6,15 @@
  * Maintenance Rationale:
  * - Server actions bridge between team administration UI and domain services.
  * - All mutations execute securely within `withContext` (ADR 0001).
- * - Enforces permission checks and safe standardized error contracts via `toSafeError`.
+ * - Enforces permission checks and safe error contracts in the request
+ *   language via `actionFailure` (I2).
  * ============================================================================
  */
 
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
@@ -20,7 +22,8 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { getRequestOrigin } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 import {
   createInvitation,
   revokeInvitation,
@@ -58,13 +61,13 @@ export async function createInvitationAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Dados inválidos para o convite.",
+        messageKey: "team.errors.invalidInvitationInput",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, email, role } = parsed.data;
@@ -93,13 +96,12 @@ export async function createInvitationAction(
 
     return {
       success: true,
-      message: `Convite gerado para ${email}.`,
+      message: (await getTranslations("team"))("invitationCreated", { email }),
       rawToken: result.rawToken,
       inviteUrl: result.inviteUrl,
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }
 
@@ -118,13 +120,13 @@ export async function revokeInvitationAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Identificador de convite inválido.",
+        messageKey: "team.errors.invalidInvitationId",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, invitationId } = parsed.data;
@@ -149,11 +151,10 @@ export async function revokeInvitationAction(
 
     return {
       success: true,
-      message: "Convite revogado com sucesso.",
+      message: (await getTranslations("team"))("invitationRevoked"),
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }
 
@@ -174,13 +175,13 @@ export async function updateMemberRoleAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Dados inválidos para alteração de papel.",
+        messageKey: "team.errors.invalidRoleInput",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, targetUserId, newRole } = parsed.data;
@@ -206,11 +207,10 @@ export async function updateMemberRoleAction(
 
     return {
       success: true,
-      message: "Papel do membro atualizado com sucesso.",
+      message: (await getTranslations("team"))("roleUpdated"),
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }
 
@@ -229,13 +229,13 @@ export async function removeMemberAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Identificador de membro inválido.",
+        messageKey: "team.errors.invalidMemberId",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, targetUserId } = parsed.data;
@@ -260,10 +260,9 @@ export async function removeMemberAction(
 
     return {
       success: true,
-      message: "Membro removido da organização com sucesso.",
+      message: (await getTranslations("team"))("memberRemoved"),
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }

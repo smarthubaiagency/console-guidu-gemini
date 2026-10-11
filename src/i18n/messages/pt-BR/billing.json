@@ -1,0 +1,59 @@
+{
+  "metaTitle": "Plano e cobrança",
+  "breadcrumbSettings": "Configurações",
+  "title": "Plano e cobrança",
+  "description": "O plano contratado pela sua empresa e a situação da assinatura.",
+  "planName": "Plano {name}",
+  "paidUntil": "Período pago até {date}.",
+  "pendingNotice": "A assinatura será ativada quando o pagamento for confirmado.",
+  "noPlan": "Sua empresa ainda não tem plano.",
+  "contact": "A cobrança é feita por {billedBy}. Para mudar de plano ou tratar de pagamentos, fale com {billedBy}",
+  "contactEmail": " pelo e-mail {email}",
+  "contactUrl": " ou em {url}",
+  "contactEnd": ".",
+  "checkoutTitle": "Contratar pelo checkout",
+  "checkoutDemo": "O checkout ainda é uma demonstração: nada é cobrado.",
+  "openCheckout": "Abrir checkout de demonstração",
+  "status": {
+    "pending": "Aguardando pagamento",
+    "active": "Ativa",
+    "pastDue": "Em atraso",
+    "suspended": "Suspensa",
+    "canceled": "Cancelada"
+  },
+  "provisional": "Provisório",
+  "checkout": {
+    "metaTitle": "Checkout (demonstração)",
+    "title": "Checkout",
+    "description": "Escolha um plano.",
+    "demoNote": "Demonstração: nenhuma cobrança é feita e nenhum dado de pagamento é pedido.",
+    "price": "{price}/{interval}",
+    "month": "mês",
+    "year": "ano",
+    "simulate": "Simular contratação",
+    "noPlans": "Nenhum plano disponível.",
+    "done": "Demonstração concluída para o plano {plan}: nenhuma cobrança foi feita."
+  },
+  "payouts": {
+    "title": "Relatórios de repasse",
+    "description": "Gerados no início de cada mês para o mês fechado, com os pagamentos e estornos registrados nele. Um relatório gerado não muda depois.",
+    "line": "{payments} pagamento(s) · recebido {received} · estornado {refunded} · plataforma {platform} · parceiro {partner} · gerado em {generated}",
+    "empty": "Sem dados."
+  },
+  "notices": {
+    "title": "Avisos de cobrança",
+    "description": "Avisos ao parceiro quando uma assinatura entra em atraso ou é suspensa. O envio de e-mail está desligado até a escolha do provedor; os avisos ficam registrados aqui.",
+    "to": "para {email}",
+    "empty": "Nenhum aviso registrado.",
+    "pastDue": "Assinatura em atraso",
+    "suspended": "Assinatura suspensa",
+    "sent": "Enviado",
+    "skipped": "Não enviado",
+    "skippedNoProvider": "Não enviado (envio desligado)",
+    "failed": "Falhou",
+    "pending": "Pendente"
+  },
+  "errors": {
+    "checkoutUnavailable": "Checkout indisponível."
+  }
+}

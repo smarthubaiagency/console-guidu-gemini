@@ -33,12 +33,21 @@ export class AppError extends Error {
   readonly safeMessage: string;
   readonly requestId: string;
   readonly cause?: unknown;
+  /**
+   * Full message key (I2), such as `errors.permissionDenied` or
+   * `team.errors.lastOwner`, translated where the error is shown;
+   * `safeMessage` stays the Portuguese text for logs and fallback.
+   */
+  readonly messageKey: string | undefined;
+  readonly messageValues: Record<string, string | number> | undefined;
 
   constructor(params: {
     code: AppErrorCode;
     safeMessage: string;
     requestId?: string;
     cause?: unknown;
+    messageKey?: string;
+    messageValues?: Record<string, string | number>;
   }) {
     super(params.safeMessage);
     this.name = "AppError";
@@ -46,6 +55,8 @@ export class AppError extends Error {
     this.safeMessage = params.safeMessage;
     this.requestId = params.requestId ?? crypto.randomUUID();
     this.cause = params.cause;
+    this.messageKey = params.messageKey;
+    this.messageValues = params.messageValues;
   }
 }
 
@@ -53,6 +64,9 @@ export type SafeErrorResult = {
   code: AppErrorCode;
   safeMessage: string;
   requestId: string;
+  /** Full message key, when the message has a translation. */
+  messageKey?: string;
+  messageValues?: Record<string, string | number>;
 };
 
 /**
@@ -70,24 +84,32 @@ export function toSafeError(
     crypto.randomUUID();
   let code: AppErrorCode = "internal";
   let safeMessage = "Não foi possível concluir a operação.";
+  let messageKey: string | undefined = "errors.generic";
+  let messageValues: Record<string, string | number> | undefined;
 
   if (err instanceof AppError) {
     code = err.code;
     safeMessage = err.safeMessage;
+    messageKey = err.messageKey;
+    messageValues = err.messageValues;
   } else if (isSpecificError(err, "AccessDeniedError")) {
     const reason = (err as { reason?: string }).reason;
     if (reason === "unauthenticated") {
       code = "unauthenticated";
       safeMessage = "Autenticação necessária.";
+      messageKey = "errors.unauthenticated";
     } else if (reason === "identity_blocked") {
       code = "forbidden";
       safeMessage = "Identidade bloqueada.";
+      messageKey = "errors.identityBlocked";
     } else if (reason === "mfa_required") {
       code = "forbidden";
       safeMessage = "Verificação em duas etapas necessária.";
+      messageKey = "errors.mfaRequired";
     } else {
       code = "forbidden";
       safeMessage = "Acesso negado.";
+      messageKey = "errors.accessDenied";
     }
   } else if (
     isSpecificError(err, "PermissionDeniedError") ||
@@ -95,63 +117,85 @@ export function toSafeError(
   ) {
     code = "forbidden";
     safeMessage = "Você não tem permissão para esta ação.";
+    messageKey = "errors.permissionDenied";
   } else if (isSpecificError(err, "InsufficientRoleError")) {
     code = "forbidden";
     safeMessage = "Papel insuficiente para executar esta operação.";
+    messageKey = "errors.insufficientRole";
   } else if (isSpecificError(err, "InvitationRecipientMismatchError")) {
     code = "forbidden";
     safeMessage = "Este convite foi enviado para outro e-mail.";
+    messageKey = "errors.invitationRecipientMismatch";
   } else if (isSpecificError(err, "InvitationEmailUnconfirmedError")) {
     code = "forbidden";
-    safeMessage = "O seu e-mail precisa estar confirmado para aceitar o convite.";
+    safeMessage =
+      "O seu e-mail precisa estar confirmado para aceitar o convite.";
+    messageKey = "errors.invitationEmailUnconfirmed";
   } else if (
     isSpecificError(err, "WorkspaceNotFoundError") ||
     isSpecificError(err, "NotAMemberError")
   ) {
     code = "not_found";
     safeMessage = "Workspace não encontrado.";
+    messageKey = "errors.workspaceNotFound";
   } else if (isSpecificError(err, "CredentialNotFoundError")) {
     code = "not_found";
     safeMessage = "Credencial não encontrada.";
+    messageKey = "errors.credentialNotFound";
   } else if (isSpecificError(err, "ApiKeyNotFoundError")) {
     code = "not_found";
     safeMessage = "Chave de API não encontrada.";
+    messageKey = "errors.apiKeyNotFound";
   } else if (isSpecificError(err, "MemberNotFoundError")) {
     code = "not_found";
     safeMessage = "Membro não encontrado.";
+    messageKey = "errors.memberNotFound";
   } else if (isSpecificError(err, "InvitationNotFoundError")) {
     code = "not_found";
     safeMessage = "Convite não encontrado ou inválido.";
+    messageKey = "errors.invitationNotFound";
   } else if (isSpecificError(err, "SeatLimitExceededError")) {
     code = "conflict";
     safeMessage = "O limite de vagas desta organização foi atingido.";
+    messageKey = "errors.seatLimitExceeded";
   } else if (isSpecificError(err, "LastOwnerCannotBeRemovedError")) {
     code = "conflict";
     safeMessage = "Não é permitido alterar ou remover o último proprietário.";
+    messageKey = "errors.lastOwner";
   } else if (isSpecificError(err, "InvitationExpiredError")) {
     code = "conflict";
     safeMessage = "Este convite expirou.";
+    messageKey = "errors.invitationExpired";
   } else if (isSpecificError(err, "InvitationRevokedError")) {
     code = "conflict";
     safeMessage = "Este convite foi revogado por um administrador.";
+    messageKey = "errors.invitationRevoked";
   } else if (isSpecificError(err, "InvitationAlreadyAcceptedError")) {
     code = "conflict";
     safeMessage = "Este convite já foi aceito.";
+    messageKey = "errors.invitationAccepted";
   } else if (isSpecificError(err, "ModuleUnavailableError")) {
     code = "unavailable";
     safeMessage =
       err instanceof Error && err.message
         ? err.message
         : "Módulo temporariamente indisponível.";
+    messageKey =
+      err instanceof Error && err.message
+        ? undefined
+        : "errors.moduleUnavailable";
   } else if (isSpecificError(err, "ProviderError")) {
     code = "provider_error";
     safeMessage = "Falha na comunicação com o provedor de IA.";
+    messageKey = "errors.providerError";
   } else if (isSpecificError(err, "AgentExecutionError")) {
     code = "provider_error";
     safeMessage = "Falha na comunicação com o provedor de IA.";
+    messageKey = "errors.providerError";
   } else if (isSpecificError(err, "ZodError")) {
     code = "invalid_input";
     safeMessage = "Dados de entrada inválidos.";
+    messageKey = "errors.invalidInput";
   }
 
   // Structured logging to server console with security redaction
@@ -170,6 +214,8 @@ export function toSafeError(
     code,
     safeMessage,
     requestId: reqId,
+    ...(messageKey ? { messageKey } : {}),
+    ...(messageValues ? { messageValues } : {}),
   };
 }
 

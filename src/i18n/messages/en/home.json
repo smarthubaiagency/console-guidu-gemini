@@ -1,0 +1,15 @@
+{
+  "metaTitle": "Your Workspaces",
+  "accountSecurity": "Account Security",
+  "title": "Select your Workspace",
+  "subtitle": "Choose the workspace you want to open to get started.",
+  "scheduledDeletions": "Scheduled deletions",
+  "scheduledDeletion": "<name>{workspace}</name> · locked; the data will be erased on {date}",
+  "cancelDeletion": "Cancel deletion",
+  "emptyTitle": "No workspace assigned",
+  "emptyDescription": "Your account is active, but you have not been added to any workspace in your organization yet. Ask your administrator for an invitation.",
+  "manageSecurity": "Manage your account security and MFA",
+  "roleLabel": "Role:",
+  "access": "Open",
+  "footer": "{name} Modular SaaS Platform • RLS Multi-tenant Isolation"
+}

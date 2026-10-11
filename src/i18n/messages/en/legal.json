@@ -1,0 +1,36 @@
+{
+  "kinds": {
+    "terms": "Terms of use",
+    "privacy": "Privacy policy"
+  },
+  "document": {
+    "metadataTitle": "Legal documents",
+    "meta": "{kind} · version {version} · {date}"
+  },
+  "accept": {
+    "metadataTitle": "Terms acceptance",
+    "title": "Before you continue",
+    "description": "To use {appName}, accept the documents below.",
+    "meta": "{kind} · version {version} · <link>open in a new tab</link>",
+    "agree": "I have read and accept the documents above.",
+    "submit": "Accept and continue",
+    "submitting": "Saving..."
+  },
+  "editor": {
+    "version": "{kind} · version {version}",
+    "requiresAcceptance": "requires acceptance",
+    "noNewAcceptance": "no new acceptance",
+    "empty": "No document published. Without documents, nobody needs to accept terms to sign in.",
+    "publishTitle": "Publish new version",
+    "publish": "Publish",
+    "document": "Document",
+    "title": "Title",
+    "body": "Text",
+    "requiresAcceptanceLabel": "Relevant change: require new acceptance (the first version always does)"
+  },
+  "published": "Version {version} published.",
+  "errors": {
+    "notFound": "Resource not found.",
+    "mustAgree": "Check the box to accept the documents."
+  }
+}

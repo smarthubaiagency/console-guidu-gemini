@@ -1,0 +1,70 @@
+{
+  "team": {
+    "metadataTitle": "Invitación de equipo",
+    "goToDashboard": "Ir al panel",
+    "roles": {
+      "owner": "Propietario",
+      "admin": "Administrador",
+      "editor": "Editor",
+      "viewer": "Lector",
+      "member": "Miembro"
+    },
+    "notFound": {
+      "title": "Invitación inválida",
+      "description": "El enlace de invitación al que accediste no es válido o no se encontró.",
+      "notice": "Invitación no encontrada o inválida."
+    },
+    "expired": {
+      "title": "Invitación expirada",
+      "description": "Esta invitación expiró y ya no se puede usar.",
+      "notice": "Esta invitación expiró. Pide al administrador que envíe una nueva invitación."
+    },
+    "revoked": {
+      "title": "Invitación revocada",
+      "description": "Esta invitación fue cancelada por un administrador.",
+      "notice": "Esta invitación fue revocada por un administrador."
+    },
+    "accepted": {
+      "title": "Invitación ya aceptada",
+      "description": "Esta invitación ya fue utilizada anteriormente.",
+      "notice": "Ya aceptaste esta invitación."
+    },
+    "mismatch": {
+      "title": "Destinatario diferente",
+      "description": "Iniciaste sesión con una cuenta diferente a la que recibió la invitación.",
+      "notice": "Esta invitación fue enviada a otro correo electrónico.",
+      "hint": "Iniciaste sesión como <strong>{email}</strong>. Para aceptar esta invitación, cierra la sesión de esta cuenta e inicia sesión con el correo electrónico invitado."
+    },
+    "unconfirmed": {
+      "title": "Correo electrónico no confirmado",
+      "description": "Se requiere confirmar el correo electrónico.",
+      "notice": "Tu correo electrónico debe estar confirmado para aceptar la invitación."
+    },
+    "valid": {
+      "title": "Invitación de equipo",
+      "description": "Te invitaron a unirte a una organización.",
+      "signedInAs": "Sesión iniciada como <strong>{email}</strong>",
+      "organization": "Organización",
+      "workspace": "Workspace",
+      "role": "Rol asignado",
+      "accept": "Aceptar invitación",
+      "accepting": "Aceptando invitación..."
+    }
+  },
+  "partner": {
+    "metadataTitle": "Invitación de socio",
+    "unavailableTitle": "Invitación no disponible",
+    "status": {
+      "notFound": "Invitación no encontrada o inválida.",
+      "accepted": "Esta invitación ya fue aceptada.",
+      "revoked": "Esta invitación fue revocada.",
+      "expired": "Esta invitación expiró. Solicita una nueva invitación.",
+      "recipientMismatch": "Esta invitación fue enviada a otro correo electrónico. Inicia sesión con la cuenta invitada.",
+      "emailUnconfirmed": "Tu correo electrónico debe estar confirmado para aceptar la invitación."
+    },
+    "title": "Unirse a {partner}",
+    "description": "Te invitaron como {role}. Después de aceptar, usa la consola del socio en /admin en el dominio del socio.",
+    "back": "Volver",
+    "accept": "Aceptar invitación"
+  }
+}

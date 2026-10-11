@@ -1,0 +1,25 @@
+{
+  "metaTitle": "Acceso de soporte",
+  "breadcrumbSettings": "Configuración",
+  "title": "Acceso de soporte",
+  "description": "Solicitudes del equipo de tu socio para ver este workspace. La aprobación vale solo para este workspace, como visualizador, hasta el plazo solicitado.",
+  "status": {
+    "approvedUntil": "Aprobado hasta el {date}",
+    "expired": "Vencido",
+    "pending": "Esperando al cliente",
+    "denied": "Denegado",
+    "revoked": "Finalizado"
+  },
+  "hours": "{hours} h",
+  "requestedOn": "solicitado el {date}",
+  "workspace": "workspace {slug}",
+  "reason": "Motivo: {reason}",
+  "approve": "Aprobar",
+  "deny": "Denegar",
+  "revoke": "Revocar",
+  "empty": "No hay solicitudes de acceso de soporte.",
+  "errors": {
+    "alreadyDecided": "Esta solicitud ya fue decidida.",
+    "alreadyMember": "Esta persona ya es miembro de este workspace."
+  }
+}

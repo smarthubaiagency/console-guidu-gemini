@@ -1,0 +1,52 @@
+{
+  "sections": {
+    "app": {
+      "platform": "Plataforma",
+      "settings": "Configurações"
+    },
+    "platform": {
+      "platform": "Administração",
+      "platform_settings": "Configurações"
+    },
+    "partner": {
+      "partner": "Parceiro"
+    }
+  },
+  "items": {
+    "core_overview": "Visão Geral",
+    "core_executions": "Execuções",
+    "core_proposals": "Propostas",
+    "core_team": "Equipe & Membros",
+    "core_general": "Geral",
+    "core_locations": "Lojas",
+    "core_modules": "Módulos",
+    "core_credentials": "Credenciais BYOK",
+    "core_mcp": "Assistentes MCP",
+    "core_api": "API e Webhooks",
+    "core_usage": "Consumo & Limites",
+    "core_billing": "Plano e cobrança",
+    "core_data": "Dados e privacidade",
+    "core_support": "Acesso de suporte",
+    "platform_overview": "Visão Geral",
+    "platform_customers": "Clientes / Empresas",
+    "platform_workspaces": "Workspaces",
+    "platform_users": "Usuários da Plataforma",
+    "platform_modules": "Módulos",
+    "platform_partners": "Parceiros",
+    "platform_billing": "Cobrança",
+    "platform_operations": "Operações",
+    "platform_api-keys": "Chaves de API",
+    "platform_legal": "Termos e privacidade",
+    "platform_brand": "Marca",
+    "platform_languages": "Idiomas",
+    "partner_overview": "Visão Geral",
+    "partner_customers": "Clientes",
+    "partner_modules": "Módulos oferecidos",
+    "partner_templates": "Modelos de workspace",
+    "partner_billing": "Cobrança",
+    "partner_support": "Acesso de suporte",
+    "partner_legal": "Termos e privacidade",
+    "partner_members": "Membros",
+    "partner_brand": "Marca"
+  }
+}

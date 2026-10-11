@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { readSessionClaims } from "@/core/auth/identity";
 import { safeInternalPath } from "@/core/auth/redirects";
@@ -10,7 +11,10 @@ import { getRequestBrand } from "@/core/brand/resolve";
 
 import { MfaChallengeForm } from "./mfa-challenge-form";
 
-export const metadata: Metadata = { title: "Verificação em duas etapas" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth");
+  return { title: t("mfa.title") };
+}
 
 export default async function MfaPage({
   searchParams,
@@ -39,13 +43,14 @@ export default async function MfaPage({
     );
   }
 
+  const t = await getTranslations("auth.mfa");
   return (
     <AuthShell
-      title="Verificação em duas etapas"
-      description="Informe o código de seis dígitos do seu aplicativo autenticador."
+      title={t("title")}
+      description={t("description")}
       appName={brand.name}
       logoUrl={brand.logoUrl}
-      footer={<SignOutForm label="Entrar com outra conta" />}
+      footer={<SignOutForm label={t("switchAccount")} />}
     >
       <MfaChallengeForm factorId={factor.id} next={next} />
     </AuthShell>

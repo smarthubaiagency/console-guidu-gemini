@@ -1,0 +1,52 @@
+{
+  "sections": {
+    "app": {
+      "platform": "Platform",
+      "settings": "Settings"
+    },
+    "platform": {
+      "platform": "Administration",
+      "platform_settings": "Settings"
+    },
+    "partner": {
+      "partner": "Partner"
+    }
+  },
+  "items": {
+    "core_overview": "Overview",
+    "core_executions": "Executions",
+    "core_proposals": "Proposals",
+    "core_team": "Team & Members",
+    "core_general": "General",
+    "core_locations": "Stores",
+    "core_modules": "Modules",
+    "core_credentials": "BYOK credentials",
+    "core_mcp": "MCP assistants",
+    "core_api": "API and Webhooks",
+    "core_usage": "Usage & Limits",
+    "core_billing": "Plan and billing",
+    "core_data": "Data and privacy",
+    "core_support": "Support access",
+    "platform_overview": "Overview",
+    "platform_customers": "Customers / Companies",
+    "platform_workspaces": "Workspaces",
+    "platform_users": "Platform users",
+    "platform_modules": "Modules",
+    "platform_partners": "Partners",
+    "platform_billing": "Billing",
+    "platform_operations": "Operations",
+    "platform_api-keys": "API keys",
+    "platform_legal": "Terms and privacy",
+    "platform_brand": "Brand",
+    "platform_languages": "Languages",
+    "partner_overview": "Overview",
+    "partner_customers": "Customers",
+    "partner_modules": "Offered modules",
+    "partner_templates": "Workspace templates",
+    "partner_billing": "Billing",
+    "partner_support": "Support access",
+    "partner_legal": "Terms and privacy",
+    "partner_members": "Members",
+    "partner_brand": "Brand"
+  }
+}

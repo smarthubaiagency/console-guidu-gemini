@@ -1,36 +1,14 @@
 import { Clock, Lock, Wrench } from "lucide-react";
+import { useTranslations } from "next-intl";
 
+/** Texts under `modules.notice.<variant>` (I2). */
 const VARIANTS = {
-  denied: {
-    icon: Lock,
-    title: "Acesso negado",
-    text: "Você não tem permissão para acessar esta área.",
-  },
-  maintenance: {
-    icon: Wrench,
-    title: "Módulo em manutenção",
-    text: "As operações deste módulo estão suspensas temporariamente.",
-  },
-  not_enabled: {
-    icon: Clock,
-    title: "Módulo desabilitado",
-    text: "Este módulo não está habilitado neste workspace.",
-  },
-  not_contracted: {
-    icon: Lock,
-    title: "Módulo não contratado",
-    text: "O plano da sua empresa não inclui este módulo. Fale com quem cuida do seu plano.",
-  },
-  suspended: {
-    icon: Lock,
-    title: "Assinatura suspensa",
-    text: "Este módulo está disponível só para consulta enquanto a assinatura estiver suspensa.",
-  },
-  unavailable: {
-    icon: Clock,
-    title: "Módulo Indisponível",
-    text: "Este módulo não está disponível nesta etapa da plataforma.",
-  },
+  denied: Lock,
+  maintenance: Wrench,
+  not_enabled: Clock,
+  not_contracted: Lock,
+  suspended: Lock,
+  unavailable: Clock,
 } as const;
 
 export type ModuleNoticeVariant = keyof typeof VARIANTS;
@@ -43,15 +21,18 @@ export function ModuleNotice({
   variant: ModuleNoticeVariant;
   text?: string;
 }) {
-  const { icon: Icon, title, text: defaultText } = VARIANTS[variant];
+  const t = useTranslations("modules.notice");
+  const Icon = VARIANTS[variant];
   return (
     <div className="border-border bg-surface-sidebar rounded-2xl border p-8 text-center">
       <div className="bg-info-bg text-info-text mx-auto flex h-10 w-10 items-center justify-center rounded-xl">
         <Icon className="h-5 w-5" />
       </div>
-      <h2 className="text-14 text-text mt-4 font-semibold">{title}</h2>
+      <h2 className="text-14 text-text mt-4 font-semibold">
+        {t(`${variant}.title`)}
+      </h2>
       <p className="text-12 text-text-secondary mx-auto mt-2 max-w-md leading-relaxed">
-        {text ?? defaultText}
+        {text ?? t(`${variant}.text`)}
       </p>
     </div>
   );

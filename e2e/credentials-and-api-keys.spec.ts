@@ -40,14 +40,22 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
     await page.goto(`/app/${wsSlug}/settings/credentials`);
 
     // Verify page title
-    await expect(page.getByRole("heading", { name: "Credenciais de Provedores de IA (BYOK)" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "Credenciais de Provedores de IA (BYOK)",
+      }),
+    ).toBeVisible();
 
     // Open registration modal
     await page.getByRole("button", { name: "Nova Credencial" }).click();
 
     // Fill form
-    await page.getByPlaceholder("Ex: Chave de Produção 2026").fill("OpenAI Produção E2E");
-    await page.getByPlaceholder("Insira a chave do OpenAI").fill("sk-proj-test-valid-e2e-key-1234567890");
+    await page
+      .getByPlaceholder("Ex: Chave de Produção 2026")
+      .fill("OpenAI Produção E2E");
+    await page
+      .getByPlaceholder("Insira a chave do OpenAI")
+      .fill("sk-proj-test-valid-e2e-key-1234567890");
     await page.getByRole("button", { name: "Salvar no Cofre" }).click();
 
     // Verify credential appears in table with masked value
@@ -75,18 +83,25 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
     await page.goto(`/app/${wsSlug}/settings/mcp`);
 
     // Verify MCP keys page
-    await expect(page.getByRole("heading", { name: "Assistentes conectados (MCP)" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Assistentes conectados (MCP)" }),
+    ).toBeVisible();
 
     // Open creation modal
     await page.getByRole("button", { name: "Emitir Nova Chave" }).click();
 
     // Fill label
-    await page.getByPlaceholder("Ex: Conector Cursor / Claude Code").fill("Chave E2E de Teste");
+    await page
+      .getByPlaceholder("Ex: Conector Cursor / Claude Code")
+      .fill("Chave E2E de Teste");
     await page.getByRole("button", { name: "Emitir Chave" }).click();
 
     // Verify one-time secret display modal and raw key prefix
-    await expect(page.getByText("Chave de API emitida com sucesso")).toBeVisible();
-    await expect(page.getByText(/gdu_live_/)).toBeVisible();
+    await expect(
+      page.getByText("Chave de API emitida com sucesso"),
+    ).toBeVisible();
+    // The full key shows only once; the table lists just its prefix.
+    await expect(page.getByText(/gdu_live_[0-9a-f]{64}/)).toBeVisible();
 
     // Verify key is listed in active table
     await expect(page.getByText("Chave E2E de Teste")).toBeVisible();
@@ -112,15 +127,24 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
 
     // Verify credentials page: heading is visible, but "Nova Credencial" button is not visible
     await page.goto(`/app/${wsSlug}/settings/credentials`);
-    await expect(page.getByRole("heading", { name: "Credenciais de Provedores de IA (BYOK)" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Nova Credencial" })).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "Credenciais de Provedores de IA (BYOK)",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Nova Credencial" }),
+    ).not.toBeVisible();
 
     // Verify mcp keys page: viewer cannot select proposals:write
     await page.goto(`/app/${wsSlug}/settings/mcp`);
-    await expect(page.getByRole("heading", { name: "Assistentes conectados (MCP)" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Assistentes conectados (MCP)" }),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Emitir Nova Chave" }).click();
-    const propWrite = page.locator('input[type="checkbox"][value="proposals:write"]');
+    const propWrite = page.locator(
+      'input[type="checkbox"][value="proposals:write"]',
+    );
     await expect(propWrite).toBeDisabled();
   });
 });
-

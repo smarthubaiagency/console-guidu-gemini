@@ -1,0 +1,35 @@
+{
+  "metaTitle": "Datos y privacidad",
+  "breadcrumbSettings": "Configuración",
+  "title": "Datos y privacidad",
+  "description": "Exporta todos los datos de este workspace o solicita su eliminación.",
+  "mfaNotice": "Exportar y eliminar requieren la verificación en dos pasos en esta sesión. Actívala o confírmala en Seguridad de la cuenta.",
+  "exportTitle": "Exportación",
+  "exportDescription": "Un archivo JSON con miembros, invitaciones, claves de API y credenciales (sin secretos), módulos, ejecuciones y los datos de cada módulo. Se genera en segundo plano y queda disponible durante 24 horas; el enlace de descarga vale 15 minutos y puede generarse de nuevo recargando la página.",
+  "generateExport": "Generar exportación",
+  "exportStatus": {
+    "pending": "En cola",
+    "running": "Generando",
+    "ready": "Lista",
+    "failed": "Falló",
+    "expired": "Vencida"
+  },
+  "requestedOn": "solicitada el {date}",
+  "availableUntil": "disponible hasta el {date}",
+  "download": "Descargar",
+  "noExports": "Todavía no hay exportaciones.",
+  "deleteTitle": "Eliminar workspace",
+  "deleteDescription": "El workspace queda bloqueado para todos en cuanto se programa la eliminación. Durante {days} días puedes cancelarla en la lista de workspaces. Después, los datos, miembros, claves, credenciales y archivos se borran de forma definitiva; solo queda el registro de que el workspace existió y fue eliminado, y la auditoría. Las copias de respaldo siguen su propio plazo y no vuelven a estar accesibles. Exporta antes si necesitas los datos.",
+  "scheduleDeletion": "Programar eliminación",
+  "confirmSlug": "Escribe {slug} para confirmar",
+  "exportRequested": "Exportación solicitada. Estará lista en unos minutos y aparecerá aquí durante 24 horas.",
+  "deletionScheduled": "Eliminación programada. Puedes cancelarla en un plazo de 30 días.",
+  "deletionCanceled": "Eliminación cancelada. El workspace volvió.",
+  "errors": {
+    "confirmSlug": "Escribe \"{slug}\" para confirmar la eliminación.",
+    "deletionNotFound": "Eliminación no encontrada o ya concluida.",
+    "mfaRequired": "Confirma la verificación en dos pasos para continuar.",
+    "exportInProgress": "Ya hay una exportación en curso en este workspace.",
+    "exportNotFound": "Exportación no encontrada o vencida."
+  }
+}

@@ -1,9 +1,10 @@
 "use server";
 
 import crypto from "node:crypto";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
-import { AUTH_MESSAGES, type AuthFormState } from "@/core/auth/form-state";
+import type { AuthFormState } from "@/core/auth/form-state";
 import { appOrigin } from "@/core/auth/origin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -15,10 +16,11 @@ export async function requestPasswordRecovery(
 ): Promise<AuthFormState> {
   const requestId = crypto.randomUUID();
   const parsed = RecoveryInput.safeParse({ email: formData.get("email") });
+  const message = (await getTranslations("auth"))("messages.recoverySent");
 
   // Even a malformed address gets the neutral answer: the form must not say
   // which addresses exist.
-  if (!parsed.success) return { message: AUTH_MESSAGES.recoverySent, requestId };
+  if (!parsed.success) return { message, requestId };
 
   const supabase = await createSupabaseServerClient();
   const origin = await appOrigin();
@@ -27,5 +29,5 @@ export async function requestPasswordRecovery(
     redirectTo: `${origin}/auth/callback?next=%2Freset-password`,
   });
 
-  return { message: AUTH_MESSAGES.recoverySent, requestId };
+  return { message, requestId };
 }

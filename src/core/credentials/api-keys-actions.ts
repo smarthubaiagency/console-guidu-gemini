@@ -1,13 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 import { createApiKey, revokeApiKey } from "./api-keys";
 import {
   WorkspaceScopeSchema,
@@ -39,7 +41,9 @@ export async function createApiKeyAction(
 ): Promise<ApiKeyActionState> {
   const scopeRaw = formData.getAll("scopes");
   const scopes =
-    scopeRaw.length > 0 ? (scopeRaw as string[]) : [...DEFAULT_WORKSPACE_SCOPES];
+    scopeRaw.length > 0
+      ? (scopeRaw as string[])
+      : [...DEFAULT_WORKSPACE_SCOPES];
 
   const parsed = CreateKeyInput.safeParse({
     workspaceSlug: formData.get("workspaceSlug"),
@@ -49,20 +53,29 @@ export async function createApiKeyAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Dados inválidos para emissão da chave de API.",
+        messageKey: "mcp.errors.invalidCreate",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
-  const { workspaceSlug, name, scopes: finalScopes, expiresInDays } = parsed.data;
+  const {
+    workspaceSlug,
+    name,
+    scopes: finalScopes,
+    expiresInDays,
+  } = parsed.data;
 
   try {
     const identity = await requireUser();
-    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
 
     const result = await withContext(prisma, context, async (tx) => {
       return createApiKey(tx, context, {
@@ -74,14 +87,14 @@ export async function createApiKeyAction(
 
     revalidatePath(`/app/${workspaceSlug}/settings/mcp`);
 
+    const t = await getTranslations("mcp");
     return {
       success: true,
-      message: `Chave '${name}' emitida com sucesso. Guarde o segredo exibido abaixo.`,
+      message: t("issued", { name }),
       rawKey: result.rawKey,
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }
 
@@ -100,20 +113,24 @@ export async function revokeApiKeyAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Identificador de chave inválido.",
+        messageKey: "mcp.errors.invalidKeyId",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, apiKeyId } = parsed.data;
 
   try {
     const identity = await requireUser();
-    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
 
     await withContext(prisma, context, async (tx) => {
       return revokeApiKey(tx, context, apiKeyId);
@@ -121,12 +138,12 @@ export async function revokeApiKeyAction(
 
     revalidatePath(`/app/${workspaceSlug}/settings/mcp`);
 
+    const t = await getTranslations("mcp");
     return {
       success: true,
-      message: "Chave de API revogada com sucesso.",
+      message: t("revoked"),
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }

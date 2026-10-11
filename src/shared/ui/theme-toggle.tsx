@@ -2,12 +2,14 @@
 
 import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 
 const subscribe = () => () => {};
 
 /** Header control that switches between the light and dark themes. */
 export function ThemeToggle() {
+  const t = useTranslations("ui");
   const { resolvedTheme, setTheme } = useTheme();
   // false on the server and during hydration, true afterwards: avoids a
   // mismatch because the stored theme is only known in the browser.
@@ -18,7 +20,7 @@ export function ThemeToggle() {
   );
 
   const isDark = mounted && resolvedTheme === "dark";
-  const label = isDark ? "Usar tema claro" : "Usar tema escuro";
+  const label = isDark ? t("themeLight") : t("themeDark");
 
   return (
     <button

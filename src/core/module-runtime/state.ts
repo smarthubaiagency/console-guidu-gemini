@@ -247,3 +247,39 @@ export function moduleStateLabel(
       return "Indisponível";
   }
 }
+
+export type ModuleStateLabelKey =
+  | "comingSoon"
+  | "maintenance"
+  | "notEnabled"
+  | "notContracted"
+  | "suspended"
+  | "beta"
+  | "active"
+  | "unavailable";
+
+/**
+ * Message key (under `modules.states`) of the label of a state (I2), for
+ * translated screens; `moduleStateLabel` keeps the Portuguese text.
+ */
+export function moduleStateLabelKey(
+  state: ModuleAccessState,
+  releaseStatus: RegisteredModule["manifest"]["releaseStatus"],
+): ModuleStateLabelKey {
+  switch (state) {
+    case "coming_soon":
+      return "comingSoon";
+    case "maintenance":
+      return "maintenance";
+    case "not_enabled":
+      return "notEnabled";
+    case "not_contracted":
+      return "notContracted";
+    case "suspended":
+      return "suspended";
+    case "enabled":
+      return releaseStatus === "beta" ? "beta" : "active";
+    default:
+      return "unavailable";
+  }
+}

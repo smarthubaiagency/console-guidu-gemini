@@ -1,0 +1,60 @@
+{
+  "metaTitle": "Lojas",
+  "detailMetaTitle": "Loja",
+  "breadcrumbSettings": "Configurações",
+  "title": "Lojas",
+  "description": "Lojas e endereços de atendimento do negócio, com horários. O Portfólio, o Google e o agente usam estes dados.",
+  "listTitle": "Lojas ({count})",
+  "inactiveSuffix": "desativada",
+  "empty": "Nenhuma loja ainda.",
+  "newLocation": "Nova loja",
+  "create": "Cadastrar loja",
+  "inactiveDescription": "Loja desativada: não aparece no Portfólio nem para o agente.",
+  "detailDescription": "Dados da loja no formato do protocolo UCP.",
+  "save": "Salvar loja",
+  "deactivate": "Desativar loja",
+  "reactivate": "Reativar loja",
+  "created": "Loja cadastrada.",
+  "reactivated": "Loja reativada.",
+  "deactivated": "Loja desativada.",
+  "saved": "Loja salva.",
+  "fields": {
+    "name": "Nome da loja",
+    "streetAddress": "Endereço",
+    "extendedAddress": "Complemento",
+    "locality": "Cidade",
+    "region": "UF",
+    "postalCode": "CEP",
+    "country": "País (sigla)",
+    "phone": "Telefone (+55…)",
+    "timezone": "Fuso horário",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "hours": "Horário de funcionamento (deixe vazio nos dias fechados)",
+    "opens": "{day} abre",
+    "closes": "{day} fecha",
+    "amenities": "Comodidades"
+  },
+  "days": {
+    "monday": "Segunda",
+    "tuesday": "Terça",
+    "wednesday": "Quarta",
+    "thursday": "Quinta",
+    "friday": "Sexta",
+    "saturday": "Sábado",
+    "sunday": "Domingo"
+  },
+  "amenities": {
+    "parking": "Estacionamento",
+    "wiFi": "Wi-Fi",
+    "inStorePickup": "Retirada na loja",
+    "curbsidePickup": "Retirada no carro",
+    "accessibility": "Acessibilidade"
+  },
+  "errors": {
+    "invalid": "Dados da loja inválidos.",
+    "invalidField": "{field}: {message}",
+    "invalidLocation": "loja: {message}",
+    "notFound": "Loja não encontrada."
+  }
+}

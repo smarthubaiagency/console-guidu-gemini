@@ -1,0 +1,60 @@
+{
+  "metaTitle": "Tiendas",
+  "detailMetaTitle": "Tienda",
+  "breadcrumbSettings": "Configuración",
+  "title": "Tiendas",
+  "description": "Tiendas y direcciones de atención del negocio, con horarios. El Portafolio, Google y el agente usan estos datos.",
+  "listTitle": "Tiendas ({count})",
+  "inactiveSuffix": "desactivada",
+  "empty": "Todavía no hay tiendas.",
+  "newLocation": "Nueva tienda",
+  "create": "Registrar tienda",
+  "inactiveDescription": "Tienda desactivada: no aparece en el Portafolio ni para el agente.",
+  "detailDescription": "Datos de la tienda en el formato del protocolo UCP.",
+  "save": "Guardar tienda",
+  "deactivate": "Desactivar tienda",
+  "reactivate": "Reactivar tienda",
+  "created": "Tienda registrada.",
+  "reactivated": "Tienda reactivada.",
+  "deactivated": "Tienda desactivada.",
+  "saved": "Tienda guardada.",
+  "fields": {
+    "name": "Nombre de la tienda",
+    "streetAddress": "Dirección",
+    "extendedAddress": "Complemento",
+    "locality": "Ciudad",
+    "region": "Estado/Provincia",
+    "postalCode": "Código postal",
+    "country": "País (código)",
+    "phone": "Teléfono (+55…)",
+    "timezone": "Zona horaria",
+    "latitude": "Latitud",
+    "longitude": "Longitud",
+    "hours": "Horario de atención (deja vacíos los días cerrados)",
+    "opens": "{day} abre",
+    "closes": "{day} cierra",
+    "amenities": "Comodidades"
+  },
+  "days": {
+    "monday": "Lunes",
+    "tuesday": "Martes",
+    "wednesday": "Miércoles",
+    "thursday": "Jueves",
+    "friday": "Viernes",
+    "saturday": "Sábado",
+    "sunday": "Domingo"
+  },
+  "amenities": {
+    "parking": "Estacionamiento",
+    "wiFi": "Wi-Fi",
+    "inStorePickup": "Retiro en tienda",
+    "curbsidePickup": "Retiro en el auto",
+    "accessibility": "Accesibilidad"
+  },
+  "errors": {
+    "invalid": "Datos de la tienda no válidos.",
+    "invalidField": "{field}: {message}",
+    "invalidLocation": "tienda: {message}",
+    "notFound": "Tienda no encontrada."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "metaTitle": "Job runs",
+  "trail": {
+    "operation": "Operations",
+    "executions": "Runs"
+  },
+  "title": "Runs and background routines",
+  "description": "Background tasks of this workspace. Each run checks the requester's permissions again before acting.",
+  "status": {
+    "pending": "Queued",
+    "queued": "Queued",
+    "running": "Running",
+    "succeeded": "Completed",
+    "failed": "Failed",
+    "skipped": "Skipped",
+    "canceled": "Canceled"
+  },
+  "runMeta": "Requested on {createdAt}{finished, select, yes { · finished on {finishedAt}} other {}} · attempts {attempts}/{maxAttempts}",
+  "retry": "Retry",
+  "retried": "Run sent back to the queue.",
+  "emptyTitle": "No runs recorded",
+  "emptyDescription": "Tasks requested by modules and integrations appear here.",
+  "jobs": {
+    "billing_daily-transitions": "Marks subscriptions as past due or suspended by their deadlines and notifies the partner.",
+    "billing_payout-report": "Generates the payout report of the closed month per partner.",
+    "core_workspace-export": "Generates the export of the workspace data.",
+    "privacy_daily-maintenance": "Completes due workspace deletions, expires exports and applies the enabled retention.",
+    "core_proposal-execute": "Runs an approved proposal, rechecking validity, content, version and permissions.",
+    "hello-world_create-record": "Creates a sample record in the background."
+  },
+  "errors": {
+    "invalidJobData": "Invalid job data.",
+    "onlyFailedRetry": "Only failed runs can be retried."
+  }
+}

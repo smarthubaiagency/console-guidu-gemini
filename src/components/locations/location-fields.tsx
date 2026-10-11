@@ -1,5 +1,7 @@
+import { useTranslations } from "next-intl";
+
 import { inputClass, labelClass } from "@/components/partners/action-form";
-import { DAY_LABELS, KNOWN_AMENITIES } from "@/core/locations/amenities";
+import { KNOWN_AMENITIES } from "@/core/locations/amenities";
 import { DAYS, type LocationView } from "@/core/locations/service";
 
 /**
@@ -9,12 +11,13 @@ import { DAYS, type LocationView } from "@/core/locations/service";
 export function LocationFields({
   location,
 }: Readonly<{ location?: LocationView }>) {
+  const t = useTranslations("locations");
   const a = location?.address ?? {};
   const hour = (day: string) => location?.hours.find((h) => h.day === day);
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <label className={`${labelClass} sm:col-span-2`}>
-        Nome da loja
+        {t("fields.name")}
         <input
           name="name"
           required
@@ -24,7 +27,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        Endereço
+        {t("fields.streetAddress")}
         <input
           name="street_address"
           maxLength={200}
@@ -33,7 +36,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        Complemento
+        {t("fields.extendedAddress")}
         <input
           name="extended_address"
           maxLength={200}
@@ -42,7 +45,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        Cidade
+        {t("fields.locality")}
         <input
           name="address_locality"
           maxLength={120}
@@ -51,7 +54,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        UF
+        {t("fields.region")}
         <input
           name="address_region"
           maxLength={80}
@@ -60,7 +63,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        CEP
+        {t("fields.postalCode")}
         <input
           name="postal_code"
           maxLength={20}
@@ -69,7 +72,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        País (sigla)
+        {t("fields.country")}
         <input
           name="address_country"
           maxLength={2}
@@ -78,7 +81,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        Telefone (+55…)
+        {t("fields.phone")}
         <input
           name="phone_number"
           maxLength={16}
@@ -87,7 +90,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        Fuso horário
+        {t("fields.timezone")}
         <input
           name="timezone"
           maxLength={64}
@@ -96,7 +99,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        Latitude
+        {t("fields.latitude")}
         <input
           name="latitude"
           inputMode="decimal"
@@ -105,7 +108,7 @@ export function LocationFields({
         />
       </label>
       <label className={labelClass}>
-        Longitude
+        {t("fields.longitude")}
         <input
           name="longitude"
           inputMode="decimal"
@@ -115,23 +118,23 @@ export function LocationFields({
       </label>
       <fieldset className="space-y-2 sm:col-span-2">
         <legend className="text-12 text-text-subtle font-medium">
-          Horário de funcionamento (deixe vazio nos dias fechados)
+          {t("fields.hours")}
         </legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {DAYS.map((day) => (
             <div key={day} className="flex items-center gap-2">
-              <span className="text-12 text-text w-20">{DAY_LABELS[day]}</span>
+              <span className="text-12 text-text w-20">{t(`days.${day}`)}</span>
               <input
                 name={`${day}_opens`}
                 type="time"
-                aria-label={`${DAY_LABELS[day]} abre`}
+                aria-label={t("fields.opens", { day: t(`days.${day}`) })}
                 defaultValue={hour(day)?.opens}
                 className={inputClass}
               />
               <input
                 name={`${day}_closes`}
                 type="time"
-                aria-label={`${DAY_LABELS[day]} fecha`}
+                aria-label={t("fields.closes", { day: t(`days.${day}`) })}
                 defaultValue={hour(day)?.closes}
                 className={inputClass}
               />
@@ -141,7 +144,7 @@ export function LocationFields({
       </fieldset>
       <fieldset className="space-y-2 sm:col-span-2">
         <legend className="text-12 text-text-subtle font-medium">
-          Comodidades
+          {t("fields.amenities")}
         </legend>
         <div className="flex flex-wrap gap-4">
           {KNOWN_AMENITIES.map((amenity) => (
@@ -151,7 +154,7 @@ export function LocationFields({
                 name={`amenity_${amenity.id}`}
                 defaultChecked={Boolean(location?.amenities[amenity.id])}
               />
-              {amenity.label}
+              {t(`amenities.${amenity.key}`)}
             </label>
           ))}
         </div>

@@ -57,6 +57,7 @@ export async function enqueueJob<P>(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Dados do job inválidos.",
+      messageKey: "executions.errors.invalidJobData",
     });
   }
   const idempotencyKey = options.idempotencyKey ?? randomUUID();
@@ -183,6 +184,7 @@ export async function retryJobRun(
     throw new AppError({
       code: "conflict",
       safeMessage: "Só execuções com falha podem ser reprocessadas.",
+      messageKey: "executions.errors.onlyFailedRetry",
     });
   }
   await recordAudit(tx, ctx, {

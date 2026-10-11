@@ -1,0 +1,99 @@
+{
+  "metaTitle": "Connected assistants (MCP) — Settings",
+  "breadcrumbSettings": "Settings",
+  "title": "Connected assistants (MCP)",
+  "description": "Per ADR 0009: personal tokens with SHA-256 hashing and mandatory expiration for developer connections and AI assistants (Cursor, Claude Code, Codex).",
+  "howToConnect": "How to connect",
+  "serverUrl": "MCP server address (Streamable HTTP): <urlCode>{url}</urlCode>. Use a key from this workspace in the <code>{header}</code> header. The available tools depend on the key's scopes and your role; no tool changes data.",
+  "headerKeyPlaceholder": "your key",
+  "commandKeyPlaceholder": "YOUR_KEY",
+  "claudeCode": "Claude Code:",
+  "codex": "Codex (<code>~/.codex/config.toml</code>, with the key in the <code>GUIDU_MCP_TOKEN</code> variable):",
+  "confirmRevoke": "Revoke the key \"{name}\"? All connections and active assistants using this key will lose access immediately.",
+  "issuedTitle": "API key issued",
+  "issuedNotice": "Copy the token below and store it safely. For compliance reasons, it can never be viewed again after you close this message.",
+  "copied": "Copied!",
+  "copyKey": "Copy key",
+  "connectionTitle": "Assistant connections",
+  "connectionDescription": "Per ADR 0009: keys issued by the platform with mandatory expiration and secure SHA-256 hashing for AI assistants (Cursor, Claude Code, Codex).",
+  "newKey": "Issue new key",
+  "nameLabel": "Key / application name",
+  "namePlaceholder": "E.g. Cursor / Claude Code connector",
+  "scopesLabel": "Allowed access scopes (catalog §17.3)",
+  "write": "Write",
+  "viewerReadOnly": "Read-only for viewers (no write permission)",
+  "writeWarning": "Warning: this scope lets the assistant propose changes that will require human approval on the platform.",
+  "expiryLabel": "Validity period (mandatory expiration)",
+  "days": "{days} days",
+  "daysRecommended": "{days} days (recommended)",
+  "daysOneYear": "{days} days (1 year)",
+  "cancel": "Cancel",
+  "issuing": "Issuing...",
+  "issue": "Issue key",
+  "keysTitle": "Issued API keys ({count})",
+  "keysNotice": "Identified by prefix, with usage auditing",
+  "empty": "No keys issued for this workspace. Create a key to connect MCP assistants (Cursor, Claude Code, etc.).",
+  "colName": "Name",
+  "colPrefix": "Prefix",
+  "colScopes": "Scopes",
+  "colExpires": "Expires on",
+  "colLastUsed": "Last used",
+  "colStatus": "Status",
+  "colActions": "Actions",
+  "neverUsed": "Never used",
+  "statusActive": "Active",
+  "statusRevoked": "Revoked",
+  "revokeTitle": "Revoke key",
+  "issued": "Key ''{name}'' issued. Save the secret shown below.",
+  "revoked": "API key revoked.",
+  "errors": {
+    "invalidCreate": "Invalid data for issuing the API key.",
+    "invalidKeyId": "Invalid key identifier."
+  },
+  "scopes": {
+    "workspace_read": {
+      "label": "Workspace overview (workspace:read)",
+      "desc": "Read access to basic information and the workspace overview."
+    },
+    "modules_read": {
+      "label": "Module status (modules:read)",
+      "desc": "View enabled modules and their operational status."
+    },
+    "usage_read": {
+      "label": "Usage and quotas (usage:read)",
+      "desc": "View the usage summary, without access to secrets or restricted content."
+    },
+    "executions_read": {
+      "label": "Executions and jobs (executions:read)",
+      "desc": "List and status of tasks and executions in the workspace."
+    },
+    "members_read": {
+      "label": "Member list (members:read)",
+      "desc": "View the members and memberships of the workspace."
+    },
+    "proposals_write": {
+      "label": "Write proposals (proposals:write)",
+      "desc": "Lets the assistant create operational proposals subject to human approval."
+    },
+    "crm_read": {
+      "label": "CRM contacts (crm:read)",
+      "desc": "Read contacts of the CRM module, when the module is enabled."
+    },
+    "crm_write": {
+      "label": "Write CRM contacts (crm:write)",
+      "desc": "Create and edit contacts through the REST API. In MCP, writes go through a proposal."
+    },
+    "portfolio_read": {
+      "label": "Portfolio catalog (portfolio:read)",
+      "desc": "Search and look up items in UCP format (search_catalog, lookup_catalog, get_product). Only active, public items with a price."
+    },
+    "portfolio_agent": {
+      "label": "Portfolio for the customer service agent (portfolio:agent)",
+      "desc": "Agent view: includes price-on-request items and the AI rules (keywords, what never to say, safety)."
+    },
+    "portfolio_write": {
+      "label": "Write to the Portfolio (portfolio:write)",
+      "desc": "Create and edit items and variants through the REST API. In MCP, writes go through a proposal."
+    }
+  }
+}

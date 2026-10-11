@@ -1,0 +1,59 @@
+{
+  "metaTitle": "Plan and billing",
+  "breadcrumbSettings": "Settings",
+  "title": "Plan and billing",
+  "description": "The plan your company has subscribed to and the state of the subscription.",
+  "planName": "{name} plan",
+  "paidUntil": "Paid through {date}.",
+  "pendingNotice": "The subscription will be activated once the payment is confirmed.",
+  "noPlan": "Your company does not have a plan yet.",
+  "contact": "Billing is handled by {billedBy}. To change plans or discuss payments, contact {billedBy}",
+  "contactEmail": " at {email}",
+  "contactUrl": " or at {url}",
+  "contactEnd": ".",
+  "checkoutTitle": "Subscribe through checkout",
+  "checkoutDemo": "Checkout is still a demo: nothing is charged.",
+  "openCheckout": "Open demo checkout",
+  "status": {
+    "pending": "Awaiting payment",
+    "active": "Active",
+    "pastDue": "Past due",
+    "suspended": "Suspended",
+    "canceled": "Canceled"
+  },
+  "provisional": "Provisional",
+  "checkout": {
+    "metaTitle": "Checkout (demo)",
+    "title": "Checkout",
+    "description": "Choose a plan.",
+    "demoNote": "Demo: no charge is made and no payment details are requested.",
+    "price": "{price}/{interval}",
+    "month": "month",
+    "year": "year",
+    "simulate": "Simulate subscription",
+    "noPlans": "No plans available.",
+    "done": "Demo completed for the {plan} plan: nothing was charged."
+  },
+  "payouts": {
+    "title": "Payout reports",
+    "description": "Generated at the start of each month for the closed month, with the payments and refunds recorded in it. A generated report does not change afterwards.",
+    "line": "{payments, plural, one {# payment} other {# payments}} · received {received} · refunded {refunded} · platform {platform} · partner {partner} · generated on {generated}",
+    "empty": "No data."
+  },
+  "notices": {
+    "title": "Billing notices",
+    "description": "Notices to the partner when a subscription becomes past due or is suspended. Email sending is off until the provider is chosen; notices are recorded here.",
+    "to": "to {email}",
+    "empty": "No notices recorded.",
+    "pastDue": "Subscription past due",
+    "suspended": "Subscription suspended",
+    "sent": "Sent",
+    "skipped": "Not sent",
+    "skippedNoProvider": "Not sent (sending off)",
+    "failed": "Failed",
+    "pending": "Pending"
+  },
+  "errors": {
+    "checkoutUnavailable": "Checkout unavailable."
+  }
+}

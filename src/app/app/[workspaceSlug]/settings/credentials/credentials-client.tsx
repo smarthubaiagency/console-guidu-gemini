@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   KeyRound,
   Plus,
@@ -38,6 +39,7 @@ export function CredentialsClient({
   credentials,
   capabilities,
 }: CredentialsClientProps) {
+  const t = useTranslations("credentials");
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<CredentialActionState | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,11 +75,7 @@ export function CredentialsClient({
   };
 
   const handleRevoke = (credentialId: string, itemLabel: string) => {
-    if (
-      !confirm(
-        `Revogar a credencial "${itemLabel}"? Agentes e rotinas não poderão mais utilizá-la.`,
-      )
-    ) {
+    if (!confirm(t("confirmRevoke", { label: itemLabel }))) {
       return;
     }
 
@@ -129,11 +127,10 @@ export function CredentialsClient({
         <div>
           <h2 className="text-16 text-text flex items-center gap-2 font-semibold">
             <Lock className="text-text-secondary h-4 w-4" />
-            <span>Cofre de Credenciais BYOK</span>
+            <span>{t("vaultTitle")}</span>
           </h2>
           <p className="text-12 text-text-secondary mt-0.5">
-            Cadastre chaves de API próprias de provedores de IA para uso
-            exclusivo neste workspace.
+            {t("vaultDescription")}
           </p>
         </div>
 
@@ -144,7 +141,7 @@ export function CredentialsClient({
             className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
           >
             <Plus className="h-4 w-4" />
-            <span>Nova Credencial</span>
+            <span>{t("newCredential")}</span>
           </button>
         )}
       </div>
@@ -156,7 +153,7 @@ export function CredentialsClient({
             <div className="border-border flex items-center justify-between border-b pb-4">
               <div className="text-text text-14 flex items-center gap-2 font-semibold">
                 <KeyRound className="text-text-subtle h-4 w-4" />
-                <span>Adicionar Credencial de IA</span>
+                <span>{t("modalTitle")}</span>
               </div>
               <button
                 type="button"
@@ -170,7 +167,7 @@ export function CredentialsClient({
             <form onSubmit={handleRegister} className="mt-4 space-y-4">
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Provedor de IA
+                  {t("providerLabel")}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {(Object.keys(AI_PROVIDERS) as AIProvider[]).map((pKey) => {
@@ -199,12 +196,12 @@ export function CredentialsClient({
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Identificador / Rótulo
+                  {t("labelLabel")}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Chave de Produção 2026"
+                  placeholder={t("labelPlaceholder")}
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                   className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
@@ -213,25 +210,28 @@ export function CredentialsClient({
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Chave Secreta de API (API Key)
+                  {t("secretLabel")}
                 </label>
                 <input
                   type="password"
                   required
-                  placeholder={`Insira a chave do ${activeProviderMeta.name}`}
+                  placeholder={t("secretPlaceholder", {
+                    provider: activeProviderMeta.name,
+                  })}
                   value={secret}
                   onChange={(e) => setSecret(e.target.value)}
                   className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 font-mono focus:outline-none"
                 />
                 <p className="text-11 text-text-tertiary mt-1">
-                  Formato esperado: inicia com &lsquo;
-                  {activeProviderMeta.keyPrefix}&rsquo;.
+                  {t("expectedFormat", {
+                    prefix: activeProviderMeta.keyPrefix,
+                  })}
                 </p>
               </div>
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Finalidade no Workspace
+                  {t("purposeLabel")}
                 </label>
                 <select
                   value={purpose}
@@ -240,22 +240,18 @@ export function CredentialsClient({
                   }
                   className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
                 >
-                  <option value="all">
-                    Todas as finalidades (Chat e Embeddings)
-                  </option>
-                  <option value="chat">Apenas Geração de Texto / Chat</option>
-                  <option value="embeddings">
-                    Apenas Vetorização / Embeddings
-                  </option>
+                  <option value="all">{t("purposeAll")}</option>
+                  <option value="chat">{t("purposeChat")}</option>
+                  <option value="embeddings">{t("purposeEmbeddings")}</option>
                 </select>
               </div>
 
               <div className="bg-surface-raised border-border text-11 text-text-subtle flex items-start gap-2 rounded-lg border p-3">
                 <Shield className="text-success-solid mt-0.5 h-4 w-4 shrink-0" />
                 <span>
-                  O segredo é criptografado com <strong>AES-256-GCM</strong> em
-                  repouso no servidor. Após o cadastro, ele nunca mais é
-                  transmitido em claro ao navegador.
+                  {t.rich("encryptionNotice", {
+                    strong: (chunks) => <strong>{chunks}</strong>,
+                  })}
                 </span>
               </div>
 
@@ -265,14 +261,14 @@ export function CredentialsClient({
                   onClick={() => setIsModalOpen(false)}
                   className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
                 >
-                  Cancelar
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
                   className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
                 >
-                  {isPending ? "Criptografando..." : "Salvar no Cofre"}
+                  {isPending ? t("encrypting") : t("save")}
                 </button>
               </div>
             </form>
@@ -284,31 +280,29 @@ export function CredentialsClient({
       <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
         <div className="border-border flex items-center justify-between border-b px-5 py-4">
           <h3 className="text-14 text-text font-semibold">
-            Credenciais Ativas ({credentials.length})
+            {t("activeTitle", { count: credentials.length })}
           </h3>
           <span className="text-12 text-text-tertiary">
-            Valores mascarados com isolamento RLS
+            {t("maskedNotice")}
           </span>
         </div>
 
         {credentials.length === 0 ? (
           <div className="text-12 text-text-tertiary p-8 text-center">
-            {!capabilities.canRead
-              ? "Você não possui permissão para visualizar credenciais deste workspace."
-              : "Nenhuma credencial cadastrada neste workspace. Adicione uma chave para habilitar módulos de IA."}
+            {!capabilities.canRead ? t("noPermission") : t("empty")}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="text-12 w-full text-left">
               <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
                 <tr>
-                  <th className="px-5 py-3">Provedor</th>
-                  <th className="px-5 py-3">Rótulo</th>
-                  <th className="px-5 py-3">Chave Mascarada</th>
-                  <th className="px-5 py-3">Finalidade</th>
-                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">{t("colProvider")}</th>
+                  <th className="px-5 py-3">{t("colLabel")}</th>
+                  <th className="px-5 py-3">{t("colMasked")}</th>
+                  <th className="px-5 py-3">{t("colPurpose")}</th>
+                  <th className="px-5 py-3">{t("colStatus")}</th>
                   <th className="px-5 py-3 text-right">
-                    {capabilities.canManage ? "Ações" : ""}
+                    {capabilities.canManage ? t("colActions") : ""}
                   </th>
                 </tr>
               </thead>
@@ -326,7 +320,7 @@ export function CredentialsClient({
                     </td>
                     <td className="text-text-subtle px-5 py-3.5 capitalize">
                       {item.purpose === "all"
-                        ? "Geral (Chat + Embeddings)"
+                        ? t("purposeGeneral")
                         : item.purpose}
                     </td>
                     <td className="px-5 py-3.5">
@@ -340,7 +334,9 @@ export function CredentialsClient({
                         {item.status === "active" && (
                           <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                         )}
-                        {item.status === "active" ? "Ativa" : "Revogada"}
+                        {item.status === "active"
+                          ? t("statusActive")
+                          : t("statusRevoked")}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
@@ -350,7 +346,7 @@ export function CredentialsClient({
                           disabled={isPending}
                           onClick={() => handleRevoke(item.id, item.label)}
                           className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
-                          title="Revogar credencial"
+                          title={t("revokeTitle")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

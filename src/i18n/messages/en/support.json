@@ -1,0 +1,25 @@
+{
+  "metaTitle": "Support access",
+  "breadcrumbSettings": "Settings",
+  "title": "Support access",
+  "description": "Requests from your partner's team to view this workspace. Approval applies only to this workspace, as a viewer, until the requested deadline.",
+  "status": {
+    "approvedUntil": "Approved until {date}",
+    "expired": "Expired",
+    "pending": "Awaiting the customer",
+    "denied": "Denied",
+    "revoked": "Ended"
+  },
+  "hours": "{hours} h",
+  "requestedOn": "requested on {date}",
+  "workspace": "workspace {slug}",
+  "reason": "Reason: {reason}",
+  "approve": "Approve",
+  "deny": "Deny",
+  "revoke": "Revoke",
+  "empty": "No support access requests.",
+  "errors": {
+    "alreadyDecided": "This request has already been decided.",
+    "alreadyMember": "This person is already a member of this workspace."
+  }
+}

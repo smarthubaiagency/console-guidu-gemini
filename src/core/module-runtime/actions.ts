@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireMfa, requireUser } from "@/core/auth/identity";
@@ -9,7 +10,8 @@ import { getPlatformAdminMember } from "@/core/admin/platform";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 
 import {
   setPlatformModuleAvailability,
@@ -24,14 +26,15 @@ export type ModuleActionState = {
   requestId?: string;
 };
 
-function failure(err: unknown): ModuleActionState {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
-}
+const failure = (err: unknown): Promise<ModuleActionState> =>
+  actionFailure(err);
+
+const invalidInput = () =>
+  new AppError({
+    code: "invalid_input",
+    safeMessage: "Dados inválidos.",
+    messageKey: "modules.errors.invalidInput",
+  });
 
 const moduleKey = z
   .string()
@@ -55,9 +58,7 @@ export async function setWorkspaceModuleStatusAction(
     status: formData.get("status"),
   });
   if (!parsed.success) {
-    return failure(
-      new AppError({ code: "invalid_input", safeMessage: "Dados inválidos." }),
-    );
+    return failure(invalidInput());
   }
   const { workspaceSlug, status } = parsed.data;
 
@@ -74,8 +75,9 @@ export async function setWorkspaceModuleStatusAction(
     revalidatePath(`/app/${workspaceSlug}`, "layout");
     return {
       success: true,
-      message:
-        status === "enabled" ? "Módulo habilitado." : "Módulo desabilitado.",
+      message: (await getTranslations("modules"))(
+        status === "enabled" ? "enabled" : "disabled",
+      ),
     };
   } catch (err) {
     return failure(err);
@@ -97,9 +99,7 @@ export async function setPlatformModuleAvailabilityAction(
     availability: formData.get("availability"),
   });
   if (!parsed.success) {
-    return failure(
-      new AppError({ code: "invalid_input", safeMessage: "Dados inválidos." }),
-    );
+    return failure(invalidInput());
   }
 
   try {
@@ -117,7 +117,10 @@ export async function setPlatformModuleAvailabilityAction(
     );
     revalidatePath("/platform", "layout");
     revalidatePath("/app", "layout");
-    return { success: true, message: "Disponibilidade atualizada." };
+    return {
+      success: true,
+      message: (await getTranslations("modules"))("availabilityUpdated"),
+    };
   } catch (err) {
     return failure(err);
   }

@@ -1,0 +1,59 @@
+{
+  "metaTitle": "Plan y facturación",
+  "breadcrumbSettings": "Configuración",
+  "title": "Plan y facturación",
+  "description": "El plan contratado por tu empresa y la situación de la suscripción.",
+  "planName": "Plan {name}",
+  "paidUntil": "Período pagado hasta el {date}.",
+  "pendingNotice": "La suscripción se activará cuando se confirme el pago.",
+  "noPlan": "Tu empresa todavía no tiene plan.",
+  "contact": "La facturación la realiza {billedBy}. Para cambiar de plan o tratar pagos, comunícate con {billedBy}",
+  "contactEmail": " por correo a {email}",
+  "contactUrl": " o en {url}",
+  "contactEnd": ".",
+  "checkoutTitle": "Contratar por el checkout",
+  "checkoutDemo": "El checkout todavía es una demostración: no se cobra nada.",
+  "openCheckout": "Abrir checkout de demostración",
+  "status": {
+    "pending": "Esperando pago",
+    "active": "Activa",
+    "pastDue": "Atrasada",
+    "suspended": "Suspendida",
+    "canceled": "Cancelada"
+  },
+  "provisional": "Provisional",
+  "checkout": {
+    "metaTitle": "Checkout (demostración)",
+    "title": "Checkout",
+    "description": "Elige un plan.",
+    "demoNote": "Demostración: no se realiza ningún cobro ni se piden datos de pago.",
+    "price": "{price}/{interval}",
+    "month": "mes",
+    "year": "año",
+    "simulate": "Simular contratación",
+    "noPlans": "No hay planes disponibles.",
+    "done": "Demostración completada para el plan {plan}: no se realizó ningún cobro."
+  },
+  "payouts": {
+    "title": "Informes de liquidación",
+    "description": "Se generan al inicio de cada mes para el mes cerrado, con los pagos y reembolsos registrados en él. Un informe generado no cambia después.",
+    "line": "{payments, plural, one {# pago} other {# pagos}} · recibido {received} · reembolsado {refunded} · plataforma {platform} · socio {partner} · generado el {generated}",
+    "empty": "Sin datos."
+  },
+  "notices": {
+    "title": "Avisos de cobro",
+    "description": "Avisos al socio cuando una suscripción se atrasa o se suspende. El envío de correo está desactivado hasta elegir el proveedor; los avisos quedan registrados aquí.",
+    "to": "para {email}",
+    "empty": "No hay avisos registrados.",
+    "pastDue": "Suscripción atrasada",
+    "suspended": "Suscripción suspendida",
+    "sent": "Enviado",
+    "skipped": "No enviado",
+    "skippedNoProvider": "No enviado (envío desactivado)",
+    "failed": "Falló",
+    "pending": "Pendiente"
+  },
+  "errors": {
+    "checkoutUnavailable": "Checkout no disponible."
+  }
+}

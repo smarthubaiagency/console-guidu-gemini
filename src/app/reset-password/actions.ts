@@ -8,7 +8,8 @@ import { AUTH_MESSAGES, type AuthFormState } from "@/core/auth/form-state";
 import { readSessionClaims } from "@/core/auth/identity";
 import { readProfile } from "@/core/auth/profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { AppError, toSafeError } from "@/shared/errors";
+import { actionFailure } from "@/core/i18n/errors";
+import { AppError } from "@/shared/errors";
 
 const MIN_PASSWORD_LENGTH = 12;
 
@@ -34,13 +35,17 @@ export async function completePasswordReset(
     const password = formData.get("password");
     const tooShort =
       typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH;
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
-        safeMessage: tooShort ? AUTH_MESSAGES.weakPassword : "As senhas não coincidem.",
+        safeMessage: tooShort
+          ? AUTH_MESSAGES.weakPassword
+          : AUTH_MESSAGES.passwordMismatch,
+        messageKey: tooShort
+          ? "auth.errors.weakPassword"
+          : "auth.errors.passwordMismatch",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   // The recovery link established the session; without it there is nothing to
@@ -63,13 +68,13 @@ export async function completePasswordReset(
   });
 
   if (error) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: AUTH_MESSAGES.recoveryLinkInvalid,
+        messageKey: "auth.errors.recoveryLinkInvalid",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   // Force a fresh sign-in with the new password so the recovery session does

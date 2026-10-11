@@ -1,0 +1,33 @@
+{
+  "metaTitle": "Consumo y Límites",
+  "breadcrumbSettings": "Configuración",
+  "breadcrumbUsage": "Consumo y Límites",
+  "title": "Consumo, cuotas y capacidad",
+  "description": "Uso medido de la empresa y de este workspace frente a los límites del plan.",
+  "plan": "Plan",
+  "legacy": "Sin suscripción: los módulos y límites siguen como antes (heredado).",
+  "planSummary": "{name} (versión {version}) · {status}",
+  "provisional": "valores provisionales",
+  "subscriptionStatus": {
+    "pending": "Esperando pago",
+    "active": "Activa",
+    "past_due": "Atrasada",
+    "suspended": "Suspendida",
+    "canceled": "Cancelada"
+  },
+  "limits": "Límites",
+  "noData": "Sin datos",
+  "scope": {
+    "organization": "Empresa",
+    "workspace": "Este workspace"
+  },
+  "source": {
+    "plan": "límite del plan",
+    "default": "límite predeterminado",
+    "none": "sin límite"
+  },
+  "overLimit": "por encima del límite: no se borró nada, pero los nuevos elementos quedan bloqueados",
+  "rows": {
+    "coreSeats": "Asientos de la empresa (miembros activos)"
+  }
+}

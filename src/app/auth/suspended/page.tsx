@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { AuthShell, ErrorNotice } from "@/shared/ui/auth-shell";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 import { getRequestBrand } from "@/core/brand/resolve";
 
-export const metadata: Metadata = { title: "Conta suspensa" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth");
+  return { title: t("suspended.title") };
+}
 
 /**
  * State shown when the identity is authenticated but blocked or suspended.
@@ -12,18 +16,16 @@ export const metadata: Metadata = { title: "Conta suspensa" };
  */
 export default async function SuspendedPage() {
   const brand = await getRequestBrand();
+  const t = await getTranslations("auth.suspended");
   return (
     <AuthShell
-      title="Conta suspensa"
-      description="Esta identidade está bloqueada e não pode realizar operações."
+      title={t("title")}
+      description={t("description")}
       appName={brand.name}
       logoUrl={brand.logoUrl}
       footer={<SignOutForm />}
     >
-      <ErrorNotice testId="suspended-state">
-        Se você acredita que isso é um erro, procure a pessoa responsável pela
-        sua empresa ou o suporte da plataforma.
-      </ErrorNotice>
+      <ErrorNotice testId="suspended-state">{t("notice")}</ErrorNotice>
     </AuthShell>
   );
 }

@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CreditCard } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
-import { intervalLabel, sectionClass } from "@/components/billing/billing-ui";
+import { sectionClass } from "@/components/billing/billing-ui";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { simulateDemoCheckoutAction } from "@/core/billing/actions";
 import { openDemoCheckout } from "@/core/billing/customer";
-import { formatCents } from "@/core/billing/split";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
-export const metadata: Metadata = { title: "Checkout (demonstração)" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("billing.checkout");
+  return { title: t("metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -47,32 +50,43 @@ export default async function DemoCheckoutPage({ params }: PageProps) {
     notFound();
   }
 
+  const t = await getTranslations("billing");
+  const format = await getFormatter();
+
   return (
     <div className="mx-auto max-w-3xl space-y-6" data-testid="demo-checkout">
       <ModulePageHeader
-        trail={["Configurações", "Plano e cobrança", "Checkout"]}
-        title="Checkout"
-        description="Escolha um plano."
+        trail={[t("breadcrumbSettings"), t("title"), t("checkout.title")]}
+        title={t("checkout.title")}
+        description={t("checkout.description")}
         icon={<CreditCard className="h-5 w-5" />}
       />
       <p
         role="note"
         className="bg-warning-bg text-warning-text border-warning-border text-12 rounded-lg border p-3 font-semibold"
       >
-        Demonstração: nenhuma cobrança é feita e nenhum dado de pagamento é
-        pedido.
+        {t("checkout.demoNote")}
       </p>
       <ul className="space-y-3">
         {checkout.plans.map((plan) => (
           <li key={plan.id} className={sectionClass}>
             <div className="text-14 text-text font-semibold">{plan.name}</div>
             <div className="text-12 text-text-secondary">
-              {formatCents(plan.priceCents)}/
-              {intervalLabel(plan.billingInterval)}
+              {t("checkout.price", {
+                price: format.number(plan.priceCents / 100, {
+                  style: "currency",
+                  currency: "BRL",
+                }),
+                interval: t(
+                  plan.billingInterval === "yearly"
+                    ? "checkout.year"
+                    : "checkout.month",
+                ),
+              })}
             </div>
             <ActionForm
               action={simulateDemoCheckoutAction}
-              submitLabel="Simular contratação"
+              submitLabel={t("checkout.simulate")}
             >
               <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
               <input type="hidden" name="partnerPlanId" value={plan.id} />
@@ -81,7 +95,7 @@ export default async function DemoCheckoutPage({ params }: PageProps) {
         ))}
         {checkout.plans.length === 0 ? (
           <li className="text-12 text-text-secondary">
-            Nenhum plano disponível.
+            {t("checkout.noPlans")}
           </li>
         ) : null}
       </ul>

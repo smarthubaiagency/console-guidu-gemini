@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   Users,
   UserPlus,
@@ -64,6 +65,7 @@ export function TeamClient({
   invitations,
   capabilities,
 }: TeamClientProps) {
+  const t = useTranslations("team");
   const [isPending, startTransition] = useTransition();
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<ActionState | null>(null);
@@ -112,7 +114,7 @@ export function TeamClient({
   };
 
   const handleRevokeInvite = (invitationId: string) => {
-    if (!confirm("Tem certeza que deseja revogar este convite?")) return;
+    if (!confirm(t("confirmRevoke"))) return;
     startTransition(async () => {
       const formData = new FormData();
       formData.append("workspaceSlug", workspaceSlug);
@@ -139,11 +141,7 @@ export function TeamClient({
   };
 
   const handleRemoveMember = (targetUserId: string, memberName: string) => {
-    if (
-      !confirm(
-        `Remover "${memberName}" da organização? O acesso será revogado imediatamente.`,
-      )
-    ) {
+    if (!confirm(t("confirmRemove", { name: memberName }))) {
       return;
     }
     startTransition(async () => {
@@ -209,12 +207,12 @@ export function TeamClient({
                 {copiedToken ? (
                   <>
                     <Check className="h-3 w-3" />
-                    <span>Copiado!</span>
+                    <span>{t("copied")}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="h-3 w-3" />
-                    <span>Copiar Link</span>
+                    <span>{t("copyLink")}</span>
                   </>
                 )}
               </button>
@@ -227,11 +225,13 @@ export function TeamClient({
       <div className="border-card-border bg-surface-card flex flex-col justify-between gap-4 rounded-xl border p-5 shadow-xs md:flex-row md:items-center">
         <div>
           <h2 className="text-16 text-text font-semibold">
-            Capacidade de Membros da Empresa
+            {t("capacityTitle")}
           </h2>
           <p className="text-12 text-text-secondary mt-0.5">
-            {organizationName} possui contrato para até {maxSeats} assentos
-            ativos ou convites simultâneos.
+            {t("capacityDescription", {
+              organization: organizationName,
+              max: maxSeats,
+            })}
           </p>
         </div>
 
@@ -242,8 +242,10 @@ export function TeamClient({
             </div>
             <div className="text-11 text-text-secondary">
               {maxSeats - totalOccupiedSeats > 0
-                ? `${maxSeats - totalOccupiedSeats} vagas disponíveis`
-                : "Limite atingido"}
+                ? t("seatsAvailable", {
+                    count: maxSeats - totalOccupiedSeats,
+                  })
+                : t("limitReached")}
             </div>
           </div>
 
@@ -259,7 +261,7 @@ export function TeamClient({
               }`}
             >
               <UserPlus className="h-4 w-4" />
-              <span>Convidar Membro</span>
+              <span>{t("inviteMember")}</span>
             </button>
           )}
         </div>
@@ -272,7 +274,7 @@ export function TeamClient({
             <div className="border-border flex items-center justify-between border-b pb-4">
               <div className="text-text text-14 flex items-center gap-2 font-semibold">
                 <UserPlus className="text-text-subtle h-4 w-4" />
-                <span>Novo Convite de Membro</span>
+                <span>{t("newInvitation")}</span>
               </div>
               <button
                 type="button"
@@ -286,12 +288,12 @@ export function TeamClient({
             <form onSubmit={handleInviteSubmit} className="mt-4 space-y-4">
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  E-mail do Convidado
+                  {t("inviteeEmail")}
                 </label>
                 <input
                   type="email"
                   required
-                  placeholder="usuario@empresa.com"
+                  placeholder={t("emailPlaceholder")}
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
@@ -300,7 +302,7 @@ export function TeamClient({
 
               <div>
                 <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  Papel de Acesso (RBAC)
+                  {t("accessRole")}
                 </label>
                 <select
                   value={inviteRole}
@@ -311,22 +313,15 @@ export function TeamClient({
                   }
                   className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
                 >
-                  <option value="member">
-                    Membro (Acesso padrão aos módulos)
-                  </option>
-                  <option value="admin">
-                    Administrador (Gestão de membros e configurações)
-                  </option>
+                  <option value="member">{t("roleOptions.member")}</option>
+                  <option value="admin">{t("roleOptions.admin")}</option>
                   {isOwner && (
-                    <option value="owner">
-                      Proprietário (Gestão completa e contratação)
-                    </option>
+                    <option value="owner">{t("roleOptions.owner")}</option>
                   )}
                 </select>
                 {!isOwner && (
                   <p className="text-11 text-text-tertiary mt-1">
-                    * Apenas proprietários podem convidar outros proprietários
-                    (AC04).
+                    {t("ownerOnlyHint")}
                   </p>
                 )}
               </div>
@@ -337,14 +332,14 @@ export function TeamClient({
                   onClick={() => setInviteModalOpen(false)}
                   className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
                 >
-                  Cancelar
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
                   className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
                 >
-                  {isPending ? "Gerando..." : "Gerar Convite"}
+                  {isPending ? t("generating") : t("generateInvitation")}
                 </button>
               </div>
             </form>
@@ -358,7 +353,7 @@ export function TeamClient({
           <div className="flex items-center gap-2">
             <Users className="text-text-secondary h-4 w-4" />
             <h3 className="text-14 text-text font-semibold">
-              Membros Ativos ({members.length})
+              {t("activeMembers", { count: members.length })}
             </h3>
           </div>
         </div>
@@ -367,12 +362,14 @@ export function TeamClient({
           <table className="text-12 w-full text-left">
             <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
               <tr>
-                <th className="px-5 py-3">Membro</th>
-                <th className="px-5 py-3">Papel</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Entrou em</th>
+                <th className="px-5 py-3">{t("columns.member")}</th>
+                <th className="px-5 py-3">{t("columns.role")}</th>
+                <th className="px-5 py-3">{t("columns.status")}</th>
+                <th className="px-5 py-3">{t("columns.joinedAt")}</th>
                 {capabilities.canManageMembers && (
-                  <th className="px-5 py-3 text-right">Ações</th>
+                  <th className="px-5 py-3 text-right">
+                    {t("columns.actions")}
+                  </th>
                 )}
               </tr>
             </thead>
@@ -392,7 +389,7 @@ export function TeamClient({
                         <span>{member.name}</span>
                         {member.isCurrentUser && (
                           <span className="bg-surface-hover text-10 text-text-subtle rounded-xs px-1.5 py-0.5 font-medium">
-                            Você
+                            {t("you")}
                           </span>
                         )}
                       </div>
@@ -414,10 +411,10 @@ export function TeamClient({
                           }
                           className="border-border bg-surface-card text-12 text-text rounded-md border px-2 py-1 font-medium focus:outline-none"
                         >
-                          <option value="member">Membro</option>
-                          <option value="admin">Administrador</option>
+                          <option value="member">{t("roles.member")}</option>
+                          <option value="admin">{t("roles.admin")}</option>
                           {isOwner && (
-                            <option value="owner">Proprietário</option>
+                            <option value="owner">{t("roles.owner")}</option>
                           )}
                         </select>
                       ) : (
@@ -432,10 +429,10 @@ export function TeamClient({
                         >
                           <Shield className="h-3 w-3" />
                           {member.role === "owner"
-                            ? "Proprietário"
+                            ? t("roles.owner")
                             : member.role === "admin"
-                              ? "Administrador"
-                              : "Membro"}
+                              ? t("roles.admin")
+                              : t("roles.member")}
                         </span>
                       )}
                     </td>
@@ -443,7 +440,7 @@ export function TeamClient({
                     <td className="px-5 py-3.5">
                       <span className="text-success-text text-11 inline-flex items-center gap-1 font-medium">
                         <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
-                        Ativo
+                        {t("active")}
                       </span>
                     </td>
 
@@ -461,7 +458,7 @@ export function TeamClient({
                               handleRemoveMember(member.userId, member.name)
                             }
                             className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
-                            title="Remover membro"
+                            title={t("removeMember")}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -480,28 +477,30 @@ export function TeamClient({
       <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
         <div className="border-border flex items-center justify-between border-b px-5 py-4">
           <h3 className="text-14 text-text font-semibold">
-            Convites Pendentes ({invitations.length})
+            {t("pendingInvitations", { count: invitations.length })}
           </h3>
           <span className="text-12 text-text-tertiary">
-            Tokens de acesso único com expiração
+            {t("pendingInvitationsHint")}
           </span>
         </div>
 
         {invitations.length === 0 ? (
           <div className="text-12 text-text-tertiary p-8 text-center">
-            Nenhum convite pendente no momento.
+            {t("noPendingInvitations")}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="text-12 w-full text-left">
               <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
                 <tr>
-                  <th className="px-5 py-3">E-mail Convidado</th>
-                  <th className="px-5 py-3">Papel Previsto</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Expira em</th>
+                  <th className="px-5 py-3">{t("columns.invitedEmail")}</th>
+                  <th className="px-5 py-3">{t("columns.plannedRole")}</th>
+                  <th className="px-5 py-3">{t("columns.status")}</th>
+                  <th className="px-5 py-3">{t("columns.expiresAt")}</th>
                   {capabilities.canManageMembers && (
-                    <th className="px-5 py-3 text-right">Ações</th>
+                    <th className="px-5 py-3 text-right">
+                      {t("columns.actions")}
+                    </th>
                   )}
                 </tr>
               </thead>
@@ -525,7 +524,7 @@ export function TeamClient({
                         }`}
                       >
                         {invite.status === "pending"
-                          ? "Pendente"
+                          ? t("pending")
                           : invite.status}
                       </span>
                     </td>
@@ -542,7 +541,7 @@ export function TeamClient({
                             className="text-12 text-danger-text hover:text-danger-text hover:bg-danger-bg inline-flex items-center gap-1 rounded-sm p-1 font-medium"
                           >
                             <XCircle className="h-3.5 w-3.5" />
-                            <span>Revogar</span>
+                            <span>{t("revoke")}</span>
                           </button>
                         )}
                       </td>

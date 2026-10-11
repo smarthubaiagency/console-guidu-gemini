@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MapPin } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { sectionClass } from "@/components/billing/billing-ui";
 import { LocationFields } from "@/components/locations/location-fields";
@@ -15,7 +15,10 @@ import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
-export const metadata: Metadata = { title: "Loja" };
+export async function generateMetadata() {
+  const t = await getTranslations("locations");
+  return { title: t("detailMetaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string; locationId: string }>;
@@ -45,16 +48,17 @@ export default async function LocationPage({ params }: PageProps) {
   });
   if (!view) notFound();
   const { location, canManage } = view;
+  const t = await getTranslations("locations");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="location">
       <ModulePageHeader
-        trail={["Configurações", "Lojas", location.name]}
+        trail={[t("breadcrumbSettings"), t("title"), location.name]}
         title={location.name}
         description={
           location.status === "inactive"
-            ? "Loja desativada: não aparece no Portfólio nem para o agente."
-            : "Dados da loja no formato do protocolo UCP."
+            ? t("inactiveDescription")
+            : t("detailDescription")
         }
         icon={<MapPin className="h-5 w-5" />}
       />
@@ -62,7 +66,7 @@ export default async function LocationPage({ params }: PageProps) {
         {canManage ? (
           <ActionForm
             action={updateLocationAction}
-            submitLabel="Salvar loja"
+            submitLabel={t("save")}
             className="space-y-3"
             testId="edit-location"
           >
@@ -81,7 +85,7 @@ export default async function LocationPage({ params }: PageProps) {
           <ActionForm
             action={updateLocationAction}
             submitLabel={
-              location.status === "active" ? "Desativar loja" : "Reativar loja"
+              location.status === "active" ? t("deactivate") : t("reactivate")
             }
             tone="neutral"
             testId="toggle-location"
