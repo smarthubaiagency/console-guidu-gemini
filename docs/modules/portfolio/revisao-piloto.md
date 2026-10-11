@@ -147,12 +147,14 @@ O UCP não tem eventos; é extensão. As correções:
 - `cancellation_policy` vira `policies`.
 - Mantidos como extensão: `topics[]`, `speakers[]`, `age_rating`, `target_audience`.
 
-## 5. Decisões para o Marcelo
+## 5. Decisões do Marcelo (11/10/2026)
 
-1. **Saída 100% UCP e interno separado.** API, MCP e Google com nomes e enums do UCP; governança de IA e vitrine nunca saem. Concorda?
-2. **Variante obrigatória.** Todo item tem ao menos uma variante, com preço, SKU e disponibilidade (exigência do UCP).
-3. **Preço sob consulta.** O UCP não tem: item `quote` fora da compra pelo protocolo e visível só para o nosso agente. Ok?
-4. **Fonte única de preço em serviços.** `price_model` dos serviços contra `quantity_unit`: proposta de manter só `quantity_unit` e a taxa de visita como variante ou `fee`.
-5. **Aluguel temporário × hospedagem.** `real_estate` com `operation_type = temporary` duplica `lodging`. Proposta: temporário é sempre `lodging`.
-6. **Namespace das extensões:** `co.guidu.*` (domínio da ADR 0004) ou outro?
-7. **Ferramentas MCP do Portfólio** com os nomes do UCP: `search_catalog`, `lookup_catalog`, `get_product` e, para hospedagem, as de booking. Assim qualquer agente compatível com o UCP usa o Portfólio sem adaptação.
+1. **Saída 100% UCP**, com o interno separado. API, MCP e Google usam nomes e enums do UCP; governança de IA e vitrine nunca saem.
+2. **Variante obrigatória** em todo item, com preço, SKU e disponibilidade.
+3. **Preço sob consulta:** só o nosso agente oferece. Itens `quote` ficam fora da busca e da compra pelo protocolo.
+4. **Serviços com fonte única de preço:** só o `quantity_unit` da variante; `price_model` sai. A taxa de visita vira variante ou `fee`.
+5. **Aluguel temporário é sempre hospedagem** (`lodging`); `real_estate.operation_type` fica com `sale` e `rent`.
+6. **Namespace das extensões:** `co.guidu.*`.
+7. **Ferramentas MCP com os nomes do UCP:** `search_catalog`, `lookup_catalog`, `get_product` e, na hospedagem, as de booking.
+
+Plano de execução em [plano-f5.md](../../operacao/plano-f5.md).
