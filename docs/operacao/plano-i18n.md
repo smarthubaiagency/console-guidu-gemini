@@ -15,7 +15,7 @@ Pedido do Marcelo (11/10/2026): painel em vários idiomas, começando por portug
 | Etapa | Entrega                                                                                                                         | Estado              |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | I1    | Base: next-intl, idiomas e edições no banco, tela de Idiomas, idioma da pessoa e do workspace, shell e menus traduzidos         | Pronta para revisão |
-| I2    | Núcleo: login, convites, conta, visão geral, configurações do workspace, mensagens de erro dos serviços e formatação por idioma | Planejada           |
+| I2    | Núcleo: login, convites, conta, visão geral, configurações do workspace, mensagens de erro dos serviços e formatação por idioma | Pronta para revisão |
 | I3    | Plataforma (`/platform`) e console do parceiro (`/admin`)                                                                       | Planejada           |
 | I4    | Módulos: CRM, Portfólio (com os campos das verticais), propostas e os módulos seguintes já nascendo com chaves                  | Planejada           |
 | I5    | Notificações e e-mails por idioma de quem recebe; termos e privacidade por idioma; API e MCP em inglês                          | Planejada           |
@@ -54,6 +54,28 @@ Como adicionar texto daqui em diante:
 2. Traduzir em `en.json` e `es.json`. O teste falha se faltar alguma.
 3. Usar `getTranslations` nos componentes de servidor e `useTranslations` nos de navegador.
 4. Se for um componente de navegador, incluir o grupo da chave em `CLIENT_NAMESPACES`.
+
+## I2 — Telas do núcleo
+
+**Estado:** pronta para revisão. Sem migration.
+
+Entregue:
+
+- Mensagens em arquivos por grupo (`src/i18n/messages/<idioma>/<grupo>.json`), com índice gerado por `node scripts/i18n-index.mjs`. Um teste falha se o índice e os arquivos divergirem.
+- Erros traduzíveis: o `AppError` aceita `messageKey` (chave completa, como `team.errors.invalidMemberId`) e `messageValues`. As ações usam `actionFailure`, que traduz no idioma da pessoa; sem chave, vale o texto em português.
+- Telas traduzidas:
+  - acesso: login, recuperação e troca de senha, MFA, convites de equipe e de parceiro, termos e aceite, segurança da conta;
+  - workspace: escolha de workspace, visão geral, equipe, geral, lojas, módulos e consumo;
+  - integrações e dados: credenciais BYOK, chaves MCP (com os escopos), API, cobrança e checkout, dados e privacidade, acesso de suporte;
+  - operação: execuções e propostas (com as operações e os campos de cada uma).
+- Datas e valores pelo idioma da pessoa, com o fuso de São Paulo.
+- O navegador dos testes e2e passou a ser pt-BR, porque visitantes sem sessão recebem o idioma do navegador.
+
+Fica em português até as próximas etapas:
+
+- **Nomes e descrições dos módulos** (manifestos): I4.
+- **Plataforma e console do parceiro**, incluindo o papel e o aceite do convite de parceiro: I3.
+- **Textos que são dados:** mensagens gravadas pelo worker, validações do zod e o nome da comodidade guardado na loja.
 
 ## Pendências do Marcelo
 
