@@ -1,4 +1,5 @@
 import { crmProposalOperations } from "@/modules/crm/proposals";
+import { portfolioProposalOperations } from "@/modules/portfolio/proposals";
 
 import type { ProposalOperation } from "./operation";
 
@@ -6,7 +7,10 @@ import type { ProposalOperation } from "./operation";
  * Operations an assistant may propose, by explicit import (§17.4: writes
  * enter by explicit list). Adding one is a code change with its tests.
  */
-const OPERATIONS: readonly ProposalOperation[] = [...crmProposalOperations];
+const OPERATIONS: readonly ProposalOperation[] = [
+  ...crmProposalOperations,
+  ...portfolioProposalOperations,
+];
 
 const BY_KEY: ReadonlyMap<string, ProposalOperation> = new Map(
   OPERATIONS.map((op) => [op.key, op]),

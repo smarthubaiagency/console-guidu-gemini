@@ -18,6 +18,12 @@ const ERRORS: Record<string, string> = {
   "429": "Limite de requisições atingido; veja Retry-After.",
 };
 
+const PATH_PARAMS: Record<string, string> = {
+  contactId: "do contato",
+  itemId: "do item",
+  variantId: "da variante",
+};
+
 function operation(route: ApiRoute) {
   const parameters: unknown[] = [];
   if (route.workspaceScoped) {
@@ -29,12 +35,13 @@ function operation(route: ApiRoute) {
       schema: { type: "string", format: "uuid" },
     });
   }
-  if (route.path.includes("{contactId}")) {
+  for (const [, name] of route.path.matchAll(/\{(\w+)\}/g)) {
+    if (name === "id" || !name) continue;
     parameters.push({
-      name: "contactId",
+      name,
       in: "path",
       required: true,
-      description: "Id (UUID) do contato.",
+      description: `Id (UUID) ${PATH_PARAMS[name] ?? "do registro"}.`,
       schema: { type: "string", format: "uuid" },
     });
   }

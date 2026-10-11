@@ -1,6 +1,6 @@
 # Especificação do módulo Portfólio (`portfolio`)
 
-- **Versão:** 0.3.0 (F5c)
+- **Versão:** 0.4.0 (F5d)
 - **Estado:** beta. Substitui o placeholder "Catálogo" (decisão do Marcelo, 11/10/2026).
 - **Modelo de origem:** `module-templates/standard` 1.0.0
 - **Referências:** [plano da F5](../../../docs/operacao/plano-f5.md), [campos do UCP](../../../docs/modules/portfolio/ucp-campos.md) e [revisão do piloto](../../../docs/modules/portfolio/revisao-piloto.md).
@@ -146,9 +146,33 @@ Esse padrão da plataforma vale para qualquer módulo que declare cotas.
 - As lojas entram na exportação e na exclusão do núcleo.
 - Sem retenção própria.
 
-## 8. Jobs, eventos e MCP
+## 8. API, MCP e propostas (F5d)
 
-Nada nesta etapa. A F5d traz `search_catalog`, `lookup_catalog` e `get_product` (nomes do UCP), os escopos `portfolio:read`, `portfolio:agent` e `portfolio:write`, e as propostas de escrita pelo agente.
+Serviço `src/modules/portfolio/server/services/catalog.ts`, com as capacidades de catálogo do UCP (release `2026-08-25`, constante `UCP_VERSION`):
+
+| Capacidade UCP   | REST (`/api/v1/workspaces/{id}/portfolio/…`) | MCP              | Escopo           |
+| ---------------- | -------------------------------------------- | ---------------- | ---------------- |
+| `search_catalog` | `POST catalog/search`                        | `search_catalog` | `portfolio:read` |
+| `lookup_catalog` | `POST catalog/lookup`                        | `lookup_catalog` | `portfolio:read` |
+| `get_product`    | `POST catalog/product`                       | `get_product`    | `portfolio:read` |
+
+- O corpo e a resposta são os do protocolo (envelope `ucp`, `products`, `pagination`, `messages`), validados nos testes contra `catalog_search.json` e `catalog_lookup.json`.
+- **Busca:** texto (título, handle, descrição, tags, categorias e, sem expô-las, as palavras-chave e sinônimos da IA), `filters.categories`, `filters.price` em centavos (estreita as variantes) e paginação por cursor (padrão 10, máximo 50), com `total_count`. Ordem: destaque, prioridade e mais recentes.
+- **Consulta:** até 50 ids por pedido, por id de produto, id de variante, SKU ou handle. Cada variante traz `inputs` com o tipo (`exact` ou `featured`); os ids não encontrados voltam em `messages` (`not_found`). Mais de 50 é recusado.
+- **Produto:** por id de produto ou de variante, com `selected` e `preferences` (relaxa do fim das preferências), `product.selected` e sinais `exists`/`available` nas opções. Não encontrado é resultado da aplicação: `ucp.status = error`, `severity = unrecoverable`.
+- Só saem itens ativos, públicos, liberados para a IA e com preço. Item sob consulta, interno, oculto da IA ou inativo é "não encontrado".
+
+**Visão do agente** (`agentSearch`, `agentGetItem`): o módulo Agentes de IA usa o serviço direto; agentes externos usam o escopo `portfolio:agent` (`GET agent/items`, `GET agent/items/{itemId}`; MCP `search_portfolio` e `get_portfolio_item`). Traz os itens sob consulta (sem preço) e a governança (`keywords`, `aliases`, `do_not_say`, `safety_rules`), separada da saída UCP. Itens ocultos da IA ficam fora também aqui.
+
+**Escrita:** `portfolio:write` na REST (`POST items`, `PATCH items/{itemId}`, `PATCH items/{itemId}/variants/{variantId}`), com os mesmos serviços das telas. Um viewer não cria chave com esse escopo. No MCP a escrita é por proposta, aprovada por uma pessoa:
+
+| Operação                    | Alvo     | Conteúdo                                                           |
+| --------------------------- | -------- | ------------------------------------------------------------------ |
+| `portfolio.items.create`    | —        | Como na API de criação                                             |
+| `portfolio.items.update`    | item     | Só os campos a mudar                                               |
+| `portfolio.variants.update` | variante | Só `price`, `list_price`, `availability_status` e `stock_quantity` |
+
+Fica previsto, fora desta etapa: o perfil público `/.well-known/ucp` só de descoberta e o `continue_url` para o checkout próprio no guidu.chat (fase 2).
 
 ## 9. Critérios de aceite e testes
 
@@ -161,3 +185,4 @@ Nada nesta etapa. A F5d traz `search_catalog`, `lookup_catalog` e `get_product` 
 | Serviços, cotas da plataforma, lojas, viewer, isolamento       | `tests/core/portfolio.test.ts` (job `db`)                               |
 | Habilitar, cadastrar loja, criar produto e variante, prévia    | `e2e/portfolio.spec.ts`                                                 |
 | Hospedagem: propriedade, acomodação, tarifa, diária, prévia    | `e2e/portfolio.spec.ts`                                                 |
+| Catálogo UCP, visão do agente, REST, MCP e propostas           | `tests/core/portfolio-catalog.test.ts`                                  |

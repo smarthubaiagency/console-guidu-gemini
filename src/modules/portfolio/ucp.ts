@@ -8,6 +8,9 @@ import { z } from "zod";
  * governance never enter the UCP output.
  */
 
+/** UCP release the catalog responses declare (`ucp.version`, F5d). */
+export const UCP_VERSION = "2026-08-25";
+
 /** Namespace of the GUIDU extensions (decision 6; GUIDU is provisional). */
 export const EXTENSION_NAMESPACE = "co.guidu";
 

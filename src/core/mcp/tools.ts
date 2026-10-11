@@ -2,11 +2,15 @@ import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
 import {
+  AgentPortfolioItem,
   Contact,
   Execution,
   Member,
   ModuleStatus,
   PageQuery,
+  UcpLookupResponse,
+  UcpProductResponse,
+  UcpSearchResponse,
   UsageItem,
   Workspace,
   WorkspaceOverview,
@@ -22,6 +26,13 @@ import {
   type ProposalView,
 } from "@/core/proposals/service";
 import { getContact, listContacts } from "@/modules/crm/server";
+import {
+  agentGetItem,
+  agentSearch,
+  getCatalogProduct,
+  lookupCatalog,
+  searchCatalog,
+} from "@/modules/portfolio/server";
 import { AppError } from "@/shared/errors";
 
 import type { WorkspaceScopeType } from "./scopes";
@@ -129,6 +140,25 @@ async function summarize(
     resourceId: proposal.resourceId,
     errorCode: proposal.errorCode,
   };
+}
+
+/**
+ * UCP MCP binding of the catalog (F5d): `meta` carries the agent profile
+ * (`ucp-agent`) and `catalog` the request of the capability.
+ */
+const UcpMeta = z
+  .looseObject({ "ucp-agent": z.looseObject({}).optional() })
+  .optional()
+  .describe("Metadados do UCP, por exemplo meta['ucp-agent'].profile.");
+
+function catalogTool(
+  ctxCall: ApiCall,
+  prisma: PrismaClient,
+  fn: typeof searchCatalog,
+  catalog: unknown,
+) {
+  const ctx = ctxCall.context!;
+  return withContext(prisma, ctx, (tx) => fn(tx, ctx, catalog ?? {}));
 }
 
 const operationKeys = listProposalOperations().map((op) => op.key) as [
@@ -319,12 +349,165 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
     },
   },
   {
+    name: "search_catalog",
+    title: "Buscar no catálogo (UCP)",
+    description:
+      "UCP search_catalog: busca no Portfólio por texto, categorias e faixa de preço (centavos), com paginação por cursor. " +
+      "Devolve produtos no formato UCP; só itens ativos, públicos e com preço.",
+    scope: "portfolio:read",
+    permission: "portfolio.items.read",
+    moduleKey: "portfolio",
+    risk: "read",
+    input: z
+      .object({
+        meta: UcpMeta,
+        catalog: z
+          .looseObject({
+            query: z.string().max(200).optional().describe("Texto livre."),
+            filters: z
+              .looseObject({})
+              .optional()
+              .describe(
+                "categories (lista de valores) e price { min, max } em centavos.",
+              ),
+            pagination: z
+              .looseObject({})
+              .optional()
+              .describe("cursor e limit (até 50)."),
+          })
+          .optional()
+          .describe("Pedido de busca do UCP."),
+      })
+      .strict(),
+    output: UcpSearchResponse,
+    run: (prisma, call, input) =>
+      catalogTool(call, prisma, searchCatalog, input.catalog),
+  },
+  {
+    name: "lookup_catalog",
+    title: "Consultar itens do catálogo (UCP)",
+    description:
+      "UCP lookup_catalog: até 50 ids de produto, variante, SKU ou handle. Cada variante traz inputs com o id do pedido e o tipo (exact ou featured); os não encontrados voltam em messages.",
+    scope: "portfolio:read",
+    permission: "portfolio.items.read",
+    moduleKey: "portfolio",
+    risk: "read",
+    input: z
+      .object({
+        meta: UcpMeta,
+        catalog: z
+          .looseObject({
+            ids: z.array(z.string()).min(1).describe("Ids a consultar."),
+            filters: z.looseObject({}).optional(),
+          })
+          .describe("Pedido de consulta do UCP."),
+      })
+      .strict(),
+    output: UcpLookupResponse,
+    run: (prisma, call, input) =>
+      catalogTool(call, prisma, lookupCatalog, input.catalog),
+  },
+  {
+    name: "get_product",
+    title: "Produto do catálogo (UCP)",
+    description:
+      "UCP get_product: um produto por id de produto ou de variante, com seleção de opções (selected, preferences) e sinais de disponibilidade. Não encontrado volta com ucp.status = error.",
+    scope: "portfolio:read",
+    permission: "portfolio.items.read",
+    moduleKey: "portfolio",
+    risk: "read",
+    input: z
+      .object({
+        meta: UcpMeta,
+        catalog: z
+          .looseObject({
+            id: z.string().describe("Id do produto ou da variante."),
+            selected: z
+              .array(z.looseObject({ name: z.string(), label: z.string() }))
+              .optional()
+              .describe(
+                "Opções já escolhidas, ex.: [{name: 'Cor', label: 'Azul'}].",
+              ),
+            preferences: z
+              .array(z.string())
+              .optional()
+              .describe("Ordem de prioridade das opções ao relaxar."),
+            filters: z.looseObject({}).optional(),
+          })
+          .describe("Pedido de produto do UCP."),
+      })
+      .strict(),
+    output: UcpProductResponse,
+    run: (prisma, call, input) =>
+      catalogTool(call, prisma, getCatalogProduct, input.catalog),
+  },
+  {
+    name: "search_portfolio",
+    title: "Portfólio para o atendimento",
+    description:
+      "Visão do agente de atendimento: itens liberados para a IA, inclusive sob consulta (ofereça sem preço e encaminhe a uma pessoa), " +
+      "com as regras da IA de cada item (palavras-chave, sinônimos, o que nunca dizer e regras de segurança). Respeite sempre essas regras.",
+    scope: "portfolio:agent",
+    permission: "portfolio.items.read",
+    moduleKey: "portfolio",
+    risk: "read",
+    input: z
+      .object({
+        query: z.string().max(200).optional().describe("Texto a buscar."),
+        item_type: z
+          .enum(["product", "service", "real_estate", "lodging", "event"])
+          .optional()
+          .describe("Categoria."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(50)
+          .optional()
+          .describe("Itens por página (1 a 50, padrão 10)."),
+        cursor: z
+          .string()
+          .max(200)
+          .optional()
+          .describe("Cursor da página anterior."),
+      })
+      .strict(),
+    output: items(AgentPortfolioItem),
+    run: async (prisma, call, input) => {
+      const ctx = call.context!;
+      return withContext(prisma, ctx, (tx) => agentSearch(tx, ctx, input));
+    },
+  },
+  {
+    name: "get_portfolio_item",
+    title: "Item para o atendimento",
+    description:
+      "Um item na visão do agente de atendimento, pelo id, com a saída UCP (quando tem preço) e as regras da IA.",
+    scope: "portfolio:agent",
+    permission: "portfolio.items.read",
+    moduleKey: "portfolio",
+    risk: "read",
+    input: z
+      .object({ itemId: z.string().uuid().describe("Id do item.") })
+      .strict(),
+    output: AgentPortfolioItem,
+    run: (prisma, call, input) => {
+      const ctx = call.context!;
+      return withContext(prisma, ctx, (tx) =>
+        agentGetItem(tx, ctx, String(input.itemId)),
+      );
+    },
+  },
+  {
     name: "propose_operation",
     title: "Propor uma operação",
     description:
       "Propõe uma escrita para uma pessoa aprovar no GUIDU; nada é executado agora. " +
       "Operações: crm.contacts.create (payload com name e, opcionais, email, phone, companyName, jobTitle, notes) " +
-      "e crm.contacts.update (targetId do contato e só os campos a mudar). " +
+      "e crm.contacts.update (targetId do contato e só os campos a mudar); " +
+      "portfolio.items.create (payload como na API: item_type, title, variants com price { amount em centavos, currency } e, opcionais, os demais campos do UCP), " +
+      "portfolio.items.update (targetId do item e só os campos a mudar) e " +
+      "portfolio.variants.update (targetId da variante; só price, list_price, availability_status e stock_quantity). " +
       "Repetir com o mesmo idempotencyKey e o mesmo conteúdo devolve a mesma proposta; com outro conteúdo, conflito. " +
       "Entregue o reviewUrl à pessoa e consulte depois com get_proposal.",
     scope: "proposals:write",

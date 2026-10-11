@@ -211,6 +211,14 @@ export async function authenticateApiKey(
         if (!workspaceRoleGrants(role, "crm.contacts.write")) {
           throw new InvalidApiKeyError(requestId);
         }
+      } else if (scope === "portfolio:read" || scope === "portfolio:agent") {
+        if (!workspaceRoleGrants(role, "portfolio.items.read")) {
+          throw new InvalidApiKeyError(requestId);
+        }
+      } else if (scope === "portfolio:write") {
+        if (!workspaceRoleGrants(role, "portfolio.items.write")) {
+          throw new InvalidApiKeyError(requestId);
+        }
       } else if (scope === "proposals:write") {
         // Viewer role has strictly read-only access (C06 / C12)
         if (role === "viewer") {
