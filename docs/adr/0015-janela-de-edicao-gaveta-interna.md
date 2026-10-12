@@ -27,12 +27,14 @@ A etapa U2a trouxe esse modelo para o GUIDU (`WorkbenchLayout`) com uma página 
    - `WorkbenchLayout`: lista opcional, conteúdo e gaveta, controlado ou não;
    - `WorkbenchPanel`: cabeçalho com título e descrição, botões de expandir e fechar, corpo com rolagem e rodapé de ações;
    - `WorkbenchDrawer` e `WorkbenchProvider`: a gaveta sozinha, para quem já tem o próprio conteúdo (o assistente do cabeçalho do shell usa assim);
+   - `RecordWorkbench`: a página de lista com a gaveta guiada pela URL (`?edit=new` ou `?edit=<id>`); fechar volta para a lista sem o registro;
    - `useWorkbench`: abre, fecha e redimensiona de qualquer ponto dentro do layout.
 8. **Componentes do shadcn** dentro da gaveta (`Button`, `Input`, `Sheet` e o que vier), como em todo o projeto (ADR 0014, revisão de 12/10/2026).
 
 ## Consequências
 
 - Editar um registro não tira a pessoa da lista. O padrão é o mesmo em `/app`, `/admin` e `/platform`.
-- A migração das telas que já existem é a etapa **U2b**: edições do CRM, do Portfólio e do Hello World passam para a gaveta, e os breadcrumbs repetidos dentro das páginas saem (o breadcrumb fica só no cabeçalho do shell).
+- **U2b (feita):** contatos do CRM, itens do Portfólio e registros do Hello World abrem na gaveta com `RecordWorkbench` (`?edit=new` ou `?edit=<id>`); o Portfólio abre já largo (700 px). Os endereços antigos de detalhe (`/crm/contacts/<id>`, `/portfolio/<id>`, `/hello-world/records/<id>`) redirecionam para a lista com a gaveta aberta, então links de propostas e favoritos continuam valendo. Os breadcrumbs repetidos dentro das páginas saíram: o caminho fica só no cabeçalho do shell.
+- Esc fecha a gaveta também com o foco fora dela; um menu ou diálogo aberto por cima fecha primeiro.
 - A página `/platform/design/workbench` continua como catálogo do padrão e referência visual. Os e2e `e2e/workbench.spec.ts` cobrem empurrar, expandir, fechar, foco e celular.
 - O assistente de IA do cabeçalho abre na mesma gaveta. Enquanto o módulo de agentes de IA estiver congelado, ela mostra só o aviso "em breve".

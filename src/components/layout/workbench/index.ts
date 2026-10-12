@@ -9,3 +9,4 @@ export {
   type WorkbenchState,
 } from "./workbench-layout";
 export { WorkbenchPanel } from "./workbench-panel";
+export { RecordWorkbench } from "./record-workbench";

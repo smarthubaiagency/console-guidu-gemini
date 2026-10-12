@@ -38,7 +38,6 @@ export default async function PartnerOverviewPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="partner-console">
       <ModulePageHeader
-        trail={[t("breadcrumb"), t("overview.breadcrumb")]}
         title={membership.partnerName}
         description={t("overview.description", {
           role: roleKey ? tAll(roleKey) : membership.role,

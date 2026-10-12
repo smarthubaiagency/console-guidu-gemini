@@ -56,7 +56,6 @@ export default async function DemoCheckoutPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-3xl space-y-6" data-testid="demo-checkout">
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("title"), t("checkout.title")]}
         title={t("checkout.title")}
         description={t("checkout.description")}
         icon={<CreditCard className="h-5 w-5" />}

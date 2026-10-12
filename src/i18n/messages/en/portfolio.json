@@ -144,7 +144,7 @@
     "newItem": "New item",
     "readOnly": "Subscription suspended: the portfolio is read-only.",
     "create": "Create item",
-    "createHint": "The item starts as a draft; the category details (for example, a property's bedrooms or an event's date) are filled in on the item page. Lodging arrives in the next stage.",
+    "createHint": "The item starts as a draft; the category details (for example, a property's bedrooms or an event's date) are filled in after creating it, in this same window.",
     "viewOnly": "Your role can only view the portfolio."
   },
   "form": {
@@ -180,7 +180,8 @@
     "aiKeywords": "Keywords for the AI",
     "aiAliases": "Synonyms",
     "aiDoNotSay": "The AI must never say",
-    "aiSafetyRules": "Safety rules for the AI"
+    "aiSafetyRules": "Safety rules for the AI",
+    "panelLabel": "Portfolio item"
   },
   "variants": {
     "title": "Variants ({count})",

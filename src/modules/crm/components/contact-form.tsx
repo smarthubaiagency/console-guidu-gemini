@@ -43,7 +43,7 @@ export function ContactForm({
   return (
     <form
       action={action}
-      className="grid gap-3 sm:grid-cols-2"
+      className="grid gap-3"
       data-testid={contactId ? "edit-contact" : "create-contact"}
     >
       <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
@@ -97,7 +97,7 @@ export function ContactForm({
           className={INPUT}
         />
       </label>
-      <label className={`${LABEL} sm:col-span-2`}>
+      <label className={LABEL}>
         {t("fields.notes")}
         <textarea
           name="notes"
@@ -107,7 +107,7 @@ export function ContactForm({
           className={INPUT}
         />
       </label>
-      <div className="flex items-center gap-3 sm:col-span-2">
+      <div className="flex items-center gap-3">
         <button type="submit" disabled={pending} className={BUTTON}>
           {contactId ? t("form.save") : t("form.add")}
         </button>

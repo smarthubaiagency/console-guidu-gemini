@@ -188,7 +188,7 @@ export async function createPortfolioItemAction(
     return {
       success: true,
       message: t("actions.itemCreated"),
-      redirectTo: `/app/${workspaceSlug}/portfolio/${item.id}`,
+      redirectTo: `/app/${workspaceSlug}/portfolio?edit=${item.id}`,
     };
   } catch (err) {
     return actionFailure(err);
@@ -263,7 +263,7 @@ export async function addPortfolioVariantAction(
     await withContext(prisma, ctx, (tx) =>
       addVariant(tx, ctx, itemId, variantFromForm(formData)),
     );
-    revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    revalidatePath(`/app/${workspaceSlug}/portfolio`);
     const t = await getTranslations("portfolio");
     return { success: true, message: t("actions.variantAdded") };
   } catch (err) {
@@ -284,7 +284,7 @@ export async function updatePortfolioVariantAction(
         ? removeVariant(tx, ctx, itemId, variantId)
         : updateVariant(tx, ctx, itemId, variantId, variantFromForm(formData)),
     );
-    revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    revalidatePath(`/app/${workspaceSlug}/portfolio`);
     const t = await getTranslations("portfolio");
     return {
       success: true,
@@ -376,7 +376,7 @@ export async function saveAccommodationTypeAction(
               accommodationTypeFromForm(formData),
             ),
     );
-    revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    revalidatePath(`/app/${workspaceSlug}/portfolio`);
     const t = await getTranslations("portfolio");
     return {
       success: true,
@@ -410,7 +410,7 @@ export async function saveRatePlanAction(
           ? removeRatePlan(tx, ctx, itemId, planId)
           : updateRatePlan(tx, ctx, itemId, planId, ratePlanFromForm(formData)),
     );
-    revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    revalidatePath(`/app/${workspaceSlug}/portfolio`);
     const t = await getTranslations("portfolio");
     return {
       success: true,

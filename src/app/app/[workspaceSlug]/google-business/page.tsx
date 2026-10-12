@@ -11,11 +11,6 @@ export default async function GoogleBusinessPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="border-border border-b pb-5">
-        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>{t("breadcrumbModules")}</span>
-          <span>/</span>
-          <span>{t("title")}</span>
-        </div>
         <div className="flex items-center gap-3">
           <div className="bg-ai-bg text-ai-text border-ai-border rounded-lg border p-2">
             <Store className="h-5 w-5" />

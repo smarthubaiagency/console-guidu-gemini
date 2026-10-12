@@ -23,17 +23,16 @@
     "limitReached": "Plan limit reached ({limit, plural, one {# record} other {# records}} per workspace).",
     "readOnlyRole": "Your role only allows viewing records.",
     "empty": "No data: no records created yet.",
-    "dateUtc": "{date} UTC"
+    "dateUtc": "{date} UTC",
+    "new": "New record"
   },
   "record": {
-    "metaTitle": "Record — Hello World",
-    "fallbackTitle": "Record",
     "id": "Identifier",
     "createdAt": "Created at",
     "author": "Author",
     "you": "You",
     "otherMember": "Another member",
-    "back": "Back to records"
+    "panelLabel": "Record"
   },
   "form": {
     "recordTitle": "Record title",

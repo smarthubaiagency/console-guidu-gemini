@@ -4,11 +4,8 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { getTranslations } from "next-intl/server";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { saveWorkspaceLanguageAction } from "@/core/i18n/actions";
 import { activeLanguages } from "@/core/i18n/store";
 import { workspaceRoleGrants } from "@/core/permissions/guard";
@@ -68,11 +65,6 @@ export default async function GeneralSettingsPage({
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="border-border border-b pb-5">
-        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>{tw("breadcrumbSettings")}</span>
-          <span>/</span>
-          <span>{tw("breadcrumbGeneral")}</span>
-        </div>
         <div className="flex items-center gap-3">
           <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
             <Settings className="h-5 w-5" />

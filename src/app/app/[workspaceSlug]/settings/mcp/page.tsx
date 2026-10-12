@@ -84,11 +84,6 @@ export default async function McpSettingsPage({
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="border-border border-b pb-5">
-        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>{t("breadcrumbSettings")}</span>
-          <span>/</span>
-          <span>{t("title")}</span>
-        </div>
         <div className="flex items-center gap-3">
           <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
             <Bot className="h-5 w-5" />

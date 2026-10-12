@@ -55,7 +55,11 @@ test("owner enables the CRM, adds, edits and finds a contact", async ({
   await sidebar(page).getByRole("link", { name: "Contatos" }).click();
   await expect(page.getByRole("heading", { name: "Contatos" })).toBeVisible();
 
-  const create = page.getByTestId("create-contact");
+  // Creating opens in the drawer, at its own address.
+  await page.getByRole("link", { name: "Novo contato" }).click();
+  await expect(page).toHaveURL(/\?edit=new$/);
+  const drawer = page.getByRole("complementary", { name: "Contato" });
+  const create = drawer.getByTestId("create-contact");
   await create.getByLabel("Nome").fill("Maria E2E");
   await create.getByLabel("E-mail").fill("maria@e2e.test");
   await create.getByLabel("Empresa").fill("Cliente E2E");
@@ -63,16 +67,29 @@ test("owner enables the CRM, adds, edits and finds a contact", async ({
   await expect(
     create.getByRole("status").filter({ hasText: /Contato/ }),
   ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden();
+  await expect(page).toHaveURL(/\/crm\/contacts$/);
 
+  // Editing opens in the drawer beside the list and survives a reload.
+  await page
+    .getByTestId("crm-contact-list")
+    .getByRole("link", { name: "Maria E2E" })
+    .click();
+  await expect(page).toHaveURL(/\?edit=[0-9a-f-]{36}$/);
   await page.reload();
-  await page.getByRole("link", { name: "Maria E2E" }).click();
-  const edit = page.getByTestId("edit-contact");
+  const edit = drawer.getByTestId("edit-contact");
   await edit.getByLabel("Telefone").fill("11 98888-7777");
   await edit.getByLabel("Cargo").fill("Compras");
   await edit.getByRole("button", { name: "Salvar contato" }).click();
   await expect(
     edit.getByRole("status").filter({ hasText: /Contato/ }),
   ).toBeVisible();
+  await expect(page.getByTestId("crm-contact-list")).toContainText(
+    "11 98888-7777",
+  );
+  await drawer.getByTestId("workbench-close").click();
+  await expect(page).toHaveURL(/\/crm\/contacts$/);
 
   await page.goto(`/app/${wsSlug}/crm/contacts`);
   await page.getByLabel("Buscar contatos").fill("cliente e2e");

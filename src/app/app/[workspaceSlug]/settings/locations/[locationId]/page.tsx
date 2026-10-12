@@ -53,7 +53,6 @@ export default async function LocationPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="location">
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("title"), location.name]}
         title={location.name}
         description={
           location.status === "inactive"

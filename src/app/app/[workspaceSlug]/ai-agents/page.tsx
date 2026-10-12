@@ -50,11 +50,6 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="border-border border-b pb-5">
-          <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-            <span>{t("breadcrumbModules")}</span>
-            <span>/</span>
-            <span>{t("breadcrumb")}</span>
-          </div>
           <div className="flex items-center gap-3">
             <div className="bg-info-bg text-info-text border-info-border rounded-lg border p-2">
               <Bot className="h-5 w-5" />
@@ -108,11 +103,6 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="border-border border-b pb-5">
-        <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>{t("breadcrumbModules")}</span>
-          <span>/</span>
-          <span>{t("breadcrumb")}</span>
-        </div>
         <div className="flex items-center gap-3">
           <div className="bg-info-bg text-info-text border-info-border rounded-lg border p-2">
             <Bot className="h-5 w-5" />

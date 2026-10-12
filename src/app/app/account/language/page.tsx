@@ -2,11 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { saveMyLanguageAction } from "@/core/i18n/actions";
 import { activeLanguages } from "@/core/i18n/store";

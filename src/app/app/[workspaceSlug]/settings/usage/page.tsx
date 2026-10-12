@@ -100,7 +100,6 @@ export default async function UsagePage({ params }: UsagePageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="usage-page">
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("breadcrumbUsage")]}
         title={t("title")}
         description={t("description")}
         icon={<Gauge className="h-5 w-5" />}

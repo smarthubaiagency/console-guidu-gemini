@@ -43,7 +43,6 @@ export default async function PlatformApiKeysPage() {
     (tx) => listPlatformApiKeys(tx, { userId: identity.userId, role }),
   );
   const t = await getTranslations("platformKeys");
-  const tPlatform = await getTranslations("platform");
   const formatDate = await calendarDateFormatter();
   // Scope texts by id; the Portuguese definitions are the fallback.
   const scopeText = (id: string, field: "label" | "desc", fallback: string) => {
@@ -64,7 +63,6 @@ export default async function PlatformApiKeysPage() {
       data-testid="platform-api-keys"
     >
       <ModulePageHeader
-        trail={[tPlatform("breadcrumb"), t("breadcrumb")]}
         title={t("title")}
         description={t("description")}
         icon={<KeyRound className="h-5 w-5" />}

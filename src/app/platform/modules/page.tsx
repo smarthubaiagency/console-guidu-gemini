@@ -31,7 +31,6 @@ export default async function AdminModulesPage() {
   }
   const canManage = grants("platform.modules.manage");
   const t = await getTranslations("modules");
-  const tPlatform = await getTranslations("platform");
   const catalog = await getModuleCatalog();
 
   const states = await withIdentityContext(prisma, identity.userId, (tx) =>
@@ -42,7 +41,6 @@ export default async function AdminModulesPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={[tPlatform("breadcrumb"), t("platform.breadcrumb")]}
         title={t("platform.title")}
         description={t("platform.description")}
         icon={<Puzzle className="h-5 w-5" />}

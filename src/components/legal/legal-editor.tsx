@@ -1,10 +1,7 @@
 import { useFormatter, useTranslations } from "next-intl";
 
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { MachineRunStatus } from "@/components/i18n/machine-run-status";
 import type { PlatformRunView } from "@/core/jobs/service";
 import type { PartnerActionState } from "@/core/partners/actions";

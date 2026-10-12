@@ -50,7 +50,6 @@ export default async function PartnerLegalPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumb"), t("legal.title")]}
         title={t("legal.title")}
         description={t("legal.description")}
         icon={<FileText className="h-5 w-5" />}

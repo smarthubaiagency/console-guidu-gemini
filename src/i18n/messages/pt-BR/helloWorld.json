@@ -23,17 +23,16 @@
     "limitReached": "Limite do plano atingido ({limit, plural, one {# registro} other {# registros}} por workspace).",
     "readOnlyRole": "Seu papel permite apenas consultar os registros.",
     "empty": "Sem dados: nenhum registro criado ainda.",
-    "dateUtc": "{date} UTC"
+    "dateUtc": "{date} UTC",
+    "new": "Novo registro"
   },
   "record": {
-    "metaTitle": "Registro — Hello World",
-    "fallbackTitle": "Registro",
     "id": "Identificador",
     "createdAt": "Criado em",
     "author": "Autor",
     "you": "Você",
     "otherMember": "Outro membro",
-    "back": "Voltar aos registros"
+    "panelLabel": "Registro"
   },
   "form": {
     "recordTitle": "Título do registro",

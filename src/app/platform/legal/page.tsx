@@ -55,11 +55,9 @@ export default async function PlatformLegalPage() {
       )
     : { documents: [], languages: [], translations: [], runs: {} };
   const t = await getTranslations("legal.platform");
-  const tPlatform = await getTranslations("platform");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <ModulePageHeader
-        trail={[tPlatform("breadcrumb"), t("breadcrumb")]}
         title={t("title")}
         description={t("description")}
         icon={<FileText className="h-5 w-5" />}

@@ -61,8 +61,10 @@ export function useControllable<T>(
 /**
  * The internal drawer itself (ADR 0015): `absolute` on the right of the
  * nearest `relative` parent, never `fixed`. 350px or 700px from `lg` up, the
- * whole parent width below. Esc closes it; the focus goes into it on open and
- * back to the opener on close. Reads its state from the nearest workbench.
+ * whole parent width below. Esc closes it, also when the focus is outside it
+ * (a menu or dialog open on top closes first); the focus goes into it on open
+ * and back to the opener on close. Reads its state from the nearest
+ * workbench.
  */
 export function WorkbenchDrawer({
   label,
@@ -90,6 +92,19 @@ export function WorkbenchDrawer({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    // Esc pressed outside the drawer, e.g. after a save moved the focus to
+    // the page. Radix layers mark the event when they close first.
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        setPanelOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, setPanelOpen]);
+
   if (!open) return null;
   return (
     <aside
@@ -99,7 +114,7 @@ export function WorkbenchDrawer({
       data-slot="workbench-panel"
       data-size={size}
       onKeyDown={(event) => {
-        if (event.key === "Escape") {
+        if (event.key === "Escape" && !event.defaultPrevented) {
           event.stopPropagation();
           setPanelOpen(false);
         }
@@ -121,7 +136,9 @@ export function WorkbenchProvider({
   children,
 }: Readonly<{ value: WorkbenchState; children: React.ReactNode }>) {
   return (
-    <WorkbenchContext.Provider value={value}>{children}</WorkbenchContext.Provider>
+    <WorkbenchContext.Provider value={value}>
+      {children}
+    </WorkbenchContext.Provider>
   );
 }
 

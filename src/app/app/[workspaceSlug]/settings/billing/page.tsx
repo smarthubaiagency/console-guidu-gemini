@@ -70,7 +70,6 @@ export default async function WorkspaceBillingPage({ params }: PageProps) {
       data-testid="workspace-billing"
     >
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("title")]}
         title={t("title")}
         description={t("description")}
         icon={<CreditCard className="h-5 w-5" />}

@@ -88,7 +88,6 @@ export default async function WorkspaceSupportPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("title")]}
         title={t("title")}
         description={t("description")}
         icon={<Hand className="h-5 w-5" />}

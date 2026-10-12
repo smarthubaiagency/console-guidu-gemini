@@ -56,30 +56,53 @@ export default async function Layout({ children }) {
 | Centro   | Busca (`Command`) sobre as páginas do menu; Ctrl/⌘+K abre                                      |
 | Direita  | Modo de cor, assistente de IA, Console do parceiro (se membro) e Plataforma (se papel interno) |
 
-As páginas não repetem o breadcrumb nem criam cabeçalho próprio: começam pelo título (`h1`). O cabeçalho fica parado e só o conteúdo rola.
+As páginas não repetem o breadcrumb nem criam cabeçalho próprio: começam pelo título (`ModulePageHeader`, com `actions` para botões como "Novo"). O cabeçalho fica parado e só o conteúdo rola.
 
 ## Gaveta interna (ADR 0015)
 
-Edição de registro e chat abrem na gaveta interna, nunca em modal ou página separada.
+Edição de registro e chat abrem na gaveta interna, nunca em modal ou página separada. Numa lista de registros, use `RecordWorkbench`: a página (server component) lê `?edit=` e passa o formulário como `panel`.
+
+```tsx
+const editKey = (await searchParams).edit ?? null; // "new" ou o id
+const panel =
+  editKey === "new" ? (
+    <WorkbenchPanel title="Novo contato">
+      <ContactForm />
+    </WorkbenchPanel>
+  ) : registro ? (
+    <WorkbenchPanel title={registro.name}>
+      <ContactForm values={registro} />
+    </WorkbenchPanel>
+  ) : null;
+
+return (
+  <RecordWorkbench
+    main={<Lista />} // links para `?edit=<id>` e botão "Novo" para `?edit=new`
+    panel={panel}
+    panelLabel="Contato"
+    closeHref={base} // a lista sem o registro
+    editKey={editKey}
+    defaultPanelSize="wide" // formulários longos, como o Portfólio
+  />
+);
+```
+
+Para conteúdo que não é registro de lista (um chat, um painel), use `WorkbenchLayout` diretamente:
 
 ```tsx
 <WorkbenchLayout
-  left={<ListaDeRegistros />} // opcional; vira Sheet no celular
-  leftLabel="Contatos"
-  main={<Tabela onEdit={abrir} />}
-  panelLabel="Editar contato"
+  left={<Lista />} // opcional; vira Sheet no celular
+  leftLabel="Conversas"
+  main={<Conteudo />}
+  panelLabel="Assistente"
   panelOpen={aberto}
   onPanelOpenChange={setAberto}
-  panel={
-    <WorkbenchPanel title="Editar contato" footer={<Botoes />}>
-      <Formulario />
-    </WorkbenchPanel>
-  }
+  panel={<WorkbenchPanel title="Assistente">…</WorkbenchPanel>}
 />
 ```
 
 - 350 px empurra o conteúdo; 700 px (botão de expandir) cobre parte dele; abaixo de `lg`, largura total.
-- Esc fecha; o foco entra ao abrir e volta a quem abriu ao fechar.
+- Esc fecha, mesmo com o foco fora da gaveta; o foco entra ao abrir e volta a quem abriu ao fechar.
 - A edição tem URL própria (`?edit=<id>`).
 - Referência viva: `/platform/design/workbench`.
 

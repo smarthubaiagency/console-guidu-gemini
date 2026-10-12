@@ -80,7 +80,6 @@ export default async function ExecutionsPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={[t("trail.operation"), t("trail.executions")]}
         title={t("title")}
         description={t("description")}
         icon={<PlayCircle className="h-5 w-5" />}

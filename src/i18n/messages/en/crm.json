@@ -12,13 +12,13 @@
     "search": "Search",
     "noResults": "No contacts found.",
     "empty": "No data: no contacts yet.",
-    "more": "More contacts"
+    "more": "More contacts",
+    "new": "New contact"
   },
   "contact": {
-    "metaTitle": "Contact — CRM",
-    "fallbackTitle": "Contact",
     "description": "Contact details.",
-    "back": "← Back to contacts"
+    "newTitle": "New contact",
+    "panelLabel": "Contact"
   },
   "fields": {
     "name": "Name",

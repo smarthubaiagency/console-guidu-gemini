@@ -60,7 +60,6 @@ export default async function HelloWorldPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumbModules"), t("breadcrumbHelloWorld")]}
         title={t("home.title")}
         description={t("home.description")}
         icon={<Hand className="h-5 w-5" />}

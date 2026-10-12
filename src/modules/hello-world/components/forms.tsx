@@ -50,15 +50,15 @@ export function CreateRecordForm({ workspaceSlug }: { workspaceSlug: string }) {
       >
         {t("form.recordTitle")}
       </label>
-      <div className="flex gap-2">
-        <input
-          id="hello-title"
-          name="title"
-          required
-          maxLength={120}
-          placeholder={t("form.recordTitlePlaceholder")}
-          className={INPUT}
-        />
+      <input
+        id="hello-title"
+        name="title"
+        required
+        maxLength={120}
+        placeholder={t("form.recordTitlePlaceholder")}
+        className={INPUT}
+      />
+      <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={pending} className={BUTTON}>
           {pending ? t("form.creating") : t("form.create")}
         </button>

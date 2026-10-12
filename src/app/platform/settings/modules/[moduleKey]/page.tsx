@@ -63,17 +63,11 @@ export default async function AdminModuleSettingsPage({ params }: PageProps) {
       )
     : {};
   const t = await getTranslations("modules.platform");
-  const tPlatform = await getTranslations("platform");
   const catalog = await getModuleCatalog();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={[
-          tPlatform("breadcrumb"),
-          t("settingsBreadcrumb"),
-          catalog.name(moduleKey, mod.manifest.displayName),
-        ]}
         title={t("settingsTitle", {
           label: catalog.settingsLabel(moduleKey, entry.id, entry.label),
         })}
