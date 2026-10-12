@@ -58,8 +58,8 @@ export function WorkspaceSwitcher({
                 <span className="truncate font-medium">
                   {active?.workspaceName ?? currentSlug}
                 </span>
-                <span className="truncate text-xs">
-                  {active?.organizationName ?? t("organization")}
+                <span className="truncate text-xs" data-testid="shell-brand">
+                  {appName}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
