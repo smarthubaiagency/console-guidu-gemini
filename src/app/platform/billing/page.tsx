@@ -16,11 +16,8 @@ import {
 } from "@/components/billing/automation-panels";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import {
@@ -124,7 +121,6 @@ export default async function PlatformBillingPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="platform-billing">
       <ModulePageHeader
-        trail={[t("trailAdmin"), t("trailBilling")]}
         title={t("title")}
         description={t("description")}
         icon={<CreditCard className="h-5 w-5" />}

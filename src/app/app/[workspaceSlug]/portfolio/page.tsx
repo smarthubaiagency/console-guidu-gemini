@@ -2,17 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ShoppingBag } from "lucide-react";
+import { Plus, ShoppingBag } from "lucide-react";
 
-import { sectionClass } from "@/components/billing/billing-ui";
+import { RecordWorkbench, WorkbenchPanel } from "@/components/layout/workbench";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { inputClass } from "@/components/partners/form-classes";
+import { Button } from "@/components/ui/button";
 import { requireUserPage } from "@/core/auth/page-guard";
+import { listLocations } from "@/core/locations/service";
 import { resolveModulePageAccess } from "@/core/module-runtime/page-access";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
@@ -21,18 +19,17 @@ import {
   formatMoney,
   ITEM_STATUSES,
   labelOf,
-  PRICE_DISPLAYS,
-  VariantFields,
 } from "@/modules/portfolio/components/fields";
 import { PortfolioPermissions } from "@/modules/portfolio/manifest";
-import { createPortfolioItemAction } from "@/modules/portfolio/server/actions";
-import { listItems } from "@/modules/portfolio/server";
+import { getItem, listItems } from "@/modules/portfolio/server";
 import {
   ITEM_TYPES,
   translatedItemTypeLabel,
   translatedKindLabel,
-  translatedKinds,
 } from "@/modules/portfolio/verticals";
+
+import { itemSummary, PortfolioItemEditor } from "./item-editor";
+import { NewItemForm } from "./new-item-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("portfolio");
@@ -46,18 +43,24 @@ interface PageProps {
     status?: string;
     type?: string;
     cursor?: string;
+    edit?: string;
   }>;
 }
 
 const STATUSES = ITEM_STATUSES;
 
-/** Items of the Portfolio (F5a): search, status filter and creation. */
+/**
+ * Items of the Portfolio (F5a): search and filters. Creating and editing
+ * open in the wide internal drawer (ADR 0015) at `?edit=new` or
+ * `?edit=<id>`.
+ */
 export default async function PortfolioPage({
   params,
   searchParams,
 }: PageProps) {
   const { workspaceSlug } = await params;
-  const { q, status, type, cursor } = await searchParams;
+  const { q, status, type, cursor, edit } = await searchParams;
+  const editKey = typeof edit === "string" && edit ? edit : null;
   const identity = await requireUserPage(`/app/${workspaceSlug}/portfolio`);
   let context;
   try {
@@ -88,9 +91,21 @@ export default async function PortfolioPage({
       cursor: typeof cursor === "string" ? cursor : undefined,
       limit: 50,
     });
+    let editing = null;
+    if (editKey && editKey !== "new") {
+      try {
+        editing = {
+          item: await getItem(tx, context, editKey),
+          locations: await listLocations(tx, context),
+        };
+      } catch {
+        editing = null;
+      }
+    }
     return {
       kind: "ok" as const,
       ...page,
+      editing,
       canWrite: access.can(PortfolioPermissions.ITEMS_WRITE),
       readOnly: access.readOnly,
     };
@@ -115,13 +130,60 @@ export default async function PortfolioPage({
         )
       : [];
 
-  return (
+  const canEdit = view.kind === "ok" && view.canWrite && !view.readOnly;
+  // Links keep the search, the filters and the page of the list.
+  const listQuery = {
+    ...(search ? { q: search } : {}),
+    ...(statusFilter ? { status: statusFilter } : {}),
+    ...(typeFilter ? { type: typeFilter } : {}),
+    ...(typeof cursor === "string" && cursor ? { cursor } : {}),
+  };
+  const hrefWith = (extra: Record<string, string>) => {
+    const query = new URLSearchParams({ ...listQuery, ...extra }).toString();
+    return query ? `${base}?${query}` : base;
+  };
+
+  let panel: React.ReactNode = null;
+  if (editKey === "new" && canEdit) {
+    panel = (
+      <WorkbenchPanel title={t("list.newItem")}>
+        <NewItemForm workspaceSlug={workspaceSlug} />
+        <p className="text-11 text-text-secondary mt-3">
+          {t("list.createHint")}
+        </p>
+      </WorkbenchPanel>
+    );
+  } else if (view.kind === "ok" && view.editing) {
+    const { item, locations } = view.editing;
+    panel = (
+      <WorkbenchPanel title={item.title} description={await itemSummary(item)}>
+        <PortfolioItemEditor
+          key={item.id}
+          workspaceSlug={workspaceSlug}
+          item={item}
+          locations={locations}
+          canWrite={canEdit}
+        />
+      </WorkbenchPanel>
+    );
+  }
+
+  const main = (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="portfolio">
       <ModulePageHeader
-        trail={[t("trailModules"), t("list.title")]}
         title={t("list.title")}
         description={t("list.description")}
         icon={<ShoppingBag className="h-5 w-5" />}
+        actions={
+          canEdit ? (
+            <Button asChild>
+              <Link href={hrefWith({ edit: "new" })} scroll={false}>
+                <Plus />
+                {t("list.newItem")}
+              </Link>
+            </Button>
+          ) : null
+        }
       />
       {view.kind !== "ok" ? (
         <ModuleNotice variant={view.kind} />
@@ -188,7 +250,9 @@ export default async function PortfolioPage({
                     className="flex flex-wrap items-center justify-between gap-2 p-4"
                   >
                     <Link
-                      href={`${base}/${item.id}`}
+                      href={hrefWith({ edit: item.id })}
+                      scroll={false}
+                      aria-current={item.id === editKey ? "true" : undefined}
                       className="text-14 text-text font-medium hover:underline"
                     >
                       {item.title}
@@ -212,87 +276,24 @@ export default async function PortfolioPage({
             </Link>
           ) : null}
 
-          <section className={sectionClass}>
-            <h2 className="text-14 text-text font-semibold">
-              {t("list.newItem")}
-            </h2>
-            {view.readOnly ? (
-              <p className="text-12 text-text-secondary">
-                {t("list.readOnly")}
-              </p>
-            ) : view.canWrite ? (
-              <ActionForm
-                action={createPortfolioItemAction}
-                submitLabel={t("list.create")}
-                className="space-y-3"
-                testId="create-portfolio-item"
-              >
-                <input
-                  type="hidden"
-                  name="workspaceSlug"
-                  value={workspaceSlug}
-                />
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <label className={labelClass}>
-                    {t("form.kind")}
-                    <select
-                      name="kind"
-                      defaultValue="product:general"
-                      className={inputClass}
-                    >
-                      {translatedKinds(t).map((k) => (
-                        <option key={k.value} value={k.value}>
-                          {k.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={labelClass}>
-                    {t("form.title")}
-                    <input
-                      name="title"
-                      required
-                      maxLength={200}
-                      className={inputClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    {t("form.priceDisplay")}
-                    <select
-                      name="price_display"
-                      defaultValue="price"
-                      className={inputClass}
-                    >
-                      {PRICE_DISPLAYS.map((k) => (
-                        <option key={k} value={k}>
-                          {labelOf(t, "priceDisplay", k)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={`${labelClass} sm:col-span-3`}>
-                    {t("form.description")}
-                    <textarea
-                      name="description_plain"
-                      rows={2}
-                      maxLength={10000}
-                      className={inputClass}
-                    />
-                  </label>
-                </div>
-                <VariantFields idPrefix="new" />
-                <p className="text-11 text-text-secondary">
-                  {t("list.createHint")}
-                </p>
-              </ActionForm>
-            ) : (
-              <p className="text-12 text-text-secondary">
-                {t("list.viewOnly")}
-              </p>
-            )}
-          </section>
+          {view.readOnly ? (
+            <p className="text-12 text-text-secondary">{t("list.readOnly")}</p>
+          ) : !view.canWrite ? (
+            <p className="text-12 text-text-secondary">{t("list.viewOnly")}</p>
+          ) : null}
         </>
       )}
     </div>
+  );
+
+  return (
+    <RecordWorkbench
+      main={main}
+      panel={panel}
+      panelLabel={t("item.panelLabel")}
+      closeHref={hrefWith({})}
+      editKey={editKey}
+      defaultPanelSize="wide"
+    />
   );
 }

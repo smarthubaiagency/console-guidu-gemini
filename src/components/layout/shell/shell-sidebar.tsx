@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, HelpCircle, ShieldAlert } from "lucide-react";
+import { ArrowLeft, HelpCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -27,8 +27,6 @@ export type ShellSidebarProps = Readonly<{
   /** Top of the sidebar: workspace switcher or console identity. */
   header: React.ReactNode;
   user: ShellUser;
-  /** Shows the link to /platform in the customer dashboard. */
-  isPlatformAdmin?: boolean;
 }>;
 
 /**
@@ -40,7 +38,6 @@ export function ShellSidebar({
   sections,
   header,
   user,
-  isPlatformAdmin = false,
 }: ShellSidebarProps) {
   const t = useTranslations("shell");
   const pathname = usePathname();
@@ -55,14 +52,6 @@ export function ShellSidebar({
       badge: "v1.0",
     },
   ];
-  if (area === "app" && isPlatformAdmin) {
-    secondary.push({
-      id: "platform",
-      title: t("adminPanel"),
-      icon: ShieldAlert,
-      href: "/platform",
-    });
-  }
   if (area !== "app") {
     secondary.push({
       id: "back-to-app",

@@ -4,11 +4,8 @@ import { getFormatter, getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { createPartnerCustomerAction } from "@/core/partners/actions";
@@ -52,7 +49,6 @@ export default async function PartnerCustomersPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumb"), t("customers.title")]}
         title={t("customers.title")}
         description={t("customers.description")}
         icon={<Building2 className="h-5 w-5" />}

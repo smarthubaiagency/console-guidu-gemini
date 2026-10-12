@@ -28,7 +28,6 @@ export default async function PartnerBrandPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumb"), t("brand.title")]}
         title={t("brand.title")}
         description={t("brand.description")}
         icon={<Palette className="h-5 w-5" />}

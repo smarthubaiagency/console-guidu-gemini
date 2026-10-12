@@ -4,7 +4,7 @@ import { requireLegalAcceptance } from "@/core/legal/gate";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { listRequestUserWorkspaces } from "@/core/partners/request-context";
-import { getPlatformAdminMember } from "@/core/admin/platform";
+import { getConsoleAccess } from "@/core/auth/console-access";
 import { loadAppNavigation } from "@/core/module-runtime/loaders";
 import { AppShell } from "@/components/layout/shell/app-shell";
 import { WorkspaceSwitcher } from "@/components/layout/shell/workspace-switcher";
@@ -44,8 +44,8 @@ export default async function WorkspaceLayout({
   // Load all user workspaces for switcher
   const workspaces = await listRequestUserWorkspaces(prisma, identity.userId);
 
-  // Check if current user is platform admin
-  const platformAdmin = await getPlatformAdminMember(prisma, identity.userId);
+  // Shortcuts to /admin and /platform in the header (ADR 0014).
+  const access = await getConsoleAccess(identity.userId);
 
   // Generated from core entries and the module registry (Adendo §8.1).
   const navigation = translateNavigation(
@@ -68,7 +68,7 @@ export default async function WorkspaceLayout({
         />
       }
       user={{ email: identity.email }}
-      isPlatformAdmin={Boolean(platformAdmin)}
+      access={access}
     >
       {children}
     </AppShell>

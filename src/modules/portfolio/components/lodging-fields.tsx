@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { inputClass, labelClass } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 
 import { ACCOMMODATION_KINDS, BOARDS, REFUNDABILITY } from "../lodging";
 import type {

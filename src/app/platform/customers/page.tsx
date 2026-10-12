@@ -38,18 +38,12 @@ export default async function AdminCustomersPage() {
     : [];
   const planByOrg = new Map(plans.map((p) => [p.organizationId, p]));
   const t = await getTranslations("platform.customers");
-  const tPlatform = await getTranslations("platform");
   const tUsage = await getTranslations("usage");
   const format = await getFormatter();
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="border-border border-b pb-5">
-        <div className="text-12 text-warning-text mb-1 flex items-center gap-2 font-semibold tracking-wider uppercase">
-          <span>{tPlatform("breadcrumb")}</span>
-          <span>/</span>
-          <span>{t("breadcrumb")}</span>
-        </div>
         <div className="flex items-center gap-3">
           <div className="bg-primary text-on-primary rounded-lg p-2">
             <Building2 className="h-5 w-5" />

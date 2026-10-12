@@ -55,7 +55,6 @@ export default async function LocationsPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="locations">
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("title")]}
         title={t("title")}
         description={t("description")}
         icon={<MapPin className="h-5 w-5" />}

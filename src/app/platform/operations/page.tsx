@@ -69,7 +69,6 @@ export default async function PlatformOperationsPage() {
   const online = data.workers.filter((w) => w.state === "online").length;
 
   const t = await getTranslations("operations");
-  const tPlatform = await getTranslations("platform");
   const format = await getFormatter();
   const formatDateTime = (date: Date): string =>
     format.dateTime(date, {
@@ -92,7 +91,6 @@ export default async function PlatformOperationsPage() {
       data-testid="platform-operations"
     >
       <ModulePageHeader
-        trail={[tPlatform("breadcrumb"), t("breadcrumb")]}
         title={t("title")}
         description={t("description")}
         icon={<Activity className="h-5 w-5" />}

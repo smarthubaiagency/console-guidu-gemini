@@ -92,17 +92,11 @@ export default async function WorkspaceModuleSettingsPage({
   });
 
   if (view.kind === "missing") notFound();
-  const t = await getTranslations("modules");
   const catalog = await getModuleCatalog();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={[
-          t("breadcrumbSettings"),
-          t("breadcrumbModules"),
-          catalog.name(moduleKey, mod.manifest.displayName),
-        ]}
         title={catalog.settingsLabel(moduleKey, entry.id, entry.label)}
         description={catalog.description(moduleKey, mod.manifest.description)}
         icon={<Puzzle className="h-5 w-5" />}

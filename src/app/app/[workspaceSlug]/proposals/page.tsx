@@ -96,7 +96,6 @@ export default async function ProposalsPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="proposals">
       <ModulePageHeader
-        trail={[t("trail.platform"), t("trail.proposals")]}
         title={t("metaTitle")}
         description={t("list.description")}
         icon={<Inbox className="h-5 w-5" />}

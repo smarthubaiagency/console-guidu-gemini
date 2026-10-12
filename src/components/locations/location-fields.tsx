@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 
-import { inputClass, labelClass } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { KNOWN_AMENITIES } from "@/core/locations/amenities";
 import { DAYS, type LocationView } from "@/core/locations/service";
 

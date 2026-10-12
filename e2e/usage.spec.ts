@@ -41,7 +41,7 @@ test("usage shows measured counts against the limits", async ({
   await expect(
     page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
-  await page.goto(`/app/${wsSlug}/hello-world/records`);
+  await page.goto(`/app/${wsSlug}/hello-world/records?edit=new`);
   await page.getByLabel("Título do registro").fill("Contado no consumo");
   await page.getByRole("button", { name: "Criar registro" }).click();
   await expect(page.getByRole("status")).toContainText("Registro criado.");

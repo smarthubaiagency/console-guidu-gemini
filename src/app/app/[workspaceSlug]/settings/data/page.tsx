@@ -8,11 +8,8 @@ import {
 } from "@/components/billing/billing-ui";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { workspaceGrants } from "@/core/module-runtime/loaders";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
@@ -80,7 +77,6 @@ export default async function WorkspaceDataPage({ params }: DataPageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="workspace-data">
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("title")]}
         title={t("title")}
         description={t("description")}
         icon={<ShieldCheck className="h-5 w-5" />}

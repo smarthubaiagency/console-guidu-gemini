@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/layout/shell/app-shell";
+import { getConsoleAccess } from "@/core/auth/console-access";
 import { ConsoleHeader } from "@/components/layout/shell/console-header";
 import { partnerRoleKey } from "@/components/partners/role-label";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
@@ -21,6 +22,7 @@ export default async function PartnerConsoleLayout({
 
   return (
     <AppShell
+      access={await getConsoleAccess(identity.userId)}
       area="admin"
       sections={translateNavigation(
         buildPartnerNavigation(partnerGrants(membership.role)),

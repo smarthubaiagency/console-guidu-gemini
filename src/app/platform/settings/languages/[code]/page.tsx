@@ -6,11 +6,8 @@ import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { MachineRunStatus } from "@/components/i18n/machine-run-status";
@@ -53,7 +50,6 @@ export default async function LanguageTextsPage({
   const actor = { userId: identity.userId, platformRole: role };
   const t = await getTranslations("languages");
   const tc = await getTranslations("common");
-  const tNav = await getTranslations("nav");
   const search = one(query.q);
   const filter = (["all", "edited", "missing", "machine"] as const).find(
     (f) => f === one(query.filter),
@@ -96,11 +92,6 @@ export default async function LanguageTextsPage({
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <ModulePageHeader
-        trail={[
-          tNav("sections.platform.platform_settings"),
-          t("title"),
-          language.name,
-        ]}
         title={`${t("texts")} — ${language.name}`}
         description={`${language.code} · ${t(`statuses.${language.status}`)} · ${t("count", { count: texts.total })}`}
         icon={<Languages className="h-5 w-5" />}

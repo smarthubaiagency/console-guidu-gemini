@@ -69,6 +69,7 @@ test("owner registers a store and a product with variants in the Portfolio", asy
 
   // Product.
   await sidebar(page).getByRole("link", { name: "Portfólio" }).click();
+  await page.getByRole("link", { name: "Novo item" }).click();
   const create = page.getByTestId("create-portfolio-item");
   await create.getByLabel("Título").fill("Camiseta E2E");
   await create.getByLabel("Descrição").fill("Algodão 100%.");
@@ -107,6 +108,7 @@ test("owner registers a store and a product with variants in the Portfolio", asy
   await expect(list).toContainText("2 variantes");
 
   // A healthcare service (F5b): the vertical fields come from its schema.
+  await page.getByRole("link", { name: "Novo item" }).click();
   const service = page.getByTestId("create-portfolio-item");
   await service.getByLabel("Categoria").selectOption("service:healthcare");
   await service.getByLabel("Título").fill("Consulta E2E");
@@ -168,6 +170,7 @@ test("owner registers lodging with accommodation, rate plans and nightly prices"
   ).toBeVisible();
 
   await page.goto(`/app/${wsSlug}/portfolio`);
+  await page.getByRole("link", { name: "Novo item" }).click();
   const create = page.getByTestId("create-portfolio-item");
   await create.getByLabel("Categoria").selectOption("lodging:general");
   await create.getByLabel("Título").fill("Pousada E2E");

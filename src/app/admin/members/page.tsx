@@ -4,11 +4,8 @@ import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { partnerRoleKey } from "@/components/partners/role-label";
 import { RoleSelect } from "@/components/partners/role-select";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
@@ -66,7 +63,6 @@ export default async function PartnerMembersPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumb"), t("members.title")]}
         title={t("members.title")}
         description={t("members.description")}
         icon={<Users className="h-5 w-5" />}

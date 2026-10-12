@@ -1,6 +1,6 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
-import { inputClass, labelClass } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 
 import { AVAILABILITY_STATUSES, SALE_UNITS } from "../ucp";
 import type { LodgingView, VariantView } from "../server/services/items";

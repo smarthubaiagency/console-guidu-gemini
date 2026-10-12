@@ -7,11 +7,8 @@ import {
   ChevronsUpDown,
   Languages,
   LogOut,
-  Moon,
-  Sun,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -67,9 +64,7 @@ export function NavUser({ user }: Readonly<{ user: ShellUser }>) {
   const t = useTranslations("shell");
   const tu = useTranslations("ui");
   const { isMobile } = useSidebar();
-  const { resolvedTheme, setTheme } = useTheme();
   const signOut = useRef<HTMLFormElement>(null);
-  const isDark = resolvedTheme === "dark";
 
   return (
     <SidebarMenu>
@@ -111,13 +106,6 @@ export function NavUser({ user }: Readonly<{ user: ShellUser }>) {
                   <Languages />
                   {t("language")}
                 </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                data-testid="theme-toggle"
-                onSelect={() => setTheme(isDark ? "light" : "dark")}
-              >
-                {isDark ? <Sun /> : <Moon />}
-                {isDark ? tu("themeLight") : tu("themeDark")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

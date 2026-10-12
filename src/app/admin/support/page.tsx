@@ -5,11 +5,8 @@ import { getFormatter, getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { supportStatusKey } from "@/components/partners/support-status";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
@@ -65,7 +62,6 @@ export default async function PartnerSupportPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumb"), t("support.title")]}
         title={t("support.title")}
         description={t("support.description")}
         icon={<Hand className="h-5 w-5" />}

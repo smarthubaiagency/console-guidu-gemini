@@ -55,7 +55,6 @@ export default async function ModulesSettingsPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("breadcrumbModules")]}
         title={t("title")}
         description={t("description")}
         icon={<Puzzle className="h-5 w-5" />}

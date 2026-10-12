@@ -20,11 +20,8 @@ import {
   NoticesSection,
   PayoutReportsSection,
 } from "@/components/billing/automation-panels";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import {
   changeSubscriptionStatusAction,
   createPartnerPlanAction,
@@ -117,7 +114,6 @@ export default async function PartnerBillingPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="partner-billing">
       <ModulePageHeader
-        trail={[t("trailPartner"), t("trailBilling")]}
         title={t("title")}
         description={t("description")}
         icon={<CreditCard className="h-5 w-5" />}

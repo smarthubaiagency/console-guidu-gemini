@@ -50,7 +50,6 @@ export default async function ApiSettingsPage({
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="api-settings">
       <ModulePageHeader
-        trail={[t("breadcrumbSettings"), t("title")]}
         title={t("title")}
         description={t("description")}
         icon={<Code2 className="h-5 w-5" />}

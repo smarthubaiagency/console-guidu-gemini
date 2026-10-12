@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 
 export type WorkbenchPanelSize = "default" | "wide";
 
-type WorkbenchState = Readonly<{
+export type WorkbenchState = Readonly<{
   panelOpen: boolean;
   setPanelOpen: (open: boolean) => void;
   panelSize: WorkbenchPanelSize;
@@ -41,7 +41,7 @@ export function useWorkbench(): WorkbenchState {
 }
 
 /** Controlled when `value` is given, uncontrolled otherwise. */
-function useControllable<T>(
+export function useControllable<T>(
   value: T | undefined,
   initial: T,
   onChange: ((next: T) => void) | undefined,
@@ -56,6 +56,90 @@ function useControllable<T>(
     [value, onChange],
   );
   return [current, set];
+}
+
+/**
+ * The internal drawer itself (ADR 0015): `absolute` on the right of the
+ * nearest `relative` parent, never `fixed`. 350px or 700px from `lg` up, the
+ * whole parent width below. Esc closes it, also when the focus is outside it
+ * (a menu or dialog open on top closes first); the focus goes into it on open
+ * and back to the opener on close. Reads its state from the nearest
+ * workbench.
+ */
+export function WorkbenchDrawer({
+  label,
+  children,
+}: Readonly<{ label: string; children: React.ReactNode }>) {
+  const { panelOpen: open, setPanelOpen, panelSize: size } = useWorkbench();
+  const drawer = useRef<HTMLElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    // A drawer already open on the first paint does not take the focus.
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    if (open) {
+      if (document.activeElement instanceof HTMLElement) {
+        opener.current = document.activeElement;
+      }
+      drawer.current?.focus();
+    } else {
+      opener.current?.focus();
+      opener.current = null;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    // Esc pressed outside the drawer, e.g. after a save moved the focus to
+    // the page. Radix layers mark the event when they close first.
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        setPanelOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, setPanelOpen]);
+
+  if (!open) return null;
+  return (
+    <aside
+      ref={drawer}
+      tabIndex={-1}
+      aria-label={label}
+      data-slot="workbench-panel"
+      data-size={size}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && !event.defaultPrevented) {
+          event.stopPropagation();
+          setPanelOpen(false);
+        }
+      }}
+      className={cn(
+        "bg-surface border-border absolute top-0 right-0 z-40 flex h-full w-full max-w-full flex-col border-l shadow-xl outline-none",
+        "transition-all duration-500 ease-in-out motion-reduce:transition-none",
+        size === "wide" ? "lg:w-drawer-wide" : "lg:w-drawer",
+      )}
+    >
+      {children}
+    </aside>
+  );
+}
+
+/** Drawer state for content outside a WorkbenchLayout (the shell assistant). */
+export function WorkbenchProvider({
+  value,
+  children,
+}: Readonly<{ value: WorkbenchState; children: React.ReactNode }>) {
+  return (
+    <WorkbenchContext.Provider value={value}>
+      {children}
+    </WorkbenchContext.Provider>
+  );
 }
 
 export type WorkbenchLayoutProps = Readonly<{
@@ -116,28 +200,6 @@ export function WorkbenchLayout({
     setWasOpen(open);
     if (open) setListOpen(false);
   }
-  const drawer = useRef<HTMLElement>(null);
-  const opener = useRef<HTMLElement | null>(null);
-
-  const mounted = useRef(false);
-
-  useEffect(() => {
-    // A drawer already open on the first paint does not take the focus.
-    if (!mounted.current) {
-      mounted.current = true;
-      return;
-    }
-    if (open) {
-      if (document.activeElement instanceof HTMLElement) {
-        opener.current = document.activeElement;
-      }
-      drawer.current?.focus();
-    } else {
-      opener.current?.focus();
-      opener.current = null;
-    }
-  }, [open]);
-
   const state = useMemo(
     () => ({
       panelOpen: open,
@@ -152,7 +214,7 @@ export function WorkbenchLayout({
     <WorkbenchContext.Provider value={state}>
       <div
         data-slot="workbench"
-        className="h-workbench md:h-workbench-inset border-border -mx-4 -mb-4 flex overflow-hidden border-t md:-mx-6 md:-mb-6 md:rounded-b-xl"
+        className="h-workbench md:h-workbench-md -m-4 flex overflow-hidden md:-m-6"
       >
         {left ? (
           <aside
@@ -192,28 +254,7 @@ export function WorkbenchLayout({
             {main}
           </div>
 
-          {open ? (
-            <aside
-              ref={drawer}
-              tabIndex={-1}
-              aria-label={panelLabel}
-              data-slot="workbench-panel"
-              data-size={size}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  event.stopPropagation();
-                  setOpen(false);
-                }
-              }}
-              className={cn(
-                "bg-surface border-border absolute top-0 right-0 z-40 flex h-full w-full max-w-full flex-col border-l shadow-xl outline-none",
-                "transition-all duration-500 ease-in-out motion-reduce:transition-none",
-                size === "wide" ? "lg:w-drawer-wide" : "lg:w-drawer",
-              )}
-            >
-              {panel}
-            </aside>
-          ) : null}
+          <WorkbenchDrawer label={panelLabel}>{panel}</WorkbenchDrawer>
         </section>
       </div>
     </WorkbenchContext.Provider>

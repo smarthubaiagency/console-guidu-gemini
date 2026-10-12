@@ -23,7 +23,7 @@ O desenvolvimento usa exclusivamente o Supabase dev `console-guidu` (`ssulunrysn
 
 ## Interface
 
-Toda área com menu lateral usa o shell padrão com a sidebar-08 do shadcn (`AppShell`, ADR 0014, guia em `docs/architecture/ui-shell.md`). Não crie sidebar nem cabeçalho de topo próprios. Componentes do shadcn ficam em `src/components/ui/`.
+Toda área com menu lateral usa o shell padrão com a sidebar-08 do shadcn e o cabeçalho de 60 px (`AppShell`, ADR 0014, guia em `docs/architecture/ui-shell.md`). Não crie sidebar nem cabeçalho próprios. Todo componente de interface usa o equivalente do shadcn/ui em `src/components/ui/`; não crie versão própria do que o shadcn tem. Edição de registro e chat abrem na gaveta interna (`WorkbenchLayout`, ADR 0015), nunca em modal ou página separada.
 
 ## Git e evidência
 

@@ -5,11 +5,8 @@ import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { addLanguageAction, updateLanguageAction } from "@/core/i18n/actions";
@@ -34,7 +31,6 @@ export default async function PlatformLanguagesPage() {
     return <ModuleNotice variant="denied" />;
   }
   const t = await getTranslations("languages");
-  const tNav = await getTranslations("nav");
   const languages = await withIdentityContext(prisma, identity.userId, (tx) =>
     listLanguages(tx, { userId: identity.userId, platformRole: role }),
   );
@@ -42,7 +38,6 @@ export default async function PlatformLanguagesPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={[tNav("sections.platform.platform_settings"), t("title")]}
         title={t("title")}
         description={t("description")}
         icon={<Languages className="h-5 w-5" />}

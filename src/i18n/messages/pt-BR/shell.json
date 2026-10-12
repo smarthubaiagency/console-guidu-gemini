@@ -1,5 +1,4 @@
 {
-  "adminPanel": "Painel Admin",
   "myAccount": "Minha Conta",
   "documentation": "Documentação",
   "mfaSession": "Sessão MFA AAL2 Ativa",
@@ -14,5 +13,13 @@
   "workbenchList": "Lista",
   "workbenchExpand": "Expandir a janela",
   "workbenchCollapse": "Reduzir a janela",
-  "workbenchClose": "Fechar a janela"
+  "workbenchClose": "Fechar a janela",
+  "searchTitle": "Pesquisar páginas",
+  "searchPlaceholder": "Pesquisar páginas…",
+  "searchEmpty": "Nenhuma página encontrada.",
+  "assistant": "Assistente de IA",
+  "assistantSoonTitle": "Em breve",
+  "assistantSoonText": "O assistente de IA vai abrir nesta janela. O módulo de agentes de IA ainda aguarda especificação, então esta janela mostra apenas o modelo.",
+  "adminLink": "Console do parceiro",
+  "platformLink": "Plataforma"
 }

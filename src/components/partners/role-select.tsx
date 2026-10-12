@@ -1,6 +1,6 @@
 import { PARTNER_ROLES, type PartnerRoleKey } from "@/core/permissions/matrix";
 
-import { inputClass, labelClass } from "./action-form";
+import { inputClass, labelClass } from "./form-classes";
 import { PARTNER_ROLE_LABELS } from "./role-label";
 
 /**

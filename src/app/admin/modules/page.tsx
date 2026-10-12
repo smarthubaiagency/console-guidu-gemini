@@ -47,7 +47,6 @@ export default async function PartnerModulesPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <ModulePageHeader
-        trail={[t("breadcrumb"), t("modules.title")]}
         title={t("modules.title")}
         description={t("modules.description")}
         icon={<Puzzle className="h-5 w-5" />}

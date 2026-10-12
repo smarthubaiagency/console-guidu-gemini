@@ -44,7 +44,7 @@ test("a background job is queued, run by the worker and shown in Execuções", a
     page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
 
-  await page.goto(`/app/${wsSlug}/hello-world/records`);
+  await page.goto(`/app/${wsSlug}/hello-world/records?edit=new`);
   await page.getByLabel("Título do registro").fill("Criado pelo worker");
   await page.getByRole("button", { name: "Em segundo plano" }).click();
   await expect(page.getByRole("status")).toContainText(

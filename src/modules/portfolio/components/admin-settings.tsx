@@ -1,10 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
-import {
-  ActionForm,
-  inputClass,
-  labelClass,
-} from "@/components/partners/action-form";
+import { ActionForm } from "@/components/partners/action-form";
+import { inputClass, labelClass } from "@/components/partners/form-classes";
 import type { ModuleSettingsComponentProps } from "@/core/module-contracts/settings";
 
 import {

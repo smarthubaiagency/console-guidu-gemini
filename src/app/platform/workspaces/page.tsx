@@ -14,17 +14,11 @@ export default async function AdminWorkspacesPage() {
   const identity = await requirePlatformAdminPage("/platform/workspaces");
   const workspaces = await listAdminWorkspaces(prisma, identity.userId);
   const t = await getTranslations("platform.workspaces");
-  const tPlatform = await getTranslations("platform");
   const format = await getFormatter();
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="border-border border-b pb-5">
-        <div className="text-12 text-warning-text mb-1 flex items-center gap-2 font-semibold tracking-wider uppercase">
-          <span>{tPlatform("breadcrumb")}</span>
-          <span>/</span>
-          <span>{t("breadcrumb")}</span>
-        </div>
         <div className="flex items-center gap-3">
           <div className="bg-primary text-on-primary rounded-lg p-2">
             <Layers className="h-5 w-5" />

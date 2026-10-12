@@ -144,7 +144,7 @@
     "newItem": "Nuevo ítem",
     "readOnly": "Suscripción suspendida: el portafolio queda solo para consulta.",
     "create": "Crear ítem",
-    "createHint": "El ítem nace como borrador; los datos de la categoría (por ejemplo, las habitaciones de un inmueble o la fecha de un evento) se completan en la página del ítem. Hospedaje llega en la próxima etapa.",
+    "createHint": "El ítem nace como borrador; los datos de la categoría (por ejemplo, las habitaciones de un inmueble o la fecha de un evento) se completan después de crearlo, en esta misma ventana.",
     "viewOnly": "Tu rol solo permite consultar el portafolio."
   },
   "form": {
@@ -180,7 +180,8 @@
     "aiKeywords": "Palabras clave para la IA",
     "aiAliases": "Sinónimos",
     "aiDoNotSay": "La IA nunca debe decir",
-    "aiSafetyRules": "Reglas de seguridad para la IA"
+    "aiSafetyRules": "Reglas de seguridad para la IA",
+    "panelLabel": "Ítem del portafolio"
   },
   "variants": {
     "title": "Variantes ({count})",

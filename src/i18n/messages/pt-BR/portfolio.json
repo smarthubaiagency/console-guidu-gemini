@@ -144,7 +144,7 @@
     "newItem": "Novo item",
     "readOnly": "Assinatura suspensa: o portfólio fica só para consulta.",
     "create": "Criar item",
-    "createHint": "O item nasce como rascunho; os dados da categoria (por exemplo, quartos de um imóvel ou a data de um evento) são preenchidos na página do item. Hospedagem chega na próxima etapa.",
+    "createHint": "O item nasce como rascunho; os dados da categoria (por exemplo, quartos de um imóvel ou a data de um evento) são preenchidos depois de criar, nesta mesma janela.",
     "viewOnly": "Seu papel permite apenas consultar o portfólio."
   },
   "form": {
@@ -180,7 +180,8 @@
     "aiKeywords": "Palavras-chave para a IA",
     "aiAliases": "Sinônimos",
     "aiDoNotSay": "A IA nunca deve dizer",
-    "aiSafetyRules": "Regras de segurança para a IA"
+    "aiSafetyRules": "Regras de segurança para a IA",
+    "panelLabel": "Item do portfólio"
   },
   "variants": {
     "title": "Variantes ({count})",

@@ -80,12 +80,14 @@ test.describe("Module contract — hello-world reference module", () => {
     await expect(
       page.getByRole("heading", { name: "Registros de exemplo" }),
     ).toBeVisible();
+    await page.getByRole("link", { name: "Novo registro" }).click();
     await page.getByLabel("Título do registro").fill("Primeiro registro E2E");
     await page.getByRole("button", { name: "Criar registro" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "Registro criado." }),
     ).toBeVisible();
 
+    await page.keyboard.press("Escape");
     await page.getByRole("link", { name: "Primeiro registro E2E" }).click();
     await expect(
       page.getByRole("heading", { name: "Primeiro registro E2E" }),
@@ -172,9 +174,9 @@ test.describe("Module contract — hello-world reference module", () => {
     await expect(
       page.getByText("Seu papel permite apenas consultar os registros."),
     ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Criar registro" }),
-    ).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Novo registro" })).toHaveCount(
+      0,
+    );
 
     await page.goto(`/app/${wsSlug}/settings/modules/hello-world`);
     await expect(page.getByLabel("Saudação do workspace")).toBeDisabled();

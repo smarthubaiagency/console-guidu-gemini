@@ -101,6 +101,9 @@ test("platform creates a partner whose owner runs the console on the partner dom
     owner.getByRole("heading", { name: "Agência E2E" }),
   ).toBeVisible();
 
+  // Partner members get the shortcut to /admin in the header.
+  await expect(owner.getByTestId("admin-link")).toBeVisible();
+
   // The owner sees the members page with themself as owner.
   await owner.goto("/admin/members");
   await expect(owner.getByTestId("partner-member-list")).toContainText(
