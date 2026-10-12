@@ -57,4 +57,7 @@ Marcelo definiu o cabeçalho de todas as páginas e que **todos os componentes d
 2. **Rolagem.** O `SidebarInset` tem a altura da tela e só o conteúdo rola: o cabeçalho fica parado e as gavetas abrem ao lado do conteúdo, abaixo do cabeçalho.
 3. **O item "Painel Admin" sai da sidebar**, substituído pelos atalhos do cabeçalho.
 4. **Regra do shadcn.** Todo componente de interface usa o componente do shadcn/ui equivalente em `src/components/ui/` (botão, campo, select, tabela, diálogo, abas, cartão, badge e o que mais houver). Não se cria versão própria de algo que o shadcn tem. Componentes novos vêm do registro oficial, com as mudanças mínimas do item 4. Telas antigas ainda feitas à mão migram na etapa **U3**.
+
+   **U3a (12/10/2026):** entraram `label`, `textarea`, `select`, `native-select`, `switch`, `radio-group`, `table`, `card`, `badge`, `alert` e `tabs`, do mesmo registro (branch `main` de 12/10/2026), com uma única mudança: `text-white` virou o token `text-on-primary` no badge destrutivo, como no botão. Em formulário, a lista de opções é o `NativeSelect`: envia no `FormData` da server action e usa o seletor do celular; o `Select` (Radix) fica para listas ricas fora de formulário. O `sonner` do plano não entra: os avisos são do SmartStatusBanner (ADR 0016). O `Field` e o `SubmitButton` de `src/shared/ui/form.tsx` passam a usar `Label`, `Input` e `Button` com a mesma API. Catálogo em Plataforma › Configurações › Padrões de interface › Componentes (`/platform/design/components`).
+
 5. **Dependência.** `cmdk` 1.1.1 (base do `Command`), versão exata.

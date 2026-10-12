@@ -50,6 +50,7 @@
     "partner_brand": "Marca",
     "platform_design": "Patrones de interfaz",
     "platform_design_workbench": "Ventana de edición",
-    "platform_design_status": "Avisos"
+    "platform_design_status": "Avisos",
+    "platform_design_components": "Componentes"
   }
 }

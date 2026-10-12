@@ -105,6 +105,8 @@ test("the customer shell navigates, collapses, switches and signs out", async ({
     name: "Assistente de IA",
   });
   await expect(assistant).toBeVisible();
+  // The drawer takes the focus once mounted; Esc before that is a race.
+  await expect(assistant).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(assistant).toBeHidden();
 

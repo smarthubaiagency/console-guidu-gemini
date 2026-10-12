@@ -50,6 +50,7 @@
     "partner_brand": "Brand",
     "platform_design": "Interface patterns",
     "platform_design_workbench": "Edit window",
-    "platform_design_status": "Notices"
+    "platform_design_status": "Notices",
+    "platform_design_components": "Components"
   }
 }
