@@ -1,5 +1,4 @@
 {
-  "adminPanel": "Admin panel",
   "myAccount": "My account",
   "documentation": "Documentation",
   "mfaSession": "MFA AAL2 session active",
@@ -14,5 +13,13 @@
   "workbenchList": "List",
   "workbenchExpand": "Expand the window",
   "workbenchCollapse": "Shrink the window",
-  "workbenchClose": "Close the window"
+  "workbenchClose": "Close the window",
+  "searchTitle": "Search pages",
+  "searchPlaceholder": "Search pages…",
+  "searchEmpty": "No pages found.",
+  "assistant": "AI assistant",
+  "assistantSoonTitle": "Coming soon",
+  "assistantSoonText": "The AI assistant will open in this window. The AI agents module is still awaiting its specification, so this window only shows the pattern.",
+  "adminLink": "Partner console",
+  "platformLink": "Platform"
 }

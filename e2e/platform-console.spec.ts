@@ -53,6 +53,7 @@ test.describe("Platform Administration Governance Console", () => {
     ).toBeVisible();
     await expect(page.getByText("Empresas / Clientes Ativos")).toBeVisible();
     await expect(page.getByText("Workspaces Ativos")).toBeVisible();
+    await expect(page.getByTestId("platform-link")).toBeVisible();
 
     // Access customers management subpage
     await page.goto("/platform/customers");

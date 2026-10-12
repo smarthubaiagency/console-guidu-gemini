@@ -6,8 +6,9 @@
  * Maintenance Rationale:
  * - The customer dashboard uses the shadcn sidebar-08 shell: active entry,
  *   breadcrumb, collapse kept across reloads by the `sidebar_state` cookie,
- *   workspace switcher, theme and logout in the account menu, and the drawer
- *   on a phone-sized screen.
+ *   workspace switcher, logout in the account menu, the 60px header (search,
+ *   colour mode, assistant drawer, console shortcuts only when allowed) and
+ *   the drawer on a phone-sized screen.
  * ============================================================================
  */
 
@@ -79,11 +80,37 @@ test("the customer shell navigates, collapses, switches and signs out", async ({
     "Shell Dois",
   );
 
-  // Theme in the account menu.
-  await page.getByTestId("user-menu").click();
+  // 60px header with a bottom border.
+  const header = page.locator('[data-slot="shell-header"]');
+  expect((await header.boundingBox())?.height).toBe(60);
+  await expect(header).toHaveCSS("border-bottom-width", "1px");
+
+  // Search opens with Ctrl+K and goes to a page of the navigation.
+  await page.keyboard.press("Control+k");
+  await page.getByPlaceholder("Pesquisar páginas…").fill("Equipe");
+  await page.getByRole("option", { name: "Equipe & Membros" }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/${second}/settings/team$`));
+
+  // Colour mode in the header.
+  const before = await page.locator("html").getAttribute("data-theme");
   await page.getByTestId("theme-toggle").click();
-  const theme = await page.locator("html").getAttribute("data-theme");
-  expect(theme === "dark" || theme === "light").toBe(true);
+  await expect(page.locator("html")).not.toHaveAttribute(
+    "data-theme",
+    before ?? "",
+  );
+
+  // The assistant opens in the internal drawer and closes with Esc.
+  await page.getByTestId("assistant-toggle").click();
+  const assistant = page.getByRole("complementary", {
+    name: "Assistente de IA",
+  });
+  await expect(assistant).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(assistant).toBeHidden();
+
+  // A customer without a console role sees no console shortcuts.
+  await expect(page.getByTestId("admin-link")).toHaveCount(0);
+  await expect(page.getByTestId("platform-link")).toHaveCount(0);
 
   await signOutFromShell(page);
   await expect(page).toHaveURL(/\/login\?notice=signed-out$/);

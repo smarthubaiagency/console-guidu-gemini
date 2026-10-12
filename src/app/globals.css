@@ -125,6 +125,8 @@
   --text-xs--line-height: 16px;
   --text-sm: 14px;
   --text-sm--line-height: 20px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
   --text-base: 16px;
   --text-base--line-height: 24px;
 
@@ -211,13 +213,13 @@
   height: calc(100dvh - --spacing(48));
 }
 
-/* Workbench (ADR 0015): the content area of the shell below its 64px
-   header, on phones and inside the inset panel (8px margins) from md up. */
+/* Workbench (ADR 0015): fills the shell content area, whose padding is
+   p-4 (phones) or p-6 (md up); the workbench cancels it with -m-4 / -m-6. */
 @utility h-workbench {
-  height: calc(100svh - --spacing(16));
+  height: calc(100% + --spacing(8));
 }
-@utility h-workbench-inset {
-  height: calc(100svh - --spacing(16) - --spacing(4));
+@utility h-workbench-md {
+  height: calc(100% + --spacing(12));
 }
 /* Room for the default drawer, so it pushes the content instead of covering. */
 @utility pr-drawer {

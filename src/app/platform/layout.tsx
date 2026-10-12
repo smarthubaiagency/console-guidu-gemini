@@ -2,6 +2,7 @@ import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { AppShell } from "@/components/layout/shell/app-shell";
+import { getConsoleAccess } from "@/core/auth/console-access";
 import { loadPlatformNavigation } from "@/core/module-runtime/loaders";
 import { ConsoleHeader } from "@/components/layout/shell/console-header";
 import { getRequestBrand } from "@/core/brand/resolve";
@@ -23,6 +24,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <AppShell
+      access={await getConsoleAccess(identity.userId)}
       area="platform"
       sections={translateNavigation(
         loadPlatformNavigation(adminInfo?.role ?? null),
