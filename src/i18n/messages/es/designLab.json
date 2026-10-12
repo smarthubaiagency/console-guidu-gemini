@@ -86,5 +86,84 @@
     "answer": "Respuesta a la última confirmación: {answer}",
     "answerYes": "confirmó",
     "answerNo": "canceló"
+  },
+  "components": {
+    "title": "Componentes",
+    "subtitle": "Los componentes shadcn que usa toda pantalla (ADR 0014). Úsela para aprobar el aspecto y como referencia al crear pantallas.",
+    "sampleNotice": "Página de demostración: los datos son ejemplos y no se guarda nada.",
+    "groups": {
+      "buttons": "Botones",
+      "fields": "Campos de texto",
+      "selects": "Listas de opciones",
+      "choices": "Marcar y elegir",
+      "tabs": "Pestañas",
+      "badges": "Etiquetas",
+      "cards": "Tarjetas",
+      "table": "Tabla",
+      "alerts": "Estado de página"
+    },
+    "hints": {
+      "buttons": "Use Button en toda acción. Destructivo solo para acciones que no se pueden deshacer.",
+      "fields": "Label + Input o Textarea. El error de validación del campo queda debajo de él, en rojo.",
+      "selects": "En formularios use NativeSelect (se envía con el formulario y funciona en el móvil). Select queda para listas ricas fuera de formularios.",
+      "choices": "Checkbox para sí/no dentro de un formulario, Switch para activar y desactivar al instante, RadioGroup para una elección entre pocas opciones.",
+      "tabs": "Para dividir una pantalla en partes del mismo tema.",
+      "badges": "Para estado y categoría, nunca como botón.",
+      "cards": "Para agrupar un bloque de contenido con título.",
+      "table": "Para listas con columnas.",
+      "alerts": "Solo para estados de página (enlace caducado, acceso denegado). El resultado de una acción va al banner de avisos (ADR 0016)."
+    },
+    "variants": {
+      "default": "Principal",
+      "secondary": "Secundario",
+      "outline": "Contorno",
+      "ghost": "Discreto",
+      "link": "Enlace",
+      "destructive": "Destructivo",
+      "disabled": "Desactivado"
+    },
+    "field": {
+      "name": "Nombre",
+      "namePlaceholder": "Maria Souza",
+      "email": "Correo",
+      "emailError": "Introduzca un correo válido.",
+      "notes": "Observaciones",
+      "notesPlaceholder": "Escriba aquí",
+      "planNative": "Plan (NativeSelect)",
+      "planRich": "Plan (Select)",
+      "check": "Acepto recibir novedades",
+      "switch": "Notificaciones activas",
+      "channel": "Canal",
+      "channels": {
+        "email": "Correo",
+        "whatsapp": "WhatsApp"
+      }
+    },
+    "tabs": {
+      "overview": "Resumen",
+      "settings": "Configuración",
+      "overviewBody": "Contenido de la pestaña Resumen.",
+      "settingsBody": "Contenido de la pestaña Configuración."
+    },
+    "card": {
+      "title": "Plan Pro",
+      "description": "Hasta 3 GUIDS y 5 usuarios",
+      "body": "Tarjeta de ejemplo con título, descripción, contenido y acción.",
+      "action": "Ver plan"
+    },
+    "table": {
+      "name": "Nombre",
+      "plan": "Plan",
+      "status": "Estado",
+      "statuses": {
+        "active": "Activo",
+        "trial": "Prueba",
+        "paused": "Pausado"
+      }
+    },
+    "alert": {
+      "title": "Enlace caducado",
+      "body": "Pida una nueva invitación a quien administra el workspace."
+    }
   }
 }

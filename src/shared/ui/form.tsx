@@ -1,10 +1,14 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 /**
  * Labelled input. The hint is wired with `aria-describedby` instead of living
  * inside the label, so assistive technology (and the test selectors) read the
- * field name on its own.
+ * field name on its own. Built on the shadcn `Label` and `Input` (ADR 0014).
  */
 export function Field({
   label,
@@ -21,19 +25,16 @@ export function Field({
   const hintId = `${name}-hint`;
 
   return (
-    <div>
-      <label htmlFor={name} className="text-14 font-medium">
-        {label}
-      </label>
-      <input
+    <div className="grid gap-2">
+      <Label htmlFor={name}>{label}</Label>
+      <Input
         {...input}
         id={name}
         name={name}
         {...(hint ? { "aria-describedby": hintId } : {})}
-        className="border-border-strong bg-surface-input text-14 text-text placeholder:text-text-secondary focus:border-focus-ring mt-1 w-full rounded-md border px-3 py-2 outline-none"
       />
       {hint ? (
-        <p id={hintId} className="text-text-secondary text-12 mt-1">
+        <p id={hintId} className="text-text-secondary text-12">
           {hint}
         </p>
       ) : null}
@@ -47,12 +48,8 @@ export function SubmitButton({
 }: Readonly<{ children: ReactNode; pending?: boolean }>) {
   const t = useTranslations("ui");
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="bg-primary text-14 text-on-primary w-full rounded-md px-3 py-2 font-medium disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending} className="w-full">
       {pending ? t("submitPending") : children}
-    </button>
+    </Button>
   );
 }

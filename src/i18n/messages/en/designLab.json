@@ -86,5 +86,84 @@
     "answer": "Answer to the last confirmation: {answer}",
     "answerYes": "confirmed",
     "answerNo": "cancelled"
+  },
+  "components": {
+    "title": "Components",
+    "subtitle": "The shadcn components every screen uses (ADR 0014). Use it to approve the look and as a reference when building screens.",
+    "sampleNotice": "Demo page: the data are samples and nothing is saved.",
+    "groups": {
+      "buttons": "Buttons",
+      "fields": "Text fields",
+      "selects": "Option lists",
+      "choices": "Check and choose",
+      "tabs": "Tabs",
+      "badges": "Badges",
+      "cards": "Cards",
+      "table": "Table",
+      "alerts": "Page state"
+    },
+    "hints": {
+      "buttons": "Use Button for every action. Destructive only for actions that cannot be undone.",
+      "fields": "Label + Input or Textarea. A field's validation error stays below it, in red.",
+      "selects": "In forms use NativeSelect (it submits with the form and works on phones). Select is for rich lists outside forms.",
+      "choices": "Checkbox for yes/no inside a form, Switch to turn something on or off at once, RadioGroup for one choice among a few options.",
+      "tabs": "To split a screen into parts of the same subject.",
+      "badges": "For status and category, never as a button.",
+      "cards": "To group a block of content with a title.",
+      "table": "For lists with columns.",
+      "alerts": "Only for page states (expired link, access denied). Action results go to the notice banner (ADR 0016)."
+    },
+    "variants": {
+      "default": "Primary",
+      "secondary": "Secondary",
+      "outline": "Outline",
+      "ghost": "Ghost",
+      "link": "Link",
+      "destructive": "Destructive",
+      "disabled": "Disabled"
+    },
+    "field": {
+      "name": "Name",
+      "namePlaceholder": "Maria Souza",
+      "email": "Email",
+      "emailError": "Enter a valid email.",
+      "notes": "Notes",
+      "notesPlaceholder": "Write here",
+      "planNative": "Plan (NativeSelect)",
+      "planRich": "Plan (Select)",
+      "check": "Send me news",
+      "switch": "Notifications on",
+      "channel": "Channel",
+      "channels": {
+        "email": "Email",
+        "whatsapp": "WhatsApp"
+      }
+    },
+    "tabs": {
+      "overview": "Overview",
+      "settings": "Settings",
+      "overviewBody": "Content of the Overview tab.",
+      "settingsBody": "Content of the Settings tab."
+    },
+    "card": {
+      "title": "Pro plan",
+      "description": "Up to 3 GUIDS and 5 users",
+      "body": "Sample card with title, description, content and action.",
+      "action": "View plan"
+    },
+    "table": {
+      "name": "Name",
+      "plan": "Plan",
+      "status": "Status",
+      "statuses": {
+        "active": "Active",
+        "trial": "Trial",
+        "paused": "Paused"
+      }
+    },
+    "alert": {
+      "title": "Link expired",
+      "body": "Ask the workspace administrator for a new invitation."
+    }
   }
 }

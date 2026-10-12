@@ -544,6 +544,12 @@ export function buildPlatformNavigation(
                           href: "/platform/design/status",
                           iconKey: "layers" as const,
                         }),
+                        item({
+                          id: "platform.design.components",
+                          label: "Componentes",
+                          href: "/platform/design/components",
+                          iconKey: "layers" as const,
+                        }),
                       ],
                     }),
                   ]
