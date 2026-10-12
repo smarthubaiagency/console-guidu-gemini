@@ -168,7 +168,7 @@ describeDatabase("F4b: workspace MCP (§17, AC09, AC10)", requiredVars, () => {
       arguments: { executionId: otherRun },
     });
     expect(other.isError).toBe(true);
-    expect(JSON.stringify(other.content)).toContain("Execução não encontrada");
+    expect(JSON.stringify(other.content)).toContain("Execution not found");
 
     const members = await client.callTool({
       name: "list_workspace_members",

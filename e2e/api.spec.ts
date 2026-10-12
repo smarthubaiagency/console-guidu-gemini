@@ -41,6 +41,8 @@ test("the session reads its workspace through the API; anonymous calls get 401",
   expect(anonymous.status()).toBe(401);
   expect((await anonymous.json()).error).toMatchObject({
     code: "unauthenticated",
+    // The API always speaks English (I5).
+    message: "Authentication required.",
     requestId: expect.any(String),
   });
 

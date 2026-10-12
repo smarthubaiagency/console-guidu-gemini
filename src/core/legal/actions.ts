@@ -10,11 +10,18 @@ import { safeInternalPath } from "@/core/auth/redirects";
 import { getPartnerMembership } from "@/core/partners/members";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
+import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { actionFailure } from "@/core/i18n/errors";
 import { AppError, type AppErrorCode } from "@/shared/errors";
 
-import { acceptPendingLegalDocuments, publishLegalDocument } from "./service";
+import {
+  acceptPendingLegalDocuments,
+  deleteLegalTranslation,
+  type LegalPublisher,
+  publishLegalDocument,
+  saveLegalTranslation,
+} from "./service";
 
 export type LegalActionState = {
   success?: boolean;
@@ -50,6 +57,7 @@ function publishInput(formData: FormData) {
     title: text(formData, "title"),
     body: text(formData, "body"),
     requiresAcceptance: formData.get("requiresAcceptance") === "on",
+    ...(text(formData, "locale") ? { locale: text(formData, "locale") } : {}),
   };
 }
 
@@ -149,4 +157,125 @@ export async function acceptLegalDocumentsAction(
     return failure(err);
   }
   redirect(next);
+}
+
+type LegalScope = "platform" | "partner";
+
+/**
+ * Runs `fn` as the publisher of the request host's partner: the house
+ * partner from the platform console, the host's partner from /admin.
+ */
+async function asPublisher<T>(
+  scope: LegalScope,
+  fn: (
+    tx: ContextTransaction,
+    actor: LegalPublisher,
+    partnerId: string,
+  ) => Promise<T>,
+): Promise<T> {
+  const identity = await requireMfa();
+  const partner = await getRequestPartner();
+  if (!partner || (scope === "platform" && !partner.isPlatformHost)) {
+    throw notFound();
+  }
+  let actor: LegalPublisher;
+  if (scope === "platform") {
+    const admin = await getPlatformAdminMember(prisma, identity.userId);
+    actor = {
+      userId: identity.userId,
+      platformRole: admin?.status === "active" ? admin.role : null,
+    };
+  } else {
+    const membership = await getPartnerMembership(
+      prisma,
+      identity.userId,
+      partner.partnerId,
+    );
+    actor = { userId: identity.userId, partnerRole: membership?.role ?? null };
+  }
+  const result = await withIdentityContext(
+    prisma,
+    identity.userId,
+    (tx) => fn(tx, actor, partner.partnerId),
+    { partnerId: partner.partnerId },
+  );
+  revalidatePath(scope === "platform" ? "/platform/legal" : "/admin/legal");
+  return result;
+}
+
+async function saveTranslation(
+  scope: LegalScope,
+  formData: FormData,
+): Promise<LegalActionState> {
+  try {
+    const locale = text(formData, "locale");
+    await asPublisher(scope, (tx, actor, partnerId) =>
+      saveLegalTranslation(
+        tx,
+        actor,
+        partnerId,
+        text(formData, "documentId"),
+        locale,
+        { title: text(formData, "title"), body: text(formData, "body") },
+      ),
+    );
+    const t = await getTranslations("legal");
+    return { success: true, message: t("translations.saved", { locale }) };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+async function removeTranslation(
+  scope: LegalScope,
+  formData: FormData,
+): Promise<LegalActionState> {
+  try {
+    const locale = text(formData, "locale");
+    await asPublisher(scope, (tx, actor, partnerId) =>
+      deleteLegalTranslation(
+        tx,
+        actor,
+        partnerId,
+        text(formData, "documentId"),
+        locale,
+      ),
+    );
+    const t = await getTranslations("legal");
+    return { success: true, message: t("translations.removed", { locale }) };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** Saves the manual translation of a house partner version (platform). */
+export async function savePlatformLegalTranslationAction(
+  _prev: LegalActionState,
+  formData: FormData,
+): Promise<LegalActionState> {
+  return saveTranslation("platform", formData);
+}
+
+/** Removes a translation of a house partner version (platform). */
+export async function deletePlatformLegalTranslationAction(
+  _prev: LegalActionState,
+  formData: FormData,
+): Promise<LegalActionState> {
+  return removeTranslation("platform", formData);
+}
+
+/** Saves the manual translation of a version of the host's partner. */
+export async function savePartnerLegalTranslationAction(
+  _prev: LegalActionState,
+  formData: FormData,
+): Promise<LegalActionState> {
+  return saveTranslation("partner", formData);
+}
+
+/** Removes a translation of a version of the host's partner. */
+export async function deletePartnerLegalTranslationAction(
+  _prev: LegalActionState,
+  formData: FormData,
+): Promise<LegalActionState> {
+  return removeTranslation("partner", formData);
 }

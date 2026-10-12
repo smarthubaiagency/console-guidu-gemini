@@ -181,6 +181,7 @@ export async function getCustomer(
     throw new AppError({
       code: "not_found",
       safeMessage: "Empresa não encontrada.",
+      messageKey: "apiErrors.customerNotFound",
     });
   }
   return { data: found };

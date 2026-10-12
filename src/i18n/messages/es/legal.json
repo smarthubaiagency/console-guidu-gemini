@@ -5,7 +5,10 @@
   },
   "document": {
     "metadataTitle": "Documentos legales",
-    "meta": "{kind} · versión {version} · {date}"
+    "meta": "{kind} · versión {version} · {date}",
+    "translatedNote": "Traducción para lectura. En caso de discrepancia, prevalece la versión original.",
+    "showOriginal": "Ver el original",
+    "showTranslation": "Ver la traducción"
   },
   "accept": {
     "metadataTitle": "Aceptación de los términos",
@@ -14,7 +17,8 @@
     "meta": "{kind} · versión {version} · <link>abrir en una pestaña nueva</link>",
     "agree": "Leí y acepto los documentos anteriores.",
     "submit": "Aceptar y continuar",
-    "submitting": "Registrando..."
+    "submitting": "Registrando...",
+    "translatedNote": "Traducción para lectura; prevalece la versión original."
   },
   "editor": {
     "version": "{kind} · versión {version}",
@@ -26,7 +30,8 @@
     "document": "Documento",
     "title": "Título",
     "body": "Texto",
-    "requiresAcceptanceLabel": "Cambio relevante: exigir nueva aceptación (la primera versión siempre la exige)"
+    "requiresAcceptanceLabel": "Cambio relevante: exigir nueva aceptación (la primera versión siempre la exige)",
+    "originalLocale": "Idioma del original"
   },
   "published": "Versión {version} publicada.",
   "errors": {
@@ -34,12 +39,29 @@
     "mustAgree": "Marca la casilla para aceptar los documentos.",
     "invalidInput": "Datos no válidos.",
     "titleRequired": "Ingresa el título.",
-    "bodyRequired": "Ingresa el texto."
+    "bodyRequired": "Ingresa el texto.",
+    "unknownLocale": "Idioma no disponible.",
+    "originalLocale": "Este es el idioma del original; para cambiarlo, publica una nueva versión."
   },
   "platform": {
     "metaTitle": "Términos y privacidad (Admin)",
     "breadcrumb": "Términos y privacidad",
     "title": "Términos y privacidad de la plataforma",
     "description": "Se aplican a los clientes directos, en los dominios de la plataforma."
+  },
+  "translations": {
+    "summary": "Traducciones · {done} de {total}",
+    "hint": "Quien lee ve la traducción de su idioma; sin ella, el original. Prevalece la versión original y la aceptación vale para la versión, en cualquier idioma.",
+    "original": "idioma del original",
+    "manual": "traducción manual",
+    "machine": "traducción automática",
+    "missing": "sin traducción",
+    "draft": "borrador",
+    "edit": "Editar",
+    "add": "Traducir",
+    "save": "Guardar traducción",
+    "remove": "Eliminar traducción",
+    "saved": "Traducción ({locale}) guardada.",
+    "removed": "Traducción ({locale}) eliminada."
   }
 }

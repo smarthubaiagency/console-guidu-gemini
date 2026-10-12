@@ -1,0 +1,25 @@
+{
+  "common": {
+    "greeting": "Hello, {partner}.",
+    "support": "Support: {email}",
+    "help": "Help: {url}",
+    "viewBilling": "View billing"
+  },
+  "invitation": {
+    "subject": "Invitation to {organization} on {brand}",
+    "body": "You have been invited to join {organization} on {brand}.",
+    "expires": "The invitation is valid until {date}.",
+    "action": "Accept invitation"
+  },
+  "pastDue": {
+    "subject": "Subscription past due: {organization}",
+    "body": "The subscription of {organization} is past due: the paid period ended on {periodEnd} and no new payment has been recorded.",
+    "nextStep": "Without a recorded payment, the subscription will be suspended on {date}; the customer will then have read-only access.",
+    "nextStepUnknown": "Without a recorded payment, the subscription may be suspended."
+  },
+  "suspended": {
+    "subject": "Subscription suspended: {organization}",
+    "body": "The subscription of {organization} was suspended for lack of payment of the period that ended on {periodEnd}.",
+    "access": "The customer keeps read and export access, without new changes. Recording the payment reactivates the subscription."
+  }
+}

@@ -12,6 +12,7 @@ import {
   ContactUpdateInput,
   createContact,
   getContact,
+  invalid,
   updateContact,
 } from "./server/services/contacts";
 
@@ -32,13 +33,7 @@ const FIELDS = [
 
 function parseWith(schema: z.ZodType, input: unknown) {
   const parsed = schema.safeParse(input);
-  if (!parsed.success) {
-    throw new AppError({
-      code: "invalid_input",
-      safeMessage:
-        parsed.error.issues[0]?.message ?? "Dados do contato inválidos.",
-    });
-  }
+  if (!parsed.success) throw invalid(parsed.error);
   return Object.fromEntries(
     Object.entries(parsed.data as Record<string, unknown>).filter(
       ([, v]) => v !== undefined,
@@ -47,7 +42,11 @@ function parseWith(schema: z.ZodType, input: unknown) {
 }
 
 const notFound = () =>
-  new AppError({ code: "not_found", safeMessage: "Contato não encontrado." });
+  new AppError({
+    code: "not_found",
+    safeMessage: "Contato não encontrado.",
+    messageKey: "crm.errors.contactNotFound",
+  });
 
 const contactVersion: ProposalOperation["version"] = async (
   tx,

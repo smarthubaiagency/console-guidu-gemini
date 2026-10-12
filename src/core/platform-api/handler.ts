@@ -56,8 +56,7 @@ export const PLATFORM_API_ROUTES = {
   listCustomers: {
     operationId: "listPlatformCustomers",
     path: "/platform/customers",
-    summary:
-      "Empresas clientes, das mais recentes, com dados comerciais mínimos.",
+    summary: "Customer companies, newest first, with minimal commercial data.",
     scope: "admin:customers:read",
     query: CustomerListQuery,
     response: z.object({
@@ -68,21 +67,21 @@ export const PLATFORM_API_ROUTES = {
   getCustomer: {
     operationId: "getPlatformCustomer",
     path: "/platform/customers/{id}",
-    summary: "Resumo de uma empresa cliente.",
+    summary: "Summary of a customer company.",
     scope: "admin:customers:read",
     response: one(PlatformCustomer),
   },
   getHealth: {
     operationId: "getPlatformHealth",
     path: "/platform/health",
-    summary: "Saúde do worker e das filas, sem conteúdo de cliente.",
+    summary: "Health of the worker and the queues, without customer content.",
     scope: "admin:operations:read",
     response: one(PlatformHealth),
   },
   listFailedJobs: {
     operationId: "listPlatformFailedJobs",
     path: "/platform/failed-jobs",
-    summary: "Jobs com falha dos últimos dias (padrão 7, até 30).",
+    summary: "Failed jobs of the last days (default 7, up to 30).",
     scope: "admin:operations:read",
     query: FailedJobsQuery,
     response: z.object({ data: z.array(FailedJob) }),
@@ -99,6 +98,7 @@ function notFound(requestId: string): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: "Recurso não encontrado.",
+    messageKey: "apiErrors.notFound",
     requestId,
   });
 }
@@ -126,6 +126,7 @@ export async function authenticatePlatformRequest(
       throw new AppError({
         code: "forbidden",
         safeMessage: "Confirme a verificação em duas etapas para continuar.",
+        messageKey: "apiErrors.mfaRequired",
         requestId,
       });
     }
@@ -169,6 +170,8 @@ export async function handlePlatformApiRoute(
       throw new AppError({
         code: "forbidden",
         safeMessage: `Esta chave não tem o escopo ${route.scope}.`,
+        messageKey: "apiErrors.missingScope",
+        messageValues: { scope: route.scope },
         requestId,
       });
     }
@@ -194,6 +197,7 @@ export async function handlePlatformApiRoute(
         throw new AppError({
           code: "invalid_input",
           safeMessage: "Parâmetros inválidos.",
+          messageKey: "apiErrors.invalidParameters",
           requestId,
         });
       }

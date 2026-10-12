@@ -5,7 +5,10 @@
   },
   "document": {
     "metadataTitle": "Documentos legais",
-    "meta": "{kind} · versão {version} · {date}"
+    "meta": "{kind} · versão {version} · {date}",
+    "translatedNote": "Tradução para leitura. Em caso de divergência, prevalece a versão original.",
+    "showOriginal": "Ver o original",
+    "showTranslation": "Ver a tradução"
   },
   "accept": {
     "metadataTitle": "Aceite dos termos",
@@ -14,7 +17,8 @@
     "meta": "{kind} · versão {version} · <link>abrir em nova aba</link>",
     "agree": "Li e aceito os documentos acima.",
     "submit": "Aceitar e continuar",
-    "submitting": "Registrando..."
+    "submitting": "Registrando...",
+    "translatedNote": "Tradução para leitura; a versão original prevalece."
   },
   "editor": {
     "version": "{kind} · versão {version}",
@@ -26,7 +30,8 @@
     "document": "Documento",
     "title": "Título",
     "body": "Texto",
-    "requiresAcceptanceLabel": "Mudança relevante: exigir novo aceite (a primeira versão sempre exige)"
+    "requiresAcceptanceLabel": "Mudança relevante: exigir novo aceite (a primeira versão sempre exige)",
+    "originalLocale": "Idioma do original"
   },
   "published": "Versão {version} publicada.",
   "errors": {
@@ -34,12 +39,29 @@
     "mustAgree": "Marque a caixa para aceitar os documentos.",
     "invalidInput": "Dados inválidos.",
     "titleRequired": "Informe o título.",
-    "bodyRequired": "Informe o texto."
+    "bodyRequired": "Informe o texto.",
+    "unknownLocale": "Idioma indisponível.",
+    "originalLocale": "Este é o idioma do original; para mudá-lo, publique uma nova versão."
   },
   "platform": {
     "metaTitle": "Termos e privacidade (Admin)",
     "breadcrumb": "Termos e privacidade",
     "title": "Termos e privacidade da plataforma",
     "description": "Valem para os clientes diretos, nos domínios da plataforma."
+  },
+  "translations": {
+    "summary": "Traduções · {done} de {total}",
+    "hint": "Quem lê vê a tradução do seu idioma; sem ela, o original. A versão original prevalece e o aceite vale para a versão, em qualquer idioma.",
+    "original": "idioma do original",
+    "manual": "tradução manual",
+    "machine": "tradução automática",
+    "missing": "sem tradução",
+    "draft": "rascunho",
+    "edit": "Editar",
+    "add": "Traduzir",
+    "save": "Salvar tradução",
+    "remove": "Remover tradução",
+    "saved": "Tradução ({locale}) salva.",
+    "removed": "Tradução ({locale}) removida."
   }
 }

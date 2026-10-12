@@ -17,6 +17,7 @@ export async function GET() {
       throw new AppError({
         code: "not_found",
         safeMessage: "Recurso não encontrado.",
+        messageKey: "apiErrors.notFound",
       });
     }
 

@@ -7,17 +7,14 @@ import { readSessionClaims } from "@/core/auth/identity";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { appLog } from "@/lib/telemetry/log";
-import { MESSAGE_FILES } from "@/i18n/messages";
 
 import {
-  type BuiltInLocale,
   chooseLocale,
-  isBuiltInLocale,
-  mergeMessages,
   type Messages,
   negotiateLocale,
   SOURCE_LOCALE,
 } from "./locales";
+import { composeMessages, readTranslationEdits } from "./messages-loader";
 import { PATH_HEADER, workspaceSlugOf } from "./path";
 
 /**
@@ -29,13 +26,7 @@ import { PATH_HEADER, workspaceSlugOf } from "./path";
  * memory; saving in that screen clears this process at once.
  */
 
-const FILES: Record<BuiltInLocale, Messages> = MESSAGE_FILES;
-
-export const SOURCE_MESSAGES: Messages = FILES["pt-BR"];
-
-export function fileMessages(locale: string): Messages | null {
-  return isBuiltInLocale(locale) ? FILES[locale] : null;
-}
+export { fileMessages, SOURCE_MESSAGES } from "./messages-loader";
 
 const TTL_MS = 30_000;
 type Entry<T> = { value: T; at: number };
@@ -101,10 +92,7 @@ async function translationEdits(
   const cached = cacheStore.edits.get(locale);
   if (fresh(cached)) return cached.value;
   try {
-    const rows = await prisma.$queryRaw<{ key: string; value: string }[]>`
-      select key, value from private.ui_translations(${locale})
-    `;
-    const value = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    const value = await readTranslationEdits(prisma, locale);
     cacheStore.edits.set(locale, { value, at: Date.now() });
     return value;
   } catch (error) {
@@ -115,11 +103,7 @@ async function translationEdits(
 
 /** Texts of a language: source, the language's file, platform edits. */
 export async function loadMessages(locale: string): Promise<Messages> {
-  return mergeMessages(
-    SOURCE_MESSAGES,
-    fileMessages(locale),
-    await translationEdits(locale),
-  );
+  return composeMessages(locale, await translationEdits(locale));
 }
 
 async function userLocale(userId: string): Promise<string | null> {

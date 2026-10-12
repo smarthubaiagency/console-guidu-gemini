@@ -180,10 +180,13 @@ export function toSafeError(
       err instanceof Error && err.message
         ? err.message
         : "Módulo temporariamente indisponível.";
-    messageKey =
-      err instanceof Error && err.message
-        ? undefined
-        : "errors.moduleUnavailable";
+    messageKey = moduleUnavailableKey(err);
+    if (
+      messageKey === "apiErrors.moduleUnavailableNamed" &&
+      typeof (err as { moduleKey?: unknown }).moduleKey === "string"
+    ) {
+      messageValues = { module: (err as { moduleKey: string }).moduleKey };
+    }
   } else if (isSpecificError(err, "ProviderError")) {
     code = "provider_error";
     safeMessage = "Falha na comunicação com o provedor de IA.";
@@ -217,6 +220,30 @@ export function toSafeError(
     ...(messageKey ? { messageKey } : {}),
     ...(messageValues ? { messageValues } : {}),
   };
+}
+
+/**
+ * Message key of a ModuleUnavailableError (I5): by its reason, else the
+ * default sentence naming the module; a custom message keeps no key.
+ */
+function moduleUnavailableKey(err: unknown): string | undefined {
+  const message = err instanceof Error ? err.message : "";
+  if (!message) return "errors.moduleUnavailable";
+  const { reason, moduleKey } = err as {
+    reason?: string;
+    moduleKey?: unknown;
+  };
+  if (reason === "maintenance") return "apiErrors.moduleMaintenance";
+  if (reason === "not_contracted") return "modules.errors.notContracted";
+  if (reason === "suspended") return "apiErrors.moduleSuspended";
+  if (
+    typeof moduleKey === "string" &&
+    message ===
+      `O módulo '${moduleKey}' está temporariamente indisponível nesta etapa da plataforma.`
+  ) {
+    return "apiErrors.moduleUnavailableNamed";
+  }
+  return undefined;
 }
 
 function isSpecificError(err: unknown, errorName: string): boolean {

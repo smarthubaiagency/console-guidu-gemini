@@ -1,0 +1,25 @@
+{
+  "common": {
+    "greeting": "Hola, {partner}.",
+    "support": "Soporte: {email}",
+    "help": "Ayuda: {url}",
+    "viewBilling": "Ver facturación"
+  },
+  "invitation": {
+    "subject": "Invitación a {organization} en {brand}",
+    "body": "Has sido invitado a participar en {organization} en {brand}.",
+    "expires": "La invitación es válida hasta el {date}.",
+    "action": "Aceptar invitación"
+  },
+  "pastDue": {
+    "subject": "Suscripción vencida: {organization}",
+    "body": "La suscripción de {organization} está vencida: el período pagado terminó el {periodEnd} y no se ha registrado ningún pago nuevo.",
+    "nextStep": "Sin un pago registrado, la suscripción se suspenderá el {date}; el cliente pasará a tener acceso solo de lectura.",
+    "nextStepUnknown": "Sin un pago registrado, la suscripción podrá suspenderse."
+  },
+  "suspended": {
+    "subject": "Suscripción suspendida: {organization}",
+    "body": "La suscripción de {organization} fue suspendida por falta de pago del período que terminó el {periodEnd}.",
+    "access": "El cliente mantiene el acceso de lectura y exportación, sin nuevos cambios. Registrar el pago reactiva la suscripción."
+  }
+}

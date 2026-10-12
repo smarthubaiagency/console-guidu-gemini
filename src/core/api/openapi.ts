@@ -11,17 +11,17 @@ const schema = (s: z.ZodType, io: "input" | "output" = "output") =>
   z.toJSONSchema(s, { io, unrepresentable: "any" });
 
 const ERRORS: Record<string, string> = {
-  "401": "Sem sessão, ou chave de API inválida, expirada ou revogada.",
-  "403": "Sem permissão ou sem o escopo exigido pela chave.",
-  "404": "Workspace inexistente ou fora do seu alcance.",
-  "422": "Parâmetros inválidos.",
-  "429": "Limite de requisições atingido; veja Retry-After.",
+  "401": "No session, or the API key is invalid, expired or revoked.",
+  "403": "No permission, or the key lacks the required scope.",
+  "404": "Workspace or record does not exist or is out of your reach.",
+  "422": "Invalid parameters or body.",
+  "429": "Rate limit reached; see Retry-After.",
 };
 
 const PATH_PARAMS: Record<string, string> = {
-  contactId: "do contato",
-  itemId: "do item",
-  variantId: "da variante",
+  contactId: "of the contact",
+  itemId: "of the item",
+  variantId: "of the variant",
 };
 
 function operation(route: ApiRoute) {
@@ -31,7 +31,7 @@ function operation(route: ApiRoute) {
       name: "id",
       in: "path",
       required: true,
-      description: "Id (UUID) do workspace.",
+      description: "Id (UUID) of the workspace.",
       schema: { type: "string", format: "uuid" },
     });
   }
@@ -41,7 +41,7 @@ function operation(route: ApiRoute) {
       name,
       in: "path",
       required: true,
-      description: `Id (UUID) ${PATH_PARAMS[name] ?? "do registro"}.`,
+      description: `Id (UUID) ${PATH_PARAMS[name] ?? "of the record"}.`,
       schema: { type: "string", format: "uuid" },
     });
   }
@@ -57,7 +57,7 @@ function operation(route: ApiRoute) {
   }
   const responses: Record<string, unknown> = {
     [String(route.successStatus ?? 200)]: {
-      description: "Sucesso.",
+      description: "Success.",
       content: { "application/json": { schema: schema(route.response) } },
     },
   };
@@ -103,7 +103,7 @@ export function buildOpenApiDocument(serverUrl: string) {
       title: "GUIDU API",
       version: "1.0.0",
       description:
-        "API REST v1 (Especificação §15). Autenticação por chave de API (Authorization: Bearer gdu_live_…) com escopos, ou pela sessão do navegador. Erros trazem code, message e requestId. Limites por chave, usuário e workspace, com cabeçalhos RateLimit-*.",
+        "REST API v1. Authentication with an API key (Authorization: Bearer gdu_live_…) with scopes, or with the browser session. Errors carry code, message (always in English) and requestId. Rate limits per key, user and workspace, with RateLimit-* headers.",
     },
     servers: [{ url: `${serverUrl.replace(/\/$/, "")}/api/v1` }],
     components: {
@@ -111,13 +111,14 @@ export function buildOpenApiDocument(serverUrl: string) {
         apiKey: {
           type: "http",
           scheme: "bearer",
-          description: "Chave criada em Configurações › MCP, com escopos.",
+          description: "Key created in Settings › MCP, with scopes.",
         },
         session: {
           type: "apiKey",
           in: "cookie",
-          name: "sb-<projeto>-auth-token",
-          description: "Sessão do navegador no mesmo host (uso das telas).",
+          name: "sb-<project>-auth-token",
+          description:
+            "Browser session on the same host (used by the dashboard).",
         },
       },
       schemas: { Error: schema(ErrorBody) },

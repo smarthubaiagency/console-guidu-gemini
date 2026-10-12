@@ -1,3 +1,8 @@
+import { createTranslator } from "next-intl";
+
+import { SOURCE_LOCALE, type Messages } from "@/core/i18n/locales";
+import { composeMessages } from "@/core/i18n/messages-loader";
+
 import type {
   NotificationBrand,
   NotificationEvent,
@@ -25,34 +30,84 @@ function safeLink(value: string): string {
   return url.toString();
 }
 
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("pt-BR", {
+export type NotificationTranslator = (
+  key: string,
+  values?: Record<string, string>,
+) => string;
+
+const translators = new Map<string, NotificationTranslator>();
+
+/**
+ * Translator of the `notifications` namespace in a language (I5). With no
+ * `messages`, the shipped files (source, then the language's file); the
+ * worker passes the texts with the platform edits (`loadMessagesFor`).
+ */
+export function notificationTranslator(
+  locale: string,
+  messages?: Messages,
+): NotificationTranslator {
+  const cached = messages ? undefined : translators.get(locale);
+  if (cached) return cached;
+  const t = createTranslator({
+    locale,
+    messages: (messages ?? composeMessages(locale)) as Record<string, unknown>,
+    namespace: "notifications",
+  } as Parameters<
+    typeof createTranslator
+  >[0]) as unknown as NotificationTranslator;
+  if (!messages) translators.set(locale, t);
+  return t;
+}
+
+function formatter(
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  try {
+    return new Intl.DateTimeFormat(locale, options);
+  } catch {
+    // A platform language code the runtime does not know.
+    return new Intl.DateTimeFormat(SOURCE_LOCALE, options);
+  }
+}
+
+/** Date and time of an instant, in Brasília time. */
+function formatDate(locale: string, date: Date): string {
+  return formatter(locale, {
     dateStyle: "short",
     timeStyle: "short",
     timeZone: "America/Sao_Paulo",
   }).format(date);
 }
 
-function formatDay(date: Date): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeZone: "UTC",
-  }).format(date);
+/** A calendar day (stored as UTC midnight). */
+function formatDay(locale: string, date: Date): string {
+  return formatter(locale, { dateStyle: "short", timeZone: "UTC" }).format(
+    date,
+  );
 }
 
-function supportLines(brand: NotificationBrand): string[] {
+function supportLines(
+  t: NotificationTranslator,
+  brand: NotificationBrand,
+): string[] {
   return [
-    brand.supportEmail ? `Suporte: ${brand.supportEmail}` : null,
-    brand.supportUrl ? `Ajuda: ${safeLink(brand.supportUrl)}` : null,
+    brand.supportEmail
+      ? t("common.support", { email: brand.supportEmail })
+      : null,
+    brand.supportUrl
+      ? t("common.help", { url: safeLink(brand.supportUrl) })
+      : null,
   ].filter((line): line is string => line !== null);
 }
 
 function layout(
+  t: NotificationTranslator,
   brand: NotificationBrand,
   paragraphs: readonly string[],
   action: Readonly<{ label: string; url: string }>,
 ): Pick<RenderedMessage, "text" | "html"> {
-  const support = supportLines(brand);
+  const support = supportLines(t, brand);
   const text = [
     ...paragraphs,
     "",
@@ -72,55 +127,80 @@ function layout(
   return { text, html };
 }
 
-/** Renders an event with the partner brand; all values are escaped. */
+/**
+ * Renders an event with the partner brand in the recipient's language;
+ * all values are escaped. `messages` carries the platform edits.
+ */
 export function renderNotification(
   event: NotificationEvent,
   brand: NotificationBrand,
+  locale: string = SOURCE_LOCALE,
+  messages?: Messages,
 ): RenderedMessage {
+  const t = notificationTranslator(locale, messages);
   switch (event.type) {
     case "invitation.created": {
       const url = safeLink(event.data.inviteUrl);
+      const names = {
+        organization: event.data.organizationName,
+        brand: brand.name,
+      };
       return {
-        subject: `Convite para ${event.data.organizationName} no ${brand.name}`,
+        subject: t("invitation.subject", names),
         ...layout(
+          t,
           brand,
           [
-            `Você foi convidado para participar de ${event.data.organizationName} no ${brand.name}.`,
-            `O convite vale até ${formatDate(event.data.expiresAt)}.`,
+            t("invitation.body", names),
+            t("invitation.expires", {
+              date: formatDate(locale, event.data.expiresAt),
+            }),
           ],
-          { label: "Aceitar convite", url },
+          { label: t("invitation.action"), url },
         ),
       };
     }
     case "billing.subscription.past_due": {
       const { data } = event;
+      const organization = data.organizationName;
       return {
-        subject: `Assinatura em atraso: ${data.organizationName}`,
+        subject: t("pastDue.subject", { organization }),
         ...layout(
+          t,
           brand,
           [
-            `Olá, ${data.partnerName}.`,
-            `A assinatura de ${data.organizationName} está em atraso: o período pago venceu em ${formatDay(data.periodEnd)} e nenhum pagamento novo foi registrado.`,
+            t("common.greeting", { partner: data.partnerName }),
+            t("pastDue.body", {
+              organization,
+              periodEnd: formatDay(locale, data.periodEnd),
+            }),
             data.nextStepOn
-              ? `Sem pagamento registrado, a assinatura será suspensa em ${formatDay(data.nextStepOn)}; o cliente passa a ter acesso só de leitura.`
-              : "Sem pagamento registrado, a assinatura poderá ser suspensa.",
+              ? t("pastDue.nextStep", {
+                  date: formatDay(locale, data.nextStepOn),
+                })
+              : t("pastDue.nextStepUnknown"),
           ],
-          { label: "Ver cobrança", url: safeLink(data.billingUrl) },
+          { label: t("common.viewBilling"), url: safeLink(data.billingUrl) },
         ),
       };
     }
     case "billing.subscription.suspended": {
       const { data } = event;
+      const organization = data.organizationName;
       return {
-        subject: `Assinatura suspensa: ${data.organizationName}`,
+        subject: t("suspended.subject", { organization }),
         ...layout(
+          t,
           brand,
           [
-            `Olá, ${data.partnerName}.`,
-            `A assinatura de ${data.organizationName} foi suspensa por falta de pagamento do período que venceu em ${formatDay(data.periodEnd)}.`,
-            "O cliente mantém o acesso de leitura e exportação, sem novas alterações. Registrar o pagamento reativa a assinatura.",
+            t("common.greeting", { partner: data.partnerName }),
+            t("suspended.body", {
+              organization,
+              periodEnd: formatDay(locale, data.periodEnd),
+            }),
+            t("suspended.access"),
           ],
-          { label: "Ver cobrança", url: safeLink(data.billingUrl) },
+          { label: t("common.viewBilling"), url: safeLink(data.billingUrl) },
         ),
       };
     }

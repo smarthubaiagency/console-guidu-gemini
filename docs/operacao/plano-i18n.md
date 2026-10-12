@@ -18,7 +18,7 @@ Pedido do Marcelo (11/10/2026): painel em vários idiomas, começando por portug
 | I2    | Núcleo: login, convites, conta, visão geral, configurações do workspace, mensagens de erro dos serviços e formatação por idioma | Pronta para revisão |
 | I3    | Plataforma (`/platform`) e console do parceiro (`/admin`)                                                                       | Pronta para revisão |
 | I4    | Módulos: CRM, Portfólio (com os campos das verticais), propostas e os módulos seguintes já nascendo com chaves                  | Pronta para revisão |
-| I5    | Notificações e e-mails por idioma de quem recebe; termos e privacidade por idioma; API e MCP em inglês                          | Planejada           |
+| I5    | Notificações e e-mails por idioma de quem recebe; termos e privacidade por idioma; API e MCP em inglês                          | Pronta para revisão |
 | I6    | Tradução automática na tela de Idiomas (edições `machine`, marcadas para revisão)                                               | Espera o provedor   |
 
 ## I1 — Base
@@ -113,6 +113,23 @@ Fica em português até as próximas etapas ou por ser dado:
 - **Mensagem de cota excedida** (`QuotaExceededError`) e erros internos do motor de agentes: entram com a revisão de erros da I5.
 - **Concordância já existente** em "Variante/Acomodação/Tarifa não encontrado." foi mantida para não mudar o texto em português; en e es estão corretos. Pode ser corrigida na tela de Idiomas.
 - **Contagens do Hello World** passaram a usar plural: com exatamente 1 registro a frase fica no singular.
+
+## I5 — E-mails, documentos legais e API/MCP
+
+**Estado:** pronta para revisão. Duas migrations: `20261026090000_i5_legal_translations.sql` e `20261026091000_i5_notification_locale.sql`.
+
+Entregue:
+
+- **Termos e privacidade por idioma.** Cada versão publicada guarda o idioma do original (as versões antigas ficam em pt-BR) e pode ter uma tradução por idioma do painel, editada em Plataforma › Termos e no console do parceiro (Termos). Quem lê vê a tradução do seu idioma, com o aviso de que o original prevalece e um link para ele; sem tradução, vê o original. O aceite continua por versão, qualquer que seja o idioma lido. As traduções têm origem `manual` ou `machine`; a automática entra na I6.
+- **E-mails no idioma de quem recebe.** Os modelos de e-mail (convite, assinatura em atraso, assinatura suspensa) usam o namespace `notifications`, com as edições da tela de Idiomas. Quem recebe é identificado pelo e-mail de um vínculo ativo de parceiro, porque o e-mail de login fica no Supabase Auth, que o painel não lê. Vale o idioma do perfil; sem perfil, o idioma padrão da plataforma. Só o worker consulta esse idioma.
+- **API e MCP em inglês.** As mensagens de erro da API REST (workspace e plataforma) e dos dois MCPs saem sempre em inglês (namespace `apiErrors` e as chaves já existentes); sem chave, uma frase genérica em inglês por código. As descrições das ferramentas MCP, as instruções dos servidores e o OpenAPI estão em inglês. Nomes de módulos, situações e rótulos de cota nas respostas vêm do catálogo em inglês. No UCP, as unidades de venda, o resumo de cancelamento e os nomes das opções de hospedagem saem em inglês, também na prévia do painel.
+- **Correção da I1:** as permissões das funções de leitura de idiomas não tinham sido aplicadas (a I1 as definia antes de mudar o dono). A migration de notificações fecha essas funções para `anon`/`authenticated` e as libera só para os papéis do app.
+
+Fica para depois:
+
+- **Tradução automática** dos textos e dos documentos legais: I6.
+- **Idioma de quem não é membro de parceiro** (por exemplo, quem recebe um convite): recebe no idioma padrão da plataforma até existir uma fonte confiável de e-mail por pessoa.
+- **Dados gravados** e mensagens do zod sem texto próprio continuam como estão.
 
 ## Pendências do Marcelo
 

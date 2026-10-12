@@ -268,7 +268,9 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
 
       const json = await response.json();
       expect(json.error.code).toBe("forbidden");
-      expect(json.error.message).toBe("Você não tem permissão para esta ação.");
+      expect(json.error.message).toBe(
+        "You do not have permission for this action.",
+      );
       expect(typeof json.error.requestId).toBe("string");
     });
 
@@ -279,7 +281,7 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
 
       const json = await response.json();
       expect(json.error.code).toBe("unauthenticated");
-      expect(json.error.message).toBe("Autenticação necessária.");
+      expect(json.error.message).toBe("Authentication required.");
     });
 
     it("formats 404 Not Found", async () => {
@@ -316,6 +318,9 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
 
       const json = await response.json();
       expect(json.error.code).toBe("unavailable");
+      expect(json.error.message).toBe(
+        "The module 'ai-agents' is temporarily unavailable at this stage of the platform.",
+      );
     });
 
     it("formats 500 Internal Server Error for unhandled exceptions", async () => {
@@ -325,7 +330,7 @@ describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07
 
       const json = await response.json();
       expect(json.error.code).toBe("internal");
-      expect(json.error.message).toBe("Não foi possível concluir a operação.");
+      expect(json.error.message).toBe("The operation could not be completed.");
       expect(JSON.stringify(json)).not.toContain("sk-secret123");
     });
   });

@@ -33,6 +33,7 @@ export function decodeCursor(value: string | undefined): CursorValue | null {
   throw new AppError({
     code: "invalid_input",
     safeMessage: "Cursor inválido.",
+    messageKey: "apiErrors.invalidCursor",
   });
 }
 

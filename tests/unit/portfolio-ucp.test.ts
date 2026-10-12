@@ -71,6 +71,12 @@ describe("Portfolio → UCP Product (F5a)", () => {
     ]);
     expect(product).not.toBeNull();
     expect(ucpErrors("shopping/types/product.json", product)).toEqual([]);
+    // Sale bases the platform writes go out in English (I5).
+    expect(
+      (product!.variants as Record<string, unknown>[]).find(
+        (v) => v.sku === "CAM-PR-G",
+      )?.quantity_unit,
+    ).toEqual({ unit: "C62", display_text: "unit" });
     expect(product).toMatchObject({
       handle: "camiseta-basica",
       price_range: {

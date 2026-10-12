@@ -69,6 +69,9 @@ export type ProposalView = Readonly<{
 
 type ProposalRow = Prisma.ExecutionProposalGetPayload<object>;
 
+const IDEMPOTENCY_KEY_FORMAT =
+  "Use letras, números, ponto, dois-pontos ou hífen.";
+
 export const ProposeInput = z
   .object({
     operation: z.string().min(1).max(96),
@@ -79,7 +82,7 @@ export const ProposeInput = z
       .trim()
       .min(1)
       .max(128)
-      .regex(/^[\w.:-]+$/, "Use letras, números, ponto, dois-pontos ou hífen."),
+      .regex(/^[\w.:-]+$/, IDEMPOTENCY_KEY_FORMAT),
     reason: z.string().trim().min(1).max(500).optional(),
   })
   .strict();
@@ -202,9 +205,18 @@ export async function createProposal(
   const parsed = ProposeInput.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0]?.message;
-    throw issue
-      ? invalid(issue)
-      : invalid("Proposta inválida.", "invalidProposal");
+    if (!issue) throw invalid("Proposta inválida.", "invalidProposal");
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: issue,
+      // The schema's own message has a translation; zod's go as they are.
+      ...(issue === IDEMPOTENCY_KEY_FORMAT
+        ? { messageKey: "apiErrors.idempotencyKeyFormat" }
+        : {
+            messageKey: "apiErrors.validationIssue",
+            messageValues: { message: issue },
+          }),
+    });
   }
   const { operation, targetId, idempotencyKey, reason } = parsed.data;
   const op = getProposalOperation(operation);

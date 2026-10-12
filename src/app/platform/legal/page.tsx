@@ -7,8 +7,16 @@ import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
-import { publishPlatformLegalAction } from "@/core/legal/actions";
-import { listLegalDocuments } from "@/core/legal/service";
+import {
+  deletePlatformLegalTranslationAction,
+  publishPlatformLegalAction,
+  savePlatformLegalTranslationAction,
+} from "@/core/legal/actions";
+import {
+  legalTranslationLanguages,
+  listLegalDocuments,
+  listPartnerLegalTranslations,
+} from "@/core/legal/service";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
@@ -27,14 +35,21 @@ export default async function PlatformLegalPage() {
     return <ModuleNotice variant="denied" />;
   }
   const partner = await getRequestPartner();
-  const documents = partner
+  const { documents, languages, translations } = partner
     ? await withIdentityContext(
         prisma,
         identity.userId,
-        (tx) => listLegalDocuments(tx, partner.partnerId),
+        async (tx) => ({
+          documents: await listLegalDocuments(tx, partner.partnerId),
+          languages: await legalTranslationLanguages(tx),
+          translations: await listPartnerLegalTranslations(
+            tx,
+            partner.partnerId,
+          ),
+        }),
         { partnerId: partner.partnerId },
       )
-    : [];
+    : { documents: [], languages: [], translations: [] };
   const t = await getTranslations("legal.platform");
   const tPlatform = await getTranslations("platform");
   return (
@@ -45,7 +60,16 @@ export default async function PlatformLegalPage() {
         description={t("description")}
         icon={<FileText className="h-5 w-5" />}
       />
-      <LegalEditor documents={documents} action={publishPlatformLegalAction} />
+      <LegalEditor
+        documents={documents}
+        action={publishPlatformLegalAction}
+        languages={languages}
+        translations={translations}
+        translationActions={{
+          save: savePlatformLegalTranslationAction,
+          remove: deletePlatformLegalTranslationAction,
+        }}
+      />
     </div>
   );
 }

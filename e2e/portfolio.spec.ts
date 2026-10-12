@@ -227,5 +227,5 @@ test("owner registers lodging with accommodation, rate plans and nightly prices"
   await expect(preview).toContainText('"non_refundable"');
   await expect(preview).toContainText("Suíte casal E2E");
   await expect(preview).toContainText("Prédio Praia E2E");
-  await expect(preview).toContainText('"diária"');
+  await expect(preview).toContainText('"night"');
 });

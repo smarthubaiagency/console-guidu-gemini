@@ -22,6 +22,7 @@ import {
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { withContext, type RequestContext } from "@/lib/prisma/with-context";
 import { appLog } from "@/lib/telemetry/log";
+import { englishErrorMessage } from "@/core/i18n/english";
 import { toSafeError } from "@/shared/errors";
 
 import type { PermissionKey } from "@/core/permissions/catalog";
@@ -44,7 +45,7 @@ import { MCP_WORKSPACE_TOOLS, type McpToolDefinition } from "./tools";
 const SERVER_INFO = { name: "guidu-workspace", version: "1.0.0" } as const;
 
 const INSTRUCTIONS =
-  "Ferramentas de um workspace do GUIDU. O workspace é o da chave usada. As leituras não mudam dados; escritas só por propose_operation, que cria uma proposta para uma pessoa aprovar na plataforma.";
+  "Tools of a GUIDU workspace. The workspace is the one of the API key in use. Reads change no data; writes only through propose_operation, which creates a proposal for a person to approve on the platform.";
 
 /** Public origin of the request, as the browser would reach this host. */
 function publicOrigin(request: Request): string {
@@ -163,7 +164,7 @@ function register(
           content: [
             {
               type: "text" as const,
-              text: `${safe.safeMessage} (requestId ${safe.requestId})`,
+              text: `${englishErrorMessage(safe)} (requestId ${safe.requestId})`,
             },
           ],
         };
@@ -195,13 +196,13 @@ export async function handleMcpWorkspaceRequest(
     return jsonError(
       405,
       "method_not_allowed",
-      "Use POST (Streamable HTTP sem sessão).",
+      "Use POST (Streamable HTTP without session).",
       requestId,
       { allow: "POST" },
     );
   }
   if (!originAllowed(request)) {
-    return jsonError(403, "forbidden", "Origem não permitida.", requestId);
+    return jsonError(403, "forbidden", "Origin not allowed.", requestId);
   }
 
   let decision: RateDecision | null = null;
@@ -213,12 +214,7 @@ export async function handleMcpWorkspaceRequest(
       { allowSession: false, origin: "mcp" },
     );
     if (principal.kind !== "api_key") {
-      return jsonError(
-        401,
-        "unauthenticated",
-        "Chave de API exigida.",
-        requestId,
-      );
+      return jsonError(401, "unauthenticated", "API key required.", requestId);
     }
     const ctx: RequestContext = {
       userId: principal.userId,
@@ -241,7 +237,7 @@ export async function handleMcpWorkspaceRequest(
       return jsonError(
         429,
         "rate_limited",
-        "Limite de requisições atingido. Tente de novo em instantes.",
+        "Rate limit reached. Try again shortly.",
         requestId,
         rateLimitHeaders(decision),
       );
@@ -313,7 +309,7 @@ export async function handleMcpWorkspaceRequest(
     return jsonError(
       status,
       safe.code,
-      safe.safeMessage,
+      englishErrorMessage(safe),
       safe.requestId,
       status === 401 ? { "www-authenticate": 'Bearer realm="guidu-mcp"' } : {},
     );

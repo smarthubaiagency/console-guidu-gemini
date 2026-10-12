@@ -7,10 +7,15 @@
  * - Emits standardized `{ error: { code, message, requestId } }` response envelope.
  * - Maps AppErrorCode to appropriate HTTP status codes (401, 403, 404, 409, 422, 429, 502, 503, 500).
  * - Never includes stack traces or raw sensitive data.
+ * - The message is always English (I5, ADR 0013): the API speaks English
+ *   whatever the dashboard language; `safeMessage` stays for the logs.
  * ============================================================================
  */
 
 import { NextResponse } from "next/server";
+
+import { englishErrorMessage } from "@/core/i18n/english";
+
 import { type AppErrorCode, toSafeError } from "./app-error";
 
 export function httpStatusFromCode(code: AppErrorCode): number {
@@ -59,7 +64,7 @@ export function apiErrorResponse(
     code: isAccessDenied
       ? ((err as { reason?: string }).reason ?? safe.code)
       : safe.code,
-    message: safe.safeMessage,
+    message: englishErrorMessage(safe),
     requestId: safe.requestId,
   };
 

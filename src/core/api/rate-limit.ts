@@ -158,6 +158,7 @@ export class RateLimitedError extends AppError {
       code: "rate_limited",
       safeMessage:
         "Limite de requisições atingido. Tente de novo em instantes.",
+      messageKey: "apiErrors.rateLimited",
       ...(requestId ? { requestId } : {}),
     });
     this.name = "RateLimitedError";

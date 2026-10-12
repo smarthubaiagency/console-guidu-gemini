@@ -213,7 +213,7 @@ describeDatabase("F4d: proposals with human approval", requiredVars, () => {
       arguments: { ...args, payload: { name: "Outra Pessoa" } },
     });
     expect(other.result.isError).toBe(true);
-    expect(other.result.content?.[0]?.text).toContain("outro conteúdo");
+    expect(other.result.content?.[0]?.text).toContain("different content");
 
     const status = await mcp("tools/call", {
       name: "get_proposal",

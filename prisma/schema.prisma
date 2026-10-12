@@ -398,20 +398,40 @@ model Payment {
 
 /// Terms and privacy policy of a partner, versioned and insert-only (P4b2).
 model PartnerLegalDocument {
-  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  partnerId          String            @map("partner_id") @db.Uuid
+  id                 String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId          String                            @map("partner_id") @db.Uuid
   kind               String
   version            Int
   title              String
   body               String
-  requiresAcceptance Boolean           @default(true) @map("requires_acceptance")
-  publishedBy        String?           @map("published_by") @db.Uuid
-  publishedAt        DateTime          @default(now()) @map("published_at") @db.Timestamptz()
-  partner            Partner           @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  requiresAcceptance Boolean                           @default(true) @map("requires_acceptance")
+  publishedBy        String?                           @map("published_by") @db.Uuid
+  publishedAt        DateTime                          @default(now()) @map("published_at") @db.Timestamptz()
+  /// Language of the original text (I5); translations cover the others.
+  locale             String                            @default("pt-BR")
+  partner            Partner                           @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   acceptances        LegalAcceptance[]
+  translations       PartnerLegalDocumentTranslation[]
 
   @@unique([partnerId, kind, version])
   @@map("partner_legal_documents")
+}
+
+/// Translation of one legal document version into one dashboard language
+/// (I5). Manual (legal settings) or machine origin; the original prevails.
+model PartnerLegalDocumentTranslation {
+  documentId String               @map("document_id") @db.Uuid
+  locale     String
+  title      String
+  body       String
+  origin     String               @default("manual")
+  updatedBy  String?              @map("updated_by") @db.Uuid
+  updatedAt  DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  document   PartnerLegalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([documentId, locale])
+  @@index([locale])
+  @@map("partner_legal_document_translations")
 }
 
 /// Acceptance of one legal document version by one user (P4b2).

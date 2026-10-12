@@ -726,7 +726,7 @@ describeDatabase(
             type: "dev.ucp.lodging.policy.cancellation",
             refundability: "refundable",
             description: {
-              plain: "Cancelamento grátis até 48 horas antes do check-in.",
+              plain: "Free cancellation up to 48 hours before check-in.",
             },
           },
         ],
@@ -734,8 +734,8 @@ describeDatabase(
       const variants = ucp.variants as Record<string, unknown>[];
       expect(variants[1]).toMatchObject({
         options: [
-          { name: "Acomodação", label: "Chalé família" },
-          { name: "Tarifa", label: "Não reembolsável com café" },
+          { name: "Accommodation", label: "Chalé família" },
+          { name: "Rate plan", label: "Não reembolsável com café" },
         ],
         metadata: {
           "co.guidu.portfolio.lodging": {

@@ -110,7 +110,7 @@ describe("Portfolio lodging (F5c)", () => {
         type: "dev.ucp.lodging.policy.cancellation",
         refundability: "non_refundable",
         description: {
-          plain: "Tarifa não reembolsável: o cancelamento não tem reembolso.",
+          plain: "Non-refundable rate: cancellation is not refunded.",
         },
       },
     ]);
@@ -123,14 +123,14 @@ describe("Portfolio lodging (F5c)", () => {
     // Options come from the type and plan, not the free options.
     expect((product.variants as Record<string, unknown>[])[0]).toMatchObject({
       options: [
-        { name: "Acomodação", label: "Suíte casal" },
-        { name: "Tarifa", label: "Não reembolsável" },
+        { name: "Accommodation", label: "Suíte casal" },
+        { name: "Rate plan", label: "Não reembolsável" },
       ],
-      quantity_unit: { unit: "DAY", display_text: "diária" },
+      quantity_unit: { unit: "DAY", display_text: "night" },
     });
     expect(product.options).toEqual([
-      { name: "Acomodação", values: [{ label: "Suíte casal" }] },
-      { name: "Tarifa", values: [{ label: "Não reembolsável" }] },
+      { name: "Accommodation", values: [{ label: "Suíte casal" }] },
+      { name: "Rate plan", values: [{ label: "Não reembolsável" }] },
     ]);
     // A quote lodging item does not leave through UCP.
     expect(

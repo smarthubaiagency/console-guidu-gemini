@@ -6,8 +6,16 @@ import { LegalEditor } from "@/components/legal/legal-editor";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
-import { publishPartnerLegalAction } from "@/core/legal/actions";
-import { listLegalDocuments } from "@/core/legal/service";
+import {
+  deletePartnerLegalTranslationAction,
+  publishPartnerLegalAction,
+  savePartnerLegalTranslationAction,
+} from "@/core/legal/actions";
+import {
+  legalTranslationLanguages,
+  listLegalDocuments,
+  listPartnerLegalTranslations,
+} from "@/core/legal/service";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
@@ -23,10 +31,14 @@ export default async function PartnerLegalPage() {
   if (!partnerGrants(membership.role)("partner.legal.manage")) {
     return <ModuleNotice variant="denied" />;
   }
-  const documents = await withIdentityContext(
+  const { documents, languages, translations } = await withIdentityContext(
     prisma,
     identity.userId,
-    (tx) => listLegalDocuments(tx, partner.partnerId),
+    async (tx) => ({
+      documents: await listLegalDocuments(tx, partner.partnerId),
+      languages: await legalTranslationLanguages(tx),
+      translations: await listPartnerLegalTranslations(tx, partner.partnerId),
+    }),
     { partnerId: partner.partnerId },
   );
   const t = await getTranslations("partnerConsole");
@@ -38,7 +50,16 @@ export default async function PartnerLegalPage() {
         description={t("legal.description")}
         icon={<FileText className="h-5 w-5" />}
       />
-      <LegalEditor documents={documents} action={publishPartnerLegalAction} />
+      <LegalEditor
+        documents={documents}
+        action={publishPartnerLegalAction}
+        languages={languages}
+        translations={translations}
+        translationActions={{
+          save: savePartnerLegalTranslationAction,
+          remove: deletePartnerLegalTranslationAction,
+        }}
+      />
     </div>
   );
 }

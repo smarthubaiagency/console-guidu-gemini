@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getFormatter, getTranslations } from "next-intl/server";
+import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 
 import { getRequestBrand } from "@/core/brand/resolve";
 import {
   LEGAL_KINDS,
-  latestLegalDocument,
+  latestLocalizedLegalDocument,
   type LegalKind,
 } from "@/core/legal/service";
 import { getRequestPartner } from "@/core/partners/resolve";
@@ -18,18 +19,35 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("document.metadataTitle") };
 }
 
-/** Latest terms or privacy policy of the host's partner (public, P4b2). */
+/**
+ * Latest terms or privacy policy of the host's partner (public, P4b2), in
+ * the request language when translated (I5); `?original=1` shows the
+ * original, which prevails.
+ */
 export default async function LegalDocumentPage({
   params,
-}: Readonly<{ params: Promise<{ kind: string }> }>) {
+  searchParams,
+}: Readonly<{
+  params: Promise<{ kind: string }>;
+  searchParams: Promise<{ original?: string }>;
+}>) {
   const { kind } = await params;
+  const { original } = await searchParams;
+  const showOriginal = original === "1";
   if (!(LEGAL_KINDS as readonly string[]).includes(kind)) notFound();
   const partner = await getRequestPartner();
   if (!partner) notFound();
   const brand = await getRequestBrand();
 
+  const locale = await getLocale();
   const document = await withPartnerContext(prisma, partner.partnerId, (tx) =>
-    latestLegalDocument(tx, partner.partnerId, kind as LegalKind),
+    latestLocalizedLegalDocument(
+      tx,
+      partner.partnerId,
+      kind as LegalKind,
+      // The original is never "translated" into its own language.
+      showOriginal ? "" : locale,
+    ),
   );
   if (!document) notFound();
   const t = await getTranslations("legal");
@@ -50,7 +68,29 @@ export default async function LegalDocumentPage({
       appName={brand.name}
       logoUrl={brand.logoUrl}
     >
+      {document.translated ? (
+        <p
+          className="text-12 text-text-secondary mb-3"
+          data-testid="legal-translation-note"
+        >
+          {t("document.translatedNote")}{" "}
+          <Link
+            href={`/legal/${document.kind}?original=1`}
+            className="underline"
+          >
+            {t("document.showOriginal")}
+          </Link>
+        </p>
+      ) : null}
+      {showOriginal && document.locale !== locale ? (
+        <p className="text-12 text-text-secondary mb-3">
+          <Link href={`/legal/${document.kind}`} className="underline">
+            {t("document.showTranslation")}
+          </Link>
+        </p>
+      ) : null}
       <article
+        lang={document.shownLocale}
         className="text-14 text-text whitespace-pre-wrap"
         data-testid="legal-document-body"
       >

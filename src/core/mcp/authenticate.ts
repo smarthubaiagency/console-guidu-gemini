@@ -36,6 +36,7 @@ export class InvalidApiKeyError extends AppError {
     super({
       code: "unauthenticated",
       safeMessage: "Chave de API inválida, expirada ou revogada.",
+      messageKey: "apiErrors.invalidApiKey",
       ...(requestId ? { requestId } : {}),
     });
     this.name = "InvalidApiKeyError";
