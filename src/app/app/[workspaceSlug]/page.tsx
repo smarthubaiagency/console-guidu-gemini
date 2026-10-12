@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { resolveSeatLimit } from "@/core/entitlements/quotas";
 import { moduleStateLabelKey } from "@/core/module-runtime/state";
+import { getModuleCatalog } from "@/core/i18n/modules";
 
 export async function generateMetadata() {
   const t = await getTranslations("overview");
@@ -30,6 +31,7 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
   const { workspaceSlug } = await params;
   const t = await getTranslations("overview");
   const tModules = await getTranslations("modules");
+  const catalog = await getModuleCatalog();
   const identity = await requireUserPage(`/app/${workspaceSlug}`);
   const context = await resolveRequestWorkspaceContext(
     prisma,
@@ -89,8 +91,8 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
 
   const modules = [
     ...moduleViews.map((view) => ({
-      title: view.displayName,
-      description: view.description,
+      title: catalog.name(view.moduleKey, view.displayName),
+      description: catalog.description(view.moduleKey, view.description),
       href:
         view.state === "not_enabled" || !view.href
           ? `/app/${workspaceSlug}/settings/modules`

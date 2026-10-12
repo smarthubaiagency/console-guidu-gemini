@@ -1,16 +1,20 @@
-import type { Metadata } from "next";
 import { Store, Clock } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = { title: "Google Meu Negócio" };
+export async function generateMetadata() {
+  const t = await getTranslations("googleBusiness");
+  return { title: t("metaTitle") };
+}
 
 export default async function GoogleBusinessPage() {
+  const t = await getTranslations("googleBusiness");
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="border-border border-b pb-5">
         <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>Módulos</span>
+          <span>{t("breadcrumbModules")}</span>
           <span>/</span>
-          <span>Google Meu Negócio</span>
+          <span>{t("title")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-ai-bg text-ai-text border-ai-border rounded-lg border p-2">
@@ -18,12 +22,9 @@ export default async function GoogleBusinessPage() {
           </div>
           <div>
             <h1 className="text-20 text-text font-bold tracking-tight">
-              Google Meu Negócio
+              {t("title")}
             </h1>
-            <p className="text-12 text-text-secondary">
-              Gestão de presença online, avaliações, horários e fotos de lojas
-              físicas.
-            </p>
+            <p className="text-12 text-text-secondary">{t("description")}</p>
           </div>
         </div>
       </div>
@@ -33,11 +34,10 @@ export default async function GoogleBusinessPage() {
           <Clock className="h-5 w-5" />
         </div>
         <h2 className="text-14 text-text mt-4 font-semibold">
-          Módulo em Desenvolvimento
+          {t("inDevelopment.title")}
         </h2>
         <p className="text-12 text-text-secondary mx-auto mt-2 max-w-md leading-relaxed">
-          A integração com a Google Business Profile API depende de conectores
-          OAuth globais e credenciais operacionais.
+          {t("inDevelopment.body")}
         </p>
       </div>
     </div>

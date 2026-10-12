@@ -1,17 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requireMfa, requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import { savePlatformModuleConfig } from "@/core/module-runtime/settings";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { AppError, toSafeError } from "@/shared/errors";
+import { AppError } from "@/shared/errors";
 
 import { NIGHT_UNIT } from "../lodging";
 import { PortfolioQuotas } from "../manifest";
@@ -37,15 +39,6 @@ import {
 
 type State = PartnerActionState;
 
-function failure(err: unknown): State {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
-}
-
 function str(formData: FormData, name: string): string | undefined {
   const value = formData.get(name);
   const text = typeof value === "string" ? value.trim() : "";
@@ -69,6 +62,8 @@ function cents(formData: FormData, name: string): number | null {
     throw new AppError({
       code: "invalid_input",
       safeMessage: `Valor inválido em ${name}: use, por exemplo, 49,90.`,
+      messageKey: "portfolio.errors.invalidAmount",
+      messageValues: { field: name },
     });
   }
   return Math.round(value * 100);
@@ -189,13 +184,14 @@ export async function createPortfolioItemAction(
       }),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio`);
+    const t = await getTranslations("portfolio");
     return {
       success: true,
-      message: "Item criado.",
+      message: t("actions.itemCreated"),
       redirectTo: `/app/${workspaceSlug}/portfolio/${item.id}`,
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -250,9 +246,10 @@ export async function updatePortfolioItemAction(
       }),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio`);
-    return { success: true, message: "Item salvo." };
+    const t = await getTranslations("portfolio");
+    return { success: true, message: t("actions.itemSaved") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -267,9 +264,10 @@ export async function addPortfolioVariantAction(
       addVariant(tx, ctx, itemId, variantFromForm(formData)),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
-    return { success: true, message: "Variante adicionada." };
+    const t = await getTranslations("portfolio");
+    return { success: true, message: t("actions.variantAdded") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -287,15 +285,17 @@ export async function updatePortfolioVariantAction(
         : updateVariant(tx, ctx, itemId, variantId, variantFromForm(formData)),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    const t = await getTranslations("portfolio");
     return {
       success: true,
-      message:
+      message: t(
         formData.get("remove") === "1"
-          ? "Variante removida."
-          : "Variante salva.",
+          ? "actions.variantRemoved"
+          : "actions.variantSaved",
+      ),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -377,17 +377,19 @@ export async function saveAccommodationTypeAction(
             ),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    const t = await getTranslations("portfolio");
     return {
       success: true,
-      message:
+      message: t(
         typeId === undefined
-          ? "Acomodação adicionada."
+          ? "actions.typeAdded"
           : remove
-            ? "Acomodação removida."
-            : "Acomodação salva.",
+            ? "actions.typeRemoved"
+            : "actions.typeSaved",
+      ),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -409,17 +411,19 @@ export async function saveRatePlanAction(
           : updateRatePlan(tx, ctx, itemId, planId, ratePlanFromForm(formData)),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio/${itemId}`);
+    const t = await getTranslations("portfolio");
     return {
       success: true,
-      message:
+      message: t(
         planId === undefined
-          ? "Tarifa adicionada."
+          ? "actions.planAdded"
           : remove
-            ? "Tarifa removida."
-            : "Tarifa salva.",
+            ? "actions.planRemoved"
+            : "actions.planSaved",
+      ),
     };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -447,8 +451,9 @@ export async function savePortfolioAdminSettingsAction(
       ),
     );
     revalidatePath("/platform/settings/modules/portfolio");
-    return { success: true, message: "Limites padrão salvos." };
+    const t = await getTranslations("portfolio");
+    return { success: true, message: t("actions.adminSaved") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }

@@ -112,10 +112,23 @@ function toDto(row: ContactRow): ContactDto {
   };
 }
 
+/** Message keys of the schema's own messages; zod defaults keep their text. */
+const ISSUE_KEYS: Readonly<Record<string, string>> = {
+  "Informe o nome.": "crm.errors.nameRequired",
+  "E-mail inválido.": "crm.errors.emailInvalid",
+  "Telefone inválido.": "crm.errors.phoneInvalid",
+  "Nada para alterar.": "crm.errors.nothingToChange",
+};
+
 function invalid(error: z.ZodError): AppError {
+  const issue = error.issues[0];
+  const messageKey = issue
+    ? ISSUE_KEYS[issue.message]
+    : "crm.errors.contactInvalid";
   return new AppError({
     code: "invalid_input",
-    safeMessage: error.issues[0]?.message ?? "Dados do contato inválidos.",
+    safeMessage: issue?.message ?? "Dados do contato inválidos.",
+    ...(messageKey ? { messageKey } : {}),
   });
 }
 
@@ -123,6 +136,7 @@ function notFound(): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: "Contato não encontrado.",
+    messageKey: "crm.errors.contactNotFound",
   });
 }
 

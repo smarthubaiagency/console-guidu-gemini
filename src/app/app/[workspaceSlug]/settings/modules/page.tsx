@@ -9,6 +9,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { requireUserPage } from "@/core/auth/page-guard";
 import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
 import { moduleStateLabelKey } from "@/core/module-runtime/state";
+import { getModuleCatalog } from "@/core/i18n/modules";
 import { prisma } from "@/lib/prisma/client";
 
 export async function generateMetadata() {
@@ -44,6 +45,12 @@ export default async function ModulesSettingsPage({ params }: PageProps) {
     workspaceSlug,
   );
   const t = await getTranslations("modules");
+  const catalog = await getModuleCatalog();
+  const named = modules.map((m) => ({
+    ...m,
+    displayName: catalog.name(m.moduleKey, m.displayName),
+    description: catalog.description(m.moduleKey, m.description),
+  }));
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -59,7 +66,7 @@ export default async function ModulesSettingsPage({ params }: PageProps) {
       )}
 
       <ul className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs">
-        {modules.map((m) => (
+        {named.map((m) => (
           <li
             key={m.moduleKey}
             className="flex items-center justify-between gap-4 p-4"

@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { inputClass, labelClass } from "@/components/partners/action-form";
 
 import { ACCOMMODATION_KINDS, BOARDS, REFUNDABILITY } from "../lodging";
@@ -5,39 +7,21 @@ import type {
   AccommodationTypeView,
   RatePlanView,
 } from "../server/services/items";
+import type { PortfolioTranslator } from "../verticals";
 
 /** Form fields of the lodging screens (F5c). */
 
-export const ACCOMMODATION_KIND_LABELS: Record<
-  (typeof ACCOMMODATION_KINDS)[number],
-  string
-> = {
-  entire_home: "Casa ou apartamento inteiro",
-  private_room: "Quarto privativo",
-  shared_room: "Quarto compartilhado",
-  hotel_room: "Quarto de hotel",
-  suite: "Suíte",
-  chalet: "Chalé",
-  campsite: "Área de camping",
-};
+/** Label of a lodging value under a `portfolio` group, or the raw value. */
+export function lodgingLabel(
+  t: PortfolioTranslator,
+  group: "accommodationKind" | "board" | "refundability",
+  value: string,
+): string {
+  const key = `${group}.${value}`;
+  return t.has(key) ? t(key) : value;
+}
 
-export const BOARD_LABELS: Record<(typeof BOARDS)[number], string> = {
-  room_only: "Só hospedagem",
-  breakfast: "Café da manhã",
-  half_board: "Meia pensão",
-  full_board: "Pensão completa",
-  all_inclusive: "Tudo incluído",
-};
-
-export const REFUNDABILITY_LABELS: Record<
-  (typeof REFUNDABILITY)[number],
-  string
-> = {
-  refundable: "Reembolsável",
-  partially_refundable: "Reembolso parcial",
-  non_refundable: "Não reembolsável",
-};
-
+/** Room amenities; `label` is the Portuguese source of `roomAmenities.*`. */
 export const ROOM_AMENITIES = [
   { id: "dev.ucp.amenity.wi_fi", label: "Wi-Fi" },
   { id: "co.guidu.amenity.air_conditioning", label: "Ar-condicionado" },
@@ -49,18 +33,27 @@ export const ROOM_AMENITIES = [
   { id: "co.guidu.amenity.accessibility", label: "Acessível" },
 ] as const;
 
+function amenityLabel(
+  t: PortfolioTranslator,
+  amenity: (typeof ROOM_AMENITIES)[number],
+): string {
+  const key = `roomAmenities.${amenity.id.replaceAll(".", "_")}`;
+  return t.has(key) ? t(key) : amenity.label;
+}
+
 const num = (value: number | null | undefined) =>
   value === null || value === undefined ? "" : String(value);
 
 /** UCP AccommodationType with capacity, plus the GUIDU extension. */
-export function AccommodationTypeFields({
+export async function AccommodationTypeFields({
   type,
 }: Readonly<{ type?: AccommodationTypeView }>) {
+  const t = await getTranslations("portfolio");
   const c = type?.capacity ?? {};
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       <label className={`${labelClass} sm:col-span-2`}>
-        Nome da acomodação
+        {t("lodging.typeTitle")}
         <input
           name="type_title"
           required
@@ -70,7 +63,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={labelClass}>
-        Tipo de espaço
+        {t("lodging.kind")}
         <select
           name="accommodation_kind"
           defaultValue={type?.accommodationKind ?? ""}
@@ -79,13 +72,13 @@ export function AccommodationTypeFields({
           <option value="">—</option>
           {ACCOMMODATION_KINDS.map((k) => (
             <option key={k} value={k}>
-              {ACCOMMODATION_KIND_LABELS[k]}
+              {lodgingLabel(t, "accommodationKind", k)}
             </option>
           ))}
         </select>
       </label>
       <label className={`${labelClass} sm:col-span-3`}>
-        Descrição da acomodação
+        {t("lodging.typeDescription")}
         <textarea
           name="type_description"
           rows={2}
@@ -95,7 +88,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={labelClass}>
-        Capacidade total (hóspedes) *
+        {t("lodging.capacityTotal")}
         <input
           name="capacity_total"
           type="number"
@@ -106,7 +99,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={labelClass}>
-        Máximo de adultos
+        {t("lodging.maxAdults")}
         <input
           name="capacity_adults"
           type="number"
@@ -117,7 +110,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={labelClass}>
-        Máximo de crianças
+        {t("lodging.maxChildren")}
         <input
           name="capacity_children"
           type="number"
@@ -128,7 +121,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={labelClass}>
-        Idades de criança (uma faixa por linha: 0-12 | limite)
+        {t("lodging.childAgeRanges")}
         <textarea
           name="child_age_ranges"
           rows={2}
@@ -142,7 +135,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={labelClass}>
-        Quartos
+        {t("lodging.bedrooms")}
         <input
           name="bedrooms"
           type="number"
@@ -153,7 +146,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={labelClass}>
-        Camas
+        {t("lodging.beds")}
         <input
           name="beds_count"
           type="number"
@@ -164,7 +157,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={labelClass}>
-        Banheiros
+        {t("lodging.bathrooms")}
         <input
           name="bathrooms"
           type="number"
@@ -175,7 +168,7 @@ export function AccommodationTypeFields({
         />
       </label>
       <label className={`${labelClass} sm:col-span-2`}>
-        Fotos (uma URL por linha: url | texto alternativo)
+        {t("lodging.photos")}
         <textarea
           name="type_media"
           rows={2}
@@ -187,7 +180,7 @@ export function AccommodationTypeFields({
       </label>
       <fieldset className="space-y-1 sm:col-span-3">
         <legend className="text-12 text-text-subtle font-medium">
-          Comodidades da acomodação
+          {t("lodging.typeAmenities")}
         </legend>
         <div className="flex flex-wrap gap-3">
           {ROOM_AMENITIES.map((a) => (
@@ -198,7 +191,7 @@ export function AccommodationTypeFields({
                 value={a.id}
                 defaultChecked={type?.amenities.includes(a.id)}
               />
-              {a.label}
+              {amenityLabel(t, a)}
             </label>
           ))}
         </div>
@@ -208,11 +201,14 @@ export function AccommodationTypeFields({
 }
 
 /** UCP RatePlan with its cancellation policy. */
-export function RatePlanFields({ plan }: Readonly<{ plan?: RatePlanView }>) {
+export async function RatePlanFields({
+  plan,
+}: Readonly<{ plan?: RatePlanView }>) {
+  const t = await getTranslations("portfolio");
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       <label className={labelClass}>
-        Nome da tarifa
+        {t("lodging.planTitle")}
         <input
           name="plan_title"
           required
@@ -222,7 +218,7 @@ export function RatePlanFields({ plan }: Readonly<{ plan?: RatePlanView }>) {
         />
       </label>
       <label className={labelClass}>
-        Alimentação
+        {t("lodging.board")}
         <select
           name="board"
           defaultValue={plan?.board ?? "room_only"}
@@ -230,13 +226,13 @@ export function RatePlanFields({ plan }: Readonly<{ plan?: RatePlanView }>) {
         >
           {BOARDS.map((b) => (
             <option key={b} value={b}>
-              {BOARD_LABELS[b]}
+              {lodgingLabel(t, "board", b)}
             </option>
           ))}
         </select>
       </label>
       <label className={labelClass}>
-        Cancelamento
+        {t("lodging.refundability")}
         <select
           name="refundability"
           defaultValue={plan?.refundability ?? "refundable"}
@@ -244,13 +240,13 @@ export function RatePlanFields({ plan }: Readonly<{ plan?: RatePlanView }>) {
         >
           {REFUNDABILITY.map((r) => (
             <option key={r} value={r}>
-              {REFUNDABILITY_LABELS[r]}
+              {lodgingLabel(t, "refundability", r)}
             </option>
           ))}
         </select>
       </label>
       <label className={labelClass}>
-        Cancelamento grátis até (horas antes do check-in)
+        {t("lodging.freeCancellationHours")}
         <input
           name="free_cancellation_hours"
           type="number"
@@ -261,7 +257,7 @@ export function RatePlanFields({ plan }: Readonly<{ plan?: RatePlanView }>) {
         />
       </label>
       <label className={`${labelClass} sm:col-span-2`}>
-        Política de cancelamento (texto para o hóspede)
+        {t("lodging.cancellationPolicy")}
         <textarea
           name="cancellation_policy"
           rows={2}
@@ -271,7 +267,7 @@ export function RatePlanFields({ plan }: Readonly<{ plan?: RatePlanView }>) {
         />
       </label>
       <label className={`${labelClass} sm:col-span-3`}>
-        Descrição da tarifa
+        {t("lodging.planDescription")}
         <textarea
           name="plan_description"
           rows={2}

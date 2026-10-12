@@ -1,0 +1,57 @@
+{
+  "portfolio": {
+    "name": "Portfolio",
+    "description": "Products, services, real estate, lodging and events in the UCP protocol format.",
+    "nav": { "portfolio": "Portfolio" },
+    "settings": { "portfolio_admin": "Portfolio" },
+    "permissions": {
+      "portfolio_items_read": "View portfolio items.",
+      "portfolio_items_write": "Create and edit portfolio items and variants."
+    },
+    "quotas": {
+      "portfolio_items": "Portfolio items per workspace.",
+      "portfolio_variants": "Portfolio variants per workspace."
+    }
+  },
+  "crm": {
+    "name": "CRM",
+    "description": "Workspace contacts; leads, companies, deals and tasks will come later.",
+    "nav": { "crm": "CRM", "crm_contacts": "Contacts" },
+    "permissions": {
+      "crm_contacts_read": "View workspace contacts.",
+      "crm_contacts_write": "Create and edit contacts."
+    },
+    "quotas": { "crm_contacts": "Contacts per workspace." }
+  },
+  "google_business": {
+    "name": "Google Business Profile",
+    "description": "Integration and sync of business profiles (specification pending).",
+    "nav": { "google_business": "Google Business Profile" }
+  },
+  "ai_agents": {
+    "name": "AI Agents",
+    "description": "Contextual assistants (frozen until the specification is approved).",
+    "nav": { "ai_agents": "AI Agents" }
+  },
+  "hello_world": {
+    "name": "Hello World",
+    "description": "Reference module that validates the platform's module contract.",
+    "nav": {
+      "hello_world": "Hello World",
+      "hello_world_home": "Greeting",
+      "hello_world_records": "Records"
+    },
+    "settings": {
+      "hello_world_workspace": "Hello World",
+      "hello_world_admin": "Hello World"
+    },
+    "permissions": {
+      "hello_world_read": "View the greeting and sample records.",
+      "hello_world_records_write": "Create sample records.",
+      "hello_world_settings_manage": "Change the workspace greeting."
+    },
+    "quotas": {
+      "hello_world_records": "Demo limit of records per workspace."
+    }
+  }
+}

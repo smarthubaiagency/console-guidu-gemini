@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { requireMfa, requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import {
   savePlatformModuleConfig,
   saveWorkspaceModuleConfig,
@@ -13,7 +15,7 @@ import {
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 
 import {
   createHelloWorldRecord,
@@ -31,13 +33,12 @@ export type HelloWorldActionState = {
 
 const MODULE_KEY = "hello-world";
 
-function failure(err: unknown): HelloWorldActionState {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
+function invalidInput(): AppError {
+  return new AppError({
+    code: "invalid_input",
+    safeMessage: "Dados inválidos.",
+    messageKey: "helloWorld.errors.invalidInput",
+  });
 }
 
 const slug = z.string().min(1).max(64);
@@ -54,9 +55,7 @@ export async function createHelloWorldRecordAction(
 ): Promise<HelloWorldActionState> {
   const workspaceSlug = slug.safeParse(formData.get("workspaceSlug"));
   if (!workspaceSlug.success) {
-    return failure(
-      new AppError({ code: "invalid_input", safeMessage: "Dados inválidos." }),
-    );
+    return actionFailure(invalidInput());
   }
   try {
     const identity = await requireUser();
@@ -70,18 +69,24 @@ export async function createHelloWorldRecordAction(
         enqueueHelloWorldRecord(tx, context, { title: formData.get("title") }),
       );
       revalidatePath(`/app/${workspaceSlug.data}/executions`);
+      const t = await getTranslations("helloWorld");
       return {
         success: true,
-        message: "Pedido enviado. Acompanhe em Execuções.",
+        message: t("actions.backgroundRequested"),
       };
     }
     const record = await withContext(prisma, context, (tx) =>
       createHelloWorldRecord(tx, context, { title: formData.get("title") }),
     );
     revalidatePath(`/app/${workspaceSlug.data}/hello-world`, "layout");
-    return { success: true, message: "Registro criado.", recordId: record.id };
+    const t = await getTranslations("helloWorld");
+    return {
+      success: true,
+      message: t("actions.recordCreated"),
+      recordId: record.id,
+    };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -91,9 +96,7 @@ export async function saveHelloWorldWorkspaceSettingsAction(
 ): Promise<HelloWorldActionState> {
   const workspaceSlug = slug.safeParse(formData.get("workspaceSlug"));
   if (!workspaceSlug.success) {
-    return failure(
-      new AppError({ code: "invalid_input", safeMessage: "Dados inválidos." }),
-    );
+    return actionFailure(invalidInput());
   }
   try {
     const identity = await requireUser();
@@ -112,9 +115,10 @@ export async function saveHelloWorldWorkspaceSettingsAction(
       ),
     );
     revalidatePath(`/app/${workspaceSlug.data}`, "layout");
-    return { success: true, message: "Configuração salva." };
+    const t = await getTranslations("helloWorld");
+    return { success: true, message: t("actions.settingsSaved") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -137,8 +141,9 @@ export async function saveHelloWorldAdminSettingsAction(
     );
     revalidatePath(`/platform/settings/modules/${MODULE_KEY}`);
     revalidatePath("/app", "layout");
-    return { success: true, message: "Política global salva." };
+    const t = await getTranslations("helloWorld");
+    return { success: true, message: t("actions.policySaved") };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }

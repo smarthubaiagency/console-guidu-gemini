@@ -7,7 +7,7 @@
  * - Server actions bridge between client chat UI and backend prompt engine.
  * - All mutations execute securely within `withContext` (ADR 0001).
  * - No decrypted keys or raw payloads ever leak to the browser.
- * - Enforces permission checks and safe standardized error contracts via `toSafeError`.
+ * - Enforces permission checks and safe standardized error contracts via `actionFailure`.
  * ============================================================================
  */
 
@@ -17,12 +17,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import type { AIProvider } from "@/core/credentials/vault";
 import { assertModuleAvailable } from "@/core/modules/availability";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 import {
   createAgentConfig,
   executeAgentPrompt,
@@ -63,13 +64,13 @@ export async function executePromptAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Dados inválidos para execução do agente.",
+        messageKey: "aiAgents.errors.invalidPrompt",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const { workspaceSlug, prompt, agentConfigId, sessionId } = parsed.data;
@@ -77,7 +78,11 @@ export async function executePromptAction(
   try {
     assertModuleAvailable("ai-agents");
     const identity = await requireUser();
-    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
 
     const result = await withContext(prisma, context, async (tx) => {
       return executeAgentPrompt(tx, context, {
@@ -94,19 +99,26 @@ export async function executePromptAction(
       result,
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }
 
 const CreateAgentConfigInput = z.object({
   workspaceSlug: z.string().min(1),
-  name: z.string().min(2, "O nome do agente deve ter ao menos 2 caracteres").max(64),
+  name: z
+    .string()
+    .min(2, "O nome do agente deve ter ao menos 2 caracteres")
+    .max(64),
   description: z.string().max(256).optional(),
-  systemPrompt: z.string().min(5, "O prompt de sistema deve ter ao menos 5 caracteres"),
+  systemPrompt: z
+    .string()
+    .min(5, "O prompt de sistema deve ter ao menos 5 caracteres"),
   primaryProvider: z.enum(["openai", "anthropic", "gemini"]),
   primaryModel: z.string().min(2),
-  fallbackProvider: z.enum(["openai", "anthropic", "gemini"]).optional().or(z.literal("")),
+  fallbackProvider: z
+    .enum(["openai", "anthropic", "gemini"])
+    .optional()
+    .or(z.literal("")),
   fallbackModel: z.string().optional().or(z.literal("")),
   temperature: z.coerce.number().min(0).max(2).default(0.7),
 });
@@ -139,13 +151,13 @@ export async function createAgentConfigAction(
   });
 
   if (!parsed.success) {
-    const safe = toSafeError(
+    return actionFailure(
       new AppError({
         code: "invalid_input",
         safeMessage: "Configurações inválidas para o agente.",
+        messageKey: "aiAgents.errors.invalidConfig",
       }),
     );
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
   }
 
   const {
@@ -163,7 +175,11 @@ export async function createAgentConfigAction(
   try {
     assertModuleAvailable("ai-agents");
     const identity = await requireUser();
-    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
 
     const config = await withContext(prisma, context, async (tx) => {
       return createAgentConfig(tx, context, {
@@ -185,8 +201,7 @@ export async function createAgentConfigAction(
       config,
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
-    return { error: safe.safeMessage, code: safe.code, requestId: safe.requestId };
+    return actionFailure(err);
   }
 }
 
@@ -206,7 +221,11 @@ export async function loadSessionMessagesAction(
   try {
     assertModuleAvailable("ai-agents");
     const identity = await requireUser();
-    const context = await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
 
     const result = await withContext(prisma, context, async (tx) => {
       return getSessionWithMessages(tx, context, sessionId);
@@ -217,13 +236,10 @@ export async function loadSessionMessagesAction(
       messages: result.messages,
     };
   } catch (err: unknown) {
-    const safe = toSafeError(err);
     return {
       session: null,
       messages: [],
-      error: safe.safeMessage,
-      code: safe.code,
-      requestId: safe.requestId,
+      ...(await actionFailure(err)),
     };
   }
 }

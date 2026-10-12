@@ -19,6 +19,9 @@ export const CLIENT_NAMESPACES = [
   "mcp",
   "brand",
   "platformKeys",
+  "crm",
+  "helloWorld",
+  "aiAgents",
 ] as const;
 
 export function clientMessages(

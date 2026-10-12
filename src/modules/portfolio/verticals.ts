@@ -599,6 +599,127 @@ export function listKinds(): { value: string; label: string }[] {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Labels in the request language (I4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Translator of the `portfolio` namespace (next-intl `t`). The Portuguese
+ * labels above stay the source and the fallback for keys it does not have.
+ */
+export type PortfolioTranslator = {
+  (key: string, values?: Record<string, string | number>): string;
+  has(key: string): boolean;
+};
+
+/** Message keys accept no dots: `service_area.cities` -> `service_area_cities`. */
+const keySegment = (value: string) => value.replaceAll(".", "_");
+
+function translated(
+  t: PortfolioTranslator,
+  key: string,
+  fallback: string,
+): string {
+  return t.has(key) ? t(key) : fallback;
+}
+
+export function itemTypeLabelKey(itemType: string): string {
+  return `itemTypes.${keySegment(itemType)}`;
+}
+
+export function verticalLabelKey(itemType: string, vertical: string): string {
+  return `verticals.${keySegment(itemType)}.${keySegment(vertical)}`;
+}
+
+/**
+ * Key of a field label: the base fields of a type live once under
+ * `fields.<type>.base`, the vertical ones under `fields.<type>.<vertical>`.
+ */
+export function fieldLabelKey(
+  itemType: string,
+  vertical: string,
+  spec: FieldSpec,
+): string {
+  const entry = isItemType(itemType) ? CATALOG[itemType] : undefined;
+  const group =
+    entry && !entry.base.includes(spec) && vertical in entry.verticals
+      ? vertical
+      : "base";
+  return `fields.${keySegment(itemType)}.${keySegment(group)}.${keySegment(spec.key)}`;
+}
+
+/** Key of an option label: `options.<type>.<field>.<value>`. */
+export function optionLabelKey(
+  itemType: string,
+  spec: FieldSpec,
+  value: string,
+): string {
+  return `options.${keySegment(itemType)}.${keySegment(spec.key)}.${keySegment(value)}`;
+}
+
+export function translatedItemTypeLabel(
+  t: PortfolioTranslator,
+  itemType: string,
+): string {
+  return translated(t, itemTypeLabelKey(itemType), itemTypeLabel(itemType));
+}
+
+export function translatedVerticalLabel(
+  t: PortfolioTranslator,
+  itemType: string,
+  vertical: string,
+): string {
+  return translated(
+    t,
+    verticalLabelKey(itemType, vertical),
+    verticalLabel(itemType, vertical),
+  );
+}
+
+/** "Serviço — Saúde", or just the type for the general vertical. */
+export function translatedKindLabel(
+  t: PortfolioTranslator,
+  itemType: string,
+  vertical: string,
+): string {
+  const type = translatedItemTypeLabel(t, itemType);
+  return vertical === "general"
+    ? type
+    : `${type} — ${translatedVerticalLabel(t, itemType, vertical)}`;
+}
+
+/** {@link listKinds} with the labels in the request language. */
+export function translatedKinds(
+  t: PortfolioTranslator,
+): { value: string; label: string }[] {
+  return listKinds().map((k) => {
+    const [type = "", vertical = "general"] = k.value.split(":");
+    return { value: k.value, label: translatedKindLabel(t, type, vertical) };
+  });
+}
+
+export function translatedFieldLabel(
+  t: PortfolioTranslator,
+  itemType: string,
+  vertical: string,
+  spec: FieldSpec,
+): string {
+  return translated(t, fieldLabelKey(itemType, vertical, spec), spec.label);
+}
+
+export function translatedOptionLabel(
+  t: PortfolioTranslator,
+  itemType: string,
+  spec: FieldSpec,
+  option: Option,
+): string {
+  return translated(
+    t,
+    optionLabelKey(itemType, spec, option.value),
+    option.label,
+  );
+}
+
 export function isValidKind(itemType: string, vertical: string): boolean {
   return isItemType(itemType) && vertical in CATALOG[itemType].verticals;
 }
@@ -616,6 +737,9 @@ export function fieldsFor(
 // ---------------------------------------------------------------------------
 // Zod schema of the details
 // ---------------------------------------------------------------------------
+
+/** Validation message of a time field, translated when it reaches the screen. */
+export const TIME_FORMAT_MESSAGE = "Use HH:MM (24 horas).";
 
 const UcpMeasure = z
   .object({
@@ -664,9 +788,7 @@ function fieldSchema(spec: FieldSpec): z.ZodType {
     case "datetime":
       return z.string().datetime({ offset: true });
     case "time":
-      return z
-        .string()
-        .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM (24 horas).");
+      return z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, TIME_FORMAT_MESSAGE);
   }
 }
 

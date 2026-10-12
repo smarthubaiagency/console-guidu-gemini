@@ -1,0 +1,66 @@
+{
+  "breadcrumbModules": "Módulos",
+  "breadcrumbHelloWorld": "Hello World",
+  "home": {
+    "metaTitle": "Hello World",
+    "title": "Hello World",
+    "description": "Módulo de referencia del contrato de módulos (solo desarrollo y pruebas).",
+    "origin": {
+      "workspace": "Definido en este workspace",
+      "global": "Heredado de la política global",
+      "fallback": "Predeterminado del módulo"
+    },
+    "count": "{count, plural, one {# registro de demostración.} other {# registros de demostración.}}",
+    "countOfLimit": "{count} de {limit, plural, one {# registro de demostración.} other {# registros de demostración.}}",
+    "viewRecords": "Ver registros"
+  },
+  "records": {
+    "metaTitle": "Registros — Hello World",
+    "breadcrumb": "Registros",
+    "title": "Registros de ejemplo",
+    "description": "Listar, crear y consultar registros vinculados al workspace.",
+    "readOnly": "Suscripción suspendida: los registros quedan disponibles solo para consulta.",
+    "limitReached": "Límite del plan alcanzado ({limit, plural, one {# registro} other {# registros}} por workspace).",
+    "readOnlyRole": "Tu rol solo permite consultar los registros.",
+    "empty": "Sin datos: todavía no se creó ningún registro.",
+    "dateUtc": "{date} UTC"
+  },
+  "record": {
+    "metaTitle": "Registro — Hello World",
+    "fallbackTitle": "Registro",
+    "id": "Identificador",
+    "createdAt": "Creado el",
+    "author": "Autor",
+    "you": "Tú",
+    "otherMember": "Otro miembro",
+    "back": "Volver a los registros"
+  },
+  "form": {
+    "recordTitle": "Título del registro",
+    "recordTitlePlaceholder": "Ej.: Primer registro de ejemplo",
+    "creating": "Creando...",
+    "create": "Crear registro",
+    "background": "En segundo plano",
+    "workspaceGreeting": "Saludo del workspace",
+    "inheritedPlaceholder": "Heredado: {greeting}",
+    "inheritHint": "Déjalo vacío para heredar el saludo global.",
+    "saving": "Guardando...",
+    "save": "Guardar",
+    "viewOnly": "Puedes ver esta configuración, pero no modificarla.",
+    "globalGreeting": "Saludo predeterminado global",
+    "fallbackPlaceholder": "Predeterminado del módulo: {greeting}",
+    "savePolicy": "Guardar política",
+    "platformReadOnly": "Tu rol interno solo permite lectura."
+  },
+  "actions": {
+    "backgroundRequested": "Solicitud enviada. Síguela en Ejecuciones.",
+    "recordCreated": "Registro creado.",
+    "settingsSaved": "Configuración guardada.",
+    "policySaved": "Política global guardada."
+  },
+  "errors": {
+    "invalidInput": "Datos inválidos.",
+    "recordNotFound": "Registro no encontrado.",
+    "titleInvalid": "Ingresa un título de 1 a 120 caracteres."
+  }
+}

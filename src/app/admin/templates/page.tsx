@@ -20,6 +20,7 @@ import {
   listOfferedModuleKeys,
   listWorkspaceTemplates,
 } from "@/core/partners/customers";
+import { getModuleCatalog } from "@/core/i18n/modules";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
@@ -45,8 +46,12 @@ export default async function PartnerTemplatesPage() {
     }),
     { partnerId: partner.partnerId },
   );
+  const catalog = await getModuleCatalog();
   const names = new Map(
-    listOfferableModules().map((m) => [m.moduleKey, m.displayName]),
+    listOfferableModules().map((m) => [
+      m.moduleKey,
+      catalog.name(m.moduleKey, m.displayName),
+    ]),
   );
 
   const t = await getTranslations("partnerConsole");

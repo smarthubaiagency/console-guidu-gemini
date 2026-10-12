@@ -49,6 +49,7 @@ async function lodgingItem(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Acomodação e tarifa existem só na hospedagem.",
+      messageKey: "portfolio.errors.lodgingOnly",
     });
   }
   return item as ItemView & { lodging: LodgingView };
@@ -72,6 +73,8 @@ export async function addAccommodationType(
     throw new AppError({
       code: "conflict",
       safeMessage: `Limite de ${MAX_TYPES} acomodações por hospedagem.`,
+      messageKey: "portfolio.errors.typeLimit",
+      messageValues: { max: MAX_TYPES },
     });
   }
   const position =
@@ -140,6 +143,7 @@ export async function removeAccommodationType(
       code: "conflict",
       safeMessage:
         "Esta acomodação tem preços. Remova ou troque esses preços antes.",
+      messageKey: "portfolio.errors.typeHasPrices",
     });
   }
   await tx.portfolioAccommodationType.deleteMany({
@@ -169,6 +173,8 @@ export async function addRatePlan(
     throw new AppError({
       code: "conflict",
       safeMessage: `Limite de ${MAX_PLANS} tarifas por hospedagem.`,
+      messageKey: "portfolio.errors.planLimit",
+      messageValues: { max: MAX_PLANS },
     });
   }
   const position =
@@ -237,6 +243,7 @@ export async function removeRatePlan(
       code: "conflict",
       safeMessage:
         "Esta tarifa tem preços. Remova ou troque esses preços antes.",
+      messageKey: "portfolio.errors.planHasPrices",
     });
   }
   await tx.portfolioRatePlan.deleteMany({

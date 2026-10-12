@@ -14,6 +14,7 @@
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
   Bot,
   User,
@@ -55,6 +56,7 @@ export function AgentsClient({
   initialSessions,
   initialMessages = [],
 }: AgentsClientProps) {
+  const t = useTranslations("aiAgents");
   const [configs, setConfigs] = useState<AgentConfigData[]>(initialConfigs);
   const [sessions, setSessions] = useState<AgentSessionData[]>(initialSessions);
   const [selectedConfigId, setSelectedConfigId] = useState<string>(
@@ -157,7 +159,7 @@ export function AgentsClient({
     try {
       const res = await executePromptAction({}, formData);
       if (res.error || !res.result) {
-        setFeedback({ error: res.error || "Falha na resposta do assistente." });
+        setFeedback({ error: res.error || t("chat.assistantFailed") });
         // remove optimistic message
         setMessages((prev) =>
           prev.filter((m) => m.id !== optimisticUserMsg.id),
@@ -183,7 +185,7 @@ export function AgentsClient({
         ]);
       }
     } catch {
-      setFeedback({ error: "Falha na comunicação ao enviar mensagem. Tente novamente." });
+      setFeedback({ error: t("chat.sendFailed") });
       setMessages((prev) => prev.filter((m) => m.id !== optimisticUserMsg.id));
     } finally {
       setIsSending(false);
@@ -217,7 +219,7 @@ export function AgentsClient({
         setNewAgentName("");
         setNewAgentDesc("");
         setFeedback({
-          success: `Agente "${res.config.name}" criado com sucesso!`,
+          success: t("chat.agentCreated", { name: res.config.name }),
         });
       }
     });
@@ -234,7 +236,7 @@ export function AgentsClient({
           <div className="mb-2 flex items-center justify-between">
             <label className="text-12 text-text-subtle flex items-center gap-1.5 font-semibold">
               <Cpu className="text-text-secondary h-3.5 w-3.5" />
-              Persona do Agente
+              {t("chat.persona")}
             </label>
             <button
               type="button"
@@ -242,7 +244,7 @@ export function AgentsClient({
               className="text-12 text-info-text hover:text-info-text flex items-center gap-1 font-medium"
             >
               <Plus className="h-3 w-3" />
-              Novo
+              {t("chat.new")}
             </button>
           </div>
 
@@ -252,7 +254,7 @@ export function AgentsClient({
             className="border-border-strong bg-surface-sidebar text-12 text-text focus:ring-focus-ring w-full rounded-xl border px-3 py-2 font-medium focus:ring-2 focus:outline-none"
           >
             {configs.length === 0 && (
-              <option value="">Assistente Padrão</option>
+              <option value="">{t("chat.defaultAssistant")}</option>
             )}
             {configs.map((c) => (
               <option key={c.id} value={c.id}>
@@ -280,8 +282,10 @@ export function AgentsClient({
                 <div className="text-10 text-warning-text flex items-center gap-1 pt-0.5 font-medium">
                   <Layers className="h-3 w-3" />
                   <span>
-                    Fallback: {activeConfig.fallbackProvider}:
-                    {activeConfig.fallbackModel}
+                    {t("chat.fallback", {
+                      provider: activeConfig.fallbackProvider,
+                      model: activeConfig.fallbackModel ?? "",
+                    })}
                   </span>
                 </div>
               )}
@@ -296,17 +300,17 @@ export function AgentsClient({
           className="bg-primary text-12 text-on-primary hover:bg-primary-hover flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 font-semibold shadow-sm transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
-          Nova Conversa
+          {t("chat.newChat")}
         </button>
 
         {/* Chat History List */}
         <div className="flex-1 space-y-1 overflow-y-auto pr-1">
           <div className="text-11 text-text-tertiary px-2 py-1 font-semibold tracking-wider uppercase">
-            Histórico Recente
+            {t("chat.recentHistory")}
           </div>
           {sessions.length === 0 ? (
             <div className="text-12 text-text-tertiary py-6 text-center">
-              Nenhuma conversa registrada.
+              {t("chat.noSessions")}
             </div>
           ) : (
             sessions.map((s) => {
@@ -344,21 +348,22 @@ export function AgentsClient({
             <div>
               <div className="text-14 text-text flex items-center gap-2 font-semibold">
                 <span>
-                  {activeConfig ? activeConfig.name : "Assistente Padrão"}
+                  {activeConfig
+                    ? activeConfig.name
+                    : t("chat.defaultAssistant")}
                 </span>
                 <span className="text-11 bg-success-bg text-success-text rounded-full px-2 py-0.5 font-normal">
-                  Online
+                  {t("chat.online")}
                 </span>
               </div>
               <p className="text-12 text-text-secondary">
-                {activeConfig?.description ||
-                  "Assistente inteligente com suporte a chaves BYOK e fallbacks"}
+                {activeConfig?.description || t("chat.defaultDescription")}
               </p>
             </div>
           </div>
 
           <div className="text-12 text-text-secondary flex items-center gap-2">
-            <span className="hidden sm:inline">Motor resiliente:</span>
+            <span className="hidden sm:inline">{t("chat.engine")}</span>
             <span className="bg-surface-strong text-11 text-text-subtle rounded-sm px-2 py-1 font-mono">
               {activeConfig?.primaryProvider || "BYOK"}
             </span>
@@ -399,7 +404,7 @@ export function AgentsClient({
           {isLoadingMessages ? (
             <div className="text-12 text-text-tertiary flex h-full items-center justify-center gap-2">
               <Clock className="h-4 w-4 animate-spin" />
-              Carregando histórico da conversa...
+              {t("chat.loadingHistory")}
             </div>
           ) : messages.length === 0 ? (
             <div className="mx-auto flex h-full max-w-sm flex-col items-center justify-center space-y-3 text-center">
@@ -407,12 +412,10 @@ export function AgentsClient({
                 <Sparkles className="text-text-secondary h-6 w-6" />
               </div>
               <h3 className="text-14 text-text font-semibold">
-                Inicie uma nova interação
+                {t("chat.emptyTitle")}
               </h3>
               <p className="text-12 text-text-secondary leading-relaxed">
-                Envie perguntas, solicitações de geração ou comandos de
-                automação. As consultas serão executadas pelo provedor primário
-                com redundância automática.
+                {t("chat.emptyBody")}
               </p>
             </div>
           ) : (
@@ -456,7 +459,7 @@ export function AgentsClient({
                         {m.fallbackTriggered && (
                           <span className="text-warning-text bg-warning-bg border-warning-border flex items-center gap-1 rounded-md border px-2 py-0.5 font-semibold">
                             <AlertTriangle className="text-warning-solid h-3 w-3" />
-                            Fallback Acionado
+                            {t("chat.fallbackTriggered")}
                           </span>
                         )}
                         <span className="bg-surface-hover border-border text-text-subtle rounded-sm border px-1.5 py-0.5 font-mono">
@@ -465,13 +468,13 @@ export function AgentsClient({
                         {m.latencyMs > 0 && (
                           <span className="text-text-secondary flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {m.latencyMs} ms
+                            {t("chat.latency", { ms: m.latencyMs })}
                           </span>
                         )}
                         {m.tokensEstimated > 0 && (
                           <span className="text-text-secondary flex items-center gap-1">
-                            <Coins className="h-3 w-3" />~{m.tokensEstimated}{" "}
-                            tokens
+                            <Coins className="h-3 w-3" />
+                            {t("chat.tokens", { count: m.tokensEstimated })}
                           </span>
                         )}
                       </div>
@@ -490,7 +493,7 @@ export function AgentsClient({
               </div>
               <div className="bg-surface-hover border-border text-12 text-text-secondary flex items-center gap-2 rounded-2xl rounded-tl-none border px-4 py-3">
                 <Clock className="text-info-text h-3.5 w-3.5 animate-spin" />
-                <span>Processando resposta com credenciais BYOK...</span>
+                <span>{t("chat.processing")}</span>
               </div>
             </div>
           )}
@@ -508,7 +511,7 @@ export function AgentsClient({
             value={promptInput}
             onChange={(e) => setPromptInput(e.target.value)}
             disabled={isSending}
-            placeholder="Digite uma mensagem para o agente de IA..."
+            placeholder={t("chat.inputPlaceholder")}
             className="border-border-strong bg-surface-sidebar text-12 text-text placeholder-text-secondary focus:ring-focus-ring flex-1 rounded-xl border px-4 py-2.5 focus:ring-2 focus:outline-none disabled:opacity-50"
           />
           <button
@@ -517,7 +520,7 @@ export function AgentsClient({
             className="bg-primary text-12 text-on-primary hover:bg-primary-hover flex items-center gap-1.5 rounded-xl px-4 py-2.5 font-semibold shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Send className="h-3.5 w-3.5" />
-            <span>Enviar</span>
+            <span>{t("chat.send")}</span>
           </button>
         </form>
       </main>
@@ -533,11 +536,10 @@ export function AgentsClient({
                 </div>
                 <div>
                   <h3 className="text-14 text-text font-bold">
-                    Cadastrar Persona do Agente
+                    {t("createAgent.title")}
                   </h3>
                   <p className="text-12 text-text-secondary">
-                    Configure a persona, o prompt de sistema e a estratégia de
-                    redundância.
+                    {t("createAgent.description")}
                   </p>
                 </div>
               </div>
@@ -556,41 +558,41 @@ export function AgentsClient({
             >
               <div>
                 <label className="text-text-subtle mb-1 block font-semibold">
-                  Nome do Agente
+                  {t("createAgent.name")}
                 </label>
                 <input
                   type="text"
                   required
                   value={newAgentName}
                   onChange={(e) => setNewAgentName(e.target.value)}
-                  placeholder="Ex: Suporte N2 ou Especialista em Redação"
+                  placeholder={t("createAgent.namePlaceholder")}
                   className="border-border-strong text-12 focus:ring-focus-ring w-full rounded-xl border px-3 py-2 focus:ring-2 focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="text-text-subtle mb-1 block font-semibold">
-                  Descrição (Opcional)
+                  {t("createAgent.descriptionLabel")}
                 </label>
                 <input
                   type="text"
                   value={newAgentDesc}
                   onChange={(e) => setNewAgentDesc(e.target.value)}
-                  placeholder="Ex: Atende solicitações de suporte e triagem"
+                  placeholder={t("createAgent.descriptionPlaceholder")}
                   className="border-border-strong text-12 focus:ring-focus-ring w-full rounded-xl border px-3 py-2 focus:ring-2 focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="text-text-subtle mb-1 block font-semibold">
-                  Prompt de Sistema
+                  {t("createAgent.systemPrompt")}
                 </label>
                 <textarea
                   rows={3}
                   required
                   value={newAgentSystemPrompt}
                   onChange={(e) => setNewAgentSystemPrompt(e.target.value)}
-                  placeholder="Instruções e diretrizes de comportamento do agente..."
+                  placeholder={t("createAgent.systemPromptPlaceholder")}
                   className="border-border-strong text-12 focus:ring-focus-ring w-full rounded-xl border px-3 py-2 focus:ring-2 focus:outline-none"
                 />
               </div>
@@ -598,7 +600,7 @@ export function AgentsClient({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-text-subtle mb-1 block font-semibold">
-                    Provedor Primário
+                    {t("createAgent.primaryProvider")}
                   </label>
                   <select
                     value={newPrimaryProvider}
@@ -615,7 +617,7 @@ export function AgentsClient({
 
                 <div>
                   <label className="text-text-subtle mb-1 block font-semibold">
-                    Modelo Primário
+                    {t("createAgent.primaryModel")}
                   </label>
                   <input
                     type="text"
@@ -631,7 +633,7 @@ export function AgentsClient({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-text-subtle mb-1 block font-semibold">
-                    Provedor Fallback (Opcional)
+                    {t("createAgent.fallbackProvider")}
                   </label>
                   <select
                     value={newFallbackProvider}
@@ -640,7 +642,7 @@ export function AgentsClient({
                     }
                     className="border-border-strong text-12 focus:ring-focus-ring w-full rounded-xl border px-3 py-2 focus:ring-2 focus:outline-none"
                   >
-                    <option value="">Nenhum (Sem redundância)</option>
+                    <option value="">{t("createAgent.noFallback")}</option>
                     <option value="gemini">Google Gemini</option>
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic</option>
@@ -649,7 +651,7 @@ export function AgentsClient({
 
                 <div>
                   <label className="text-text-subtle mb-1 block font-semibold">
-                    Modelo Fallback
+                    {t("createAgent.fallbackModel")}
                   </label>
                   <input
                     type="text"
@@ -664,10 +666,10 @@ export function AgentsClient({
               <div>
                 <div className="mb-1 flex items-center justify-between">
                   <label className="text-text-subtle font-semibold">
-                    Temperatura ({newTemperature})
+                    {t("createAgent.temperature", { value: newTemperature })}
                   </label>
                   <span className="text-10 text-text-tertiary">
-                    0 = Preciso | 1 = Criativo
+                    {t("createAgent.temperatureHint")}
                   </span>
                 </div>
                 <input
@@ -689,14 +691,16 @@ export function AgentsClient({
                   onClick={() => setIsModalOpen(false)}
                   className="border-border-strong text-text-subtle hover:bg-surface-hover rounded-xl border px-4 py-2 font-medium"
                 >
-                  Cancelar
+                  {t("createAgent.cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={isCreatingConfig}
                   className="bg-primary text-on-primary hover:bg-primary-hover rounded-xl px-4 py-2 font-semibold disabled:opacity-50"
                 >
-                  {isCreatingConfig ? "Salvando..." : "Criar Agente"}
+                  {isCreatingConfig
+                    ? t("createAgent.saving")
+                    : t("createAgent.submit")}
                 </button>
               </div>
             </form>

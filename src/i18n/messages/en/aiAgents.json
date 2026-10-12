@@ -1,0 +1,59 @@
+{
+  "metaTitle": "AI Agents and Resilient Execution Engine",
+  "breadcrumbModules": "Modules",
+  "breadcrumb": "AI Agents",
+  "title": "Artificial Intelligence Agents & Prompt Engine",
+  "description": "Contextual assistants with redundant execution (automatic fallbacks), BYOK keys and an audit trail.",
+  "unavailable": {
+    "title": "Module Unavailable",
+    "body": "Under ADR 0003 and the governance decision (C04), the AI Agents module is frozen and unavailable until the product specification and the Phase 2 module registry are formally defined."
+  },
+  "chat": {
+    "persona": "Agent persona",
+    "new": "New",
+    "defaultAssistant": "Default Assistant",
+    "fallback": "Fallback: {provider}:{model}",
+    "newChat": "New Conversation",
+    "recentHistory": "Recent History",
+    "noSessions": "No conversations yet.",
+    "online": "Online",
+    "defaultDescription": "Smart assistant with support for BYOK keys and fallbacks",
+    "engine": "Resilient engine:",
+    "loadingHistory": "Loading conversation history...",
+    "emptyTitle": "Start a new interaction",
+    "emptyBody": "Send questions, generation requests or automation commands. Queries run on the primary provider with automatic redundancy.",
+    "fallbackTriggered": "Fallback Triggered",
+    "latency": "{ms} ms",
+    "tokens": "~{count} tokens",
+    "processing": "Processing the response with BYOK credentials...",
+    "inputPlaceholder": "Type a message for the AI agent...",
+    "send": "Send",
+    "assistantFailed": "The assistant failed to respond.",
+    "sendFailed": "Communication failed while sending the message. Try again.",
+    "agentCreated": "Agent \"{name}\" created successfully!"
+  },
+  "createAgent": {
+    "title": "Register Agent Persona",
+    "description": "Set up the persona, the system prompt and the redundancy strategy.",
+    "name": "Agent name",
+    "namePlaceholder": "E.g. Tier 2 Support or Writing Specialist",
+    "descriptionLabel": "Description (optional)",
+    "descriptionPlaceholder": "E.g. Handles support requests and triage",
+    "systemPrompt": "System prompt",
+    "systemPromptPlaceholder": "Instructions and behavior guidelines for the agent...",
+    "primaryProvider": "Primary provider",
+    "primaryModel": "Primary model",
+    "fallbackProvider": "Fallback provider (optional)",
+    "noFallback": "None (no redundancy)",
+    "fallbackModel": "Fallback model",
+    "temperature": "Temperature ({value})",
+    "temperatureHint": "0 = Precise | 1 = Creative",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "submit": "Create Agent"
+  },
+  "errors": {
+    "invalidPrompt": "Invalid data for running the agent.",
+    "invalidConfig": "Invalid agent settings."
+  }
+}

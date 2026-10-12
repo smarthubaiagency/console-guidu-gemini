@@ -49,6 +49,7 @@ import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { listRegisteredModules } from "@/modules/registry";
+import { getModuleCatalog } from "@/core/i18n/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("billing.platform");
@@ -103,8 +104,16 @@ export default async function PlatformBillingPage() {
   );
   const partnerById = new Map(data.partners.map((p) => [p.id, p]));
   const orgNames = new Map(data.organizations.map((o) => [o.id, o.name]));
-  const modules = listRegisteredModules().map((m) => m.manifest);
-  const quotaKeys = listQuotaKeys();
+  // Module names and quota descriptions in the request language (I4).
+  const catalog = await getModuleCatalog();
+  const modules = listRegisteredModules().map((m) => ({
+    moduleKey: m.manifest.moduleKey,
+    displayName: catalog.name(m.manifest.moduleKey, m.manifest.displayName),
+  }));
+  const quotaKeys = listQuotaKeys().map((q) => ({
+    ...q,
+    description: catalog.findQuota(q.key)?.description ?? q.description,
+  }));
   const tb = await getTranslations("billing");
   const t = await getTranslations("billing.platform");
   const format = await getFormatter();

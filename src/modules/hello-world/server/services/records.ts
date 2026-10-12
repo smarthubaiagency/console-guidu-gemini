@@ -80,6 +80,7 @@ export async function getHelloWorldRecord(
     throw new AppError({
       code: "not_found",
       safeMessage: "Registro não encontrado.",
+      messageKey: "helloWorld.errors.recordNotFound",
     });
   }
   return toDto(row, ctx);
@@ -106,6 +107,7 @@ export async function createHelloWorldRecord(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Informe um título de 1 a 120 caracteres.",
+      messageKey: "helloWorld.errors.titleInvalid",
     });
   }
 
@@ -156,6 +158,7 @@ export async function enqueueHelloWorldRecord(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Informe um título de 1 a 120 caracteres.",
+      messageKey: "helloWorld.errors.titleInvalid",
     });
   }
   const { createRecordJob } = await import("../../jobs");

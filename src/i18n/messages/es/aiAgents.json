@@ -1,0 +1,59 @@
+{
+  "metaTitle": "Agentes de IA y Motor de Ejecución Resiliente",
+  "breadcrumbModules": "Módulos",
+  "breadcrumb": "Agentes de IA",
+  "title": "Agentes de Inteligencia Artificial & Motor de Prompts",
+  "description": "Asistentes contextuales con ejecución redundante (fallbacks automáticos), claves BYOK y registro de auditoría.",
+  "unavailable": {
+    "title": "Módulo No Disponible",
+    "body": "Según la ADR 0003 y la decisión de gobernanza (C04), el módulo de Agentes de IA está congelado y no disponible hasta la definición formal de la especificación de producto y del registro de módulos de la Fase 2."
+  },
+  "chat": {
+    "persona": "Persona del Agente",
+    "new": "Nuevo",
+    "defaultAssistant": "Asistente Predeterminado",
+    "fallback": "Fallback: {provider}:{model}",
+    "newChat": "Nueva Conversación",
+    "recentHistory": "Historial Reciente",
+    "noSessions": "No hay conversaciones registradas.",
+    "online": "En línea",
+    "defaultDescription": "Asistente inteligente con soporte para claves BYOK y fallbacks",
+    "engine": "Motor resiliente:",
+    "loadingHistory": "Cargando el historial de la conversación...",
+    "emptyTitle": "Inicia una nueva interacción",
+    "emptyBody": "Envía preguntas, solicitudes de generación o comandos de automatización. Las consultas se ejecutarán en el proveedor principal con redundancia automática.",
+    "fallbackTriggered": "Fallback Activado",
+    "latency": "{ms} ms",
+    "tokens": "~{count} tokens",
+    "processing": "Procesando la respuesta con credenciales BYOK...",
+    "inputPlaceholder": "Escribe un mensaje para el agente de IA...",
+    "send": "Enviar",
+    "assistantFailed": "El asistente no pudo responder.",
+    "sendFailed": "Falló la comunicación al enviar el mensaje. Inténtalo de nuevo.",
+    "agentCreated": "¡Agente \"{name}\" creado con éxito!"
+  },
+  "createAgent": {
+    "title": "Registrar Persona del Agente",
+    "description": "Configura la persona, el prompt de sistema y la estrategia de redundancia.",
+    "name": "Nombre del Agente",
+    "namePlaceholder": "Ej.: Soporte N2 o Especialista en Redacción",
+    "descriptionLabel": "Descripción (Opcional)",
+    "descriptionPlaceholder": "Ej.: Atiende solicitudes de soporte y clasificación",
+    "systemPrompt": "Prompt de Sistema",
+    "systemPromptPlaceholder": "Instrucciones y pautas de comportamiento del agente...",
+    "primaryProvider": "Proveedor Principal",
+    "primaryModel": "Modelo Principal",
+    "fallbackProvider": "Proveedor Fallback (Opcional)",
+    "noFallback": "Ninguno (Sin redundancia)",
+    "fallbackModel": "Modelo Fallback",
+    "temperature": "Temperatura ({value})",
+    "temperatureHint": "0 = Preciso | 1 = Creativo",
+    "cancel": "Cancelar",
+    "saving": "Guardando...",
+    "submit": "Crear Agente"
+  },
+  "errors": {
+    "invalidPrompt": "Datos inválidos para ejecutar el agente.",
+    "invalidConfig": "Configuración inválida para el agente."
+  }
+}
