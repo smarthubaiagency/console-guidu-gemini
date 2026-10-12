@@ -5,7 +5,6 @@ import { getTranslations } from "next-intl/server";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { partnerRoleKey } from "@/components/partners/role-label";
 import { RoleSelect } from "@/components/partners/role-select";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
@@ -22,6 +21,8 @@ import {
 } from "@/core/partners/members";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("partnerConsole");
@@ -166,15 +167,10 @@ export default async function PartnerMembersPage() {
             submitLabel={t("members.generateInvite")}
             testId="invite-member"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("members.email")}
-              <input
-                name="email"
-                type="email"
-                required
-                className={inputClass}
-              />
-            </label>
+              <Input name="email" type="email" required />
+            </Label>
             <RoleSelect label={t("members.role")} roleLabels={roleLabels} />
           </ActionForm>
         </section>

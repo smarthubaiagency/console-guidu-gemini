@@ -5,7 +5,6 @@ import { getTranslations } from "next-intl/server";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import {
@@ -20,6 +19,9 @@ import {
 import { getModuleCatalog } from "@/core/i18n/modules";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("partnerConsole");
@@ -108,22 +110,19 @@ export default async function PartnerTemplatesPage() {
           className="space-y-3"
           testId="create-template"
         >
-          <label className={labelClass}>
+          <Label className="flex-col items-start">
             {t("templates.name")}
-            <input name="name" required maxLength={80} className={inputClass} />
-          </label>
+            <Input name="name" required maxLength={80} />
+          </Label>
           <fieldset className="space-y-1">
             <legend className="text-12 text-text-subtle font-medium">
               {t("templates.modules")}
             </legend>
             {offeredKeys.map((key) => (
-              <label
-                key={key}
-                className="text-14 text-text flex items-center gap-2"
-              >
-                <input type="checkbox" name="moduleKeys" value={key} />
+              <Label key={key} className="text-14 text-text font-normal">
+                <Checkbox name="moduleKeys" value={key} />
                 {names.get(key) ?? key}
-              </label>
+              </Label>
             ))}
             {offeredKeys.length === 0 ? (
               <p className="text-12 text-text-secondary">

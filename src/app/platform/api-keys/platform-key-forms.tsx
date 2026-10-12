@@ -9,11 +9,12 @@ import {
   revokePlatformKeyAction,
 } from "@/core/platform-api/actions";
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const INITIAL: PlatformKeyActionState = {};
-const INPUT =
-  "border-border bg-surface-card text-12 text-text w-full rounded-lg border px-3 py-2";
-const LABEL = "text-12 text-text-subtle flex flex-col gap-1 font-medium";
 
 /** Result in the SmartStatusBanner (ADR 0016); the new key stays here, to copy. */
 function Feedback({ state }: Readonly<{ state: PlatformKeyActionState }>) {
@@ -47,43 +48,41 @@ export function CreatePlatformKeyForm({
       data-testid="create-platform-key"
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className={LABEL}>
+        <Label className="flex-col items-start">
           {t("name")}
-          <input name="name" required maxLength={80} className={INPUT} />
-        </label>
-        <label className={LABEL}>
+          <Input name="name" required maxLength={80} />
+        </Label>
+        <Label className="flex-col items-start">
           {t("expiresInDays")}
-          <input
+          <Input
             name="expiresInDays"
             type="number"
             min={1}
             max={90}
             defaultValue={30}
-            className={INPUT}
           />
-        </label>
+        </Label>
       </div>
       <fieldset className="space-y-2">
         <legend className="text-12 text-text-subtle font-medium">
           {t("scopes")}
         </legend>
         {scopes.map((scope) => (
-          <label key={scope.id} className="text-12 text-text flex gap-2">
-            <input type="checkbox" name="scopes" value={scope.id} />
+          <Label
+            key={scope.id}
+            className="text-12 text-text items-start font-normal"
+          >
+            <Checkbox name="scopes" value={scope.id} />
             <span>
               <span className="font-medium">{scope.label}</span>
               <span className="text-text-secondary block">{scope.desc}</span>
             </span>
-          </label>
+          </Label>
         ))}
       </fieldset>
-      <button
-        type="submit"
-        disabled={pending}
-        className="bg-primary text-on-primary text-12 rounded-lg px-3 py-2 font-semibold disabled:opacity-60"
-      >
+      <Button type="submit" disabled={pending}>
         {t("create")}
-      </button>
+      </Button>
       <Feedback state={state} />
     </form>
   );
@@ -101,13 +100,9 @@ export function RevokePlatformKeyButton({
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="keyId" value={keyId} />
-      <button
-        type="submit"
-        disabled={pending}
-        className="border-border text-text-subtle hover:bg-surface-hover text-12 rounded-lg border px-3 py-1.5 font-semibold disabled:opacity-60"
-      >
+      <Button type="submit" variant="outline" size="sm" disabled={pending}>
         {t("revoke")}
-      </button>
+      </Button>
     </form>
   );
 }

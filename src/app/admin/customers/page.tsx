@@ -5,7 +5,6 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { createPartnerCustomerAction } from "@/core/partners/actions";
@@ -13,6 +12,12 @@ import { listWorkspaceTemplates } from "@/core/partners/customers";
 import { listPartnerCustomers } from "@/core/partners/members";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("partnerConsole");
@@ -64,54 +69,44 @@ export default async function PartnerCustomersPage() {
             className="grid gap-3 sm:grid-cols-2"
             testId="create-customer"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("customers.company")}
-              <input
-                name="organizationName"
-                required
-                maxLength={120}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
+              <Input name="organizationName" required maxLength={120} />
+            </Label>
+            <Label className="flex-col items-start">
               {t("customers.ownerEmail")}
-              <input
-                name="ownerEmail"
-                type="email"
-                required
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
+              <Input name="ownerEmail" type="email" required />
+            </Label>
+            <Label className="flex-col items-start">
               {t("customers.workspaceName")}
-              <input
-                name="workspaceName"
-                required
-                maxLength={80}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
+              <Input name="workspaceName" required maxLength={80} />
+            </Label>
+            <Label className="flex-col items-start">
               {t("customers.workspaceSlug")}
-              <input
+              <Input
                 name="workspaceSlug"
                 required
                 pattern="[a-z0-9][a-z0-9-]{1,46}[a-z0-9]"
                 placeholder={t("customers.slugPlaceholder")}
-                className={inputClass}
               />
-            </label>
-            <label className={labelClass}>
+            </Label>
+            <Label className="flex-col items-start">
               {t("customers.template")}
-              <select name="templateId" defaultValue="" className={inputClass}>
-                <option value="">{t("customers.noTemplate")}</option>
+              <NativeSelect
+                name="templateId"
+                defaultValue=""
+                className="w-full"
+              >
+                <NativeSelectOption value="">
+                  {t("customers.noTemplate")}
+                </NativeSelectOption>
                 {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
+                  <NativeSelectOption key={template.id} value={template.id}>
                     {template.name}
-                  </option>
+                  </NativeSelectOption>
                 ))}
-              </select>
-            </label>
+              </NativeSelect>
+            </Label>
           </ActionForm>
           <p className="text-11 text-text-tertiary">{t("customers.hint")}</p>
         </section>

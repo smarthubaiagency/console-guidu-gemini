@@ -5,6 +5,10 @@ import { useActionState } from "react";
 
 import { saveBrandAction, type BrandActionState } from "@/core/brand/actions";
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type BrandAction = (
   prev: BrandActionState,
@@ -12,10 +16,6 @@ type BrandAction = (
 ) => Promise<BrandActionState>;
 
 const INITIAL: BrandActionState = {};
-
-const field =
-  "border-border bg-surface-input text-14 text-text w-full rounded-lg border px-3 py-2";
-const label = "text-12 text-text-subtle font-medium";
 
 /** Brand editor of the platform console (ADR 0012, P3). */
 export function BrandForm({
@@ -39,89 +39,70 @@ export function BrandForm({
 
   return (
     <form action={action} className="space-y-4" data-testid="brand-form">
-      <div className="space-y-1">
-        <label htmlFor="displayName" className={label}>
-          {t("displayName")}
-        </label>
-        <input
+      <div className="grid gap-2">
+        <Label htmlFor="displayName">{t("displayName")}</Label>
+        <Input
           id="displayName"
           name="displayName"
           required
           maxLength={60}
           defaultValue={defaults.displayName}
-          className={field}
         />
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="primaryColor" className={label}>
-          {t("primaryColor")}
-        </label>
-        <input
+      <div className="grid gap-2">
+        <Label htmlFor="primaryColor">{t("primaryColor")}</Label>
+        <Input
           id="primaryColor"
           name="primaryColor"
           placeholder="#1976d2"
           pattern="#[0-9a-fA-F]{6}"
           defaultValue={defaults.primaryColor}
-          className={field}
         />
         <p className="text-11 text-text-tertiary">{t("contrastHint")}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1">
-          <label htmlFor="supportEmail" className={label}>
-            {t("supportEmail")}
-          </label>
-          <input
+        <div className="grid gap-2">
+          <Label htmlFor="supportEmail">{t("supportEmail")}</Label>
+          <Input
             id="supportEmail"
             name="supportEmail"
             type="email"
             defaultValue={defaults.supportEmail}
-            className={field}
           />
         </div>
-        <div className="space-y-1">
-          <label htmlFor="supportUrl" className={label}>
-            {t("supportUrl")}
-          </label>
-          <input
+        <div className="grid gap-2">
+          <Label htmlFor="supportUrl">{t("supportUrl")}</Label>
+          <Input
             id="supportUrl"
             name="supportUrl"
             type="url"
             defaultValue={defaults.supportUrl}
-            className={field}
           />
         </div>
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="logo" className={label}>
-          {t("logo")}
-        </label>
-        <input
+      <div className="grid gap-2">
+        <Label htmlFor="logo">{t("logo")}</Label>
+        <Input
           id="logo"
           name="logo"
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          className="text-12 text-text-subtle"
         />
         {hasLogo ? (
-          <label className="text-12 text-text-subtle flex items-center gap-2">
-            <input type="checkbox" name="removeLogo" />
+          <Label className="text-12 text-text-subtle font-normal">
+            <Checkbox name="removeLogo" />
             {t("removeLogo")}
-          </label>
+          </Label>
         ) : null}
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="bg-primary text-on-primary text-12 rounded-lg px-4 py-2 font-semibold disabled:opacity-60"
-        >
+        <Button type="submit" disabled={pending}>
           {pending ? t("saving") : t("save")}
-        </button>
+        </Button>
       </div>
     </form>
   );

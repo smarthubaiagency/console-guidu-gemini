@@ -6,7 +6,6 @@ import { getTranslations } from "next-intl/server";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { RoleSelect } from "@/components/partners/role-select";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
@@ -26,6 +25,12 @@ import {
 } from "@/core/partners/members";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("partners.detail");
@@ -182,26 +187,29 @@ export default async function PlatformPartnerPage({
               testId="add-domain"
             >
               <input type="hidden" name="partnerId" value={partner.id} />
-              <label className={labelClass}>
+              <Label className="flex-col items-start">
                 {t("detail.hostLabel")}
-                <input
+                <Input
                   name="host"
                   required
                   placeholder={t("detail.hostPlaceholder")}
-                  className={inputClass}
                 />
-              </label>
-              <label className={labelClass}>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("detail.kindLabel")}
-                <select
+                <NativeSelect
                   name="kind"
                   defaultValue="custom"
-                  className={inputClass}
+                  className="w-full"
                 >
-                  <option value="custom">{t("detail.customDomain")}</option>
-                  <option value="subdomain">{t("detail.kindSubdomain")}</option>
-                </select>
-              </label>
+                  <NativeSelectOption value="custom">
+                    {t("detail.customDomain")}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="subdomain">
+                    {t("detail.kindSubdomain")}
+                  </NativeSelectOption>
+                </NativeSelect>
+              </Label>
             </ActionForm>
           ) : null}
           <p className="text-11 text-text-tertiary mt-2">
@@ -276,15 +284,10 @@ export default async function PlatformPartnerPage({
             testId="invite-partner-member"
           >
             <input type="hidden" name="partnerId" value={partner.id} />
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("detail.email")}
-              <input
-                name="email"
-                type="email"
-                required
-                className={inputClass}
-              />
-            </label>
+              <Input name="email" type="email" required />
+            </Label>
             <RoleSelect
               defaultValue="partner_owner"
               label={t("detail.role")}

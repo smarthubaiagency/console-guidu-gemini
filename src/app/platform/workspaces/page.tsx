@@ -4,6 +4,14 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { listAdminWorkspaces } from "@/core/admin/platform";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("platform.workspaces");
@@ -40,44 +48,44 @@ export default async function AdminWorkspacesPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="text-12 w-full text-left">
-            <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
-              <tr>
-                <th className="px-5 py-3">{t("colWorkspace")}</th>
-                <th className="px-5 py-3">{t("colSlug")}</th>
-                <th className="px-5 py-3">{t("colOrganization")}</th>
-                <th className="px-5 py-3">{t("colStatus")}</th>
-                <th className="px-5 py-3">{t("colCreatedAt")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
+          <Table className="text-12">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="px-5">{t("colWorkspace")}</TableHead>
+                <TableHead className="px-5">{t("colSlug")}</TableHead>
+                <TableHead className="px-5">{t("colOrganization")}</TableHead>
+                <TableHead className="px-5">{t("colStatus")}</TableHead>
+                <TableHead className="px-5">{t("colCreatedAt")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {workspaces.map((ws) => (
-                <tr key={ws.id} className="hover:bg-surface-hover">
-                  <td className="px-5 py-3.5">
+                <TableRow key={ws.id}>
+                  <TableCell className="px-5">
                     <div className="text-text font-semibold">{ws.name}</div>
                     <div className="text-11 text-text-tertiary font-mono">
                       {ws.id}
                     </div>
-                  </td>
-                  <td className="text-text-subtle px-5 py-3.5 font-mono">
+                  </TableCell>
+                  <TableCell className="text-text-subtle px-5 font-mono">
                     {ws.slug}
-                  </td>
-                  <td className="text-text px-5 py-3.5 font-medium">
+                  </TableCell>
+                  <TableCell className="text-text px-5 font-medium">
                     {ws.organizationName}
-                  </td>
-                  <td className="px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="px-5">
                     <span className="bg-success-bg text-success-text border-success-border text-11 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
                       <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                       {ws.status}
                     </span>
-                  </td>
-                  <td className="text-text-secondary px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="text-text-secondary px-5">
                     {format.dateTime(ws.createdAt, { dateStyle: "short" })}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

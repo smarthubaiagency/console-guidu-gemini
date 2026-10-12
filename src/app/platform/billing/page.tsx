@@ -17,7 +17,7 @@ import {
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
+import { labelClass } from "@/components/partners/form-classes";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import {
@@ -47,6 +47,13 @@ import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { listRegisteredModules } from "@/modules/registry";
 import { getModuleCatalog } from "@/core/i18n/modules";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("billing.platform");
@@ -197,34 +204,31 @@ export default async function PlatformBillingPage() {
             className="grid gap-3 sm:grid-cols-3"
             testId="billing-terms-form"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("pastDueLabel")}
-              <input
+              <Input
                 name="pastDueAfterDays"
                 required
                 inputMode="numeric"
                 defaultValue={data.terms.pastDueAfterDays}
-                className={inputClass}
               />
-            </label>
-            <label className={labelClass}>
+            </Label>
+            <Label className="flex-col items-start">
               {t("suspendLabel")}
-              <input
+              <Input
                 name="suspendAfterDays"
                 required
                 inputMode="numeric"
                 defaultValue={data.terms.suspendAfterDays}
-                className={inputClass}
               />
-            </label>
-            <label className="text-12 text-text-subtle flex items-center gap-2 font-medium">
-              <input
-                type="checkbox"
+            </Label>
+            <Label className="text-12 text-text-subtle flex items-center gap-2 font-medium">
+              <Checkbox
                 name="provisional"
                 defaultChecked={data.terms.provisional}
               />
               {t("provisionalTerms")}
-            </label>
+            </Label>
           </ActionForm>
         ) : null}
       </section>
@@ -309,21 +313,20 @@ export default async function PlatformBillingPage() {
                       testId={`publish-version-${plan.key}`}
                     >
                       <input type="hidden" name="planId" value={plan.id} />
-                      <label className={labelClass}>
+                      <Label className="flex-col items-start">
                         {t("floorLabel")}
-                        <input
+                        <Input
                           name="minPrice"
                           required
                           inputMode="decimal"
                           defaultValue={
                             current ? centsInput(current.minPriceCents) : ""
                           }
-                          className={inputClass}
                         />
-                      </label>
-                      <label className={labelClass}>
+                      </Label>
+                      <Label className="flex-col items-start">
                         {t("minShareLabel")}
-                        <input
+                        <Input
                           name="minPlatformShare"
                           required
                           inputMode="decimal"
@@ -332,12 +335,11 @@ export default async function PlatformBillingPage() {
                               ? centsInput(current.minPlatformShareCents)
                               : ""
                           }
-                          className={inputClass}
                         />
-                      </label>
-                      <label className={labelClass}>
+                      </Label>
+                      <Label className="flex-col items-start">
                         {t("basePriceLabel")}
-                        <input
+                        <Input
                           name="partnerBasePrice"
                           required
                           inputMode="decimal"
@@ -346,45 +348,44 @@ export default async function PlatformBillingPage() {
                               ? centsInput(current.partnerBasePriceCents)
                               : ""
                           }
-                          className={inputClass}
                         />
-                      </label>
-                      <label className={labelClass}>
+                      </Label>
+                      <Label className="flex-col items-start">
                         {t("intervalLabel")}
-                        <select
+                        <NativeSelect
                           name="billingInterval"
                           defaultValue={current?.billingInterval ?? "monthly"}
-                          className={inputClass}
+                          className="w-full"
                         >
-                          <option value="monthly">{t("monthly")}</option>
-                          <option value="yearly">{t("yearly")}</option>
-                        </select>
-                      </label>
+                          <NativeSelectOption value="monthly">
+                            {t("monthly")}
+                          </NativeSelectOption>
+                          <NativeSelectOption value="yearly">
+                            {t("yearly")}
+                          </NativeSelectOption>
+                        </NativeSelect>
+                      </Label>
                       <fieldset className={`${labelClass} sm:col-span-2`}>
                         {t("modulesLabel")}
                         <div className="flex flex-wrap gap-3">
                           {modules.map((m) => (
-                            <label
-                              key={m.moduleKey}
-                              className="flex items-center gap-1"
-                            >
-                              <input
-                                type="checkbox"
+                            <Label key={m.moduleKey} className="font-normal">
+                              <Checkbox
                                 name="moduleKeys"
                                 value={m.moduleKey}
-                                defaultChecked={current?.moduleKeys.includes(
-                                  m.moduleKey,
+                                defaultChecked={Boolean(
+                                  current?.moduleKeys.includes(m.moduleKey),
                                 )}
                               />
                               {m.displayName}
-                            </label>
+                            </Label>
                           ))}
                         </div>
                       </fieldset>
                       {quotaKeys.map((quota) => (
-                        <label key={quota.key} className={labelClass}>
+                        <Label key={quota.key} className="flex-col items-start">
                           {t("limitLabel", { key: quota.key })}
-                          <input
+                          <Input
                             name={`limit.${quota.key}`}
                             inputMode="numeric"
                             title={quota.description}
@@ -393,18 +394,16 @@ export default async function PlatformBillingPage() {
                                 ? String(current.limits[quota.key])
                                 : ""
                             }
-                            className={inputClass}
                           />
-                        </label>
+                        </Label>
                       ))}
-                      <label className="text-12 text-text-subtle flex items-center gap-2 font-medium sm:col-span-3">
-                        <input
-                          type="checkbox"
+                      <Label className="text-12 text-text-subtle flex items-center gap-2 font-medium sm:col-span-3">
+                        <Checkbox
                           name="provisional"
                           defaultChecked={current?.provisional ?? true}
                         />
                         {t("provisionalValues")}
-                      </label>
+                      </Label>
                     </ActionForm>
                   </details>
                 ) : null}
@@ -419,24 +418,14 @@ export default async function PlatformBillingPage() {
             className="grid gap-3 sm:grid-cols-2"
             testId="create-plan"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {tb("console.name")}
-              <input
-                name="name"
-                required
-                maxLength={80}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
+              <Input name="name" required maxLength={80} />
+            </Label>
+            <Label className="flex-col items-start">
               {t("keyLabel")}
-              <input
-                name="key"
-                required
-                maxLength={48}
-                className={inputClass}
-              />
-            </label>
+              <Input name="key" required maxLength={48} />
+            </Label>
           </ActionForm>
         ) : null}
       </section>
@@ -469,28 +458,25 @@ export default async function PlatformBillingPage() {
             className="grid gap-3 sm:grid-cols-2"
             testId="publish-split-rule"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("appliesTo")}
-              <select name="partnerId" className={inputClass}>
-                <option value="">{t("defaultOption")}</option>
+              <NativeSelect name="partnerId" className="w-full">
+                <NativeSelectOption value="">
+                  {t("defaultOption")}
+                </NativeSelectOption>
                 {data.partners
                   .filter((p) => !p.isHouse)
                   .map((p) => (
-                    <option key={p.id} value={p.id}>
+                    <NativeSelectOption key={p.id} value={p.id}>
                       {p.name}
-                    </option>
+                    </NativeSelectOption>
                   ))}
-              </select>
-            </label>
-            <label className={labelClass}>
+              </NativeSelect>
+            </Label>
+            <Label className="flex-col items-start">
               {t("percentLabel")}
-              <input
-                name="platformPercent"
-                required
-                inputMode="decimal"
-                className={inputClass}
-              />
-            </label>
+              <Input name="platformPercent" required inputMode="decimal" />
+            </Label>
           </ActionForm>
         ) : null}
       </section>
@@ -537,12 +523,11 @@ export default async function PlatformBillingPage() {
                     tone="neutral"
                   >
                     <input type="hidden" name="paymentId" value={payment.id} />
-                    <input
+                    <Input
                       name="reason"
                       placeholder={t("reasonPlaceholder")}
                       maxLength={500}
                       aria-label={t("reasonLabel")}
-                      className={inputClass}
                     />
                   </ActionForm>
                 ) : null}

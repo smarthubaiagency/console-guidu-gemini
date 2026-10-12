@@ -1,7 +1,6 @@
 import { useFormatter, useTranslations } from "next-intl";
 
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { MachineRunStatus } from "@/components/i18n/machine-run-status";
 import type { PlatformRunView } from "@/core/jobs/service";
 import type { PartnerActionState } from "@/core/partners/actions";
@@ -12,6 +11,14 @@ import {
   type LegalLanguage,
   type LegalTranslationView,
 } from "@/core/legal/service";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Action = (
   prev: PartnerActionState,
@@ -105,55 +112,44 @@ export function LegalEditor({
           className="space-y-3"
           testId="publish-legal"
         >
-          <label className={labelClass}>
+          <Label className="flex-col items-start">
             {t("editor.document")}
-            <select name="kind" defaultValue="terms" className={inputClass}>
+            <NativeSelect name="kind" defaultValue="terms" className="w-full">
               {LEGAL_KINDS.map((kind) => (
-                <option key={kind} value={kind}>
+                <NativeSelectOption key={kind} value={kind}>
                   {t(`kinds.${kind}`)}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
-          </label>
+            </NativeSelect>
+          </Label>
           {languages.length > 1 ? (
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("editor.originalLocale")}
-              <select
+              <NativeSelect
                 name="locale"
                 defaultValue={SOURCE_LOCALE}
-                className={inputClass}
+                className="w-full"
               >
                 {languages.map((language) => (
-                  <option key={language.code} value={language.code}>
+                  <NativeSelectOption key={language.code} value={language.code}>
                     {language.name}
-                  </option>
+                  </NativeSelectOption>
                 ))}
-              </select>
-            </label>
+              </NativeSelect>
+            </Label>
           ) : null}
-          <label className={labelClass}>
+          <Label className="flex-col items-start">
             {t("editor.title")}
-            <input
-              name="title"
-              required
-              maxLength={120}
-              className={inputClass}
-            />
-          </label>
-          <label className={labelClass}>
+            <Input name="title" required maxLength={120} />
+          </Label>
+          <Label className="flex-col items-start">
             {t("editor.body")}
-            <textarea
-              name="body"
-              required
-              rows={10}
-              maxLength={100000}
-              className={inputClass}
-            />
-          </label>
-          <label className="text-14 text-text flex items-center gap-2">
-            <input type="checkbox" name="requiresAcceptance" defaultChecked />
+            <Textarea name="body" required rows={10} maxLength={100000} />
+          </Label>
+          <Label className="text-14 text-text font-normal">
+            <Checkbox name="requiresAcceptance" defaultChecked />
             {t("editor.requiresAcceptanceLabel")}
-          </label>
+          </Label>
         </ActionForm>
       </section>
     </div>
@@ -240,28 +236,26 @@ function LegalTranslations({
                         name="locale"
                         value={language.code}
                       />
-                      <label className={labelClass}>
+                      <Label className="flex-col items-start">
                         {t("editor.title")}
-                        <input
+                        <Input
                           name="title"
                           required
                           maxLength={120}
                           defaultValue={translation?.title ?? ""}
                           placeholder={document.title}
-                          className={inputClass}
                         />
-                      </label>
-                      <label className={labelClass}>
+                      </Label>
+                      <Label className="flex-col items-start">
                         {t("editor.body")}
-                        <textarea
+                        <Textarea
                           name="body"
                           required
                           rows={8}
                           maxLength={100000}
                           defaultValue={translation?.body ?? ""}
-                          className={inputClass}
                         />
-                      </label>
+                      </Label>
                     </ActionForm>
                     {translation ? (
                       <ActionForm

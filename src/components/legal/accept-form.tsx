@@ -8,6 +8,9 @@ import {
   type LegalActionState,
 } from "@/core/legal/actions";
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const INITIAL: LegalActionState = {};
 
@@ -21,17 +24,13 @@ export function AcceptLegalForm({ next }: Readonly<{ next: string }>) {
   return (
     <form action={action} className="space-y-3" data-testid="accept-legal">
       <input type="hidden" name="next" value={next} />
-      <label className="text-14 text-text flex items-start gap-2">
-        <input type="checkbox" name="agree" required className="mt-1" />
+      <Label className="text-14 text-text items-start font-normal">
+        <Checkbox name="agree" required />
         {t("agree")}
-      </label>
-      <button
-        type="submit"
-        disabled={pending}
-        className="bg-primary text-on-primary text-14 rounded-lg px-4 py-2 font-semibold disabled:opacity-60"
-      >
+      </Label>
+      <Button type="submit" disabled={pending}>
         {pending ? t("submitting") : t("submit")}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -62,4 +62,6 @@ Marcelo definiu o cabeçalho de todas as páginas e que **todos os componentes d
 
    **U3b (12/10/2026):** as telas do `/app` (configurações, locais, módulos, execuções, propostas e conta) e os componentes compartilhados que elas usam (`ActionForm`, campos de local, formulários de módulo, botão Sair) passam ao shadcn. As janelas feitas à mão de credencial, chave MCP e convite viram `Dialog`; as tabelas viram `Table`. O `NativeSelect` vendorizado aplica o `className` no contêiner (segunda mudança mínima), para o campo ocupar a largura do formulário com a seta junto. Os campos ocultos (`type="hidden"`) continuam como `<input>`. Módulos (CRM, Portfólio, Hello World) ficam para a U3d e o protótipo congelado de Agentes de IA não muda.
 
+   **U3c (12/10/2026):** as telas do `/admin` e do `/platform` (clientes, workspaces, usuários, parceiros, cobrança, idiomas, chaves de API, módulos, marca, jurídico e modelos) e os componentes delas (`BrandForm`, editor e aceite jurídico, seletor de papel) passam ao shadcn, assim como o checkbox do banner de avisos. As caixas de marcar usam o `Checkbox` do shadcn, que envia `on` no formulário como a nativa.
+
 5. **Dependência.** `cmdk` 1.1.1 (base do `Command`), versão exata.
