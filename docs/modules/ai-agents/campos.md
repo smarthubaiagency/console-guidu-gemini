@@ -113,23 +113,46 @@ Ficam de fora: `platform_ai_key_id`, `credential_vault_secret_id` e `credential_
 
 ## 7. Enums de comportamento
 
-No legado, a tela gravava `manual/automatic`, `collect_and_notify/auto_respond/ignore` e `notify_owner/ignore/escalate`, mas o render do prompt esperava `high_intent/always_ask/never`, `offer_callback/inform_hours/auto_reply_only` e `escalate_team/say_dont_know`. O código cru da tela ia para o prompt. O handoff do legado indica o Code node do n8n como fonte da verdade.
+No legado, a tela gravava `manual/automatic`, `collect_and_notify/auto_respond/ignore` e `notify_owner/ignore/escalate`, mas o render do prompt esperava `high_intent/always_ask/never`, `offer_callback/inform_hours/auto_reply_only` e `escalate_team/say_dont_know`. O código cru da tela ia para o prompt.
 
-**[Proposta]** Os valores do prompt viram os únicos valores:
+**[Decidido]** Os valores do render do legado (`render-system-prompt.ts`, cópia do Code node do n8n) são os únicos valores; rótulos confirmados por Marcelo em 12/10/2026. A última coluna é o texto que o renderizador põe no prompt, igual ao legado:
 
-| Campo                  | Valores           | Rótulo na tela (pt-BR)                               |
-| ---------------------- | ----------------- | ---------------------------------------------------- |
-| `handoff_mode`         | `high_intent`     | Transferir quando o lead mostrar alta intenção       |
-|                        | `always_ask`      | Sempre perguntar se o lead quer falar com uma pessoa |
-|                        | `never`           | Nunca transferir                                     |
-| `after_hours_behavior` | `offer_callback`  | Oferecer retorno no horário de atendimento           |
-|                        | `inform_hours`    | Informar o horário de atendimento                    |
-|                        | `auto_reply_only` | Só a resposta automática                             |
-| `out_of_scope_action`  | `escalate_team`   | Encaminhar para a equipe (ou para uma indicação)     |
-|                        | `say_dont_know`   | Dizer que não sabe e seguir                          |
+| Campo                  | Valor             | Rótulo na tela (pt-BR)                               | Texto no prompt                                                                                       |
+| ---------------------- | ----------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `handoff_mode`         | `high_intent`     | Transferir quando o lead mostrar alta intenção       | Transfira para um atendente humano assim que perceber alta intenção de compra ou pedido explícito.    |
+|                        | `always_ask`      | Sempre perguntar se o lead quer falar com uma pessoa | Sempre pergunte se o contato prefere continuar com um humano antes de avançar.                        |
+|                        | `never`           | Nunca transferir                                     | Não transfira automaticamente; continue o atendimento você mesmo.                                     |
+| `after_hours_behavior` | `offer_callback`  | Oferecer retorno no horário de atendimento           | Fora do horário de atendimento, informe isso com transparência e ofereça retornar assim que possível. |
+|                        | `inform_hours`    | Informar o horário de atendimento                    | Fora do horário de atendimento, apenas informe o horário de funcionamento.                            |
+|                        | `auto_reply_only` | Só a resposta automática                             | Fora do horário, responda apenas com uma mensagem automática padrão.                                  |
+| `out_of_scope_action`  | `escalate_team`   | Encaminhar para a equipe (ou para uma indicação)     | Se a pergunta fugir do que você pode responder, explique que vai encaminhar para o time responsável.  |
+|                        | `say_dont_know`   | Dizer que não sabe e seguir                          | Se não souber responder, diga isso com honestidade, sem inventar informação.                          |
 
-**[Em aberto]** Marcelo confirma os rótulos acima contra o texto que o Code node do n8n injeta no prompt para cada valor.
+Os textos do prompt são traduzidos para `en-US` e `es` conforme o `language` do agente, pelo mesmo catálogo de idiomas do painel (ADR 0013).
 
 ## 8. Tags do prompt
 
-O prompt template e o `system_prompt` aceitam tags `{{campo}}` com os campos das abas acima. **[Em aberto]** A lista exata das 25 tags e os textos dos mapas vêm do `render-system-prompt.ts` do legado, que Marcelo envia; o renderizador da A2 é escrito a partir dele, com teste para cada tag.
+O prompt template do modelo e o `system_prompt` do agente aceitam as **25 tags** do legado, no formato `{{tag}}`. A lista e as regras vêm do `render-system-prompt.ts` do legado (enviado por Marcelo em 12/10/2026).
+
+| Tag                                                                                                     | Campo       | Como vira texto                                                                    |
+| ------------------------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------- |
+| `{{agent_name}}`, `{{business_summary}}`, `{{segment}}`, `{{products_services}}`, `{{persona_context}}` | Visão geral | Texto como está                                                                    |
+| `{{language}}`, `{{agent_tone}}`                                                                        | Visão geral | O valor do enum                                                                    |
+| `{{base_city}}`, `{{base_state}}`, `{{timezone}}`, `{{coverage_radius_km}}`                             | Escopo      | Texto ou número como está                                                          |
+| `{{coverage_cities}}`, `{{coverage_areas}}`                                                             | Escopo      | Lista separada por vírgula                                                         |
+| `{{remote_allowed}}`, `{{travel_allowed}}`                                                              | Escopo      | Sim/não (veja a regra 3)                                                           |
+| `{{availability_slots}}`                                                                                | Escopo      | "dias: início às fim", separados por ponto e vírgula; sem horário, "não informado" |
+| `{{refuses_pricing}}`, `{{refuses_competitor_comparison}}`, `{{refuses_delivery_commitment}}`           | Regras      | Sim/não                                                                            |
+| `{{partner_referral_notify}}`                                                                           | Regras      | Sim/não                                                                            |
+| `{{partner_message_template}}`                                                                          | Regras      | Texto como está                                                                    |
+| `{{handoff_mode}}`, `{{after_hours_behavior}}`, `{{out_of_scope_action}}`                               | Regras      | O texto do prompt da seção 7                                                       |
+| `{{lead_destination}}`                                                                                  | Integração  | O valor do enum                                                                    |
+
+**Regras do renderizador** (iguais ao legado, salvo onde indicado):
+
+1. Substituição literal de cada `{{tag}}` por todas as ocorrências; tag desconhecida fica como está no texto.
+2. Campo vazio vira `(nao configurado)`; código de enum desconhecido vai como está.
+3. **[Proposta]** Sim/não: o legado escrevia `true` e `false` no prompt; o GUIDU escreve "sim" e "não" no idioma do agente.
+4. **[Proposta]** `availability_slots`: o legado guardava um objeto `{ "seg-sex": "09:00-18:00" }`; o GUIDU guarda a lista `{ weekday, start, end }` (seção 2) e o renderizador agrupa os dias com o mesmo horário para produzir o mesmo texto.
+5. **Sem prompt de reserva.** No legado, um agente inativo ou sem template caía num prompt fixo da CartãoPro (`DEFAULT_SYSTEM_MESSAGE`). No GUIDU, um agente sem prompt **não pode ser ativado** nem testado, e a tela diz o que falta. O texto da CartãoPro serve de referência para o modelo SDR da casa (Anna), não de reserva.
+6. O renderizador é um só, no motor, e é usado pelo "Testar agente" e pela produção. Cada tag tem um teste.

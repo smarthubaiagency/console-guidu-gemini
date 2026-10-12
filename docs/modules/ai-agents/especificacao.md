@@ -130,7 +130,7 @@ Os GUIDS atendem pela camada de canais do núcleo, com o Chatwoot via Agent Bot 
 - **Contexto vem do servidor, nunca do modelo.** Workspace, agente e identidade saem da sessão (Assistente) ou do job (GUIDS); nenhum argumento de ferramenta escolhe workspace ou agente.
 - **Limites técnicos por turno** **[Proposta]**: passos de ferramenta, tokens de saída e tempo total, com valores no manifesto do módulo e ajuste em `/platform`.
 - **Saída estruturada:** o plano de resposta dos GUIDS ([canais.md](canais.md), seção 6.1) e a resposta do Assistente (texto com citações e ações propostas) são validados por Zod antes de qualquer efeito.
-- **Renderizador único de prompt** com as tags do legado (`{{…}}`), em código do motor. **[Em aberto]** A lista exata das 25 tags vem do arquivo `render-system-prompt.ts` do legado, que Marcelo envia para o dicionário de campos.
+- **Renderizador único de prompt** com as tags do legado (`{{…}}`), em código do motor. As 25 tags, os textos dos enums e as regras de renderização estão em [campos.md](campos.md), seções 7 e 8. **[Em aberto]** As variáveis do agente, que Marcelo vai trazer do handoff do legado.
 
 ## 8. Ferramentas
 
