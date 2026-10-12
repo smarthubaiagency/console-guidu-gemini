@@ -19,6 +19,14 @@ import { displayValue } from "@/core/proposals/labels";
 import { getProposal, loadProposalTarget } from "@/core/proposals/service";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export async function generateMetadata() {
   const t = await getTranslations("proposals");
@@ -124,32 +132,40 @@ export default async function ProposalPage({ params }: PageProps) {
             {proposal.reason}
           </p>
         ) : null}
-        <table className="text-12 w-full" data-testid="proposal-fields">
-          <thead>
-            <tr className="text-text-secondary text-left">
-              <th className="py-2 pr-3 font-medium">{t("detail.field")}</th>
+        <Table className="text-12" data-testid="proposal-fields">
+          <TableHeader>
+            <TableRow className="text-text-secondary text-left">
+              <TableHead className="pr-3 font-medium">
+                {t("detail.field")}
+              </TableHead>
               {proposal.targetId ? (
-                <th className="py-2 pr-3 font-medium">{t("detail.current")}</th>
+                <TableHead className="pr-3 font-medium">
+                  {t("detail.current")}
+                </TableHead>
               ) : null}
-              <th className="py-2 font-medium">{t("detail.proposed")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-border divide-y">
+              <TableHead className="font-medium">
+                {t("detail.proposed")}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {shown.map((f) => (
-              <tr key={f.key}>
-                <td className="text-text-secondary py-2 pr-3">{f.label}</td>
+              <TableRow key={f.key}>
+                <TableCell className="text-text-secondary pr-3">
+                  {f.label}
+                </TableCell>
                 {proposal.targetId ? (
-                  <td className="text-text-secondary py-2 pr-3">
+                  <TableCell className="text-text-secondary pr-3">
                     {displayValue(current?.[f.key])}
-                  </td>
+                  </TableCell>
                 ) : null}
-                <td className="text-text py-2 font-medium">
+                <TableCell className="text-text font-medium">
                   {displayValue(proposal.payload[f.key])}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         <p className="text-11 text-text-secondary">
           {t("detail.hash")}{" "}
           <code data-testid="proposal-hash">

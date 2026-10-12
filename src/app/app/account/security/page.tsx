@@ -5,6 +5,7 @@ import { PageStatus } from "@/components/feedback/page-status";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ErrorNotice } from "@/shared/ui/auth-shell";
+import { Button } from "@/components/ui/button";
 import { SignOutForm } from "@/shared/ui/sign-out-form";
 
 import { unenrolTotpFactor } from "./actions";
@@ -73,9 +74,9 @@ export default async function AccountSecurityPage({
                     <span>{factor.friendly_name ?? t("authenticatorApp")}</span>
                     <form action={unenrolTotpFactor}>
                       <input type="hidden" name="factorId" value={factor.id} />
-                      <button type="submit" className="underline">
+                      <Button type="submit" variant="link" size="sm">
                         {t("remove")}
-                      </button>
+                      </Button>
                     </form>
                   </li>
                 ))}

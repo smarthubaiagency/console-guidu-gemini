@@ -16,6 +16,29 @@ import type {
 } from "@/core/credentials/vault";
 import { useStatus } from "@/components/feedback/status-context";
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { cn } from "@/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export type CredentialsCapabilities = {
   canManage: boolean;
@@ -107,84 +130,73 @@ export function CredentialsClient({
         </div>
 
         {capabilities.canManage && (
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
-          >
-            <Plus className="h-4 w-4" />
+          <Button type="button" onClick={() => setIsModalOpen(true)}>
+            <Plus />
             <span>{t("newCredential")}</span>
-          </button>
+          </Button>
         )}
       </div>
 
-      {/* Modal / Register Form */}
-      {capabilities.canManage && isModalOpen && (
-        <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="border-card-border bg-surface-card w-full max-w-lg rounded-2xl border p-6 shadow-xl">
-            <div className="border-border flex items-center justify-between border-b pb-4">
-              <div className="text-text text-14 flex items-center gap-2 font-semibold">
+      {/* Register form */}
+      {capabilities.canManage && (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
                 <KeyRound className="text-text-subtle h-4 w-4" />
                 <span>{t("modalTitle")}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-text-tertiary hover:text-text-subtle text-18 leading-none"
-              >
-                ×
-              </button>
-            </div>
+              </DialogTitle>
+            </DialogHeader>
 
-            <form onSubmit={handleRegister} className="mt-4 space-y-4">
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
+            <form onSubmit={handleRegister} className="space-y-4">
+              <fieldset className="grid gap-2">
+                <legend className="text-14 mb-2 font-medium">
                   {t("providerLabel")}
-                </label>
+                </legend>
                 <div className="grid grid-cols-3 gap-2">
                   {(Object.keys(AI_PROVIDERS) as AIProvider[]).map((pKey) => {
                     const pMeta = AI_PROVIDERS[pKey];
                     const isSelected = provider === pKey;
                     return (
-                      <button
+                      <Button
                         key={pKey}
                         type="button"
+                        variant="outline"
+                        aria-pressed={isSelected}
                         onClick={() => setProvider(pKey)}
-                        className={`text-12 rounded-lg border p-2.5 text-left transition ${
+                        className={cn(
+                          "text-12 h-auto flex-col items-start gap-0 p-2.5 text-left",
                           isSelected
                             ? "border-focus-ring bg-surface-raised text-text font-semibold"
-                            : "border-border text-text-subtle hover:bg-surface-hover"
-                        }`}
+                            : "text-text-subtle font-normal",
+                        )}
                       >
-                        <div>{pMeta.name}</div>
-                        <div className="text-10 text-text-tertiary font-mono">
+                        <span>{pMeta.name}</span>
+                        <span className="text-10 text-text-tertiary font-mono">
                           {pMeta.keyPrefix}*
-                        </div>
-                      </button>
+                        </span>
+                      </Button>
                     );
                   })}
                 </div>
-              </div>
+              </fieldset>
 
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  {t("labelLabel")}
-                </label>
-                <input
+              <div className="grid gap-2">
+                <Label htmlFor="credential-label">{t("labelLabel")}</Label>
+                <Input
+                  id="credential-label"
                   type="text"
                   required
                   placeholder={t("labelPlaceholder")}
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
-                  className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  {t("secretLabel")}
-                </label>
-                <input
+              <div className="grid gap-2">
+                <Label htmlFor="credential-secret">{t("secretLabel")}</Label>
+                <Input
+                  id="credential-secret"
                   type="password"
                   required
                   placeholder={t("secretPlaceholder", {
@@ -192,30 +204,39 @@ export function CredentialsClient({
                   })}
                   value={secret}
                   onChange={(e) => setSecret(e.target.value)}
-                  className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 font-mono focus:outline-none"
+                  aria-describedby="credential-secret-hint"
+                  className="font-mono"
                 />
-                <p className="text-11 text-text-tertiary mt-1">
+                <p
+                  id="credential-secret-hint"
+                  className="text-11 text-text-tertiary"
+                >
                   {t("expectedFormat", {
                     prefix: activeProviderMeta.keyPrefix,
                   })}
                 </p>
               </div>
 
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  {t("purposeLabel")}
-                </label>
-                <select
+              <div className="grid gap-2">
+                <Label htmlFor="credential-purpose">{t("purposeLabel")}</Label>
+                <NativeSelect
+                  id="credential-purpose"
                   value={purpose}
                   onChange={(e) =>
                     setPurpose(e.target.value as CredentialPurpose)
                   }
-                  className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
+                  className="w-full"
                 >
-                  <option value="all">{t("purposeAll")}</option>
-                  <option value="chat">{t("purposeChat")}</option>
-                  <option value="embeddings">{t("purposeEmbeddings")}</option>
-                </select>
+                  <NativeSelectOption value="all">
+                    {t("purposeAll")}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="chat">
+                    {t("purposeChat")}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="embeddings">
+                    {t("purposeEmbeddings")}
+                  </NativeSelectOption>
+                </NativeSelect>
               </div>
 
               <div className="bg-surface-raised border-border text-11 text-text-subtle flex items-start gap-2 rounded-lg border p-3">
@@ -227,25 +248,21 @@ export function CredentialsClient({
                 </span>
               </div>
 
-              <div className="border-border mt-6 flex items-center justify-end gap-3 border-t pt-3">
-                <button
+              <DialogFooter>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setIsModalOpen(false)}
-                  className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
                 >
                   {t("cancel")}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
-                >
+                </Button>
+                <Button type="submit" disabled={isPending}>
                   {isPending ? t("encrypting") : t("save")}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Credentials Table */}
@@ -265,37 +282,37 @@ export function CredentialsClient({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="text-12 w-full text-left">
-              <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
-                <tr>
-                  <th className="px-5 py-3">{t("colProvider")}</th>
-                  <th className="px-5 py-3">{t("colLabel")}</th>
-                  <th className="px-5 py-3">{t("colMasked")}</th>
-                  <th className="px-5 py-3">{t("colPurpose")}</th>
-                  <th className="px-5 py-3">{t("colStatus")}</th>
-                  <th className="px-5 py-3 text-right">
+            <Table className="text-12">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-5">{t("colProvider")}</TableHead>
+                  <TableHead className="px-5">{t("colLabel")}</TableHead>
+                  <TableHead className="px-5">{t("colMasked")}</TableHead>
+                  <TableHead className="px-5">{t("colPurpose")}</TableHead>
+                  <TableHead className="px-5">{t("colStatus")}</TableHead>
+                  <TableHead className="px-5 text-right">
                     {capabilities.canManage ? t("colActions") : ""}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-border divide-y">
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {credentials.map((item) => (
-                  <tr key={item.id} className="hover:bg-surface-hover">
-                    <td className="text-text px-5 py-3.5 font-semibold capitalize">
+                  <TableRow key={item.id}>
+                    <TableCell className="text-text px-5 font-semibold capitalize">
                       {item.provider}
-                    </td>
-                    <td className="text-text px-5 py-3.5 font-medium">
+                    </TableCell>
+                    <TableCell className="text-text px-5 font-medium">
                       {item.label}
-                    </td>
-                    <td className="text-text-subtle bg-surface-sidebar rounded-sm px-5 py-3.5 font-mono">
+                    </TableCell>
+                    <TableCell className="text-text-subtle bg-surface-sidebar rounded-sm px-5 font-mono">
                       {item.maskedValue}
-                    </td>
-                    <td className="text-text-subtle px-5 py-3.5 capitalize">
+                    </TableCell>
+                    <TableCell className="text-text-subtle px-5 capitalize">
                       {item.purpose === "all"
                         ? t("purposeGeneral")
                         : item.purpose}
-                    </td>
-                    <td className="px-5 py-3.5">
+                    </TableCell>
+                    <TableCell className="px-5">
                       <span
                         className={`text-10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${
                           item.status === "active"
@@ -310,24 +327,27 @@ export function CredentialsClient({
                           ? t("statusActive")
                           : t("statusRevoked")}
                       </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
+                    </TableCell>
+                    <TableCell className="px-5 text-right">
                       {capabilities.canManage && item.status === "active" && (
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon-sm"
                           disabled={isPending}
                           onClick={() => handleRevoke(item.id, item.label)}
-                          className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
+                          className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg"
                           title={t("revokeTitle")}
+                          aria-label={t("revokeTitle")}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                          <Trash2 />
+                        </Button>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

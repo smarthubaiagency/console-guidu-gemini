@@ -110,32 +110,17 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await page.getByPlaceholder(/Conector Cursor|Nome da Chave/i).fill(keyName);
 
     // Verify default scopes are checked and write scope is unchecked
-    const wsReadCheckbox = page
-      .locator(
-        'input[type="checkbox"][value="workspace:read"], input[type="checkbox"]:has-text("workspace:read")',
-      )
-      .or(
-        page.locator('label:has-text("workspace:read") input[type="checkbox"]'),
-      )
-      .first();
+    const wsReadCheckbox = page.getByRole("checkbox", {
+      name: /workspace:read/,
+    });
 
-    const modReadCheckbox = page
-      .locator(
-        'input[type="checkbox"][value="modules:read"], input[type="checkbox"]:has-text("modules:read")',
-      )
-      .or(page.locator('label:has-text("modules:read") input[type="checkbox"]'))
-      .first();
+    const modReadCheckbox = page.getByRole("checkbox", {
+      name: /modules:read/,
+    });
 
-    const propWriteCheckbox = page
-      .locator(
-        'input[type="checkbox"][value="proposals:write"], input[type="checkbox"]:has-text("proposals:write")',
-      )
-      .or(
-        page.locator(
-          'label:has-text("proposals:write") input[type="checkbox"]',
-        ),
-      )
-      .first();
+    const propWriteCheckbox = page.getByRole("checkbox", {
+      name: /proposals:write/,
+    });
 
     // If explicit scope checkboxes exist, check their default state
     if (await wsReadCheckbox.isVisible().catch(() => false)) {
@@ -347,14 +332,9 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await page.getByRole("button", { name: "Emitir Nova Chave" }).click();
 
     // Verify proposals:write checkbox is disabled or blocked for viewer
-    const propWriteInput = page
-      .locator('input[type="checkbox"][value="proposals:write"]')
-      .or(
-        page.locator(
-          'label:has-text("proposals:write") input[type="checkbox"]',
-        ),
-      )
-      .first();
+    const propWriteInput = page.getByRole("checkbox", {
+      name: /proposals:write/,
+    });
 
     if (await propWriteInput.isVisible().catch(() => false)) {
       await expect(propWriteInput).toBeDisabled();

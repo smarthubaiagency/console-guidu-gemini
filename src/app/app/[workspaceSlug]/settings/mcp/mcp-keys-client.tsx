@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Bot,
+  X,
 } from "lucide-react";
 import {
   createApiKeyAction,
@@ -21,7 +22,32 @@ import type { ApiKeyItem } from "@/core/credentials/api-keys";
 import { SCOPE_DEFINITIONS, DEFAULT_WORKSPACE_SCOPES } from "@/core/mcp/scopes";
 import type { WorkspaceRole } from "@/core/permissions/roles";
 import { useStatus } from "@/components/feedback/status-context";
+import { cn } from "@/lib/utils";
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export type McpKeysCapabilities = {
   canManage: boolean;
@@ -139,13 +165,15 @@ export function McpKeysClient({
               <CheckCircle2 className="text-success-solid h-4 w-4" />
               <span>{t("issuedTitle")}</span>
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setFeedback(null)}
-              className="text-success-text hover:text-success-text font-bold"
+              aria-label={t("cancel")}
             >
-              ×
-            </button>
+              <X />
+            </Button>
           </div>
           <p className="text-text-subtle">{t("issuedNotice")}</p>
           {
@@ -153,10 +181,10 @@ export function McpKeysClient({
               <div className="text-12 text-text truncate font-mono font-semibold select-all">
                 {feedback.rawKey}
               </div>
-              <button
+              <Button
                 type="button"
+                size="sm"
                 onClick={() => handleCopy(feedback.rawKey!)}
-                className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 font-semibold transition"
               >
                 {copiedKey === feedback.rawKey ? (
                   <>
@@ -169,7 +197,7 @@ export function McpKeysClient({
                     <span>{t("copyKey")}</span>
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           }
         </div>
@@ -188,78 +216,68 @@ export function McpKeysClient({
         </div>
 
         {capabilities.canCreate && (
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="bg-primary hover:bg-primary-hover text-on-primary text-12 flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition"
-          >
-            <Plus className="h-4 w-4" />
+          <Button type="button" onClick={() => setIsModalOpen(true)}>
+            <Plus />
             <span>{t("newKey")}</span>
-          </button>
+          </Button>
         )}
       </div>
 
-      {/* Modal / Create Key Form */}
-      {capabilities.canCreate && isModalOpen && (
-        <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="border-card-border bg-surface-card max-h-full w-full max-w-lg overflow-y-auto rounded-2xl border p-6 shadow-xl">
-            <div className="border-border flex items-center justify-between border-b pb-4">
-              <div className="text-text text-14 flex items-center gap-2 font-semibold">
+      {/* Create key form */}
+      {capabilities.canCreate && (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-h-full overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
                 <Key className="text-text-subtle h-4 w-4" />
                 <span>{t("newKey")}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-text-tertiary hover:text-text-subtle text-18 leading-none"
-              >
-                ×
-              </button>
-            </div>
+              </DialogTitle>
+            </DialogHeader>
 
-            <form onSubmit={handleCreateKey} className="mt-4 space-y-4">
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  {t("nameLabel")}
-                </label>
-                <input
+            <form onSubmit={handleCreateKey} className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="mcp-key-name">{t("nameLabel")}</Label>
+                <Input
+                  id="mcp-key-name"
                   type="text"
                   required
                   placeholder={t("namePlaceholder")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
+              <fieldset className="grid gap-2">
+                <legend className="text-14 mb-2 font-medium">
                   {t("scopesLabel")}
-                </label>
+                </legend>
                 <div className="space-y-2">
                   {SCOPE_DEFINITIONS.map((sc) => {
                     const isChecked = scopes.includes(sc.id);
                     const isWrite = sc.isWrite;
                     const isDisabled = isWrite && isViewer;
+                    const id = `mcp-scope-${sc.id}`;
 
                     return (
-                      <label
+                      <Label
                         key={sc.id}
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-2.5 transition ${
+                        htmlFor={id}
+                        className={cn(
+                          "items-start gap-3 rounded-lg border p-2.5 font-normal transition",
                           isDisabled
                             ? "border-border bg-surface-raised cursor-not-allowed opacity-60"
                             : isChecked
-                              ? "border-focus-ring bg-surface-raised"
-                              : "border-border hover:bg-surface-hover"
-                        }`}
+                              ? "border-focus-ring bg-surface-raised cursor-pointer"
+                              : "border-border hover:bg-surface-hover cursor-pointer",
+                        )}
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
+                          id={id}
                           value={sc.id}
                           checked={isChecked}
                           disabled={isDisabled}
-                          onChange={() => handleScopeToggle(sc.id)}
-                          className="mt-0.5 rounded-sm"
+                          onCheckedChange={() => handleScopeToggle(sc.id)}
+                          className="mt-0.5"
                         />
                         <div>
                           <div className="text-12 text-text flex items-center gap-1.5 font-medium">
@@ -269,9 +287,12 @@ export function McpKeysClient({
                                 : sc.label}
                             </span>
                             {isWrite && (
-                              <span className="text-10 bg-warning-bg text-warning-text border-warning-border rounded-xs border px-1 py-0.5 font-semibold">
+                              <Badge
+                                variant="outline"
+                                className="bg-warning-bg text-warning-text border-warning-border"
+                              >
                                 {t("write")}
-                              </span>
+                              </Badge>
                             )}
                           </div>
                           <div className="text-11 text-text-secondary">
@@ -285,7 +306,7 @@ export function McpKeysClient({
                             </div>
                           )}
                         </div>
-                      </label>
+                      </Label>
                     );
                   })}
                 </div>
@@ -299,46 +320,52 @@ export function McpKeysClient({
                     </div>
                   </div>
                 )}
-              </div>
+              </fieldset>
 
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  {t("expiryLabel")}
-                </label>
-                <select
+              <div className="grid gap-2">
+                <Label htmlFor="mcp-key-expiry">{t("expiryLabel")}</Label>
+                <NativeSelect
+                  id="mcp-key-expiry"
                   value={expiresInDays}
                   onChange={(e) => setExpiresInDays(Number(e.target.value))}
-                  className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
+                  className="w-full"
                 >
-                  <option value={30}>{t("days", { days: 30 })}</option>
-                  <option value={60}>{t("days", { days: 60 })}</option>
-                  <option value={90}>
+                  <NativeSelectOption value={30}>
+                    {t("days", { days: 30 })}
+                  </NativeSelectOption>
+                  <NativeSelectOption value={60}>
+                    {t("days", { days: 60 })}
+                  </NativeSelectOption>
+                  <NativeSelectOption value={90}>
                     {t("daysRecommended", { days: 90 })}
-                  </option>
-                  <option value={180}>{t("days", { days: 180 })}</option>
-                  <option value={365}>{t("daysOneYear", { days: 365 })}</option>
-                </select>
+                  </NativeSelectOption>
+                  <NativeSelectOption value={180}>
+                    {t("days", { days: 180 })}
+                  </NativeSelectOption>
+                  <NativeSelectOption value={365}>
+                    {t("daysOneYear", { days: 365 })}
+                  </NativeSelectOption>
+                </NativeSelect>
               </div>
 
-              <div className="border-border mt-6 flex items-center justify-end gap-3 border-t pt-3">
-                <button
+              <DialogFooter>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setIsModalOpen(false)}
-                  className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
                 >
                   {t("cancel")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={isPending || scopes.length === 0}
-                  className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
                 >
                   {isPending ? t("issuing") : t("issue")}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Keys Table */}
@@ -356,28 +383,30 @@ export function McpKeysClient({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="text-12 w-full text-left">
-              <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
-                <tr>
-                  <th className="px-5 py-3">{t("colName")}</th>
-                  <th className="px-5 py-3">{t("colPrefix")}</th>
-                  <th className="px-5 py-3">{t("colScopes")}</th>
-                  <th className="px-5 py-3">{t("colExpires")}</th>
-                  <th className="px-5 py-3">{t("colLastUsed")}</th>
-                  <th className="px-5 py-3">{t("colStatus")}</th>
-                  <th className="px-5 py-3 text-right">{t("colActions")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-border divide-y">
+            <Table className="text-12">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-5">{t("colName")}</TableHead>
+                  <TableHead className="px-5">{t("colPrefix")}</TableHead>
+                  <TableHead className="px-5">{t("colScopes")}</TableHead>
+                  <TableHead className="px-5">{t("colExpires")}</TableHead>
+                  <TableHead className="px-5">{t("colLastUsed")}</TableHead>
+                  <TableHead className="px-5">{t("colStatus")}</TableHead>
+                  <TableHead className="px-5 text-right">
+                    {t("colActions")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {apiKeys.map((item) => (
-                  <tr key={item.id} className="hover:bg-surface-hover">
-                    <td className="text-text px-5 py-3.5 font-semibold">
+                  <TableRow key={item.id}>
+                    <TableCell className="text-text px-5 font-semibold">
                       {item.name}
-                    </td>
-                    <td className="text-text-subtle bg-surface-sidebar rounded-sm px-5 py-3.5 font-mono">
+                    </TableCell>
+                    <TableCell className="text-text-subtle px-5 font-mono">
                       {item.prefix}
-                    </td>
-                    <td className="px-5 py-3.5">
+                    </TableCell>
+                    <TableCell className="px-5">
                       <div className="flex flex-wrap gap-1">
                         {item.scopes.map((sc) => (
                           <span
@@ -392,21 +421,21 @@ export function McpKeysClient({
                           </span>
                         ))}
                       </div>
-                    </td>
-                    <td className="text-text-secondary px-5 py-3.5">
+                    </TableCell>
+                    <TableCell className="text-text-secondary px-5">
                       {format.dateTime(new Date(item.expiresAt), {
                         dateStyle: "short",
                       })}
-                    </td>
-                    <td className="text-text-secondary px-5 py-3.5">
+                    </TableCell>
+                    <TableCell className="text-text-secondary px-5">
                       {item.lastUsedAt
                         ? format.dateTime(new Date(item.lastUsedAt), {
                             dateStyle: "short",
                             timeStyle: "short",
                           })
                         : t("neverUsed")}
-                    </td>
-                    <td className="px-5 py-3.5">
+                    </TableCell>
+                    <TableCell className="px-5">
                       <span
                         className={`text-10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${
                           item.status === "active"
@@ -421,24 +450,27 @@ export function McpKeysClient({
                           ? t("statusActive")
                           : t("statusRevoked")}
                       </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
+                    </TableCell>
+                    <TableCell className="px-5 text-right">
                       {item.status === "active" && canRevokeItem(item) && (
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon-sm"
                           disabled={isPending}
                           onClick={() => handleRevoke(item.id, item.name)}
-                          className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
+                          className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg"
                           title={t("revokeTitle")}
+                          aria-label={t("revokeTitle")}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                          <Trash2 />
+                        </Button>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>
