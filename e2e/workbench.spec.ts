@@ -19,7 +19,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/identity";
-import { sidebar } from "./support/sidebar";
+import { expandSidebarGroup, sidebar } from "./support/sidebar";
 import { totpCode } from "./support/totp";
 
 async function platformAdmin(
@@ -57,9 +57,8 @@ test("the workbench drawer pushes, expands, closes and returns the focus", async
   await page.setViewportSize({ width: 1600, height: 900 });
 
   await page.goto("/platform");
-  await sidebar(page)
-    .getByRole("link", { name: "Padrões de interface" })
-    .click();
+  await expandSidebarGroup(page, "Padrões de interface");
+  await sidebar(page).getByRole("link", { name: "Janela de edição" }).click();
   await expect(
     page.getByRole("heading", { name: "Padrões de interface" }),
   ).toBeVisible();

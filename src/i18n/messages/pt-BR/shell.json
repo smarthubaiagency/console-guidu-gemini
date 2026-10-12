@@ -21,5 +21,11 @@
   "assistantSoonTitle": "Em breve",
   "assistantSoonText": "O assistente de IA vai abrir nesta janela. O módulo de agentes de IA ainda aguarda especificação, então esta janela mostra apenas o modelo.",
   "adminLink": "Console do parceiro",
-  "platformLink": "Plataforma"
+  "platformLink": "Plataforma",
+  "statusClose": "Fechar aviso",
+  "statusShowDetails": "Ver detalhes",
+  "statusHideDetails": "Ocultar detalhes",
+  "statusAutoClose": "Esta mensagem fechará em breve. Clique para pausar.",
+  "statusPaused": "Pausado. Clique × para fechar.",
+  "statusResume": "Retomar"
 }

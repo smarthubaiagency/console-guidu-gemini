@@ -30,5 +30,61 @@
   "simpleTitle": "Janela simples",
   "simpleHint": "Sem a coluna da esquerda, o conteúdo ocupa toda a área e a janela abre à direita.",
   "openPanel": "Abrir a janela",
-  "simpleBody": "Conteúdo da janela. Esc fecha e o foco volta para o botão que a abriu."
+  "simpleBody": "Conteúdo da janela. Esc fecha e o foco volta para o botão que a abriu.",
+  "status": {
+    "title": "Avisos",
+    "subtitle": "SmartStatusBanner (ADR 0016): o retorno de todo envio e as confirmações do painel aparecem neste card, logo abaixo do cabeçalho.",
+    "sampleNotice": "Página de demonstração: os botões só mostram avisos e nada é gravado.",
+    "groups": {
+      "results": "Retorno de uma ação",
+      "confirm": "Confirmação"
+    },
+    "demo": {
+      "up": "Sucesso",
+      "oops": "Aviso",
+      "down": "Erro com detalhes",
+      "sticky": "Não fecha sozinho",
+      "same": "O mesmo aviso duas vezes",
+      "confirm": "Confirmar com checkbox",
+      "destructive": "Ação destrutiva"
+    },
+    "up": {
+      "title": "Contato salvo!",
+      "message": "As alterações já aparecem na lista."
+    },
+    "oops": {
+      "title": "Assinatura vence em 3 dias",
+      "message": "Renove para não perder o acesso aos módulos."
+    },
+    "down": {
+      "title": "Erro ao salvar",
+      "message": "Não foi possível salvar o contato.",
+      "details": "O servidor respondeu com erro de validação: o e-mail já pertence a outro contato deste workspace. Corrija o e-mail e tente de novo.",
+      "action": "Tentar de novo",
+      "secondary": "Fechar"
+    },
+    "sticky": {
+      "title": "Integração pendente",
+      "message": "Este aviso só fecha quando você clicar no ×."
+    },
+    "confirm": {
+      "title": "Desvincular cartão?",
+      "message": "O cartão deixa de funcionar para este membro.",
+      "checkbox": "Entendo que o cartão voltará ao inventário",
+      "action": "Desvincular",
+      "cancel": "Cancelar",
+      "done": "Cartão desvinculado",
+      "kept": "Nada foi alterado"
+    },
+    "destructive": {
+      "title": "Cancelar o addon?",
+      "message": "O addon deixa de ser cobrado no próximo ciclo e os dados dele ficam só para consulta.",
+      "action": "Cancelar addon",
+      "cancel": "Manter",
+      "done": "Addon cancelado"
+    },
+    "answer": "Resposta da última confirmação: {answer}",
+    "answerYes": "confirmou",
+    "answerNo": "cancelou"
+  }
 }

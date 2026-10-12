@@ -30,5 +30,61 @@
   "simpleTitle": "Simple window",
   "simpleHint": "Without the left column, the content fills the whole area and the window opens on the right.",
   "openPanel": "Open the window",
-  "simpleBody": "Window content. Esc closes it and the focus returns to the button that opened it."
+  "simpleBody": "Window content. Esc closes it and the focus returns to the button that opened it.",
+  "status": {
+    "title": "Notices",
+    "subtitle": "SmartStatusBanner (ADR 0016): the result of every submit and the confirmations of the dashboard show in this card, right under the header.",
+    "sampleNotice": "Demo page: the buttons only show notices and nothing is saved.",
+    "groups": {
+      "results": "Result of an action",
+      "confirm": "Confirmation"
+    },
+    "demo": {
+      "up": "Success",
+      "oops": "Warning",
+      "down": "Error with details",
+      "sticky": "Does not close by itself",
+      "same": "The same notice twice",
+      "confirm": "Confirm with checkbox",
+      "destructive": "Destructive action"
+    },
+    "up": {
+      "title": "Contact saved!",
+      "message": "The changes already show in the list."
+    },
+    "oops": {
+      "title": "Subscription ends in 3 days",
+      "message": "Renew to keep access to the modules."
+    },
+    "down": {
+      "title": "Could not save",
+      "message": "The contact was not saved.",
+      "details": "The server answered with a validation error: the email already belongs to another contact in this workspace. Fix the email and try again.",
+      "action": "Try again",
+      "secondary": "Close"
+    },
+    "sticky": {
+      "title": "Integration pending",
+      "message": "This notice only closes when you click ×."
+    },
+    "confirm": {
+      "title": "Unlink card?",
+      "message": "The card stops working for this member.",
+      "checkbox": "I understand the card goes back to the inventory",
+      "action": "Unlink",
+      "cancel": "Cancel",
+      "done": "Card unlinked",
+      "kept": "Nothing changed"
+    },
+    "destructive": {
+      "title": "Cancel the add-on?",
+      "message": "The add-on is no longer billed from the next cycle and its data becomes read-only.",
+      "action": "Cancel add-on",
+      "cancel": "Keep",
+      "done": "Add-on cancelled"
+    },
+    "answer": "Answer to the last confirmation: {answer}",
+    "answerYes": "confirmed",
+    "answerNo": "cancelled"
+  }
 }

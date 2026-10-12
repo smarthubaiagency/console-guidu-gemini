@@ -226,6 +226,24 @@
   padding-right: var(--container-drawer);
 }
 
+/* Countdown of the SmartStatusBanner (ADR 0016): shrinks from full to empty
+   in --status-duration and stops where it is while paused. */
+@keyframes status-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+@utility status-countdown {
+  transform-origin: left;
+  animation: status-countdown var(--status-duration, 4000ms) linear forwards;
+  &[data-paused="true"] {
+    animation-play-state: paused;
+  }
+}
+
 /* Native progress bar styled with tokens (replaces an inline width style). */
 @utility progress-bar {
   appearance: none;
