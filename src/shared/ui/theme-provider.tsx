@@ -6,7 +6,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 /**
  * Light/dark theme for the design system. Writes `data-theme` on <html>, which
  * switches every token in globals.css. Follows the OS setting until the user
- * picks a theme with <ThemeToggle />.
+ * picks a theme in the account menu of the sidebar (ADR 0014).
  */
 export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
   return (

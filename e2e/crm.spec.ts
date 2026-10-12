@@ -18,6 +18,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/identity";
+import { expandSidebarGroup, sidebar } from "./support/sidebar";
 
 test("owner enables the CRM, adds, edits and finds a contact", async ({
   page,
@@ -50,7 +51,8 @@ test("owner enables the CRM, adds, edits and finds a contact", async ({
   ).toBeVisible();
 
   await page.goto(`/app/${wsSlug}`);
-  await page.locator("aside").getByRole("link", { name: "Contatos" }).click();
+  await expandSidebarGroup(page, "CRM");
+  await sidebar(page).getByRole("link", { name: "Contatos" }).click();
   await expect(page.getByRole("heading", { name: "Contatos" })).toBeVisible();
 
   const create = page.getByTestId("create-contact");

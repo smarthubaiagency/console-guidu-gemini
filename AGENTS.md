@@ -21,6 +21,10 @@ Registre e execute: **Contexto → Objetivo → Requisitos → Lógica → Plano
 
 O desenvolvimento usa exclusivamente o Supabase dev `console-guidu` (`ssulunrysnvwyqjlkpry`), conforme ADR 0010 (que ajusta a ADR 0008 para este repositório). SQL e migrations só podem atingir esse projeto, sempre a partir de arquivo versionado. Migrations remotas são aplicadas com `MIGRATION_DATABASE_URL=... pnpm tsx scripts/migrate.ts` depois do PR aprovado. Nunca execute DDL ad hoc, edite migration aplicada, use produção, exponha `.env` ou segredos. Supabase local existe somente no CI. Toda consulta de domínio usa Prisma dentro de `withContext`; autorização é revalidada no servidor.
 
+## Interface
+
+Toda área com menu lateral usa o shell padrão com a sidebar-08 do shadcn (`AppShell`, ADR 0014, guia em `docs/architecture/ui-shell.md`). Não crie sidebar nem cabeçalho de topo próprios. Componentes do shadcn ficam em `src/components/ui/`.
+
 ## Git e evidência
 
 Não altere a branch padrão, não force-push, não use `--no-verify`. Contagens usam `count(*)`. Produção, exclusão, infraestrutura ou migration fora do dev exigem aprovação explícita do Marcelo registrada no PR.

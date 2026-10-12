@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma/client";
 import { listRequestUserWorkspaces } from "@/core/partners/request-context";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { loadAppNavigation } from "@/core/module-runtime/loaders";
-import { AppSidebar } from "@/components/layout/app-sidebar";
-import { AppHeader } from "@/components/layout/app-header";
+import { AppShell } from "@/components/layout/shell/app-shell";
+import { WorkspaceSwitcher } from "@/components/layout/shell/workspace-switcher";
 import { getRequestBrand } from "@/core/brand/resolve";
 import { translateNavigation } from "@/core/i18n/navigation";
 import { getModuleCatalog } from "@/core/i18n/modules";
@@ -56,22 +56,21 @@ export default async function WorkspaceLayout({
   );
 
   return (
-    <div className="bg-surface-hover text-text flex min-h-screen flex-col">
-      <AppHeader
-        currentSlug={workspaceSlug}
-        workspaces={workspaces}
-        userEmail={identity.email}
-        isPlatformAdmin={Boolean(platformAdmin)}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
-      />
-
-      <div className="flex flex-1 overflow-hidden">
-        <AppSidebar sections={navigation} />
-        <main className="bg-surface-card flex-1 overflow-y-auto p-6 md:p-8">
-          {children}
-        </main>
-      </div>
-    </div>
+    <AppShell
+      area="app"
+      sections={navigation}
+      header={
+        <WorkspaceSwitcher
+          currentSlug={workspaceSlug}
+          workspaces={workspaces}
+          appName={brand.name}
+          logoUrl={brand.logoUrl}
+        />
+      }
+      user={{ email: identity.email }}
+      isPlatformAdmin={Boolean(platformAdmin)}
+    >
+      {children}
+    </AppShell>
   );
 }

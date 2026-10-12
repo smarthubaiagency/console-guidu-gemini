@@ -1,12 +1,15 @@
 {
-  "activeEnvironment": "Active environment",
   "adminPanel": "Admin panel",
   "myAccount": "My account",
   "documentation": "Documentation",
   "mfaSession": "MFA AAL2 session active",
   "backToApp": "Back to the customer app",
   "organization": "Organization",
-  "adminConsole": "Admin Console",
-  "governance": "Governance & Audit",
-  "language": "Language"
+  "language": "Language",
+  "workspaces": "Your workspaces",
+  "toggleSidebar": "Open or collapse the side menu",
+  "toggleItem": "Open or close {item}",
+  "userMenu": "Account menu",
+  "breadcrumb": "Page path",
+  "platformTitle": "{app} Admin"
 }

@@ -21,6 +21,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { totpCode } from "./support/totp";
+import { sidebar } from "./support/sidebar";
 
 const HEADERS = {
   "content-type": "application/json",
@@ -117,7 +118,7 @@ test("an assistant proposes a contact and the owner approves it", async ({
   ).toBeVisible();
 
   await page.goto(`/app/${wsSlug}`);
-  await page.locator("aside").getByRole("link", { name: "Propostas" }).click();
+  await sidebar(page).getByRole("link", { name: "Propostas" }).click();
   const open = page.getByTestId("proposals-open");
   await expect(open.getByTestId("proposal-row")).toHaveCount(2);
   await open.getByRole("link", { name: "Adicionar contato: Lia E2E" }).click();

@@ -1,5 +1,5 @@
-import { PlatformHeader } from "@/components/layout/platform-header";
-import { PlatformSidebar } from "@/components/layout/platform-sidebar";
+import { AppShell } from "@/components/layout/shell/app-shell";
+import { ConsoleHeader } from "@/components/layout/shell/console-header";
 import { partnerRoleKey } from "@/components/partners/role-label";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { getRequestBrand } from "@/core/brand/resolve";
@@ -20,25 +20,28 @@ export default async function PartnerConsoleLayout({
   const roleKey = partnerRoleKey(membership.role);
 
   return (
-    <div className="bg-surface-hover text-text flex min-h-screen flex-col">
-      <PlatformHeader
-        userEmail={identity.email}
-        adminRole={roleKey ? tAll(roleKey) : membership.role}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
-      />
-      <div className="flex flex-1 overflow-hidden">
-        <PlatformSidebar
-          sections={translateNavigation(
-            buildPartnerNavigation(partnerGrants(membership.role)),
-            "partner",
-            t,
-          )}
+    <AppShell
+      area="admin"
+      sections={translateNavigation(
+        buildPartnerNavigation(partnerGrants(membership.role)),
+        "partner",
+        t,
+      )}
+      header={
+        <ConsoleHeader
+          href="/admin"
+          brandName={brand.name}
+          logoUrl={brand.logoUrl}
           title={tc("consoleTitle")}
           subtitle={membership.partnerName}
         />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
-      </div>
-    </div>
+      }
+      user={{
+        email: identity.email,
+        role: roleKey ? tAll(roleKey) : membership.role,
+      }}
+    >
+      {children}
+    </AppShell>
   );
 }
