@@ -6,7 +6,6 @@ import { getTranslations } from "next-intl/server";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { platformGrants } from "@/core/module-runtime/loaders";
@@ -14,6 +13,8 @@ import { createPartnerAction } from "@/core/partners/actions";
 import { listPartners } from "@/core/partners/management";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("partners.list");
@@ -55,26 +56,20 @@ export default async function PlatformPartnersPage() {
             submitLabel={t("list.create")}
             testId="create-partner"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("list.name")}
-              <input
-                name="name"
-                required
-                maxLength={120}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
+              <Input name="name" required maxLength={120} />
+            </Label>
+            <Label className="flex-col items-start">
               {t("list.slug")}
-              <input
+              <Input
                 name="slug"
                 required
                 maxLength={48}
                 pattern="[a-z][a-z0-9]*(-[a-z0-9]+)*"
                 placeholder="agencia-exemplo"
-                className={inputClass}
               />
-            </label>
+            </Label>
           </ActionForm>
         </section>
       ) : null}

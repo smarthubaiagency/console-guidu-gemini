@@ -7,7 +7,6 @@ import { getTranslations } from "next-intl/server";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { MachineRunStatus } from "@/components/i18n/machine-run-status";
@@ -21,6 +20,14 @@ import { listLanguages, listTexts } from "@/core/i18n/service";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Textos do idioma (Admin)" };
 
@@ -127,29 +134,34 @@ export default async function LanguageTextsPage({
         method="get"
         className="border-card-border bg-surface-card flex flex-wrap items-end gap-3 rounded-xl border p-4 shadow-xs"
       >
-        <label className={labelClass}>
+        <Label className="flex-col items-start">
           {tc("search")}
-          <input name="q" defaultValue={search ?? ""} className={inputClass} />
-        </label>
-        <label className={labelClass}>
+          <Input name="q" defaultValue={search ?? ""} />
+        </Label>
+        <Label className="flex-col items-start">
           {t("status")}
-          <select
+          <NativeSelect
             name="filter"
             defaultValue={filter ?? "all"}
-            className={inputClass}
+            className="w-full"
           >
-            <option value="all">{t("filterAll")}</option>
-            <option value="edited">{t("filterEdited")}</option>
-            <option value="missing">{t("filterMissing")}</option>
-            <option value="machine">{t("filterMachine")}</option>
-          </select>
-        </label>
-        <button
-          type="submit"
-          className="border-border text-12 text-text rounded-lg border px-4 py-2 font-semibold"
-        >
+            <NativeSelectOption value="all">
+              {t("filterAll")}
+            </NativeSelectOption>
+            <NativeSelectOption value="edited">
+              {t("filterEdited")}
+            </NativeSelectOption>
+            <NativeSelectOption value="missing">
+              {t("filterMissing")}
+            </NativeSelectOption>
+            <NativeSelectOption value="machine">
+              {t("filterMachine")}
+            </NativeSelectOption>
+          </NativeSelect>
+        </Label>
+        <Button type="submit" variant="outline">
           {tc("search")}
-        </button>
+        </Button>
       </form>
 
       <section
@@ -186,16 +198,15 @@ export default async function LanguageTextsPage({
             <ActionForm action={saveTextAction} submitLabel={t("saveText")}>
               <input type="hidden" name="code" value={code} />
               <input type="hidden" name="key" value={row.key} />
-              <label className={`${labelClass} min-w-0 flex-1`}>
+              <Label className="min-w-0 flex-1 flex-col items-start">
                 {t("current")}
-                <textarea
+                <Textarea
                   name="value"
                   rows={row.current.length > 80 ? 3 : 1}
                   maxLength={5000}
                   defaultValue={row.current}
-                  className={inputClass}
                 />
-              </label>
+              </Label>
             </ActionForm>
             {row.edit !== null ? (
               <ActionForm

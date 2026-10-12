@@ -1,7 +1,5 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
-import { inputClass, labelClass } from "@/components/partners/form-classes";
-
 import { AVAILABILITY_STATUSES, SALE_UNITS } from "../ucp";
 import type { LodgingView, VariantView } from "../server/services/items";
 import {
@@ -12,6 +10,14 @@ import {
   translatedFieldLabel,
   translatedOptionLabel,
 } from "../verticals";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 /** Shared labels and form fields of the Portfolio screens (F5a). */
 
@@ -75,166 +81,153 @@ export async function VariantFields({
       {lodging ? (
         <>
           <input type="hidden" name="lodging" value="1" />
-          <label className={labelClass}>
+          <Label className="flex-col items-start">
             {t("variant.accommodation")}
-            <select
+            <NativeSelect
               name="accommodation_type_id"
               defaultValue={
                 variant?.accommodationTypeId ??
                 lodging.accommodationTypes[0]?.id ??
                 ""
               }
-              className={inputClass}
+              className="w-full"
             >
-              <option value="">—</option>
+              <NativeSelectOption value="">—</NativeSelectOption>
               {lodging.accommodationTypes.map((type) => (
-                <option key={type.id} value={type.id}>
+                <NativeSelectOption key={type.id} value={type.id}>
                   {type.title}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
-          </label>
-          <label className={labelClass}>
+            </NativeSelect>
+          </Label>
+          <Label className="flex-col items-start">
             {t("variant.ratePlan")}
-            <select
+            <NativeSelect
               name="rate_plan_id"
               defaultValue={
                 variant?.ratePlanId ?? lodging.ratePlans[0]?.id ?? ""
               }
-              className={inputClass}
+              className="w-full"
             >
-              <option value="">—</option>
+              <NativeSelectOption value="">—</NativeSelectOption>
               {lodging.ratePlans.map((p) => (
-                <option key={p.id} value={p.id}>
+                <NativeSelectOption key={p.id} value={p.id}>
                   {p.title}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
-          </label>
+            </NativeSelect>
+          </Label>
         </>
       ) : null}
-      <label className={labelClass}>
+      <Label className="flex-col items-start">
         {t("variant.title")}
-        <input
+        <Input
           name="variant_title"
           maxLength={200}
           defaultValue={variant?.title ?? t("variant.defaultTitle")}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("variant.sku")}
-        <input
-          name="sku"
-          maxLength={64}
-          defaultValue={variant?.sku ?? ""}
-          className={inputClass}
-        />
-      </label>
+        <Input name="sku" maxLength={64} defaultValue={variant?.sku ?? ""} />
+      </Label>
       {lodging ? null : (
-        <label className={labelClass}>
+        <Label className="flex-col items-start">
           {t("variant.unit")}
-          <select name="unit" defaultValue={unit} className={inputClass}>
+          <NativeSelect name="unit" defaultValue={unit} className="w-full">
             {SALE_UNITS.map((u) => (
-              <option key={u.unit} value={u.unit}>
+              <NativeSelectOption key={u.unit} value={u.unit}>
                 {u.display_text}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
-        </label>
+          </NativeSelect>
+        </Label>
       )}
-      <label className={labelClass}>
+      <Label className="flex-col items-start">
         {lodging ? t("variant.nightlyPrice") : t("variant.price")}
-        <input
+        <Input
           name="price"
           inputMode="decimal"
           placeholder="49,90"
           defaultValue={moneyInput(variant?.priceAmount ?? null)}
-          className={inputClass}
+
           data-testid={`${idPrefix}-price`}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("variant.listPrice")}
-        <input
+        <Input
           name="list_price"
           inputMode="decimal"
           defaultValue={moneyInput(variant?.listPriceAmount ?? null)}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("variant.availability")}
-        <select
+        <NativeSelect
           name="availability_status"
           defaultValue={variant?.availabilityStatus ?? "in_stock"}
-          className={inputClass}
+          className="w-full"
         >
           {AVAILABILITY_STATUSES.map((s) => (
-            <option key={s} value={s}>
+            <NativeSelectOption key={s} value={s}>
               {labelOf(t, "availability", s)}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-      </label>
+        </NativeSelect>
+      </Label>
       {lodging ? null : (
-        <label className={`${labelClass} sm:col-span-2`}>
+        <Label className="flex-col items-start sm:col-span-2">
           {t("variant.options")}
-          <input
+          <Input
             name="options"
             defaultValue={variant?.options
               .map((o) => `${o.name}: ${o.label}`)
               .join("; ")}
-            className={inputClass}
           />
-        </label>
+        </Label>
       )}
-      <label className={labelClass}>
+      <Label className="flex-col items-start">
         {t("variant.barcodes")}
-        <textarea
+        <Textarea
           name="barcodes"
           rows={2}
           defaultValue={variant?.barcodes
             .map((b) => `${b.type} | ${b.value}`)
             .join("\n")}
-          className={inputClass}
         />
-      </label>
-      <label className="text-12 text-text flex items-center gap-2">
-        <input
-          type="checkbox"
+      </Label>
+      <Label className="text-12 text-text flex items-center gap-2">
+        <Checkbox
           name="track_inventory"
-          defaultChecked={variant?.trackInventory}
+          defaultChecked={Boolean(variant?.trackInventory)}
         />
         {t("variant.trackInventory")}
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("variant.stock")}
-        <input
+        <Input
           name="stock_quantity"
           type="number"
           defaultValue={variant?.stockQuantity ?? ""}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("variant.minStockAlert")}
-        <input
+        <Input
           name="min_stock_alert"
           type="number"
           min={0}
           defaultValue={variant?.minStockAlert ?? ""}
-          className={inputClass}
         />
-      </label>
-      <label className="text-12 text-text flex items-center gap-2">
-        <input
-          type="checkbox"
+      </Label>
+      <Label className="text-12 text-text flex items-center gap-2">
+        <Checkbox
           name="allow_backorder"
-          defaultChecked={variant?.allowBackorder}
+          defaultChecked={Boolean(variant?.allowBackorder)}
         />
         {t("variant.allowBackorder")}
-      </label>
+      </Label>
     </div>
   );
 }
@@ -264,36 +257,32 @@ export async function DetailsFields({
         switch (spec.kind) {
           case "bool":
             return (
-              <label
+              <Label
                 key={name}
                 className="text-12 text-text flex items-center gap-2"
               >
                 <input type="hidden" name={`${name}.present`} value="1" />
-                <input
-                  type="checkbox"
-                  name={name}
-                  defaultChecked={value === true}
-                />
+                <Checkbox name={name} defaultChecked={value === true} />
                 {label}
-              </label>
+              </Label>
             );
           case "enum":
             return (
-              <label key={name} className={labelClass}>
+              <Label key={name} className="flex-col items-start">
                 {label}
-                <select
+                <NativeSelect
                   name={name}
                   defaultValue={typeof value === "string" ? value : ""}
-                  className={inputClass}
+                  className="w-full"
                 >
-                  <option value="">—</option>
+                  <NativeSelectOption value="">—</NativeSelectOption>
                   {spec.options.map((o) => (
-                    <option key={o.value} value={o.value}>
+                    <NativeSelectOption key={o.value} value={o.value}>
                       {translatedOptionLabel(t, itemType, spec, o)}
-                    </option>
+                    </NativeSelectOption>
                   ))}
-                </select>
-              </label>
+                </NativeSelect>
+              </Label>
             );
           case "multi":
             return (
@@ -303,12 +292,11 @@ export async function DetailsFields({
                 </legend>
                 <div className="flex flex-wrap gap-3">
                   {spec.options.map((o) => (
-                    <label
+                    <Label
                       key={o.value}
                       className="text-12 text-text flex gap-2"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         name={name}
                         value={o.value}
                         defaultChecked={
@@ -316,7 +304,7 @@ export async function DetailsFields({
                         }
                       />
                       {translatedOptionLabel(t, itemType, spec, o)}
-                    </label>
+                    </Label>
                   ))}
                 </div>
               </fieldset>
@@ -324,21 +312,20 @@ export async function DetailsFields({
           case "textarea":
           case "list":
             return (
-              <label key={name} className={labelClass}>
+              <Label key={name} className="flex-col items-start">
                 {label}
-                <textarea
+                <Textarea
                   name={name}
                   rows={2}
                   defaultValue={formValue(spec, value)}
-                  className={inputClass}
                 />
-              </label>
+              </Label>
             );
           default:
             return (
-              <label key={name} className={labelClass}>
+              <Label key={name} className="flex-col items-start">
                 {label}
-                <input
+                <Input
                   name={name}
                   type={
                     spec.kind === "int"
@@ -356,9 +343,8 @@ export async function DetailsFields({
                   }
                   maxLength={spec.kind === "text" ? spec.max : undefined}
                   defaultValue={formValue(spec, value)}
-                  className={inputClass}
                 />
-              </label>
+              </Label>
             );
         }
       })}

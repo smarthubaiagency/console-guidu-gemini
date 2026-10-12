@@ -6,7 +6,6 @@ import { getTranslations } from "next-intl/server";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { addLanguageAction, updateLanguageAction } from "@/core/i18n/actions";
@@ -14,6 +13,16 @@ import { listLanguages } from "@/core/i18n/service";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const metadata: Metadata = { title: "Idiomas (Admin)" };
 
@@ -44,23 +53,25 @@ export default async function PlatformLanguagesPage() {
       />
 
       <section className="border-card-border bg-surface-card rounded-xl border shadow-xs">
-        <table className="text-12 w-full" data-testid="languages-table">
-          <thead className="text-text-secondary border-border border-b text-left">
-            <tr>
-              <th className="px-4 py-2 font-medium">{t("name")}</th>
-              <th className="px-4 py-2 font-medium">{t("code")}</th>
-              <th className="px-4 py-2 font-medium">{t("status")}</th>
-              <th className="px-4 py-2 font-medium">{t("progress")}</th>
-              <th className="px-4 py-2 font-medium">{t("edits")}</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-border divide-y">
+        <Table className="text-12" data-testid="languages-table">
+          <TableHeader className="text-left">
+            <TableRow>
+              <TableHead className="px-4 font-medium">{t("name")}</TableHead>
+              <TableHead className="px-4 font-medium">{t("code")}</TableHead>
+              <TableHead className="px-4 font-medium">{t("status")}</TableHead>
+              <TableHead className="px-4 font-medium">
+                {t("progress")}
+              </TableHead>
+              <TableHead className="px-4 font-medium">{t("edits")}</TableHead>
+              <TableHead className="px-4" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {languages.map((l) => {
               const percent = Math.floor((l.translated / l.total) * 100);
               return (
-                <tr key={l.code} data-testid={`language-${l.code}`}>
-                  <td className="text-text px-4 py-3 font-semibold">
+                <TableRow key={l.code} data-testid={`language-${l.code}`}>
+                  <TableCell className="text-text px-4 font-semibold">
                     {l.name}
                     {l.isDefault ? (
                       <span className="text-10 bg-surface-strong text-text-subtle ml-2 rounded-sm px-1.5 py-0.5">
@@ -72,16 +83,18 @@ export default async function PlatformLanguagesPage() {
                         {t("source")}
                       </span>
                     ) : null}
-                  </td>
-                  <td className="text-text-secondary px-4 py-3 font-mono">
+                  </TableCell>
+                  <TableCell className="text-text-secondary px-4 font-mono">
                     {l.code}
-                  </td>
-                  <td className="px-4 py-3">{t(`statuses.${l.status}`)}</td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4">
+                    {t(`statuses.${l.status}`)}
+                  </TableCell>
+                  <TableCell className="px-4">
                     {percent}% ({l.translated}/{l.total})
-                  </td>
-                  <td className="px-4 py-3">{l.edits}</td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4">{l.edits}</TableCell>
+                  <TableCell className="px-4">
                     <div className="flex flex-wrap items-center justify-end gap-2">
                       <Link
                         href={`/platform/settings/languages/${l.code}`}
@@ -120,12 +133,12 @@ export default async function PlatformLanguagesPage() {
                         </ActionForm>
                       ) : null}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </section>
 
       <section className="border-card-border bg-surface-card space-y-3 rounded-xl border p-6 shadow-xs">
@@ -136,26 +149,14 @@ export default async function PlatformLanguagesPage() {
           submitLabel={t("add")}
           testId="add-language"
         >
-          <label className={labelClass}>
+          <Label className="flex-col items-start">
             {t("code")}
-            <input
-              name="code"
-              required
-              maxLength={12}
-              placeholder="fr"
-              className={inputClass}
-            />
-          </label>
-          <label className={labelClass}>
+            <Input name="code" required maxLength={12} placeholder="fr" />
+          </Label>
+          <Label className="flex-col items-start">
             {t("name")}
-            <input
-              name="name"
-              required
-              maxLength={60}
-              placeholder="Français"
-              className={inputClass}
-            />
-          </label>
+            <Input name="name" required maxLength={60} placeholder="Français" />
+          </Label>
         </ActionForm>
         <p className="text-11 text-text-secondary">{t("autoTranslate")}</p>
       </section>

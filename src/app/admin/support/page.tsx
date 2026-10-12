@@ -6,7 +6,6 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { supportStatusKey } from "@/components/partners/support-status";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
@@ -22,6 +21,13 @@ import {
 } from "@/core/partners/support";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("partnerConsole");
@@ -77,39 +83,37 @@ export default async function PartnerSupportPage() {
           className="grid gap-3 sm:grid-cols-2"
           testId="request-support"
         >
-          <label className={labelClass}>
+          <Label className="flex-col items-start">
             {t("support.customer")}
-            <select name="organizationId" required className={inputClass}>
+            <NativeSelect name="organizationId" required className="w-full">
               {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
+                <NativeSelectOption key={customer.id} value={customer.id}>
                   {customer.name}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
-          </label>
-          <label className={labelClass}>
+            </NativeSelect>
+          </Label>
+          <Label className="flex-col items-start">
             {t("support.duration", { max: MAX_SUPPORT_HOURS })}
-            <input
+            <Input
               name="durationHours"
               type="number"
               min={1}
               max={MAX_SUPPORT_HOURS}
               defaultValue={4}
               required
-              className={inputClass}
             />
-          </label>
-          <label className={`${labelClass} sm:col-span-2`}>
+          </Label>
+          <Label className="flex-col items-start sm:col-span-2">
             {t("support.reason")}
-            <textarea
+            <Textarea
               name="reason"
               required
               minLength={10}
               maxLength={500}
               rows={3}
-              className={inputClass}
             />
-          </label>
+          </Label>
         </ActionForm>
       </section>
 

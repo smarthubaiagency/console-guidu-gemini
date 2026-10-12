@@ -7,8 +7,8 @@ import { Plus, ShoppingBag } from "lucide-react";
 import { RecordWorkbench, WorkbenchPanel } from "@/components/layout/workbench";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import { inputClass } from "@/components/partners/form-classes";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { listLocations } from "@/core/locations/service";
 import { resolveModulePageAccess } from "@/core/module-runtime/page-access";
@@ -30,6 +30,10 @@ import {
 
 import { itemSummary, PortfolioItemEditor } from "./item-editor";
 import { NewItemForm } from "./new-item-form";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("portfolio");
@@ -190,46 +194,45 @@ export default async function PortfolioPage({
       ) : (
         <>
           <form method="get" className="flex flex-wrap gap-2" role="search">
-            <input
+            <Input
               name="q"
               defaultValue={search}
               maxLength={100}
               placeholder={t("list.searchPlaceholder")}
               aria-label={t("list.searchLabel")}
-              className={`${inputClass} min-w-60 flex-1`}
+              className="min-w-60 flex-1"
             />
-            <select
+            <NativeSelect
               name="status"
               defaultValue={statusFilter ?? ""}
               aria-label={t("list.statusLabel")}
-              className={inputClass}
             >
-              <option value="">{t("list.allStatuses")}</option>
+              <NativeSelectOption value="">
+                {t("list.allStatuses")}
+              </NativeSelectOption>
               {STATUSES.map((s) => (
-                <option key={s} value={s}>
+                <NativeSelectOption key={s} value={s}>
                   {labelOf(t, "status", s)}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
-            <select
+            </NativeSelect>
+            <NativeSelect
               name="type"
               defaultValue={typeFilter ?? ""}
               aria-label={t("list.typeLabel")}
-              className={inputClass}
             >
-              <option value="">{t("list.allTypes")}</option>
+              <NativeSelectOption value="">
+                {t("list.allTypes")}
+              </NativeSelectOption>
               {ITEM_TYPES.map((type) => (
-                <option key={type} value={type}>
+                <NativeSelectOption key={type} value={type}>
                   {translatedItemTypeLabel(t, type)}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
-            <button
-              type="submit"
-              className="border-border text-12 text-text rounded-lg border px-4 py-2 font-semibold"
-            >
+            </NativeSelect>
+            <Button type="submit" variant="outline">
               {t("list.search")}
-            </button>
+            </Button>
           </form>
 
           {view.items.length === 0 ? (

@@ -21,7 +21,6 @@ import {
   PayoutReportsSection,
 } from "@/components/billing/automation-panels";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import {
   changeSubscriptionStatusAction,
   createPartnerPlanAction,
@@ -55,6 +54,12 @@ import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("billing.partner");
@@ -196,11 +201,11 @@ export default async function PartnerBillingPage() {
                     name="organizationId"
                     value={row.organizationId}
                   />
-                  <label className={labelClass}>
+                  <Label className="flex-col items-start">
                     {t("plan")}
-                    <select name="planId" className={inputClass}>
+                    <NativeSelect name="planId" className="w-full">
                       {data.plans.map((plan) => (
-                        <option key={plan.id} value={plan.id}>
+                        <NativeSelectOption key={plan.id} value={plan.id}>
                           {plan.name}
                           {plan.versions[0]
                             ? t("planOptionPrice", {
@@ -212,10 +217,10 @@ export default async function PartnerBillingPage() {
                                 ),
                               })
                             : ""}
-                        </option>
+                        </NativeSelectOption>
                       ))}
-                    </select>
-                  </label>
+                    </NativeSelect>
+                  </Label>
                 </ActionForm>
               ) : null}
 
@@ -240,57 +245,50 @@ export default async function PartnerBillingPage() {
                       name="idempotencyKey"
                       value={randomUUID()}
                     />
-                    <label className={labelClass}>
+                    <Label className="flex-col items-start">
                       {t("amountPaid")}
-                      <input
+                      <Input
                         name="amount"
                         required
                         inputMode="decimal"
                         defaultValue={centsInput(row.subscription.amountCents)}
-                        className={inputClass}
                       />
-                    </label>
-                    <label className={labelClass}>
+                    </Label>
+                    <Label className="flex-col items-start">
                       {t("paidOn")}
-                      <input
+                      <Input
                         name="paidOn"
                         type="date"
                         required
                         max={todayInput()}
                         defaultValue={todayInput()}
-                        className={inputClass}
                       />
-                    </label>
-                    <label className={labelClass}>
+                    </Label>
+                    <Label className="flex-col items-start">
                       {t("method")}
-                      <select name="method" className={inputClass}>
+                      <NativeSelect name="method" className="w-full">
                         {PAYMENT_METHODS.map((method) => (
-                          <option key={method} value={method}>
+                          <NativeSelectOption key={method} value={method}>
                             {labels.method(method)}
-                          </option>
+                          </NativeSelectOption>
                         ))}
-                      </select>
-                    </label>
-                    <label className={labelClass}>
+                      </NativeSelect>
+                    </Label>
+                    <Label className="flex-col items-start">
                       {t("evidenceLabel", {
                         kb: Math.round(MAX_EVIDENCE_BYTES / 1024),
                       })}
-                      <input
+                      <Input
                         name="evidence"
                         type="file"
                         required
                         accept="application/pdf,image/png,image/jpeg,image/webp"
-                        className={inputClass}
                       />
-                    </label>
-                    <label className={`${labelClass} sm:col-span-2`}>
+                    </Label>
+                    <Label className="flex-col items-start sm:col-span-2">
                       {t("note")}
-                      <input
-                        name="note"
-                        maxLength={500}
-                        className={inputClass}
-                      />
-                    </label>
+                      <Input name="note" maxLength={500} />
+                    </Label>
                   </ActionForm>
                 </details>
               ) : null}
@@ -449,39 +447,29 @@ export default async function PartnerBillingPage() {
             className="grid gap-3 sm:grid-cols-3"
             testId="create-partner-plan"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("basePlan")}
-              <select name="planId" className={inputClass}>
+              <NativeSelect name="planId" className="w-full">
                 {data.plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
+                  <NativeSelectOption key={plan.id} value={plan.id}>
                     {plan.name}
                     {plan.versions[0]
                       ? t("basePlanFloor", {
                           floor: formatCents(plan.versions[0].minPriceCents),
                         })
                       : ""}
-                  </option>
+                  </NativeSelectOption>
                 ))}
-              </select>
-            </label>
-            <label className={labelClass}>
+              </NativeSelect>
+            </Label>
+            <Label className="flex-col items-start">
               {tb("console.name")}
-              <input
-                name="name"
-                required
-                maxLength={80}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
+              <Input name="name" required maxLength={80} />
+            </Label>
+            <Label className="flex-col items-start">
               {t("price")}
-              <input
-                name="price"
-                required
-                inputMode="decimal"
-                className={inputClass}
-              />
-            </label>
+              <Input name="price" required inputMode="decimal" />
+            </Label>
           </ActionForm>
         ) : null}
       </section>
@@ -504,35 +492,32 @@ export default async function PartnerBillingPage() {
             className="grid gap-3 sm:grid-cols-3"
             testId="billing-profile"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("legalName")}
-              <input
+              <Input
                 name="legalName"
                 required
                 maxLength={160}
                 defaultValue={data.profile?.legalName ?? ""}
-                className={inputClass}
               />
-            </label>
-            <label className={labelClass}>
+            </Label>
+            <Label className="flex-col items-start">
               {t("taxId")}
-              <input
+              <Input
                 name="taxId"
                 required
                 defaultValue={data.profile?.taxId ?? ""}
-                className={inputClass}
               />
-            </label>
-            <label className={labelClass}>
+            </Label>
+            <Label className="flex-col items-start">
               {t("billingEmail")}
-              <input
+              <Input
                 name="billingEmail"
                 type="email"
                 required
                 defaultValue={data.profile?.billingEmail ?? ""}
-                className={inputClass}
               />
-            </label>
+            </Label>
           </ActionForm>
         ) : data.profile ? (
           <p className="text-12 text-text-subtle">

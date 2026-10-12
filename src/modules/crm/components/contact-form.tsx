@@ -9,13 +9,12 @@ import {
   updateContactAction,
 } from "../server/actions";
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const INITIAL: CrmActionState = {};
-const INPUT =
-  "border-border bg-surface-card text-14 text-text w-full rounded-lg border px-3 py-2 disabled:opacity-60";
-const LABEL = "text-12 text-text-subtle flex flex-col gap-1 font-medium";
-const BUTTON =
-  "bg-primary text-on-primary text-12 rounded-lg px-4 py-2 font-semibold disabled:opacity-60";
 
 export type ContactFormValues = Readonly<{
   name: string;
@@ -52,67 +51,57 @@ export function ContactForm({
       {contactId ? (
         <input type="hidden" name="contactId" value={contactId} />
       ) : null}
-      <label className={LABEL}>
+      <Label className="flex-col items-start">
         {t("fields.name")}
-        <input
+        <Input
           name="name"
           required
           maxLength={160}
           defaultValue={values?.name ?? ""}
-          className={INPUT}
         />
-      </label>
-      <label className={LABEL}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.email")}
-        <input
+        <Input
           name="email"
           type="email"
           maxLength={254}
           defaultValue={values?.email ?? ""}
-          className={INPUT}
         />
-      </label>
-      <label className={LABEL}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.phone")}
-        <input
-          name="phone"
-          maxLength={40}
-          defaultValue={values?.phone ?? ""}
-          className={INPUT}
-        />
-      </label>
-      <label className={LABEL}>
+        <Input name="phone" maxLength={40} defaultValue={values?.phone ?? ""} />
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.companyName")}
-        <input
+        <Input
           name="companyName"
           maxLength={160}
           defaultValue={values?.companyName ?? ""}
-          className={INPUT}
         />
-      </label>
-      <label className={LABEL}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.jobTitle")}
-        <input
+        <Input
           name="jobTitle"
           maxLength={120}
           defaultValue={values?.jobTitle ?? ""}
-          className={INPUT}
         />
-      </label>
-      <label className={LABEL}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.notes")}
-        <textarea
+        <Textarea
           name="notes"
           maxLength={5000}
           rows={3}
           defaultValue={values?.notes ?? ""}
-          className={INPUT}
         />
-      </label>
+      </Label>
       <div className="flex items-center gap-3">
-        <button type="submit" disabled={pending} className={BUTTON}>
+        <Button type="submit" disabled={pending}>
           {contactId ? t("form.save") : t("form.add")}
-        </button>
+        </Button>
       </div>
     </form>
   );

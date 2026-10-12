@@ -13,6 +13,7 @@ import {
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Collapsible,
@@ -198,8 +199,8 @@ function BannerCard({ item }: Readonly<{ item: ShownStatus }>) {
           ) : null}
 
           {item.checkboxLabel ? (
-            <label
-              className="mt-3 flex cursor-pointer items-start gap-2.5 select-none"
+            <Label
+              className="mt-3 cursor-pointer items-start gap-2.5 font-normal"
               onClick={(event) => event.stopPropagation()}
             >
               <Checkbox
@@ -208,7 +209,7 @@ function BannerCard({ item }: Readonly<{ item: ShownStatus }>) {
                 onCheckedChange={(value) => setChecked(value === true)}
               />
               <span className="text-xs">{item.checkboxLabel}</span>
-            </label>
+            </Label>
           ) : null}
 
           {!hasDetails && actions ? (

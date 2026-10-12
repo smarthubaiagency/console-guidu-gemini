@@ -6,6 +6,7 @@ import { useTransition } from "react";
 import { useStatus } from "@/components/feedback/status-context";
 
 import { acceptInvitationAction } from "./actions";
+import { Button } from "@/components/ui/button";
 
 export function InviteForm({ rawToken }: Readonly<{ rawToken: string }>) {
   const t = useTranslations("invite.team.valid");
@@ -24,13 +25,9 @@ export function InviteForm({ rawToken }: Readonly<{ rawToken: string }>) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <button
-        type="submit"
-        disabled={isPending}
-        className="bg-primary text-on-primary hover:bg-primary-hover focus:outline-focus-ring text-14 flex w-full items-center justify-center rounded-lg px-4 py-2.5 font-medium transition disabled:opacity-50"
-      >
+      <Button type="submit" disabled={isPending} className="w-full">
         {isPending ? t("accepting") : t("accept")}
-      </button>
+      </Button>
     </form>
   );
 }

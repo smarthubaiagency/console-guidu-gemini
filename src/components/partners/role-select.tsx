@@ -1,7 +1,11 @@
 import { PARTNER_ROLES, type PartnerRoleKey } from "@/core/permissions/matrix";
 
-import { inputClass, labelClass } from "./form-classes";
 import { PARTNER_ROLE_LABELS } from "./role-label";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 /**
  * Role picker of a partner form. Translated callers pass `label` and
@@ -19,15 +23,15 @@ export function RoleSelect({
   roleLabels?: Readonly<Record<PartnerRoleKey, string>>;
 }>) {
   return (
-    <label className={labelClass}>
+    <Label className="flex-col items-start">
       {label}
-      <select name={name} defaultValue={defaultValue} className={inputClass}>
+      <NativeSelect name={name} defaultValue={defaultValue} className="w-full">
         {PARTNER_ROLES.map((role) => (
-          <option key={role} value={role}>
+          <NativeSelectOption key={role} value={role}>
             {roleLabels[role]}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
-    </label>
+      </NativeSelect>
+    </Label>
   );
 }

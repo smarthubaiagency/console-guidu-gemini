@@ -4,6 +4,14 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { listAdminUsers } from "@/core/admin/platform";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("platform.users");
@@ -40,26 +48,26 @@ export default async function AdminUsersPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="text-12 w-full text-left">
-            <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
-              <tr>
-                <th className="px-5 py-3">{t("colName")}</th>
-                <th className="px-5 py-3">{t("colStatus")}</th>
-                <th className="px-5 py-3">{t("colCreatedAt")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
+          <Table className="text-12">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="px-5">{t("colName")}</TableHead>
+                <TableHead className="px-5">{t("colStatus")}</TableHead>
+                <TableHead className="px-5">{t("colCreatedAt")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {users.map((u) => (
-                <tr key={u.id} className="hover:bg-surface-hover">
-                  <td className="px-5 py-3.5">
+                <TableRow key={u.id}>
+                  <TableCell className="px-5">
                     <div className="text-text font-semibold">
                       {u.fullName ?? t("noName")}
                     </div>
                     <div className="text-11 text-text-tertiary font-mono">
                       {u.id}
                     </div>
-                  </td>
-                  <td className="px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="px-5">
                     <span
                       className={`text-11 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
                         u.status === "active"
@@ -76,14 +84,14 @@ export default async function AdminUsersPage() {
                       />
                       {u.status}
                     </span>
-                  </td>
-                  <td className="text-text-secondary px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="text-text-secondary px-5">
                     {format.dateTime(u.createdAt, { dateStyle: "short" })}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

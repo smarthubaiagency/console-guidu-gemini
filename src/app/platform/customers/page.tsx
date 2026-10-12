@@ -10,6 +10,14 @@ import {
 import { isSubscriptionStatus } from "@/core/billing/subscriptions";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("platform.customers");
@@ -65,29 +73,29 @@ export default async function AdminCustomersPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="text-12 w-full text-left">
-            <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
-              <tr>
-                <th className="px-5 py-3">{t("colOrganization")}</th>
-                <th className="px-5 py-3">{t("colMaxSeats")}</th>
-                <th className="px-5 py-3">{t("colPlan")}</th>
-                <th className="px-5 py-3">{t("colStatus")}</th>
-                <th className="px-5 py-3">{t("colCreatedAt")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
+          <Table className="text-12">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="px-5">{t("colOrganization")}</TableHead>
+                <TableHead className="px-5">{t("colMaxSeats")}</TableHead>
+                <TableHead className="px-5">{t("colPlan")}</TableHead>
+                <TableHead className="px-5">{t("colStatus")}</TableHead>
+                <TableHead className="px-5">{t("colCreatedAt")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {organizations.map((org) => (
-                <tr key={org.id} className="hover:bg-surface-hover">
-                  <td className="px-5 py-3.5">
+                <TableRow key={org.id}>
+                  <TableCell className="px-5">
                     <div className="text-text font-semibold">{org.name}</div>
                     <div className="text-11 text-text-tertiary font-mono">
                       {org.id}
                     </div>
-                  </td>
-                  <td className="text-text-subtle px-5 py-3.5 font-medium">
+                  </TableCell>
+                  <TableCell className="text-text-subtle px-5 font-medium">
                     {t("seats", { count: org.maxSeats })}
-                  </td>
-                  <td className="text-text-subtle px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="text-text-subtle px-5">
                     {!canReadBilling
                       ? "—"
                       : (() => {
@@ -99,20 +107,20 @@ export default async function AdminCustomersPage() {
                               : plan.status
                           }`;
                         })()}
-                  </td>
-                  <td className="px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="px-5">
                     <span className="bg-success-bg text-success-text border-success-border text-11 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
                       <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                       {org.status}
                     </span>
-                  </td>
-                  <td className="text-text-secondary px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="text-text-secondary px-5">
                     {format.dateTime(org.createdAt, { dateStyle: "short" })}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>
