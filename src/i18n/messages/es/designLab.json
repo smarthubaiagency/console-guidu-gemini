@@ -1,0 +1,34 @@
+{
+  "title": "Patrones de interfaz",
+  "subtitle": "Ventana de edición y chat en cajón interno (ADR 0015). Úsala para aprobar el modelo y como referencia al crear pantallas.",
+  "sampleNotice": "Página de demostración: los datos son ejemplos y no se guarda nada.",
+  "demos": "Demostraciones",
+  "demo": {
+    "edit": "Edición",
+    "chat": "Chat",
+    "simple": "Sin la columna izquierda"
+  },
+  "list": "Contactos de ejemplo",
+  "field": {
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "city": "Ciudad",
+    "notes": "Observaciones"
+  },
+  "edit": "Editar",
+  "editTitle": "Editar contacto",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "chatTitle": "Asistente",
+  "chatSubtitle": "Conversación de ejemplo",
+  "chatHello": "¡Hola! Soy un asistente de ejemplo. Usa el botón de ampliar para ver la ventana ancha, que pasa por encima del contenido.",
+  "chatEcho": "Recibido. En esta página no se envía ni se guarda nada.",
+  "chatInput": "Escribe un mensaje",
+  "chatSend": "Enviar",
+  "chatHint": "La ventana de 350 px empuja el contenido. Ampliada a 700 px, pasa por encima de él, creciendo hacia la izquierda.",
+  "openChat": "Abrir el asistente",
+  "simpleTitle": "Ventana simple",
+  "simpleHint": "Sin la columna izquierda, el contenido ocupa toda el área y la ventana se abre a la derecha.",
+  "openPanel": "Abrir la ventana",
+  "simpleBody": "Contenido de la ventana. Esc la cierra y el foco vuelve al botón que la abrió."
+}

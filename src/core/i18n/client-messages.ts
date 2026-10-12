@@ -22,6 +22,7 @@ export const CLIENT_NAMESPACES = [
   "crm",
   "helloWorld",
   "aiAgents",
+  "designLab",
 ] as const;
 
 export function clientMessages(

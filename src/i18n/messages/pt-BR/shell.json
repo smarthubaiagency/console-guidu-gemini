@@ -10,5 +10,9 @@
   "toggleItem": "Abrir ou fechar {item}",
   "userMenu": "Menu da conta",
   "breadcrumb": "Caminho da página",
-  "platformTitle": "{app} Admin"
+  "platformTitle": "{app} Admin",
+  "workbenchList": "Lista",
+  "workbenchExpand": "Expandir a janela",
+  "workbenchCollapse": "Reduzir a janela",
+  "workbenchClose": "Fechar a janela"
 }
