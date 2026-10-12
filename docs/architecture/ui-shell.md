@@ -112,7 +112,14 @@ Baixe o arquivo novo do registro (`apps/v4/registry/new-york-v4/ui/<nome>.tsx` e
 
 ## Avisos (ADR 0016)
 
-Todo envio ou salvamento dá retorno pelo SmartStatusBanner, que o shell já monta. Não use mensagem inline, `alert()` nem `confirm()`. Referência viva: `/platform/design/status`.
+Todo envio ou salvamento dá retorno pelo SmartStatusBanner, que o shell e o `PageStatus` (usado pelo `AuthShell` e pelas páginas fora do shell, como a escolha de workspace e as da conta) já montam. Não use mensagem inline, `alert()` nem `confirm()`; o ESLint recusa os diálogos do navegador. Referência viva: `/platform/design/status`.
+
+Para o resultado de uma server action (`{ error, message, success, requestId }`), basta o `useActionStatus(state)`; o `ActionForm` já faz isso.
+
+```tsx
+const [state, action, pending] = useActionState(salvar, {});
+useActionStatus(state); // erro vira `down` com a referência; mensagem vira `up`
+```
 
 ```tsx
 "use client";
@@ -149,4 +156,6 @@ if (ok) await remover();
 - Uma mensagem por vez; uma confirmação aberta não é apagada por outro aviso.
 - Clicar no card pausa; "Retomar" continua do tempo que faltava.
 - Esc fecha o aviso antes da gaveta embaixo.
-- Nos e2e, leia o aviso por `getByTestId("smart-status")`.
+- Conteúdo para copiar (link de convite, chave nova exibida uma vez) não é aviso: fica na página.
+- Estado de página (link expirado, acesso negado) continua no `ErrorNotice` do `AuthShell`.
+- Nos e2e, leia o aviso por `statusBanner(page)` (`e2e/support/status.ts`), que aponta para `getByTestId("smart-status")`.

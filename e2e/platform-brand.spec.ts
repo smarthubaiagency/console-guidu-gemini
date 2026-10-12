@@ -20,6 +20,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { totpCode } from "./support/totp";
+import { statusBanner } from "./support/status";
 
 // 1x1 transparent PNG.
 const PNG = Buffer.from(
@@ -52,9 +53,9 @@ test("platform owner saves a brand version and the host serves it", async ({
     buffer: PNG,
   });
   await page.getByRole("button", { name: "Salvar nova versão" }).click();
-  await expect(
-    page.getByTestId("brand-form").getByRole("status"),
-  ).toContainText("Marca salva");
+  await expect(statusBanner(page.getByTestId("brand-form"))).toContainText(
+    "Marca salva",
+  );
 
   await page.reload();
   await expect(page.getByTestId("brand-current-name")).toHaveText(
@@ -82,7 +83,7 @@ test("platform owner saves a brand version and the host serves it", async ({
     buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'),
   });
   await page.getByRole("button", { name: "Salvar nova versão" }).click();
-  await expect(page.getByTestId("brand-form").getByRole("alert")).toContainText(
+  await expect(statusBanner(page.getByTestId("brand-form"))).toContainText(
     "Use um logo PNG, JPEG ou WebP.",
   );
 
@@ -94,7 +95,7 @@ test("platform owner saves a brand version and the host serves it", async ({
   await page.getByLabel("Cor primária (#rrggbb, opcional)").fill("");
   await page.getByLabel("Remover o logo atual").check();
   await page.getByRole("button", { name: "Salvar nova versão" }).click();
-  await expect(
-    page.getByTestId("brand-form").getByRole("status"),
-  ).toContainText("Marca salva");
+  await expect(statusBanner(page.getByTestId("brand-form"))).toContainText(
+    "Marca salva",
+  );
 });

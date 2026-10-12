@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { saveBrandAction, type BrandActionState } from "@/core/brand/actions";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 type BrandAction = (
   prev: BrandActionState,
@@ -34,6 +35,7 @@ export function BrandForm({
 }>) {
   const t = useTranslations("brand.form");
   const [state, action, pending] = useActionState(saveAction, INITIAL);
+  useActionStatus(state);
 
   return (
     <form action={action} className="space-y-4" data-testid="brand-form">
@@ -120,19 +122,6 @@ export function BrandForm({
         >
           {pending ? t("saving") : t("save")}
         </button>
-        {state.error ? (
-          <p role="alert" className="text-12 text-danger-text">
-            {state.error}
-            {state.requestId
-              ? ` ${t("reference", { id: state.requestId.slice(0, 8) })}`
-              : ""}
-          </p>
-        ) : null}
-        {state.message ? (
-          <p role="status" className="text-12 text-success-text">
-            {state.message}
-          </p>
-        ) : null}
       </div>
     </form>
   );

@@ -12,6 +12,7 @@
  */
 
 import { expect, test } from "@playwright/test";
+import { statusBanner } from "./support/status";
 import {
   createIdentity,
   seedWorkspace,
@@ -104,7 +105,22 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
     await expect(page.getByText(/gdu_live_[0-9a-f]{64}/)).toBeVisible();
 
     // Verify key is listed in active table
-    await expect(page.getByText("Chave E2E de Teste")).toBeVisible();
+    await expect(
+      page.getByRole("table").getByText("Chave E2E de Teste"),
+    ).toBeVisible();
+
+    // Revoking asks in the banner (ADR 0016): the action stays disabled
+    // until the irreversible checkbox is ticked.
+    await page.getByTitle("Revogar chave").first().click();
+    const question = statusBanner(page);
+    await expect(question).toHaveAttribute("role", "alertdialog");
+    await expect(question).toContainText("Chave E2E de Teste");
+    await expect(question.getByTestId("smart-status-action")).toBeDisabled();
+    await question.getByRole("checkbox").check();
+    await question.getByTestId("smart-status-action").click();
+    await expect(statusBanner(page)).toContainText(
+      "Chave de API revogada com sucesso.",
+    );
   });
 
   test("restricts viewer from registering credentials and issuing write-scoped keys", async ({

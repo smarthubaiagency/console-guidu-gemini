@@ -27,6 +27,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { totpCode } from "./support/totp";
+import { statusBanner } from "./support/status";
 
 async function enrolMfa(page: Page): Promise<void> {
   await page.goto("/app/account/security");
@@ -135,9 +136,7 @@ test("partner activates a customer with a manual payment; the checkout stays a d
   await expect(payment.getByLabel("Valor pago (R$)")).toHaveValue("30,00");
   await payment.getByLabel(/Comprovante/).setInputFiles(EVIDENCE);
   await payment.getByRole("button", { name: "Registrar pagamento" }).click();
-  await expect(payment.getByRole("status")).toContainText(
-    "Pagamento registrado.",
-  );
+  await expect(statusBanner(payment)).toContainText("Pagamento registrado.");
   await owner.reload();
   await expect(customerRow.getByTestId("subscription-status")).toHaveText(
     "Ativa",
@@ -194,7 +193,7 @@ test("partner activates a customer with a manual payment; the checkout stays a d
   await openPage(owner, "/admin/billing", "partner-billing");
   const switchCard = owner.getByTestId("checkout-switch");
   await switchCard.getByRole("button", { name: "Ativar checkout" }).click();
-  await expect(switchCard.getByRole("alert")).toContainText(
+  await expect(statusBanner(switchCard)).toContainText(
     "Para ativar o checkout falta",
   );
 
@@ -202,12 +201,12 @@ test("partner activates a customer with a manual payment; the checkout stays a d
   await plan.getByLabel("Nome").fill("Completo");
   await plan.getByLabel("Preço (R$)").fill("99,99");
   await plan.getByRole("button", { name: "Criar plano" }).click();
-  await expect(plan.getByRole("alert")).toContainText("abaixo do piso");
+  await expect(statusBanner(plan)).toContainText("abaixo do piso");
   // The form resets after each submit, as every action form does.
   await plan.getByLabel("Nome").fill("Completo");
   await plan.getByLabel("Preço (R$)").fill("150,00");
   await plan.getByRole("button", { name: "Criar plano" }).click();
-  await expect(plan.getByRole("status")).toContainText("Plano criado");
+  await expect(statusBanner(plan)).toContainText("Plano criado");
 
   await owner.goto("/admin/legal");
   const publish = owner.getByTestId("publish-legal");
@@ -224,9 +223,7 @@ test("partner activates a customer with a manual payment; the checkout stays a d
 
   await openPage(owner, "/admin/billing", "partner-billing");
   await switchCard.getByRole("button", { name: "Ativar checkout" }).click();
-  await expect(switchCard.getByRole("status")).toContainText(
-    "Checkout ativado",
-  );
+  await expect(statusBanner(switchCard)).toContainText("Checkout ativado");
 
   // The customer accepts the new terms and goes through the demonstration.
   await customer.goto(`/app/${workspaceSlug}/settings/billing`);
@@ -249,7 +246,7 @@ test("partner activates a customer with a manual payment; the checkout stays a d
   );
   await expect(checkout).toContainText("R$ 150,00");
   await checkout.getByRole("button", { name: "Simular contratação" }).click();
-  await expect(checkout.getByRole("status")).toContainText(
+  await expect(statusBanner(checkout)).toContainText(
     "nenhuma cobrança foi feita",
   );
 
@@ -257,9 +254,7 @@ test("partner activates a customer with a manual payment; the checkout stays a d
   await openPage(owner, "/admin/billing", "partner-billing");
   await expect(payments.getByRole("listitem")).toHaveCount(1);
   await switchCard.getByRole("button", { name: "Desativar checkout" }).click();
-  await expect(switchCard.getByRole("status")).toContainText(
-    "Checkout desativado",
-  );
+  await expect(statusBanner(switchCard)).toContainText("Checkout desativado");
   const reclosed = await customer.evaluate(async (path) => {
     const response = await fetch(path, { redirect: "manual" });
     return response.status;

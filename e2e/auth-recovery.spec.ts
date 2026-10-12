@@ -6,6 +6,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/identity";
+import { statusBanner } from "./support/status";
 
 const NEW_PASSWORD = "nova-senha-de-teste-123";
 
@@ -21,7 +22,7 @@ test("recovers access through the e-mail link and invalidates the link", async (
   await page
     .getByRole("button", { name: "Enviar link de recuperação" })
     .click();
-  await expect(page.getByTestId("success-notice")).toContainText(
+  await expect(statusBanner(page)).toContainText(
     "enviamos um link de recuperação",
   );
 
@@ -60,7 +61,7 @@ test("refuses a short password and keeps the user on the form", async ({
   await page
     .getByRole("button", { name: "Enviar link de recuperação" })
     .click();
-  await expect(page.getByTestId("success-notice")).toBeVisible();
+  await expect(statusBanner(page)).toBeVisible();
 
   const token = await readRecoveryToken(request, email);
   await page.goto(
@@ -71,7 +72,7 @@ test("refuses a short password and keeps the user on the form", async ({
   await page.getByLabel("Confirme a nova senha").fill("curta");
   await page.getByRole("button", { name: "Salvar nova senha" }).click();
 
-  await expect(page.getByTestId("error-notice")).toContainText("12 caracteres");
+  await expect(statusBanner(page)).toContainText("12 caracteres");
   await expect(page).toHaveURL(/\/reset-password$/);
 });
 

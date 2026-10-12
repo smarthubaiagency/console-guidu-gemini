@@ -8,39 +8,24 @@ import {
   type PlatformKeyActionState,
   revokePlatformKeyAction,
 } from "@/core/platform-api/actions";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 const INITIAL: PlatformKeyActionState = {};
 const INPUT =
   "border-border bg-surface-card text-12 text-text w-full rounded-lg border px-3 py-2";
 const LABEL = "text-12 text-text-subtle flex flex-col gap-1 font-medium";
 
+/** Result in the SmartStatusBanner (ADR 0016); the new key stays here, to copy. */
 function Feedback({ state }: Readonly<{ state: PlatformKeyActionState }>) {
-  const t = useTranslations("platformKeys.form");
-  if (state.error) {
-    return (
-      <p role="alert" className="text-12 text-danger-text">
-        {state.error}
-        {state.requestId
-          ? ` ${t("reference", { id: state.requestId.slice(0, 8) })}`
-          : ""}
-      </p>
-    );
-  }
-  if (!state.message) return null;
+  useActionStatus(state);
+  if (!state.rawKey) return null;
   return (
-    <div className="space-y-1">
-      <p role="status" className="text-12 text-success-text">
-        {state.message}
-      </p>
-      {state.rawKey ? (
-        <code
-          className="bg-surface-raised text-11 block rounded-sm px-2 py-1 break-all select-all"
-          data-testid="platform-raw-key"
-        >
-          {state.rawKey}
-        </code>
-      ) : null}
-    </div>
+    <code
+      className="bg-surface-raised text-11 block rounded-sm px-2 py-1 break-all select-all"
+      data-testid="platform-raw-key"
+    >
+      {state.rawKey}
+    </code>
   );
 }
 
@@ -112,6 +97,7 @@ export function RevokePlatformKeyButton({
     revokePlatformKeyAction,
     INITIAL,
   );
+  useActionStatus(state);
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="keyId" value={keyId} />
@@ -122,11 +108,6 @@ export function RevokePlatformKeyButton({
       >
         {t("revoke")}
       </button>
-      {state.error ? (
-        <span role="alert" className="text-12 text-danger-text">
-          {state.error}
-        </span>
-      ) : null}
     </form>
   );
 }

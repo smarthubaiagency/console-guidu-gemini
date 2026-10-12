@@ -9,6 +9,7 @@ import {
   saveHelloWorldWorkspaceSettingsAction,
   type HelloWorldActionState,
 } from "../server/actions";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 const INITIAL: HelloWorldActionState = {};
 
@@ -17,21 +18,9 @@ const INPUT =
 const BUTTON =
   "bg-primary text-on-primary text-12 rounded-lg px-4 py-2 font-semibold disabled:opacity-60";
 
+/** Result of the action in the SmartStatusBanner (ADR 0016). */
 function Feedback({ state }: { state: HelloWorldActionState }) {
-  if (state.error) {
-    return (
-      <p role="alert" className="text-12 text-danger-text">
-        {state.error}
-      </p>
-    );
-  }
-  if (state.message) {
-    return (
-      <p role="status" className="text-12 text-success-text">
-        {state.message}
-      </p>
-    );
-  }
+  useActionStatus(state);
   return null;
 }
 

@@ -7,5 +7,8 @@
   "yes": "Yes",
   "no": "No",
   "saving": "Saving...",
-  "inviteLink": "Invitation link (valid for 72 hours):"
+  "inviteLink": "Invitation link (valid for 72 hours):",
+  "reference": "Reference: {id}",
+  "saved": "Saved.",
+  "confirmIrreversible": "I understand this cannot be undone."
 }

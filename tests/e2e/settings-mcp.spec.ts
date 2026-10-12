@@ -17,6 +17,8 @@
  */
 
 import { expect, test } from "@playwright/test";
+
+import { statusBanner } from "../../e2e/support/status";
 import {
   createIdentity,
   seedWorkspace,
@@ -303,31 +305,15 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await expect(page.getByText(keyName)).toBeVisible();
     await expect(page.getByText("Ativa").first()).toBeVisible();
 
-    // Handle browser confirm dialog or custom confirmation modal
-    page.once("dialog", async (dialog) => {
-      expect(dialog.message()).toMatch(
-        /(Revogar|perderão o acesso imediatamente)/i,
-      );
-      await dialog.accept();
-    });
-
-    // Click revoke button (trash or action button)
-    const revokeButton = page
-      .getByRole("button", { name: /Revogar chave|Revogar/i })
-      .or(
-        page
-          .locator('button[title*="Revogar"], button[aria-label*="Revogar"]')
-          .first(),
-      );
-    await revokeButton.click();
-
-    // If custom modal confirmation exists instead of dialog:
-    const confirmModalButton = page.getByRole("button", {
-      name: /Confirmar Revogação|Sim, revogar/i,
-    });
-    if (await confirmModalButton.isVisible().catch(() => false)) {
-      await confirmModalButton.click();
-    }
+    // The confirmation is the status banner (ADR 0016): the action stays
+    // disabled until the irreversible checkbox is ticked.
+    await page.getByTitle("Revogar chave").first().click();
+    const question = statusBanner(page);
+    await expect(question).toHaveAttribute("role", "alertdialog");
+    await expect(question).toContainText(keyName);
+    await expect(question.getByTestId("smart-status-action")).toBeDisabled();
+    await question.getByRole("checkbox").check();
+    await question.getByTestId("smart-status-action").click();
 
     // Status updates immediately to "Revogada"
     await expect(page.getByText("Revogada").first()).toBeVisible();

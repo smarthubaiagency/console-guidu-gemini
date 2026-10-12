@@ -8,6 +8,7 @@ import {
   submitLogin,
   uniqueEmail,
 } from "./support/identity";
+import { statusBanner } from "./support/status";
 
 test("rejects wrong credentials without revealing the account", async ({
   page,
@@ -18,9 +19,7 @@ test("rejects wrong credentials without revealing the account", async ({
 
   await submitLogin(page, email, "senha-errada-12345");
 
-  await expect(page.getByTestId("error-notice")).toHaveText(
-    "E-mail ou senha inválidos.",
-  );
+  await expect(statusBanner(page)).toContainText("E-mail ou senha inválidos.");
   await expect(page).toHaveURL(/\/login$/);
 });
 

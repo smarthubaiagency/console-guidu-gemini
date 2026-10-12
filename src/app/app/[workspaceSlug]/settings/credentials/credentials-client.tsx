@@ -2,15 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import {
-  KeyRound,
-  Plus,
-  Shield,
-  Trash2,
-  AlertCircle,
-  CheckCircle2,
-  Lock,
-} from "lucide-react";
+import { KeyRound, Plus, Shield, Trash2, Lock } from "lucide-react";
 import {
   registerCredentialAction,
   revokeCredentialAction,
@@ -22,6 +14,8 @@ import type {
   AIProvider,
   CredentialPurpose,
 } from "@/core/credentials/vault";
+import { useStatus } from "@/components/feedback/status-context";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 export type CredentialsCapabilities = {
   canManage: boolean;
@@ -42,6 +36,9 @@ export function CredentialsClient({
   const t = useTranslations("credentials");
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<CredentialActionState | null>(null);
+  const tCommon = useTranslations("common");
+  const { confirmStatus } = useStatus();
+  useActionStatus(feedback);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form State
@@ -74,10 +71,16 @@ export function CredentialsClient({
     });
   };
 
-  const handleRevoke = (credentialId: string, itemLabel: string) => {
-    if (!confirm(t("confirmRevoke", { label: itemLabel }))) {
-      return;
-    }
+  const handleRevoke = async (credentialId: string, itemLabel: string) => {
+    const confirmed = await confirmStatus({
+      title: t("revokeTitle"),
+      message: t("confirmRevoke", { label: itemLabel }),
+      checkboxLabel: tCommon("confirmIrreversible"),
+      confirmLabel: t("revokeTitle"),
+      cancelLabel: t("cancel"),
+      tone: "destructive",
+    });
+    if (!confirmed) return;
 
     startTransition(async () => {
       const formData = new FormData();
@@ -91,37 +94,6 @@ export function CredentialsClient({
 
   return (
     <div className="space-y-6">
-      {/* Feedback banner */}
-      {feedback?.error && (
-        <div className="border-danger-border bg-danger-bg text-12 text-danger-text flex items-center gap-3 rounded-lg border p-4 font-medium">
-          <AlertCircle className="text-danger-text h-4 w-4 shrink-0" />
-          <span>{feedback.error}</span>
-          <button
-            type="button"
-            onClick={() => setFeedback(null)}
-            className="text-danger-text hover:text-danger-text ml-auto"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {feedback?.success && (
-        <div className="border-success-border bg-success-bg text-12 text-success-text flex items-center justify-between rounded-lg border p-4 font-semibold">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="text-success-solid h-4 w-4" />
-            <span>{feedback.message}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setFeedback(null)}
-            className="text-success-solid hover:text-success-text"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
       {/* Top Banner & Action */}
       <div className="border-card-border bg-surface-card flex flex-col justify-between gap-4 rounded-xl border p-5 shadow-xs md:flex-row md:items-center">
         <div>

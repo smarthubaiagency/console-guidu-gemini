@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2, Layers, ArrowRight, ShieldCheck } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
+import { PageStatus } from "@/components/feedback/page-status";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { requireLegalAcceptance } from "@/core/legal/gate";
 import { prisma } from "@/lib/prisma/client";
@@ -51,145 +52,147 @@ export default async function AppPage() {
   const format = await getFormatter();
 
   return (
-    <div className="bg-surface-raised flex min-h-screen flex-col justify-between">
-      <header className="border-border bg-surface-card flex items-center justify-between border-b px-6 py-4">
-        <div className="flex items-center gap-3">
-          <BrandMark name={brand.name} logoUrl={brand.logoUrl} size="md" />
-          <span className="text-text font-bold tracking-tight">
-            {brand.name}
-          </span>
-        </div>
+    <PageStatus>
+      <div className="bg-surface-raised flex min-h-screen flex-col justify-between">
+        <header className="border-border bg-surface-card flex items-center justify-between border-b px-6 py-4">
+          <div className="flex items-center gap-3">
+            <BrandMark name={brand.name} logoUrl={brand.logoUrl} size="md" />
+            <span className="text-text font-bold tracking-tight">
+              {brand.name}
+            </span>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <span
-            className="text-12 text-text-secondary hidden font-medium sm:inline"
-            data-testid="identity-email"
-          >
-            {identity.email}
-          </span>
-          <Link
-            href="/app/account/security"
-            className="text-12 text-text-subtle hover:text-text border-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5"
-          >
-            <ShieldCheck className="text-success-solid h-3.5 w-3.5" />
-            <span>{t("accountSecurity")}</span>
-          </Link>
-          <SignOutForm />
-        </div>
-      </header>
+          <div className="flex items-center gap-3">
+            <span
+              className="text-12 text-text-secondary hidden font-medium sm:inline"
+              data-testid="identity-email"
+            >
+              {identity.email}
+            </span>
+            <Link
+              href="/app/account/security"
+              className="text-12 text-text-subtle hover:text-text border-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5"
+            >
+              <ShieldCheck className="text-success-solid h-3.5 w-3.5" />
+              <span>{t("accountSecurity")}</span>
+            </Link>
+            <SignOutForm />
+          </div>
+        </header>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
-        <div className="mb-8 text-center">
-          <h1 className="text-24 text-text font-bold tracking-tight">
-            {t("title")}
-          </h1>
-          <p className="text-14 text-text-secondary mt-1">{t("subtitle")}</p>
-        </div>
+        <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
+          <div className="mb-8 text-center">
+            <h1 className="text-24 text-text font-bold tracking-tight">
+              {t("title")}
+            </h1>
+            <p className="text-14 text-text-secondary mt-1">{t("subtitle")}</p>
+          </div>
 
-        {scheduled.length > 0 ? (
-          <section
-            className="border-warning-border bg-warning-bg mb-6 space-y-3 rounded-xl border p-4"
-            data-testid="scheduled-deletions"
-          >
-            <h2 className="text-14 text-warning-text font-semibold">
-              {t("scheduledDeletions")}
-            </h2>
-            <ul className="space-y-3">
-              {scheduled.map((d) => (
-                <li
-                  key={d.workspaceId}
-                  className="text-12 text-warning-text flex flex-wrap items-center justify-between gap-3"
-                >
-                  <span>
-                    {t.rich("scheduledDeletion", {
-                      workspace: d.workspaceName,
-                      date: format.dateTime(d.purgeAfter, {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        timeZone: "America/Sao_Paulo",
-                      }),
-                      name: (chunks) => (
-                        <span className="font-semibold">{chunks}</span>
-                      ),
-                    })}
-                  </span>
-                  <ActionForm
-                    action={cancelWorkspaceDeletionAction}
-                    submitLabel={t("cancelDeletion")}
-                    tone="neutral"
-                    testId={`cancel-deletion-${d.workspaceSlug}`}
+          {scheduled.length > 0 ? (
+            <section
+              className="border-warning-border bg-warning-bg mb-6 space-y-3 rounded-xl border p-4"
+              data-testid="scheduled-deletions"
+            >
+              <h2 className="text-14 text-warning-text font-semibold">
+                {t("scheduledDeletions")}
+              </h2>
+              <ul className="space-y-3">
+                {scheduled.map((d) => (
+                  <li
+                    key={d.workspaceId}
+                    className="text-12 text-warning-text flex flex-wrap items-center justify-between gap-3"
                   >
-                    <input
-                      type="hidden"
-                      name="workspaceId"
-                      value={d.workspaceId}
-                    />
-                  </ActionForm>
-                </li>
+                    <span>
+                      {t.rich("scheduledDeletion", {
+                        workspace: d.workspaceName,
+                        date: format.dateTime(d.purgeAfter, {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          timeZone: "America/Sao_Paulo",
+                        }),
+                        name: (chunks) => (
+                          <span className="font-semibold">{chunks}</span>
+                        ),
+                      })}
+                    </span>
+                    <ActionForm
+                      action={cancelWorkspaceDeletionAction}
+                      submitLabel={t("cancelDeletion")}
+                      tone="neutral"
+                      testId={`cancel-deletion-${d.workspaceSlug}`}
+                    >
+                      <input
+                        type="hidden"
+                        name="workspaceId"
+                        value={d.workspaceId}
+                      />
+                    </ActionForm>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {workspaces.length === 0 ? (
+            <div className="border-card-border bg-surface-card rounded-2xl border p-8 text-center shadow-xs">
+              <div className="bg-surface-hover text-text-tertiary mx-auto flex h-12 w-12 items-center justify-center rounded-xl">
+                <Layers className="h-6 w-6" />
+              </div>
+              <h2 className="text-16 text-text mt-4 font-semibold">
+                {t("emptyTitle")}
+              </h2>
+              <p className="text-12 text-text-secondary mx-auto mt-2 max-w-sm leading-relaxed">
+                {t("emptyDescription")}
+              </p>
+              <div className="mt-6">
+                <Link
+                  href="/app/account/security"
+                  className="text-12 text-text hover:text-text-subtle font-semibold underline"
+                >
+                  {t("manageSecurity")}
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {workspaces.map((ws) => (
+                <Link
+                  key={ws.workspaceId}
+                  href={`/app/${ws.workspaceSlug}`}
+                  className="group border-card-border bg-surface-card hover:border-border-strong flex items-center justify-between rounded-xl border p-4 shadow-xs transition hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="bg-surface-hover text-text-subtle group-hover:bg-primary group-hover:text-on-primary flex h-10 w-10 items-center justify-center rounded-lg transition">
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-14 text-text font-semibold">
+                        {ws.workspaceName}
+                      </h3>
+                      <p className="text-12 text-text-secondary">
+                        {ws.organizationName} • {t("roleLabel")}{" "}
+                        <span className="text-text-subtle font-medium capitalize">
+                          {ws.workspaceRole}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-12 text-text-secondary group-hover:text-text flex items-center gap-1 font-semibold transition">
+                    <span>{t("access")}</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </Link>
               ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {workspaces.length === 0 ? (
-          <div className="border-card-border bg-surface-card rounded-2xl border p-8 text-center shadow-xs">
-            <div className="bg-surface-hover text-text-tertiary mx-auto flex h-12 w-12 items-center justify-center rounded-xl">
-              <Layers className="h-6 w-6" />
             </div>
-            <h2 className="text-16 text-text mt-4 font-semibold">
-              {t("emptyTitle")}
-            </h2>
-            <p className="text-12 text-text-secondary mx-auto mt-2 max-w-sm leading-relaxed">
-              {t("emptyDescription")}
-            </p>
-            <div className="mt-6">
-              <Link
-                href="/app/account/security"
-                className="text-12 text-text hover:text-text-subtle font-semibold underline"
-              >
-                {t("manageSecurity")}
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {workspaces.map((ws) => (
-              <Link
-                key={ws.workspaceId}
-                href={`/app/${ws.workspaceSlug}`}
-                className="group border-card-border bg-surface-card hover:border-border-strong flex items-center justify-between rounded-xl border p-4 shadow-xs transition hover:shadow-sm"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="bg-surface-hover text-text-subtle group-hover:bg-primary group-hover:text-on-primary flex h-10 w-10 items-center justify-center rounded-lg transition">
-                    <Building2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-14 text-text font-semibold">
-                      {ws.workspaceName}
-                    </h3>
-                    <p className="text-12 text-text-secondary">
-                      {ws.organizationName} • {t("roleLabel")}{" "}
-                      <span className="text-text-subtle font-medium capitalize">
-                        {ws.workspaceRole}
-                      </span>
-                    </p>
-                  </div>
-                </div>
+          )}
+        </main>
 
-                <div className="text-12 text-text-secondary group-hover:text-text flex items-center gap-1 font-semibold transition">
-                  <span>{t("access")}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </main>
-
-      <footer className="border-border bg-surface-card text-12 text-text-tertiary border-t py-4 text-center">
-        {t("footer", { name: brand.name })}
-      </footer>
-    </div>
+        <footer className="border-border bg-surface-card text-12 text-text-tertiary border-t py-4 text-center">
+          {t("footer", { name: brand.name })}
+        </footer>
+      </div>
+    </PageStatus>
   );
 }

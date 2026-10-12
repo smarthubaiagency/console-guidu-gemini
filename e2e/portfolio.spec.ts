@@ -22,6 +22,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { sidebar } from "./support/sidebar";
+import { statusBanner } from "./support/status";
 
 test("owner registers a store and a product with variants in the Portfolio", async ({
   page,
@@ -49,7 +50,7 @@ test("owner registers a store and a product with variants in the Portfolio", asy
   await page.goto(`/app/${wsSlug}/settings/modules`);
   await page.getByRole("button", { name: "Habilitar Portfólio" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
 
   // Store in the workspace settings.
@@ -86,7 +87,7 @@ test("owner registers a store and a product with variants in the Portfolio", asy
   await edit.getByLabel("Loja Centro E2E").check();
   await edit.getByRole("button", { name: "Salvar item" }).click();
   await expect(
-    edit.getByRole("status").filter({ hasText: "Item salvo." }),
+    statusBanner(edit).filter({ hasText: "Item salvo." }),
   ).toBeVisible();
 
   const add = page.getByTestId("add-variant");
@@ -126,7 +127,7 @@ test("owner registers a store and a product with variants in the Portfolio", asy
   await serviceEdit.getByLabel("Situação").selectOption("active");
   await serviceEdit.getByRole("button", { name: "Salvar item" }).click();
   await expect(
-    serviceEdit.getByRole("status").filter({ hasText: "Item salvo." }),
+    statusBanner(serviceEdit).filter({ hasText: "Item salvo." }),
   ).toBeVisible();
   await expect(page.getByTestId("ucp-preview")).toContainText(
     "co.guidu.portfolio.service.healthcare",
@@ -156,7 +157,7 @@ test("owner registers lodging with accommodation, rate plans and nightly prices"
   await page.goto(`/app/${wsSlug}/settings/modules`);
   await page.getByRole("button", { name: "Habilitar Portfólio" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
 
   await page.goto(`/app/${wsSlug}/settings/locations`);
@@ -188,7 +189,7 @@ test("owner registers lodging with accommodation, rate plans and nightly prices"
   await type.getByLabel("Máximo de adultos").fill("2");
   await type.getByRole("button", { name: "Salvar acomodação" }).click();
   await expect(
-    type.getByRole("status").filter({ hasText: "Acomodação salva." }),
+    statusBanner(type).filter({ hasText: "Acomodação salva." }),
   ).toBeVisible();
 
   // House rules, property and activation.
@@ -202,7 +203,7 @@ test("owner registers lodging with accommodation, rate plans and nightly prices"
   await edit.getByLabel("Situação").selectOption("active");
   await edit.getByRole("button", { name: "Salvar item" }).click();
   await expect(
-    edit.getByRole("status").filter({ hasText: "Item salvo." }),
+    statusBanner(edit).filter({ hasText: "Item salvo." }),
   ).toBeVisible();
 
   // A non-refundable plan with its own nightly price.
