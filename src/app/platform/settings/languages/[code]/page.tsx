@@ -13,7 +13,13 @@ import {
 } from "@/components/partners/action-form";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
-import { saveTextAction } from "@/core/i18n/actions";
+import { MachineRunStatus } from "@/components/i18n/machine-run-status";
+import {
+  saveTextAction,
+  translateMissingTextsAction,
+} from "@/core/i18n/actions";
+import { machineTranslationConfigured } from "@/core/i18n/machine/provider";
+import { latestTextsRun } from "@/core/i18n/machine/requests";
 import { listLanguages, listTexts } from "@/core/i18n/service";
 import { platformGrants } from "@/core/module-runtime/loaders";
 import { prisma } from "@/lib/prisma/client";
@@ -49,7 +55,7 @@ export default async function LanguageTextsPage({
   const tc = await getTranslations("common");
   const tNav = await getTranslations("nav");
   const search = one(query.q);
-  const filter = (["all", "edited", "missing"] as const).find(
+  const filter = (["all", "edited", "missing", "machine"] as const).find(
     (f) => f === one(query.filter),
   );
   const data = await withIdentityContext(
@@ -62,6 +68,7 @@ export default async function LanguageTextsPage({
       if (!language) return null;
       return {
         language,
+        run: code === "pt-BR" ? null : await latestTextsRun(tx, actor, code),
         texts: await listTexts(tx, actor, code, {
           ...(search ? { search } : {}),
           filter: filter ?? "all",
@@ -71,7 +78,12 @@ export default async function LanguageTextsPage({
     },
   );
   if (!data) notFound();
-  const { language, texts } = data;
+  const { language, texts, run } = data;
+  const configured = machineTranslationConfigured();
+  const inFlight =
+    run?.status === "pending" ||
+    run?.status === "queued" ||
+    run?.status === "running";
   const base = `/platform/settings/languages/${code}`;
   const link = (page: number) => {
     const p = new URLSearchParams();
@@ -94,6 +106,32 @@ export default async function LanguageTextsPage({
         icon={<Languages className="h-5 w-5" />}
       />
 
+      {code !== "pt-BR" ? (
+        <section
+          className="border-card-border bg-surface-card space-y-2 rounded-xl border p-4 shadow-xs"
+          data-testid="machine-translation"
+        >
+          <h2 className="text-14 text-text font-semibold">{t("auto.title")}</h2>
+          <p className="text-12 text-text-secondary">{t("auto.hint")}</p>
+          <ActionForm
+            action={translateMissingTextsAction}
+            submitLabel={t("auto.button")}
+            disabled={!configured || inFlight}
+          >
+            <input type="hidden" name="code" value={code} />
+          </ActionForm>
+          {configured ? null : (
+            <p
+              className="text-12 text-warning-text"
+              data-testid="machine-not-configured"
+            >
+              {t("auto.notConfigured")}
+            </p>
+          )}
+          <MachineRunStatus run={run} testId="machine-translation-status" />
+        </section>
+      ) : null}
+
       <form
         method="get"
         className="border-card-border bg-surface-card flex flex-wrap items-end gap-3 rounded-xl border p-4 shadow-xs"
@@ -112,6 +150,7 @@ export default async function LanguageTextsPage({
             <option value="all">{t("filterAll")}</option>
             <option value="edited">{t("filterEdited")}</option>
             <option value="missing">{t("filterMissing")}</option>
+            <option value="machine">{t("filterMachine")}</option>
           </select>
         </label>
         <button

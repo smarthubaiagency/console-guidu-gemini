@@ -63,5 +63,11 @@
     "remove": "Remove translation",
     "saved": "Translation ({locale}) saved.",
     "removed": "Translation ({locale}) removed."
+  },
+  "machine": {
+    "button": "Translate automatically",
+    "hint": "Fills the missing translations (active languages) with machine translation; existing translations do not change.",
+    "queued": "Machine translation requested. It runs in the background; reload the page to see its progress.",
+    "tooLong": "Document too long for machine translation."
   }
 }

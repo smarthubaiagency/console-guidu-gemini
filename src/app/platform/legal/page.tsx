@@ -11,7 +11,10 @@ import {
   deletePlatformLegalTranslationAction,
   publishPlatformLegalAction,
   savePlatformLegalTranslationAction,
+  translatePlatformLegalAction,
 } from "@/core/legal/actions";
+import { machineTranslationConfigured } from "@/core/i18n/machine/provider";
+import { latestLegalTranslationRuns } from "@/core/legal/machine";
 import {
   legalTranslationLanguages,
   listLegalDocuments,
@@ -35,7 +38,7 @@ export default async function PlatformLegalPage() {
     return <ModuleNotice variant="denied" />;
   }
   const partner = await getRequestPartner();
-  const { documents, languages, translations } = partner
+  const { documents, languages, translations, runs } = partner
     ? await withIdentityContext(
         prisma,
         identity.userId,
@@ -46,10 +49,11 @@ export default async function PlatformLegalPage() {
             tx,
             partner.partnerId,
           ),
+          runs: await latestLegalTranslationRuns(tx, partner.partnerId),
         }),
         { partnerId: partner.partnerId },
       )
-    : { documents: [], languages: [], translations: [] };
+    : { documents: [], languages: [], translations: [], runs: {} };
   const t = await getTranslations("legal.platform");
   const tPlatform = await getTranslations("platform");
   return (
@@ -68,6 +72,11 @@ export default async function PlatformLegalPage() {
         translationActions={{
           save: savePlatformLegalTranslationAction,
           remove: deletePlatformLegalTranslationAction,
+          machine: {
+            action: translatePlatformLegalAction,
+            configured: machineTranslationConfigured(),
+            runs,
+          },
         }}
       />
     </div>

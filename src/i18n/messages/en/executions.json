@@ -30,6 +30,7 @@
   },
   "errors": {
     "invalidJobData": "Invalid job data.",
-    "onlyFailedRetry": "Only failed runs can be retried."
+    "onlyFailedRetry": "Only failed runs can be retried.",
+    "alreadyRunning": "A run is already in progress for this item."
   }
 }

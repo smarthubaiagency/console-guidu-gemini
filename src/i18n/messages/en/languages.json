@@ -37,5 +37,28 @@
   "textReset": "System text restored.",
   "empty": "No text found.",
   "count": "{count} texts",
-  "autoTranslate": "Machine translation: coming soon, once the provider is chosen."
+  "autoTranslate": "In each language, “Translate automatically” fills the texts still missing, to be reviewed later.",
+  "filterMachine": "Machine texts to review",
+  "auto": {
+    "title": "Machine translation",
+    "hint": "Fills only the texts that have no translation in this language yet; edited or already translated texts do not change. Review them with the “Machine texts to review” filter: once saved, a text becomes manual.",
+    "button": "Translate automatically",
+    "queued": "Machine translation requested. It runs in the background; reload the page to see its progress.",
+    "notConfigured": "Translation provider not configured",
+    "sourceLocale": "The source language is not translated.",
+    "none": "No machine translation requested yet.",
+    "lastRun": "Last run",
+    "status": {
+      "pending": "queued",
+      "queued": "queued",
+      "running": "running",
+      "succeeded": "finished",
+      "failed": "failed",
+      "skipped": "skipped",
+      "canceled": "canceled"
+    },
+    "counts": "{translated} translated · {invalid} invalid (discarded) · {skipped} without an answer.",
+    "remaining": "{count} still missing; request again to continue.",
+    "error": "Error: {message}"
+  }
 }

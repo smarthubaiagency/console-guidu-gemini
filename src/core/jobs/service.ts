@@ -11,7 +11,10 @@ import type {
 } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import type { WorkspaceJobDefinition } from "./definition";
+import type {
+  PlatformJobDefinition,
+  WorkspaceJobDefinition,
+} from "./definition";
 
 /**
  * Web side of jobs (F3a, decision 2): the job is a row of `job_runs`
@@ -91,6 +94,127 @@ export async function enqueueJob<P>(
     }
     throw error;
   }
+}
+
+/**
+ * Platform job asked from the web (I6): only the kinds the `job_runs`
+ * policies open to app_runtime (machine translation) can be inserted, by
+ * whom those policies allow. One run in flight per `subject` (a language or
+ * a document): an advisory lock serialises concurrent requests and a
+ * pending, queued or running run with the same subject is refused.
+ */
+export async function enqueuePlatformJob<P extends Record<string, unknown>>(
+  tx: ContextTransaction,
+  requestedBy: string,
+  definition: PlatformJobDefinition<P>,
+  payload: P,
+  options: Readonly<{
+    partnerId?: string | null;
+    /** Payload field that identifies the subject, e.g. `locale`. */
+    subjectField: keyof P & string;
+  }>,
+): Promise<{ id: string }> {
+  const parsed = definition.payload.safeParse(payload);
+  if (!parsed.success) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: "Dados do job inválidos.",
+      messageKey: "executions.errors.invalidJobData",
+    });
+  }
+  const subject = String(payload[options.subjectField]);
+  await tx.$executeRaw`
+    select pg_advisory_xact_lock(hashtext(${`job_subject:${definition.kind}:${subject}`}))
+  `;
+  const inFlight = await tx.jobRun.findFirst({
+    where: {
+      kind: definition.kind,
+      status: { in: ["pending", "queued", "running"] },
+      payload: { path: [options.subjectField], equals: subject },
+    },
+    select: { id: true },
+  });
+  if (inFlight) {
+    throw new AppError({
+      code: "conflict",
+      safeMessage: "Já existe uma execução em andamento para este item.",
+      messageKey: "executions.errors.alreadyRunning",
+    });
+  }
+  const run = await tx.jobRun.create({
+    data: {
+      kind: definition.kind,
+      scope: "platform",
+      partnerId: options.partnerId ?? null,
+      requestedBy,
+      payload: parsed.data as Prisma.InputJsonValue,
+      idempotencyKey: `${subject}:${randomUUID()}`.slice(0, 200),
+      maxAttempts: definition.maxAttempts ?? 3,
+    },
+    select: { id: true },
+  });
+  return run;
+}
+
+/** Latest run of a platform job for one subject, or null. */
+export async function latestPlatformRun(
+  tx: ContextTransaction,
+  kind: string,
+  subjectField: string,
+  subject: string,
+): Promise<PlatformRunView | null> {
+  const row = await tx.jobRun.findFirst({
+    where: { kind, payload: { path: [subjectField], equals: subject } },
+    orderBy: { createdAt: "desc" },
+    select: platformRunSelect,
+  });
+  return row ? toPlatformRunView(row) : null;
+}
+
+export type PlatformRunView = Readonly<{
+  id: string;
+  status: JobRunStatus;
+  lastError: string | null;
+  result: Record<string, unknown> | null;
+  createdAt: Date;
+  finishedAt: Date | null;
+  payload: Record<string, unknown>;
+}>;
+
+export const platformRunSelect = {
+  id: true,
+  status: true,
+  lastError: true,
+  result: true,
+  createdAt: true,
+  finishedAt: true,
+  payload: true,
+} as const;
+
+export function toPlatformRunView(row: {
+  id: string;
+  status: string;
+  lastError: string | null;
+  result: Prisma.JsonValue;
+  createdAt: Date;
+  finishedAt: Date | null;
+  payload: Prisma.JsonValue;
+}): PlatformRunView {
+  const obj = (v: Prisma.JsonValue) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? (v as Record<string, unknown>)
+      : null;
+  return {
+    id: row.id,
+    status: (JOB_RUN_STATUSES as readonly string[]).includes(row.status)
+      ? (row.status as JobRunStatus)
+      : "pending",
+    lastError: row.lastError,
+    result: obj(row.result),
+    createdAt: row.createdAt,
+    finishedAt: row.finishedAt,
+    payload: obj(row.payload) ?? {},
+  };
 }
 
 function toView(

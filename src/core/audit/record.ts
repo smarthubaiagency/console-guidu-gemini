@@ -67,6 +67,11 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "resourceType",
   "targetSlug",
   "status",
+  // Counts of a machine translation run (I6).
+  "translated",
+  "invalid",
+  "skipped",
+  "remaining",
 ]);
 
 /**

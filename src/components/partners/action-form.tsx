@@ -24,6 +24,7 @@ export function ActionForm({
   className = "flex flex-wrap items-end gap-2",
   testId,
   tone = "primary",
+  disabled = false,
 }: Readonly<{
   action: Action;
   submitLabel: string;
@@ -31,6 +32,8 @@ export function ActionForm({
   className?: string;
   testId?: string;
   tone?: "primary" | "neutral";
+  /** Submit button disabled (e.g. a feature not configured). */
+  disabled?: boolean;
 }>) {
   const t = useTranslations("common");
   const router = useRouter();
@@ -46,7 +49,7 @@ export function ActionForm({
         {children}
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || disabled}
           className={
             tone === "primary"
               ? "bg-primary text-on-primary text-12 rounded-lg px-3 py-2 font-semibold disabled:opacity-60"

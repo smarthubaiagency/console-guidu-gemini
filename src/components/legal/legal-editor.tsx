@@ -5,6 +5,8 @@ import {
   inputClass,
   labelClass,
 } from "@/components/partners/action-form";
+import { MachineRunStatus } from "@/components/i18n/machine-run-status";
+import type { PlatformRunView } from "@/core/jobs/service";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { SOURCE_LOCALE } from "@/core/i18n/locales";
 import {
@@ -22,6 +24,14 @@ type Action = (
 export type LegalTranslationActions = Readonly<{
   save: Action;
   remove: Action;
+  /** Machine translation of a version (I6). */
+  machine?: Readonly<{
+    action: Action;
+    /** A provider is configured in this environment. */
+    configured: boolean;
+    /** Latest run per document id. */
+    runs: Readonly<Record<string, PlatformRunView>>;
+  }>;
 }>;
 
 /**
@@ -184,6 +194,12 @@ function LegalTranslations({
         <p className="text-12 text-text-secondary">
           {original?.name ?? document.locale} · {t("translations.original")}
         </p>
+        {actions.machine ? (
+          <LegalMachineTranslation
+            document={document}
+            machine={actions.machine}
+          />
+        ) : null}
         <ul className="space-y-2">
           {targets.map((language) => {
             const translation = translations.find(
@@ -276,5 +292,42 @@ function LegalTranslations({
         </ul>
       </div>
     </details>
+  );
+}
+
+/** "Traduzir automaticamente" for one version, with its last run (I6). */
+function LegalMachineTranslation({
+  document,
+  machine,
+}: Readonly<{
+  document: LegalDocumentView;
+  machine: NonNullable<LegalTranslationActions["machine"]>;
+}>) {
+  const t = useTranslations("legal");
+  const tm = useTranslations("languages.auto");
+  const run = machine.runs[document.id] ?? null;
+  const inFlight =
+    run?.status === "pending" ||
+    run?.status === "queued" ||
+    run?.status === "running";
+  return (
+    <div
+      className="border-border space-y-1 rounded-lg border p-2"
+      data-testid={`legal-machine-${document.kind}-${document.version}`}
+    >
+      <p className="text-12 text-text-secondary">{t("machine.hint")}</p>
+      <ActionForm
+        action={machine.action}
+        submitLabel={t("machine.button")}
+        tone="neutral"
+        disabled={!machine.configured || inFlight}
+      >
+        <input type="hidden" name="documentId" value={document.id} />
+      </ActionForm>
+      {machine.configured ? null : (
+        <p className="text-12 text-warning-text">{tm("notConfigured")}</p>
+      )}
+      <MachineRunStatus run={run} />
+    </div>
   );
 }

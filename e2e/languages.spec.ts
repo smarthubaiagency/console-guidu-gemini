@@ -6,8 +6,9 @@
  * Maintenance Rationale:
  * - A platform owner adds a language in Plataforma › Configurações ›
  *   Idiomas, translates a text and turns the language on.
- * - The person picks that language and sees the translated menu; texts not
- *   translated yet keep the Portuguese source.
+ * - The owner asks for the machine translation of the missing texts (fake
+ *   provider) and finds them in the "Automáticos a revisar" filter.
+ * - The person picks that language and sees the translated menu.
  * - Following the workspace again, the owner sets the workspace default to
  *   Spanish and the menu follows it.
  * - The language code is unique per run because the e2e database is shared.
@@ -19,6 +20,7 @@ import { expect, test } from "@playwright/test";
 import {
   createIdentity,
   makePlatformAdmin,
+  runJobs,
   seedWorkspace,
   signIn,
   uniqueEmail,
@@ -92,6 +94,30 @@ test("languages: add, translate, choose per person and per workspace", async ({
     text.getByRole("status").filter({ hasText: "Texto salvo." }),
   ).toBeVisible();
 
+  // Machine translation (I6, fake provider in e2e): fills the texts still
+  // missing, never the one just saved; they show in "Automáticos a revisar".
+  const machine = page.getByTestId("machine-translation");
+  await machine
+    .getByRole("button", { name: "Traduzir automaticamente" })
+    .click();
+  await expect(
+    machine
+      .getByRole("status")
+      .filter({ hasText: "Tradução automática pedida" }),
+  ).toBeVisible();
+  expect(await runJobs(request)).toBe(0);
+  await page.goto(
+    `/platform/settings/languages/${code}?filter=machine&q=languages.title`,
+  );
+  await expect(page.getByTestId("machine-translation-status")).toHaveAttribute(
+    "data-status",
+    "succeeded",
+  );
+  await expect(page.getByTestId("language-text")).toHaveCount(1);
+  await expect(page.getByTestId("language-text")).toContainText(
+    `[${code}]Idiomas`,
+  );
+
   await page.goto("/platform/settings/languages");
   await table
     .getByTestId(`language-${code}`)
@@ -111,7 +137,7 @@ test("languages: add, translate, choose per person and per workspace", async ({
   await expect(
     menu.getByRole("link", { name: "Panoramica E2E" }),
   ).toBeVisible();
-  // Not translated yet: the Portuguese source.
+  // Machine texts keep the source words (fake provider prefixes them).
   await expect(menu.getByRole("link", { name: "Execuções" })).toBeVisible();
 
   // Back to following the workspace; the workspace goes Spanish.
