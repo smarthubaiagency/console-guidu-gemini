@@ -35,4 +35,4 @@ O painel nasceu só em português, com os textos escritos direto no código. Mar
 - Cada tela passa a usar chaves em vez de frases. A migração é por etapas (I2 a I4), e telas ainda não migradas continuam em português em qualquer idioma.
 - Rótulos de menu e manifestos sem chave mantêm o texto do código, que é o comportamento esperado para módulos ainda não traduzidos.
 - Com várias instâncias, uma edição leva até 30 segundos para aparecer nas outras.
-- A tradução automática usa a mesma tabela, com `origin = machine`, e fica marcada para revisão. Ela depende da escolha do provedor.
+- A tradução automática usa a mesma tabela, com `origin = machine`, e fica marcada para revisão. Provedor: Claude, pela API da Anthropic (`claude-opus-5-5`), escolhido em 12/10/2026 por preservar a sintaxe ICU e usar o contexto das chaves (I6).

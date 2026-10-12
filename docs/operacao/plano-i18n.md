@@ -19,7 +19,7 @@ Pedido do Marcelo (11/10/2026): painel em vários idiomas, começando por portug
 | I3    | Plataforma (`/platform`) e console do parceiro (`/admin`)                                                                       | Pronta para revisão |
 | I4    | Módulos: CRM, Portfólio (com os campos das verticais), propostas e os módulos seguintes já nascendo com chaves                  | Pronta para revisão |
 | I5    | Notificações e e-mails por idioma de quem recebe; termos e privacidade por idioma; API e MCP em inglês                          | Pronta para revisão |
-| I6    | Tradução automática na tela de Idiomas (edições `machine`, marcadas para revisão)                                               | Espera o provedor   |
+| I6    | Tradução automática na tela de Idiomas (edições `machine`, marcadas para revisão)                                               | Pronta para revisão |
 
 ## I1 — Base
 
@@ -131,6 +131,24 @@ Fica para depois:
 - **Idioma de quem não é membro de parceiro** (por exemplo, quem recebe um convite): recebe no idioma padrão da plataforma até existir uma fonte confiável de e-mail por pessoa.
 - **Dados gravados** e mensagens do zod sem texto próprio continuam como estão.
 
+## I6 — Tradução automática
+
+**Estado:** pronta para revisão. Migration `20261027090000_i6_machine_translation.sql`. Provedor escolhido pelo Marcelo em 12/10/2026: Claude, pela API da Anthropic.
+
+Entregue:
+
+- **Textos do painel.** Em Plataforma › Configurações › Idiomas › idioma, o botão "Traduzir automaticamente" preenche só os textos que faltam (sem edição e sem texto no código para aquele idioma): até 5.000 por execução, 150 por chamada, 3 chamadas em paralelo. O filtro "Automáticos a revisar" lista o que entrou; salvar um texto o torna manual (revisado).
+- **Documentos legais.** Em cada versão, o mesmo botão preenche as traduções que faltam nos idiomas ativos, exceto o do original, com uma chamada por idioma.
+- **Como roda.** Jobs de plataforma no worker (`i18n.translate-texts` e `legal.translate-document`), um por vez por idioma ou documento, com a situação da última execução na própria tela. O worker só insere linhas `machine`, sem autor, e nunca sobrescreve uma tradução existente, manual ou automática. Cada texto passa pela mesma validação de variáveis e plurais da edição manual; os inválidos são descartados e contados. O pedido e a conclusão ficam na auditoria.
+- **Modelo.** `claude-opus-5-5`, esforço `medium`, resposta estruturada em JSON, prompt de sistema em cache e fallback do servidor em caso de recusa. Glossário curto para manter os termos do produto.
+- **Chave.** Só na variável `TRANSLATION_ANTHROPIC_API_KEY`, no web e no worker. Sem ela, os botões ficam desabilitados com o aviso "Provedor de tradução não configurado". Nos testes e no e2e, `TRANSLATION_PROVIDER=fake` usa um tradutor falso.
+
+Observações:
+
+- Os textos novos aparecem no painel em até 30 segundos (cache dos textos).
+- Uma execução que falha no meio é refeita do início (uma transação por execução).
+- A primeira chamada real ao Claude acontece quando a chave estiver configurada no dev.
+
 ## Pendências do Marcelo
 
-- Provedor da tradução automática (I6).
+- Configurar `TRANSLATION_ANTHROPIC_API_KEY` no Coolify (web e worker) e no dev, e fazer a primeira tradução real (I6).

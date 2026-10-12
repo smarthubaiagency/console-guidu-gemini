@@ -1,4 +1,6 @@
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
+import { translateTextsJob } from "@/core/i18n/machine/texts-job";
+import { translateDocumentJob } from "@/core/legal/machine-job";
 import { workspaceExportJob } from "@/core/privacy/export";
 import { privacyJobs, privacySchedules } from "@/core/privacy/maintenance";
 import { proposalExecuteJob } from "@/core/proposals/service";
@@ -14,6 +16,8 @@ import type { JobDefinition, JobSchedule } from "./definition";
 const DEFINITIONS = [
   ...billingJobs,
   ...privacyJobs,
+  translateTextsJob,
+  translateDocumentJob,
   workspaceExportJob,
   proposalExecuteJob,
   ...helloWorldJobs,

@@ -37,5 +37,28 @@
   "textReset": "Texto del sistema restaurado.",
   "empty": "No se encontró ningún texto.",
   "count": "{count} textos",
-  "autoTranslate": "Traducción automática: próximamente, cuando se elija el proveedor."
+  "autoTranslate": "En cada idioma, “Traducir automáticamente” completa los textos que aún faltan, para revisarlos después.",
+  "filterMachine": "Automáticos por revisar",
+  "auto": {
+    "title": "Traducción automática",
+    "hint": "Completa con traducción automática solo los textos que aún no tienen traducción en este idioma; los textos editados o ya traducidos no cambian. Revísalos con el filtro “Automáticos por revisar”: al guardarlo, el texto pasa a ser manual.",
+    "button": "Traducir automáticamente",
+    "queued": "Traducción automática solicitada. Se ejecuta en segundo plano; recarga la página para ver el avance.",
+    "notConfigured": "Proveedor de traducción no configurado",
+    "sourceLocale": "El idioma de origen no se traduce.",
+    "none": "Aún no se solicitó ninguna traducción automática.",
+    "lastRun": "Última ejecución",
+    "status": {
+      "pending": "en cola",
+      "queued": "en cola",
+      "running": "en curso",
+      "succeeded": "finalizada",
+      "failed": "falló",
+      "skipped": "omitida",
+      "canceled": "cancelada"
+    },
+    "counts": "{translated} traducidos · {invalid} inválidos (descartados) · {skipped} sin respuesta.",
+    "remaining": "Aún faltan {count}; solicítala de nuevo para continuar.",
+    "error": "Error: {message}"
+  }
 }

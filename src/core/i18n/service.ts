@@ -18,8 +18,8 @@ import type {
 import { AppError } from "@/shared/errors";
 
 import {
-  balancedBraces,
   flattenMessages,
+  keepsMessageArguments,
   LOCALE_CODE,
   messageArguments,
   SOURCE_LOCALE,
@@ -33,7 +33,8 @@ import { fileMessages, invalidateI18nCache, SOURCE_MESSAGES } from "./store";
  * The texts live in the code (`src/i18n/messages`, pt-BR is the source);
  * the platform edits any of them per language, and a language added here
  * starts from the source texts until translated. Machine translation fills
- * the same edits with `origin = machine` once its provider is chosen.
+ * the same edits with `origin = machine` (I6, `./machine`); saving a text
+ * here makes it manual, i.e. reviewed.
  */
 
 export type LanguageActor = Readonly<{
@@ -233,7 +234,7 @@ export async function updateLanguage(
 
 export const TextsQuery = z.object({
   search: z.string().trim().max(100).optional(),
-  filter: z.enum(["all", "edited", "missing"]).default("all"),
+  filter: z.enum(["all", "edited", "missing", "machine"]).default("all"),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
   size: z.coerce.number().int().min(10).max(200).default(50),
 });
@@ -280,7 +281,9 @@ export async function listTexts(
         ? row.edit !== null
         : q.filter === "missing"
           ? row.edit === null && row.system === null
-          : true,
+          : q.filter === "machine"
+            ? row.origin === "machine"
+            : true,
     )
     .filter(
       (row) =>
@@ -335,10 +338,7 @@ export async function saveText(
   }
   // The dashboard fills the same arguments; a lost {count} would break it.
   const expected = messageArguments(source);
-  if (
-    !balancedBraces(value) ||
-    messageArguments(value).join() !== expected.join()
-  ) {
+  if (!keepsMessageArguments(source, value)) {
     throw invalid(
       expected.length
         ? `Mantenha as variáveis do texto original: ${expected.map((a) => `{${a}}`).join(", ")}.`

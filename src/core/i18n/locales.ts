@@ -154,3 +154,15 @@ export function balancedBraces(text: string): boolean {
   }
   return depth === 0;
 }
+
+/**
+ * A translation keeps the ICU arguments of its source and balanced braces
+ * (I1 manual edits, I6 machine translation): the dashboard fills the same
+ * arguments, and a lost `{count}` would break the text.
+ */
+export function keepsMessageArguments(source: string, text: string): boolean {
+  return (
+    balancedBraces(text) &&
+    messageArguments(text).join() === messageArguments(source).join()
+  );
+}

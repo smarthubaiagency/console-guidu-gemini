@@ -10,7 +10,10 @@ import {
   deletePartnerLegalTranslationAction,
   publishPartnerLegalAction,
   savePartnerLegalTranslationAction,
+  translatePartnerLegalAction,
 } from "@/core/legal/actions";
+import { machineTranslationConfigured } from "@/core/i18n/machine/provider";
+import { latestLegalTranslationRuns } from "@/core/legal/machine";
 import {
   legalTranslationLanguages,
   listLegalDocuments,
@@ -31,16 +34,18 @@ export default async function PartnerLegalPage() {
   if (!partnerGrants(membership.role)("partner.legal.manage")) {
     return <ModuleNotice variant="denied" />;
   }
-  const { documents, languages, translations } = await withIdentityContext(
-    prisma,
-    identity.userId,
-    async (tx) => ({
-      documents: await listLegalDocuments(tx, partner.partnerId),
-      languages: await legalTranslationLanguages(tx),
-      translations: await listPartnerLegalTranslations(tx, partner.partnerId),
-    }),
-    { partnerId: partner.partnerId },
-  );
+  const { documents, languages, translations, runs } =
+    await withIdentityContext(
+      prisma,
+      identity.userId,
+      async (tx) => ({
+        documents: await listLegalDocuments(tx, partner.partnerId),
+        languages: await legalTranslationLanguages(tx),
+        translations: await listPartnerLegalTranslations(tx, partner.partnerId),
+        runs: await latestLegalTranslationRuns(tx, partner.partnerId),
+      }),
+      { partnerId: partner.partnerId },
+    );
   const t = await getTranslations("partnerConsole");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -58,6 +63,11 @@ export default async function PartnerLegalPage() {
         translationActions={{
           save: savePartnerLegalTranslationAction,
           remove: deletePartnerLegalTranslationAction,
+          machine: {
+            action: translatePartnerLegalAction,
+            configured: machineTranslationConfigured(),
+            runs,
+          },
         }}
       />
     </div>

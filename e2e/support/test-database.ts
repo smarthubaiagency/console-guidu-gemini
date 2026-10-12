@@ -325,6 +325,9 @@ export async function startTestDatabase(
             WORKER_DATABASE_URL: `${url}?pgbouncer=true&connection_limit=2`,
             WORKER_CONCURRENCY: "1",
             GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
+            // Deterministic machine translation (I6); never the real provider.
+            TRANSLATION_PROVIDER: "fake",
+            TRANSLATION_ANTHROPIC_API_KEY: "",
           },
           stdio: "ignore",
         },

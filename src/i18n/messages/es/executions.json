@@ -30,6 +30,7 @@
   },
   "errors": {
     "invalidJobData": "Datos del job no válidos.",
-    "onlyFailedRetry": "Solo las ejecuciones con fallo pueden reprocesarse."
+    "onlyFailedRetry": "Solo las ejecuciones con fallo pueden reprocesarse.",
+    "alreadyRunning": "Ya hay una ejecución en curso para este elemento."
   }
 }

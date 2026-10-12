@@ -22,6 +22,7 @@ import {
   publishLegalDocument,
   saveLegalTranslation,
 } from "./service";
+import { requestLegalTranslation } from "./machine";
 
 export type LegalActionState = {
   success?: boolean;
@@ -278,4 +279,40 @@ export async function deletePartnerLegalTranslationAction(
   formData: FormData,
 ): Promise<LegalActionState> {
   return removeTranslation("partner", formData);
+}
+
+async function machineTranslation(
+  scope: LegalScope,
+  formData: FormData,
+): Promise<LegalActionState> {
+  try {
+    await asPublisher(scope, (tx, actor, partnerId) =>
+      requestLegalTranslation(
+        tx,
+        actor,
+        partnerId,
+        text(formData, "documentId"),
+      ),
+    );
+    const t = await getTranslations("legal");
+    return { success: true, message: t("machine.queued") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** Queues the machine translation of a house partner version (I6). */
+export async function translatePlatformLegalAction(
+  _prev: LegalActionState,
+  formData: FormData,
+): Promise<LegalActionState> {
+  return machineTranslation("platform", formData);
+}
+
+/** Queues the machine translation of a version of the host's partner (I6). */
+export async function translatePartnerLegalAction(
+  _prev: LegalActionState,
+  formData: FormData,
+): Promise<LegalActionState> {
+  return machineTranslation("partner", formData);
 }

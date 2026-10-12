@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { actionFailure } from "./errors";
+import { requestTextsTranslation } from "./machine/requests";
 
 import {
   addLanguage,
@@ -127,6 +128,25 @@ export async function saveTextAction(
       message: (await getTranslations("languages"))(
         reset ? "textReset" : "textSaved",
       ),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** Queues the machine translation of the missing texts (I6). */
+export async function translateMissingTextsAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const actor = await platformActor();
+    const code = str(formData, "code") ?? "";
+    await runAsActor(actor, (tx) => requestTextsTranslation(tx, actor, code));
+    revalidatePath(`/platform/settings/languages/${code}`);
+    return {
+      success: true,
+      message: (await getTranslations("languages"))("auto.queued"),
     };
   } catch (err) {
     return failure(err);

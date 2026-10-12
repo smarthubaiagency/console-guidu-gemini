@@ -152,7 +152,8 @@ export type LegalPublisher = Readonly<{
   partnerRole?: PartnerRoleKey | null;
 }>;
 
-function canPublish(actor: LegalPublisher): boolean {
+/** Platform owner/operations or partner owner/admin (legal.manage). */
+export function canPublishLegal(actor: LegalPublisher): boolean {
   return Boolean(
     (actor.platformRole &&
       hasPlatformRolePermission(
@@ -200,7 +201,7 @@ export async function publishLegalDocument(
     locale?: string;
   }>,
 ): Promise<{ version: number }> {
-  if (!canPublish(actor)) throw new PermissionDeniedError();
+  if (!canPublishLegal(actor)) throw new PermissionDeniedError();
   const parsed = PublishSchema.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -403,7 +404,7 @@ export async function saveLegalTranslation(
   locale: string,
   input: Readonly<{ title: string; body: string }>,
 ): Promise<LegalTranslationView> {
-  if (!canPublish(actor)) throw new PermissionDeniedError();
+  if (!canPublishLegal(actor)) throw new PermissionDeniedError();
   const parsed = TranslationSchema.safeParse({ ...input, locale });
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -463,7 +464,7 @@ export async function deleteLegalTranslation(
   documentId: string,
   locale: string,
 ): Promise<boolean> {
-  if (!canPublish(actor)) throw new PermissionDeniedError();
+  if (!canPublishLegal(actor)) throw new PermissionDeniedError();
   const document = await translatableDocument(tx, partnerId, documentId);
   const { count } = await tx.partnerLegalDocumentTranslation.deleteMany({
     where: { documentId, locale },

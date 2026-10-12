@@ -63,5 +63,11 @@
     "remove": "Eliminar traducción",
     "saved": "Traducción ({locale}) guardada.",
     "removed": "Traducción ({locale}) eliminada."
+  },
+  "machine": {
+    "button": "Traducir automáticamente",
+    "hint": "Completa las traducciones que faltan (idiomas activos) con traducción automática; las traducciones existentes no cambian.",
+    "queued": "Traducción automática solicitada. Se ejecuta en segundo plano; recarga la página para ver el avance.",
+    "tooLong": "Documento demasiado largo para la traducción automática."
   }
 }
