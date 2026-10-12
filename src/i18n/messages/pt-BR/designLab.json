@@ -1,0 +1,34 @@
+{
+  "title": "Padrões de interface",
+  "subtitle": "Janela de edição e chat em gaveta interna (ADR 0015). Use para aprovar o modelo e como referência ao criar telas.",
+  "sampleNotice": "Página de demonstração: os dados são exemplos e nada é gravado.",
+  "demos": "Demonstrações",
+  "demo": {
+    "edit": "Edição",
+    "chat": "Chat",
+    "simple": "Sem coluna da esquerda"
+  },
+  "list": "Contatos de exemplo",
+  "field": {
+    "name": "Nome",
+    "email": "E-mail",
+    "city": "Cidade",
+    "notes": "Observações"
+  },
+  "edit": "Editar",
+  "editTitle": "Editar contato",
+  "cancel": "Cancelar",
+  "save": "Salvar",
+  "chatTitle": "Assistente",
+  "chatSubtitle": "Exemplo de conversa",
+  "chatHello": "Olá! Sou um assistente de exemplo. Use o botão de expandir para ver a janela larga, que passa por cima do conteúdo.",
+  "chatEcho": "Recebi. Nesta página nada é enviado nem gravado.",
+  "chatInput": "Escreva uma mensagem",
+  "chatSend": "Enviar",
+  "chatHint": "A janela de 350 px empurra o conteúdo. Expandida, com 700 px, ela passa por cima dele, crescendo para a esquerda.",
+  "openChat": "Abrir o assistente",
+  "simpleTitle": "Janela simples",
+  "simpleHint": "Sem a coluna da esquerda, o conteúdo ocupa toda a área e a janela abre à direita.",
+  "openPanel": "Abrir a janela",
+  "simpleBody": "Conteúdo da janela. Esc fecha e o foco volta para o botão que a abriu."
+}

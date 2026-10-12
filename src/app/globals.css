@@ -147,6 +147,9 @@
 
   /* Fixed sizes */
   --container-email: 140px;
+  /* Workbench drawer (ADR 0015): default pushes the content, wide covers it */
+  --container-drawer: 350px;
+  --container-drawer-wide: 700px;
 }
 
 [data-theme="dark"] {
@@ -206,6 +209,19 @@
 /* Viewport-height panel (agent chat). */
 @utility h-panel {
   height: calc(100dvh - --spacing(48));
+}
+
+/* Workbench (ADR 0015): the content area of the shell below its 64px
+   header, on phones and inside the inset panel (8px margins) from md up. */
+@utility h-workbench {
+  height: calc(100svh - --spacing(16));
+}
+@utility h-workbench-inset {
+  height: calc(100svh - --spacing(16) - --spacing(4));
+}
+/* Room for the default drawer, so it pushes the content instead of covering. */
+@utility pr-drawer {
+  padding-right: var(--container-drawer);
 }
 
 /* Native progress bar styled with tokens (replaces an inline width style). */

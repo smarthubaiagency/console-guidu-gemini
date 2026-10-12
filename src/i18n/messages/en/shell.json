@@ -10,5 +10,9 @@
   "toggleItem": "Open or close {item}",
   "userMenu": "Account menu",
   "breadcrumb": "Page path",
-  "platformTitle": "{app} Admin"
+  "platformTitle": "{app} Admin",
+  "workbenchList": "List",
+  "workbenchExpand": "Expand the window",
+  "workbenchCollapse": "Shrink the window",
+  "workbenchClose": "Close the window"
 }
