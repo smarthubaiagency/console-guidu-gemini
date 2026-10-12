@@ -229,7 +229,10 @@ describeDatabase("F4a: REST API v1", requiredVars, () => {
     ).toBe(404);
     const noScope = await call("listWorkspaceMembers", { key: raw });
     expect(noScope.status).toBe(403);
-    expect(noScope.body.error.message).toContain("members:read");
+    // The API always answers in English (I5).
+    expect(noScope.body.error.message).toBe(
+      "This key does not have the members:read scope.",
+    );
   });
 
   it("stops a revoked key and a removed member at the next request (AC03)", async () => {

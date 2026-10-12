@@ -5,7 +5,10 @@
   },
   "document": {
     "metadataTitle": "Legal documents",
-    "meta": "{kind} · version {version} · {date}"
+    "meta": "{kind} · version {version} · {date}",
+    "translatedNote": "Translation for reading. In case of discrepancy, the original version prevails.",
+    "showOriginal": "View the original",
+    "showTranslation": "View the translation"
   },
   "accept": {
     "metadataTitle": "Terms acceptance",
@@ -14,7 +17,8 @@
     "meta": "{kind} · version {version} · <link>open in a new tab</link>",
     "agree": "I have read and accept the documents above.",
     "submit": "Accept and continue",
-    "submitting": "Saving..."
+    "submitting": "Saving...",
+    "translatedNote": "Translation for reading; the original version prevails."
   },
   "editor": {
     "version": "{kind} · version {version}",
@@ -26,7 +30,8 @@
     "document": "Document",
     "title": "Title",
     "body": "Text",
-    "requiresAcceptanceLabel": "Relevant change: require new acceptance (the first version always does)"
+    "requiresAcceptanceLabel": "Relevant change: require new acceptance (the first version always does)",
+    "originalLocale": "Language of the original"
   },
   "published": "Version {version} published.",
   "errors": {
@@ -34,12 +39,29 @@
     "mustAgree": "Check the box to accept the documents.",
     "invalidInput": "Invalid data.",
     "titleRequired": "Enter the title.",
-    "bodyRequired": "Enter the text."
+    "bodyRequired": "Enter the text.",
+    "unknownLocale": "Language unavailable.",
+    "originalLocale": "This is the language of the original; to change it, publish a new version."
   },
   "platform": {
     "metaTitle": "Terms and privacy (Admin)",
     "breadcrumb": "Terms and privacy",
     "title": "Platform terms and privacy",
     "description": "They apply to direct customers, on the platform domains."
+  },
+  "translations": {
+    "summary": "Translations · {done} of {total}",
+    "hint": "Readers see the translation in their language; without it, the original. The original version prevails, and acceptance applies to the version in any language.",
+    "original": "language of the original",
+    "manual": "manual translation",
+    "machine": "machine translation",
+    "missing": "no translation",
+    "draft": "draft",
+    "edit": "Edit",
+    "add": "Translate",
+    "save": "Save translation",
+    "remove": "Remove translation",
+    "saved": "Translation ({locale}) saved.",
+    "removed": "Translation ({locale}) removed."
   }
 }

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { mergeMessages, type Messages } from "@/core/i18n/locales";
+import { MESSAGE_FILES } from "@/i18n/messages";
+
 import { notify } from "./notify";
 import { escapeHtml, renderNotification } from "./templates";
 import type { NotificationEvent } from "./types";
@@ -128,5 +131,101 @@ describe("billing notices (F3c)", () => {
     );
     expect(message.subject).toBe("Assinatura suspensa: Cliente <X>");
     expect(message.text).toContain("leitura e exportação");
+  });
+});
+
+describe("languages of the recipient (I5)", () => {
+  const notice = {
+    type: "billing.subscription.past_due" as const,
+    recipientEmail: "cobranca@agencia-b.com.br",
+    idempotencyKey: "k",
+    data: {
+      partnerName: "Agência B",
+      organizationName: "Cliente <X>",
+      periodEnd: new Date("2026-10-01T00:00:00Z"),
+      nextStepOn: new Date("2026-10-11T00:00:00Z"),
+      billingUrl: "https://agencia-b.com.br/admin/billing",
+    },
+  };
+
+  it("renders the invitation in English, dates in the English format", () => {
+    const message = renderNotification(event, brand, "en");
+    expect(message.subject).toBe(
+      'Invitation to Cliente "X" & Cia on Agência <B>',
+    );
+    expect(message.text).toContain("You have been invited to join");
+    // ICU may separate "PM" with a narrow no-break space.
+    expect(message.text).toMatch(
+      /The invitation is valid until 10\/12\/26, 12:00\sPM\./,
+    );
+    expect(message.text).toContain("Accept invitation: https://");
+    expect(message.text).toContain("Support: suporte@agencia-b.com.br");
+    expect(message.text).toContain("Help: https://agencia-b.com.br/ajuda");
+    expect(message.html).toContain("Cliente &quot;X&quot; &amp; Cia");
+  });
+
+  it("renders the billing notices in Spanish", () => {
+    const pastDue = renderNotification(notice, brand, "es");
+    expect(pastDue.subject).toBe("Suscripción vencida: Cliente <X>");
+    expect(pastDue.text).toContain("Hola, Agência B.");
+    expect(pastDue.text).toContain("terminó el 1/10/26");
+    expect(pastDue.text).toContain("se suspenderá el 11/10/26");
+    expect(pastDue.text).toContain("Ver facturación: https://");
+    expect(pastDue.html).toContain("Cliente &lt;X&gt;");
+
+    const suspended = renderNotification(
+      {
+        ...notice,
+        type: "billing.subscription.suspended",
+        data: { ...notice.data, nextStepOn: null },
+      },
+      brand,
+      "es",
+    );
+    expect(suspended.subject).toBe("Suscripción suspendida: Cliente <X>");
+    expect(suspended.text).toContain("lectura y exportación");
+  });
+
+  it("renders the billing notices in English", () => {
+    const message = renderNotification(
+      { ...notice, data: { ...notice.data, nextStepOn: null } },
+      brand,
+      "en",
+    );
+    expect(message.subject).toBe("Subscription past due: Cliente <X>");
+    expect(message.text).toContain("ended on 10/1/26");
+    expect(message.text).toContain(
+      "Without a recorded payment, the subscription may be suspended.",
+    );
+  });
+
+  it("applies the platform edits and falls back to the source texts", () => {
+    const messages = mergeMessages(
+      MESSAGE_FILES["pt-BR"] as Messages,
+      MESSAGE_FILES.en as Messages,
+      { "notifications.pastDue.subject": "Overdue: {organization}" },
+    );
+    expect(renderNotification(notice, brand, "en", messages).subject).toBe(
+      "Overdue: Cliente <X>",
+    );
+    // A language added on the platform, without a file: Portuguese texts.
+    expect(renderNotification(notice, brand, "fr").subject).toBe(
+      "Assinatura em atraso: Cliente <X>",
+    );
+  });
+
+  it("keeps Portuguese by default and passes the language to notify", async () => {
+    expect(renderNotification(notice, brand).subject).toBe(
+      "Assinatura em atraso: Cliente <X>",
+    );
+    const send = vi
+      .fn()
+      .mockResolvedValue({ status: "sent", providerMessageId: "m1" });
+    await notify(notice, brand, { send }, { locale: "en" });
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Subscription past due: Cliente <X>",
+      }),
+    );
   });
 });

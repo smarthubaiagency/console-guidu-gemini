@@ -81,6 +81,7 @@ function notFound(): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: "Recurso não encontrado.",
+    messageKey: "apiErrors.notFound",
   });
 }
 
@@ -217,6 +218,8 @@ export async function handleApiRoute(
       throw new AppError({
         code: "forbidden",
         safeMessage: `Esta chave não tem o escopo ${route.scope}.`,
+        messageKey: "apiErrors.missingScope",
+        messageValues: { scope: route.scope },
         requestId,
       });
     }
@@ -257,6 +260,7 @@ export async function handleApiRoute(
         throw new AppError({
           code: "forbidden",
           safeMessage: "Escrita pela sessão só com JSON do próprio site.",
+          messageKey: "apiErrors.sessionWriteJsonOnly",
           requestId,
         });
       }
@@ -270,6 +274,7 @@ export async function handleApiRoute(
         throw new AppError({
           code: "invalid_input",
           safeMessage: "Corpo JSON inválido.",
+          messageKey: "apiErrors.invalidJson",
           requestId,
         });
       }
@@ -283,6 +288,7 @@ export async function handleApiRoute(
         throw new AppError({
           code: "invalid_input",
           safeMessage: "Parâmetros inválidos.",
+          messageKey: "apiErrors.invalidParameters",
           requestId,
         });
       }

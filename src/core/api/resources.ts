@@ -2,7 +2,10 @@ import type { PrismaClient } from "@prisma/client";
 
 import { loadCompanyContract } from "@/core/entitlements/contract";
 import { loadUsage } from "@/core/entitlements/usage";
+import { englishText, englishTranslator } from "@/core/i18n/english";
+import { moduleCatalog } from "@/core/i18n/modules";
 import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
+import { moduleStateLabelKey } from "@/core/module-runtime/state";
 import { Permissions } from "@/core/permissions/catalog";
 import { requireWorkspacePermission } from "@/core/permissions/guard";
 import { listUserWorkspaces } from "@/core/workspaces/navigation";
@@ -26,6 +29,9 @@ function ctxOf(call: ApiCall): RequestContext {
 export { decodeCursor, encodeCursor } from "./pagination";
 
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
+
+/** Module texts of the API, always in English (I5). */
+const englishCatalog = () => moduleCatalog(englishTranslator("moduleCatalog"));
 
 // ---------------------------------------------------------------------------
 // Routes
@@ -126,13 +132,17 @@ export async function listWorkspaceModules(
 ) {
   const ctx = ctxOf(call);
   const views = await loadWorkspaceModuleViews(prisma, ctx, "");
+  const catalog = englishCatalog();
   return {
     data: views.modules.map((m) => ({
       moduleKey: m.moduleKey,
-      displayName: m.displayName,
+      displayName: catalog.name(m.moduleKey, m.displayName),
       releaseStatus: m.releaseStatus,
       state: m.state,
-      stateLabel: m.stateLabel,
+      stateLabel:
+        englishText(
+          `modules.states.${moduleStateLabelKey(m.state, m.releaseStatus)}`,
+        ) ?? m.stateLabel,
     })),
   };
 }
@@ -142,7 +152,16 @@ export async function getWorkspaceUsage(prisma: PrismaClient, call: ApiCall) {
   return withContext(prisma, ctx, async (tx) => {
     await requireWorkspacePermission(tx, ctx, Permissions.WORKSPACE_READ);
     const usage = await loadUsage(tx, ctx);
-    return { data: usage.rows };
+    const catalog = englishCatalog();
+    return {
+      data: usage.rows.map((row) => ({
+        ...row,
+        label:
+          (row.key === "core.seats"
+            ? englishText("usage.rows.coreSeats")
+            : catalog.findQuota(row.key)?.label) ?? row.label,
+      })),
+    };
   });
 }
 
@@ -270,6 +289,7 @@ export async function getWorkspaceExecution(
       throw new AppError({
         code: "not_found",
         safeMessage: "Execução não encontrada.",
+        messageKey: "apiErrors.executionNotFound",
       });
     }
     return {

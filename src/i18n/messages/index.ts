@@ -3,6 +3,7 @@
 import ptBR_account from "./pt-BR/account.json";
 import ptBR_aiAgents from "./pt-BR/aiAgents.json";
 import ptBR_api from "./pt-BR/api.json";
+import ptBR_apiErrors from "./pt-BR/apiErrors.json";
 import ptBR_auth from "./pt-BR/auth.json";
 import ptBR_billing from "./pt-BR/billing.json";
 import ptBR_brand from "./pt-BR/brand.json";
@@ -22,6 +23,7 @@ import ptBR_mcp from "./pt-BR/mcp.json";
 import ptBR_moduleCatalog from "./pt-BR/moduleCatalog.json";
 import ptBR_modules from "./pt-BR/modules.json";
 import ptBR_nav from "./pt-BR/nav.json";
+import ptBR_notifications from "./pt-BR/notifications.json";
 import ptBR_operations from "./pt-BR/operations.json";
 import ptBR_overview from "./pt-BR/overview.json";
 import ptBR_partnerConsole from "./pt-BR/partnerConsole.json";
@@ -41,6 +43,7 @@ import ptBR_workspace from "./pt-BR/workspace.json";
 import en_account from "./en/account.json";
 import en_aiAgents from "./en/aiAgents.json";
 import en_api from "./en/api.json";
+import en_apiErrors from "./en/apiErrors.json";
 import en_auth from "./en/auth.json";
 import en_billing from "./en/billing.json";
 import en_brand from "./en/brand.json";
@@ -60,6 +63,7 @@ import en_mcp from "./en/mcp.json";
 import en_moduleCatalog from "./en/moduleCatalog.json";
 import en_modules from "./en/modules.json";
 import en_nav from "./en/nav.json";
+import en_notifications from "./en/notifications.json";
 import en_operations from "./en/operations.json";
 import en_overview from "./en/overview.json";
 import en_partnerConsole from "./en/partnerConsole.json";
@@ -79,6 +83,7 @@ import en_workspace from "./en/workspace.json";
 import es_account from "./es/account.json";
 import es_aiAgents from "./es/aiAgents.json";
 import es_api from "./es/api.json";
+import es_apiErrors from "./es/apiErrors.json";
 import es_auth from "./es/auth.json";
 import es_billing from "./es/billing.json";
 import es_brand from "./es/brand.json";
@@ -98,6 +103,7 @@ import es_mcp from "./es/mcp.json";
 import es_moduleCatalog from "./es/moduleCatalog.json";
 import es_modules from "./es/modules.json";
 import es_nav from "./es/nav.json";
+import es_notifications from "./es/notifications.json";
 import es_operations from "./es/operations.json";
 import es_overview from "./es/overview.json";
 import es_partnerConsole from "./es/partnerConsole.json";
@@ -121,6 +127,7 @@ export const MESSAGE_FILES = {
     account: ptBR_account,
     aiAgents: ptBR_aiAgents,
     api: ptBR_api,
+    apiErrors: ptBR_apiErrors,
     auth: ptBR_auth,
     billing: ptBR_billing,
     brand: ptBR_brand,
@@ -140,6 +147,7 @@ export const MESSAGE_FILES = {
     moduleCatalog: ptBR_moduleCatalog,
     modules: ptBR_modules,
     nav: ptBR_nav,
+    notifications: ptBR_notifications,
     operations: ptBR_operations,
     overview: ptBR_overview,
     partnerConsole: ptBR_partnerConsole,
@@ -161,6 +169,7 @@ export const MESSAGE_FILES = {
     account: en_account,
     aiAgents: en_aiAgents,
     api: en_api,
+    apiErrors: en_apiErrors,
     auth: en_auth,
     billing: en_billing,
     brand: en_brand,
@@ -180,6 +189,7 @@ export const MESSAGE_FILES = {
     moduleCatalog: en_moduleCatalog,
     modules: en_modules,
     nav: en_nav,
+    notifications: en_notifications,
     operations: en_operations,
     overview: en_overview,
     partnerConsole: en_partnerConsole,
@@ -201,6 +211,7 @@ export const MESSAGE_FILES = {
     account: es_account,
     aiAgents: es_aiAgents,
     api: es_api,
+    apiErrors: es_apiErrors,
     auth: es_auth,
     billing: es_billing,
     brand: es_brand,
@@ -220,6 +231,7 @@ export const MESSAGE_FILES = {
     moduleCatalog: es_moduleCatalog,
     modules: es_modules,
     nav: es_nav,
+    notifications: es_notifications,
     operations: es_operations,
     overview: es_overview,
     partnerConsole: es_partnerConsole,
@@ -243,6 +255,7 @@ export const NAMESPACES = [
   "account",
   "aiAgents",
   "api",
+  "apiErrors",
   "auth",
   "billing",
   "brand",
@@ -262,6 +275,7 @@ export const NAMESPACES = [
   "moduleCatalog",
   "modules",
   "nav",
+  "notifications",
   "operations",
   "overview",
   "partnerConsole",

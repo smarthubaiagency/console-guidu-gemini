@@ -120,15 +120,27 @@ const ISSUE_KEYS: Readonly<Record<string, string>> = {
   "Nada para alterar.": "crm.errors.nothingToChange",
 };
 
-function invalid(error: z.ZodError): AppError {
+/** Shared with ../../proposals.ts. */
+export function invalid(error: z.ZodError): AppError {
   const issue = error.issues[0];
-  const messageKey = issue
-    ? ISSUE_KEYS[issue.message]
-    : "crm.errors.contactInvalid";
+  if (!issue) {
+    return new AppError({
+      code: "invalid_input",
+      safeMessage: "Dados do contato inválidos.",
+      messageKey: "crm.errors.contactInvalid",
+    });
+  }
+  const messageKey = ISSUE_KEYS[issue.message];
   return new AppError({
     code: "invalid_input",
-    safeMessage: issue?.message ?? "Dados do contato inválidos.",
-    ...(messageKey ? { messageKey } : {}),
+    safeMessage: issue.message,
+    // zod's own messages (English) go out as they are.
+    ...(messageKey
+      ? { messageKey }
+      : {
+          messageKey: "apiErrors.validationIssue",
+          messageValues: { message: issue.message },
+        }),
   });
 }
 

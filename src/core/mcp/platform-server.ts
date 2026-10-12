@@ -35,6 +35,7 @@ import {
   roleAllowsScope,
 } from "@/core/platform-api/scopes";
 import { appLog } from "@/lib/telemetry/log";
+import { englishErrorMessage } from "@/core/i18n/english";
 import { toSafeError } from "@/shared/errors";
 
 import { originAllowed } from "./server";
@@ -50,7 +51,7 @@ import { originAllowed } from "./server";
 
 const SERVER_INFO = { name: "guidu-platform", version: "1.0.0" } as const;
 const INSTRUCTIONS =
-  "Ferramentas de leitura da plataforma GUIDU: empresas clientes com dados comerciais mínimos e a saúde da operação, sem conteúdo de cliente. Nenhuma ferramenta muda dados.";
+  "Read tools of the GUIDU platform: customer companies with minimal commercial data and the health of the operation, without customer content. No tool changes data.";
 
 type PlatformTool = Readonly<{
   name: string;
@@ -69,17 +70,17 @@ type PlatformTool = Readonly<{
 export const MCP_PLATFORM_TOOLS: readonly PlatformTool[] = [
   {
     name: "list_customers",
-    title: "Empresas clientes",
+    title: "Customer companies",
     description:
-      "Empresas clientes, das mais recentes: situação, assentos, número de workspaces e plano (plano só para papéis que leem cobrança).",
+      "Customer companies, newest first: status, seats, number of workspaces and plan (plan only for roles that read billing).",
     scope: "admin:customers:read",
     input: z
       .object({
         limit: CustomerListQuery.shape.limit.describe(
-          "Itens por página (1 a 100, padrão 25).",
+          "Items per page (1 to 100, default 25).",
         ),
         cursor: CustomerListQuery.shape.cursor.describe(
-          "Cursor devolvido pela página anterior.",
+          "Cursor returned by the previous page.",
         ),
       })
       .strict(),
@@ -94,11 +95,11 @@ export const MCP_PLATFORM_TOOLS: readonly PlatformTool[] = [
   },
   {
     name: "get_customer_summary",
-    title: "Resumo de uma empresa",
-    description: "Resumo comercial mínimo de uma empresa cliente, pelo id.",
+    title: "Company summary",
+    description: "Minimal commercial summary of a customer company, by id.",
     scope: "admin:customers:read",
     input: z
-      .object({ customerId: z.string().uuid().describe("Id da empresa.") })
+      .object({ customerId: z.string().uuid().describe("Company id.") })
       .strict(),
     output: PlatformCustomer,
     run: async (prisma, actor, input) =>
@@ -106,9 +107,9 @@ export const MCP_PLATFORM_TOOLS: readonly PlatformTool[] = [
   },
   {
     name: "get_platform_health",
-    title: "Saúde da plataforma",
+    title: "Platform health",
     description:
-      "Workers, filas e totais das últimas 24 horas, com o aviso de métricas antigas.",
+      "Workers, queues and totals of the last 24 hours, with the stale metrics warning.",
     scope: "admin:operations:read",
     input: z.object({}).strict(),
     output: PlatformHealth,
@@ -116,17 +117,17 @@ export const MCP_PLATFORM_TOOLS: readonly PlatformTool[] = [
   },
   {
     name: "list_failed_jobs",
-    title: "Jobs com falha",
+    title: "Failed jobs",
     description:
-      "Jobs com falha dos últimos dias, com o erro seguro registrado pelo worker; nunca o conteúdo do job.",
+      "Failed jobs of the last days, with the safe error recorded by the worker; never the job content.",
     scope: "admin:operations:read",
     input: z
       .object({
         limit: FailedJobsQuery.shape.limit.describe(
-          "Itens (1 a 100, padrão 25).",
+          "Items (1 to 100, default 25).",
         ),
         days: FailedJobsQuery.shape.days.describe(
-          "Janela em dias (1 a 30, padrão 7).",
+          "Window in days (1 to 30, default 7).",
         ),
       })
       .strict(),
@@ -197,13 +198,13 @@ export async function handlePlatformMcpRequest(
     return jsonError(
       405,
       "method_not_allowed",
-      "Use POST (Streamable HTTP sem sessão).",
+      "Use POST (Streamable HTTP without session).",
       requestId,
       { allow: "POST" },
     );
   }
   if (!originAllowed(request)) {
-    return jsonError(403, "forbidden", "Origem não permitida.", requestId);
+    return jsonError(403, "forbidden", "Origin not allowed.", requestId);
   }
 
   let decision: RateDecision | null = null;
@@ -227,7 +228,7 @@ export async function handlePlatformMcpRequest(
       return jsonError(
         429,
         "rate_limited",
-        "Limite de requisições atingido. Tente de novo em instantes.",
+        "Rate limit reached. Try again shortly.",
         requestId,
         rateLimitHeaders(decision),
       );
@@ -282,7 +283,7 @@ export async function handlePlatformMcpRequest(
               content: [
                 {
                   type: "text" as const,
-                  text: `${safe.safeMessage} (requestId ${safe.requestId})`,
+                  text: `${englishErrorMessage(safe)} (requestId ${safe.requestId})`,
                 },
               ],
             };
@@ -325,7 +326,7 @@ export async function handlePlatformMcpRequest(
     return jsonError(
       status,
       safe.code,
-      safe.safeMessage,
+      englishErrorMessage(safe),
       safe.requestId,
       status === 401
         ? { "www-authenticate": 'Bearer realm="guidu-platform-mcp"' }

@@ -69,10 +69,10 @@ const NoInput = z.object({}).strict();
 const PageInput = z
   .object({
     limit: PageQuery.shape.limit.describe(
-      "Itens por página (1 a 100, padrão 25).",
+      "Items per page (1 to 100, default 25).",
     ),
     cursor: PageQuery.shape.cursor.describe(
-      "Cursor devolvido pela página anterior.",
+      "Cursor returned by the previous page.",
     ),
   })
   .strict();
@@ -149,7 +149,7 @@ async function summarize(
 const UcpMeta = z
   .looseObject({ "ucp-agent": z.looseObject({}).optional() })
   .optional()
-  .describe("Metadados do UCP, por exemplo meta['ucp-agent'].profile.");
+  .describe("UCP metadata, for example meta['ucp-agent'].profile.");
 
 function catalogTool(
   ctxCall: ApiCall,
@@ -175,8 +175,7 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   {
     name: "get_workspace",
     title: "Workspace",
-    description:
-      "Dados do workspace desta chave: nome, slug, situação e empresa.",
+    description: "The workspace of this key: name, slug, status and company.",
     scope: "workspace:read",
     permission: Permissions.WORKSPACE_READ,
     risk: "read",
@@ -186,9 +185,9 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "get_workspace_overview",
-    title: "Resumo do workspace",
+    title: "Workspace overview",
     description:
-      "Resumo do workspace: membros ativos, módulos habilitados, execuções das últimas 24 horas e contrato.",
+      "Workspace overview: active members, enabled modules, executions of the last 24 hours and contract.",
     scope: "workspace:read",
     permission: Permissions.WORKSPACE_READ,
     risk: "read",
@@ -198,8 +197,8 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "list_enabled_modules",
-    title: "Módulos do workspace",
-    description: "Módulos visíveis no workspace e o estado de cada um.",
+    title: "Workspace modules",
+    description: "Modules visible in the workspace and the state of each one.",
     scope: "modules:read",
     permission: Permissions.WORKSPACE_READ,
     risk: "read",
@@ -211,8 +210,8 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "get_module_status",
-    title: "Estado de um módulo",
-    description: "Estado de um módulo no workspace, pela chave do módulo.",
+    title: "Module status",
+    description: "State of one module in the workspace, by module key.",
     scope: "modules:read",
     permission: Permissions.WORKSPACE_READ,
     risk: "read",
@@ -221,7 +220,7 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
         moduleKey: z
           .string()
           .regex(/^[a-z][a-z0-9-]{0,47}$/)
-          .describe("Chave do módulo, por exemplo hello-world."),
+          .describe("Module key, for example hello-world."),
       })
       .strict(),
     output: ModuleStatus,
@@ -236,6 +235,7 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
         throw new AppError({
           code: "not_found",
           safeMessage: "Módulo não encontrado.",
+          messageKey: "modules.errors.notFound",
         });
       }
       return found;
@@ -243,8 +243,8 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "get_usage_summary",
-    title: "Consumo e limites",
-    description: "Consumo medido contra os limites do plano, sem conteúdo.",
+    title: "Usage and limits",
+    description: "Measured usage against the plan limits, without content.",
     scope: "usage:read",
     permission: Permissions.WORKSPACE_READ,
     risk: "read",
@@ -256,9 +256,8 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "list_executions",
-    title: "Execuções",
-    description:
-      "Execuções em segundo plano, das mais recentes para as antigas.",
+    title: "Executions",
+    description: "Background executions, newest first.",
     scope: "executions:read",
     permission: Permissions.WORKSPACE_READ,
     risk: "read",
@@ -269,13 +268,13 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "get_execution_status",
-    title: "Situação de uma execução",
-    description: "Situação, tentativas e erro seguro de uma execução, pelo id.",
+    title: "Execution status",
+    description: "Status, attempts and safe error of one execution, by id.",
     scope: "executions:read",
     permission: Permissions.WORKSPACE_READ,
     risk: "read",
     input: z
-      .object({ executionId: z.string().uuid().describe("Id da execução.") })
+      .object({ executionId: z.string().uuid().describe("Execution id.") })
       .strict(),
     output: Execution,
     run: (prisma, call, input) =>
@@ -289,9 +288,9 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "list_workspace_members",
-    title: "Membros",
+    title: "Members",
     description:
-      "Membros do workspace com dados mínimos (id, papel, situação, entrada).",
+      "Workspace members with minimal data (id, role, status, joined at).",
     scope: "members:read",
     permission: Permissions.WORKSPACE_MEMBERS_READ,
     risk: "read",
@@ -302,21 +301,21 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "list_contacts",
-    title: "Contatos do CRM",
+    title: "CRM contacts",
     description:
-      "Contatos do módulo CRM, dos mais recentes; busca opcional por nome, e-mail ou empresa.",
+      "Contacts of the CRM module, newest first; optional search by name, email or company.",
     scope: "crm:read",
     permission: "crm.contacts.read",
     moduleKey: "crm",
     risk: "read",
     input: z
       .object({
-        search: z.string().max(100).optional().describe("Texto a buscar."),
+        search: z.string().max(100).optional().describe("Text to search for."),
         limit: PageQuery.shape.limit.describe(
-          "Itens por página (1 a 100, padrão 25).",
+          "Items per page (1 to 100, default 25).",
         ),
         cursor: PageQuery.shape.cursor.describe(
-          "Cursor devolvido pela página anterior.",
+          "Cursor returned by the previous page.",
         ),
       })
       .strict(),
@@ -331,14 +330,14 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "get_contact",
-    title: "Contato do CRM",
-    description: "Um contato do módulo CRM, pelo id.",
+    title: "CRM contact",
+    description: "One contact of the CRM module, by id.",
     scope: "crm:read",
     permission: "crm.contacts.read",
     moduleKey: "crm",
     risk: "read",
     input: z
-      .object({ contactId: z.string().uuid().describe("Id do contato.") })
+      .object({ contactId: z.string().uuid().describe("Contact id.") })
       .strict(),
     output: Contact,
     run: (prisma, call, input) => {
@@ -350,10 +349,10 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "search_catalog",
-    title: "Buscar no catálogo (UCP)",
+    title: "Search the catalog (UCP)",
     description:
-      "UCP search_catalog: busca no Portfólio por texto, categorias e faixa de preço (centavos), com paginação por cursor. " +
-      "Devolve produtos no formato UCP; só itens ativos, públicos e com preço.",
+      "UCP search_catalog: searches the Portfolio by text, categories and price range (minor units, e.g. cents), with cursor pagination. " +
+      "Returns products in the UCP format; only active, public items with a price.",
     scope: "portfolio:read",
     permission: "portfolio.items.read",
     moduleKey: "portfolio",
@@ -363,20 +362,20 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
         meta: UcpMeta,
         catalog: z
           .looseObject({
-            query: z.string().max(200).optional().describe("Texto livre."),
+            query: z.string().max(200).optional().describe("Free text."),
             filters: z
               .looseObject({})
               .optional()
               .describe(
-                "categories (lista de valores) e price { min, max } em centavos.",
+                "categories (list of values) and price { min, max } in minor units (cents).",
               ),
             pagination: z
               .looseObject({})
               .optional()
-              .describe("cursor e limit (até 50)."),
+              .describe("cursor and limit (up to 50)."),
           })
           .optional()
-          .describe("Pedido de busca do UCP."),
+          .describe("UCP search request."),
       })
       .strict(),
     output: UcpSearchResponse,
@@ -385,9 +384,9 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "lookup_catalog",
-    title: "Consultar itens do catálogo (UCP)",
+    title: "Look up catalog items (UCP)",
     description:
-      "UCP lookup_catalog: até 50 ids de produto, variante, SKU ou handle. Cada variante traz inputs com o id do pedido e o tipo (exact ou featured); os não encontrados voltam em messages.",
+      "UCP lookup_catalog: up to 50 product, variant, SKU or handle ids. Each variant carries inputs with the requested id and the match type (exact or featured); the ones not found come back in messages.",
     scope: "portfolio:read",
     permission: "portfolio.items.read",
     moduleKey: "portfolio",
@@ -397,10 +396,10 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
         meta: UcpMeta,
         catalog: z
           .looseObject({
-            ids: z.array(z.string()).min(1).describe("Ids a consultar."),
+            ids: z.array(z.string()).min(1).describe("Ids to look up."),
             filters: z.looseObject({}).optional(),
           })
-          .describe("Pedido de consulta do UCP."),
+          .describe("UCP lookup request."),
       })
       .strict(),
     output: UcpLookupResponse,
@@ -409,9 +408,9 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "get_product",
-    title: "Produto do catálogo (UCP)",
+    title: "Catalog product (UCP)",
     description:
-      "UCP get_product: um produto por id de produto ou de variante, com seleção de opções (selected, preferences) e sinais de disponibilidade. Não encontrado volta com ucp.status = error.",
+      "UCP get_product: one product by product or variant id, with option selection (selected, preferences) and availability signals. Not found comes back with ucp.status = error.",
     scope: "portfolio:read",
     permission: "portfolio.items.read",
     moduleKey: "portfolio",
@@ -421,20 +420,22 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
         meta: UcpMeta,
         catalog: z
           .looseObject({
-            id: z.string().describe("Id do produto ou da variante."),
+            id: z.string().describe("Product or variant id."),
             selected: z
               .array(z.looseObject({ name: z.string(), label: z.string() }))
               .optional()
               .describe(
-                "Opções já escolhidas, ex.: [{name: 'Cor', label: 'Azul'}].",
+                "Options already chosen, e.g. [{name: 'Color', label: 'Blue'}].",
               ),
             preferences: z
               .array(z.string())
               .optional()
-              .describe("Ordem de prioridade das opções ao relaxar."),
+              .describe(
+                "Priority order of the options when relaxing the selection.",
+              ),
             filters: z.looseObject({}).optional(),
           })
-          .describe("Pedido de produto do UCP."),
+          .describe("UCP product request."),
       })
       .strict(),
     output: UcpProductResponse,
@@ -443,33 +444,33 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "search_portfolio",
-    title: "Portfólio para o atendimento",
+    title: "Portfolio for customer service",
     description:
-      "Visão do agente de atendimento: itens liberados para a IA, inclusive sob consulta (ofereça sem preço e encaminhe a uma pessoa), " +
-      "com as regras da IA de cada item (palavras-chave, sinônimos, o que nunca dizer e regras de segurança). Respeite sempre essas regras.",
+      "Customer service agent view: items released to AI, including price-on-request ones (offer them without a price and hand over to a person), " +
+      "with the AI rules of each item (keywords, synonyms, what never to say and safety rules). Always follow these rules.",
     scope: "portfolio:agent",
     permission: "portfolio.items.read",
     moduleKey: "portfolio",
     risk: "read",
     input: z
       .object({
-        query: z.string().max(200).optional().describe("Texto a buscar."),
+        query: z.string().max(200).optional().describe("Text to search for."),
         item_type: z
           .enum(["product", "service", "real_estate", "lodging", "event"])
           .optional()
-          .describe("Categoria."),
+          .describe("Category."),
         limit: z
           .number()
           .int()
           .min(1)
           .max(50)
           .optional()
-          .describe("Itens por página (1 a 50, padrão 10)."),
+          .describe("Items per page (1 to 50, default 10)."),
         cursor: z
           .string()
           .max(200)
           .optional()
-          .describe("Cursor da página anterior."),
+          .describe("Cursor of the previous page."),
       })
       .strict(),
     output: items(AgentPortfolioItem),
@@ -480,15 +481,15 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "get_portfolio_item",
-    title: "Item para o atendimento",
+    title: "Item for customer service",
     description:
-      "Um item na visão do agente de atendimento, pelo id, com a saída UCP (quando tem preço) e as regras da IA.",
+      "One item in the customer service agent view, by id, with the UCP output (when it has a price) and the AI rules.",
     scope: "portfolio:agent",
     permission: "portfolio.items.read",
     moduleKey: "portfolio",
     risk: "read",
     input: z
-      .object({ itemId: z.string().uuid().describe("Id do item.") })
+      .object({ itemId: z.string().uuid().describe("Item id.") })
       .strict(),
     output: AgentPortfolioItem,
     run: (prisma, call, input) => {
@@ -500,40 +501,40 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "propose_operation",
-    title: "Propor uma operação",
+    title: "Propose an operation",
     description:
-      "Propõe uma escrita para uma pessoa aprovar no GUIDU; nada é executado agora. " +
-      "Operações: crm.contacts.create (payload com name e, opcionais, email, phone, companyName, jobTitle, notes) " +
-      "e crm.contacts.update (targetId do contato e só os campos a mudar); " +
-      "portfolio.items.create (payload como na API: item_type, title, variants com price { amount em centavos, currency } e, opcionais, os demais campos do UCP), " +
-      "portfolio.items.update (targetId do item e só os campos a mudar) e " +
-      "portfolio.variants.update (targetId da variante; só price, list_price, availability_status e stock_quantity). " +
-      "Repetir com o mesmo idempotencyKey e o mesmo conteúdo devolve a mesma proposta; com outro conteúdo, conflito. " +
-      "Entregue o reviewUrl à pessoa e consulte depois com get_proposal.",
+      "Proposes a write for a person to approve in GUIDU; nothing runs now. " +
+      "Operations: crm.contacts.create (payload with name and, optionally, email, phone, companyName, jobTitle, notes) " +
+      "and crm.contacts.update (targetId of the contact and only the fields to change); " +
+      "portfolio.items.create (payload as in the API: item_type, title, variants with price { amount in minor units (cents), currency } and, optionally, the other UCP fields), " +
+      "portfolio.items.update (targetId of the item and only the fields to change) and " +
+      "portfolio.variants.update (targetId of the variant; only price, list_price, availability_status and stock_quantity). " +
+      "Repeating with the same idempotencyKey and the same content returns the same proposal; with other content, a conflict. " +
+      "Give the reviewUrl to the person and check it later with get_proposal.",
     scope: "proposals:write",
     permission: Permissions.WORKSPACE_READ,
     risk: "propose",
     input: z
       .object({
-        operation: z.enum(operationKeys).describe("Operação a propor."),
+        operation: z.enum(operationKeys).describe("Operation to propose."),
         targetId: z
           .string()
           .uuid()
           .optional()
-          .describe("Id do registro, para operações de edição."),
+          .describe("Record id, for update operations."),
         payload: z
           .record(z.string(), z.unknown())
-          .describe("Campos da operação."),
+          .describe("Fields of the operation."),
         idempotencyKey: z
           .string()
           .min(1)
           .max(128)
-          .describe("Chave única desta intenção, para reenvios seguros."),
+          .describe("Unique key of this intent, for safe retries."),
         reason: z
           .string()
           .max(500)
           .optional()
-          .describe("Motivo, mostrado a quem aprova."),
+          .describe("Reason, shown to the approver."),
       })
       .strict(),
     output: ProposalSummary,
@@ -547,14 +548,14 @@ export const MCP_WORKSPACE_TOOLS: readonly McpToolDefinition[] = [
   },
   {
     name: "get_proposal",
-    title: "Situação de uma proposta",
+    title: "Proposal status",
     description:
-      "Situação de uma proposta feita com esta chave: pendente, aprovada, rejeitada, executada, com falha ou vencida.",
+      "Status of a proposal made with this key: pending, approved, rejected, executed, failed or expired.",
     scope: "proposals:write",
     permission: Permissions.WORKSPACE_READ,
     risk: "read",
     input: z
-      .object({ proposalId: z.string().uuid().describe("Id da proposta.") })
+      .object({ proposalId: z.string().uuid().describe("Proposal id.") })
       .strict(),
     output: ProposalSummary,
     run: async (prisma, call, input) => {

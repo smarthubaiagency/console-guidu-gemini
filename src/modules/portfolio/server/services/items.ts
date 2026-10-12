@@ -473,7 +473,7 @@ export function itemToUcp(item: ItemView): Record<string, unknown> | null {
 }
 
 /** Shared with ./lodging.ts. */
-export function invalid(error: z.ZodError): AppError {
+export function invalid(error: z.ZodError, rootField = "item"): AppError {
   const issue = error.issues[0];
   if (!issue) {
     return new AppError({
@@ -482,7 +482,7 @@ export function invalid(error: z.ZodError): AppError {
       messageKey: "portfolio.errors.invalidItem",
     });
   }
-  const field = issue.path.join(".") || "item";
+  const field = issue.path.join(".") || rootField;
   // Known messages are translated; zod's own stay as they are (I4).
   const key = VALIDATION_KEYS.get(issue.message);
   return new AppError({

@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { AcceptLegalForm } from "@/components/legal/accept-form";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { safeInternalPath } from "@/core/auth/redirects";
 import { getRequestBrand } from "@/core/brand/resolve";
-import { pendingLegalDocuments } from "@/core/legal/service";
+import {
+  localizeLegalDocuments,
+  pendingLegalDocuments,
+} from "@/core/legal/service";
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
@@ -31,10 +34,18 @@ export default async function AcceptLegalPage({
   const partner = await getRequestPartner();
   if (!partner) redirect(next);
 
+  const locale = await getLocale();
+  // Shown in the request language when translated (I5); acceptance is of
+  // the version, recomputed by the action.
   const pending = await withIdentityContext(
     prisma,
     identity.userId,
-    (tx) => pendingLegalDocuments(tx, partner.partnerId, identity.userId),
+    async (tx) =>
+      localizeLegalDocuments(
+        tx,
+        await pendingLegalDocuments(tx, partner.partnerId, identity.userId),
+        locale,
+      ),
     { partnerId: partner.partnerId },
   );
   if (pending.length === 0) redirect(next);
@@ -72,7 +83,18 @@ export default async function AcceptLegalPage({
                 ),
               })}
             </p>
-            <div className="text-12 text-text-subtle mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap">
+            {document.translated ? (
+              <p
+                className="text-12 text-text-secondary mt-1"
+                data-testid="legal-translation-note"
+              >
+                {t("accept.translatedNote")}
+              </p>
+            ) : null}
+            <div
+              lang={document.shownLocale}
+              className="text-12 text-text-subtle mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap"
+            >
               {document.body}
             </div>
           </section>

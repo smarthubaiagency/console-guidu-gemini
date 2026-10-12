@@ -285,18 +285,21 @@ export function ucpAccommodationType(
   });
 }
 
-/** Plain summary of a cancellation policy, when none was written. */
+/**
+ * Plain summary of a cancellation policy, when none was written; English,
+ * like the rest of the UCP output (I5).
+ */
 export function cancellationSummary(plan: SerializableRatePlan): string {
   if (plan.cancellationPolicy) return plan.cancellationPolicy;
   switch (plan.refundability) {
     case "non_refundable":
-      return "Tarifa não reembolsável: o cancelamento não tem reembolso.";
+      return "Non-refundable rate: cancellation is not refunded.";
     case "partially_refundable":
-      return "Cancelamento com reembolso parcial.";
+      return "Cancellation with partial refund.";
     case "refundable":
       return plan.freeCancellationHours !== null
-        ? `Cancelamento grátis até ${plan.freeCancellationHours} horas antes do check-in.`
-        : "Cancelamento grátis.";
+        ? `Free cancellation up to ${plan.freeCancellationHours} hours before check-in.`
+        : "Free cancellation.";
   }
 }
 
@@ -343,8 +346,8 @@ export function toUcpLodgingProduct(
       ? {
           ...v,
           options: [
-            { name: "Acomodação", label: type.title },
-            { name: "Tarifa", label: plan.title },
+            { name: "Accommodation", label: type.title },
+            { name: "Rate plan", label: plan.title },
           ],
         }
       : v;

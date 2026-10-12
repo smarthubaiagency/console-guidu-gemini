@@ -79,7 +79,14 @@ test("languages: add, translate, choose per person and per workspace", async ({
   const text = page.getByTestId("language-text");
   await expect(text).toHaveCount(1);
   await expect(text).toContainText("Visão Geral");
-  await text.getByLabel("Texto atual").fill("Panoramica E2E");
+  // Fill only once the form is hydrated: a value typed before hydration can
+  // be reset to the current text and saved unchanged.
+  await page.waitForLoadState("networkidle");
+  const current = text.getByLabel("Texto atual");
+  await expect(async () => {
+    await current.fill("Panoramica E2E");
+    await expect(current).toHaveValue("Panoramica E2E", { timeout: 1_000 });
+  }).toPass();
   await text.getByRole("button", { name: "Salvar texto" }).click();
   await expect(
     text.getByRole("status").filter({ hasText: "Texto salvo." }),

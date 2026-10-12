@@ -1,0 +1,25 @@
+{
+  "common": {
+    "greeting": "Olá, {partner}.",
+    "support": "Suporte: {email}",
+    "help": "Ajuda: {url}",
+    "viewBilling": "Ver cobrança"
+  },
+  "invitation": {
+    "subject": "Convite para {organization} no {brand}",
+    "body": "Você foi convidado para participar de {organization} no {brand}.",
+    "expires": "O convite vale até {date}.",
+    "action": "Aceitar convite"
+  },
+  "pastDue": {
+    "subject": "Assinatura em atraso: {organization}",
+    "body": "A assinatura de {organization} está em atraso: o período pago venceu em {periodEnd} e nenhum pagamento novo foi registrado.",
+    "nextStep": "Sem pagamento registrado, a assinatura será suspensa em {date}; o cliente passa a ter acesso só de leitura.",
+    "nextStepUnknown": "Sem pagamento registrado, a assinatura poderá ser suspensa."
+  },
+  "suspended": {
+    "subject": "Assinatura suspensa: {organization}",
+    "body": "A assinatura de {organization} foi suspensa por falta de pagamento do período que venceu em {periodEnd}.",
+    "access": "O cliente mantém o acesso de leitura e exportação, sem novas alterações. Registrar o pagamento reativa a assinatura."
+  }
+}

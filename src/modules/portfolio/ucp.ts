@@ -140,6 +140,29 @@ export const SALE_UNITS = [
   { unit: "MON", display_text: "mês" },
 ] as const;
 
+/**
+ * English of the sale bases the platform itself writes (SALE_UNITS and the
+ * lodging night), by `unit display_text`. The UCP output speaks English
+ * (I5, ADR 0013); a text the merchant typed stays as it is.
+ */
+const SYSTEM_UNIT_TEXT_EN: Readonly<Record<string, string>> = {
+  "C62 unidade": "unit",
+  "LTR litro": "liter",
+  "HUR hora": "hour",
+  "DAY dia": "day",
+  "IE pessoa": "person",
+  "MON mês": "month",
+  "DAY diária": "night",
+};
+
+export function englishQuantityUnit<
+  T extends { unit: string; display_text: string },
+>(quantityUnit: T): T {
+  const english =
+    SYSTEM_UNIT_TEXT_EN[`${quantityUnit.unit} ${quantityUnit.display_text}`];
+  return english ? { ...quantityUnit, display_text: english } : quantityUnit;
+}
+
 // ---------------------------------------------------------------------------
 // Serializer: item + variants -> UCP Product
 // ---------------------------------------------------------------------------
@@ -277,7 +300,9 @@ export function toUcpProduct(
       if (v.listPriceAmount !== null && v.listPriceAmount > v.priceAmount!) {
         variant.list_price = price(v.listPriceAmount, v.currency);
       }
-      if (v.quantityUnit) variant.quantity_unit = v.quantityUnit;
+      if (v.quantityUnit) {
+        variant.quantity_unit = englishQuantityUnit(v.quantityUnit);
+      }
       if (v.options.length) variant.options = v.options;
       if (v.media.length) variant.media = v.media;
       return variant;

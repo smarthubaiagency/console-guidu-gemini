@@ -103,11 +103,23 @@ function parse<T extends z.ZodType>(schema: T, input: unknown): z.output<T> {
   const parsed = schema.safeParse(input ?? {});
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
+    const field = issue?.path.join(".");
     throw new AppError({
       code: "invalid_input",
       safeMessage: issue
-        ? `${issue.path.join(".") || "pedido"}: ${issue.message}`
+        ? `${field || "pedido"}: ${issue.message}`
         : "Pedido inválido.",
+      ...(!issue
+        ? { messageKey: "apiErrors.invalidRequest" }
+        : field
+          ? {
+              messageKey: "apiErrors.invalidRequestField",
+              messageValues: { field, message: issue.message },
+            }
+          : {
+              messageKey: "apiErrors.invalidRequestIssue",
+              messageValues: { message: issue.message },
+            }),
     });
   }
   return parsed.data;
@@ -139,6 +151,7 @@ function decodeOffset(cursor: string | undefined): number {
   throw new AppError({
     code: "invalid_input",
     safeMessage: "Cursor inválido.",
+    messageKey: "apiErrors.invalidCursor",
   });
 }
 
@@ -356,6 +369,8 @@ export async function lookupCatalog(
     throw new AppError({
       code: "invalid_input",
       safeMessage: `Envie no máximo ${MAX_LOOKUP_IDS} identificadores por consulta.`,
+      messageKey: "apiErrors.tooManyLookupIds",
+      messageValues: { max: MAX_LOOKUP_IDS },
     });
   }
   const { resolved, missing } = await resolveIds(tx, ctx, ids);
@@ -427,7 +442,7 @@ export async function getCatalogProduct(
         {
           type: "error",
           code: "not_found",
-          content: `Produto não encontrado: ${request.id}`,
+          content: `Product not found: ${request.id}`,
           severity: "unrecoverable",
         },
       ],
@@ -603,6 +618,7 @@ export async function agentGetItem(
   const notFound = new AppError({
     code: "not_found",
     safeMessage: "Item não encontrado.",
+    messageKey: "portfolio.errors.notFound.item",
   });
   if (!isUuid(itemId)) throw notFound;
   const rows = await tx.$queryRaw<{ id: string }[]>`

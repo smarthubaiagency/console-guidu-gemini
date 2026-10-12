@@ -128,6 +128,10 @@ export class QuotaExceededError extends AppError {
     super({
       code: "conflict",
       safeMessage: `Limite do plano atingido: ${label} (${used} de ${limit}).`,
+      messageKey: "apiErrors.quotaExceeded",
+      // `quotaKey` lets the English of the API name the quota from the
+      // module catalog (I5); `quota` is the caller's Portuguese label.
+      messageValues: { quota: label, quotaKey, used, limit },
     });
     this.name = "QuotaExceededError";
   }

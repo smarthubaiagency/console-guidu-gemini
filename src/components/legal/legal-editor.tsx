@@ -6,18 +6,41 @@ import {
   labelClass,
 } from "@/components/partners/action-form";
 import type { PartnerActionState } from "@/core/partners/actions";
-import { LEGAL_KINDS, type LegalDocumentView } from "@/core/legal/service";
+import { SOURCE_LOCALE } from "@/core/i18n/locales";
+import {
+  LEGAL_KINDS,
+  type LegalDocumentView,
+  type LegalLanguage,
+  type LegalTranslationView,
+} from "@/core/legal/service";
 
 type Action = (
   prev: PartnerActionState,
   formData: FormData,
 ) => Promise<PartnerActionState>;
 
-/** Version list and publishing form for terms and privacy (P4b2). */
+export type LegalTranslationActions = Readonly<{
+  save: Action;
+  remove: Action;
+}>;
+
+/**
+ * Version list and publishing form for terms and privacy (P4b2), with the
+ * translations of each version per dashboard language (I5).
+ */
 export function LegalEditor({
   documents,
   action,
-}: Readonly<{ documents: readonly LegalDocumentView[]; action: Action }>) {
+  languages = [],
+  translations = [],
+  translationActions,
+}: Readonly<{
+  documents: readonly LegalDocumentView[];
+  action: Action;
+  languages?: readonly LegalLanguage[];
+  translations?: readonly LegalTranslationView[];
+  translationActions?: LegalTranslationActions;
+}>) {
   const t = useTranslations("legal");
   const format = useFormatter();
   return (
@@ -46,6 +69,16 @@ export function LegalEditor({
                 ? t("editor.requiresAcceptance")
                 : t("editor.noNewAcceptance")}
             </div>
+            {translationActions && languages.length > 1 ? (
+              <LegalTranslations
+                document={doc}
+                languages={languages}
+                translations={translations.filter(
+                  (tr) => tr.documentId === doc.id,
+                )}
+                actions={translationActions}
+              />
+            ) : null}
           </li>
         ))}
         {documents.length === 0 ? (
@@ -75,6 +108,22 @@ export function LegalEditor({
               ))}
             </select>
           </label>
+          {languages.length > 1 ? (
+            <label className={labelClass}>
+              {t("editor.originalLocale")}
+              <select
+                name="locale"
+                defaultValue={SOURCE_LOCALE}
+                className={inputClass}
+              >
+                {languages.map((language) => (
+                  <option key={language.code} value={language.code}>
+                    {language.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <label className={labelClass}>
             {t("editor.title")}
             <input
@@ -101,5 +150,131 @@ export function LegalEditor({
         </ActionForm>
       </section>
     </div>
+  );
+}
+
+/** Translations of one version: status per language and the edit forms. */
+function LegalTranslations({
+  document,
+  languages,
+  translations,
+  actions,
+}: Readonly<{
+  document: LegalDocumentView;
+  languages: readonly LegalLanguage[];
+  translations: readonly LegalTranslationView[];
+  actions: LegalTranslationActions;
+}>) {
+  const t = useTranslations("legal");
+  const targets = languages.filter((l) => l.code !== document.locale);
+  const done = targets.filter((l) =>
+    translations.some((tr) => tr.locale === l.code),
+  ).length;
+  const original = languages.find((l) => l.code === document.locale);
+  return (
+    <details
+      className="mt-2"
+      data-testid={`legal-translations-${document.kind}-${document.version}`}
+    >
+      <summary className="text-12 text-text-subtle cursor-pointer font-medium">
+        {t("translations.summary", { done, total: targets.length })}
+      </summary>
+      <div className="mt-2 space-y-2">
+        <p className="text-12 text-text-secondary">{t("translations.hint")}</p>
+        <p className="text-12 text-text-secondary">
+          {original?.name ?? document.locale} · {t("translations.original")}
+        </p>
+        <ul className="space-y-2">
+          {targets.map((language) => {
+            const translation = translations.find(
+              (tr) => tr.locale === language.code,
+            );
+            const status = translation
+              ? t(`translations.${translation.origin}`)
+              : t("translations.missing");
+            return (
+              <li
+                key={language.code}
+                className="border-border rounded-lg border p-2"
+                data-testid={`legal-translation-${language.code}`}
+              >
+                <details>
+                  <summary className="text-12 text-text cursor-pointer">
+                    <span className="font-medium">{language.name}</span>
+                    {language.status === "draft"
+                      ? ` (${t("translations.draft")})`
+                      : ""}{" "}
+                    · {status} ·{" "}
+                    <span className="underline">
+                      {translation
+                        ? t("translations.edit")
+                        : t("translations.add")}
+                    </span>
+                  </summary>
+                  <div className="mt-2 space-y-2">
+                    <ActionForm
+                      action={actions.save}
+                      submitLabel={t("translations.save")}
+                      className="space-y-2"
+                    >
+                      <input
+                        type="hidden"
+                        name="documentId"
+                        value={document.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="locale"
+                        value={language.code}
+                      />
+                      <label className={labelClass}>
+                        {t("editor.title")}
+                        <input
+                          name="title"
+                          required
+                          maxLength={120}
+                          defaultValue={translation?.title ?? ""}
+                          placeholder={document.title}
+                          className={inputClass}
+                        />
+                      </label>
+                      <label className={labelClass}>
+                        {t("editor.body")}
+                        <textarea
+                          name="body"
+                          required
+                          rows={8}
+                          maxLength={100000}
+                          defaultValue={translation?.body ?? ""}
+                          className={inputClass}
+                        />
+                      </label>
+                    </ActionForm>
+                    {translation ? (
+                      <ActionForm
+                        action={actions.remove}
+                        submitLabel={t("translations.remove")}
+                        tone="neutral"
+                      >
+                        <input
+                          type="hidden"
+                          name="documentId"
+                          value={document.id}
+                        />
+                        <input
+                          type="hidden"
+                          name="locale"
+                          value={language.code}
+                        />
+                      </ActionForm>
+                    ) : null}
+                  </div>
+                </details>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </details>
   );
 }

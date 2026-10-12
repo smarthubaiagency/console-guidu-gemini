@@ -14,6 +14,7 @@ import { PortfolioPermissions } from "./manifest";
 import {
   createItem,
   getItem,
+  invalid,
   ItemCreateInput,
   ItemUpdateInput,
   type ItemView,
@@ -72,15 +73,7 @@ export const VariantPriceInput = VariantUpdateInput.pick({
 
 function parseWith(schema: z.ZodType, input: unknown) {
   const parsed = schema.safeParse(input);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    throw new AppError({
-      code: "invalid_input",
-      safeMessage: issue
-        ? `${issue.path.join(".") || "payload"}: ${issue.message}`
-        : "Dados do item inválidos.",
-    });
-  }
+  if (!parsed.success) throw invalid(parsed.error, "payload");
   return Object.fromEntries(
     Object.entries(parsed.data as Record<string, unknown>).filter(
       ([, v]) => v !== undefined,
@@ -89,9 +82,17 @@ function parseWith(schema: z.ZodType, input: unknown) {
 }
 
 const itemNotFound = () =>
-  new AppError({ code: "not_found", safeMessage: "Item não encontrado." });
+  new AppError({
+    code: "not_found",
+    safeMessage: "Item não encontrado.",
+    messageKey: "portfolio.errors.notFound.item",
+  });
 const variantNotFound = () =>
-  new AppError({ code: "not_found", safeMessage: "Variante não encontrada." });
+  new AppError({
+    code: "not_found",
+    safeMessage: "Variante não encontrada.",
+    messageKey: "apiErrors.variantNotFound",
+  });
 
 async function rowVersion(
   tx: ContextTransaction,
