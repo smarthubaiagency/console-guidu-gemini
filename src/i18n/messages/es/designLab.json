@@ -30,5 +30,61 @@
   "simpleTitle": "Ventana simple",
   "simpleHint": "Sin la columna izquierda, el contenido ocupa toda el área y la ventana se abre a la derecha.",
   "openPanel": "Abrir la ventana",
-  "simpleBody": "Contenido de la ventana. Esc la cierra y el foco vuelve al botón que la abrió."
+  "simpleBody": "Contenido de la ventana. Esc la cierra y el foco vuelve al botón que la abrió.",
+  "status": {
+    "title": "Avisos",
+    "subtitle": "SmartStatusBanner (ADR 0016): el resultado de cada envío y las confirmaciones del panel aparecen en esta tarjeta, justo debajo del encabezado.",
+    "sampleNotice": "Página de demostración: los botones solo muestran avisos y nada se guarda.",
+    "groups": {
+      "results": "Resultado de una acción",
+      "confirm": "Confirmación"
+    },
+    "demo": {
+      "up": "Éxito",
+      "oops": "Advertencia",
+      "down": "Error con detalles",
+      "sticky": "No se cierra solo",
+      "same": "El mismo aviso dos veces",
+      "confirm": "Confirmar con casilla",
+      "destructive": "Acción destructiva"
+    },
+    "up": {
+      "title": "¡Contacto guardado!",
+      "message": "Los cambios ya aparecen en la lista."
+    },
+    "oops": {
+      "title": "La suscripción vence en 3 días",
+      "message": "Renueva para no perder el acceso a los módulos."
+    },
+    "down": {
+      "title": "Error al guardar",
+      "message": "No se pudo guardar el contacto.",
+      "details": "El servidor respondió con un error de validación: el correo ya pertenece a otro contacto de este workspace. Corrige el correo e inténtalo de nuevo.",
+      "action": "Intentar de nuevo",
+      "secondary": "Cerrar"
+    },
+    "sticky": {
+      "title": "Integración pendiente",
+      "message": "Este aviso solo se cierra al hacer clic en ×."
+    },
+    "confirm": {
+      "title": "¿Desvincular tarjeta?",
+      "message": "La tarjeta deja de funcionar para este miembro.",
+      "checkbox": "Entiendo que la tarjeta volverá al inventario",
+      "action": "Desvincular",
+      "cancel": "Cancelar",
+      "done": "Tarjeta desvinculada",
+      "kept": "No se cambió nada"
+    },
+    "destructive": {
+      "title": "¿Cancelar el complemento?",
+      "message": "El complemento deja de cobrarse en el próximo ciclo y sus datos quedan solo para consulta.",
+      "action": "Cancelar complemento",
+      "cancel": "Mantener",
+      "done": "Complemento cancelado"
+    },
+    "answer": "Respuesta a la última confirmación: {answer}",
+    "answerYes": "confirmó",
+    "answerNo": "canceló"
+  }
 }

@@ -506,7 +506,7 @@ export function buildPlatformNavigation(
       ],
     },
     // Configurações: languages of the dashboard (I1), the interface
-    // patterns (U2a, every internal role) and the global settings of each
+    // patterns (U2a and ADR 0016, every internal role) and the global settings of each
     // module.
     ...(canManageLanguages || canReadModules || settingsItems.length > 0
       ? [
@@ -529,8 +529,22 @@ export function buildPlatformNavigation(
                     item({
                       id: "platform.design",
                       label: "Padrões de interface",
-                      href: "/platform/design/workbench",
+                      href: null,
                       iconKey: "layers" as const,
+                      children: [
+                        item({
+                          id: "platform.design.workbench",
+                          label: "Janela de edição",
+                          href: "/platform/design/workbench",
+                          iconKey: "layers" as const,
+                        }),
+                        item({
+                          id: "platform.design.status",
+                          label: "Avisos",
+                          href: "/platform/design/status",
+                          iconKey: "layers" as const,
+                        }),
+                      ],
                     }),
                   ]
                 : []),

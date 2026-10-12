@@ -63,10 +63,12 @@ export default defineConfig([
     // block adapted in layout/shell (ADR 0014). It keeps the upstream
     // arbitrary values, CSS variables and the provider's inline CSS variables
     // so it can follow shadcn updates; classes must still exist in
-    // globals.css. Everything else in src/ stays under P0.
+    // globals.css. The feedback banner (ADR 0016) sets its countdown length
+    // through a CSS variable. Everything else in src/ stays under P0.
     files: [
       "src/components/ui/**/*.tsx",
       "src/components/layout/shell/**/*.tsx",
+      "src/components/feedback/**/*.tsx",
       "src/hooks/**/*.ts",
     ],
     rules: {

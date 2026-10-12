@@ -1,6 +1,6 @@
 # Shell padrão (sidebar-08)
 
-Decisões em [ADR 0014](../adr/0014-shell-padrao-sidebar-08.md) (shell, cabeçalho e regra do shadcn) e [ADR 0015](../adr/0015-janela-de-edicao-gaveta-interna.md) (gaveta interna). Toda área com menu lateral usa este shell; não se cria sidebar nem cabeçalho próprios, e todo componente usa o equivalente do shadcn em `src/components/ui/`.
+Decisões em [ADR 0014](../adr/0014-shell-padrao-sidebar-08.md) (shell, cabeçalho e regra do shadcn), [ADR 0015](../adr/0015-janela-de-edicao-gaveta-interna.md) (gaveta interna) e [ADR 0016](../adr/0016-smart-status-banner.md) (avisos). Toda área com menu lateral usa este shell; não se cria sidebar nem cabeçalho próprios, e todo componente usa o equivalente do shadcn em `src/components/ui/`.
 
 ## Peças
 
@@ -109,3 +109,44 @@ Para conteúdo que não é registro de lista (um chat, um painel), use `Workbenc
 ## Atualizar o shadcn
 
 Baixe o arquivo novo do registro (`apps/v4/registry/new-york-v4/ui/<nome>.tsx` em `shadcn-ui/ui`) ou rode `npx shadcn@latest add <nome>` numa máquina com acesso a `ui.shadcn.com`. Depois, repita as mudanças mínimas listadas na ADR 0014 (item 4) e rode o e2e `e2e/shell.spec.ts`.
+
+## Avisos (ADR 0016)
+
+Todo envio ou salvamento dá retorno pelo SmartStatusBanner, que o shell já monta. Não use mensagem inline, `alert()` nem `confirm()`. Referência viva: `/platform/design/status`.
+
+```tsx
+"use client";
+import { useStatus } from "@/components/feedback/status-context";
+
+const { showStatus, confirmStatus } = useStatus();
+
+// Resultado
+showStatus({ type: "up", title: "Contato salvo!", message: "…" });
+showStatus({ type: "down", title: "Erro ao salvar", details: erro });
+
+// Confirmação (no lugar do confirm())
+const ok = await confirmStatus({
+  title: "Remover membro?",
+  checkboxLabel: "Entendo que o acesso é perdido na hora",
+  confirmLabel: "Remover",
+  cancelLabel: "Cancelar",
+  tone: "destructive",
+});
+if (ok) await remover();
+```
+
+| Campo                       | Efeito                                                    |
+| --------------------------- | --------------------------------------------------------- |
+| `type`, `title`             | Obrigatórios: `up` sucesso, `oops` aviso, `down` erro     |
+| `message`                   | Subtítulo sempre visível                                  |
+| `details`                   | Texto atrás de um chevron; os botões vão para dentro dele |
+| `action`, `secondaryAction` | Botão principal (na cor do aviso) e secundário (ghost)    |
+| `checkboxLabel`             | Checkbox que libera o botão principal                     |
+| `tone: "destructive"`       | Cores de perigo para ações destrutivas                    |
+| `icon`                      | Troca o ícone do tipo                                     |
+| `duration`                  | Milissegundos (padrão 4000); `0` só fecha pela pessoa     |
+
+- Uma mensagem por vez; uma confirmação aberta não é apagada por outro aviso.
+- Clicar no card pausa; "Retomar" continua do tempo que faltava.
+- Esc fecha o aviso antes da gaveta embaixo.
+- Nos e2e, leia o aviso por `getByTestId("smart-status")`.

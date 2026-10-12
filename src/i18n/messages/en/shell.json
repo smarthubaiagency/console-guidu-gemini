@@ -21,5 +21,11 @@
   "assistantSoonTitle": "Coming soon",
   "assistantSoonText": "The AI assistant will open in this window. The AI agents module is still awaiting its specification, so this window only shows the pattern.",
   "adminLink": "Partner console",
-  "platformLink": "Platform"
+  "platformLink": "Platform",
+  "statusClose": "Close notice",
+  "statusShowDetails": "Show details",
+  "statusHideDetails": "Hide details",
+  "statusAutoClose": "This message will close soon. Click to pause.",
+  "statusPaused": "Paused. Click × to close.",
+  "statusResume": "Resume"
 }
