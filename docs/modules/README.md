@@ -35,7 +35,7 @@ Avaliado nesta ordem; a primeira condição que bloqueia decide.
 - Papéis da empresa não concedem nada nas tabelas de módulo, em linha com a pendência de herança empresarial.
 - `workspace.modules.manage` (owner e admin do workspace) habilita módulos. `platform.modules.read` e `platform.modules.manage` são do admin: owner e operations gerenciam; billing e support só leem.
 - Escritas em `workspace_modules` são restritas no RLS a owner/admin do workspace. Um módulo que conceda a outro papel a escrita de configuração precisa de nova política.
-- O Agentes de IA continua congelado (C04): entra no registro como `beta` atrás da trava `GUIDU_MODULE_AI_AGENTS_ENABLED`. Com a flag ligada, o menu só aparece depois de habilitado no workspace; a página congelada ainda usa apenas a trava técnica.
+- O Agentes de IA continua congelado (C04) até a aprovação da especificação v1.0 (A0): entra no registro como `beta` atrás da trava `GUIDU_MODULE_AI_AGENTS_ENABLED`. Com a flag ligada, o menu só aparece depois de habilitado no workspace; a página congelada ainda usa apenas a trava técnica.
 
 ## Checklist
 

@@ -4,7 +4,8 @@
 - **Data do congelamento:** 09/10/2026 (Decisão do Marcelo, correção C04)
 - **Feature Flag de ativação:** `GUIDU_MODULE_AI_AGENTS_ENABLED="true"` (padrão: desligado)
 - **Registro de módulos (F2):** manifesto em `src/modules/ai-agents/manifest.ts`, `beta` atrás da mesma flag. Com a flag ligada, o item de menu só aparece depois de habilitado no workspace; a página congelada continua usando só `isModuleTechnicallyAvailable`.
-- **Especificação:** rascunho v0.1 em [especificacao.md](especificacao.md), aguardando aprovação; não descongela o módulo.
+- **Especificação:** v1.0 em [especificacao.md](especificacao.md), com [canais.md](canais.md) e [campos.md](campos.md), proposta no PR da etapa A0 (12/10/2026). Duas verticais sobre um motor único: o **Assistente GUIDU** (um por parceiro) e os **GUIDS** (de 1 a 3 agentes por workspace, conforme o plano).
+- **Descongelamento:** a aprovação do PR da A0 encerra o congelamento da C04 no papel. O código continua atrás da flag até a etapa A4; o protótipo descrito abaixo sai na A2 e as tabelas dele são substituídas na A1 (especificação, seção 18).
 
 ---
 

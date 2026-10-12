@@ -1,6 +1,6 @@
 # ADR 0012 — Plataforma de parceiros (white label, cobrança dividida e comunicação)
 
-- **Status:** Aceito
+- **Status:** Aceito; revisão de 12/10/2026 (agentes de IA) proposta no PR da etapa A0
 - **Aprovador:** Marcelo, no PR #18 (10/10/2026)
 - **Data:** 10/10/2026
 - **Decisões de origem (Marcelo, 10/10/2026):** três níveis com console da plataforma em `/platform` e console do parceiro em `/admin`; cliente final acessa pelo domínio do parceiro com a identidade, os termos e a cobrança dele; checkout da plataforma com o preço do parceiro, valores mínimos e divisão padrão de 70% para o parceiro e 30% para a plataforma; alternativa em que o próprio parceiro cadastra o cliente e paga só o valor base da plataforma; provedores Iugu, Stripe e manual como opções.
@@ -18,7 +18,7 @@ O GUIDU vai ser revendido por parceiros (agências) com a marca deles, e os clie
    - `/platform`: console de quem opera a plataforma. Só responde nos domínios da plataforma; em domínio de parceiro, responde 404.
    - `/admin`: console do parceiro, no domínio do parceiro. O parceiro zero usa o mesmo console no domínio da plataforma.
    - `/app`: produto do cliente final.
-3. **Papéis de parceiro são separados** dos papéis internos e dos papéis de empresa e workspace. Por padrão, **não dão acesso aos dados dos workspaces dos clientes**. O acesso de suporte só existe por concessão temporária, justificada, auditada e visível ao cliente (especificação §12).
+3. **Papéis de parceiro são separados** dos papéis internos e dos papéis de empresa e workspace. Por padrão, **não dão acesso aos dados dos workspaces dos clientes**. O acesso de suporte só existe por concessão temporária, justificada, auditada e visível ao cliente (especificação §12). A exceção é a configuração dos agentes de IA dos clientes (revisão de 12/10/2026, abaixo).
 4. **A marca é do parceiro e é resolvida no servidor a partir do host.** A configuração de ambiente da ADR 0004 continua como marca do parceiro zero e como padrão.
 5. **Domínios em etapas:** primeiro subdomínio da plataforma (`<parceiro>.<domínio-da-plataforma>`), depois domínio próprio com verificação de posse e certificado automático.
 6. **Dois modos de cobrança, escolhidos pelo parceiro com a chave "Ativar checkout"** no console dele, **desligada por padrão**. O modo fica gravado em cada assinatura, e mudar a chave só afeta quem já é cliente no fim do período pago. A plataforma não custodia o dinheiro dos parceiros.
@@ -36,3 +36,13 @@ O GUIDU vai ser revendido por parceiros (agências) com a marca deles, e os clie
 - Mover `/admin` para `/platform` é mais barato agora, com poucas páginas administrativas.
 - **Fora do código, exigem validação antes de produção:** emissão de nota fiscal e enquadramento tributário na divisão (contador), papéis de controlador e operador na LGPD e contrato com parceiros (jurídico), e as condições contratuais de cada provedor.
 - Identidade continua global (um projeto Supabase Auth). No domínio de um parceiro, o login só mostra empresas daquele parceiro, e a sessão vale só naquele domínio.
+
+## Revisão de 12/10/2026 — agentes de IA dos clientes
+
+- **Decisão de origem:** Marcelo, 12/10/2026: "no admin o parceiro (e nós mesmos) configuramos o guidu que atende a plataforma e também teríamos acesso aos agentes de IA dos clientes sem ter que acessar o app do cliente para editar". Detalhes na [especificação do módulo Agentes de IA](../modules/ai-agents/especificacao.md), seção 6.
+
+1. **A configuração dos agentes de IA (GUIDS) dos clientes é um recurso gerenciado pelo parceiro.** Membros do parceiro com `partner.ai_agents.manage` leem e editam, pelo `/admin`, a configuração dos GUIDS dos workspaces cujas empresas pertencem ao parceiro, sem concessão de suporte. `partner.ai_agents.read` só lê.
+2. **O conteúdo continua protegido pela regra 3.** Conversas, transcrições, leads, contatos e a base de conhecimento do cliente seguem exigindo a concessão temporária aprovada pelo cliente.
+3. **A RLS abre só as tabelas de configuração** (agentes, indicações e o vínculo do agente com bases), para o membro do parceiro dono da empresa do workspace e com a permissão acima.
+4. **Transparência:** toda alteração feita pelo parceiro é auditada (antes e depois, sem segredo) e aparece para o cliente no próprio GUIDS, com o nome do parceiro e a data.
+5. O parceiro zero (a casa) tem o mesmo acesso aos clientes diretos.
