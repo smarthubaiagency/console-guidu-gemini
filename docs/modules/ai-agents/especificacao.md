@@ -4,7 +4,7 @@
 - **Data:** 12/10/2026
 - **Estado:** Proposta para aprovação no PR da etapa A0. Com a aprovação, encerra o congelamento da C04 no papel ([ESTADO.md](ESTADO.md)); o código continua atrás da flag até as etapas da seção 18.
 - **Substitui:** a especificação v0.3 de 09/10/2026. A parte de canais da v0.3 continua valendo para os GUIDS e foi para [canais.md](canais.md).
-- **Partes:** esta especificação (produto, motor, dados e regras), [canais.md](canais.md) (canais, conversas e saídas dos GUIDS) e [campos.md](campos.md) (dicionário de campos do editor).
+- **Partes:** esta especificação (produto, motor, dados e regras), [canais.md](canais.md) (canais, conversas e saídas dos GUIDS) [campos.md](campos.md) (dicionário de campos do editor) e [variaveis.md](variaveis.md) (variáveis e memória).
 - **Origem:** decisões do Marcelo em 12/10/2026 nesta conversa e o handoff do agente de IA do legado CartãoPro/LinkkoPro (persona Anna, execução no n8n).
 - **ADRs:** [0011](../../adr/0011-camada-de-canais-no-nucleo.md) (canais no núcleo), [0012](../../adr/0012-plataforma-de-parceiros.md) (parceiros, revisada em 12/10/2026), [0015](../../adr/0015-janela-de-edicao-gaveta-interna.md) (gaveta), [0016](../../adr/0016-smart-status-banner.md) (avisos) e [0017](../../adr/0017-sdk-dos-agentes-de-ia.md) (SDK).
 
@@ -79,7 +79,7 @@ O módulo tem duas verticais sobre **um motor único** **[Decidido]**:
 ### 5.1 Quantidade, modelos e personalização
 
 - **De 1 a 3 GUIDS por workspace, conforme o plano** **[Decidido]**. O limite vale mesmo com a chave do cliente (BYOK). É o limite `ai_agents.max` do contrato do plano, aplicado no servidor no momento da criação (mesmo padrão das quotas da F3).
-- **Cada GUIDS nasce de um modelo pronto** (SDR, agendador, suporte e o que a casa e o parceiro publicarem) **ou em branco** **[Decidido]**. Qualquer GUIDS pode ser personalizado: num plano de 1, o cliente usa a configuração padrão ou personaliza o seu.
+- **A escolha do modelo é obrigatória** **[Decidido]**. Os modelos prontos (SDR, agendador, suporte e o que a casa e o parceiro publicarem) carregam a configuração; a opção **Personalizado** começa vazia e exige os **campos mínimos** para o agente funcionar ([campos.md](campos.md), seção 9). Qualquer GUIDS pode ser personalizado depois: num plano de 1, o cliente usa a configuração padrão ou personaliza a sua.
 - **Origem e versão:** o GUIDS guarda o modelo de origem e a versão. **[Proposta]** Uma nova versão do modelo não altera GUIDS existentes; o parceiro ou o cliente aplica a atualização quando quiser, com a diferença mostrada antes.
 - **Os dados iniciais** trazem os dois presets do legado (Anna, SDR, e Assistente de Onboarding) como modelos da casa.
 
@@ -130,20 +130,22 @@ Os GUIDS atendem pela camada de canais do núcleo, com o Chatwoot via Agent Bot 
 - **Contexto vem do servidor, nunca do modelo.** Workspace, agente e identidade saem da sessão (Assistente) ou do job (GUIDS); nenhum argumento de ferramenta escolhe workspace ou agente.
 - **Limites técnicos por turno** **[Proposta]**: passos de ferramenta, tokens de saída e tempo total, com valores no manifesto do módulo e ajuste em `/platform`.
 - **Saída estruturada:** o plano de resposta dos GUIDS ([canais.md](canais.md), seção 6.1) e a resposta do Assistente (texto com citações e ações propostas) são validados por Zod antes de qualquer efeito.
-- **Renderizador único de prompt** com as tags do legado (`{{…}}`), em código do motor. As 25 tags, os textos dos enums e as regras de renderização estão em [campos.md](campos.md), seções 7 e 8. **[Em aberto]** As variáveis do agente, que Marcelo vai trazer do handoff do legado.
+- **Renderizador único de prompt** com as tags do legado (`{{…}}`), em código do motor. As 25 tags, os textos dos enums e as regras de renderização estão em [campos.md](campos.md), seções 7 e 8. Variáveis e memória estão em [variaveis.md](variaveis.md).
 
 ## 8. Ferramentas
 
-| Ferramenta                                                | Origem       | Disponível para | Observação                                                                                          |
-| --------------------------------------------------------- | ------------ | --------------- | --------------------------------------------------------------------------------------------------- |
-| `create_contact`, `edit_contact`, `add_note`              | Legado       | GUIDS           | Pelo serviço público do módulo CRM (Adendo §7), validando que o contato é do workspace              |
-| `add_tag`                                                 | Legado       | GUIDS           | **[Em aberto]** o CRM do GUIDU ainda não tem etiquetas; entra junto com elas no CRM ou sai da lista |
-| `think`                                                   | Legado       | Ambos           | Raciocínio interno, sem efeito                                                                      |
-| `score_lead`                                              | Legado (n8n) | GUIDS           | Aplica as regras de pontuação e grava o log                                                         |
-| `handoff`                                                 | v0.3         | GUIDS           | Transferência para humano, com motivo obrigatório                                                   |
-| `search_knowledge`                                        | Novo         | Ambos           | Busca nas bases ligadas ao agente                                                                   |
-| Leitura do workspace (resumo, módulos, consumo, contatos) | MCP atual    | Assistente      | Com as permissões do usuário                                                                        |
-| `propose_operation`                                       | MCP atual    | Assistente      | Propõe uma alteração que a pessoa aprova                                                            |
+| Ferramenta                                                | Origem                                      | Disponível para | Observação                                                                                                        |
+| --------------------------------------------------------- | ------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `create_contact`, `add_note`                              | Legado                                      | GUIDS           | Pelo serviço público do módulo CRM (Adendo §7), validando que o contato é do workspace                            |
+| `update_contact_property`                                 | Legado (proposta do handoff de variáveis)   | GUIDS           | Substitui o `edit_contact`: grava campos do contato liberados para a IA ([variaveis.md](variaveis.md), seção 2.4) |
+| `set_conversation_variable`                               | Legado (`set_variable`, nunca implementado) | Ambos           | Memória da conversa ([variaveis.md](variaveis.md), seção 2.5)                                                     |
+| `add_tag`                                                 | Legado                                      | GUIDS           | **[Em aberto]** o CRM do GUIDU ainda não tem etiquetas; entra junto com elas no CRM ou sai da lista               |
+| `think`                                                   | Legado                                      | Ambos           | Raciocínio interno, sem efeito                                                                                    |
+| `score_lead`                                              | Legado (n8n)                                | GUIDS           | Aplica as regras de pontuação e grava o log                                                                       |
+| `handoff`                                                 | v0.3                                        | GUIDS           | Transferência para humano, com motivo obrigatório                                                                 |
+| `search_knowledge`                                        | Novo                                        | Ambos           | Busca nas bases ligadas ao agente                                                                                 |
+| Leitura do workspace (resumo, módulos, consumo, contatos) | MCP atual                                   | Assistente      | Com as permissões do usuário                                                                                      |
+| `propose_operation`                                       | MCP atual                                   | Assistente      | Propõe uma alteração que a pessoa aprova                                                                          |
 
 - A lista de ferramentas do agente é uma **allowlist** validada no servidor a cada chamada (substitui o Policy Engine do n8n). Ferramenta nova entra no catálogo do motor e no dicionário de campos, num só lugar.
 - Não existe ferramenta genérica de HTTP, SQL ou arquivo (Especificação §17.3).
@@ -209,6 +211,7 @@ Toda tabela tem RLS forçado ([ADR 0001](../../adr/0001-prisma-como-caminho-unic
 | `ai_knowledge_bases`, `ai_knowledge_documents`, `ai_knowledge_chunks`, `ai_agent_knowledge` | Casa, parceiro ou workspace                  | Base, documentos, trechos com vetor e o vínculo agente × base                                                                                                                                                                                                               |
 | `ai_usage_events`                                                                           | Parceiro ou workspace                        | Consumo por turno: agente, chave usada, modelo, tokens, áudio, embeddings                                                                                                                                                                                                   |
 | `ai_conversations`, `ai_messages`                                                           | Parceiro ou workspace                        | Conversas do Assistente e dos GUIDS (evolução de `agent_sessions` e `agent_messages`)                                                                                                                                                                                       |
+| `crm_contact_property_definitions`, `crm_contact_property_values`                           | Workspace (módulo CRM)                       | Campos personalizados do contato com as flags da IA e os valores ([variaveis.md](variaveis.md), seção 2.4)                                                                                                                                                                  |
 | Camada de canais                                                                            | Núcleo                                       | [canais.md](canais.md) e ADR 0011                                                                                                                                                                                                                                           |
 
 - **Configuração em JSON tipado por aba**, com um schema Zod por versão: clonar um modelo copia o documento inteiro, então um campo novo nunca fica para trás (no legado, um clone sem `tools` ou sem score ficava mudo, sem erro). Ficam como colunas só o que é filtrado ou tem restrição.
@@ -263,6 +266,8 @@ Todas seguem o shadcn (ADR 0014), a gaveta interna (ADR 0015) e o SmartStatusBan
 | D-AG-20                             | Base de conhecimento do Assistente: base GUIDU + base do parceiro                            | Proposta                                |
 | D-AG-21                             | Ações do Assistente                                                                          | Em aberto                               |
 | D-AG-22                             | Etiquetas no CRM para a ferramenta `add_tag`                                                 | Em aberto                               |
+| D-AG-23                             | Modelo obrigatório; "Personalizado" exige os campos mínimos                                  | **Decidido**                            |
+| D-AG-24                             | Variáveis: uma sintaxe, quatro camadas, propriedades do contato no CRM com flags da IA       | Proposta ([variaveis.md](variaveis.md)) |
 
 ## 17. Critérios de aceite
 
@@ -281,17 +286,18 @@ Todas seguem o shadcn (ADR 0014), a gaveta interna (ADR 0015) e o SmartStatusBan
 
 Uma PR por etapa, cada uma com o "pode começar" do Marcelo. A A0 corre em paralelo com S2, U3 e F6a; o código começa depois da F6a **[Decidido]**.
 
-| Etapa  | Entrega                                                                                                                                                                                  |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A0** | Esta especificação, [campos.md](campos.md), [canais.md](canais.md), ADR 0017 e revisão da ADR 0012                                                                                       |
-| **A1** | Migrations, RLS (com o acesso do parceiro à configuração), limite `ai_agents.max`, dados iniciais (modelo de admin, Anna e Onboarding, um Assistente por parceiro), testes de isolamento |
-| **A2** | Motor: runtime com o SDK, renderizador, chaves com backup, ferramentas, pontuação, consumo e auditoria; remove o protótipo                                                               |
-| **A3** | Telas do `/platform` e do `/admin` (modelos, Assistente, GUIDS dos clientes)                                                                                                             |
-| **A4** | Telas do `/app` (GUIDS) e "Testar agente"                                                                                                                                                |
-| **A5** | Camada de canais e o adaptador Chatwoot; troca do n8n inbox por inbox                                                                                                                    |
-| **A6** | Avisos ao responsável, indicações, regras de horário e de fora do escopo                                                                                                                 |
-| **A7** | Base de conhecimento                                                                                                                                                                     |
-| **A8** | Assistente GUIDU na gaveta do cabeçalho; depois, as ações por proposta                                                                                                                   |
+| Etapa     | Entrega                                                                                                                                                                                  |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A0**    | Esta especificação, [campos.md](campos.md), [canais.md](canais.md), ADR 0017 e revisão da ADR 0012                                                                                       |
+| **A1**    | Migrations, RLS (com o acesso do parceiro à configuração), limite `ai_agents.max`, dados iniciais (modelo de admin, Anna e Onboarding, um Assistente por parceiro), testes de isolamento |
+| **CRM-P** | Campos personalizados do contato no CRM, com as flags da IA e os valores ([variaveis.md](variaveis.md))                                                                                  |
+| **A2**    | Motor: runtime com o SDK, renderizador e variáveis, chaves com backup, ferramentas, pontuação, consumo e auditoria; remove o protótipo                                                   |
+| **A3**    | Telas do `/platform` e do `/admin` (modelos, Assistente, GUIDS dos clientes)                                                                                                             |
+| **A4**    | Telas do `/app` (GUIDS) e "Testar agente"                                                                                                                                                |
+| **A5**    | Camada de canais e o adaptador Chatwoot; troca do n8n inbox por inbox                                                                                                                    |
+| **A6**    | Avisos ao responsável, indicações, regras de horário e de fora do escopo                                                                                                                 |
+| **A7**    | Base de conhecimento                                                                                                                                                                     |
+| **A8**    | Assistente GUIDU na gaveta do cabeçalho; depois, as ações por proposta                                                                                                                   |
 
 ## 19. Do legado para o GUIDU
 

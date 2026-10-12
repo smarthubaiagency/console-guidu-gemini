@@ -156,3 +156,16 @@ O prompt template do modelo e o `system_prompt` do agente aceitam as **25 tags**
 4. **[Proposta]** `availability_slots`: o legado guardava um objeto `{ "seg-sex": "09:00-18:00" }`; o GUIDU guarda a lista `{ weekday, start, end }` (seção 2) e o renderizador agrupa os dias com o mesmo horário para produzir o mesmo texto.
 5. **Sem prompt de reserva.** No legado, um agente inativo ou sem template caía num prompt fixo da CartãoPro (`DEFAULT_SYSTEM_MESSAGE`). No GUIDU, um agente sem prompt **não pode ser ativado** nem testado, e a tela diz o que falta. O texto da CartãoPro serve de referência para o modelo SDR da casa (Anna), não de reserva.
 6. O renderizador é um só, no motor, e é usado pelo "Testar agente" e pela produção. Cada tag tem um teste.
+
+## 9. Campos mínimos
+
+**[Decidido]** Todo GUIDS nasce de um modelo; o modelo é obrigatório. Um modelo pronto já traz os campos preenchidos. Na opção **Personalizado**, o agente só pode ser testado e ativado com estes campos preenchidos **[Proposta]**:
+
+| Aba               | Campos obrigatórios                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| Visão geral       | `agent_name`, `language`, `agent_tone`, `business_summary`, `products_services`, `system_prompt` |
+| Escopo            | `timezone` e pelo menos um horário em `availability_slots`                                       |
+| Regras            | `handoff_mode`, `after_hours_behavior`, `out_of_scope_action`                                    |
+| Conexão de modelo | `credential_id` e `model_name`                                                                   |
+
+O rascunho pode ser salvo incompleto; a tela mostra o que falta antes de testar ou ativar. As mesmas regras valem para o Assistente GUIDU do parceiro.
