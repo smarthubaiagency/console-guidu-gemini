@@ -1,4 +1,4 @@
-import { createTranslator } from "next-intl";
+import { createTranslator } from "use-intl/core";
 
 import { MESSAGE_FILES } from "@/i18n/messages";
 import type { AppErrorCode, SafeErrorResult } from "@/shared/errors/app-error";

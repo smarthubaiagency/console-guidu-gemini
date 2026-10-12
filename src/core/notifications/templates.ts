@@ -1,4 +1,4 @@
-import { createTranslator } from "next-intl";
+import { createTranslator } from "use-intl/core";
 
 import { SOURCE_LOCALE, type Messages } from "@/core/i18n/locales";
 import { composeMessages } from "@/core/i18n/messages-loader";
