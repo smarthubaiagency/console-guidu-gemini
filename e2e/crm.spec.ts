@@ -19,6 +19,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { expandSidebarGroup, sidebar } from "./support/sidebar";
+import { statusBanner } from "./support/status";
 
 test("owner enables the CRM, adds, edits and finds a contact", async ({
   page,
@@ -47,7 +48,7 @@ test("owner enables the CRM, adds, edits and finds a contact", async ({
   await page.goto(`/app/${wsSlug}/settings/modules`);
   await page.getByRole("button", { name: "Habilitar CRM" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
 
   await page.goto(`/app/${wsSlug}`);
@@ -65,8 +66,11 @@ test("owner enables the CRM, adds, edits and finds a contact", async ({
   await create.getByLabel("Empresa").fill("Cliente E2E");
   await create.getByRole("button", { name: "Adicionar contato" }).click();
   await expect(
-    create.getByRole("status").filter({ hasText: /Contato/ }),
+    statusBanner(create).filter({ hasText: /Contato/ }),
   ).toBeVisible();
+  // Esc closes the banner first (ADR 0016), then the drawer.
+  await page.keyboard.press("Escape");
+  await expect(statusBanner(page)).toBeHidden();
   await page.keyboard.press("Escape");
   await expect(drawer).toBeHidden();
   await expect(page).toHaveURL(/\/crm\/contacts$/);
@@ -82,9 +86,7 @@ test("owner enables the CRM, adds, edits and finds a contact", async ({
   await edit.getByLabel("Telefone").fill("11 98888-7777");
   await edit.getByLabel("Cargo").fill("Compras");
   await edit.getByRole("button", { name: "Salvar contato" }).click();
-  await expect(
-    edit.getByRole("status").filter({ hasText: /Contato/ }),
-  ).toBeVisible();
+  await expect(statusBanner(edit).filter({ hasText: /Contato/ })).toBeVisible();
   await expect(page.getByTestId("crm-contact-list")).toContainText(
     "11 98888-7777",
   );

@@ -23,6 +23,7 @@ import {
 } from "./support/identity";
 import { totpCode } from "./support/totp";
 import { expandSidebarGroup, sidebar } from "./support/sidebar";
+import { statusBanner } from "./support/status";
 
 test.describe.configure({ mode: "serial" });
 
@@ -33,7 +34,7 @@ async function enableHelloWorld(page: Page, wsSlug: string) {
   await page.goto(`/app/${wsSlug}/settings/modules`);
   await page.getByRole("button", { name: "Habilitar Hello World" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
 }
 
@@ -84,7 +85,7 @@ test.describe("Module contract — hello-world reference module", () => {
     await page.getByLabel("Título do registro").fill("Primeiro registro E2E");
     await page.getByRole("button", { name: "Criar registro" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Registro criado." }),
+      statusBanner(page).filter({ hasText: "Registro criado." }),
     ).toBeVisible();
 
     await page.keyboard.press("Escape");
@@ -99,7 +100,7 @@ test.describe("Module contract — hello-world reference module", () => {
     await page.getByLabel("Saudação do workspace").fill("Olá, E2E!");
     await page.getByRole("button", { name: "Salvar" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Configuração salva." }),
+      statusBanner(page).filter({ hasText: "Configuração salva." }),
     ).toBeVisible();
 
     await page.goto(`/app/${wsSlug}/hello-world`);
@@ -231,7 +232,7 @@ test.describe("Module contract — hello-world reference module", () => {
     await page.getByLabel("Saudação padrão global").fill("Olá da plataforma!");
     await page.getByRole("button", { name: "Salvar política" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Política global salva." }),
+      statusBanner(page).filter({ hasText: "Política global salva." }),
     ).toBeVisible();
 
     await page.goto(`/app/${wsSlug}/hello-world`);
@@ -247,9 +248,7 @@ test.describe("Module contract — hello-world reference module", () => {
       .selectOption("maintenance");
     await helloRow(page).getByRole("button", { name: "Aplicar" }).click();
     await expect(
-      page
-        .getByRole("status")
-        .filter({ hasText: "Disponibilidade atualizada." }),
+      statusBanner(page).filter({ hasText: "Disponibilidade atualizada." }),
     ).toBeVisible();
 
     await page.goto(`/app/${wsSlug}/hello-world`);
@@ -266,15 +265,13 @@ test.describe("Module contract — hello-world reference module", () => {
       .selectOption("enabled");
     await helloRow(page).getByRole("button", { name: "Aplicar" }).click();
     await expect(
-      page
-        .getByRole("status")
-        .filter({ hasText: "Disponibilidade atualizada." }),
+      statusBanner(page).filter({ hasText: "Disponibilidade atualizada." }),
     ).toBeVisible();
     await page.goto("/platform/settings/modules/hello-world");
     await page.getByLabel("Saudação padrão global").fill("");
     await page.getByRole("button", { name: "Salvar política" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Política global salva." }),
+      statusBanner(page).filter({ hasText: "Política global salva." }),
     ).toBeVisible();
   });
 });

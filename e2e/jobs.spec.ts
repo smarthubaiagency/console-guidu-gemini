@@ -19,6 +19,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/identity";
+import { statusBanner } from "./support/status";
 
 test("a background job is queued, run by the worker and shown in Execuções", async ({
   page,
@@ -41,15 +42,13 @@ test("a background job is queued, run by the worker and shown in Execuções", a
   await page.goto(`/app/${wsSlug}/settings/modules`);
   await page.getByRole("button", { name: "Habilitar Hello World" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
 
   await page.goto(`/app/${wsSlug}/hello-world/records?edit=new`);
   await page.getByLabel("Título do registro").fill("Criado pelo worker");
   await page.getByRole("button", { name: "Em segundo plano" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "Acompanhe em Execuções",
-  );
+  await expect(statusBanner(page)).toContainText("Acompanhe em Execuções");
 
   await page.goto(`/app/${wsSlug}/executions`);
   const runs = page.getByTestId("job-runs");

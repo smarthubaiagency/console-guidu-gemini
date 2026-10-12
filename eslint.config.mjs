@@ -79,6 +79,29 @@ export default defineConfig([
       "react-hooks/purity": "off",
     },
   },
+  {
+    // Feedback of the dashboard goes through the SmartStatusBanner
+    // (useStatus / confirmStatus, ADR 0016), never the browser dialogs.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        ...["alert", "confirm", "prompt"].map((name) => ({
+          name,
+          message: "Use useStatus() ou confirmStatus() (ADR 0016).",
+        })),
+      ],
+      "no-restricted-properties": [
+        "error",
+        ...["alert", "confirm", "prompt"].map((property) => ({
+          object: "window",
+          property,
+          message: "Use useStatus() ou confirmStatus() (ADR 0016).",
+        })),
+      ],
+    },
+  },
   globalIgnores([
     ".next/**",
     "coverage/**",

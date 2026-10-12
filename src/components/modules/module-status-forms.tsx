@@ -8,28 +8,13 @@ import {
   setWorkspaceModuleStatusAction,
   type ModuleActionState,
 } from "@/core/module-runtime/actions";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 const INITIAL: ModuleActionState = {};
 
+/** Result of the action in the SmartStatusBanner (ADR 0016). */
 function Feedback({ state }: { state: ModuleActionState }) {
-  const t = useTranslations("modules");
-  if (state.error) {
-    return (
-      <p role="alert" className="text-11 text-danger-text">
-        {state.error}
-        {state.requestId
-          ? ` ${t("reference", { id: state.requestId.slice(0, 8) })}`
-          : ""}
-      </p>
-    );
-  }
-  if (state.message) {
-    return (
-      <p role="status" className="text-11 text-success-text">
-        {state.message}
-      </p>
-    );
-  }
+  useActionStatus(state);
   return null;
 }
 

@@ -10,8 +10,6 @@ import {
   XCircle,
   Copy,
   Check,
-  AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 import {
   createInvitationAction,
@@ -20,6 +18,8 @@ import {
   removeMemberAction,
   type ActionState,
 } from "@/core/workspaces/team-actions";
+import { useStatus } from "@/components/feedback/status-context";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 export type MemberDisplay = {
   userId: string;
@@ -69,6 +69,9 @@ export function TeamClient({
   const [isPending, startTransition] = useTransition();
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<ActionState | null>(null);
+  const tCommon = useTranslations("common");
+  const { confirmStatus } = useStatus();
+  useActionStatus(feedback);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   // Invite Form state
@@ -113,8 +116,14 @@ export function TeamClient({
     });
   };
 
-  const handleRevokeInvite = (invitationId: string) => {
-    if (!confirm(t("confirmRevoke"))) return;
+  const handleRevokeInvite = async (invitationId: string) => {
+    const confirmed = await confirmStatus({
+      title: t("confirmRevoke"),
+      confirmLabel: t("revoke"),
+      cancelLabel: t("cancel"),
+      tone: "destructive",
+    });
+    if (!confirmed) return;
     startTransition(async () => {
       const formData = new FormData();
       formData.append("workspaceSlug", workspaceSlug);
@@ -140,10 +149,19 @@ export function TeamClient({
     });
   };
 
-  const handleRemoveMember = (targetUserId: string, memberName: string) => {
-    if (!confirm(t("confirmRemove", { name: memberName }))) {
-      return;
-    }
+  const handleRemoveMember = async (
+    targetUserId: string,
+    memberName: string,
+  ) => {
+    const confirmed = await confirmStatus({
+      title: t("removeMember"),
+      message: t("confirmRemove", { name: memberName }),
+      checkboxLabel: tCommon("confirmIrreversible"),
+      confirmLabel: t("removeMember"),
+      cancelLabel: t("cancel"),
+      tone: "destructive",
+    });
+    if (!confirmed) return;
     startTransition(async () => {
       const formData = new FormData();
       formData.append("workspaceSlug", workspaceSlug);
@@ -156,37 +174,10 @@ export function TeamClient({
 
   return (
     <div className="space-y-8">
-      {/* Feedback alerts */}
-      {feedback?.error && (
-        <div className="border-danger-border bg-danger-bg text-12 text-danger-text flex items-center gap-3 rounded-lg border p-4 font-medium">
-          <AlertCircle className="text-danger-text h-4 w-4 shrink-0" />
-          <span>{feedback.error}</span>
-          <button
-            type="button"
-            onClick={() => setFeedback(null)}
-            className="text-danger-text hover:text-danger-text ml-auto"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {feedback?.success && (
+      {/* The invitation link stays on the page to copy (ADR 0016). */}
+      {feedback?.success && (feedback.inviteUrl || feedback.rawToken) && (
         <div className="border-success-border bg-success-bg text-12 text-success-text space-y-2 rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-semibold">
-              <CheckCircle2 className="text-success-solid h-4 w-4" />
-              <span>{feedback.message}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setFeedback(null)}
-              className="text-success-solid hover:text-success-text font-bold"
-            >
-              ×
-            </button>
-          </div>
-          {(feedback.inviteUrl || feedback.rawToken) && (
+          {
             <div className="bg-surface-card border-success-border mt-2 flex items-center justify-between gap-3 rounded-md border p-2.5">
               <div className="text-11 text-text truncate font-mono select-all">
                 {feedback.inviteUrl ||
@@ -217,7 +208,7 @@ export function TeamClient({
                 )}
               </button>
             </div>
-          )}
+          }
         </div>
       )}
 

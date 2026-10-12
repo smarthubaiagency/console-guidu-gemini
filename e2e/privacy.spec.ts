@@ -24,6 +24,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { totpCode } from "./support/totp";
+import { statusBanner } from "./support/status";
 
 async function enrolMfa(page: Page): Promise<void> {
   await page.goto("/app/account/security");
@@ -61,9 +62,9 @@ test("the owner exports the workspace, schedules its deletion and cancels it", a
     .getByTestId("request-export")
     .getByRole("button", { name: "Gerar exportação" })
     .click();
-  await expect(
-    page.getByTestId("request-export").getByRole("status"),
-  ).toContainText("Exportação pedida.");
+  await expect(statusBanner(page.getByTestId("request-export"))).toContainText(
+    "Exportação pedida.",
+  );
   expect(await runJobs(request)).toBe(0);
   await page.reload();
   await expect(exportsSection.getByTestId("export-status").first()).toHaveText(

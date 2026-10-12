@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+import { PageStatus } from "@/components/feedback/page-status";
 import { ActionForm } from "@/components/partners/action-form";
 import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { requireUserPage } from "@/core/auth/page-guard";
@@ -27,41 +28,43 @@ export default async function AccountLanguagePage() {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <Link href="/app" className="text-12 text-primary">
-        ←
-      </Link>
-      <h1 className="text-30 mt-2 font-semibold tracking-tight">
-        {t("title")}
-      </h1>
-      <p className="text-text-secondary text-14 mt-2">
-        {identity.email ?? identity.userId}
-      </p>
-      <section className="border-card-border bg-surface-card mt-8 space-y-3 rounded-xl border p-6 shadow-xs">
-        <h2 className="text-14 text-text font-semibold">{t("personal")}</h2>
-        <p className="text-12 text-text-secondary">{t("personalHint")}</p>
-        <ActionForm
-          action={saveMyLanguageAction}
-          submitLabel={t("title")}
-          testId="my-language"
-        >
-          <label className={labelClass}>
-            {t("personal")}
-            <select
-              name="locale"
-              defaultValue={profile?.locale ?? ""}
-              className={inputClass}
-            >
-              <option value="">{t("followWorkspace")}</option>
-              {languages.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </ActionForm>
-      </section>
-    </main>
+    <PageStatus>
+      <main className="mx-auto w-full max-w-2xl px-6 py-12">
+        <Link href="/app" className="text-12 text-primary">
+          ←
+        </Link>
+        <h1 className="text-30 mt-2 font-semibold tracking-tight">
+          {t("title")}
+        </h1>
+        <p className="text-text-secondary text-14 mt-2">
+          {identity.email ?? identity.userId}
+        </p>
+        <section className="border-card-border bg-surface-card mt-8 space-y-3 rounded-xl border p-6 shadow-xs">
+          <h2 className="text-14 text-text font-semibold">{t("personal")}</h2>
+          <p className="text-12 text-text-secondary">{t("personalHint")}</p>
+          <ActionForm
+            action={saveMyLanguageAction}
+            submitLabel={t("title")}
+            testId="my-language"
+          >
+            <label className={labelClass}>
+              {t("personal")}
+              <select
+                name="locale"
+                defaultValue={profile?.locale ?? ""}
+                className={inputClass}
+              >
+                <option value="">{t("followWorkspace")}</option>
+                {languages.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </ActionForm>
+        </section>
+      </main>
+    </PageStatus>
   );
 }

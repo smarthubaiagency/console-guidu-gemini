@@ -275,9 +275,12 @@ function BannerCard({ item }: Readonly<{ item: ShownStatus }>) {
 /**
  * SmartStatusBanner (ADR 0016): the feedback card of the dashboard, centred
  * under the 60px header, over the content and its drawers. Mounted once by
- * the shell; pages talk to it through `useStatus()`.
+ * the shell (`content`) and by the identity pages (`page`, fixed at the top
+ * of the window); pages talk to it through `useStatus()`.
  */
-export function SmartStatusBanner() {
+export function SmartStatusBanner({
+  placement = "content",
+}: Readonly<{ placement?: "content" | "page" }>) {
   const { current, dismiss } = useStatus();
 
   // Esc closes the banner before anything under it (a drawer, ADR 0015).
@@ -300,7 +303,12 @@ export function SmartStatusBanner() {
   }, [current, dismiss]);
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-2 z-50 flex justify-center px-4">
+    <div
+      className={cn(
+        "pointer-events-none inset-x-0 z-50 flex justify-center px-4",
+        placement === "content" ? "absolute top-2" : "fixed top-4",
+      )}
+    >
       <div className="pointer-events-auto w-full max-w-120">
         {current ? <BannerCard key={current.id} item={current} /> : null}
       </div>

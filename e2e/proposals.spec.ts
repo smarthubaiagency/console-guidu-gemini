@@ -22,6 +22,7 @@ import {
 } from "./support/identity";
 import { totpCode } from "./support/totp";
 import { sidebar } from "./support/sidebar";
+import { statusBanner } from "./support/status";
 
 const HEADERS = {
   "content-type": "application/json",
@@ -60,7 +61,7 @@ test("an assistant proposes a contact and the owner approves it", async ({
   await page.goto(`/app/${wsSlug}/settings/modules`);
   await page.getByRole("button", { name: "Habilitar CRM" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
 
   await page.goto(`/app/${wsSlug}/settings/mcp`);

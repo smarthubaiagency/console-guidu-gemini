@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useActionState, useEffect, type ReactNode } from "react";
 
+import { useActionStatus } from "@/components/feedback/use-action-status";
 import type { PartnerActionState } from "@/core/partners/actions";
 
 type Action = (
@@ -14,8 +15,9 @@ type Action = (
 const INITIAL: PartnerActionState = {};
 
 /**
- * Small form around a partner server action: shows the result, the generated
- * invitation link and follows `redirectTo` after success.
+ * Small form around a server action: the result goes to the SmartStatusBanner
+ * (ADR 0016), the generated invitation link stays below the form (it is
+ * content to copy, not a message) and `redirectTo` is followed on success.
  */
 export function ActionForm({
   action,
@@ -38,6 +40,7 @@ export function ActionForm({
   const t = useTranslations("common");
   const router = useRouter();
   const [state, formAction, pending] = useActionState(action, INITIAL);
+  useActionStatus(state === INITIAL ? null : state);
 
   useEffect(() => {
     if (state.success && state.redirectTo) router.push(state.redirectTo);
@@ -59,17 +62,6 @@ export function ActionForm({
           {pending ? t("saving") : submitLabel}
         </button>
       </form>
-      {state.error ? (
-        <p role="alert" className="text-12 text-danger-text">
-          {state.error}
-          {state.requestId ? ` (ref. ${state.requestId.slice(0, 8)})` : ""}
-        </p>
-      ) : null}
-      {state.message ? (
-        <p role="status" className="text-12 text-success-text">
-          {state.message}
-        </p>
-      ) : null}
       {state.inviteUrl ? (
         <p className="text-12 text-text-subtle">
           {t("inviteLink")}{" "}

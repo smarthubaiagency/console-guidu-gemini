@@ -27,6 +27,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { totpCode } from "./support/totp";
+import { statusBanner } from "./support/status";
 
 async function enrolMfa(page: Page): Promise<void> {
   await page.goto("/app/account/security");
@@ -66,7 +67,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
   const domain = page.getByTestId("add-domain");
   await domain.getByLabel("Domínio ou nome do subdomínio").fill(host);
   await domain.getByRole("button", { name: "Cadastrar domínio" }).click();
-  await expect(domain.getByRole("status")).toContainText("pendente");
+  await expect(statusBanner(domain)).toContainText("pendente");
   await page.reload();
   await page.getByRole("button", { name: "Ativar" }).click();
   await expect(page.getByText("Domínio ativado.")).toBeVisible();
@@ -115,9 +116,9 @@ test("platform creates a partner whose owner runs the console on the partner dom
   await owner.getByLabel("Nome exibido").fill("Marca Agência E2E");
   await owner.getByLabel("Cor primária (#rrggbb, opcional)").fill("#6a1b9a");
   await owner.getByRole("button", { name: "Salvar nova versão" }).click();
-  await expect(
-    owner.getByTestId("brand-form").getByRole("status"),
-  ).toContainText("Marca salva");
+  await expect(statusBanner(owner.getByTestId("brand-form"))).toContainText(
+    "Marca salva",
+  );
   await owner.reload();
   await expect(owner.getByTestId("brand-current-name")).toHaveText(
     "Marca Agência E2E",
@@ -146,14 +147,14 @@ test("platform creates a partner whose owner runs the console on the partner dom
     .getByRole("listitem")
     .filter({ hasText: "Hello" });
   await helloRow.getByRole("button", { name: "Oferecer" }).click();
-  await expect(helloRow.getByRole("status")).toContainText("Módulo oferecido.");
+  await expect(statusBanner(helloRow)).toContainText("Módulo oferecido.");
 
   await owner.goto("/admin/templates");
   const template = owner.getByTestId("create-template");
   await template.getByLabel("Nome").fill("Padrão E2E");
   await template.getByRole("checkbox").first().check();
   await template.getByRole("button", { name: "Criar modelo" }).click();
-  await expect(template.getByRole("status")).toContainText("Modelo criado.");
+  await expect(statusBanner(template)).toContainText("Modelo criado.");
 
   const customerEmail = uniqueEmail("customer-owner");
   const customerSlug = `cliente-${stamp}`;
@@ -209,9 +210,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
   await publish.getByLabel("Título").fill("Termos da Agência E2E");
   await publish.getByLabel("Texto").fill("Cláusula única de teste.");
   await publish.getByRole("button", { name: "Publicar" }).click();
-  await expect(publish.getByRole("status")).toContainText(
-    "Versão 1 publicada.",
-  );
+  await expect(statusBanner(publish)).toContainText("Versão 1 publicada.");
 
   await customerPage.goto(`/app/${customerSlug}`);
   await expect(customerPage).toHaveURL(/\/legal\/accept\?next=/);
@@ -227,7 +226,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
   const support = owner.getByTestId("request-support");
   await support.getByLabel("Motivo").fill("Ajudar na configuração inicial");
   await support.getByRole("button", { name: "Pedir acesso" }).click();
-  await expect(support.getByRole("status")).toContainText("Pedido enviado");
+  await expect(statusBanner(support)).toContainText("Pedido enviado");
 
   await customerPage.goto(`/app/${customerSlug}/settings/support`);
   const grants = customerPage.getByTestId("workspace-support-grants");

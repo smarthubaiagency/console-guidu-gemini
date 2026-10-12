@@ -18,6 +18,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/identity";
+import { statusBanner } from "./support/status";
 
 test("usage shows measured counts against the limits", async ({
   page,
@@ -39,12 +40,12 @@ test("usage shows measured counts against the limits", async ({
   await page.goto(`/app/${wsSlug}/settings/modules`);
   await page.getByRole("button", { name: "Habilitar Hello World" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Módulo habilitado." }),
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
   ).toBeVisible();
   await page.goto(`/app/${wsSlug}/hello-world/records?edit=new`);
   await page.getByLabel("Título do registro").fill("Contado no consumo");
   await page.getByRole("button", { name: "Criar registro" }).click();
-  await expect(page.getByRole("status")).toContainText("Registro criado.");
+  await expect(statusBanner(page)).toContainText("Registro criado.");
 
   await page.goto(`/app/${wsSlug}/settings/usage`);
   await expect(page.getByTestId("usage-plan")).toContainText("legado");

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { EMPTY_FORM_STATE } from "@/core/auth/form-state";
-import { ErrorNotice } from "@/shared/ui/auth-shell";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 import { Field, SubmitButton } from "@/shared/ui/form";
 
 import { completePasswordReset } from "./actions";
@@ -15,6 +15,7 @@ export function ResetPasswordForm() {
     completePasswordReset,
     EMPTY_FORM_STATE,
   );
+  useActionStatus(state);
 
   return (
     <form action={action} className="space-y-4" noValidate>
@@ -33,7 +34,6 @@ export function ResetPasswordForm() {
         autoComplete="new-password"
         required
       />
-      {state.error ? <ErrorNotice>{state.error}</ErrorNotice> : null}
       <SubmitButton pending={pending}>{t("submit")}</SubmitButton>
     </form>
   );

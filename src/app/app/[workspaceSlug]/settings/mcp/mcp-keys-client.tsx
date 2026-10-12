@@ -8,7 +8,6 @@ import {
   Trash2,
   Copy,
   Check,
-  AlertCircle,
   AlertTriangle,
   CheckCircle2,
   Bot,
@@ -21,6 +20,8 @@ import {
 import type { ApiKeyItem } from "@/core/credentials/api-keys";
 import { SCOPE_DEFINITIONS, DEFAULT_WORKSPACE_SCOPES } from "@/core/mcp/scopes";
 import type { WorkspaceRole } from "@/core/permissions/roles";
+import { useStatus } from "@/components/feedback/status-context";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 export type McpKeysCapabilities = {
   canManage: boolean;
@@ -50,6 +51,9 @@ export function McpKeysClient({
   const scopeKey = (id: string) => `scopes.${id.replace(/:/g, "_")}`;
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<ApiKeyActionState | null>(null);
+  const tCommon = useTranslations("common");
+  const { confirmStatus } = useStatus();
+  useActionStatus(feedback);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -98,10 +102,16 @@ export function McpKeysClient({
     });
   };
 
-  const handleRevoke = (apiKeyId: string, keyName: string) => {
-    if (!confirm(t("confirmRevoke", { name: keyName }))) {
-      return;
-    }
+  const handleRevoke = async (apiKeyId: string, keyName: string) => {
+    const confirmed = await confirmStatus({
+      title: t("revokeTitle"),
+      message: t("confirmRevoke", { name: keyName }),
+      checkboxLabel: tCommon("confirmIrreversible"),
+      confirmLabel: t("revokeTitle"),
+      cancelLabel: t("cancel"),
+      tone: "destructive",
+    });
+    if (!confirmed) return;
 
     startTransition(async () => {
       const formData = new FormData();
@@ -121,22 +131,8 @@ export function McpKeysClient({
 
   return (
     <div className="space-y-6">
-      {/* Feedback banner */}
-      {feedback?.error && (
-        <div className="border-danger-border bg-danger-bg text-12 text-danger-text flex items-center gap-3 rounded-lg border p-4 font-medium">
-          <AlertCircle className="text-danger-text h-4 w-4 shrink-0" />
-          <span>{feedback.error}</span>
-          <button
-            type="button"
-            onClick={() => setFeedback(null)}
-            className="text-danger-text hover:text-danger-text ml-auto"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {feedback?.success && (
+      {/* The new key is shown once: it stays on the page to copy (ADR 0016). */}
+      {feedback?.success && feedback.rawKey && (
         <div className="border-success-border bg-success-bg text-12 text-success-text space-y-3 rounded-xl border p-5">
           <div className="flex items-center justify-between">
             <div className="text-14 flex items-center gap-2 font-bold">
@@ -152,7 +148,7 @@ export function McpKeysClient({
             </button>
           </div>
           <p className="text-text-subtle">{t("issuedNotice")}</p>
-          {feedback.rawKey && (
+          {
             <div className="bg-surface-card border-success-border mt-2 flex items-center justify-between gap-3 rounded-lg border p-3 shadow-xs">
               <div className="text-12 text-text truncate font-mono font-semibold select-all">
                 {feedback.rawKey}
@@ -175,7 +171,7 @@ export function McpKeysClient({
                 )}
               </button>
             </div>
-          )}
+          }
         </div>
       )}
 

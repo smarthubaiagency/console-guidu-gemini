@@ -8,6 +8,7 @@ import {
   type CrmActionState,
   updateContactAction,
 } from "../server/actions";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 const INITIAL: CrmActionState = {};
 const INPUT =
@@ -40,6 +41,7 @@ export function ContactForm({
     contactId ? updateContactAction : createContactAction,
     INITIAL,
   );
+  useActionStatus(state);
   return (
     <form
       action={action}
@@ -111,15 +113,6 @@ export function ContactForm({
         <button type="submit" disabled={pending} className={BUTTON}>
           {contactId ? t("form.save") : t("form.add")}
         </button>
-        {state.error ? (
-          <p role="alert" className="text-12 text-danger-text">
-            {state.error}
-          </p>
-        ) : state.message ? (
-          <p role="status" className="text-12 text-success-text">
-            {state.message}
-          </p>
-        ) : null}
       </div>
     </form>
   );

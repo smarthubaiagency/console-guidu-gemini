@@ -8,6 +8,7 @@ import {
 } from "./support/identity";
 import { totpCode } from "./support/totp";
 import { signOutFromShell } from "./support/sidebar";
+import { statusBanner } from "./support/status";
 
 test("administration is closed to a session without a second factor", async ({
   page,
@@ -48,9 +49,7 @@ test("enrols TOTP, then requires it on the next sign-in and opens /platform", as
 
   await page.getByLabel("Código de seis dígitos").fill("000000");
   await page.getByRole("button", { name: "Confirmar ativação" }).click();
-  await expect(page.getByTestId("error-notice")).toContainText(
-    "Código inválido",
-  );
+  await expect(statusBanner(page)).toContainText("Código inválido");
 
   await page.getByLabel("Código de seis dígitos").fill(totpCode(secret!));
   await page.getByRole("button", { name: "Confirmar ativação" }).click();
@@ -70,9 +69,7 @@ test("enrols TOTP, then requires it on the next sign-in and opens /platform", as
 
   await page.getByLabel("Código do aplicativo autenticador").fill("111111");
   await page.getByRole("button", { name: "Confirmar" }).click();
-  await expect(page.getByTestId("error-notice")).toContainText(
-    "Código inválido",
-  );
+  await expect(statusBanner(page)).toContainText("Código inválido");
 
   await page
     .getByLabel("Código do aplicativo autenticador")

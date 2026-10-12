@@ -7,6 +7,7 @@ import {
   acceptLegalDocumentsAction,
   type LegalActionState,
 } from "@/core/legal/actions";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 
 const INITIAL: LegalActionState = {};
 
@@ -16,6 +17,7 @@ export function AcceptLegalForm({ next }: Readonly<{ next: string }>) {
     acceptLegalDocumentsAction,
     INITIAL,
   );
+  useActionStatus(state);
   return (
     <form action={action} className="space-y-3" data-testid="accept-legal">
       <input type="hidden" name="next" value={next} />
@@ -30,11 +32,6 @@ export function AcceptLegalForm({ next }: Readonly<{ next: string }>) {
       >
         {pending ? t("submitting") : t("submit")}
       </button>
-      {state.error ? (
-        <p role="alert" className="text-12 text-danger-text">
-          {state.error}
-        </p>
-      ) : null}
     </form>
   );
 }

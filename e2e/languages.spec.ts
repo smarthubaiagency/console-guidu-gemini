@@ -27,6 +27,7 @@ import {
 } from "./support/identity";
 import { totpCode } from "./support/totp";
 import { sidebar } from "./support/sidebar";
+import { statusBanner } from "./support/status";
 
 test("languages: add, translate, choose per person and per workspace", async ({
   page,
@@ -92,7 +93,7 @@ test("languages: add, translate, choose per person and per workspace", async ({
   }).toPass();
   await text.getByRole("button", { name: "Salvar texto" }).click();
   await expect(
-    text.getByRole("status").filter({ hasText: "Texto salvo." }),
+    statusBanner(text).filter({ hasText: "Texto salvo." }),
   ).toBeVisible();
 
   // Machine translation (I6, fake provider in e2e): fills the texts still
@@ -102,9 +103,7 @@ test("languages: add, translate, choose per person and per workspace", async ({
     .getByRole("button", { name: "Traduzir automaticamente" })
     .click();
   await expect(
-    machine
-      .getByRole("status")
-      .filter({ hasText: "Tradução automática pedida" }),
+    statusBanner(machine).filter({ hasText: "Tradução automática pedida" }),
   ).toBeVisible();
   expect(await runJobs(request)).toBe(0);
   await page.goto(
@@ -152,9 +151,7 @@ test("languages: add, translate, choose per person and per workspace", async ({
   await wsLanguage.getByRole("combobox").selectOption("es");
   await wsLanguage.getByRole("button").click();
   await expect(
-    wsLanguage
-      .getByRole("status")
-      .filter({ hasText: /Idioma (salvo|guardado)\./ }),
+    statusBanner(wsLanguage).filter({ hasText: /Idioma (salvo|guardado)\./ }),
   ).toBeVisible();
   await page.goto(`/app/${wsSlug}`);
   await expect(page.locator("html")).toHaveAttribute("lang", "es");

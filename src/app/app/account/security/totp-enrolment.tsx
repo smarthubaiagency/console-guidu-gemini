@@ -3,7 +3,8 @@
 import { useTranslations } from "next-intl";
 import { useActionState, useState, useTransition } from "react";
 
-import { ErrorNotice, SuccessNotice } from "@/shared/ui/auth-shell";
+import { useActionStatus } from "@/components/feedback/use-action-status";
+import { SuccessNotice } from "@/shared/ui/auth-shell";
 import { Field, SubmitButton } from "@/shared/ui/form";
 
 import { confirmTotpEnrolment, startTotpEnrolment } from "./actions";
@@ -20,7 +21,10 @@ export function TotpEnrolment() {
 
   const factorId = state.factorId ?? started?.factorId;
   const secret = state.secret ?? started?.secret;
-  const error = state.error ?? started?.error;
+  // Errors go to the banner (ADR 0016); a finished enrolment replaces the
+  // form with its own state below.
+  useActionStatus(state.message ? null : state);
+  useActionStatus(started);
 
   if (state.message) {
     return <SuccessNotice testId="mfa-enrolled">{state.message}</SuccessNotice>;
@@ -40,7 +44,6 @@ export function TotpEnrolment() {
         >
           {t("start")}
         </button>
-        {error ? <ErrorNotice>{error}</ErrorNotice> : null}
       </div>
     );
   }
@@ -66,7 +69,6 @@ export function TotpEnrolment() {
         maxLength={6}
         required
       />
-      {error ? <ErrorNotice>{error}</ErrorNotice> : null}
       <SubmitButton pending={pending}>{t("confirm")}</SubmitButton>
     </form>
   );

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { EMPTY_FORM_STATE } from "@/core/auth/form-state";
-import { SuccessNotice } from "@/shared/ui/auth-shell";
+import { useActionStatus } from "@/components/feedback/use-action-status";
 import { Field, SubmitButton } from "@/shared/ui/form";
 
 import { requestPasswordRecovery } from "./actions";
@@ -16,6 +16,7 @@ export function ForgotPasswordForm() {
     requestPasswordRecovery,
     EMPTY_FORM_STATE,
   );
+  useActionStatus(state);
 
   return (
     <form action={action} className="space-y-4" noValidate>
@@ -26,7 +27,6 @@ export function ForgotPasswordForm() {
         autoComplete="username"
         required
       />
-      {state.message ? <SuccessNotice>{state.message}</SuccessNotice> : null}
       <SubmitButton pending={pending}>{t("submit")}</SubmitButton>
       <p className="text-14">
         <Link href="/login" className="underline">

@@ -1,31 +1,29 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
-import { ErrorNotice } from "@/shared/ui/auth-shell";
-import { acceptInvitationAction, type AcceptInvitationState } from "./actions";
+import { useTransition } from "react";
+
+import { useStatus } from "@/components/feedback/status-context";
+
+import { acceptInvitationAction } from "./actions";
 
 export function InviteForm({ rawToken }: Readonly<{ rawToken: string }>) {
   const t = useTranslations("invite.team.valid");
   const [isPending, startTransition] = useTransition();
-  const [state, setState] = useState<AcceptInvitationState | null>(null);
+  const { showStatus } = useStatus();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     startTransition(async () => {
       const result = await acceptInvitationAction(rawToken);
       if (result?.error) {
-        setState(result);
+        showStatus({ type: "down", title: result.error });
       }
     });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {state?.error && (
-        <ErrorNotice testId="invite-error">{state.error}</ErrorNotice>
-      )}
-
       <button
         type="submit"
         disabled={isPending}

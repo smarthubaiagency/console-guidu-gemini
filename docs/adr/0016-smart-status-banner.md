@@ -40,10 +40,11 @@ O projeto legado já tinha um sistema aprovado, o **SmartStatusBanner**: um card
    - Esc fecha o banner antes da gaveta que estiver embaixo; um diálogo ou menu aberto por cima fecha primeiro.
 7. **Sem dependência nova.** A entrada usa `tw-animate-css`. A barra é uma animação CSS (`status-countdown`) que para com `animation-play-state` durante a pausa, sincronizada com o timer.
 8. **Cores** pelos tokens `success`, `warning` e `danger`, nos temas claro e escuro.
-9. **Fora do shell** (login, convites, MFA), `useStatus()` lança um erro claro. O `AuthShell` ganha o provider quando alguma tela de lá precisar.
+9. **Fora do shell** (login, convites, MFA, escolha de workspace, páginas da conta), o `PageStatus` monta o provider e o banner, fixo no topo da janela (S2); o `AuthShell` já o usa. Fora dos dois, `useStatus()` lança um erro claro.
 
 ## Consequências
 
 - Etapa **S1** (esta): o componente, a regra e a página de catálogo `/platform/design/status`, com o e2e `e2e/status.spec.ts`.
-- Etapa **S2**: o `ActionForm` (66 formulários), os formulários com `useActionState` próprio e os três `confirm()` passam para o banner; os e2e passam a ler `getByTestId("smart-status")`. Depois disso, uma regra do ESLint (`no-restricted-globals`) trava o `alert` e o `confirm`.
+- Etapa **S2** (feita): o `ActionForm` (66 formulários), os formulários com `useActionState` próprio (pelo `useActionStatus`) e os três `confirm()` passam para o banner. As confirmações de revogar credencial, revogar chave MCP e remover membro pedem o checkbox "Entendo que esta ação não pode ser desfeita". O `AuthShell` também monta o banner, no topo da janela (`placement="page"`), para login, recuperação de senha, MFA e convites. Os e2e leem o banner por `statusBanner()`. O `useActionStatus` anuncia cada resultado uma vez só: quando uma revalidação troca as traduções, os formulários já montados não repetem a mensagem antiga por cima da nova. O ESLint recusa `alert`, `confirm` e `prompt` (`no-restricted-globals` e `no-restricted-properties`).
+- Ficam na página, de propósito: o link de convite e a chave exibida uma vez (conteúdo para copiar) e os estados de página do `AuthShell` (link expirado, acesso negado). O protótipo congelado de Agentes de IA não foi migrado; ele sai na etapa A2.
 - O ESLint libera variável CSS e `style` também em `src/components/feedback/`, só para o tempo da barra (`--status-duration`).
