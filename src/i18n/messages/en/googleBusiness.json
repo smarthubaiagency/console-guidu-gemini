@@ -1,0 +1,10 @@
+{
+  "metaTitle": "Google Business Profile",
+  "breadcrumbModules": "Modules",
+  "title": "Google Business Profile",
+  "description": "Manage online presence, reviews, opening hours and photos of physical stores.",
+  "inDevelopment": {
+    "title": "Module in Development",
+    "body": "The integration with the Google Business Profile API depends on global OAuth connectors and operational credentials."
+  }
+}

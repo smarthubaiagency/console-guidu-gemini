@@ -1,0 +1,57 @@
+{
+  "portfolio": {
+    "name": "Portafolio",
+    "description": "Productos, servicios, inmuebles, hospedaje y eventos en el formato del protocolo UCP.",
+    "nav": { "portfolio": "Portafolio" },
+    "settings": { "portfolio_admin": "Portafolio" },
+    "permissions": {
+      "portfolio_items_read": "Ver los ítems del portafolio.",
+      "portfolio_items_write": "Crear y editar ítems y variantes del portafolio."
+    },
+    "quotas": {
+      "portfolio_items": "Ítems del portafolio por workspace.",
+      "portfolio_variants": "Variantes del portafolio por workspace."
+    }
+  },
+  "crm": {
+    "name": "CRM",
+    "description": "Contactos del workspace; prospectos, empresas, negocios y tareas llegarán después.",
+    "nav": { "crm": "CRM", "crm_contacts": "Contactos" },
+    "permissions": {
+      "crm_contacts_read": "Ver los contactos del workspace.",
+      "crm_contacts_write": "Crear y editar contactos."
+    },
+    "quotas": { "crm_contacts": "Contactos por workspace." }
+  },
+  "google_business": {
+    "name": "Perfil de Empresa de Google",
+    "description": "Integración y sincronización de perfiles comerciales (especificación pendiente).",
+    "nav": { "google_business": "Perfil de Empresa de Google" }
+  },
+  "ai_agents": {
+    "name": "Agentes de IA",
+    "description": "Asistentes contextuales (congelado hasta que se apruebe la especificación).",
+    "nav": { "ai_agents": "Agentes de IA" }
+  },
+  "hello_world": {
+    "name": "Hello World",
+    "description": "Módulo de referencia que valida el contrato de módulos de la plataforma.",
+    "nav": {
+      "hello_world": "Hello World",
+      "hello_world_home": "Saludo",
+      "hello_world_records": "Registros"
+    },
+    "settings": {
+      "hello_world_workspace": "Hello World",
+      "hello_world_admin": "Hello World"
+    },
+    "permissions": {
+      "hello_world_read": "Ver el saludo y los registros de ejemplo.",
+      "hello_world_records_write": "Crear registros de ejemplo.",
+      "hello_world_settings_manage": "Cambiar el saludo del workspace."
+    },
+    "quotas": {
+      "hello_world_records": "Límite de demostración de registros por workspace."
+    }
+  }
+}

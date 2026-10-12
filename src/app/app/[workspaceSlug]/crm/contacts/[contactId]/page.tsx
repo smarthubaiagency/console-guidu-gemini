@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { UserRound } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -15,7 +15,10 @@ import { CrmPermissions } from "@/modules/crm/manifest";
 import { getContact } from "@/modules/crm/server";
 import { AppError } from "@/shared/errors";
 
-export const metadata: Metadata = { title: "Contato — CRM" };
+export async function generateMetadata() {
+  const t = await getTranslations("crm");
+  return { title: t("contact.metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string; contactId: string }>;
@@ -61,20 +64,27 @@ export default async function CrmContactPage({ params }: PageProps) {
     }
   });
   if (view.kind === "missing") notFound();
+  const t = await getTranslations("crm");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="crm-contact">
       <ModulePageHeader
-        trail={["Módulos", "CRM", "Contatos"]}
-        title={view.kind === "ok" ? view.contact.name : "Contato"}
-        description="Dados do contato."
+        trail={[
+          t("breadcrumbModules"),
+          t("breadcrumbCrm"),
+          t("contacts.title"),
+        ]}
+        title={
+          view.kind === "ok" ? view.contact.name : t("contact.fallbackTitle")
+        }
+        description={t("contact.description")}
         icon={<UserRound className="h-5 w-5" />}
       />
       <Link
         href={`/app/${workspaceSlug}/crm/contacts`}
         className="text-12 text-primary font-semibold"
       >
-        ← Voltar para contatos
+        {t("contact.back")}
       </Link>
       {view.kind !== "ok" ? (
         <ModuleNotice variant={view.kind} />
@@ -90,15 +100,17 @@ export default async function CrmContactPage({ params }: PageProps) {
         <dl className="border-card-border bg-surface-card text-12 grid gap-2 rounded-xl border p-5 shadow-xs sm:grid-cols-2">
           {(
             [
-              ["E-mail", view.contact.email],
-              ["Telefone", view.contact.phone],
-              ["Empresa", view.contact.companyName],
-              ["Cargo", view.contact.jobTitle],
-              ["Observações", view.contact.notes],
+              ["email", view.contact.email],
+              ["phone", view.contact.phone],
+              ["companyName", view.contact.companyName],
+              ["jobTitle", view.contact.jobTitle],
+              ["notes", view.contact.notes],
             ] as const
-          ).map(([label, value]) => (
-            <div key={label}>
-              <dt className="text-text-subtle font-medium">{label}</dt>
+          ).map(([field, value]) => (
+            <div key={field}>
+              <dt className="text-text-subtle font-medium">
+                {t(`fields.${field}`)}
+              </dt>
               <dd className="text-text">{value ?? "—"}</dd>
             </div>
           ))}

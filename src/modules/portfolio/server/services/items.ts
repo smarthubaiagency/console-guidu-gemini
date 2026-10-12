@@ -17,6 +17,7 @@ import { AppError } from "@/shared/errors";
 
 import {
   AccommodationTypeInput,
+  LODGING_VALIDATION,
   NIGHT_UNIT,
   RatePlanInput,
   type SerializableAccommodationType,
@@ -26,7 +27,12 @@ import {
   toUcpLodgingProduct,
 } from "../../lodging";
 import { PortfolioPermissions, PortfolioQuotas } from "../../manifest";
-import { detailsSchema, isValidKind, ITEM_TYPES } from "../../verticals";
+import {
+  detailsSchema,
+  isValidKind,
+  ITEM_TYPES,
+  TIME_FORMAT_MESSAGE,
+} from "../../verticals";
 import {
   AVAILABILITY_STATUSES,
   FULFILLMENT_METHODS,
@@ -60,6 +66,33 @@ import {
 
 const MODULE_KEY = "portfolio";
 
+/**
+ * Custom validation messages of the item schemas. {@link invalid} gives
+ * them a translation key when they reach the screen (I4).
+ */
+const ITEM_VALIDATION = {
+  handleFormat: "Use letras minúsculas, números e hífen.",
+  itemType:
+    "Categoria inválida (produto, serviço, imóvel, hospedagem ou evento).",
+  titleRequired: "Informe o título.",
+  variantTitleRequired: "Informe o nome da variante.",
+  listPriceBelowPrice: "O preço cheio não pode ser menor que o preço atual.",
+  listPriceCurrency: "Preço e preço cheio precisam da mesma moeda.",
+  variantsRequired: "Informe ao menos uma variante.",
+} as const;
+
+/** Validation message -> `portfolio.validation.<name>`. */
+const VALIDATION_KEYS = new Map<string, string>(
+  Object.entries({
+    ...ITEM_VALIDATION,
+    ...LODGING_VALIDATION,
+    timeFormat: TIME_FORMAT_MESSAGE,
+    // Messages of ../../ucp.ts (media and links).
+    invalidUrl: "URL inválida.",
+    httpUrl: "Use http ou https.",
+  }).map(([name, message]) => [message, `portfolio.validation.${name}`]),
+);
+
 const tagList = (max: number, each = 60) =>
   z.array(z.string().trim().min(1).max(each)).max(max);
 
@@ -68,16 +101,15 @@ const handleSchema = z
   .trim()
   .min(1)
   .max(200)
-  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use letras minúsculas, números e hífen.");
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, ITEM_VALIDATION.handleFormat);
 
 const itemFields = {
   item_type: z.enum(ITEM_TYPES, {
-    error:
-      "Categoria inválida (produto, serviço, imóvel, hospedagem ou evento).",
+    error: ITEM_VALIDATION.itemType,
   }),
   vertical: z.string().regex(/^[a-z][a-z0-9_]{0,47}$/),
   details: z.record(z.string(), z.unknown()),
-  title: z.string().trim().min(1, "Informe o título.").max(200),
+  title: z.string().trim().min(1, ITEM_VALIDATION.titleRequired).max(200),
   handle: handleSchema,
   description: UcpDescription,
   categories: z.array(UcpCategory).max(20),
@@ -111,7 +143,11 @@ const itemFields = {
 
 /** Variant fields without defaults (updates change only what is sent). */
 const variantShape = {
-  title: z.string().trim().min(1, "Informe o nome da variante.").max(200),
+  title: z
+    .string()
+    .trim()
+    .min(1, ITEM_VALIDATION.variantTitleRequired)
+    .max(200),
   sku: z.string().trim().min(1).max(64).nullable().optional(),
   barcodes: z.array(UcpBarcode).max(10),
   price: UcpPrice.nullable().optional(),
@@ -155,11 +191,11 @@ const VariantFields = z
 
 export const VariantInput = VariantFields.refine(
   (v) => !v.price || !v.list_price || v.list_price.amount >= v.price.amount,
-  "O preço cheio não pode ser menor que o preço atual.",
+  ITEM_VALIDATION.listPriceBelowPrice,
 ).refine(
   (v) =>
     !v.price || !v.list_price || v.list_price.currency === v.price.currency,
-  "Preço e preço cheio precisam da mesma moeda.",
+  ITEM_VALIDATION.listPriceCurrency,
 );
 
 export const VariantUpdateInput = z.object(variantShape).partial().strict();
@@ -194,7 +230,7 @@ export const ItemCreateInput = z
     ai_safety_rules: itemFields.ai_safety_rules.optional(),
     variants: z
       .array(VariantInput)
-      .min(1, "Informe ao menos uma variante.")
+      .min(1, ITEM_VALIDATION.variantsRequired)
       .max(100),
     /** Lodging only; by default one type named after the item and one plan. */
     accommodation_types: z
@@ -211,7 +247,7 @@ export const ItemUpdateInput = z
   .omit({ item_type: true, vertical: true })
   .partial()
   .strict()
-  .refine((v) => Object.keys(v).length > 0, "Nada para alterar.");
+  .refine((v) => Object.keys(v).length > 0, LODGING_VALIDATION.nothingToChange);
 
 export type VariantView = SerializableVariant &
   Readonly<{
@@ -439,18 +475,37 @@ export function itemToUcp(item: ItemView): Record<string, unknown> | null {
 /** Shared with ./lodging.ts. */
 export function invalid(error: z.ZodError): AppError {
   const issue = error.issues[0];
+  if (!issue) {
+    return new AppError({
+      code: "invalid_input",
+      safeMessage: "Dados do item inválidos.",
+      messageKey: "portfolio.errors.invalidItem",
+    });
+  }
+  const field = issue.path.join(".") || "item";
+  // Known messages are translated; zod's own stay as they are (I4).
+  const key = VALIDATION_KEYS.get(issue.message);
   return new AppError({
     code: "invalid_input",
-    safeMessage: issue
-      ? `${issue.path.join(".") || "item"}: ${issue.message}`
-      : "Dados do item inválidos.",
+    safeMessage: `${field}: ${issue.message}`,
+    messageKey: key ?? "portfolio.errors.invalidField",
+    messageValues: key ? { field } : { field, message: issue.message },
   });
 }
 
+const NOT_FOUND_KEYS: Readonly<Record<string, string>> = {
+  Item: "item",
+  Variante: "variant",
+  Acomodação: "accommodationType",
+  Tarifa: "ratePlan",
+};
+
 export function notFound(what = "Item"): AppError {
+  const key = NOT_FOUND_KEYS[what];
   return new AppError({
     code: "not_found",
     safeMessage: `${what} não encontrado.`,
+    ...(key ? { messageKey: `portfolio.errors.notFound.${key}` } : {}),
   });
 }
 
@@ -465,6 +520,8 @@ function parseDetails(
     throw new AppError({
       code: "invalid_input",
       safeMessage: `Vertical "${vertical}" não existe para esta categoria.`,
+      messageKey: "portfolio.errors.unknownVertical",
+      messageValues: { vertical },
     });
   }
   const parsed = detailsSchema(itemType, vertical, {
@@ -479,6 +536,7 @@ function parseDetails(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Informe o início e o fim do horário de silêncio.",
+      messageKey: "portfolio.errors.quietHoursPair",
     });
   }
   return data;
@@ -489,31 +547,51 @@ function parseDetails(
  * the property (one location), accommodation types with capacity, a rate
  * plan and every variant bound to a type and a plan.
  */
-export function lodgingProblem(item: ItemView): string | null {
+const LODGING_PROBLEMS = {
+  property: "Escolha a propriedade (uma loja) antes de ativar a hospedagem.",
+  accommodationTypes: "Cadastre ao menos uma acomodação antes de ativar.",
+  capacity: "Informe a capacidade total de cada acomodação antes de ativar.",
+  ratePlans: "Cadastre ao menos uma tarifa antes de ativar.",
+  variantLinks: "Cada preço precisa de uma acomodação e de uma tarifa.",
+} as const;
+
+export type LodgingProblem = keyof typeof LODGING_PROBLEMS;
+
+/**
+ * Code of what an active lodging item lacks, or null; its text is
+ * `portfolio.errors.lodging.<code>` (I4).
+ */
+export function lodgingProblemCode(item: ItemView): LodgingProblem | null {
   if (!item.lodging || item.status !== "active") return null;
-  if (item.locationIds.length !== 1) {
-    return "Escolha a propriedade (uma loja) antes de ativar a hospedagem.";
-  }
+  if (item.locationIds.length !== 1) return "property";
   if (item.lodging.accommodationTypes.length === 0) {
-    return "Cadastre ao menos uma acomodação antes de ativar.";
+    return "accommodationTypes";
   }
   if (item.lodging.accommodationTypes.some((t) => !t.capacity.total)) {
-    return "Informe a capacidade total de cada acomodação antes de ativar.";
+    return "capacity";
   }
-  if (item.lodging.ratePlans.length === 0) {
-    return "Cadastre ao menos uma tarifa antes de ativar.";
-  }
+  if (item.lodging.ratePlans.length === 0) return "ratePlans";
   if (item.variants.some((v) => !v.accommodationTypeId || !v.ratePlanId)) {
-    return "Cada preço precisa de uma acomodação e de uma tarifa.";
+    return "variantLinks";
   }
   return null;
 }
 
+export function lodgingProblem(item: ItemView): string | null {
+  const code = lodgingProblemCode(item);
+  return code ? LODGING_PROBLEMS[code] : null;
+}
+
 /** Shared with ./lodging.ts: an active lodging item must stay complete. */
 export function assertLodgingReady(item: ItemView): ItemView {
-  const problem = lodgingProblem(item);
-  if (problem)
-    throw new AppError({ code: "invalid_input", safeMessage: problem });
+  const code = lodgingProblemCode(item);
+  if (code) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: LODGING_PROBLEMS[code],
+      messageKey: `portfolio.errors.lodging.${code}`,
+    });
+  }
   return item;
 }
 
@@ -530,6 +608,7 @@ function checkLodgingFields(
       throw new AppError({
         code: "invalid_input",
         safeMessage: "Uma hospedagem fica em uma única propriedade (loja).",
+        messageKey: "portfolio.errors.singleProperty",
       });
     }
     return;
@@ -538,6 +617,7 @@ function checkLodgingFields(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Acomodação e tarifa existem só na hospedagem.",
+      messageKey: "portfolio.errors.lodgingOnly",
     });
   }
 }
@@ -611,6 +691,7 @@ function checkPrices(
       code: "invalid_input",
       safeMessage:
         "Informe o preço de cada variante, ou marque o item como sob consulta.",
+      messageKey: "portfolio.errors.priceRequired",
     });
   }
   const currencies = new Set(
@@ -620,6 +701,7 @@ function checkPrices(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Todas as variantes de um item usam a mesma moeda.",
+      messageKey: "portfolio.errors.singleCurrency",
     });
   }
 }
@@ -635,6 +717,7 @@ async function checkLocations(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Uma das lojas não existe ou está desativada.",
+      messageKey: "portfolio.errors.locationUnavailable",
     });
   }
 }
@@ -750,6 +833,7 @@ function skuConflict(error: unknown): never {
     throw new AppError({
       code: "conflict",
       safeMessage: "Este SKU ou endereço (handle) já está em uso no workspace.",
+      messageKey: "portfolio.errors.skuConflict",
     });
   }
   throw error;
@@ -864,6 +948,7 @@ export async function createItem(
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Acomodação e tarifa existem só na hospedagem.",
+      messageKey: "portfolio.errors.lodgingOnly",
     });
   }
   if (
@@ -874,6 +959,7 @@ export async function createItem(
       code: "invalid_input",
       safeMessage:
         "Na criação, os preços usam a primeira acomodação e a primeira tarifa.",
+      messageKey: "portfolio.errors.createLinks",
     });
   }
   await checkLocations(tx, ctx, d.location_ids);
@@ -1227,6 +1313,7 @@ export async function removeVariant(
     throw new AppError({
       code: "conflict",
       safeMessage: "Todo item precisa de ao menos uma variante.",
+      messageKey: "portfolio.errors.lastVariant",
     });
   }
   await tx.portfolioVariant.deleteMany({

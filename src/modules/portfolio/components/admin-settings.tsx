@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import {
   ActionForm,
   inputClass,
@@ -17,18 +19,21 @@ import { savePortfolioAdminSettingsAction } from "../server/actions";
  * quotas for companies whose plan does not set them. A plan limit, set in
  * Plataforma › Cobrança, always wins.
  */
-export function PortfolioAdminSettings(props: ModuleSettingsComponentProps) {
+export async function PortfolioAdminSettings(
+  props: ModuleSettingsComponentProps,
+) {
+  const t = await getTranslations("portfolio");
   const defaults =
     (props.config.quotaDefaults as Record<string, number> | undefined) ?? {};
   const fields = [
     {
       key: PortfolioQuotas.ITEMS,
-      label: "Itens por workspace",
+      label: t("admin.items"),
       fallback: PORTFOLIO_DEFAULT_ITEM_LIMIT,
     },
     {
       key: PortfolioQuotas.VARIANTS,
-      label: "Variantes por workspace",
+      label: t("admin.variants"),
       fallback: PORTFOLIO_DEFAULT_VARIANT_LIMIT,
     },
   ];
@@ -42,7 +47,7 @@ export function PortfolioAdminSettings(props: ModuleSettingsComponentProps) {
             type="number"
             min={0}
             defaultValue={defaults[f.key]}
-            placeholder={`Padrão do módulo: ${f.fallback}`}
+            placeholder={t("admin.placeholder", { value: String(f.fallback) })}
             disabled={!props.canWrite}
             className={inputClass}
           />
@@ -55,14 +60,11 @@ export function PortfolioAdminSettings(props: ModuleSettingsComponentProps) {
       className="border-card-border bg-surface-card space-y-3 rounded-xl border p-5 shadow-xs"
       data-testid="portfolio-admin-settings"
     >
-      <p className="text-12 text-text-secondary">
-        Limites usados quando o plano da empresa não define um. Vazio volta ao
-        padrão do módulo.
-      </p>
+      <p className="text-12 text-text-secondary">{t("admin.intro")}</p>
       {props.canWrite ? (
         <ActionForm
           action={savePortfolioAdminSettingsAction}
-          submitLabel="Salvar limites"
+          submitLabel={t("admin.submit")}
           className="space-y-3"
         >
           {inputs}

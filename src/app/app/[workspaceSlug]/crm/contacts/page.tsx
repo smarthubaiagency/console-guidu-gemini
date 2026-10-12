@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Users } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -14,7 +14,10 @@ import { ContactForm } from "@/modules/crm/client";
 import { CrmPermissions } from "@/modules/crm/manifest";
 import { listContacts } from "@/modules/crm/server";
 
-export const metadata: Metadata = { title: "Contatos — CRM" };
+export async function generateMetadata() {
+  const t = await getTranslations("crm");
+  return { title: t("contacts.metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -63,13 +66,18 @@ export default async function CrmContactsPage({
   });
   if (view.kind === "missing") notFound();
   const base = `/app/${workspaceSlug}/crm/contacts`;
+  const t = await getTranslations("crm");
 
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="crm-contacts">
       <ModulePageHeader
-        trail={["Módulos", "CRM", "Contatos"]}
-        title="Contatos"
-        description="Pessoas com quem o workspace se relaciona."
+        trail={[
+          t("breadcrumbModules"),
+          t("breadcrumbCrm"),
+          t("contacts.title"),
+        ]}
+        title={t("contacts.title")}
+        description={t("contacts.description")}
         icon={<Users className="h-5 w-5" />}
       />
       {view.kind !== "ok" ? (
@@ -82,14 +90,13 @@ export default async function CrmContactsPage({
                 className="text-12 text-text-secondary"
                 data-testid="module-read-only"
               >
-                Assinatura suspensa: os contatos ficam disponíveis só para
-                consulta.
+                {t("contacts.readOnly")}
               </p>
             ) : view.canWrite ? (
               <ContactForm workspaceSlug={workspaceSlug} />
             ) : (
               <p className="text-12 text-text-secondary">
-                Seu papel permite apenas consultar os contatos.
+                {t("contacts.readOnlyRole")}
               </p>
             )}
           </div>
@@ -99,23 +106,21 @@ export default async function CrmContactsPage({
               name="q"
               defaultValue={search}
               maxLength={100}
-              placeholder="Buscar por nome, e-mail ou empresa"
-              aria-label="Buscar contatos"
+              placeholder={t("contacts.searchPlaceholder")}
+              aria-label={t("contacts.searchLabel")}
               className="border-border bg-surface-card text-14 text-text w-full rounded-lg border px-3 py-2"
             />
             <button
               type="submit"
               className="border-border text-12 text-text rounded-lg border px-4 py-2 font-semibold"
             >
-              Buscar
+              {t("contacts.search")}
             </button>
           </form>
 
           {view.items.length === 0 ? (
             <p className="text-12 text-text-secondary">
-              {search
-                ? "Nenhum contato encontrado."
-                : "Sem dados: nenhum contato ainda."}
+              {search ? t("contacts.noResults") : t("contacts.empty")}
             </p>
           ) : (
             <ul
@@ -147,7 +152,7 @@ export default async function CrmContactsPage({
               href={`${base}?${new URLSearchParams({ ...(search ? { q: search } : {}), cursor: view.nextCursor })}`}
               className="text-12 text-primary font-semibold"
             >
-              Mais contatos
+              {t("contacts.more")}
             </Link>
           ) : null}
         </>

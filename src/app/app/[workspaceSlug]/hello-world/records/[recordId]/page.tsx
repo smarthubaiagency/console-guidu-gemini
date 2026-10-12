@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FileText } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -14,7 +14,10 @@ import { HelloWorldPermissions } from "@/modules/hello-world/manifest";
 import { getHelloWorldRecord } from "@/modules/hello-world/server";
 import { AppError } from "@/shared/errors";
 
-export const metadata: Metadata = { title: "Registro — Hello World" };
+export async function generateMetadata() {
+  const t = await getTranslations("helloWorld");
+  return { title: t("record.metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string; recordId: string }>;
@@ -56,28 +59,41 @@ export default async function HelloWorldRecordPage({ params }: PageProps) {
     }
   });
   if (view.kind === "missing") notFound();
+  const t = await getTranslations("helloWorld");
+  const format = await getFormatter();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={["Módulos", "Hello World", "Registros"]}
-        title={view.kind === "ok" ? view.record.title : "Registro"}
+        trail={[
+          t("breadcrumbModules"),
+          t("breadcrumbHelloWorld"),
+          t("records.breadcrumb"),
+        ]}
+        title={
+          view.kind === "ok" ? view.record.title : t("record.fallbackTitle")
+        }
         icon={<FileText className="h-5 w-5" />}
       />
       {view.kind === "ok" ? (
         <dl className="border-card-border bg-surface-card text-12 grid grid-cols-3 gap-3 rounded-xl border p-5 shadow-xs">
-          <dt className="text-text-secondary">Identificador</dt>
+          <dt className="text-text-secondary">{t("record.id")}</dt>
           <dd className="text-text col-span-2 font-mono">{view.record.id}</dd>
-          <dt className="text-text-secondary">Criado em</dt>
+          <dt className="text-text-secondary">{t("record.createdAt")}</dt>
           <dd className="text-text col-span-2">
-            {new Date(view.record.createdAt).toLocaleString("pt-BR", {
-              timeZone: "UTC",
-            })}{" "}
-            UTC
+            {t("records.dateUtc", {
+              date: format.dateTime(new Date(view.record.createdAt), {
+                dateStyle: "short",
+                timeStyle: "medium",
+                timeZone: "UTC",
+              }),
+            })}
           </dd>
-          <dt className="text-text-secondary">Autor</dt>
+          <dt className="text-text-secondary">{t("record.author")}</dt>
           <dd className="text-text col-span-2">
-            {view.record.createdByMe ? "Você" : "Outro membro"}
+            {view.record.createdByMe
+              ? t("record.you")
+              : t("record.otherMember")}
           </dd>
         </dl>
       ) : (
@@ -87,7 +103,7 @@ export default async function HelloWorldRecordPage({ params }: PageProps) {
         href={`/app/${workspaceSlug}/hello-world/records`}
         className="text-12 underline"
       >
-        Voltar aos registros
+        {t("record.back")}
       </Link>
     </div>
   );

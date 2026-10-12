@@ -1,0 +1,48 @@
+{
+  "breadcrumbModules": "Modules",
+  "breadcrumbCrm": "CRM",
+  "contacts": {
+    "metaTitle": "Contacts — CRM",
+    "title": "Contacts",
+    "description": "People the workspace works with.",
+    "readOnly": "Subscription suspended: contacts are available for viewing only.",
+    "readOnlyRole": "Your role only allows viewing contacts.",
+    "searchPlaceholder": "Search by name, email or company",
+    "searchLabel": "Search contacts",
+    "search": "Search",
+    "noResults": "No contacts found.",
+    "empty": "No data: no contacts yet.",
+    "more": "More contacts"
+  },
+  "contact": {
+    "metaTitle": "Contact — CRM",
+    "fallbackTitle": "Contact",
+    "description": "Contact details.",
+    "back": "← Back to contacts"
+  },
+  "fields": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "companyName": "Company",
+    "jobTitle": "Job title",
+    "notes": "Notes"
+  },
+  "form": {
+    "save": "Save contact",
+    "add": "Add contact"
+  },
+  "actions": {
+    "created": "Contact created.",
+    "saved": "Contact saved."
+  },
+  "errors": {
+    "invalidInput": "Invalid data.",
+    "contactInvalid": "Invalid contact data.",
+    "nameRequired": "Enter the name.",
+    "emailInvalid": "Invalid email.",
+    "phoneInvalid": "Invalid phone number.",
+    "nothingToChange": "Nothing to change.",
+    "contactNotFound": "Contact not found."
+  }
+}

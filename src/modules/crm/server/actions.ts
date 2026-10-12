@@ -1,13 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
-import { AppError, type AppErrorCode, toSafeError } from "@/shared/errors";
+import { AppError, type AppErrorCode } from "@/shared/errors";
 
 import { createContact, updateContact } from "./services/contacts";
 
@@ -21,15 +23,6 @@ export type CrmActionState = {
 };
 
 const slug = z.string().min(1).max(64);
-
-function failure(err: unknown): CrmActionState {
-  const safe = toSafeError(err);
-  return {
-    error: safe.safeMessage,
-    code: safe.code,
-    requestId: safe.requestId,
-  };
-}
 
 function contactFields(formData: FormData) {
   const text = (key: string) => {
@@ -52,6 +45,7 @@ async function contextFor(formData: FormData) {
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Dados inválidos.",
+      messageKey: "crm.errors.invalidInput",
     });
   }
   const identity = await requireUser();
@@ -73,9 +67,14 @@ export async function createContactAction(
       createContact(tx, context, contactFields(formData)),
     );
     revalidatePath(`/app/${workspaceSlug}/crm/contacts`);
-    return { success: true, message: "Contato criado.", contactId: contact.id };
+    const t = await getTranslations("crm");
+    return {
+      success: true,
+      message: t("actions.created"),
+      contactId: contact.id,
+    };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }
 
@@ -90,8 +89,9 @@ export async function updateContactAction(
       updateContact(tx, context, contactId, contactFields(formData)),
     );
     revalidatePath(`/app/${workspaceSlug}/crm/contacts`, "layout");
-    return { success: true, message: "Contato salvo.", contactId };
+    const t = await getTranslations("crm");
+    return { success: true, message: t("actions.saved"), contactId };
   } catch (err) {
-    return failure(err);
+    return actionFailure(err);
   }
 }

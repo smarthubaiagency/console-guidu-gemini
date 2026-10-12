@@ -1,0 +1,10 @@
+{
+  "metaTitle": "Perfil de Empresa en Google",
+  "breadcrumbModules": "Módulos",
+  "title": "Perfil de Empresa en Google",
+  "description": "Gestión de presencia en línea, reseñas, horarios y fotos de tiendas físicas.",
+  "inDevelopment": {
+    "title": "Módulo en Desarrollo",
+    "body": "La integración con la Google Business Profile API depende de conectores OAuth globales y credenciales operativas."
+  }
+}

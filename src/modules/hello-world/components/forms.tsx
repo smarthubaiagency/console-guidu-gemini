@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   createHelloWorldRecordAction,
@@ -35,6 +36,7 @@ function Feedback({ state }: { state: HelloWorldActionState }) {
 }
 
 export function CreateRecordForm({ workspaceSlug }: { workspaceSlug: string }) {
+  const t = useTranslations("helloWorld");
   const [state, action, pending] = useActionState(
     createHelloWorldRecordAction,
     INITIAL,
@@ -46,7 +48,7 @@ export function CreateRecordForm({ workspaceSlug }: { workspaceSlug: string }) {
         className="text-12 text-text-subtle block font-medium"
         htmlFor="hello-title"
       >
-        Título do registro
+        {t("form.recordTitle")}
       </label>
       <div className="flex gap-2">
         <input
@@ -54,11 +56,11 @@ export function CreateRecordForm({ workspaceSlug }: { workspaceSlug: string }) {
           name="title"
           required
           maxLength={120}
-          placeholder="Ex.: Primeiro registro de exemplo"
+          placeholder={t("form.recordTitlePlaceholder")}
           className={INPUT}
         />
         <button type="submit" disabled={pending} className={BUTTON}>
-          {pending ? "Criando..." : "Criar registro"}
+          {pending ? t("form.creating") : t("form.create")}
         </button>
         {/* F3a reference job: the same creation through the worker. */}
         <button
@@ -68,7 +70,7 @@ export function CreateRecordForm({ workspaceSlug }: { workspaceSlug: string }) {
           disabled={pending}
           className="border-border text-text-subtle hover:bg-surface-hover text-12 rounded-lg border px-4 py-2 font-semibold whitespace-nowrap disabled:opacity-60"
         >
-          Em segundo plano
+          {t("form.background")}
         </button>
       </div>
       <Feedback state={state} />
@@ -87,6 +89,7 @@ export function WorkspaceGreetingForm({
   inheritedGreeting: string;
   canWrite: boolean;
 }) {
+  const t = useTranslations("helloWorld");
   const [state, action, pending] = useActionState(
     saveHelloWorldWorkspaceSettingsAction,
     INITIAL,
@@ -98,28 +101,26 @@ export function WorkspaceGreetingForm({
         className="text-12 text-text-subtle block font-medium"
         htmlFor="hello-greeting"
       >
-        Saudação do workspace
+        {t("form.workspaceGreeting")}
       </label>
       <input
         id="hello-greeting"
         name="greeting"
         maxLength={80}
         defaultValue={greeting}
-        placeholder={`Herdada: ${inheritedGreeting}`}
+        placeholder={t("form.inheritedPlaceholder", {
+          greeting: inheritedGreeting,
+        })}
         disabled={!canWrite}
         className={INPUT}
       />
-      <p className="text-11 text-text-tertiary">
-        Deixe vazio para herdar a saudação global.
-      </p>
+      <p className="text-11 text-text-tertiary">{t("form.inheritHint")}</p>
       {canWrite ? (
         <button type="submit" disabled={pending} className={BUTTON}>
-          {pending ? "Salvando..." : "Salvar"}
+          {pending ? t("form.saving") : t("form.save")}
         </button>
       ) : (
-        <p className="text-12 text-text-secondary">
-          Você pode ver, mas não alterar, esta configuração.
-        </p>
+        <p className="text-12 text-text-secondary">{t("form.viewOnly")}</p>
       )}
       <Feedback state={state} />
     </form>
@@ -135,6 +136,7 @@ export function AdminGreetingForm({
   fallback: string;
   canWrite: boolean;
 }) {
+  const t = useTranslations("helloWorld");
   const [state, action, pending] = useActionState(
     saveHelloWorldAdminSettingsAction,
     INITIAL,
@@ -145,24 +147,24 @@ export function AdminGreetingForm({
         className="text-12 text-text-subtle block font-medium"
         htmlFor="hello-default-greeting"
       >
-        Saudação padrão global
+        {t("form.globalGreeting")}
       </label>
       <input
         id="hello-default-greeting"
         name="defaultGreeting"
         maxLength={80}
         defaultValue={defaultGreeting}
-        placeholder={`Padrão do módulo: ${fallback}`}
+        placeholder={t("form.fallbackPlaceholder", { greeting: fallback })}
         disabled={!canWrite}
         className={INPUT}
       />
       {canWrite ? (
         <button type="submit" disabled={pending} className={BUTTON}>
-          {pending ? "Salvando..." : "Salvar política"}
+          {pending ? t("form.saving") : t("form.savePolicy")}
         </button>
       ) : (
         <p className="text-12 text-text-secondary">
-          Seu papel interno só permite leitura.
+          {t("form.platformReadOnly")}
         </p>
       )}
       <Feedback state={state} />

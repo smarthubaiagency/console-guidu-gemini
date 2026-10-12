@@ -1,0 +1,517 @@
+{
+  "metadata": {
+    "list": "Portfólio",
+    "item": "Item do portfólio"
+  },
+  "trailModules": "Módulos",
+  "status": {
+    "draft": "Rascunho",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "archived": "Arquivado"
+  },
+  "availability": {
+    "in_stock": "Disponível",
+    "backorder": "Sob encomenda",
+    "preorder": "Pré-venda",
+    "out_of_stock": "Esgotado",
+    "discontinued": "Descontinuado"
+  },
+  "priceDisplay": {
+    "price": "Preço normal",
+    "from": "A partir de",
+    "quote": "Sob consulta (só o agente oferece)"
+  },
+  "fulfillment": {
+    "shipping": "Entrega",
+    "pickup": "No local / retirada",
+    "digital": "Online",
+    "on_site": "No endereço do cliente"
+  },
+  "money": {
+    "quote": "sob consulta"
+  },
+  "visibility": {
+    "public": "Pública",
+    "internal": "Interna"
+  },
+  "variant": {
+    "accommodation": "Acomodação",
+    "ratePlan": "Tarifa",
+    "title": "Nome da variante",
+    "defaultTitle": "Padrão",
+    "sku": "SKU",
+    "unit": "Unidade de venda",
+    "price": "Preço (R$)",
+    "nightlyPrice": "Preço da diária (R$)",
+    "listPrice": "Preço cheio, antes do desconto (R$)",
+    "availability": "Disponibilidade",
+    "options": "Opções (ex.: Cor: Azul; Tamanho: M)",
+    "barcodes": "Códigos de barras (um por linha, ex.: EAN | 789…)",
+    "trackInventory": "Controlar estoque",
+    "stock": "Estoque",
+    "minStockAlert": "Alerta de estoque mínimo",
+    "allowBackorder": "Vender sem estoque (sob encomenda)"
+  },
+  "admin": {
+    "items": "Itens por workspace",
+    "variants": "Variantes por workspace",
+    "placeholder": "Padrão do módulo: {value}",
+    "intro": "Limites usados quando o plano da empresa não define um. Vazio volta ao padrão do módulo.",
+    "submit": "Salvar limites"
+  },
+  "accommodationKind": {
+    "entire_home": "Casa ou apartamento inteiro",
+    "private_room": "Quarto privativo",
+    "shared_room": "Quarto compartilhado",
+    "hotel_room": "Quarto de hotel",
+    "suite": "Suíte",
+    "chalet": "Chalé",
+    "campsite": "Área de camping"
+  },
+  "board": {
+    "room_only": "Só hospedagem",
+    "breakfast": "Café da manhã",
+    "half_board": "Meia pensão",
+    "full_board": "Pensão completa",
+    "all_inclusive": "Tudo incluído"
+  },
+  "refundability": {
+    "refundable": "Reembolsável",
+    "partially_refundable": "Reembolso parcial",
+    "non_refundable": "Não reembolsável"
+  },
+  "roomAmenities": {
+    "dev_ucp_amenity_wi_fi": "Wi-Fi",
+    "co_guidu_amenity_air_conditioning": "Ar-condicionado",
+    "co_guidu_amenity_tv": "TV",
+    "co_guidu_amenity_minibar": "Frigobar",
+    "co_guidu_amenity_kitchen": "Cozinha",
+    "co_guidu_amenity_balcony": "Varanda",
+    "co_guidu_amenity_hot_tub": "Banheira de hidromassagem",
+    "co_guidu_amenity_accessibility": "Acessível"
+  },
+  "lodging": {
+    "typeTitle": "Nome da acomodação",
+    "kind": "Tipo de espaço",
+    "typeDescription": "Descrição da acomodação",
+    "capacityTotal": "Capacidade total (hóspedes) *",
+    "maxAdults": "Máximo de adultos",
+    "maxChildren": "Máximo de crianças",
+    "childAgeRanges": "Idades de criança (uma faixa por linha: 0-12 | limite)",
+    "bedrooms": "Quartos",
+    "beds": "Camas",
+    "bathrooms": "Banheiros",
+    "photos": "Fotos (uma URL por linha: url | texto alternativo)",
+    "typeAmenities": "Comodidades da acomodação",
+    "planTitle": "Nome da tarifa",
+    "board": "Alimentação",
+    "refundability": "Cancelamento",
+    "freeCancellationHours": "Cancelamento grátis até (horas antes do check-in)",
+    "cancellationPolicy": "Política de cancelamento (texto para o hóspede)",
+    "planDescription": "Descrição da tarifa",
+    "typesTitle": "Acomodações ({count})",
+    "typesIntro": "Cada tipo de quarto ou unidade, com a capacidade de hóspedes.",
+    "toActivate": "Para ativar: {problem}",
+    "upToGuests": "até {count} hóspedes",
+    "noCapacity": "capacidade não informada",
+    "saveType": "Salvar acomodação",
+    "removeType": "Remover acomodação",
+    "newType": "Nova acomodação",
+    "addType": "Adicionar acomodação",
+    "plansTitle": "Tarifas ({count})",
+    "plansIntro": "Condições comerciais: alimentação e política de cancelamento.",
+    "savePlan": "Salvar tarifa",
+    "removePlan": "Remover tarifa",
+    "newPlan": "Nova tarifa",
+    "addPlan": "Adicionar tarifa"
+  },
+  "list": {
+    "title": "Portfólio",
+    "description": "Produtos, serviços e ofertas do workspace, no formato do protocolo UCP. É o que o agente consulta no atendimento.",
+    "searchPlaceholder": "Buscar por título ou endereço",
+    "searchLabel": "Buscar no portfólio",
+    "statusLabel": "Situação",
+    "allStatuses": "Todos (menos arquivados)",
+    "typeLabel": "Categoria",
+    "allTypes": "Todas as categorias",
+    "search": "Buscar",
+    "noResults": "Nenhum item encontrado.",
+    "empty": "Sem dados: nenhum item ainda.",
+    "fromPrice": "a partir de {price}",
+    "variants": "{count, plural, one {# variante} other {# variantes}}",
+    "more": "Mais itens",
+    "newItem": "Novo item",
+    "readOnly": "Assinatura suspensa: o portfólio fica só para consulta.",
+    "create": "Criar item",
+    "createHint": "O item nasce como rascunho; os dados da categoria (por exemplo, quartos de um imóvel ou a data de um evento) são preenchidos na página do item. Hospedagem chega na próxima etapa.",
+    "viewOnly": "Seu papel permite apenas consultar o portfólio."
+  },
+  "form": {
+    "kind": "Categoria",
+    "title": "Título",
+    "priceDisplay": "Exibição do preço",
+    "description": "Descrição"
+  },
+  "item": {
+    "description": "{kind} · {status} · {count, plural, one {# variante} other {# variantes}} · endereço /{handle}",
+    "dataTitle": "Dados do item",
+    "save": "Salvar item",
+    "handle": "Endereço (handle)",
+    "status": "Situação",
+    "visibility": "Visibilidade",
+    "descriptionMarkdown": "Descrição em Markdown (opcional)",
+    "categories": "Categorias (uma por linha: valor | taxonomia)",
+    "categoriesPlaceholder": "Vestuário > Camisetas | merchant\n212 | google_product_category",
+    "media": "Imagens (uma URL por linha: url | texto alternativo)",
+    "mediaHint": "Envio de arquivo: em breve, quando o Storage for definido nas configurações da plataforma.",
+    "tags": "Tags (separadas por vírgula)",
+    "url": "Página do item (URL)",
+    "fulfillment": "Como é entregue ou atendido",
+    "property": "Propriedade (endereço da hospedagem)",
+    "locations": "Lojas onde está disponível",
+    "noLocations": "Nenhuma loja cadastrada em Configurações › Lojas.",
+    "noProperty": "Nenhuma",
+    "detailsTitle": "Dados de {kind} (* obrigatórios para ativar)",
+    "aiTitle": "Vitrine e agente de IA (uso interno; nunca sai pelo UCP)",
+    "aiDiscovery": "A IA pode sugerir este item",
+    "featured": "Destaque",
+    "priority": "Prioridade",
+    "aiKeywords": "Palavras-chave para a IA",
+    "aiAliases": "Sinônimos",
+    "aiDoNotSay": "A IA nunca deve dizer",
+    "aiSafetyRules": "Regras de segurança para a IA"
+  },
+  "variants": {
+    "title": "Variantes ({count})",
+    "nightlyTitle": "Preços por diária ({count})",
+    "featured": "destaque",
+    "save": "Salvar variante",
+    "remove": "Remover variante",
+    "new": "Nova variante",
+    "newNightly": "Novo preço",
+    "add": "Adicionar variante"
+  },
+  "preview": {
+    "title": "Prévia no protocolo UCP",
+    "visible": "É assim que agentes compatíveis com o UCP veem este item.",
+    "quote": "Item sob consulta: não sai pelo UCP; só o agente do GUIDU oferece.",
+    "hidden": "Este item não sai pelo UCP enquanto não estiver ativo, público e liberado para a IA. Prévia do formato:"
+  },
+  "actions": {
+    "itemCreated": "Item criado.",
+    "itemSaved": "Item salvo.",
+    "variantAdded": "Variante adicionada.",
+    "variantRemoved": "Variante removida.",
+    "variantSaved": "Variante salva.",
+    "typeAdded": "Acomodação adicionada.",
+    "typeRemoved": "Acomodação removida.",
+    "typeSaved": "Acomodação salva.",
+    "planAdded": "Tarifa adicionada.",
+    "planRemoved": "Tarifa removida.",
+    "planSaved": "Tarifa salva.",
+    "adminSaved": "Limites padrão salvos."
+  },
+  "errors": {
+    "invalidAmount": "Valor inválido em {field}: use, por exemplo, 49,90.",
+    "invalidItem": "Dados do item inválidos.",
+    "invalidField": "{field}: {message}",
+    "notFound": {
+      "item": "Item não encontrado.",
+      "variant": "Variante não encontrado.",
+      "accommodationType": "Acomodação não encontrado.",
+      "ratePlan": "Tarifa não encontrado."
+    },
+    "unknownVertical": "Vertical \"{vertical}\" não existe para esta categoria.",
+    "quietHoursPair": "Informe o início e o fim do horário de silêncio.",
+    "lodging": {
+      "property": "Escolha a propriedade (uma loja) antes de ativar a hospedagem.",
+      "accommodationTypes": "Cadastre ao menos uma acomodação antes de ativar.",
+      "capacity": "Informe a capacidade total de cada acomodação antes de ativar.",
+      "ratePlans": "Cadastre ao menos uma tarifa antes de ativar.",
+      "variantLinks": "Cada preço precisa de uma acomodação e de uma tarifa."
+    },
+    "singleProperty": "Uma hospedagem fica em uma única propriedade (loja).",
+    "lodgingOnly": "Acomodação e tarifa existem só na hospedagem.",
+    "priceRequired": "Informe o preço de cada variante, ou marque o item como sob consulta.",
+    "singleCurrency": "Todas as variantes de um item usam a mesma moeda.",
+    "locationUnavailable": "Uma das lojas não existe ou está desativada.",
+    "skuConflict": "Este SKU ou endereço (handle) já está em uso no workspace.",
+    "createLinks": "Na criação, os preços usam a primeira acomodação e a primeira tarifa.",
+    "lastVariant": "Todo item precisa de ao menos uma variante.",
+    "typeLimit": "Limite de {max} acomodações por hospedagem.",
+    "planLimit": "Limite de {max} tarifas por hospedagem.",
+    "typeHasPrices": "Esta acomodação tem preços. Remova ou troque esses preços antes.",
+    "planHasPrices": "Esta tarifa tem preços. Remova ou troque esses preços antes."
+  },
+  "validation": {
+    "handleFormat": "{field}: Use letras minúsculas, números e hífen.",
+    "itemType": "{field}: Categoria inválida (produto, serviço, imóvel, hospedagem ou evento).",
+    "titleRequired": "{field}: Informe o título.",
+    "variantTitleRequired": "{field}: Informe o nome da variante.",
+    "listPriceBelowPrice": "{field}: O preço cheio não pode ser menor que o preço atual.",
+    "listPriceCurrency": "{field}: Preço e preço cheio precisam da mesma moeda.",
+    "variantsRequired": "{field}: Informe ao menos uma variante.",
+    "ageRangeInverted": "{field}: Faixa de idade invertida.",
+    "capacityTotal": "{field}: A capacidade total não pode ser menor que a de adultos ou de crianças.",
+    "reverseId": "{field}: Use um identificador reverso.",
+    "typeTitleRequired": "{field}: Informe o nome da acomodação.",
+    "planTitleRequired": "{field}: Informe o nome da tarifa.",
+    "nothingToChange": "{field}: Nada para alterar.",
+    "timeFormat": "{field}: Use HH:MM (24 horas).",
+    "invalidUrl": "{field}: URL inválida.",
+    "httpUrl": "{field}: Use http ou https."
+  },
+  "itemTypes": {
+    "product": "Produto",
+    "service": "Serviço",
+    "real_estate": "Imóvel",
+    "lodging": "Hospedagem",
+    "event": "Evento"
+  },
+  "verticals": {
+    "product": {
+      "general": "Geral"
+    },
+    "service": {
+      "general": "Geral",
+      "healthcare": "Saúde",
+      "aesthetics": "Estética",
+      "beauty": "Beleza (salão e barbearia)",
+      "b2b_corporate": "Corporativo e consultoria"
+    },
+    "real_estate": {
+      "general": "Geral"
+    },
+    "lodging": {
+      "general": "Geral"
+    },
+    "event": {
+      "general": "Geral"
+    }
+  },
+  "fields": {
+    "product": {
+      "base": {
+        "brand": "Marca",
+        "model": "Modelo",
+        "condition": "Condição",
+        "weight": "Peso (kg)",
+        "dimensions_length": "Comprimento (cm)",
+        "dimensions_width": "Largura (cm)",
+        "dimensions_height": "Altura (cm)",
+        "warranty_months": "Garantia (meses)",
+        "attributes": "Características (uma por linha: nome: valor)"
+      }
+    },
+    "service": {
+      "base": {
+        "duration_minutes": "Duração (minutos)",
+        "capacity": "Capacidade (pessoas por atendimento)",
+        "service_type": "Tipo de serviço",
+        "specialties": "Especialidades",
+        "requirements": "Pré-requisitos",
+        "callout_fee": "Taxa de visita (R$)",
+        "min_hours": "Mínimo de horas",
+        "includes_materials": "Inclui materiais",
+        "min_notice_minutes": "Antecedência mínima (minutos)",
+        "warranty_days": "Garantia (dias)",
+        "service_area_coverage_type": "Área de atendimento",
+        "service_area_radius_meters": "Raio (metros)",
+        "service_area_cities": "Cidades atendidas",
+        "technical_notes": "Observações técnicas"
+      },
+      "healthcare": {
+        "professional_registry_type": "Conselho profissional",
+        "professional_registry_number": "Número do registro",
+        "professional_registry_region": "UF do registro",
+        "insurance_providers": "Convênios aceitos",
+        "patient_type": "Atende",
+        "prescriptions_included": "Inclui receita/prescrição",
+        "emergency_service": "Atende urgência"
+      },
+      "aesthetics": {
+        "treated_areas": "Áreas tratadas",
+        "contraindications": "Contraindicações",
+        "pre_care": "Cuidados antes",
+        "post_care": "Cuidados depois",
+        "sessions_recommended": "Sessões recomendadas",
+        "session_interval_days": "Intervalo entre sessões (dias)",
+        "single_session_possible": "Pode ser sessão única",
+        "recovery_time": "Recuperação",
+        "has_discomfort": "Pode causar desconforto",
+        "results_onset": "Quando aparecem os resultados"
+      },
+      "beauty": {
+        "target_gender": "Público",
+        "target_age": "Faixa etária",
+        "scheduling_mode": "Atendimento",
+        "maintenance_level": "Manutenção"
+      },
+      "b2b_corporate": {
+        "deliverables": "Entregáveis",
+        "contract_models": "Modelos de contrato",
+        "sla_hours": "SLA de resposta (horas)",
+        "project_phases": "Fases do projeto",
+        "tools_used": "Ferramentas usadas"
+      }
+    },
+    "real_estate": {
+      "base": {
+        "operation_type": "Operação",
+        "property_type": "Tipo de imóvel",
+        "usable_area": "Área útil (m²)",
+        "total_area": "Área total (m²)",
+        "bedrooms": "Quartos",
+        "suites": "Suítes",
+        "bathrooms": "Banheiros",
+        "parking_spaces": "Vagas",
+        "condo_fee": "Condomínio (R$/mês)",
+        "property_tax": "IPTU (R$/ano)",
+        "financing_available": "Aceita financiamento",
+        "furnished_status": "Mobília",
+        "amenities": "Comodidades"
+      }
+    },
+    "lodging": {
+      "base": {
+        "check_in_time": "Check-in a partir de",
+        "check_out_time": "Check-out até",
+        "quiet_hours_opens": "Silêncio a partir de",
+        "quiet_hours_closes": "Silêncio até",
+        "min_nights": "Mínimo de diárias",
+        "smoking_allowed": "Permite fumar",
+        "pets_allowed": "Aceita animais",
+        "parties_allowed": "Permite festas e eventos",
+        "house_rules": "Outras regras da casa (uma por linha)",
+        "cleaning_fee": "Taxa de limpeza (R$)",
+        "security_deposit": "Caução (R$)",
+        "amenities": "Comodidades da propriedade"
+      }
+    },
+    "event": {
+      "base": {
+        "starts_at": "Início",
+        "ends_at": "Término",
+        "is_recurring": "Evento recorrente",
+        "recurrence": "Recorrência (ex.: toda sexta)",
+        "topics": "Temas",
+        "speakers": "Palestrantes / atrações",
+        "age_rating": "Classificação etária",
+        "target_audience": "Público-alvo",
+        "capacity": "Lotação"
+      }
+    }
+  },
+  "options": {
+    "product": {
+      "condition": {
+        "new": "Novo",
+        "used": "Usado",
+        "refurbished": "Recondicionado"
+      }
+    },
+    "service": {
+      "service_area_coverage_type": {
+        "radius": "Raio a partir da loja",
+        "cities": "Cidades"
+      },
+      "professional_registry_type": {
+        "crm": "CRM",
+        "cro": "CRO",
+        "crp": "CRP",
+        "crefito": "CREFITO",
+        "crn": "CRN",
+        "coren": "COREN",
+        "crmv": "CRMV",
+        "other": "Outro"
+      },
+      "patient_type": {
+        "human": "Pessoas",
+        "animal": "Animais"
+      },
+      "recovery_time": {
+        "immediate": "Imediata",
+        "24h": "24 horas",
+        "48h_plus": "48 horas ou mais"
+      },
+      "target_gender": {
+        "female": "Feminino",
+        "male": "Masculino",
+        "unisex": "Unissex"
+      },
+      "target_age": {
+        "adult": "Adulto",
+        "child": "Infantil",
+        "all": "Todas"
+      },
+      "scheduling_mode": {
+        "appointment": "Com hora marcada",
+        "walk_in": "Por ordem de chegada"
+      },
+      "maintenance_level": {
+        "low": "Baixa",
+        "medium": "Média",
+        "high": "Alta"
+      },
+      "contract_models": {
+        "retainer": "Mensalidade (retainer)",
+        "fixed_project": "Projeto fechado",
+        "time_and_materials": "Horas e materiais"
+      }
+    },
+    "real_estate": {
+      "operation_type": {
+        "sale": "Venda",
+        "rent": "Aluguel"
+      },
+      "property_type": {
+        "apartment": "Apartamento",
+        "house": "Casa",
+        "penthouse": "Cobertura",
+        "studio": "Studio",
+        "commercial": "Comercial",
+        "office": "Sala comercial",
+        "land": "Terreno",
+        "farm": "Sítio/fazenda"
+      },
+      "furnished_status": {
+        "furnished": "Mobiliado",
+        "semi_furnished": "Semimobiliado",
+        "unfurnished": "Sem mobília"
+      },
+      "amenities": {
+        "dev_ucp_amenity_parking": "Estacionamento",
+        "co_guidu_amenity_pool": "Piscina",
+        "co_guidu_amenity_gym": "Academia",
+        "co_guidu_amenity_gourmet_balcony": "Varanda gourmet",
+        "co_guidu_amenity_elevator": "Elevador",
+        "co_guidu_amenity_concierge": "Portaria 24h",
+        "co_guidu_amenity_playground": "Playground",
+        "co_guidu_amenity_pet_friendly": "Aceita animais"
+      }
+    },
+    "lodging": {
+      "amenities": {
+        "dev_ucp_amenity_wi_fi": "Wi-Fi",
+        "dev_ucp_amenity_parking": "Estacionamento",
+        "co_guidu_amenity_pool": "Piscina",
+        "co_guidu_amenity_air_conditioning": "Ar-condicionado",
+        "co_guidu_amenity_kitchen": "Cozinha",
+        "co_guidu_amenity_laundry": "Lavanderia",
+        "co_guidu_amenity_barbecue": "Churrasqueira",
+        "co_guidu_amenity_accessibility": "Acessibilidade"
+      }
+    },
+    "event": {
+      "age_rating": {
+        "10": "10 anos",
+        "12": "12 anos",
+        "14": "14 anos",
+        "16": "16 anos",
+        "18": "18 anos",
+        "l": "Livre"
+      }
+    }
+  }
+}

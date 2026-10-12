@@ -1,0 +1,48 @@
+{
+  "breadcrumbModules": "Módulos",
+  "breadcrumbCrm": "CRM",
+  "contacts": {
+    "metaTitle": "Contactos — CRM",
+    "title": "Contactos",
+    "description": "Personas con las que el workspace se relaciona.",
+    "readOnly": "Suscripción suspendida: los contactos quedan disponibles solo para consulta.",
+    "readOnlyRole": "Tu rol solo permite consultar los contactos.",
+    "searchPlaceholder": "Buscar por nombre, correo o empresa",
+    "searchLabel": "Buscar contactos",
+    "search": "Buscar",
+    "noResults": "No se encontraron contactos.",
+    "empty": "Sin datos: todavía no hay contactos.",
+    "more": "Más contactos"
+  },
+  "contact": {
+    "metaTitle": "Contacto — CRM",
+    "fallbackTitle": "Contacto",
+    "description": "Datos del contacto.",
+    "back": "← Volver a contactos"
+  },
+  "fields": {
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "companyName": "Empresa",
+    "jobTitle": "Cargo",
+    "notes": "Observaciones"
+  },
+  "form": {
+    "save": "Guardar contacto",
+    "add": "Agregar contacto"
+  },
+  "actions": {
+    "created": "Contacto creado.",
+    "saved": "Contacto guardado."
+  },
+  "errors": {
+    "invalidInput": "Datos inválidos.",
+    "contactInvalid": "Datos del contacto inválidos.",
+    "nameRequired": "Ingresa el nombre.",
+    "emailInvalid": "Correo electrónico inválido.",
+    "phoneInvalid": "Teléfono inválido.",
+    "nothingToChange": "No hay nada que cambiar.",
+    "contactNotFound": "Contacto no encontrado."
+  }
+}

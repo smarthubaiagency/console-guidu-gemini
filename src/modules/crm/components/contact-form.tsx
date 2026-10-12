@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   createContactAction,
@@ -34,6 +35,7 @@ export function ContactForm({
   contactId?: string;
   values?: ContactFormValues;
 }>) {
+  const t = useTranslations("crm");
   const [state, action, pending] = useActionState(
     contactId ? updateContactAction : createContactAction,
     INITIAL,
@@ -49,7 +51,7 @@ export function ContactForm({
         <input type="hidden" name="contactId" value={contactId} />
       ) : null}
       <label className={LABEL}>
-        Nome
+        {t("fields.name")}
         <input
           name="name"
           required
@@ -59,7 +61,7 @@ export function ContactForm({
         />
       </label>
       <label className={LABEL}>
-        E-mail
+        {t("fields.email")}
         <input
           name="email"
           type="email"
@@ -69,7 +71,7 @@ export function ContactForm({
         />
       </label>
       <label className={LABEL}>
-        Telefone
+        {t("fields.phone")}
         <input
           name="phone"
           maxLength={40}
@@ -78,7 +80,7 @@ export function ContactForm({
         />
       </label>
       <label className={LABEL}>
-        Empresa
+        {t("fields.companyName")}
         <input
           name="companyName"
           maxLength={160}
@@ -87,7 +89,7 @@ export function ContactForm({
         />
       </label>
       <label className={LABEL}>
-        Cargo
+        {t("fields.jobTitle")}
         <input
           name="jobTitle"
           maxLength={120}
@@ -96,7 +98,7 @@ export function ContactForm({
         />
       </label>
       <label className={`${LABEL} sm:col-span-2`}>
-        Observações
+        {t("fields.notes")}
         <textarea
           name="notes"
           maxLength={5000}
@@ -107,7 +109,7 @@ export function ContactForm({
       </label>
       <div className="flex items-center gap-3 sm:col-span-2">
         <button type="submit" disabled={pending} className={BUTTON}>
-          {contactId ? "Salvar contato" : "Adicionar contato"}
+          {contactId ? t("form.save") : t("form.add")}
         </button>
         {state.error ? (
           <p role="alert" className="text-12 text-danger-text">

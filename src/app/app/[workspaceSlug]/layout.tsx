@@ -10,6 +10,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
 import { getRequestBrand } from "@/core/brand/resolve";
 import { translateNavigation } from "@/core/i18n/navigation";
+import { getModuleCatalog } from "@/core/i18n/modules";
 import { getTranslations } from "next-intl/server";
 
 interface WorkspaceLayoutProps {
@@ -51,6 +52,7 @@ export default async function WorkspaceLayout({
     await loadAppNavigation(prisma, context, workspaceSlug),
     "app",
     await getTranslations("nav"),
+    (await getModuleCatalog()).entryLabel,
   );
 
   return (

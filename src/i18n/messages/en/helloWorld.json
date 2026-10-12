@@ -1,0 +1,66 @@
+{
+  "breadcrumbModules": "Modules",
+  "breadcrumbHelloWorld": "Hello World",
+  "home": {
+    "metaTitle": "Hello World",
+    "title": "Hello World",
+    "description": "Reference module for the module contract (development and testing only).",
+    "origin": {
+      "workspace": "Set in this workspace",
+      "global": "Inherited from the global policy",
+      "fallback": "Module default"
+    },
+    "count": "{count, plural, one {# demo record.} other {# demo records.}}",
+    "countOfLimit": "{count} of {limit, plural, one {# demo record.} other {# demo records.}}",
+    "viewRecords": "View records"
+  },
+  "records": {
+    "metaTitle": "Records — Hello World",
+    "breadcrumb": "Records",
+    "title": "Sample records",
+    "description": "List, create and view records linked to the workspace.",
+    "readOnly": "Subscription suspended: records are available for viewing only.",
+    "limitReached": "Plan limit reached ({limit, plural, one {# record} other {# records}} per workspace).",
+    "readOnlyRole": "Your role only allows viewing records.",
+    "empty": "No data: no records created yet.",
+    "dateUtc": "{date} UTC"
+  },
+  "record": {
+    "metaTitle": "Record — Hello World",
+    "fallbackTitle": "Record",
+    "id": "Identifier",
+    "createdAt": "Created at",
+    "author": "Author",
+    "you": "You",
+    "otherMember": "Another member",
+    "back": "Back to records"
+  },
+  "form": {
+    "recordTitle": "Record title",
+    "recordTitlePlaceholder": "E.g. First sample record",
+    "creating": "Creating...",
+    "create": "Create record",
+    "background": "In the background",
+    "workspaceGreeting": "Workspace greeting",
+    "inheritedPlaceholder": "Inherited: {greeting}",
+    "inheritHint": "Leave empty to inherit the global greeting.",
+    "saving": "Saving...",
+    "save": "Save",
+    "viewOnly": "You can view, but not change, this setting.",
+    "globalGreeting": "Global default greeting",
+    "fallbackPlaceholder": "Module default: {greeting}",
+    "savePolicy": "Save policy",
+    "platformReadOnly": "Your internal role is read-only."
+  },
+  "actions": {
+    "backgroundRequested": "Request sent. Follow it in Executions.",
+    "recordCreated": "Record created.",
+    "settingsSaved": "Settings saved.",
+    "policySaved": "Global policy saved."
+  },
+  "errors": {
+    "invalidInput": "Invalid data.",
+    "recordNotFound": "Record not found.",
+    "titleInvalid": "Enter a title of 1 to 120 characters."
+  }
+}

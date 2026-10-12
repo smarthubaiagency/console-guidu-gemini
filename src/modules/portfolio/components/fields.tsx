@@ -1,50 +1,57 @@
+import { getFormatter, getTranslations } from "next-intl/server";
+
 import { inputClass, labelClass } from "@/components/partners/action-form";
 
 import { AVAILABILITY_STATUSES, SALE_UNITS } from "../ucp";
 import type { LodgingView, VariantView } from "../server/services/items";
-import { fieldsFor, formValue, getPath } from "../verticals";
+import {
+  fieldsFor,
+  formValue,
+  getPath,
+  type PortfolioTranslator,
+  translatedFieldLabel,
+  translatedOptionLabel,
+} from "../verticals";
 
 /** Shared labels and form fields of the Portfolio screens (F5a). */
 
-export const STATUS_LABELS: Record<string, string> = {
-  draft: "Rascunho",
-  active: "Ativo",
-  inactive: "Inativo",
-  archived: "Arquivado",
-};
+/** Item statuses, in the order of the selects. */
+export const ITEM_STATUSES = [
+  "draft",
+  "active",
+  "inactive",
+  "archived",
+] as const;
 
-export const AVAILABILITY_LABELS: Record<string, string> = {
-  in_stock: "Disponível",
-  backorder: "Sob encomenda",
-  preorder: "Pré-venda",
-  out_of_stock: "Esgotado",
-  discontinued: "Descontinuado",
-};
+/** Price display modes, in the order of the selects. */
+export const PRICE_DISPLAYS = ["price", "from", "quote"] as const;
 
-export const PRICE_DISPLAY_LABELS: Record<string, string> = {
-  price: "Preço normal",
-  from: "A partir de",
-  quote: "Sob consulta (só o agente oferece)",
-};
-
-export const FULFILLMENT_LABELS: Record<string, string> = {
-  shipping: "Entrega",
-  pickup: "No local / retirada",
-  digital: "Online",
-  on_site: "No endereço do cliente",
-};
+/** Label of a stored value under a `portfolio` group, or the raw value. */
+export function labelOf(
+  t: PortfolioTranslator,
+  group: "status" | "availability" | "priceDisplay" | "fulfillment",
+  value: string,
+): string {
+  const key = `${group}.${value}`;
+  return t.has(key) ? t(key) : value;
+}
 
 /** "4990" -> "49,90" for the inputs. */
 export function moneyInput(amount: number | null): string {
   return amount === null ? "" : (amount / 100).toFixed(2).replace(".", ",");
 }
 
-export function formatMoney(amount: number | null, currency = "BRL"): string {
-  if (amount === null) return "sob consulta";
-  return (amount / 100).toLocaleString("pt-BR", {
-    style: "currency",
-    currency,
-  });
+/** Price in the request language, in the item's currency (BRL). */
+export async function formatMoney(
+  amount: number | null,
+  currency = "BRL",
+): Promise<string> {
+  if (amount === null) {
+    const t = await getTranslations("portfolio");
+    return t("money.quote");
+  }
+  const format = await getFormatter();
+  return format.number(amount / 100, { style: "currency", currency });
 }
 
 /**
@@ -52,7 +59,7 @@ export function formatMoney(amount: number | null, currency = "BRL"): string {
  * a variant is the nightly price of one accommodation type under one rate
  * plan, chosen instead of the sale unit and the free options.
  */
-export function VariantFields({
+export async function VariantFields({
   variant,
   idPrefix,
   lodging,
@@ -61,6 +68,7 @@ export function VariantFields({
   idPrefix: string;
   lodging?: LodgingView | null;
 }>) {
+  const t = await getTranslations("portfolio");
   const unit = variant?.quantityUnit?.unit ?? "C62";
   return (
     <div className="grid gap-3 sm:grid-cols-3">
@@ -68,7 +76,7 @@ export function VariantFields({
         <>
           <input type="hidden" name="lodging" value="1" />
           <label className={labelClass}>
-            Acomodação
+            {t("variant.accommodation")}
             <select
               name="accommodation_type_id"
               defaultValue={
@@ -79,15 +87,15 @@ export function VariantFields({
               className={inputClass}
             >
               <option value="">—</option>
-              {lodging.accommodationTypes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title}
+              {lodging.accommodationTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.title}
                 </option>
               ))}
             </select>
           </label>
           <label className={labelClass}>
-            Tarifa
+            {t("variant.ratePlan")}
             <select
               name="rate_plan_id"
               defaultValue={
@@ -106,16 +114,16 @@ export function VariantFields({
         </>
       ) : null}
       <label className={labelClass}>
-        Nome da variante
+        {t("variant.title")}
         <input
           name="variant_title"
           maxLength={200}
-          defaultValue={variant?.title ?? "Padrão"}
+          defaultValue={variant?.title ?? t("variant.defaultTitle")}
           className={inputClass}
         />
       </label>
       <label className={labelClass}>
-        SKU
+        {t("variant.sku")}
         <input
           name="sku"
           maxLength={64}
@@ -125,7 +133,7 @@ export function VariantFields({
       </label>
       {lodging ? null : (
         <label className={labelClass}>
-          Unidade de venda
+          {t("variant.unit")}
           <select name="unit" defaultValue={unit} className={inputClass}>
             {SALE_UNITS.map((u) => (
               <option key={u.unit} value={u.unit}>
@@ -136,7 +144,7 @@ export function VariantFields({
         </label>
       )}
       <label className={labelClass}>
-        {lodging ? "Preço da diária (R$)" : "Preço (R$)"}
+        {lodging ? t("variant.nightlyPrice") : t("variant.price")}
         <input
           name="price"
           inputMode="decimal"
@@ -147,7 +155,7 @@ export function VariantFields({
         />
       </label>
       <label className={labelClass}>
-        Preço cheio, antes do desconto (R$)
+        {t("variant.listPrice")}
         <input
           name="list_price"
           inputMode="decimal"
@@ -156,7 +164,7 @@ export function VariantFields({
         />
       </label>
       <label className={labelClass}>
-        Disponibilidade
+        {t("variant.availability")}
         <select
           name="availability_status"
           defaultValue={variant?.availabilityStatus ?? "in_stock"}
@@ -164,14 +172,14 @@ export function VariantFields({
         >
           {AVAILABILITY_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {AVAILABILITY_LABELS[s]}
+              {labelOf(t, "availability", s)}
             </option>
           ))}
         </select>
       </label>
       {lodging ? null : (
         <label className={`${labelClass} sm:col-span-2`}>
-          Opções (ex.: Cor: Azul; Tamanho: M)
+          {t("variant.options")}
           <input
             name="options"
             defaultValue={variant?.options
@@ -182,7 +190,7 @@ export function VariantFields({
         </label>
       )}
       <label className={labelClass}>
-        Códigos de barras (um por linha, ex.: EAN | 789…)
+        {t("variant.barcodes")}
         <textarea
           name="barcodes"
           rows={2}
@@ -198,10 +206,10 @@ export function VariantFields({
           name="track_inventory"
           defaultChecked={variant?.trackInventory}
         />
-        Controlar estoque
+        {t("variant.trackInventory")}
       </label>
       <label className={labelClass}>
-        Estoque
+        {t("variant.stock")}
         <input
           name="stock_quantity"
           type="number"
@@ -210,7 +218,7 @@ export function VariantFields({
         />
       </label>
       <label className={labelClass}>
-        Alerta de estoque mínimo
+        {t("variant.minStockAlert")}
         <input
           name="min_stock_alert"
           type="number"
@@ -225,7 +233,7 @@ export function VariantFields({
           name="allow_backorder"
           defaultChecked={variant?.allowBackorder}
         />
-        Vender sem estoque (sob encomenda)
+        {t("variant.allowBackorder")}
       </label>
     </div>
   );
@@ -235,7 +243,7 @@ export function VariantFields({
  * Fields of the vertical extension (F5b), generated from the declaration
  * in ../verticals.ts. Inputs are named `details.<key>`.
  */
-export function DetailsFields({
+export async function DetailsFields({
   itemType,
   vertical,
   details,
@@ -246,12 +254,13 @@ export function DetailsFields({
 }>) {
   const fields = fieldsFor(itemType, vertical);
   if (fields.length === 0) return null;
+  const t = await getTranslations("portfolio");
   return (
     <div className="grid gap-3 sm:grid-cols-3" data-testid="details-fields">
       {fields.map((spec) => {
         const name = `details.${spec.key}`;
         const value = getPath(details, spec.key);
-        const label = `${spec.label}${spec.required ? " *" : ""}`;
+        const label = `${translatedFieldLabel(t, itemType, vertical, spec)}${spec.required ? " *" : ""}`;
         switch (spec.kind) {
           case "bool":
             return (
@@ -280,7 +289,7 @@ export function DetailsFields({
                   <option value="">—</option>
                   {spec.options.map((o) => (
                     <option key={o.value} value={o.value}>
-                      {o.label}
+                      {translatedOptionLabel(t, itemType, spec, o)}
                     </option>
                   ))}
                 </select>
@@ -306,7 +315,7 @@ export function DetailsFields({
                           Array.isArray(value) && value.includes(o.value)
                         }
                       />
-                      {o.label}
+                      {translatedOptionLabel(t, itemType, spec, o)}
                     </label>
                   ))}
                 </div>

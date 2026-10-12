@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ShoppingBag } from "lucide-react";
 
 import { sectionClass } from "@/components/billing/billing-ui";
@@ -17,21 +18,23 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import {
-  formatMoney,
-  FULFILLMENT_LABELS,
-  PRICE_DISPLAY_LABELS,
   DetailsFields,
-  STATUS_LABELS,
+  formatMoney,
+  ITEM_STATUSES,
+  labelOf,
+  PRICE_DISPLAYS,
   VariantFields,
 } from "@/modules/portfolio/components/fields";
 import {
   AccommodationTypeFields,
-  ACCOMMODATION_KIND_LABELS,
-  BOARD_LABELS,
+  lodgingLabel,
   RatePlanFields,
-  REFUNDABILITY_LABELS,
 } from "@/modules/portfolio/components/lodging-fields";
-import { itemTypeLabel, verticalLabel } from "@/modules/portfolio/verticals";
+import {
+  translatedItemTypeLabel,
+  translatedKindLabel,
+  translatedVerticalLabel,
+} from "@/modules/portfolio/verticals";
 import { PortfolioPermissions } from "@/modules/portfolio/manifest";
 import {
   addPortfolioVariantAction,
@@ -40,10 +43,17 @@ import {
   updatePortfolioItemAction,
   updatePortfolioVariantAction,
 } from "@/modules/portfolio/server/actions";
-import { getItem, itemToUcp, lodgingProblem } from "@/modules/portfolio/server";
+import {
+  getItem,
+  itemToUcp,
+  lodgingProblemCode,
+} from "@/modules/portfolio/server";
 import { FULFILLMENT_METHODS, isUcpVisible } from "@/modules/portfolio/ucp";
 
-export const metadata: Metadata = { title: "Item do portfólio" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("portfolio");
+  return { title: t("metadata.item") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string; itemId: string }>;
@@ -95,9 +105,14 @@ export default async function PortfolioItemPage({ params }: PageProps) {
   const ucp = itemToUcp(item);
   const visible = isUcpVisible(item);
   const lodging = item.lodging;
-  const toActivate = lodging
-    ? lodgingProblem({ ...item, status: "active" })
+  const t = await getTranslations("portfolio");
+  const problem = lodging
+    ? lodgingProblemCode({ ...item, status: "active" })
     : null;
+  const toActivate = problem ? t(`errors.lodging.${problem}`) : null;
+  const variantPrices = await Promise.all(
+    item.variants.map((v) => formatMoney(v.priceAmount, v.currency)),
+  );
   const hidden = (
     <>
       <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
@@ -108,18 +123,25 @@ export default async function PortfolioItemPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="portfolio-item">
       <ModulePageHeader
-        trail={["Módulos", "Portfólio", item.title]}
+        trail={[t("trailModules"), t("list.title"), item.title]}
         title={item.title}
-        description={`${item.vertical === "general" ? itemTypeLabel(item.itemType) : `${itemTypeLabel(item.itemType)} — ${verticalLabel(item.itemType, item.vertical)}`} · ${STATUS_LABELS[item.status]} · ${item.variants.length} ${item.variants.length === 1 ? "variante" : "variantes"} · endereço /${item.handle}`}
+        description={t("item.description", {
+          kind: translatedKindLabel(t, item.itemType, item.vertical),
+          status: labelOf(t, "status", item.status),
+          count: item.variants.length,
+          handle: item.handle,
+        })}
         icon={<ShoppingBag className="h-5 w-5" />}
       />
 
       <fieldset disabled={!canWrite} className="space-y-6">
         <section className={sectionClass}>
-          <h2 className="text-14 text-text font-semibold">Dados do item</h2>
+          <h2 className="text-14 text-text font-semibold">
+            {t("item.dataTitle")}
+          </h2>
           <ActionForm
             action={updatePortfolioItemAction}
-            submitLabel="Salvar item"
+            submitLabel={t("item.save")}
             className="space-y-3"
             testId="edit-portfolio-item"
           >
@@ -128,7 +150,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
             <input type="hidden" name="vertical" value={item.vertical} />
             <div className="grid gap-3 sm:grid-cols-3">
               <label className={`${labelClass} sm:col-span-2`}>
-                Título
+                {t("form.title")}
                 <input
                   name="title"
                   required
@@ -138,7 +160,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 />
               </label>
               <label className={labelClass}>
-                Endereço (handle)
+                {t("item.handle")}
                 <input
                   name="handle"
                   required
@@ -148,46 +170,46 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 />
               </label>
               <label className={labelClass}>
-                Situação
+                {t("item.status")}
                 <select
                   name="status"
                   defaultValue={item.status}
                   className={inputClass}
                 >
-                  {Object.entries(STATUS_LABELS).map(([k, v]) => (
+                  {ITEM_STATUSES.map((k) => (
                     <option key={k} value={k}>
-                      {v}
+                      {labelOf(t, "status", k)}
                     </option>
                   ))}
                 </select>
               </label>
               <label className={labelClass}>
-                Exibição do preço
+                {t("form.priceDisplay")}
                 <select
                   name="price_display"
                   defaultValue={item.priceDisplay}
                   className={inputClass}
                 >
-                  {Object.entries(PRICE_DISPLAY_LABELS).map(([k, v]) => (
+                  {PRICE_DISPLAYS.map((k) => (
                     <option key={k} value={k}>
-                      {v}
+                      {labelOf(t, "priceDisplay", k)}
                     </option>
                   ))}
                 </select>
               </label>
               <label className={labelClass}>
-                Visibilidade
+                {t("item.visibility")}
                 <select
                   name="visibility"
                   defaultValue={item.visibility}
                   className={inputClass}
                 >
-                  <option value="public">Pública</option>
-                  <option value="internal">Interna</option>
+                  <option value="public">{t("visibility.public")}</option>
+                  <option value="internal">{t("visibility.internal")}</option>
                 </select>
               </label>
               <label className={`${labelClass} sm:col-span-3`}>
-                Descrição
+                {t("form.description")}
                 <textarea
                   name="description_plain"
                   rows={3}
@@ -197,7 +219,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 />
               </label>
               <label className={`${labelClass} sm:col-span-3`}>
-                Descrição em Markdown (opcional)
+                {t("item.descriptionMarkdown")}
                 <textarea
                   name="description_markdown"
                   rows={3}
@@ -207,13 +229,11 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 />
               </label>
               <label className={labelClass}>
-                Categorias (uma por linha: valor | taxonomia)
+                {t("item.categories")}
                 <textarea
                   name="categories"
                   rows={3}
-                  placeholder={
-                    "Vestuário > Camisetas | merchant\n212 | google_product_category"
-                  }
+                  placeholder={t("item.categoriesPlaceholder")}
                   defaultValue={item.categories
                     .map((c) => `${c.value} | ${c.taxonomy ?? "merchant"}`)
                     .join("\n")}
@@ -221,7 +241,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 />
               </label>
               <label className={labelClass}>
-                Imagens (uma URL por linha: url | texto alternativo)
+                {t("item.media")}
                 <textarea
                   name="media"
                   rows={3}
@@ -233,13 +253,12 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                   className={inputClass}
                 />
                 <span className="text-11 text-text-secondary">
-                  Envio de arquivo: em breve, quando o Storage for definido nas
-                  configurações da plataforma.
+                  {t("item.mediaHint")}
                 </span>
               </label>
               <div className="space-y-2">
                 <label className={labelClass}>
-                  Tags (separadas por vírgula)
+                  {t("item.tags")}
                   <input
                     name="tags"
                     defaultValue={item.tags.join(", ")}
@@ -247,7 +266,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                   />
                 </label>
                 <label className={labelClass}>
-                  Página do item (URL)
+                  {t("item.url")}
                   <input
                     name="url"
                     type="url"
@@ -258,7 +277,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
               </div>
               <fieldset className="space-y-1">
                 <legend className="text-12 text-text-subtle font-medium">
-                  Como é entregue ou atendido
+                  {t("item.fulfillment")}
                 </legend>
                 {FULFILLMENT_METHODS.map((m) => (
                   <label key={m} className="text-12 text-text flex gap-2">
@@ -268,19 +287,17 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                       value={m}
                       defaultChecked={item.fulfillmentMethods.includes(m)}
                     />
-                    {FULFILLMENT_LABELS[m]}
+                    {labelOf(t, "fulfillment", m)}
                   </label>
                 ))}
               </fieldset>
               <fieldset className="space-y-1 sm:col-span-2">
                 <legend className="text-12 text-text-subtle font-medium">
-                  {lodging
-                    ? "Propriedade (endereço da hospedagem)"
-                    : "Lojas onde está disponível"}
+                  {lodging ? t("item.property") : t("item.locations")}
                 </legend>
                 {locations.length === 0 ? (
                   <p className="text-12 text-text-secondary">
-                    Nenhuma loja cadastrada em Configurações › Lojas.
+                    {t("item.noLocations")}
                   </p>
                 ) : lodging ? (
                   <>
@@ -291,7 +308,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                         value=""
                         defaultChecked={item.locationIds.length === 0}
                       />
-                      Nenhuma
+                      {t("item.noProperty")}
                     </label>
                     {locations.map((l) => (
                       <label
@@ -325,11 +342,13 @@ export default async function PortfolioItemPage({ params }: PageProps) {
             </div>
 
             <h3 className="text-12 text-text pt-2 font-semibold">
-              Dados de {itemTypeLabel(item.itemType).toLowerCase()}
-              {item.vertical === "general"
-                ? ""
-                : ` — ${verticalLabel(item.itemType, item.vertical)}`}{" "}
-              (* obrigatórios para ativar)
+              {t("item.detailsTitle", {
+                kind: `${translatedItemTypeLabel(t, item.itemType).toLowerCase()}${
+                  item.vertical === "general"
+                    ? ""
+                    : ` — ${translatedVerticalLabel(t, item.itemType, item.vertical)}`
+                }`,
+              })}
             </h3>
             <DetailsFields
               itemType={item.itemType}
@@ -338,7 +357,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
             />
 
             <h3 className="text-12 text-text pt-2 font-semibold">
-              Vitrine e agente de IA (uso interno; nunca sai pelo UCP)
+              {t("item.aiTitle")}
             </h3>
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="text-12 text-text flex items-center gap-2">
@@ -347,7 +366,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                   name="ai_discovery_enabled"
                   defaultChecked={item.aiDiscoveryEnabled}
                 />
-                A IA pode sugerir este item
+                {t("item.aiDiscovery")}
               </label>
               <label className="text-12 text-text flex items-center gap-2">
                 <input
@@ -355,10 +374,10 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                   name="is_featured"
                   defaultChecked={item.isFeatured}
                 />
-                Destaque
+                {t("item.featured")}
               </label>
               <label className={labelClass}>
-                Prioridade
+                {t("item.priority")}
                 <input
                   name="priority"
                   type="number"
@@ -372,7 +391,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 value={item.featuredRank}
               />
               <label className={labelClass}>
-                Palavras-chave para a IA
+                {t("item.aiKeywords")}
                 <input
                   name="ai_keywords"
                   defaultValue={item.aiKeywords.join(", ")}
@@ -380,7 +399,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 />
               </label>
               <label className={labelClass}>
-                Sinônimos
+                {t("item.aiAliases")}
                 <input
                   name="ai_aliases"
                   defaultValue={item.aiAliases.join(", ")}
@@ -388,7 +407,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 />
               </label>
               <label className={labelClass}>
-                A IA nunca deve dizer
+                {t("item.aiDoNotSay")}
                 <input
                   name="ai_do_not_say"
                   defaultValue={item.aiDoNotSay.join(", ")}
@@ -396,7 +415,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 />
               </label>
               <label className={`${labelClass} sm:col-span-3`}>
-                Regras de segurança para a IA
+                {t("item.aiSafetyRules")}
                 <textarea
                   name="ai_safety_rules"
                   rows={2}
@@ -413,45 +432,51 @@ export default async function PortfolioItemPage({ params }: PageProps) {
           <>
             <section className={sectionClass} data-testid="accommodation-types">
               <h2 className="text-14 text-text font-semibold">
-                Acomodações ({lodging.accommodationTypes.length})
+                {t("lodging.typesTitle", {
+                  count: lodging.accommodationTypes.length,
+                })}
               </h2>
               <p className="text-12 text-text-secondary">
-                Cada tipo de quarto ou unidade, com a capacidade de hóspedes.
-                {toActivate ? ` Para ativar: ${toActivate}` : ""}
+                {t("lodging.typesIntro")}
+                {toActivate
+                  ? ` ${t("lodging.toActivate", { problem: toActivate })}`
+                  : ""}
               </p>
               <div className="divide-border divide-y">
-                {lodging.accommodationTypes.map((t) => (
+                {lodging.accommodationTypes.map((type) => (
                   <div
-                    key={t.id}
+                    key={type.id}
                     className="space-y-2 py-4"
                     data-testid="accommodation-type"
                   >
                     <p className="text-12 text-text-secondary">
-                      <span className="text-text font-semibold">{t.title}</span>
-                      {t.accommodationKind
-                        ? ` · ${ACCOMMODATION_KIND_LABELS[t.accommodationKind as keyof typeof ACCOMMODATION_KIND_LABELS] ?? t.accommodationKind}`
+                      <span className="text-text font-semibold">
+                        {type.title}
+                      </span>
+                      {type.accommodationKind
+                        ? ` · ${lodgingLabel(t, "accommodationKind", type.accommodationKind)}`
                         : ""}
-                      {t.capacity.total
-                        ? ` · até ${t.capacity.total} hóspedes`
-                        : " · capacidade não informada"}
+                      {type.capacity.total
+                        ? ` · ${t("lodging.upToGuests", { count: type.capacity.total })}`
+                        : ` · ${t("lodging.noCapacity")}`}
                     </p>
                     <ActionForm
                       action={saveAccommodationTypeAction}
-                      submitLabel="Salvar acomodação"
+                      submitLabel={t("lodging.saveType")}
                       className="space-y-3"
                     >
                       {hidden}
-                      <input type="hidden" name="typeId" value={t.id} />
-                      <AccommodationTypeFields type={t} />
+                      <input type="hidden" name="typeId" value={type.id} />
+                      <AccommodationTypeFields type={type} />
                     </ActionForm>
                     {lodging.accommodationTypes.length > 1 ? (
                       <ActionForm
                         action={saveAccommodationTypeAction}
-                        submitLabel="Remover acomodação"
+                        submitLabel={t("lodging.removeType")}
                         tone="neutral"
                       >
                         {hidden}
-                        <input type="hidden" name="typeId" value={t.id} />
+                        <input type="hidden" name="typeId" value={type.id} />
                         <input type="hidden" name="remove" value="1" />
                       </ActionForm>
                     ) : null}
@@ -459,11 +484,11 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 ))}
               </div>
               <h3 className="text-12 text-text pt-2 font-semibold">
-                Nova acomodação
+                {t("lodging.newType")}
               </h3>
               <ActionForm
                 action={saveAccommodationTypeAction}
-                submitLabel="Adicionar acomodação"
+                submitLabel={t("lodging.addType")}
                 className="space-y-3"
                 testId="add-accommodation-type"
               >
@@ -474,10 +499,10 @@ export default async function PortfolioItemPage({ params }: PageProps) {
 
             <section className={sectionClass} data-testid="rate-plans">
               <h2 className="text-14 text-text font-semibold">
-                Tarifas ({lodging.ratePlans.length})
+                {t("lodging.plansTitle", { count: lodging.ratePlans.length })}
               </h2>
               <p className="text-12 text-text-secondary">
-                Condições comerciais: alimentação e política de cancelamento.
+                {t("lodging.plansIntro")}
               </p>
               <div className="divide-border divide-y">
                 {lodging.ratePlans.map((p) => (
@@ -488,11 +513,11 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                   >
                     <p className="text-12 text-text-secondary">
                       <span className="text-text font-semibold">{p.title}</span>
-                      {` · ${BOARD_LABELS[p.board]} · ${REFUNDABILITY_LABELS[p.refundability]}`}
+                      {` · ${lodgingLabel(t, "board", p.board)} · ${lodgingLabel(t, "refundability", p.refundability)}`}
                     </p>
                     <ActionForm
                       action={saveRatePlanAction}
-                      submitLabel="Salvar tarifa"
+                      submitLabel={t("lodging.savePlan")}
                       className="space-y-3"
                     >
                       {hidden}
@@ -502,7 +527,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                     {lodging.ratePlans.length > 1 ? (
                       <ActionForm
                         action={saveRatePlanAction}
-                        submitLabel="Remover tarifa"
+                        submitLabel={t("lodging.removePlan")}
                         tone="neutral"
                       >
                         {hidden}
@@ -514,11 +539,11 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 ))}
               </div>
               <h3 className="text-12 text-text pt-2 font-semibold">
-                Nova tarifa
+                {t("lodging.newPlan")}
               </h3>
               <ActionForm
                 action={saveRatePlanAction}
-                submitLabel="Adicionar tarifa"
+                submitLabel={t("lodging.addPlan")}
                 className="space-y-3"
                 testId="add-rate-plan"
               >
@@ -531,20 +556,21 @@ export default async function PortfolioItemPage({ params }: PageProps) {
 
         <section className={sectionClass}>
           <h2 className="text-14 text-text font-semibold">
-            {lodging ? "Preços por diária" : "Variantes"} (
-            {item.variants.length})
+            {t(lodging ? "variants.nightlyTitle" : "variants.title", {
+              count: item.variants.length,
+            })}
           </h2>
           <div className="divide-border divide-y">
             {item.variants.map((v, index) => (
               <div key={v.id} className="space-y-2 py-4" data-testid="variant">
                 <p className="text-12 text-text-secondary">
                   <span className="text-text font-semibold">{v.title}</span> ·{" "}
-                  {formatMoney(v.priceAmount, v.currency)}
-                  {index === 0 ? " · destaque" : ""}
+                  {variantPrices[index]}
+                  {index === 0 ? ` · ${t("variants.featured")}` : ""}
                 </p>
                 <ActionForm
                   action={updatePortfolioVariantAction}
-                  submitLabel="Salvar variante"
+                  submitLabel={t("variants.save")}
                   className="space-y-3"
                 >
                   {hidden}
@@ -558,7 +584,7 @@ export default async function PortfolioItemPage({ params }: PageProps) {
                 {item.variants.length > 1 ? (
                   <ActionForm
                     action={updatePortfolioVariantAction}
-                    submitLabel="Remover variante"
+                    submitLabel={t("variants.remove")}
                     tone="neutral"
                   >
                     {hidden}
@@ -570,11 +596,11 @@ export default async function PortfolioItemPage({ params }: PageProps) {
             ))}
           </div>
           <h3 className="text-12 text-text pt-2 font-semibold">
-            {lodging ? "Novo preço" : "Nova variante"}
+            {lodging ? t("variants.newNightly") : t("variants.new")}
           </h3>
           <ActionForm
             action={addPortfolioVariantAction}
-            submitLabel="Adicionar variante"
+            submitLabel={t("variants.add")}
             className="space-y-3"
             testId="add-variant"
           >
@@ -586,14 +612,14 @@ export default async function PortfolioItemPage({ params }: PageProps) {
 
       <section className={sectionClass} data-testid="ucp-preview">
         <h2 className="text-14 text-text font-semibold">
-          Prévia no protocolo UCP
+          {t("preview.title")}
         </h2>
         <p className="text-12 text-text-secondary">
           {visible
-            ? "É assim que agentes compatíveis com o UCP veem este item."
+            ? t("preview.visible")
             : item.priceDisplay === "quote"
-              ? "Item sob consulta: não sai pelo UCP; só o agente do GUIDU oferece."
-              : "Este item não sai pelo UCP enquanto não estiver ativo, público e liberado para a IA. Prévia do formato:"}
+              ? t("preview.quote")
+              : t("preview.hidden")}
         </p>
         {ucp ? (
           <pre className="bg-surface-raised text-11 max-h-96 overflow-auto rounded-lg p-3">

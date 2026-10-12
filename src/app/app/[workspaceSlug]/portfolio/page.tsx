@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ShoppingBag } from "lucide-react";
 
 import { sectionClass } from "@/components/billing/billing-ui";
@@ -18,8 +19,9 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import {
   formatMoney,
-  PRICE_DISPLAY_LABELS,
-  STATUS_LABELS,
+  ITEM_STATUSES,
+  labelOf,
+  PRICE_DISPLAYS,
   VariantFields,
 } from "@/modules/portfolio/components/fields";
 import { PortfolioPermissions } from "@/modules/portfolio/manifest";
@@ -27,18 +29,15 @@ import { createPortfolioItemAction } from "@/modules/portfolio/server/actions";
 import { listItems } from "@/modules/portfolio/server";
 import {
   ITEM_TYPES,
-  itemTypeLabel,
-  listKinds,
-  verticalLabel,
+  translatedItemTypeLabel,
+  translatedKindLabel,
+  translatedKinds,
 } from "@/modules/portfolio/verticals";
 
-function verticalLabelFor(itemType: string, vertical: string): string {
-  return vertical === "general"
-    ? itemTypeLabel(itemType)
-    : `${itemTypeLabel(itemType)} — ${verticalLabel(itemType, vertical)}`;
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("portfolio");
+  return { title: t("metadata.list") };
 }
-
-export const metadata: Metadata = { title: "Portfólio" };
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -50,7 +49,7 @@ interface PageProps {
   }>;
 }
 
-const STATUSES = ["draft", "active", "inactive", "archived"] as const;
+const STATUSES = ITEM_STATUSES;
 
 /** Items of the Portfolio (F5a): search, status filter and creation. */
 export default async function PortfolioPage({
@@ -98,13 +97,30 @@ export default async function PortfolioPage({
   });
   if (view.kind === "missing") notFound();
   const base = `/app/${workspaceSlug}/portfolio`;
+  const t = await getTranslations("portfolio");
+  const prices =
+    view.kind === "ok"
+      ? await Promise.all(
+          view.items.map(async (item) => {
+            const amounts = item.variants
+              .map((v) => v.priceAmount)
+              .filter((p): p is number => p !== null);
+            const min = amounts.length ? Math.min(...amounts) : null;
+            if (item.priceDisplay === "quote") return t("money.quote");
+            const price = await formatMoney(min);
+            return item.priceDisplay === "from" || amounts.length > 1
+              ? t("list.fromPrice", { price })
+              : price;
+          }),
+        )
+      : [];
 
   return (
     <div className="mx-auto max-w-5xl space-y-6" data-testid="portfolio">
       <ModulePageHeader
-        trail={["Módulos", "Portfólio"]}
-        title="Portfólio"
-        description="Produtos, serviços e ofertas do workspace, no formato do protocolo UCP. É o que o agente consulta no atendimento."
+        trail={[t("trailModules"), t("list.title")]}
+        title={t("list.title")}
+        description={t("list.description")}
         icon={<ShoppingBag className="h-5 w-5" />}
       />
       {view.kind !== "ok" ? (
@@ -116,33 +132,33 @@ export default async function PortfolioPage({
               name="q"
               defaultValue={search}
               maxLength={100}
-              placeholder="Buscar por título ou endereço"
-              aria-label="Buscar no portfólio"
+              placeholder={t("list.searchPlaceholder")}
+              aria-label={t("list.searchLabel")}
               className={`${inputClass} min-w-60 flex-1`}
             />
             <select
               name="status"
               defaultValue={statusFilter ?? ""}
-              aria-label="Situação"
+              aria-label={t("list.statusLabel")}
               className={inputClass}
             >
-              <option value="">Todos (menos arquivados)</option>
+              <option value="">{t("list.allStatuses")}</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {STATUS_LABELS[s]}
+                  {labelOf(t, "status", s)}
                 </option>
               ))}
             </select>
             <select
               name="type"
               defaultValue={typeFilter ?? ""}
-              aria-label="Categoria"
+              aria-label={t("list.typeLabel")}
               className={inputClass}
             >
-              <option value="">Todas as categorias</option>
-              {ITEM_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {itemTypeLabel(t)}
+              <option value="">{t("list.allTypes")}</option>
+              {ITEM_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {translatedItemTypeLabel(t, type)}
                 </option>
               ))}
             </select>
@@ -150,26 +166,22 @@ export default async function PortfolioPage({
               type="submit"
               className="border-border text-12 text-text rounded-lg border px-4 py-2 font-semibold"
             >
-              Buscar
+              {t("list.search")}
             </button>
           </form>
 
           {view.items.length === 0 ? (
             <p className="text-12 text-text-secondary">
               {search || statusFilter || typeFilter
-                ? "Nenhum item encontrado."
-                : "Sem dados: nenhum item ainda."}
+                ? t("list.noResults")
+                : t("list.empty")}
             </p>
           ) : (
             <ul
               className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs"
               data-testid="portfolio-list"
             >
-              {view.items.map((item) => {
-                const prices = item.variants
-                  .map((v) => v.priceAmount)
-                  .filter((p): p is number => p !== null);
-                const min = prices.length ? Math.min(...prices) : null;
+              {view.items.map((item, index) => {
                 return (
                   <li
                     key={item.id}
@@ -182,13 +194,9 @@ export default async function PortfolioPage({
                       {item.title}
                     </Link>
                     <span className="text-12 text-text-secondary">
-                      {verticalLabelFor(item.itemType, item.vertical)} ·{" "}
-                      {STATUS_LABELS[item.status]} ·{" "}
-                      {item.priceDisplay === "quote"
-                        ? "sob consulta"
-                        : `${item.priceDisplay === "from" || prices.length > 1 ? "a partir de " : ""}${formatMoney(min)}`}{" "}
-                      · {item.variants.length}{" "}
-                      {item.variants.length === 1 ? "variante" : "variantes"}
+                      {translatedKindLabel(t, item.itemType, item.vertical)} ·{" "}
+                      {labelOf(t, "status", item.status)} · {prices[index]} ·{" "}
+                      {t("list.variants", { count: item.variants.length })}
                     </span>
                   </li>
                 );
@@ -200,20 +208,22 @@ export default async function PortfolioPage({
               href={`${base}?${new URLSearchParams({ ...(search ? { q: search } : {}), ...(statusFilter ? { status: statusFilter } : {}), ...(typeFilter ? { type: typeFilter } : {}), cursor: view.nextCursor })}`}
               className="text-12 text-primary font-semibold"
             >
-              Mais itens
+              {t("list.more")}
             </Link>
           ) : null}
 
           <section className={sectionClass}>
-            <h2 className="text-14 text-text font-semibold">Novo item</h2>
+            <h2 className="text-14 text-text font-semibold">
+              {t("list.newItem")}
+            </h2>
             {view.readOnly ? (
               <p className="text-12 text-text-secondary">
-                Assinatura suspensa: o portfólio fica só para consulta.
+                {t("list.readOnly")}
               </p>
             ) : view.canWrite ? (
               <ActionForm
                 action={createPortfolioItemAction}
-                submitLabel="Criar item"
+                submitLabel={t("list.create")}
                 className="space-y-3"
                 testId="create-portfolio-item"
               >
@@ -224,13 +234,13 @@ export default async function PortfolioPage({
                 />
                 <div className="grid gap-3 sm:grid-cols-3">
                   <label className={labelClass}>
-                    Categoria
+                    {t("form.kind")}
                     <select
                       name="kind"
                       defaultValue="product:general"
                       className={inputClass}
                     >
-                      {listKinds().map((k) => (
+                      {translatedKinds(t).map((k) => (
                         <option key={k.value} value={k.value}>
                           {k.label}
                         </option>
@@ -238,7 +248,7 @@ export default async function PortfolioPage({
                     </select>
                   </label>
                   <label className={labelClass}>
-                    Título
+                    {t("form.title")}
                     <input
                       name="title"
                       required
@@ -247,21 +257,21 @@ export default async function PortfolioPage({
                     />
                   </label>
                   <label className={labelClass}>
-                    Exibição do preço
+                    {t("form.priceDisplay")}
                     <select
                       name="price_display"
                       defaultValue="price"
                       className={inputClass}
                     >
-                      {Object.entries(PRICE_DISPLAY_LABELS).map(([k, v]) => (
+                      {PRICE_DISPLAYS.map((k) => (
                         <option key={k} value={k}>
-                          {v}
+                          {labelOf(t, "priceDisplay", k)}
                         </option>
                       ))}
                     </select>
                   </label>
                   <label className={`${labelClass} sm:col-span-3`}>
-                    Descrição
+                    {t("form.description")}
                     <textarea
                       name="description_plain"
                       rows={2}
@@ -272,15 +282,12 @@ export default async function PortfolioPage({
                 </div>
                 <VariantFields idPrefix="new" />
                 <p className="text-11 text-text-secondary">
-                  O item nasce como rascunho; os dados da categoria (por
-                  exemplo, quartos de um imóvel ou a data de um evento) são
-                  preenchidos na página do item. Hospedagem chega na próxima
-                  etapa.
+                  {t("list.createHint")}
                 </p>
               </ActionForm>
             ) : (
               <p className="text-12 text-text-secondary">
-                Seu papel permite apenas consultar o portfólio.
+                {t("list.viewOnly")}
               </p>
             )}
           </section>

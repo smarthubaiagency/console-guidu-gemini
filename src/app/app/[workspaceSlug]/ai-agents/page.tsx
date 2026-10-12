@@ -10,8 +10,8 @@
  * ============================================================================
  */
 
-import type { Metadata } from "next";
 import { Bot, Clock } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
@@ -25,9 +25,10 @@ import {
 } from "@/core/agents/engine";
 import { AgentsClient } from "./agents-client";
 
-export const metadata: Metadata = {
-  title: "Agentes de IA e Motor de Execução Resiliente",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("aiAgents");
+  return { title: t("metaTitle") };
+}
 
 interface AiAgentsPageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -36,6 +37,7 @@ interface AiAgentsPageProps {
 export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
   const { workspaceSlug } = await params;
   const currentPath = `/app/${workspaceSlug}/ai-agents`;
+  const t = await getTranslations("aiAgents");
   const identity = await requireUserPage(currentPath);
 
   const context = await resolveRequestWorkspaceContext(
@@ -49,9 +51,9 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="border-border border-b pb-5">
           <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-            <span>Módulos</span>
+            <span>{t("breadcrumbModules")}</span>
             <span>/</span>
-            <span>Agentes de IA</span>
+            <span>{t("breadcrumb")}</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="bg-info-bg text-info-text border-info-border rounded-lg border p-2">
@@ -59,12 +61,9 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
             </div>
             <div>
               <h1 className="text-20 text-text font-bold tracking-tight">
-                Agentes de Inteligência Artificial & Motor de Prompts
+                {t("title")}
               </h1>
-              <p className="text-12 text-text-secondary">
-                Assistentes contextuais com execução redundante (fallbacks
-                automáticos), chaves BYOK e trilha de auditoria.
-              </p>
+              <p className="text-12 text-text-secondary">{t("description")}</p>
             </div>
           </div>
         </div>
@@ -74,11 +73,10 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
             <Clock className="h-5 w-5" />
           </div>
           <h2 className="text-14 text-text mt-4 font-semibold">
-            Módulo Indisponível
+            {t("unavailable.title")}
           </h2>
           <p className="text-12 text-text-secondary mx-auto mt-2 max-w-md leading-relaxed">
-            Conforme ADR 0003 e decisão de governança (C04), o módulo de Agentes de IA está congelado
-            e indisponível até a definição formal da especificação de produto e do registro de módulos da Fase 2.
+            {t("unavailable.body")}
           </p>
         </div>
       </div>
@@ -111,9 +109,9 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="border-border border-b pb-5">
         <div className="text-12 text-text-secondary mb-1 flex items-center gap-2 font-medium">
-          <span>Módulos</span>
+          <span>{t("breadcrumbModules")}</span>
           <span>/</span>
-          <span>Agentes de IA</span>
+          <span>{t("breadcrumb")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-info-bg text-info-text border-info-border rounded-lg border p-2">
@@ -121,12 +119,9 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
           </div>
           <div>
             <h1 className="text-20 text-text font-bold tracking-tight">
-              Agentes de Inteligência Artificial & Motor de Prompts
+              {t("title")}
             </h1>
-            <p className="text-12 text-text-secondary">
-              Assistentes contextuais com execução redundante (fallbacks
-              automáticos), chaves BYOK e trilha de auditoria.
-            </p>
+            <p className="text-12 text-text-secondary">{t("description")}</p>
           </div>
         </div>
       </div>

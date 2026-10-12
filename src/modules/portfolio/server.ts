@@ -16,6 +16,7 @@ export {
   listItems,
   type LodgingView,
   lodgingProblem,
+  lodgingProblemCode,
   type RatePlanView,
   removeVariant,
   updateItem,

@@ -1,0 +1,10 @@
+{
+  "metaTitle": "Google Meu Negócio",
+  "breadcrumbModules": "Módulos",
+  "title": "Google Meu Negócio",
+  "description": "Gestão de presença online, avaliações, horários e fotos de lojas físicas.",
+  "inDevelopment": {
+    "title": "Módulo em Desenvolvimento",
+    "body": "A integração com a Google Business Profile API depende de conectores OAuth globais e credenciais operacionais."
+  }
+}

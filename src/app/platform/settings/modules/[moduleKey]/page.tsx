@@ -13,6 +13,7 @@ import type { PermissionKey } from "@/core/permissions/catalog";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { getRegisteredModule } from "@/modules/registry";
+import { getModuleCatalog } from "@/core/i18n/modules";
 import {
   hasSettingsComponent,
   renderSettingsComponent,
@@ -63,6 +64,7 @@ export default async function AdminModuleSettingsPage({ params }: PageProps) {
     : {};
   const t = await getTranslations("modules.platform");
   const tPlatform = await getTranslations("platform");
+  const catalog = await getModuleCatalog();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -70,10 +72,12 @@ export default async function AdminModuleSettingsPage({ params }: PageProps) {
         trail={[
           tPlatform("breadcrumb"),
           t("settingsBreadcrumb"),
-          mod.manifest.displayName,
+          catalog.name(moduleKey, mod.manifest.displayName),
         ]}
-        title={t("settingsTitle", { label: entry.label })}
-        description={mod.manifest.description}
+        title={t("settingsTitle", {
+          label: catalog.settingsLabel(moduleKey, entry.id, entry.label),
+        })}
+        description={catalog.description(moduleKey, mod.manifest.description)}
         icon={<Puzzle className="h-5 w-5" />}
       />
       {canRead ? (

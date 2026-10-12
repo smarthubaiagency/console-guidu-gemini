@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { List } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -14,7 +14,10 @@ import { CreateRecordForm } from "@/modules/hello-world/client";
 import { HelloWorldPermissions } from "@/modules/hello-world/manifest";
 import { listHelloWorldRecords } from "@/modules/hello-world/server";
 
-export const metadata: Metadata = { title: "Registros — Hello World" };
+export async function generateMetadata() {
+  const t = await getTranslations("helloWorld");
+  return { title: t("records.metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -54,13 +57,19 @@ export default async function HelloWorldRecordsPage({ params }: PageProps) {
     };
   });
   if (view.kind === "missing") notFound();
+  const t = await getTranslations("helloWorld");
+  const format = await getFormatter();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={["Módulos", "Hello World", "Registros"]}
-        title="Registros de exemplo"
-        description="Listar, criar e consultar registros vinculados ao workspace."
+        trail={[
+          t("breadcrumbModules"),
+          t("breadcrumbHelloWorld"),
+          t("records.breadcrumb"),
+        ]}
+        title={t("records.title")}
+        description={t("records.description")}
         icon={<List className="h-5 w-5" />}
       />
       {view.kind !== "ok" ? (
@@ -73,28 +82,24 @@ export default async function HelloWorldRecordsPage({ params }: PageProps) {
                 className="text-12 text-text-secondary"
                 data-testid="module-read-only"
               >
-                Assinatura suspensa: os registros ficam disponíveis só para
-                consulta.
+                {t("records.readOnly")}
               </p>
             ) : view.canWrite ? (
               view.limit === null || view.records.length < view.limit ? (
                 <CreateRecordForm workspaceSlug={workspaceSlug} />
               ) : (
                 <p className="text-12 text-text-secondary">
-                  Limite do plano atingido ({view.limit} registros por
-                  workspace).
+                  {t("records.limitReached", { limit: view.limit })}
                 </p>
               )
             ) : (
               <p className="text-12 text-text-secondary">
-                Seu papel permite apenas consultar os registros.
+                {t("records.readOnlyRole")}
               </p>
             )}
           </div>
           {view.records.length === 0 ? (
-            <p className="text-12 text-text-secondary">
-              Sem dados: nenhum registro criado ainda.
-            </p>
+            <p className="text-12 text-text-secondary">{t("records.empty")}</p>
           ) : (
             <ul className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs">
               {view.records.map((record) => (
@@ -109,10 +114,13 @@ export default async function HelloWorldRecordsPage({ params }: PageProps) {
                     {record.title}
                   </Link>
                   <span className="text-11 text-text-tertiary">
-                    {new Date(record.createdAt).toLocaleString("pt-BR", {
-                      timeZone: "UTC",
-                    })}{" "}
-                    UTC
+                    {t("records.dateUtc", {
+                      date: format.dateTime(new Date(record.createdAt), {
+                        dateStyle: "short",
+                        timeStyle: "medium",
+                        timeZone: "UTC",
+                      }),
+                    })}
                   </span>
                 </li>
               ))}

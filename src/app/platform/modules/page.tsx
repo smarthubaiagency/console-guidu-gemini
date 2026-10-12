@@ -13,6 +13,7 @@ import { loadPlatformModuleStates } from "@/core/module-runtime/state";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { listRegisteredModules } from "@/modules/registry";
+import { getModuleCatalog } from "@/core/i18n/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("modules.platform");
@@ -31,6 +32,7 @@ export default async function AdminModulesPage() {
   const canManage = grants("platform.modules.manage");
   const t = await getTranslations("modules");
   const tPlatform = await getTranslations("platform");
+  const catalog = await getModuleCatalog();
 
   const states = await withIdentityContext(prisma, identity.userId, (tx) =>
     loadPlatformModuleStates(tx),
@@ -49,6 +51,7 @@ export default async function AdminModulesPage() {
         {modules.map(({ manifest }) => {
           const availability =
             states.get(manifest.moduleKey)?.availability ?? "enabled";
+          const name = catalog.name(manifest.moduleKey, manifest.displayName);
           const hasAdminSettings = manifest.settings.some(
             (s) => s.destination === "admin",
           );
@@ -58,9 +61,7 @@ export default async function AdminModulesPage() {
               className="flex items-center justify-between gap-4 p-4"
             >
               <div>
-                <div className="text-14 text-text font-semibold">
-                  {manifest.displayName}
-                </div>
+                <div className="text-14 text-text font-semibold">{name}</div>
                 <div className="text-12 text-text-secondary">
                   {t("platform.versionLine", {
                     version: manifest.moduleVersion,
@@ -77,7 +78,7 @@ export default async function AdminModulesPage() {
                     className="text-12 text-text-subtle hover:text-text mt-1 inline-block font-medium underline"
                   >
                     {t("platform.globalPolicy", {
-                      name: manifest.displayName,
+                      name,
                     })}
                   </Link>
                 )}
@@ -85,7 +86,7 @@ export default async function AdminModulesPage() {
               {canManage ? (
                 <PlatformAvailabilityForm
                   moduleKey={manifest.moduleKey}
-                  moduleName={manifest.displayName}
+                  moduleName={name}
                   availability={availability}
                 />
               ) : (

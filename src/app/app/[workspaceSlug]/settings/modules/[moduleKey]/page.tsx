@@ -12,6 +12,7 @@ import {
   getWorkspaceModuleConfig,
 } from "@/core/module-runtime/settings";
 import { getModuleAccessState } from "@/core/module-runtime/state";
+import { getModuleCatalog } from "@/core/i18n/modules";
 import type { PermissionKey } from "@/core/permissions/catalog";
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { prisma } from "@/lib/prisma/client";
@@ -92,6 +93,7 @@ export default async function WorkspaceModuleSettingsPage({
 
   if (view.kind === "missing") notFound();
   const t = await getTranslations("modules");
+  const catalog = await getModuleCatalog();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -99,10 +101,10 @@ export default async function WorkspaceModuleSettingsPage({
         trail={[
           t("breadcrumbSettings"),
           t("breadcrumbModules"),
-          mod.manifest.displayName,
+          catalog.name(moduleKey, mod.manifest.displayName),
         ]}
-        title={entry.label}
-        description={mod.manifest.description}
+        title={catalog.settingsLabel(moduleKey, entry.id, entry.label)}
+        description={catalog.description(moduleKey, mod.manifest.description)}
         icon={<Puzzle className="h-5 w-5" />}
       />
       {view.kind === "ready" ? (

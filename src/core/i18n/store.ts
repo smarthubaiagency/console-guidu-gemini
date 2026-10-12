@@ -39,8 +39,20 @@ export function fileMessages(locale: string): Messages | null {
 
 const TTL_MS = 30_000;
 type Entry<T> = { value: T; at: number };
-let languagesCache: Entry<UiLanguage[]> | null = null;
-const editsCache = new Map<string, Entry<Record<string, string>>>();
+type I18nCache = {
+  languages: Entry<UiLanguage[]> | null;
+  edits: Map<string, Entry<Record<string, string>>>;
+};
+
+// One cache per process: the dev server may load this module once per route
+// bundle, and an edit must clear the texts every page reads.
+const globalCache = globalThis as typeof globalThis & {
+  __guiduI18nCache?: I18nCache;
+};
+const cacheStore: I18nCache = (globalCache.__guiduI18nCache ??= {
+  languages: null,
+  edits: new Map(),
+});
 
 export type UiLanguage = Readonly<{
   code: string;
@@ -56,8 +68,8 @@ const FALLBACK_LANGUAGES: UiLanguage[] = [
 
 /** Clears the cached languages and texts (after an edit). */
 export function invalidateI18nCache(): void {
-  languagesCache = null;
-  editsCache.clear();
+  cacheStore.languages = null;
+  cacheStore.edits.clear();
 }
 
 const fresh = <T>(entry: Entry<T> | null | undefined): entry is Entry<T> =>
@@ -65,7 +77,7 @@ const fresh = <T>(entry: Entry<T> | null | undefined): entry is Entry<T> =>
 
 /** Active languages, in display order. */
 export async function activeLanguages(): Promise<UiLanguage[]> {
-  if (fresh(languagesCache)) return languagesCache.value;
+  if (fresh(cacheStore.languages)) return cacheStore.languages.value;
   try {
     const rows = await prisma.$queryRaw<
       { code: string; name: string; is_default: boolean }[]
@@ -75,7 +87,7 @@ export async function activeLanguages(): Promise<UiLanguage[]> {
       name: r.name,
       isDefault: r.is_default,
     }));
-    languagesCache = { value, at: Date.now() };
+    cacheStore.languages = { value, at: Date.now() };
     return value;
   } catch (error) {
     appLog.error("i18n.languages_failed", { error });
@@ -86,14 +98,14 @@ export async function activeLanguages(): Promise<UiLanguage[]> {
 async function translationEdits(
   locale: string,
 ): Promise<Record<string, string>> {
-  const cached = editsCache.get(locale);
+  const cached = cacheStore.edits.get(locale);
   if (fresh(cached)) return cached.value;
   try {
     const rows = await prisma.$queryRaw<{ key: string; value: string }[]>`
       select key, value from private.ui_translations(${locale})
     `;
     const value = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-    editsCache.set(locale, { value, at: Date.now() });
+    cacheStore.edits.set(locale, { value, at: Date.now() });
     return value;
   } catch (error) {
     appLog.error("i18n.translations_failed", { locale, error });

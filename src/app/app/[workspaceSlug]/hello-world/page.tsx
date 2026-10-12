@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Hand } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
@@ -16,13 +16,10 @@ import {
   resolveHelloWorldGreeting,
 } from "@/modules/hello-world/server";
 
-export const metadata: Metadata = { title: "Hello World" };
-
-const ORIGIN_LABELS = {
-  workspace: "Definida neste workspace",
-  global: "Herdada da política global",
-  fallback: "Padrão do módulo",
-} as const;
+export async function generateMetadata() {
+  const t = await getTranslations("helloWorld");
+  return { title: t("home.metaTitle") };
+}
 
 interface PageProps {
   params: Promise<{ workspaceSlug: string }>;
@@ -58,13 +55,14 @@ export default async function HelloWorldPage({ params }: PageProps) {
     return { kind: "ok" as const, greeting, count: records.length, limit };
   });
   if (view.kind === "missing") notFound();
+  const t = await getTranslations("helloWorld");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <ModulePageHeader
-        trail={["Módulos", "Hello World"]}
-        title="Hello World"
-        description="Módulo de referência do contrato de módulos (somente desenvolvimento e testes)."
+        trail={[t("breadcrumbModules"), t("breadcrumbHelloWorld")]}
+        title={t("home.title")}
+        description={t("home.description")}
         icon={<Hand className="h-5 w-5" />}
       />
       {view.kind === "ok" ? (
@@ -76,17 +74,20 @@ export default async function HelloWorldPage({ params }: PageProps) {
             {view.greeting.greeting}
           </p>
           <p className="text-12 text-text-secondary">
-            {ORIGIN_LABELS[view.greeting.origin]}
+            {t(`home.origin.${view.greeting.origin}`)}
           </p>
           <p className="text-12 text-text-secondary">
             {view.limit === null
-              ? `${view.count} registros de demonstração.`
-              : `${view.count} de ${view.limit} registros de demonstração.`}{" "}
+              ? t("home.count", { count: view.count })
+              : t("home.countOfLimit", {
+                  count: view.count,
+                  limit: view.limit,
+                })}{" "}
             <Link
               href={`/app/${workspaceSlug}/hello-world/records`}
               className="underline"
             >
-              Ver registros
+              {t("home.viewRecords")}
             </Link>
           </p>
         </div>

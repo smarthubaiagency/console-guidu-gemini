@@ -16,8 +16,8 @@ Pedido do Marcelo (11/10/2026): painel em vários idiomas, começando por portug
 | ----- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | I1    | Base: next-intl, idiomas e edições no banco, tela de Idiomas, idioma da pessoa e do workspace, shell e menus traduzidos         | Pronta para revisão |
 | I2    | Núcleo: login, convites, conta, visão geral, configurações do workspace, mensagens de erro dos serviços e formatação por idioma | Pronta para revisão |
-| I3    | Plataforma (`/platform`) e console do parceiro (`/admin`)                                                                       | Planejada           |
-| I4    | Módulos: CRM, Portfólio (com os campos das verticais), propostas e os módulos seguintes já nascendo com chaves                  | Planejada           |
+| I3    | Plataforma (`/platform`) e console do parceiro (`/admin`)                                                                       | Pronta para revisão |
+| I4    | Módulos: CRM, Portfólio (com os campos das verticais), propostas e os módulos seguintes já nascendo com chaves                  | Pronta para revisão |
 | I5    | Notificações e e-mails por idioma de quem recebe; termos e privacidade por idioma; API e MCP em inglês                          | Planejada           |
 | I6    | Tradução automática na tela de Idiomas (edições `machine`, marcadas para revisão)                                               | Espera o provedor   |
 
@@ -94,6 +94,25 @@ Fica em português até as próximas etapas ou por ser dado:
 
 - **Nomes, descrições e campos de configuração dos módulos** (manifestos): I4.
 - **Dados mostrados como estão gravados:** descrições de retenção, situações brutas de empresa, workspace e usuário, e mensagens padrão do zod sem texto próprio.
+
+## I4 — Módulos
+
+**Estado:** pronta para revisão. Sem migration.
+
+Entregue:
+
+- **Portfólio:** lista e detalhe dos itens, filtros, criação, campos, variantes, hospedagem (propriedade, acomodações e tarifas), seção de IA e prévia UCP. Os rótulos das verticais (campos, opções, tipos de item e verticais) vêm do namespace `portfolio`, com o rótulo em português do código como reserva. Preços pela moeda do item e no formato do idioma.
+- **CRM, Hello World, Agentes de IA e Google Business:** páginas, formulários, mensagens de sucesso e erros dos serviços com chave de tradução.
+- **Catálogo de módulos** (namespace `moduleCatalog`): nome, descrição, itens de menu, telas de configuração, permissões e cotas de cada módulo, aplicados no menu lateral, na visão geral, em Configurações › Módulos, em Consumo & Limites, nos módulos e na cobrança da plataforma e no console do parceiro. O manifesto continua sendo a fonte em português.
+- **Novos módulos:** nascem com as chaves no `moduleCatalog` e um namespace próprio; o texto do manifesto é usado enquanto a chave não existir.
+
+Fica em português até as próximas etapas ou por ser dado:
+
+- **Saídas da API e do MCP** (nomes de módulos, UCP, mensagens): I5.
+- **Dados gravados ou do formato UCP:** título padrão da variante ("Padrão"), unidades de venda, resumo de cancelamento e nomes de opções de hospedagem.
+- **Mensagem de cota excedida** (`QuotaExceededError`) e erros internos do motor de agentes: entram com a revisão de erros da I5.
+- **Concordância já existente** em "Variante/Acomodação/Tarifa não encontrado." foi mantida para não mudar o texto em português; en e es estão corretos. Pode ser corrigida na tela de Idiomas.
+- **Contagens do Hello World** passaram a usar plural: com exatamente 1 registro a frase fica no singular.
 
 ## Pendências do Marcelo
 

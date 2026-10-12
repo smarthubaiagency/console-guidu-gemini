@@ -5,6 +5,7 @@ import { sectionClass } from "@/components/billing/billing-ui";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { loadUsage, type UsageRow } from "@/core/entitlements/usage";
+import { getModuleCatalog, type ModuleCatalog } from "@/core/i18n/modules";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
@@ -25,9 +26,20 @@ const ROW_LABEL_KEYS: Record<string, string> = {
 
 type Translate = Awaited<ReturnType<typeof getTranslations<"usage">>>;
 
-function UsageMeter({ row, t }: { row: UsageRow; t: Translate }) {
+function UsageMeter({
+  row,
+  t,
+  catalog,
+}: {
+  row: UsageRow;
+  t: Translate;
+  catalog: ModuleCatalog;
+}) {
   const labelKey = ROW_LABEL_KEYS[row.key];
-  const label = labelKey ? t(labelKey) : row.label;
+  // Module quotas come from the manifests, translated by the catalog (I4).
+  const label = labelKey
+    ? t(labelKey)
+    : (catalog.findQuota(row.key)?.label ?? row.label);
   const percent =
     row.used !== null && row.limit
       ? Math.min(100, Math.round((row.used / row.limit) * 100))
@@ -83,6 +95,7 @@ export default async function UsagePage({ params }: UsagePageProps) {
   );
   const contract = usage.contract;
   const t = await getTranslations("usage");
+  const catalog = await getModuleCatalog();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="usage-page">
@@ -110,7 +123,7 @@ export default async function UsagePage({ params }: UsagePageProps) {
         <h2 className="text-14 text-text font-semibold">{t("limits")}</h2>
         <ul className="divide-border divide-y">
           {usage.rows.map((row) => (
-            <UsageMeter key={row.key} row={row} t={t} />
+            <UsageMeter key={row.key} row={row} t={t} catalog={catalog} />
           ))}
         </ul>
       </section>

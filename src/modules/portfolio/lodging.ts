@@ -53,6 +53,20 @@ export const ACCOMMODATION_KINDS = [
   "campsite",
 ] as const;
 
+/**
+ * Custom validation messages of the lodging schemas. The services give
+ * them a translation key when they reach the screen (I4).
+ */
+export const LODGING_VALIDATION = {
+  ageRangeInverted: "Faixa de idade invertida.",
+  capacityTotal:
+    "A capacidade total não pode ser menor que a de adultos ou de crianças.",
+  reverseId: "Use um identificador reverso.",
+  typeTitleRequired: "Informe o nome da acomodação.",
+  planTitleRequired: "Informe o nome da tarifa.",
+  nothingToChange: "Nada para alterar.",
+} as const;
+
 /** Sale basis of a lodging variant: one night. */
 export const NIGHT_UNIT = { unit: "DAY", display_text: "diária" } as const;
 
@@ -75,7 +89,10 @@ export const UcpCapacity = z
                 max: z.number().int().min(0).max(17),
               })
               .strict()
-              .refine((a) => a.min <= a.max, "Faixa de idade invertida."),
+              .refine(
+                (a) => a.min <= a.max,
+                LODGING_VALIDATION.ageRangeInverted,
+              ),
             limit: z.number().int().min(0).max(100).optional(),
           })
           .strict(),
@@ -89,16 +106,20 @@ export const UcpCapacity = z
     (c) =>
       c.total === undefined ||
       c.total >= Math.max(c.adults ?? 0, c.children ?? 0),
-    "A capacidade total não pode ser menor que a de adultos ou de crianças.",
+    LODGING_VALIDATION.capacityTotal,
   );
 
 const amenityId = z
   .string()
-  .regex(/^[a-z][a-z0-9-]*(\.[a-z0-9_-]+)+$/, "Use um identificador reverso.");
+  .regex(/^[a-z][a-z0-9-]*(\.[a-z0-9_-]+)+$/, LODGING_VALIDATION.reverseId);
 
 /** Accommodation type fields without defaults (updates send only changes). */
 export const accommodationTypeShape = {
-  title: z.string().trim().min(1, "Informe o nome da acomodação.").max(200),
+  title: z
+    .string()
+    .trim()
+    .min(1, LODGING_VALIDATION.typeTitleRequired)
+    .max(200),
   description: z.string().trim().min(1).max(5000).nullable().optional(),
   capacity: UcpCapacity,
   media: z.array(UcpMedia).max(20),
@@ -122,11 +143,15 @@ export const AccommodationTypeUpdateInput = z
   .object(accommodationTypeShape)
   .partial()
   .strict()
-  .refine((v) => Object.keys(v).length > 0, "Nada para alterar.");
+  .refine((v) => Object.keys(v).length > 0, LODGING_VALIDATION.nothingToChange);
 
 /** Rate plan fields without defaults. */
 export const ratePlanShape = {
-  title: z.string().trim().min(1, "Informe o nome da tarifa.").max(200),
+  title: z
+    .string()
+    .trim()
+    .min(1, LODGING_VALIDATION.planTitleRequired)
+    .max(200),
   description: z.string().trim().min(1).max(5000).nullable().optional(),
   refundability: z.enum(REFUNDABILITY),
   cancellation_policy: z.string().trim().min(1).max(2000).nullable().optional(),
@@ -152,7 +177,7 @@ export const RatePlanUpdateInput = z
   .object(ratePlanShape)
   .partial()
   .strict()
-  .refine((v) => Object.keys(v).length > 0, "Nada para alterar.");
+  .refine((v) => Object.keys(v).length > 0, LODGING_VALIDATION.nothingToChange);
 
 // ---------------------------------------------------------------------------
 // Serializer: lodging item -> UCP Product with Property, AccommodationType

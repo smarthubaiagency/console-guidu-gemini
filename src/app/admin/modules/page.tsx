@@ -12,6 +12,7 @@ import {
   listOfferableModules,
   listOfferedModuleKeys,
 } from "@/core/partners/customers";
+import { getModuleCatalog } from "@/core/i18n/modules";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
@@ -41,6 +42,7 @@ export default async function PartnerModulesPage() {
   const modules = listOfferableModules();
 
   const t = await getTranslations("partnerConsole");
+  const catalog = await getModuleCatalog();
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -63,7 +65,7 @@ export default async function PartnerModulesPage() {
             >
               <div>
                 <div className="text-14 text-text font-semibold">
-                  {mod.displayName}
+                  {catalog.name(mod.moduleKey, mod.displayName)}
                 </div>
                 <div className="text-12 text-text-secondary">
                   {RELEASE_KEYS.has(mod.releaseStatus)
