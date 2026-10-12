@@ -164,7 +164,7 @@ Planejado:
 
 ### F4e — API e MCP da plataforma
 
-**Estado:** pronta para revisão. A migration `20261021090000_f4e_platform_api_keys.sql` é aplicada como `app_migrations`. Guia em [mcp-conexao.md](mcp-conexao.md#plataforma-f4e).
+**Estado:** concluída (PR #38), migration `20261021090000_f4e_platform_api_keys.sql` aplicada no dev. Guia em [mcp-conexao.md](mcp-conexao.md#plataforma-f4e).
 
 Entregue:
 

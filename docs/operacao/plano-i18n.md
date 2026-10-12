@@ -12,18 +12,18 @@ Pedido do Marcelo (11/10/2026): painel em vários idiomas, começando por portug
 
 ## Etapas
 
-| Etapa | Entrega                                                                                                                         | Estado              |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| I1    | Base: next-intl, idiomas e edições no banco, tela de Idiomas, idioma da pessoa e do workspace, shell e menus traduzidos         | Pronta para revisão |
-| I2    | Núcleo: login, convites, conta, visão geral, configurações do workspace, mensagens de erro dos serviços e formatação por idioma | Pronta para revisão |
-| I3    | Plataforma (`/platform`) e console do parceiro (`/admin`)                                                                       | Pronta para revisão |
-| I4    | Módulos: CRM, Portfólio (com os campos das verticais), propostas e os módulos seguintes já nascendo com chaves                  | Pronta para revisão |
-| I5    | Notificações e e-mails por idioma de quem recebe; termos e privacidade por idioma; API e MCP em inglês                          | Pronta para revisão |
-| I6    | Tradução automática na tela de Idiomas (edições `machine`, marcadas para revisão)                                               | Pronta para revisão |
+| Etapa | Entrega                                                                                                                         | Estado             |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| I1    | Base: next-intl, idiomas e edições no banco, tela de Idiomas, idioma da pessoa e do workspace, shell e menus traduzidos         | Concluída (PR #43) |
+| I2    | Núcleo: login, convites, conta, visão geral, configurações do workspace, mensagens de erro dos serviços e formatação por idioma | Concluída (PR #44) |
+| I3    | Plataforma (`/platform`) e console do parceiro (`/admin`)                                                                       | Concluída (PR #45) |
+| I4    | Módulos: CRM, Portfólio (com os campos das verticais), propostas e os módulos seguintes já nascendo com chaves                  | Concluída (PR #46) |
+| I5    | Notificações e e-mails por idioma de quem recebe; termos e privacidade por idioma; API e MCP em inglês                          | Concluída (PR #47) |
+| I6    | Tradução automática na tela de Idiomas (edições `machine`, marcadas para revisão)                                               | Concluída (PR #48) |
 
 ## I1 — Base
 
-**Estado:** pronta para revisão. A migration `20261025090000_i1_languages.sql` é aplicada como `app_migrations`.
+**Estado:** concluída (PR #43), migration `20261025090000_i1_languages.sql` aplicada no dev.
 
 Entregue:
 
@@ -57,7 +57,7 @@ Como adicionar texto daqui em diante:
 
 ## I2 — Telas do núcleo
 
-**Estado:** pronta para revisão. Sem migration.
+**Estado:** concluída (PR #44), sem migration.
 
 Entregue:
 
@@ -79,7 +79,7 @@ Fica em português até as próximas etapas:
 
 ## I3 — Plataforma e console do parceiro
 
-**Estado:** pronta para revisão. Sem migration.
+**Estado:** concluída (PR #45), sem migration.
 
 Entregue:
 
@@ -97,7 +97,7 @@ Fica em português até as próximas etapas ou por ser dado:
 
 ## I4 — Módulos
 
-**Estado:** pronta para revisão. Sem migration.
+**Estado:** concluída (PR #46), sem migration.
 
 Entregue:
 
@@ -116,7 +116,7 @@ Fica em português até as próximas etapas ou por ser dado:
 
 ## I5 — E-mails, documentos legais e API/MCP
 
-**Estado:** pronta para revisão. Duas migrations: `20261026090000_i5_legal_translations.sql` e `20261026091000_i5_notification_locale.sql`.
+**Estado:** concluída (PR #47), migrations `20261026090000_i5_legal_translations.sql` e `20261026091000_i5_notification_locale.sql` aplicadas no dev.
 
 Entregue:
 
@@ -133,7 +133,7 @@ Fica para depois:
 
 ## I6 — Tradução automática
 
-**Estado:** pronta para revisão. Migration `20261027090000_i6_machine_translation.sql`. Provedor escolhido pelo Marcelo em 12/10/2026: Claude, pela API da Anthropic.
+**Estado:** concluída (PR #48), migration `20261027090000_i6_machine_translation.sql` aplicada no dev. Provedor escolhido pelo Marcelo em 12/10/2026: Claude, pela API da Anthropic.
 
 Entregue:
 

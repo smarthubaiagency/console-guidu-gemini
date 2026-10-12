@@ -2,7 +2,7 @@
 
 ## Antes de começar
 
-Leia `docs/context.md`, a especificação, o adendo, os ADRs e `docs/pendencias.md`. ADR aceito prevalece.
+Leia `docs/context.md`, o handoff mais recente em `docs/handoff/` (estado das fases, armadilhas e como validar), a especificação, o adendo, os ADRs e `docs/pendencias.md`. ADR aceito prevalece.
 
 ## Fluxo
 

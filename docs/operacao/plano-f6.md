@@ -6,7 +6,7 @@ A F6 é a última fase da [ADR 0003](../adr/0003-ordem-das-fases.md). Pela espec
 - a configuração dos alertas no provedor, conforme [observabilidade.md](observabilidade.md);
 - a P7: subdomínios, domínio próprio e e-mail por marca ([plano de parceiros](../partners/plano-de-execucao.md)).
 
-## Situação ao abrir a F6 (11/10/2026)
+## Situação (atualizada em 12/10/2026)
 
 | Fase                                             | Estado                                                                                       |
 | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
@@ -14,6 +14,8 @@ A F6 é a última fase da [ADR 0003](../adr/0003-ordem-das-fases.md). Pela espec
 | F3 Operação                                      | Concluída ([plano-f3.md](plano-f3.md))                                                       |
 | F4 API REST e MCP                                | Concluída ([plano-f4.md](plano-f4.md))                                                       |
 | F5 Portfólio                                     | F5a a F5d concluídas; a F5e (mídia) espera a escolha do Storage ([plano-f5.md](plano-f5.md)) |
+| Idiomas (I1 a I6)                                | Concluídos, PRs #43 a #48 ([plano-i18n.md](plano-i18n.md))                                   |
+| Parceiros (P1 a P5)                              | Concluídos; P6 espera a Iugu e P7 virou a F6e ([plano](../partners/plano-de-execucao.md))    |
 
 Fora da sequência das fases:
 

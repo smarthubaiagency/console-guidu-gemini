@@ -6,16 +6,16 @@
 
 ## Visão geral
 
-| Etapa | Entrega                                         | Fase | Migration | Tamanho | Depende de                 | Estado                    |
-| ----- | ----------------------------------------------- | ---- | --------- | ------- | -------------------------- | ------------------------- |
-| P1    | `/admin` vira `/platform`                       | F2   | Não       | Pequeno | —                          | Concluída (PR #19)        |
-| P2    | Parceiro zero e contexto de parceiro            | F2   | Sim       | Médio   | P1                         | Concluída (PR #20)        |
-| P3    | Marca por host e porta de notificação           | F2   | Sim       | Médio   | P2                         | Concluída (PR #21)        |
-| P4    | Console do parceiro em `/admin`                 | F2   | Sim       | Grande  | P3                         | Concluída (PRs #22 a #25) |
-| P5m   | Cobrança manual e provedores previstos          | F3   | Sim       | Médio   | P4                         | Próxima                   |
-| P5b   | Planos com entitlements e cobrança em job       | F3   | Sim       | Médio   | P5m, worker da F3, D-PA-11 | Aguardando                |
-| P6    | Provedor real (Iugu) e checkout do cliente      | F3   | Sim       | Grande  | P5b, D-PA-07               | Aguardando                |
-| P7    | Subdomínios, domínio próprio e e-mail por marca | F6   | Sim       | Grande  | P6, hospedagem             | Aguardando                |
+| Etapa | Entrega                                         | Fase | Migration | Tamanho | Depende de                 | Estado                          |
+| ----- | ----------------------------------------------- | ---- | --------- | ------- | -------------------------- | ------------------------------- |
+| P1    | `/admin` vira `/platform`                       | F2   | Não       | Pequeno | —                          | Concluída (PR #19)              |
+| P2    | Parceiro zero e contexto de parceiro            | F2   | Sim       | Médio   | P1                         | Concluída (PR #20)              |
+| P3    | Marca por host e porta de notificação           | F2   | Sim       | Médio   | P2                         | Concluída (PR #21)              |
+| P4    | Console do parceiro em `/admin`                 | F2   | Sim       | Grande  | P3                         | Concluída (PRs #22 a #25)       |
+| P5m   | Cobrança manual e provedores previstos          | F3   | Sim       | Médio   | P4                         | Concluída (PRs #27 e #28)       |
+| P5b   | Planos com entitlements e cobrança em job       | F3   | Sim       | Médio   | P5m, worker da F3, D-PA-11 | Concluída na F3b/F3c (#30, #31) |
+| P6    | Provedor real (Iugu) e checkout do cliente      | F3   | Sim       | Grande  | P5b, D-PA-07               | Aguardando                      |
+| P7    | Subdomínios, domínio próprio e e-mail por marca | F6   | Sim       | Grande  | P6, hospedagem             | Aguardando                      |
 
 Eram **sete etapas**. P1 a P4 não dependiam de nenhuma decisão comercial e estão concluídas. A P5 foi dividida em P5m e P5b no ajuste de rota abaixo; P5b a P7 dependem das decisões e dos fornecedores listados em cada uma.
 
@@ -167,7 +167,7 @@ Dividida em dois PRs, aprovados por Marcelo em 10/10/2026, junto com os papéis 
 
 ## P5m — Cobrança manual e provedores previstos (F3)
 
-**Estado:** em andamento, dividida em dois PRs. PR A (núcleo: migration `20261012090000_p5m_billing.sql`, `src/core/billing/`, permissões e testes) mergeado no PR #27, com a migration aplicada no dev. PR B (telas `/platform/billing`, `/admin/billing`, `/app/[slug]/settings/billing` e o checkout de demonstração, navegação e e2e `e2e/partner-billing.spec.ts`) pronto para revisão. O comprovante de pagamento vai até 900 KB, abaixo do limite de 1 MB das Server Actions.
+**Estado:** concluída em dois PRs. PR A (núcleo: migration `20261012090000_p5m_billing.sql`, `src/core/billing/`, permissões e testes) mergeado no PR #27, com a migration aplicada no dev. PR B (telas `/platform/billing`, `/admin/billing`, `/app/[slug]/settings/billing` e o checkout de demonstração, navegação e e2e `e2e/partner-billing.spec.ts`) mergeado no PR #28. O comprovante de pagamento vai até 900 KB, abaixo do limite de 1 MB das Server Actions.
 
 **Decisões do Marcelo (10/10/2026), ao dar o "pode começar":**
 
@@ -206,6 +206,8 @@ Piso, repasse mínimo e valor base ficaram em `plan_versions` (em vez de uma tab
 
 ## P5b — Planos com entitlements e cobrança em job (F3)
 
+**Estado:** concluída dentro da F3: entitlements e cotas na F3b (PR #30) e transições, avisos e relatório de repasse em job na F3c (PR #31). Ver [plano da F3](../operacao/plano-f3.md). Os valores continuam provisórios até o Comercial (D-PA-11).
+
 **Pré-requisitos:** worker `app_worker` com pg-boss (F3, ADR 0002); números do Comercial (D-PA-11) para trocar os valores provisórios.
 
 - Entitlements: o estado de módulo passa a considerar o plano contratado (pendência "Contratação no acesso a módulos").
@@ -215,6 +217,8 @@ Piso, repasse mínimo e valor base ficaram em `plan_versions` (em vez de uma tab
 **Aceite:** critério 12 da §11 e módulo fora do plano bloqueado em UI, API, MCP e workers (AC08).
 
 ## P6 — Provedor real e checkout do cliente (F3)
+
+**Estado:** aguardando conta Iugu e as decisões D-PA-03, D-PA-04, D-PA-05 e D-PA-07.
 
 **Pré-requisitos:** P5b; escolha do provedor (D-PA-07, recomendação Iugu); itens **[Verificar]** da §3.4 confirmados com o fornecedor; conta e credenciais no cofre; D-PA-03, D-PA-04 e D-PA-05 respondidos por Comercial e contador.
 
@@ -226,6 +230,8 @@ Piso, repasse mínimo e valor base ficaram em `plan_versions` (em vez de uma tab
 **Aceite:** critérios 8, 11 e 12 da §11; fluxo completo em ambiente de teste do provedor.
 
 ## P7 — Domínios e e-mail por marca (F6)
+
+**Estado:** virou a F6e do [plano da F6](../operacao/plano-f6.md); aguarda o ambiente de produção (F6c) e o provedor de e-mail (D-PA-08).
 
 **Pré-requisitos:** decisão de hospedagem de produção; provedor de e-mail transacional (D-PA-08).
 
