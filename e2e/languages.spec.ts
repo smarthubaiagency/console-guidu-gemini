@@ -26,6 +26,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { totpCode } from "./support/totp";
+import { sidebar } from "./support/sidebar";
 
 test("languages: add, translate, choose per person and per workspace", async ({
   page,
@@ -58,7 +59,7 @@ test("languages: add, translate, choose per person and per workspace", async ({
 
   // Plataforma › Configurações › Idiomas.
   await page.goto("/platform");
-  await page.locator("aside").getByRole("link", { name: "Idiomas" }).click();
+  await sidebar(page).getByRole("link", { name: "Idiomas" }).click();
   const table = page.getByTestId("languages-table");
   await expect(table.getByTestId("language-pt-BR")).toContainText("100%");
   await expect(table.getByTestId("language-en")).toContainText("English");
@@ -133,7 +134,7 @@ test("languages: add, translate, choose per person and per workspace", async ({
   await expect(page.locator("html")).toHaveAttribute("lang", code);
 
   await page.goto(`/app/${wsSlug}`);
-  const menu = page.locator("aside");
+  const menu = sidebar(page);
   await expect(
     menu.getByRole("link", { name: "Panoramica E2E" }),
   ).toBeVisible();

@@ -44,7 +44,7 @@ test("a platform owner reads the platform API and MCP with an administrative key
 
   await page.goto("/platform");
   await page
-    .locator("aside")
+    .locator('[data-slot="sidebar"]')
     .getByRole("link", { name: "Chaves de API" })
     .click();
   const form = page.getByTestId("create-platform-key");

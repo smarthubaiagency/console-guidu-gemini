@@ -22,10 +22,10 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { totpCode } from "./support/totp";
+import { expandSidebarGroup, sidebar } from "./support/sidebar";
 
 test.describe.configure({ mode: "serial" });
 
-const sidebar = (page: Page) => page.locator("aside");
 const helloRow = (page: Page) =>
   page.locator("li", { hasText: "key: hello-world" });
 
@@ -69,6 +69,7 @@ test.describe("Module contract — hello-world reference module", () => {
     // Generated navigation: group with two children and a settings entry.
     await page.goto(`/app/${wsSlug}`);
     await expect(sidebar(page).getByText("Hello World").first()).toBeVisible();
+    await expandSidebarGroup(page, "Hello World");
     await sidebar(page).getByRole("link", { name: "Saudação" }).click();
     await expect(page.getByTestId("hello-greeting")).toHaveText(
       "Hello, World!",

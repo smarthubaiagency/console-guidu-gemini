@@ -119,7 +119,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
   await expect(owner.getByTestId("brand-current-name")).toHaveText(
     "Marca Agência E2E",
   );
-  await expect(owner.locator("header").first()).toContainText(
+  await expect(owner.locator('[data-slot="sidebar-header"]')).toContainText(
     "Marca Agência E2E",
   );
 
@@ -190,11 +190,14 @@ test("platform creates a partner whose owner runs the console on the partner dom
   await expect(
     customerPage.getByRole("heading", { name: "Operação E2E" }),
   ).toBeVisible();
-  await expect(customerPage.locator("header").first()).toContainText(
-    "Marca Agência E2E",
-  );
   await expect(
-    customerPage.getByRole("link", { name: /Hello/ }).first(),
+    customerPage.locator('[data-slot="sidebar-header"]'),
+  ).toContainText("Marca Agência E2E");
+  await expect(
+    customerPage
+      .locator('[data-slot="sidebar"]')
+      .getByText("Hello World")
+      .first(),
   ).toBeVisible();
 
   // P4b2: the partner publishes terms; the customer accepts on next access.

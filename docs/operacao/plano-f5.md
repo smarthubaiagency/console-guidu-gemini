@@ -40,7 +40,7 @@ Tudo por workspace, com RLS FORCE, contrato de dados da F3e (exportação e excl
 
 ### F5a — Base do Portfólio (produto simples)
 
-**Estado:** pronta para revisão. A migration `20261022090000_f5a_portfolio.sql` é aplicada como `app_migrations`. Especificação em [MODULE_SPEC.md](../../src/modules/portfolio/MODULE_SPEC.md).
+**Estado:** concluída (PR #39), migration `20261022090000_f5a_portfolio.sql` aplicada no dev. Especificação em [MODULE_SPEC.md](../../src/modules/portfolio/MODULE_SPEC.md).
 
 Entregue:
 
@@ -64,7 +64,7 @@ Planejado:
 
 ### F5b — Verticais
 
-**Estado:** pronta para revisão. Sem migration: o `details` em JSONB e o `item_type` já existiam.
+**Estado:** concluída (PR #40), sem migration: o `details` em JSONB e o `item_type` já existiam.
 
 Entregue:
 
@@ -82,7 +82,7 @@ Planejado:
 
 ### F5c — Hospedagem (UCP lodging)
 
-**Estado:** pronta para revisão. A migration `20261023090000_f5c_lodging.sql` é aplicada como `app_migrations`.
+**Estado:** concluída (PR #41), migration `20261023090000_f5c_lodging.sql` aplicada no dev.
 
 Entregue:
 
@@ -98,7 +98,7 @@ Fora desta etapa: a reserva (`create_booking_session`…), que depende de agenda
 
 ### F5d — API e MCP no formato UCP
 
-**Estado:** pronta para revisão. A migration `20261024090000_f5d_portfolio_scopes.sql` só amplia o catálogo de escopos das chaves; é aplicada como `app_migrations`.
+**Estado:** concluída (PR #42), migration `20261024090000_f5d_portfolio_scopes.sql` aplicada no dev (só amplia o catálogo de escopos das chaves).
 
 Entregue:
 
@@ -117,6 +117,8 @@ Planejado:
 - Escrita pelo agente por proposta: `portfolio.items.create`, `portfolio.items.update` e `portfolio.variants.update` (preço e disponibilidade).
 
 ### F5e — Mídia
+
+**Estado:** aguardando a escolha do Storage pelo Marcelo (Supabase Storage ou Cloudflare R2).
 
 - Envio de imagens para o Storage escolhido nas configurações da plataforma (Supabase ou Cloudflare R2), com tamanho, tipo e cota controlados. Espera essa definição; até lá a mídia é por URL com envio simulado.
 

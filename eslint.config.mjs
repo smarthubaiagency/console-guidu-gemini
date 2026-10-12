@@ -58,6 +58,25 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // shadcn/ui code copied from the official registry and the sidebar-08
+    // block adapted in layout/shell (ADR 0014). It keeps the upstream
+    // arbitrary values, CSS variables and the provider's inline CSS variables
+    // so it can follow shadcn updates; classes must still exist in
+    // globals.css. Everything else in src/ stays under P0.
+    files: [
+      "src/components/ui/**/*.tsx",
+      "src/components/layout/shell/**/*.tsx",
+      "src/hooks/**/*.ts",
+    ],
+    rules: {
+      "better-tailwindcss/no-restricted-classes": "off",
+      "react/forbid-dom-props": "off",
+      "react/forbid-component-props": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/purity": "off",
+    },
+  },
   globalIgnores([
     ".next/**",
     "coverage/**",

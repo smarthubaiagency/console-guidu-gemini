@@ -21,6 +21,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/identity";
+import { sidebar } from "./support/sidebar";
 
 test("owner registers a store and a product with variants in the Portfolio", async ({
   page,
@@ -53,7 +54,7 @@ test("owner registers a store and a product with variants in the Portfolio", asy
 
   // Store in the workspace settings.
   await page.goto(`/app/${wsSlug}`);
-  await page.locator("aside").getByRole("link", { name: "Lojas" }).click();
+  await sidebar(page).getByRole("link", { name: "Lojas" }).click();
   const store = page.getByTestId("create-location");
   await store.getByLabel("Nome da loja").fill("Loja Centro E2E");
   await store.getByLabel("Cidade").fill("São Paulo");
@@ -67,7 +68,7 @@ test("owner registers a store and a product with variants in the Portfolio", asy
   ).toBeVisible();
 
   // Product.
-  await page.locator("aside").getByRole("link", { name: "Portfólio" }).click();
+  await sidebar(page).getByRole("link", { name: "Portfólio" }).click();
   const create = page.getByTestId("create-portfolio-item");
   await create.getByLabel("Título").fill("Camiseta E2E");
   await create.getByLabel("Descrição").fill("Algodão 100%.");

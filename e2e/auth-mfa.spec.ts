@@ -7,6 +7,7 @@ import {
   uniqueEmail,
 } from "./support/identity";
 import { totpCode } from "./support/totp";
+import { signOutFromShell } from "./support/sidebar";
 
 test("administration is closed to a session without a second factor", async ({
   page,
@@ -60,7 +61,7 @@ test("enrols TOTP, then requires it on the next sign-in and opens /platform", as
   await page.goto("/platform");
   await expect(page.getByTestId("platform-state")).toBeVisible();
 
-  await page.getByTestId("sign-out").click();
+  await signOutFromShell(page);
   await expect(page).toHaveURL(/\/login/);
 
   // A fresh password sign-in is aal1 and has to pass the challenge.
@@ -80,7 +81,7 @@ test("enrols TOTP, then requires it on the next sign-in and opens /platform", as
   await expect(page).toHaveURL(/\/app$/);
 
   await page.goto("/platform");
-  await expect(page.getByTestId("platform-identity")).toHaveText(email);
+  await expect(page.getByTestId("user-identity")).toHaveText(email);
 
   const adminApi = await page.request.get("/api/v1/platform/session");
   expect(adminApi.status()).toBe(200);
