@@ -3,7 +3,6 @@ import type { listLocations } from "@/core/locations/service";
 
 import { sectionClass } from "@/components/billing/billing-ui";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import {
   DetailsFields,
   formatMoney,
@@ -35,6 +34,15 @@ import {
   lodgingProblemCode,
 } from "@/modules/portfolio/server";
 import { FULFILLMENT_METHODS, isUcpVisible } from "@/modules/portfolio/ucp";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Item = Awaited<ReturnType<typeof getItem>>;
 type Locations = Awaited<ReturnType<typeof listLocations>>;
@@ -102,100 +110,99 @@ export async function PortfolioItemEditor({
             <input type="hidden" name="item_type" value={item.itemType} />
             <input type="hidden" name="vertical" value={item.vertical} />
             <div className="grid gap-3 sm:grid-cols-3">
-              <label className={`${labelClass} sm:col-span-2`}>
+              <Label className="flex-col items-start sm:col-span-2">
                 {t("form.title")}
-                <input
+                <Input
                   name="title"
                   required
                   maxLength={200}
                   defaultValue={item.title}
-                  className={inputClass}
                 />
-              </label>
-              <label className={labelClass}>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("item.handle")}
-                <input
+                <Input
                   name="handle"
                   required
                   maxLength={200}
                   defaultValue={item.handle}
-                  className={inputClass}
                 />
-              </label>
-              <label className={labelClass}>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("item.status")}
-                <select
+                <NativeSelect
                   name="status"
                   defaultValue={item.status}
-                  className={inputClass}
+                  className="w-full"
                 >
                   {ITEM_STATUSES.map((k) => (
-                    <option key={k} value={k}>
+                    <NativeSelectOption key={k} value={k}>
                       {labelOf(t, "status", k)}
-                    </option>
+                    </NativeSelectOption>
                   ))}
-                </select>
-              </label>
-              <label className={labelClass}>
+                </NativeSelect>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("form.priceDisplay")}
-                <select
+                <NativeSelect
                   name="price_display"
                   defaultValue={item.priceDisplay}
-                  className={inputClass}
+                  className="w-full"
                 >
                   {PRICE_DISPLAYS.map((k) => (
-                    <option key={k} value={k}>
+                    <NativeSelectOption key={k} value={k}>
                       {labelOf(t, "priceDisplay", k)}
-                    </option>
+                    </NativeSelectOption>
                   ))}
-                </select>
-              </label>
-              <label className={labelClass}>
+                </NativeSelect>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("item.visibility")}
-                <select
+                <NativeSelect
                   name="visibility"
                   defaultValue={item.visibility}
-                  className={inputClass}
+                  className="w-full"
                 >
-                  <option value="public">{t("visibility.public")}</option>
-                  <option value="internal">{t("visibility.internal")}</option>
-                </select>
-              </label>
-              <label className={`${labelClass} sm:col-span-3`}>
+                  <NativeSelectOption value="public">
+                    {t("visibility.public")}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="internal">
+                    {t("visibility.internal")}
+                  </NativeSelectOption>
+                </NativeSelect>
+              </Label>
+              <Label className="flex-col items-start sm:col-span-3">
                 {t("form.description")}
-                <textarea
+                <Textarea
                   name="description_plain"
                   rows={3}
                   maxLength={10000}
                   defaultValue={item.description.plain ?? ""}
-                  className={inputClass}
                 />
-              </label>
-              <label className={`${labelClass} sm:col-span-3`}>
+              </Label>
+              <Label className="flex-col items-start sm:col-span-3">
                 {t("item.descriptionMarkdown")}
-                <textarea
+                <Textarea
                   name="description_markdown"
                   rows={3}
                   maxLength={10000}
                   defaultValue={item.description.markdown ?? ""}
-                  className={inputClass}
                 />
-              </label>
-              <label className={labelClass}>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("item.categories")}
-                <textarea
+                <Textarea
                   name="categories"
                   rows={3}
                   placeholder={t("item.categoriesPlaceholder")}
                   defaultValue={item.categories
                     .map((c) => `${c.value} | ${c.taxonomy ?? "merchant"}`)
                     .join("\n")}
-                  className={inputClass}
                 />
-              </label>
-              <label className={labelClass}>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("item.media")}
-                <textarea
+                <Textarea
                   name="media"
                   rows={3}
                   defaultValue={item.media
@@ -203,45 +210,34 @@ export async function PortfolioItemEditor({
                       (m) => `${m.url}${m.alt_text ? ` | ${m.alt_text}` : ""}`,
                     )
                     .join("\n")}
-                  className={inputClass}
                 />
                 <span className="text-11 text-text-secondary">
                   {t("item.mediaHint")}
                 </span>
-              </label>
+              </Label>
               <div className="space-y-2">
-                <label className={labelClass}>
+                <Label className="flex-col items-start">
                   {t("item.tags")}
-                  <input
-                    name="tags"
-                    defaultValue={item.tags.join(", ")}
-                    className={inputClass}
-                  />
-                </label>
-                <label className={labelClass}>
+                  <Input name="tags" defaultValue={item.tags.join(", ")} />
+                </Label>
+                <Label className="flex-col items-start">
                   {t("item.url")}
-                  <input
-                    name="url"
-                    type="url"
-                    defaultValue={item.url ?? ""}
-                    className={inputClass}
-                  />
-                </label>
+                  <Input name="url" type="url" defaultValue={item.url ?? ""} />
+                </Label>
               </div>
               <fieldset className="space-y-1">
                 <legend className="text-12 text-text-subtle font-medium">
                   {t("item.fulfillment")}
                 </legend>
                 {FULFILLMENT_METHODS.map((m) => (
-                  <label key={m} className="text-12 text-text flex gap-2">
-                    <input
-                      type="checkbox"
+                  <Label key={m} className="text-12 text-text flex gap-2">
+                    <Checkbox
                       name="fulfillment_methods"
                       value={m}
                       defaultChecked={item.fulfillmentMethods.includes(m)}
                     />
                     {labelOf(t, "fulfillment", m)}
-                  </label>
+                  </Label>
                 ))}
               </fieldset>
               <fieldset className="space-y-1 sm:col-span-2">
@@ -253,42 +249,35 @@ export async function PortfolioItemEditor({
                     {t("item.noLocations")}
                   </p>
                 ) : lodging ? (
-                  <>
-                    <label className="text-12 text-text flex gap-2">
-                      <input
-                        type="radio"
-                        name="location_ids"
-                        value=""
-                        defaultChecked={item.locationIds.length === 0}
-                      />
+                  <RadioGroup
+                    name="location_ids"
+                    defaultValue={item.locationIds[0] ?? ""}
+                    className="gap-2"
+                  >
+                    <Label className="text-12 text-text font-normal">
+                      <RadioGroupItem value="" />
                       {t("item.noProperty")}
-                    </label>
+                    </Label>
                     {locations.map((l) => (
-                      <label
+                      <Label
                         key={l.id}
-                        className="text-12 text-text flex gap-2"
+                        className="text-12 text-text font-normal"
                       >
-                        <input
-                          type="radio"
-                          name="location_ids"
-                          value={l.id}
-                          defaultChecked={item.locationIds[0] === l.id}
-                        />
+                        <RadioGroupItem value={l.id} />
                         {l.name}
-                      </label>
+                      </Label>
                     ))}
-                  </>
+                  </RadioGroup>
                 ) : (
                   locations.map((l) => (
-                    <label key={l.id} className="text-12 text-text flex gap-2">
-                      <input
-                        type="checkbox"
+                    <Label key={l.id} className="text-12 text-text flex gap-2">
+                      <Checkbox
                         name="location_ids"
                         value={l.id}
                         defaultChecked={item.locationIds.includes(l.id)}
                       />
                       {l.name}
-                    </label>
+                    </Label>
                   ))
                 )}
               </fieldset>
@@ -313,70 +302,60 @@ export async function PortfolioItemEditor({
               {t("item.aiTitle")}
             </h3>
             <div className="grid gap-3 sm:grid-cols-3">
-              <label className="text-12 text-text flex items-center gap-2">
-                <input
-                  type="checkbox"
+              <Label className="text-12 text-text flex items-center gap-2">
+                <Checkbox
                   name="ai_discovery_enabled"
                   defaultChecked={item.aiDiscoveryEnabled}
                 />
                 {t("item.aiDiscovery")}
-              </label>
-              <label className="text-12 text-text flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="is_featured"
-                  defaultChecked={item.isFeatured}
-                />
+              </Label>
+              <Label className="text-12 text-text flex items-center gap-2">
+                <Checkbox name="is_featured" defaultChecked={item.isFeatured} />
                 {t("item.featured")}
-              </label>
-              <label className={labelClass}>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("item.priority")}
-                <input
+                <Input
                   name="priority"
                   type="number"
                   defaultValue={item.priority}
-                  className={inputClass}
                 />
-              </label>
+              </Label>
               <input
                 type="hidden"
                 name="featured_rank"
                 value={item.featuredRank}
               />
-              <label className={labelClass}>
+              <Label className="flex-col items-start">
                 {t("item.aiKeywords")}
-                <input
+                <Input
                   name="ai_keywords"
                   defaultValue={item.aiKeywords.join(", ")}
-                  className={inputClass}
                 />
-              </label>
-              <label className={labelClass}>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("item.aiAliases")}
-                <input
+                <Input
                   name="ai_aliases"
                   defaultValue={item.aiAliases.join(", ")}
-                  className={inputClass}
                 />
-              </label>
-              <label className={labelClass}>
+              </Label>
+              <Label className="flex-col items-start">
                 {t("item.aiDoNotSay")}
-                <input
+                <Input
                   name="ai_do_not_say"
                   defaultValue={item.aiDoNotSay.join(", ")}
-                  className={inputClass}
                 />
-              </label>
-              <label className={`${labelClass} sm:col-span-3`}>
+              </Label>
+              <Label className="flex-col items-start sm:col-span-3">
                 {t("item.aiSafetyRules")}
-                <textarea
+                <Textarea
                   name="ai_safety_rules"
                   rows={2}
                   maxLength={2000}
                   defaultValue={item.aiSafetyRules ?? ""}
-                  className={inputClass}
                 />
-              </label>
+              </Label>
             </div>
           </ActionForm>
         </section>

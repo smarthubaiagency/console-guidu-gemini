@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import {
   labelOf,
   PRICE_DISPLAYS,
@@ -9,6 +8,13 @@ import {
 } from "@/modules/portfolio/components/fields";
 import { createPortfolioItemAction } from "@/modules/portfolio/server/actions";
 import { translatedKinds } from "@/modules/portfolio/verticals";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 
 /**
  * Creation of a Portfolio item (F5a), in the drawer of the list (ADR 0015).
@@ -27,47 +33,42 @@ export async function NewItemForm({
     >
       <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className={labelClass}>
+        <Label className="flex-col items-start">
           {t("form.kind")}
-          <select
+          <NativeSelect
             name="kind"
             defaultValue="product:general"
-            className={inputClass}
+            className="w-full"
           >
             {translatedKinds(t).map((k) => (
-              <option key={k.value} value={k.value}>
+              <NativeSelectOption key={k.value} value={k.value}>
                 {k.label}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
-        </label>
-        <label className={labelClass}>
+          </NativeSelect>
+        </Label>
+        <Label className="flex-col items-start">
           {t("form.title")}
-          <input name="title" required maxLength={200} className={inputClass} />
-        </label>
-        <label className={labelClass}>
+          <Input name="title" required maxLength={200} />
+        </Label>
+        <Label className="flex-col items-start">
           {t("form.priceDisplay")}
-          <select
+          <NativeSelect
             name="price_display"
             defaultValue="price"
-            className={inputClass}
+            className="w-full"
           >
             {PRICE_DISPLAYS.map((k) => (
-              <option key={k} value={k}>
+              <NativeSelectOption key={k} value={k}>
                 {labelOf(t, "priceDisplay", k)}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
-        </label>
-        <label className={`${labelClass} sm:col-span-3`}>
+          </NativeSelect>
+        </Label>
+        <Label className="flex-col items-start sm:col-span-3">
           {t("form.description")}
-          <textarea
-            name="description_plain"
-            rows={2}
-            maxLength={10000}
-            className={inputClass}
-          />
-        </label>
+          <Textarea name="description_plain" rows={2} maxLength={10000} />
+        </Label>
       </div>
       <VariantFields idPrefix="new" />
       <p className="text-11 text-text-secondary">{t("list.createHint")}</p>

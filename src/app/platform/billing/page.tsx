@@ -17,7 +17,6 @@ import {
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { labelClass } from "@/components/partners/form-classes";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import {
@@ -365,7 +364,7 @@ export default async function PlatformBillingPage() {
                           </NativeSelectOption>
                         </NativeSelect>
                       </Label>
-                      <fieldset className={`${labelClass} sm:col-span-2`}>
+                      <fieldset className="text-12 text-text-subtle flex flex-col gap-1 font-medium sm:col-span-2">
                         {t("modulesLabel")}
                         <div className="flex flex-wrap gap-3">
                           {modules.map((m) => (

@@ -64,4 +64,6 @@ Marcelo definiu o cabeçalho de todas as páginas e que **todos os componentes d
 
    **U3c (12/10/2026):** as telas do `/admin` e do `/platform` (clientes, workspaces, usuários, parceiros, cobrança, idiomas, chaves de API, módulos, marca, jurídico e modelos) e os componentes delas (`BrandForm`, editor e aceite jurídico, seletor de papel) passam ao shadcn, assim como o checkbox do banner de avisos. As caixas de marcar usam o `Checkbox` do shadcn, que envia `on` no formulário como a nativa.
 
+   **U3d (12/10/2026):** os formulários dos módulos (Portfólio, CRM e Hello World), as buscas de contatos e do portfólio e o botão do convite passam ao shadcn; a escolha de propriedade da hospedagem vira `RadioGroup`. Login, MFA e recuperação de senha já usavam o kit refeito na U3a. As classes de campo feitas à mão (`form-classes.ts`) saem. Fora do shadcn ficam só os campos ocultos e o protótipo congelado de Agentes de IA, que sai na etapa A2.
+
 5. **Dependência.** `cmdk` 1.1.1 (base do `Command`), versão exata.

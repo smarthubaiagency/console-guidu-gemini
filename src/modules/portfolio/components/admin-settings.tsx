@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import type { ModuleSettingsComponentProps } from "@/core/module-contracts/settings";
 
 import {
@@ -10,6 +9,8 @@ import {
   PortfolioQuotas,
 } from "../manifest";
 import { savePortfolioAdminSettingsAction } from "../server/actions";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 /**
  * Admin settings of the Portfolio (portfolio.admin-settings): default
@@ -37,18 +38,17 @@ export async function PortfolioAdminSettings(
   const inputs = (
     <div className="grid gap-3 sm:grid-cols-2">
       {fields.map((f) => (
-        <label key={f.key} className={labelClass}>
+        <Label key={f.key} className="flex-col items-start">
           {f.label}
-          <input
+          <Input
             name={f.key}
             type="number"
             min={0}
             defaultValue={defaults[f.key]}
             placeholder={t("admin.placeholder", { value: String(f.fallback) })}
             disabled={!props.canWrite}
-            className={inputClass}
           />
-        </label>
+        </Label>
       ))}
     </div>
   );

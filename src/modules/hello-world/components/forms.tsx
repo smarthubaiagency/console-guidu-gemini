@@ -10,13 +10,11 @@ import {
   type HelloWorldActionState,
 } from "../server/actions";
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const INITIAL: HelloWorldActionState = {};
-
-const INPUT =
-  "border-border bg-surface-card text-14 text-text w-full rounded-lg border px-3 py-2 disabled:opacity-60";
-const BUTTON =
-  "bg-primary text-on-primary text-12 rounded-lg px-4 py-2 font-semibold disabled:opacity-60";
 
 /** Result of the action in the SmartStatusBanner (ADR 0016). */
 function Feedback({ state }: { state: HelloWorldActionState }) {
@@ -33,34 +31,28 @@ export function CreateRecordForm({ workspaceSlug }: { workspaceSlug: string }) {
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
-      <label
-        className="text-12 text-text-subtle block font-medium"
-        htmlFor="hello-title"
-      >
-        {t("form.recordTitle")}
-      </label>
-      <input
+      <Label htmlFor="hello-title">{t("form.recordTitle")}</Label>
+      <Input
         id="hello-title"
         name="title"
         required
         maxLength={120}
         placeholder={t("form.recordTitlePlaceholder")}
-        className={INPUT}
       />
       <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={pending} className={BUTTON}>
+        <Button type="submit" disabled={pending}>
           {pending ? t("form.creating") : t("form.create")}
-        </button>
+        </Button>
         {/* F3a reference job: the same creation through the worker. */}
-        <button
+        <Button
           type="submit"
           name="mode"
           value="background"
+          variant="outline"
           disabled={pending}
-          className="border-border text-text-subtle hover:bg-surface-hover text-12 rounded-lg border px-4 py-2 font-semibold whitespace-nowrap disabled:opacity-60"
         >
           {t("form.background")}
-        </button>
+        </Button>
       </div>
       <Feedback state={state} />
     </form>
@@ -86,13 +78,8 @@ export function WorkspaceGreetingForm({
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
-      <label
-        className="text-12 text-text-subtle block font-medium"
-        htmlFor="hello-greeting"
-      >
-        {t("form.workspaceGreeting")}
-      </label>
-      <input
+      <Label htmlFor="hello-greeting">{t("form.workspaceGreeting")}</Label>
+      <Input
         id="hello-greeting"
         name="greeting"
         maxLength={80}
@@ -101,13 +88,12 @@ export function WorkspaceGreetingForm({
           greeting: inheritedGreeting,
         })}
         disabled={!canWrite}
-        className={INPUT}
       />
       <p className="text-11 text-text-tertiary">{t("form.inheritHint")}</p>
       {canWrite ? (
-        <button type="submit" disabled={pending} className={BUTTON}>
+        <Button type="submit" disabled={pending}>
           {pending ? t("form.saving") : t("form.save")}
-        </button>
+        </Button>
       ) : (
         <p className="text-12 text-text-secondary">{t("form.viewOnly")}</p>
       )}
@@ -132,25 +118,19 @@ export function AdminGreetingForm({
   );
   return (
     <form action={action} className="space-y-3">
-      <label
-        className="text-12 text-text-subtle block font-medium"
-        htmlFor="hello-default-greeting"
-      >
-        {t("form.globalGreeting")}
-      </label>
-      <input
+      <Label htmlFor="hello-default-greeting">{t("form.globalGreeting")}</Label>
+      <Input
         id="hello-default-greeting"
         name="defaultGreeting"
         maxLength={80}
         defaultValue={defaultGreeting}
         placeholder={t("form.fallbackPlaceholder", { greeting: fallback })}
         disabled={!canWrite}
-        className={INPUT}
       />
       {canWrite ? (
-        <button type="submit" disabled={pending} className={BUTTON}>
+        <Button type="submit" disabled={pending}>
           {pending ? t("form.saving") : t("form.savePolicy")}
-        </button>
+        </Button>
       ) : (
         <p className="text-12 text-text-secondary">
           {t("form.platformReadOnly")}

@@ -1,13 +1,19 @@
 import { getTranslations } from "next-intl/server";
 
-import { inputClass, labelClass } from "@/components/partners/form-classes";
-
 import { ACCOMMODATION_KINDS, BOARDS, REFUNDABILITY } from "../lodging";
 import type {
   AccommodationTypeView,
   RatePlanView,
 } from "../server/services/items";
 import type { PortfolioTranslator } from "../verticals";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 /** Form fields of the lodging screens (F5c). */
 
@@ -52,77 +58,72 @@ export async function AccommodationTypeFields({
   const c = type?.capacity ?? {};
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      <label className={`${labelClass} sm:col-span-2`}>
+      <Label className="flex-col items-start sm:col-span-2">
         {t("lodging.typeTitle")}
-        <input
+        <Input
           name="type_title"
           required
           maxLength={200}
           defaultValue={type?.title ?? ""}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.kind")}
-        <select
+        <NativeSelect
           name="accommodation_kind"
           defaultValue={type?.accommodationKind ?? ""}
-          className={inputClass}
+          className="w-full"
         >
-          <option value="">—</option>
+          <NativeSelectOption value="">—</NativeSelectOption>
           {ACCOMMODATION_KINDS.map((k) => (
-            <option key={k} value={k}>
+            <NativeSelectOption key={k} value={k}>
               {lodgingLabel(t, "accommodationKind", k)}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-      </label>
-      <label className={`${labelClass} sm:col-span-3`}>
+        </NativeSelect>
+      </Label>
+      <Label className="flex-col items-start sm:col-span-3">
         {t("lodging.typeDescription")}
-        <textarea
+        <Textarea
           name="type_description"
           rows={2}
           maxLength={5000}
           defaultValue={type?.description ?? ""}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.capacityTotal")}
-        <input
+        <Input
           name="capacity_total"
           type="number"
           min={1}
           max={200}
           defaultValue={num(c.total)}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.maxAdults")}
-        <input
+        <Input
           name="capacity_adults"
           type="number"
           min={0}
           max={100}
           defaultValue={num(c.adults)}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.maxChildren")}
-        <input
+        <Input
           name="capacity_children"
           type="number"
           min={0}
           max={100}
           defaultValue={num(c.children)}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.childAgeRanges")}
-        <textarea
+        <Textarea
           name="child_age_ranges"
           rows={2}
           defaultValue={(c.child_age_ranges ?? [])
@@ -131,68 +132,62 @@ export async function AccommodationTypeFields({
                 `${r.ages.min}-${r.ages.max}${r.limit === undefined ? "" : ` | ${r.limit}`}`,
             )
             .join("\n")}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.bedrooms")}
-        <input
+        <Input
           name="bedrooms"
           type="number"
           min={0}
           max={100}
           defaultValue={num(type?.bedrooms)}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.beds")}
-        <input
+        <Input
           name="beds_count"
           type="number"
           min={0}
           max={200}
           defaultValue={num(type?.bedsCount)}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.bathrooms")}
-        <input
+        <Input
           name="bathrooms"
           type="number"
           min={0}
           max={100}
           defaultValue={num(type?.bathrooms)}
-          className={inputClass}
         />
-      </label>
-      <label className={`${labelClass} sm:col-span-2`}>
+      </Label>
+      <Label className="flex-col items-start sm:col-span-2">
         {t("lodging.photos")}
-        <textarea
+        <Textarea
           name="type_media"
           rows={2}
           defaultValue={(type?.media ?? [])
             .map((m) => `${m.url}${m.alt_text ? ` | ${m.alt_text}` : ""}`)
             .join("\n")}
-          className={inputClass}
         />
-      </label>
+      </Label>
       <fieldset className="space-y-1 sm:col-span-3">
         <legend className="text-12 text-text-subtle font-medium">
           {t("lodging.typeAmenities")}
         </legend>
         <div className="flex flex-wrap gap-3">
           {ROOM_AMENITIES.map((a) => (
-            <label key={a.id} className="text-12 text-text flex gap-2">
-              <input
-                type="checkbox"
+            <Label key={a.id} className="text-12 text-text flex gap-2">
+              <Checkbox
                 name="type_amenities"
                 value={a.id}
-                defaultChecked={type?.amenities.includes(a.id)}
+                defaultChecked={Boolean(type?.amenities.includes(a.id))}
               />
               {amenityLabel(t, a)}
-            </label>
+            </Label>
           ))}
         </div>
       </fieldset>
@@ -207,75 +202,71 @@ export async function RatePlanFields({
   const t = await getTranslations("portfolio");
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      <label className={labelClass}>
+      <Label className="flex-col items-start">
         {t("lodging.planTitle")}
-        <input
+        <Input
           name="plan_title"
           required
           maxLength={200}
           defaultValue={plan?.title ?? ""}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.board")}
-        <select
+        <NativeSelect
           name="board"
           defaultValue={plan?.board ?? "room_only"}
-          className={inputClass}
+          className="w-full"
         >
           {BOARDS.map((b) => (
-            <option key={b} value={b}>
+            <NativeSelectOption key={b} value={b}>
               {lodgingLabel(t, "board", b)}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-      </label>
-      <label className={labelClass}>
+        </NativeSelect>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.refundability")}
-        <select
+        <NativeSelect
           name="refundability"
           defaultValue={plan?.refundability ?? "refundable"}
-          className={inputClass}
+          className="w-full"
         >
           {REFUNDABILITY.map((r) => (
-            <option key={r} value={r}>
+            <NativeSelectOption key={r} value={r}>
               {lodgingLabel(t, "refundability", r)}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-      </label>
-      <label className={labelClass}>
+        </NativeSelect>
+      </Label>
+      <Label className="flex-col items-start">
         {t("lodging.freeCancellationHours")}
-        <input
+        <Input
           name="free_cancellation_hours"
           type="number"
           min={0}
           max={8760}
           defaultValue={num(plan?.freeCancellationHours)}
-          className={inputClass}
         />
-      </label>
-      <label className={`${labelClass} sm:col-span-2`}>
+      </Label>
+      <Label className="flex-col items-start sm:col-span-2">
         {t("lodging.cancellationPolicy")}
-        <textarea
+        <Textarea
           name="cancellation_policy"
           rows={2}
           maxLength={2000}
           defaultValue={plan?.cancellationPolicy ?? ""}
-          className={inputClass}
         />
-      </label>
-      <label className={`${labelClass} sm:col-span-3`}>
+      </Label>
+      <Label className="flex-col items-start sm:col-span-3">
         {t("lodging.planDescription")}
-        <textarea
+        <Textarea
           name="plan_description"
           rows={2}
           maxLength={5000}
           defaultValue={plan?.description ?? ""}
-          className={inputClass}
         />
-      </label>
+      </Label>
     </div>
   );
 }

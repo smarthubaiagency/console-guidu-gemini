@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { RecordWorkbench, WorkbenchPanel } from "@/components/layout/workbench";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { requireUserPage } from "@/core/auth/page-guard";
@@ -176,20 +177,16 @@ export default async function CrmContactsPage({
           ) : null}
 
           <form method="get" className="flex gap-2" role="search">
-            <input
+            <Input
               name="q"
               defaultValue={search}
               maxLength={100}
               placeholder={t("contacts.searchPlaceholder")}
               aria-label={t("contacts.searchLabel")}
-              className="border-border bg-surface-card text-14 text-text w-full rounded-lg border px-3 py-2"
             />
-            <button
-              type="submit"
-              className="border-border text-12 text-text rounded-lg border px-4 py-2 font-semibold"
-            >
+            <Button type="submit" variant="outline">
               {t("contacts.search")}
-            </button>
+            </Button>
           </form>
 
           {view.items.length === 0 ? (

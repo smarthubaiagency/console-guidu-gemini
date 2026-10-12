@@ -347,6 +347,16 @@ export async function startTestDatabase(
         await new Promise((resolve) => setTimeout(resolve, 250));
         remaining = await waiting();
       }
+      if (remaining > 0) {
+        // The worker's output is ignored; name what is stuck so a CI failure
+        // says which job kind to look at.
+        const stuck = await pool.query(
+          `select kind, status, attempts, run_after, last_error
+             from public.job_runs
+            where status in ('pending', 'queued', 'running')`,
+        );
+        console.error("run-jobs: still waiting", stuck.rows);
+      }
       child.kill("SIGTERM");
       await new Promise((resolve) => child.once("exit", resolve));
       return { remaining };
