@@ -1,8 +1,10 @@
 import { useTranslations } from "next-intl";
 
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { KNOWN_AMENITIES } from "@/core/locations/amenities";
 import { DAYS, type LocationView } from "@/core/locations/service";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 /**
  * Fields of a store (UCP Location) for the create and edit forms (F5a).
@@ -16,106 +18,91 @@ export function LocationFields({
   const hour = (day: string) => location?.hours.find((h) => h.day === day);
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <label className={`${labelClass} sm:col-span-2`}>
+      <Label className="flex-col items-start sm:col-span-2">
         {t("fields.name")}
-        <input
+        <Input
           name="name"
           required
           maxLength={120}
           defaultValue={location?.name}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.streetAddress")}
-        <input
+        <Input
           name="street_address"
           maxLength={200}
           defaultValue={a.street_address}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.extendedAddress")}
-        <input
+        <Input
           name="extended_address"
           maxLength={200}
           defaultValue={a.extended_address}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.locality")}
-        <input
+        <Input
           name="address_locality"
           maxLength={120}
           defaultValue={a.address_locality}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.region")}
-        <input
+        <Input
           name="address_region"
           maxLength={80}
           defaultValue={a.address_region}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.postalCode")}
-        <input
-          name="postal_code"
-          maxLength={20}
-          defaultValue={a.postal_code}
-          className={inputClass}
-        />
-      </label>
-      <label className={labelClass}>
+        <Input name="postal_code" maxLength={20} defaultValue={a.postal_code} />
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.country")}
-        <input
+        <Input
           name="address_country"
           maxLength={2}
           defaultValue={a.address_country ?? "BR"}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.phone")}
-        <input
+        <Input
           name="phone_number"
           maxLength={16}
           defaultValue={a.phone_number}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.timezone")}
-        <input
+        <Input
           name="timezone"
           maxLength={64}
           defaultValue={location?.timezone ?? "America/Sao_Paulo"}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.latitude")}
-        <input
+        <Input
           name="latitude"
           inputMode="decimal"
           defaultValue={location?.geo?.latitude}
-          className={inputClass}
         />
-      </label>
-      <label className={labelClass}>
+      </Label>
+      <Label className="flex-col items-start">
         {t("fields.longitude")}
-        <input
+        <Input
           name="longitude"
           inputMode="decimal"
           defaultValue={location?.geo?.longitude}
-          className={inputClass}
         />
-      </label>
+      </Label>
       <fieldset className="space-y-2 sm:col-span-2">
         <legend className="text-12 text-text-subtle font-medium">
           {t("fields.hours")}
@@ -124,19 +111,17 @@ export function LocationFields({
           {DAYS.map((day) => (
             <div key={day} className="flex items-center gap-2">
               <span className="text-12 text-text w-20">{t(`days.${day}`)}</span>
-              <input
+              <Input
                 name={`${day}_opens`}
                 type="time"
                 aria-label={t("fields.opens", { day: t(`days.${day}`) })}
                 defaultValue={hour(day)?.opens}
-                className={inputClass}
               />
-              <input
+              <Input
                 name={`${day}_closes`}
                 type="time"
                 aria-label={t("fields.closes", { day: t(`days.${day}`) })}
                 defaultValue={hour(day)?.closes}
-                className={inputClass}
               />
             </div>
           ))}
@@ -148,14 +133,13 @@ export function LocationFields({
         </legend>
         <div className="flex flex-wrap gap-4">
           {KNOWN_AMENITIES.map((amenity) => (
-            <label key={amenity.id} className="text-12 text-text flex gap-2">
-              <input
-                type="checkbox"
+            <Label key={amenity.id} className="text-12 font-normal">
+              <Checkbox
                 name={`amenity_${amenity.id}`}
                 defaultChecked={Boolean(location?.amenities[amenity.id])}
               />
               {t(`amenities.${amenity.key}`)}
-            </label>
+            </Label>
           ))}
         </div>
       </fieldset>

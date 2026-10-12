@@ -158,9 +158,7 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
       page.getByRole("heading", { name: "Assistentes conectados (MCP)" }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Emitir Nova Chave" }).click();
-    const propWrite = page.locator(
-      'input[type="checkbox"][value="proposals:write"]',
-    );
+    const propWrite = page.getByRole("checkbox", { name: /proposals:write/ });
     await expect(propWrite).toBeDisabled();
   });
 });

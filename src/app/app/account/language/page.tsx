@@ -4,12 +4,16 @@ import { getTranslations } from "next-intl/server";
 
 import { PageStatus } from "@/components/feedback/page-status";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { saveMyLanguageAction } from "@/core/i18n/actions";
 import { activeLanguages } from "@/core/i18n/store";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Idioma" };
 
@@ -47,21 +51,23 @@ export default async function AccountLanguagePage() {
             submitLabel={t("title")}
             testId="my-language"
           >
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("personal")}
-              <select
+              <NativeSelect
                 name="locale"
                 defaultValue={profile?.locale ?? ""}
-                className={inputClass}
+                className="w-full"
               >
-                <option value="">{t("followWorkspace")}</option>
+                <NativeSelectOption value="">
+                  {t("followWorkspace")}
+                </NativeSelectOption>
                 {languages.map((l) => (
-                  <option key={l.code} value={l.code}>
+                  <NativeSelectOption key={l.code} value={l.code}>
                     {l.name}
-                  </option>
+                  </NativeSelectOption>
                 ))}
-              </select>
-            </label>
+              </NativeSelect>
+            </Label>
           </ActionForm>
         </section>
       </main>

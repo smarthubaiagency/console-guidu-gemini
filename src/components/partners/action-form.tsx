@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useActionState, useEffect, type ReactNode } from "react";
 
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
 import type { PartnerActionState } from "@/core/partners/actions";
 
 type Action = (
@@ -50,17 +51,14 @@ export function ActionForm({
     <div className="space-y-2" data-testid={testId}>
       <form action={formAction} className={className}>
         {children}
-        <button
+        <Button
           type="submit"
+          size="sm"
+          variant={tone === "primary" ? "default" : "outline"}
           disabled={pending || disabled}
-          className={
-            tone === "primary"
-              ? "bg-primary text-on-primary text-12 rounded-lg px-3 py-2 font-semibold disabled:opacity-60"
-              : "border-border text-text-subtle hover:bg-surface-hover text-12 rounded-lg border px-3 py-2 font-semibold disabled:opacity-60"
-          }
         >
           {pending ? t("saving") : submitLabel}
-        </button>
+        </Button>
       </form>
       {state.inviteUrl ? (
         <p className="text-12 text-text-subtle">

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useActionState, useState, useTransition } from "react";
 
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
 import { SuccessNotice } from "@/shared/ui/auth-shell";
 import { Field, SubmitButton } from "@/shared/ui/form";
 
@@ -33,17 +34,16 @@ export function TotpEnrolment() {
   if (!factorId) {
     return (
       <div className="space-y-3">
-        <button
+        <Button
           type="button"
           data-testid="start-mfa-enrolment"
           disabled={starting}
           onClick={() =>
             startEnrolment(async () => setStarted(await startTotpEnrolment()))
           }
-          className="bg-primary text-14 text-on-primary rounded-md px-3 py-2 font-medium disabled:opacity-60"
         >
           {t("start")}
-        </button>
+        </Button>
       </div>
     );
   }

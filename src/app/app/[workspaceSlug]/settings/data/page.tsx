@@ -9,7 +9,6 @@ import {
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { workspaceGrants } from "@/core/module-runtime/loaders";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
@@ -23,6 +22,8 @@ import { listWorkspaceExports } from "@/core/privacy/export";
 import { exportDownloadHref } from "@/core/privacy/links";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("privacy");
@@ -169,15 +170,10 @@ export default async function WorkspaceDataPage({ params }: DataPageProps) {
             testId="request-deletion"
           >
             <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("confirmSlug", { slug: workspaceSlug })}
-              <input
-                name="confirmSlug"
-                required
-                autoComplete="off"
-                className={inputClass}
-              />
-            </label>
+              <Input name="confirmSlug" required autoComplete="off" />
+            </Label>
           </ActionForm>
         </section>
       ) : null}

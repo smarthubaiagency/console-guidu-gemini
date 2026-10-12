@@ -5,11 +5,15 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { getTranslations } from "next-intl/server";
 import { ActionForm } from "@/components/partners/action-form";
-import { inputClass, labelClass } from "@/components/partners/form-classes";
 import { saveWorkspaceLanguageAction } from "@/core/i18n/actions";
 import { activeLanguages } from "@/core/i18n/store";
 import { workspaceRoleGrants } from "@/core/permissions/guard";
 import type { WorkspaceRole } from "@/core/permissions/roles";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 export async function generateMetadata() {
   const t = await getTranslations("workspace");
@@ -80,36 +84,36 @@ export default async function GeneralSettingsPage({
 
       <div className="border-card-border bg-surface-card space-y-4 rounded-xl border p-6 shadow-xs">
         <div>
-          <label className="text-12 text-text-secondary block font-medium">
+          <p className="text-12 text-text-secondary font-medium">
             {tw("name")}
-          </label>
+          </p>
           <div className="text-14 text-text mt-1 font-semibold">
             {workspace?.name}
           </div>
         </div>
 
         <div>
-          <label className="text-12 text-text-secondary block font-medium">
+          <p className="text-12 text-text-secondary font-medium">
             {tw("slug")}
-          </label>
+          </p>
           <div className="text-12 text-text-subtle bg-surface-raised mt-1 inline-block rounded-sm px-2 py-1 font-mono">
             {workspace?.slug}
           </div>
         </div>
 
         <div>
-          <label className="text-12 text-text-secondary block font-medium">
+          <p className="text-12 text-text-secondary font-medium">
             {tw("organization")}
-          </label>
+          </p>
           <div className="text-14 text-text mt-1 font-medium">
             {organization?.name}
           </div>
         </div>
 
         <div>
-          <label className="text-12 text-text-secondary block font-medium">
+          <p className="text-12 text-text-secondary font-medium">
             {tw("uuid")}
-          </label>
+          </p>
           <div className="text-12 text-text-secondary mt-1 font-mono">
             {workspace?.id}
           </div>
@@ -129,21 +133,23 @@ export default async function GeneralSettingsPage({
             submitLabel={t("title")}
           >
             <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
-            <label className={labelClass}>
+            <Label className="flex-col items-start">
               {t("workspace")}
-              <select
+              <NativeSelect
                 name="locale"
                 defaultValue={workspace?.defaultLocale ?? ""}
-                className={inputClass}
+                className="w-full"
               >
-                <option value="">{t("followPlatform")}</option>
+                <NativeSelectOption value="">
+                  {t("followPlatform")}
+                </NativeSelectOption>
                 {languages.map((l) => (
-                  <option key={l.code} value={l.code}>
+                  <NativeSelectOption key={l.code} value={l.code}>
                     {l.name}
-                  </option>
+                  </NativeSelectOption>
                 ))}
-              </select>
-            </label>
+              </NativeSelect>
+            </Label>
           </ActionForm>
         ) : (
           <p className="text-14 text-text font-medium">

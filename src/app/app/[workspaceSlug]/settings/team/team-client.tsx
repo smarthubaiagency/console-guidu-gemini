@@ -20,6 +20,28 @@ import {
 } from "@/core/workspaces/team-actions";
 import { useStatus } from "@/components/feedback/status-context";
 import { useActionStatus } from "@/components/feedback/use-action-status";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export type MemberDisplay = {
   userId: string;
@@ -185,15 +207,15 @@ export function TeamClient({
                     ? `${window.location.origin}/invite/${feedback.rawToken}`
                     : `/invite/${feedback.rawToken}`)}
               </div>
-              <button
+              <Button
                 type="button"
+                size="xs"
                 onClick={() => {
                   const linkToCopy =
                     feedback.inviteUrl ||
                     `${window.location.origin}/invite/${feedback.rawToken}`;
                   handleCopy(linkToCopy);
                 }}
-                className="bg-primary hover:bg-primary-hover text-on-primary text-11 flex shrink-0 items-center gap-1 rounded-sm px-2 py-1 font-medium transition"
               >
                 {copiedToken ? (
                   <>
@@ -206,7 +228,7 @@ export function TeamClient({
                     <span>{t("copyLink")}</span>
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           }
         </div>
@@ -241,102 +263,85 @@ export function TeamClient({
           </div>
 
           {capabilities.canInvite && (
-            <button
+            <Button
               type="button"
               disabled={isSeatLimitReached || isPending}
               onClick={() => setInviteModalOpen(true)}
-              className={`text-12 flex items-center gap-2 rounded-lg px-3.5 py-2 font-semibold shadow-xs transition ${
-                isSeatLimitReached
-                  ? "bg-surface-strong text-text-tertiary cursor-not-allowed"
-                  : "bg-primary text-on-primary hover:bg-primary-hover"
-              }`}
             >
-              <UserPlus className="h-4 w-4" />
+              <UserPlus />
               <span>{t("inviteMember")}</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Invite Modal */}
-      {inviteModalOpen && (
-        <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="border-card-border bg-surface-card w-full max-w-md rounded-2xl border p-6 shadow-xl">
-            <div className="border-border flex items-center justify-between border-b pb-4">
-              <div className="text-text text-14 flex items-center gap-2 font-semibold">
-                <UserPlus className="text-text-subtle h-4 w-4" />
-                <span>{t("newInvitation")}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setInviteModalOpen(false)}
-                className="text-text-tertiary hover:text-text-subtle text-18 leading-none"
-              >
-                ×
-              </button>
+      {/* Invite form */}
+      <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="text-text-subtle h-4 w-4" />
+              <span>{t("newInvitation")}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleInviteSubmit} className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="team-invite-email">{t("inviteeEmail")}</Label>
+              <Input
+                id="team-invite-email"
+                type="email"
+                required
+                placeholder={t("emailPlaceholder")}
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
             </div>
 
-            <form onSubmit={handleInviteSubmit} className="mt-4 space-y-4">
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  {t("inviteeEmail")}
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder={t("emailPlaceholder")}
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="border-border-strong text-12 focus:border-focus-ring w-full rounded-lg border px-3 py-2 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-12 text-text-subtle mb-1 block font-medium">
-                  {t("accessRole")}
-                </label>
-                <select
-                  value={inviteRole}
-                  onChange={(e) =>
-                    setInviteRole(
-                      e.target.value as "admin" | "member" | "owner",
-                    )
-                  }
-                  className="border-border-strong text-12 focus:border-focus-ring bg-surface-card w-full rounded-lg border px-3 py-2 focus:outline-none"
-                >
-                  <option value="member">{t("roleOptions.member")}</option>
-                  <option value="admin">{t("roleOptions.admin")}</option>
-                  {isOwner && (
-                    <option value="owner">{t("roleOptions.owner")}</option>
-                  )}
-                </select>
-                {!isOwner && (
-                  <p className="text-11 text-text-tertiary mt-1">
-                    {t("ownerOnlyHint")}
-                  </p>
+            <div className="grid gap-2">
+              <Label htmlFor="team-invite-role">{t("accessRole")}</Label>
+              <NativeSelect
+                id="team-invite-role"
+                value={inviteRole}
+                onChange={(e) =>
+                  setInviteRole(e.target.value as "admin" | "member" | "owner")
+                }
+                className="w-full"
+              >
+                <NativeSelectOption value="member">
+                  {t("roleOptions.member")}
+                </NativeSelectOption>
+                <NativeSelectOption value="admin">
+                  {t("roleOptions.admin")}
+                </NativeSelectOption>
+                {isOwner && (
+                  <NativeSelectOption value="owner">
+                    {t("roleOptions.owner")}
+                  </NativeSelectOption>
                 )}
-              </div>
+              </NativeSelect>
+              {!isOwner && (
+                <p className="text-11 text-text-tertiary">
+                  {t("ownerOnlyHint")}
+                </p>
+              )}
+            </div>
 
-              <div className="border-border mt-6 flex items-center justify-end gap-3 border-t pt-3">
-                <button
-                  type="button"
-                  onClick={() => setInviteModalOpen(false)}
-                  className="border-border-strong text-12 text-text-subtle hover:bg-surface-hover rounded-lg border px-3 py-1.5 font-medium"
-                >
-                  {t("cancel")}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="bg-primary text-12 text-on-primary hover:bg-primary-hover rounded-lg px-4 py-1.5 font-semibold disabled:opacity-50"
-                >
-                  {isPending ? t("generating") : t("generateInvitation")}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setInviteModalOpen(false)}
+              >
+                {t("cancel")}
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? t("generating") : t("generateInvitation")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Active Members Table */}
       <div className="border-card-border bg-surface-card overflow-hidden rounded-xl border shadow-xs">
@@ -350,21 +355,21 @@ export function TeamClient({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="text-12 w-full text-left">
-            <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
-              <tr>
-                <th className="px-5 py-3">{t("columns.member")}</th>
-                <th className="px-5 py-3">{t("columns.role")}</th>
-                <th className="px-5 py-3">{t("columns.status")}</th>
-                <th className="px-5 py-3">{t("columns.joinedAt")}</th>
+          <Table className="text-12">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="px-5">{t("columns.member")}</TableHead>
+                <TableHead className="px-5">{t("columns.role")}</TableHead>
+                <TableHead className="px-5">{t("columns.status")}</TableHead>
+                <TableHead className="px-5">{t("columns.joinedAt")}</TableHead>
                 {capabilities.canManageMembers && (
-                  <th className="px-5 py-3 text-right">
+                  <TableHead className="px-5 text-right">
                     {t("columns.actions")}
-                  </th>
+                  </TableHead>
                 )}
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {members.map((member) => {
                 const isTargetOwner = member.role === "owner";
                 // Admin cannot alter or remove an owner (AC04)
@@ -374,8 +379,8 @@ export function TeamClient({
                     (!isTargetOwner && member.userId !== currentUserId));
 
                 return (
-                  <tr key={member.userId} className="hover:bg-surface-hover">
-                    <td className="px-5 py-3.5">
+                  <TableRow key={member.userId}>
+                    <TableCell className="px-5">
                       <div className="text-text flex items-center gap-2 font-medium">
                         <span>{member.name}</span>
                         {member.isCurrentUser && (
@@ -387,11 +392,13 @@ export function TeamClient({
                       <div className="text-11 text-text-tertiary font-mono">
                         {member.userId}
                       </div>
-                    </td>
+                    </TableCell>
 
-                    <td className="px-5 py-3.5">
+                    <TableCell className="px-5">
                       {canModifyThisMember ? (
-                        <select
+                        <NativeSelect
+                          size="sm"
+                          aria-label={t("columns.role")}
                           value={member.role}
                           disabled={isPending}
                           onChange={(e) =>
@@ -400,14 +407,19 @@ export function TeamClient({
                               e.target.value as "owner" | "admin" | "member",
                             )
                           }
-                          className="border-border bg-surface-card text-12 text-text rounded-md border px-2 py-1 font-medium focus:outline-none"
                         >
-                          <option value="member">{t("roles.member")}</option>
-                          <option value="admin">{t("roles.admin")}</option>
+                          <NativeSelectOption value="member">
+                            {t("roles.member")}
+                          </NativeSelectOption>
+                          <NativeSelectOption value="admin">
+                            {t("roles.admin")}
+                          </NativeSelectOption>
                           {isOwner && (
-                            <option value="owner">{t("roles.owner")}</option>
+                            <NativeSelectOption value="owner">
+                              {t("roles.owner")}
+                            </NativeSelectOption>
                           )}
-                        </select>
+                        </NativeSelect>
                       ) : (
                         <span
                           className={`text-11 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
@@ -426,41 +438,44 @@ export function TeamClient({
                               : t("roles.member")}
                         </span>
                       )}
-                    </td>
+                    </TableCell>
 
-                    <td className="px-5 py-3.5">
+                    <TableCell className="px-5">
                       <span className="text-success-text text-11 inline-flex items-center gap-1 font-medium">
                         <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
                         {t("active")}
                       </span>
-                    </td>
+                    </TableCell>
 
-                    <td className="text-text-secondary px-5 py-3.5">
+                    <TableCell className="text-text-secondary px-5">
                       {member.joinedAt}
-                    </td>
+                    </TableCell>
 
                     {capabilities.canManageMembers && (
-                      <td className="px-5 py-3.5 text-right">
+                      <TableCell className="px-5 text-right">
                         {canModifyThisMember && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon-sm"
                             disabled={isPending}
                             onClick={() =>
                               handleRemoveMember(member.userId, member.name)
                             }
-                            className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg rounded-sm p-1 transition"
+                            className="text-text-tertiary hover:text-danger-text hover:bg-danger-bg"
                             title={t("removeMember")}
+                            aria-label={t("removeMember")}
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                            <Trash2 />
+                          </Button>
                         )}
-                      </td>
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 
@@ -481,30 +496,36 @@ export function TeamClient({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="text-12 w-full text-left">
-              <thead className="bg-surface-raised text-text-secondary border-border border-b font-semibold tracking-wider uppercase">
-                <tr>
-                  <th className="px-5 py-3">{t("columns.invitedEmail")}</th>
-                  <th className="px-5 py-3">{t("columns.plannedRole")}</th>
-                  <th className="px-5 py-3">{t("columns.status")}</th>
-                  <th className="px-5 py-3">{t("columns.expiresAt")}</th>
+            <Table className="text-12">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-5">
+                    {t("columns.invitedEmail")}
+                  </TableHead>
+                  <TableHead className="px-5">
+                    {t("columns.plannedRole")}
+                  </TableHead>
+                  <TableHead className="px-5">{t("columns.status")}</TableHead>
+                  <TableHead className="px-5">
+                    {t("columns.expiresAt")}
+                  </TableHead>
                   {capabilities.canManageMembers && (
-                    <th className="px-5 py-3 text-right">
+                    <TableHead className="px-5 text-right">
                       {t("columns.actions")}
-                    </th>
+                    </TableHead>
                   )}
-                </tr>
-              </thead>
-              <tbody className="divide-border divide-y">
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {invitations.map((invite) => (
-                  <tr key={invite.id} className="hover:bg-surface-hover">
-                    <td className="text-text px-5 py-3.5 font-medium">
+                  <TableRow key={invite.id}>
+                    <TableCell className="text-text px-5 font-medium">
                       {invite.email}
-                    </td>
-                    <td className="text-text-subtle px-5 py-3.5 capitalize">
+                    </TableCell>
+                    <TableCell className="text-text-subtle px-5 capitalize">
                       {invite.role}
-                    </td>
-                    <td className="px-5 py-3.5">
+                    </TableCell>
+                    <TableCell className="px-5">
                       <span
                         className={`text-10 inline-block rounded-full px-2 py-0.5 font-semibold ${
                           invite.status === "pending"
@@ -518,29 +539,31 @@ export function TeamClient({
                           ? t("pending")
                           : invite.status}
                       </span>
-                    </td>
-                    <td className="text-text-secondary px-5 py-3.5">
+                    </TableCell>
+                    <TableCell className="text-text-secondary px-5">
                       {invite.expiresAt}
-                    </td>
+                    </TableCell>
                     {capabilities.canManageMembers && (
-                      <td className="px-5 py-3.5 text-right">
+                      <TableCell className="px-5 text-right">
                         {invite.status === "pending" && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
                             disabled={isPending}
                             onClick={() => handleRevokeInvite(invite.id)}
-                            className="text-12 text-danger-text hover:text-danger-text hover:bg-danger-bg inline-flex items-center gap-1 rounded-sm p-1 font-medium"
+                            className="text-danger-text hover:text-danger-text hover:bg-danger-bg"
                           >
-                            <XCircle className="h-3.5 w-3.5" />
+                            <XCircle />
                             <span>{t("revoke")}</span>
-                          </button>
+                          </Button>
                         )}
-                      </td>
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

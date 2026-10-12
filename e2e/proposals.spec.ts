@@ -69,7 +69,7 @@ test("an assistant proposes a contact and the owner approves it", async ({
   await page
     .getByPlaceholder(/Conector Cursor|Nome da Chave/i)
     .fill("E2E Propostas");
-  await page.locator('input[type="checkbox"][value="proposals:write"]').check();
+  await page.getByRole("checkbox", { name: /proposals:write/ }).check();
   await page.getByRole("button", { name: /Emitir Chave/i }).click();
   const key = (
     await page
