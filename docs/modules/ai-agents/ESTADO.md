@@ -5,8 +5,9 @@
 - **Feature Flag de ativação:** `GUIDU_MODULE_AI_AGENTS_ENABLED="true"` (padrão: desligado)
 - **Registro de módulos (F2):** manifesto em `src/modules/ai-agents/manifest.ts`, `beta` atrás da mesma flag. Com a flag ligada, o item de menu só aparece depois de habilitado no workspace; a página congelada continua usando só `isModuleTechnicallyAvailable`.
 - **Especificação:** v1.0 em [especificacao.md](especificacao.md), com [canais.md](canais.md) e [campos.md](campos.md), proposta no PR da etapa A0 (12/10/2026). Duas verticais sobre um motor único: o **Assistente GUIDU** (um por parceiro) e os **GUIDS** (de 1 a 3 agentes por workspace, conforme o plano).
-- **Descongelamento:** a aprovação do PR da A0 encerra o congelamento da C04 no papel. O código continua atrás da flag até a etapa A4; o protótipo descrito abaixo, com as tabelas dele, sai na A2 (especificação, seção 18).
+- **Descongelamento:** a aprovação do PR da A0 encerra o congelamento da C04 no papel. O código continua atrás da flag até a etapa A4. O protótipo e as tabelas dele saíram na A2a (D-AG-11).
 - **A1 (dados), 13/10/2026:** migration `20261029090000_a1_ai_agents.sql` com `ai_agent_templates`, `ai_agents`, `ai_agent_referrals` e `ai_lead_activities`, RLS com o acesso do parceiro só à configuração dos GUIDS dos clientes, limite `ai-agents.max` (padrão 1), os modelos da casa (modelo de admin, Anna e Assistente de Onboarding) e um Assistente por parceiro, criado também quando nasce um parceiro novo. Configuração em JSON validado por Zod em `src/core/ai/config/`; criação de GUIDS em `src/modules/ai-agents/server/services/agents.ts`. Testes: `tests/core/ai-agents-rls.sql` e `tests/core/ai-agents-guids.test.ts`.
+- **A2a (dados e chaves do motor), 13/10/2026:** migration `20261030090000_a2a_ai_engine_data.sql` com `ai_conversations` e `ai_messages` (conversas dos GUIDS, do workspace, e do Assistente, de quem conversa com ele), `ai_usage_events` (consumo por chave: cliente, admin ou backup, este como cortesia), o cofre do parceiro `partner_credentials` (chave do admin) e `platform_ai_settings` (chave e modelo de backup). Nesta etapa as tabelas só são lidas: as políticas de escrita entram na A2b com o motor. OpenRouter entra no cofre do workspace. Permissão nova `ai_agents.conversations.read` (owner, admin e editor); o parceiro não lê conversas sem concessão. Serviços das chaves em `src/core/ai/keys.ts`. Saíram o protótipo (`src/core/agents/`, o cliente da rota, os testes dele) e as tabelas `agent_configs`, `agent_sessions` e `agent_messages`; a rota `/app/[workspace]/ai-agents` mostra "Em construção" com a flag ligada até a A4. Testes: `tests/core/ai-engine-rls.sql` e `tests/core/ai-keys.test.ts`. O plano das próximas partes (A2b runtime, A2c backup) está em `/mnt/project-files/ia/plano-a2.md`.
 
 ---
 
@@ -22,23 +23,14 @@ Por decisão de Marcelo em 09/10/2026, o módulo está **congelado**: o código 
 
 ---
 
-## 2. Artefatos Existentes no Repositório
+## 2. Artefatos no Repositório
 
-### 2.1. Tabelas de Banco de Dados (PostgreSQL / Prisma)
+O protótipo da Task 07 (`agent_configs`, `agent_sessions`, `agent_messages`, `src/core/agents/` e o cliente da rota) saiu na A2a. O que existe hoje:
 
-As tabelas foram provisionadas via migrations versionadas (`20261008180000_sma100_ai_agents_and_sessions.sql`), possuem RLS ativado e forçado (`relrowsecurity = true`, `relforcerowsecurity = true`), e isolamento multi-tenant garantido por workspace:
-
-- `public.agent_configs`: Configurações de perfis/personas de agentes por workspace.
-- `public.agent_sessions`: Sessões de conversa associadas a um workspace e usuário.
-- `public.agent_messages`: Mensagens individuais (usuário/assistente) de uma sessão com metadados de execução.
-
-### 2.2. Arquivos de Código
-
-- `src/core/modules/availability.ts`: Guard central server-only que governa a disponibilidade técnica (`isModuleTechnicallyAvailable("ai-agents")` e `assertModuleAvailable("ai-agents")`).
-- `src/core/agents/engine.ts`: Funções de domínio para persistência de agentes, sessões e orquestração de prompts.
-- `src/core/agents/actions.ts`: Server actions Next.js (`executePromptAction`, `createAgentConfigAction`, `loadSessionMessagesAction`).
-- `src/app/app/[workspaceSlug]/ai-agents/`: Rota de interface do módulo com tela de bloqueio e client interativo.
-- `tests/core/ai-agents.test.ts`: Testes de integração do isolamento e do engine (executados com a flag habilitada explicitamente via teste).
+- **Tabelas:** as da A1 e da A2a, listadas acima, todas com RLS forçado.
+- **Código:** `src/core/ai/config/` (configuração e ferramentas), `src/core/ai/keys.ts` (chave do admin e de backup), `src/core/ai/errors.ts` (`ProviderError`), `src/modules/ai-agents/` (manifesto, quotas, dados e serviços dos GUIDS).
+- **Rota:** `src/app/app/[workspaceSlug]/ai-agents/page.tsx`, que mostra "Módulo Indisponível" com a flag desligada e "Em construção" com ela ligada.
+- **Guard:** `src/core/modules/availability.ts` (`isModuleTechnicallyAvailable("ai-agents")` e `assertModuleAvailable("ai-agents")`).
 
 ---
 
@@ -55,21 +47,11 @@ Com a flag desligada:
 1. **Sidebar (`AppSidebar`):** O item de menu "Agentes de IA" não é renderizado.
 2. **Dashboard do Workspace:** O módulo é apresentado com o badge de status `"Indisponível"`.
 3. **Página de Módulos (`settings/modules`):** Exibe status `"Indisponível"`.
-4. **Rota Direta (`/app/[workspaceSlug]/ai-agents`):** Renderiza tela informativa de módulo indisponível sem efetuar consultas às tabelas nem montar o cliente.
-5. **Server Actions (`src/core/agents/actions.ts`):** Todas as actions invocam `assertModuleAvailable("ai-agents")` no início e retornam erro seguro caso acionadas diretamente.
-6. **Engine de Domínio (`src/core/agents/engine.ts`):** Todas as funções exportadas que tocam tabelas ou provedores invocam `assertModuleAvailable("ai-agents")` como defesa em profundidade (Adendo §6).
+4. **Rota Direta (`/app/[workspaceSlug]/ai-agents`):** Renderiza tela informativa de módulo indisponível sem consultar as tabelas do módulo.
+5. **Serviços (`src/modules/ai-agents/server/`):** chamam `assertModuleOperational` no início, como defesa em profundidade (Adendo §6).
 
 ---
 
-## 4. Problemas Conhecidos a Resolver na Especificação
+## 4. Débitos do protótipo
 
-Quando a especificação formal do módulo for produzida e sua fase de desenvolvimento for iniciada, os seguintes débitos arquiteturais identificados na auditoria devem ser corrigidos:
-
-1. **Chamada HTTP externa dentro da transação `withContext`:**
-   Atualmente o `engine.ts` realiza a chamada ao provedor LLM externo dentro da transação do Prisma. Chamadas de rede bloqueantes prolongam o lock transacional e esgotam o pool de conexões do banco de dados em conexões lentas ou timeouts. A execução do prompt deve ocorrer fora da transação do banco, ou delegada para um worker via fila assíncrona (ADR 0002).
-2. **Mecanismo de fallback sem política de produto homologada:**
-   O chaveamento automático entre provedores (ex: OpenAI para Gemini) foi prototipado sem critérios formais de homologação de prompts, custos ou preferências contratuais dos workspaces.
-3. **Ausência de contabilização de consumo, cotas e billing:**
-   Não há integração com o modelo de planos e limites da plataforma (Fase 3), permitindo uso irrestrito de tokens.
-4. **Ausência de trilha formal de auditoria:**
-   As execuções e alterações de agentes não estão conectadas à tabela `audit_events` da plataforma (ADR 0009 / §20).
+Os quatro débitos apontados na auditoria do protótipo (chamada de rede dentro da transação, fallback entre provedores sem política, consumo sem conta e execução sem auditoria) saíram com ele. O motor novo os trata na A2b e na A2c: chamada ao modelo fora da transação, chaves com backup definido (§9.2), consumo em `ai_usage_events` e auditoria de cada ferramenta.

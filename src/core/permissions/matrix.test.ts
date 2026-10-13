@@ -65,6 +65,7 @@ describe("Permissions Matrix", () => {
         [Permissions.API_KEYS_READ_ALL]: true,
         [Permissions.AI_AGENTS_USE]: true,
         [Permissions.AI_AGENTS_MANAGE]: true,
+        [Permissions.AI_AGENTS_CONVERSATIONS_READ]: true,
         [Permissions.ORGANIZATION_READ]: false,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,
@@ -112,6 +113,7 @@ describe("Permissions Matrix", () => {
         [Permissions.API_KEYS_READ_ALL]: true,
         [Permissions.AI_AGENTS_USE]: true,
         [Permissions.AI_AGENTS_MANAGE]: true,
+        [Permissions.AI_AGENTS_CONVERSATIONS_READ]: true,
         [Permissions.ORGANIZATION_READ]: false,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,
@@ -159,6 +161,7 @@ describe("Permissions Matrix", () => {
         [Permissions.API_KEYS_READ_ALL]: false,
         [Permissions.AI_AGENTS_USE]: true,
         [Permissions.AI_AGENTS_MANAGE]: false,
+        [Permissions.AI_AGENTS_CONVERSATIONS_READ]: true,
         [Permissions.ORGANIZATION_READ]: false,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,
@@ -206,6 +209,7 @@ describe("Permissions Matrix", () => {
         [Permissions.API_KEYS_READ_ALL]: false,
         [Permissions.AI_AGENTS_USE]: false,
         [Permissions.AI_AGENTS_MANAGE]: false,
+        [Permissions.AI_AGENTS_CONVERSATIONS_READ]: false,
         [Permissions.ORGANIZATION_READ]: false,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,
@@ -232,9 +236,9 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(18);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(17);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(6);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(19);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(18);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(7);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(4);
     });
   });
@@ -289,6 +293,7 @@ describe("Permissions Matrix", () => {
         [Permissions.API_KEYS_READ_ALL]: false,
         [Permissions.AI_AGENTS_USE]: false,
         [Permissions.AI_AGENTS_MANAGE]: false,
+        [Permissions.AI_AGENTS_CONVERSATIONS_READ]: false,
         [Permissions.ORGANIZATION_READ]: true,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: true,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: true,
@@ -336,6 +341,7 @@ describe("Permissions Matrix", () => {
         [Permissions.API_KEYS_READ_ALL]: false,
         [Permissions.AI_AGENTS_USE]: false,
         [Permissions.AI_AGENTS_MANAGE]: false,
+        [Permissions.AI_AGENTS_CONVERSATIONS_READ]: false,
         [Permissions.ORGANIZATION_READ]: true,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: true,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: true,
@@ -383,6 +389,7 @@ describe("Permissions Matrix", () => {
         [Permissions.API_KEYS_READ_ALL]: false,
         [Permissions.AI_AGENTS_USE]: false,
         [Permissions.AI_AGENTS_MANAGE]: false,
+        [Permissions.AI_AGENTS_CONVERSATIONS_READ]: false,
         [Permissions.ORGANIZATION_READ]: true,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,

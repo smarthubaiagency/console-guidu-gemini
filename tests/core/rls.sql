@@ -33,7 +33,7 @@ begin
       'profiles', 'organizations', 'organization_members',
       'workspaces', 'workspace_members', 'platform_admin_members',
       'invitations', 'credentials', 'api_keys',
-      'agent_configs', 'agent_sessions', 'agent_messages'
+      'ai_conversations', 'ai_messages', 'ai_usage_events'
     );
 
   if checked <> 12 then
@@ -126,14 +126,14 @@ begin
   if (select count(*) from public.api_keys) <> 0 then
     raise exception 'FORCE: owner read api_keys';
   end if;
-  if (select count(*) from public.agent_configs) <> 0 then
-    raise exception 'FORCE: owner read agent_configs';
+  if (select count(*) from public.ai_conversations) <> 0 then
+    raise exception 'FORCE: owner read ai_conversations';
   end if;
-  if (select count(*) from public.agent_sessions) <> 0 then
-    raise exception 'FORCE: owner read agent_sessions';
+  if (select count(*) from public.ai_messages) <> 0 then
+    raise exception 'FORCE: owner read ai_messages';
   end if;
-  if (select count(*) from public.agent_messages) <> 0 then
-    raise exception 'FORCE: owner read agent_messages';
+  if (select count(*) from public.ai_usage_events) <> 0 then
+    raise exception 'FORCE: owner read ai_usage_events';
   end if;
 end
 $$;

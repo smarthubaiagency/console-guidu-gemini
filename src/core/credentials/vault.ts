@@ -23,7 +23,7 @@ import { requireWorkspacePermission } from "@/core/permissions/guard";
 import { recordAudit } from "@/core/audit/record";
 import { encryptSecret, decryptSecret } from "./crypto";
 
-export type AIProvider = "openai" | "anthropic" | "gemini";
+export type AIProvider = "openai" | "anthropic" | "gemini" | "openrouter";
 export type CredentialPurpose = "chat" | "embeddings" | "all";
 
 export type CredentialItem = {
@@ -48,12 +48,17 @@ export class CredentialNotFoundError extends Error {
 
 export class InvalidProviderError extends Error {
   constructor(provider: string) {
-    super(`Unsupported AI provider: ${provider}. Supported providers are: openai, anthropic, gemini.`);
+    super(`Unsupported AI provider: ${provider}. Supported providers are: openai, anthropic, gemini, openrouter.`);
     this.name = "InvalidProviderError";
   }
 }
 
-const SUPPORTED_PROVIDERS: Set<string> = new Set(["openai", "anthropic", "gemini"]);
+const SUPPORTED_PROVIDERS: Set<string> = new Set([
+  "openai",
+  "anthropic",
+  "gemini",
+  "openrouter",
+]);
 
 /**
  * Registers a new BYOK credential inside the contextual workspace.

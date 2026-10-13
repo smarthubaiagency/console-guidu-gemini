@@ -54,6 +54,7 @@ As permissões possuem namespace estável declarado em [`src/core/permissions/ca
 | `api_keys.read_all` | Chaves de API | Listar metadados de todas as chaves de API do workspace |
 | `ai_agents.use` | Agentes de IA | Executar prompts e interagir com sessões de agentes (módulo congelado na C04) |
 | `ai_agents.manage` | Agentes de IA | Criar, configurar e alterar agentes de IA (módulo congelado na C04) |
+| `ai_agents.conversations.read` | Agentes de IA | Ler conversas, transcrições e áudios dos GUIDS (A2a) |
 | `organization.read` | Organização | Visualizar dados institucionais da organização contratante |
 | `organization.members.invite` | Organização | Convidar novos membros para a organização |
 | `organization.members.manage` | Organização | Atualizar papéis, transferir propriedade e remover membros da organização |
@@ -82,6 +83,7 @@ As permissões possuem namespace estável declarado em [`src/core/permissions/ca
 | `api_keys.read_all` | ✅ | ✅ | ❌ | ❌ |
 | `ai_agents.use` | ✅ | ✅ | ✅ | ❌ |
 | `ai_agents.manage` | ✅ | ✅ | ❌ | ❌ |
+| `ai_agents.conversations.read` | ✅ | ✅ | ✅ | ❌ |
 
 *\* Sujeito à verificação de escalonamento em `roles.ts` (admins não podem alterar ou remover owners).*
 *\*\* No viewer, criação de chaves de API é restrita a escopos puramente de leitura (restrição aplicada na C12).*
