@@ -15,10 +15,12 @@ import type {
 import { AppError } from "@/shared/errors";
 
 /**
- * Test conversation of a GUIDS (A2b): a person of the workspace writes to
- * the agent and the worker answers (`ai-agents.guid-turn`). The screen of
- * "Testar agente" arrives in A4 and the real channels in A5; this service
- * is the entry both will use for a message that starts a turn.
+ * Test conversation of a GUIDS ("Testar agente", A2b and A4b, §5.3): a
+ * person of the workspace writes to the agent and the worker answers
+ * (`ai-agents.guid-turn`) with the real prompt and key and the tools
+ * simulated. A paused or draft agent is tested too: the test is what turns
+ * it on. The screen reads the conversation back with
+ * `getGuidTestConversation` while the answer is on its way.
  */
 
 const MODULE_KEY = "ai-agents";
@@ -62,13 +64,15 @@ export async function sendGuidTestMessage(
 
   const agent = await tx.aiAgent.findFirst({
     where: { id: agentId, kind: "guid", workspaceId: ctx.workspaceId },
-    select: { id: true, status: true },
+    select: { id: true, keyState: true },
   });
   if (!agent) throw notFound();
-  if (agent.status === "paused") {
+  if (agent.keyState === "failed") {
     throw new AppError({
       code: "conflict",
-      safeMessage: "O agente está pausado.",
+      safeMessage:
+        "A chave do agente falhou. Teste a chave antes de conversar.",
+      messageKey: "aiAgents.errors.keyFailed",
     });
   }
 
@@ -126,5 +130,125 @@ export async function sendGuidTestMessage(
     conversationId: conversation.id,
     messageId: message.id,
     jobRunId: run.id,
+  };
+}
+
+export type GuidTestToolCall = Readonly<{
+  name: string;
+  input: unknown;
+  /** What the tool answered (simulated in a test), or null if refused. */
+  output: unknown;
+}>;
+
+export type GuidTestMessageDto = Readonly<{
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  /** Code of a turn that did not answer (`ai_messages.error_code`). */
+  errorCode: string | null;
+  /** The tools the agent called before this message. */
+  tools: readonly GuidTestToolCall[];
+  createdAt: string;
+}>;
+
+export type GuidTestConversationDto = Readonly<{
+  conversationId: string;
+  messages: readonly GuidTestMessageDto[];
+  /** The last message of the person still waits for the agent. */
+  waiting: boolean;
+}>;
+
+function parseOutput(content: string): unknown {
+  try {
+    return JSON.parse(content);
+  } catch {
+    return content;
+  }
+}
+
+/**
+ * The test conversation of the person with a GUIDS: the one given, or the
+ * latest. Each answer carries the tool calls that came before it, with
+ * what they returned. Null when there is none yet.
+ */
+export async function getGuidTestConversation(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  agentId: string,
+  conversationId?: string,
+): Promise<GuidTestConversationDto | null> {
+  await assertModuleOperational(tx, ctx, MODULE_KEY, "read");
+  await requireWorkspacePermission(tx, ctx, Permissions.AI_AGENTS_USE);
+  if (!z.uuid().safeParse(agentId).success) throw notFound();
+  if (conversationId && !z.uuid().safeParse(conversationId).success) {
+    throw notFound();
+  }
+  const conversation = await tx.aiConversation.findFirst({
+    where: {
+      ...(conversationId ? { id: conversationId } : {}),
+      kind: "guid",
+      agentId,
+      workspaceId: ctx.workspaceId,
+      channel: "test",
+      userId: ctx.userId,
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { id: true },
+  });
+  if (!conversation) {
+    if (conversationId) throw notFound();
+    return null;
+  }
+  const rows = await tx.aiMessage.findMany({
+    where: { conversationId: conversation.id },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    take: 500,
+    select: {
+      id: true,
+      role: true,
+      content: true,
+      toolCalls: true,
+      toolCallId: true,
+      errorCode: true,
+      createdAt: true,
+    },
+  });
+  const outputs = new Map(
+    rows
+      .filter((row) => row.role === "tool" && row.toolCallId)
+      .map((row) => [row.toolCallId, parseOutput(row.content)]),
+  );
+  const messages: GuidTestMessageDto[] = [];
+  let pending: GuidTestToolCall[] = [];
+  for (const row of rows) {
+    if (row.role === "assistant") {
+      const calls = Array.isArray(row.toolCalls)
+        ? (row.toolCalls as { id?: string; name?: string; input?: unknown }[])
+        : [];
+      pending.push(
+        ...calls.map((call) => ({
+          name: String(call.name ?? ""),
+          input: call.input ?? null,
+          output: outputs.get(String(call.id ?? "")) ?? null,
+        })),
+      );
+      // A row of tool calls only: its tools go with the next answer.
+      if (calls.length > 0 && !row.content) continue;
+    }
+    if (row.role !== "user" && row.role !== "assistant") continue;
+    messages.push({
+      id: row.id,
+      role: row.role,
+      content: row.content,
+      errorCode: row.errorCode,
+      tools: row.role === "assistant" ? pending : [],
+      createdAt: row.createdAt.toISOString(),
+    });
+    if (row.role === "assistant") pending = [];
+  }
+  return {
+    conversationId: conversation.id,
+    messages,
+    waiting: messages.at(-1)?.role === "user",
   };
 }

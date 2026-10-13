@@ -91,6 +91,7 @@ O módulo tem duas verticais sobre **um motor único** **[Decidido]**:
 | -------------------------------------------------------------------------------------- | -------------------- | --------------------------------- |
 | Conexão de modelo (chave, modelo, áudio, base de conhecimento ligada), ativar e pausar | Sim                  | Sim                               |
 | Visão geral, escopo, regras e score, indicações                                        | Sim                  | **Só quando personaliza** o GUIDS |
+| Resumo do negócio e produtos e serviços                                                | Sim                  | Sim (decisão de 13/10/2026)       |
 | Ferramentas e resultado esperado (`expected_output`)                                   | Sim                  | **Nunca**                         |
 | Destino dos leads e integração                                                         | Sim                  | Não                               |
 
@@ -98,7 +99,7 @@ Quando o cliente personaliza, a configuração passa a ser do GUIDS dele; o vín
 
 ### 5.3 Testar agente
 
-O "Testar Integração" do legado (4 passos no n8n) vira **"Testar agente"**: um chat na gaveta interna, com o prompt renderizado pelo mesmo renderizador da produção, a conexão de modelo real e as ferramentas em **modo simulado** (mostram o que fariam, sem gravar). O teste conta no consumo. Um GUIDS só pode ser ativado num canal depois de um teste com sucesso na versão atual da configuração **[Proposta]**.
+O "Testar Integração" do legado (4 passos no n8n) vira **"Testar agente"**: um chat na gaveta interna, com o prompt renderizado pelo mesmo renderizador da produção, a conexão de modelo real e as ferramentas em **modo simulado** (mostram o que fariam, sem gravar). O teste conta no consumo. Um GUIDS só pode ser ativado depois de um teste com sucesso na versão atual da configuração (decisão de 13/10/2026, A4b). No teste, a memória da conversa de teste é gravada; contato, nota, pontuação, transferência e proposta só aparecem como simulação.
 
 ### 5.4 Pontuação de leads, avisos e indicações
 

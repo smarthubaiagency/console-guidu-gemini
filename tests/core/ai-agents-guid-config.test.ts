@@ -1,9 +1,11 @@
 import { PrismaClient } from "@prisma/client";
+import { MockLanguageModelV4 } from "ai/test";
 import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
 import { ConfigValidationError } from "@/core/ai/templates";
+import { runGuidTurn } from "@/core/ai/turn/guid";
 import { registerCredential } from "@/core/credentials/vault";
 import { PermissionDeniedError } from "@/core/permissions/guard";
 import {
@@ -18,6 +20,8 @@ import {
   deleteGuid,
   deleteReferral,
   getGuid,
+  getGuidTestConversation,
+  sendGuidTestMessage,
   updateGuid,
   updateReferral,
 } from "@/modules/ai-agents/server";
@@ -30,7 +34,8 @@ import { describeDatabase } from "../prisma-rls/describe-database.js";
  * A4a: a GUIDS in the workspace's own screens — the model connection with
  * a key of the workspace's vault, turning it on, customizing it (and only
  * then the overview and the referrals), deleting it. Another workspace and
- * a viewer see nothing.
+ * a viewer see nothing. A4b: it is turned on only after a successful test
+ * of the configuration being saved.
  */
 
 const databaseUrl = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
@@ -54,6 +59,10 @@ describeDatabase("A4a: GUIDS of the workspace in /app", requiredVars, () => {
   ) => withContext(prisma, ctx, op);
 
   async function cleanup() {
+    // The usage of the tests stays when a GUIDS is deleted (§9.3).
+    await admin.$executeRawUnsafe(
+      `delete from public.ai_usage_events where workspace_id in ('${ids.workspaceA}', '${ids.workspaceB}')`,
+    );
     await admin.$executeRawUnsafe(
       `delete from public.ai_agents where kind = 'guid' and workspace_id in ('${ids.workspaceA}', '${ids.workspaceB}')`,
     );
@@ -88,6 +97,42 @@ describeDatabase("A4a: GUIDS of the workspace in /app", requiredVars, () => {
     await prisma.$disconnect();
     await admin.$disconnect();
   });
+
+  /** "Testar agente": one message, answered by a mock model. */
+  async function passTest(agentId: string) {
+    const sent = await run(contextA, (tx) =>
+      sendGuidTestMessage(tx, contextA, { agentId, text: "Olá" }),
+    );
+    const model = new MockLanguageModelV4({
+      doGenerate: [
+        {
+          content: [
+            { type: "text", text: JSON.stringify({ messages: ["Oi!"] }) },
+          ],
+          finishReason: { unified: "stop", raw: undefined },
+          usage: {
+            inputTokens: {
+              total: 10,
+              noCache: 10,
+              cacheRead: undefined,
+              cacheWrite: undefined,
+            },
+            outputTokens: { total: 5, text: 5, reasoning: undefined },
+          },
+          warnings: [],
+        },
+      ],
+    });
+    return runGuidTurn(
+      {
+        jobRunId: sent.jobRunId,
+        transaction: (op) => withContext(prisma, contextA, op),
+      },
+      contextA,
+      sent,
+      { createModel: () => model },
+    );
+  }
 
   async function newGuid() {
     const guid = await run(contextA, (tx) =>
@@ -135,11 +180,16 @@ describeDatabase("A4a: GUIDS of the workspace in /app", requiredVars, () => {
       (prompt as ConfigValidationError).fieldErrors["overview.agent_name"],
     ).toBeDefined();
 
-    const saved = await run(contextA, (tx) =>
+    const draft = await run(contextA, (tx) =>
       updateGuid(tx, contextA, guid.id, {
-        status: "active",
+        status: "paused",
         config: {
           ...before.config,
+          // The business is the customer's too, without customizing.
+          overview: {
+            ...before.config.overview,
+            business_summary: "Clínica de sorrisos.",
+          },
           model: {
             credential_id: key.id,
             model_provider: "openai",
@@ -148,18 +198,78 @@ describeDatabase("A4a: GUIDS of the workspace in /app", requiredVars, () => {
         },
       }),
     );
-    expect(saved.status).toBe("active");
-    expect(saved.missing).toEqual([]);
+    expect(draft).toMatchObject({ status: "draft", testedCurrent: false });
+    expect(draft.missing).toEqual([]);
+    expect(draft.config.overview.business_summary).toBe("Clínica de sorrisos.");
     // The provider follows the key.
-    expect(saved.config.model.model_provider).toBe("openrouter");
+    expect(draft.config.model.model_provider).toBe("openrouter");
+
+    // Not tested yet: it stays a draft.
+    const untested = await run(contextA, (tx) =>
+      updateGuid(tx, contextA, guid.id, {
+        status: "active",
+        config: draft.config,
+      }),
+    ).catch((err: unknown) => err);
+    expect(untested).toBeInstanceOf(ConfigValidationError);
+    expect((untested as ConfigValidationError).fieldErrors.active).toBe(
+      "Teste o agente nesta configuração antes de ativá-lo.",
+    );
+    expect(
+      (await run(contextA, (tx) => getGuid(tx, contextA, guid.id))).status,
+    ).toBe("draft");
+
+    await expect(passTest(guid.id)).resolves.toMatchObject({ tested: 1 });
+    const chat = await run(contextA, (tx) =>
+      getGuidTestConversation(tx, contextA, guid.id),
+    );
+    expect(chat?.waiting).toBe(false);
+    expect(chat?.messages.map((m) => [m.role, m.content])).toEqual([
+      ["user", "Olá"],
+      ["assistant", "Oi!"],
+    ]);
+    const tested = await run(contextA, (tx) => getGuid(tx, contextA, guid.id));
+    expect(tested.testedCurrent).toBe(true);
+    expect(tested.testedAt).not.toBeNull();
+
+    const saved = await run(contextA, (tx) =>
+      updateGuid(tx, contextA, guid.id, {
+        status: "active",
+        config: tested.config,
+      }),
+    );
+    expect(saved).toMatchObject({ status: "active", testedCurrent: true });
 
     const audit = await admin.auditEvent.findFirst({
       where: { action: "ai_agents.guid.update", resourceId: guid.id },
+      orderBy: { occurredAt: "desc" },
     });
     expect(audit?.metadata).toMatchObject({
       from: { status: "draft" },
       to: { status: "active" },
     });
+
+    // A change keeps it on, and asks for a new test.
+    const changed = await run(contextA, (tx) =>
+      updateGuid(tx, contextA, guid.id, {
+        status: "active",
+        config: {
+          ...saved.config,
+          model: { ...saved.config.model, model_name: "openai/gpt-4.1" },
+        },
+      }),
+    );
+    expect(changed).toMatchObject({ status: "active", testedCurrent: false });
+
+    // Only the engine records a test.
+    await expect(
+      run(contextA, (tx) =>
+        tx.$executeRawUnsafe(
+          `update public.ai_agents set tested_config_hash = md5(config::text), tested_at = now()
+           where id = '${guid.id}'`,
+        ),
+      ),
+    ).rejects.toThrow(/recorded only by the engine/);
 
     // A key of another workspace is refused.
     const foreign = await run(contextB, (tx) =>

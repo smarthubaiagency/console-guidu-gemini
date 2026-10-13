@@ -37,6 +37,12 @@ import { type GuidDto, listGuids } from "./agents";
  * leads' destination. Reading needs `ai_agents.use`; changing, customizing
  * and deleting need `ai_agents.manage`. RLS repeats tenant and role; a
  * workspace change clears the partner's signature ("Alterado por …").
+ *
+ * Turning a GUIDS on needs a successful "Testar agente" of its current
+ * configuration (A4b, §5.3): the engine records the version that passed
+ * (`tested_config_hash`), and any change after it asks for a new test. An
+ * agent already on stays on when its configuration changes; the screen says
+ * the new version was not tested.
  */
 
 const MODULE_KEY = "ai-agents";
@@ -50,6 +56,10 @@ export type GuidDetailDto = GuidDto &
     /** Minimum fields still empty (campos.md §9). */
     missing: readonly string[];
     lastTestedAt: string | null;
+    /** When the last successful "Testar agente" answered. */
+    testedAt: string | null;
+    /** Whether that test was of the configuration saved now. */
+    testedCurrent: boolean;
     /** The workspace's referrals; editable once the GUIDS is customized. */
     referrals: readonly ReferralDto[];
   }>;
@@ -114,6 +124,18 @@ async function loadAgent(
   return row;
 }
 
+/** Whether the saved configuration is the one that passed the test. */
+async function testedCurrent(
+  tx: ContextTransaction,
+  agentId: string,
+): Promise<boolean> {
+  const rows = await tx.$queryRaw<{ tested: boolean | null }[]>`
+    select md5(config::text) = tested_config_hash as tested
+    from public.ai_agents where id = ${agentId}::uuid
+  `;
+  return rows[0]?.tested === true;
+}
+
 function parsedConfig(row: { config: unknown; configVersion: number }) {
   const parsed = parseAgentConfig("guid", row.configVersion, row.config);
   return {
@@ -147,14 +169,17 @@ export async function getGuid(
     editor,
     missing: missingConfigFields(config, editor),
     lastTestedAt: row.lastTestedAt?.toISOString() ?? null,
+    testedAt: row.testedAt?.toISOString() ?? null,
+    testedCurrent: await testedCurrent(tx, row.id),
     referrals,
   };
 }
 
 /**
  * Saves the configuration and the status. The provider follows the chosen
- * key of the workspace's vault; turning it on needs the minimum fields and
- * a working key, turning it off is always allowed and keeps a draft a draft.
+ * key of the workspace's vault; turning it on needs the minimum fields, a
+ * working key and a successful test of the configuration being saved;
+ * turning it off is always allowed and keeps a draft a draft.
  */
 export async function updateGuid(
   tx: ContextTransaction,
@@ -250,6 +275,17 @@ export async function updateGuid(
       },
       select: { id: true },
     });
+    // Checked on the saved row (same transaction, undone on refusal): the
+    // hash is the database's.
+    if (
+      status === "active" &&
+      row.status !== "active" &&
+      !(await testedCurrent(tx, row.id))
+    ) {
+      throw new ConfigValidationError({
+        active: "Teste o agente nesta configuração antes de ativá-lo.",
+      });
+    }
     await recordAudit(tx, ctx, {
       action: "ai_agents.guid.update",
       resourceType: "ai_agent",

@@ -25,7 +25,11 @@ export {
   type GuidDetailDto,
 } from "./server/services/guid-config";
 export {
+  getGuidTestConversation,
   GuidTestMessageInput,
   sendGuidTestMessage,
+  type GuidTestConversationDto,
+  type GuidTestMessageDto,
   type GuidTestMessageResult,
+  type GuidTestToolCall,
 } from "./server/services/conversations";

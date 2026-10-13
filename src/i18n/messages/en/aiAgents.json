@@ -102,9 +102,51 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "deleteTitle": "Delete agent",
-    "deleteMessage": "The agent {name} and its conversations will be deleted. Usage already recorded stays."
+    "deleteMessage": "The agent {name} and its conversations will be deleted. Usage already recorded stays.",
+    "tested": "Tested with this configuration on {date}.",
+    "untested": "This configuration has not been tested yet. Test the agent before turning it on.",
+    "untestedActive": "The configuration changed after the last test. Test the agent again.",
+    "test": {
+      "open": "Test agent",
+      "title": "Test {name}",
+      "intro": "Chat as a customer would. The agent uses the real prompt, key and model; the tools only show what they would do. The test counts toward usage.",
+      "back": "Back to configuration",
+      "newConversation": "New conversation",
+      "placeholder": "Write as a customer would",
+      "send": "Send",
+      "empty": "Send the first message to start the test.",
+      "waiting": "The agent is answering…",
+      "slow": "The agent has not answered yet. The answer shows up here when it arrives.",
+      "you": "You",
+      "agent": "Agent",
+      "tools": "{count, plural, one {# tool (simulated)} other {# tools (simulated)}}",
+      "input": "Input",
+      "output": "Result",
+      "refused": "no result",
+      "failed": "The agent did not answer: {reason}",
+      "errors": {
+        "module_unavailable": "the agents module is not available.",
+        "conversation_handoff": "the conversation was handed to a person.",
+        "conversation_closed": "the conversation was closed.",
+        "agent_paused": "the agent is paused.",
+        "key_failed": "the key failed. Use \"Test key\".",
+        "plan_limit": "the workspace has more agents than the plan allows.",
+        "invalid_config": "the configuration is invalid.",
+        "no_model": "choose the key and the model.",
+        "no_key": "the chosen key is not active in the vault.",
+        "no_prompt": "the agent has no prompt.",
+        "engine_error": "internal error. Try again.",
+        "invalid_output": "the model answered in an unexpected format.",
+        "provider_auth": "the provider refused the key.",
+        "provider_error": "the model provider failed.",
+        "provider_limit": "the key hit a provider limit.",
+        "timeout": "the model took too long.",
+        "unknown": "unknown error."
+      }
+    }
   },
   "errors": {
-    "notCustomized": "Customize the agent to change the referrals."
+    "notCustomized": "Customize the agent to change the referrals.",
+    "keyFailed": "The agent's key failed. Test the key before chatting."
   }
 }

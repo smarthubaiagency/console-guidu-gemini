@@ -102,9 +102,51 @@
     "cancel": "Cancelar",
     "delete": "Excluir",
     "deleteTitle": "Excluir agente",
-    "deleteMessage": "O agente {name} e as conversas dele serão excluídos. O consumo já registrado continua."
+    "deleteMessage": "O agente {name} e as conversas dele serão excluídos. O consumo já registrado continua.",
+    "tested": "Testado nesta configuração em {date}.",
+    "untested": "Esta configuração ainda não foi testada. Teste o agente antes de ativá-lo.",
+    "untestedActive": "A configuração mudou depois do último teste. Teste o agente de novo.",
+    "test": {
+      "open": "Testar agente",
+      "title": "Testar {name}",
+      "intro": "Converse como um cliente. O agente usa o prompt, a chave e o modelo reais; as ferramentas só mostram o que fariam. O teste conta no consumo.",
+      "back": "Voltar à configuração",
+      "newConversation": "Nova conversa",
+      "placeholder": "Escreva como um cliente escreveria",
+      "send": "Enviar",
+      "empty": "Mande a primeira mensagem para começar o teste.",
+      "waiting": "O agente está respondendo…",
+      "slow": "O agente ainda não respondeu. A resposta aparece aqui quando chegar.",
+      "you": "Você",
+      "agent": "Agente",
+      "tools": "{count, plural, one {# ferramenta (simulada)} other {# ferramentas (simuladas)}}",
+      "input": "Entrada",
+      "output": "Resultado",
+      "refused": "sem resultado",
+      "failed": "O agente não respondeu: {reason}",
+      "errors": {
+        "module_unavailable": "o módulo de agentes não está disponível.",
+        "conversation_handoff": "a conversa foi passada para uma pessoa.",
+        "conversation_closed": "a conversa foi encerrada.",
+        "agent_paused": "o agente está pausado.",
+        "key_failed": "a chave falhou. Use o \"Testar chave\".",
+        "plan_limit": "o workspace tem mais agentes do que o plano permite.",
+        "invalid_config": "a configuração é inválida.",
+        "no_model": "escolha a chave e o modelo.",
+        "no_key": "a chave escolhida não está ativa no cofre.",
+        "no_prompt": "o agente não tem prompt.",
+        "engine_error": "erro interno. Tente de novo.",
+        "invalid_output": "o modelo respondeu fora do formato esperado.",
+        "provider_auth": "o provedor recusou a chave.",
+        "provider_error": "o provedor do modelo falhou.",
+        "provider_limit": "a chave atingiu um limite do provedor.",
+        "timeout": "o modelo demorou demais.",
+        "unknown": "erro desconhecido."
+      }
+    }
   },
   "errors": {
-    "notCustomized": "Personalize o agente para alterar as indicações."
+    "notCustomized": "Personalize o agente para alterar as indicações.",
+    "keyFailed": "A chave do agente falhou. Teste a chave antes de conversar."
   }
 }

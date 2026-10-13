@@ -63,6 +63,12 @@ import { TURN_LIMITS, type TurnState } from "./types";
  * When the customer's key fails, the turn goes on with the platform key
  * (A2c, `../backup.ts`), only in a conversation opened before the failure.
  *
+ * A test conversation ("Testar agente", A4b, §5.3) runs the same turn with
+ * the tools simulated, also while the agent is paused or still a draft, and
+ * counts in the usage. When it answers with the customer's key, the agent
+ * records that its current configuration passed the test, the condition to
+ * turn it on.
+ *
  * The answer is a response plan (canais.md §6.1) validated by Zod before
  * it is written. The job's run id is the turn's execution id: a turn that
  * already wrote its answer is not answered again.
@@ -95,6 +101,10 @@ type TurnKey = ChatModelKey & Readonly<{ source: "customer" | "backup" }>;
 
 type Ready = Readonly<{
   kind: "ready";
+  /** A test of the agent: simulated tools, the pass recorded. */
+  test: boolean;
+  /** `md5(config::text)` of the configuration this turn answers with. */
+  configHash: string | null;
   conversationId: string;
   agentId: string;
   conversationCreatedAt: Date;
@@ -174,7 +184,9 @@ async function loadTurn(
     },
   });
   if (!agent) throw new SkipJobError("Agente não encontrado.");
-  if (agent.status === "paused") {
+  const test = conversation.channel === "test";
+  // A paused agent is tested before it is turned on again.
+  if (agent.status === "paused" && !test) {
     return blocked("agent_paused", "O agente está pausado.", ids);
   }
   if (agent.keyState === "failed") {
@@ -323,9 +335,17 @@ async function loadTurn(
   if (!systemPrompt) {
     return blocked("no_prompt", "O agente não tem prompt.", ids);
   }
+  const hash = test
+    ? await tx.$queryRaw<{ hash: string }[]>`
+        select md5(config::text) as hash from public.ai_agents
+        where id = ${agent.id}::uuid
+      `
+    : [];
 
   return {
     kind: "ready",
+    test,
+    configHash: hash[0]?.hash ?? null,
     ...ids,
     conversationCreatedAt: conversation.createdAt,
     config,
@@ -386,6 +406,7 @@ export async function runGuidTurn(
     prisma: null,
     now,
     state,
+    simulate: loaded.test,
   };
   const turn = {
     conversationId: loaded.conversationId,
@@ -490,7 +511,7 @@ export async function runGuidTurn(
   }
 
   const used = key;
-  await session.transaction(async (tx) => {
+  const tested = await session.transaction(async (tx) => {
     await persistTurn(tx, {
       ...turn,
       provider: used.provider,
@@ -513,9 +534,18 @@ export async function runGuidTurn(
         data: { keyMode: "backup" },
       });
     }
+    // The platform's key proves nothing about the customer's.
+    if (!loaded.test || used.source !== "customer" || !loaded.configHash) {
+      return false;
+    }
+    const rows = await tx.$queryRaw<{ passed: boolean }[]>`
+      select private.ai_agent_test_passed(${loaded.agentId}::uuid, ${loaded.configHash}) as passed
+    `;
+    return rows[0]?.passed === true;
   });
   return {
     status: state.status,
+    ...(loaded.test ? { tested: tested ? 1 : 0 } : {}),
     keySource: used.source,
     messages: outcome.answer.messages.length,
     tools: state.records.length,

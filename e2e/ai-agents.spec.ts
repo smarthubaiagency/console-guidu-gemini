@@ -64,7 +64,7 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       "Module is frozen by default (C04); runs only when GUIDU_MODULE_AI_AGENTS_ENABLED is true",
     );
 
-    test("the owner creates, customizes and deletes a GUIDS", async ({
+    test("the owner creates, customizes, tests and deletes a GUIDS", async ({
       page,
       request,
     }) => {
@@ -93,10 +93,14 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       const panel = page.getByTestId("guid-panel");
       await expect(panel.getByTestId("guid-state")).toContainText("Rascunho");
       await expect(panel.getByTestId("guid-missing")).toBeVisible();
-      // Following the template, only the model connection is the customer's.
+      // Following the template, the customer has the business and the model.
       await expect(page.getByTestId("guid-form").getByRole("tab")).toHaveText([
+        "Visão geral",
         "Conexão de modelo",
       ]);
+      await expect(panel.getByTestId("guid-tested")).toContainText(
+        "ainda não foi testada",
+      );
       await expect(page.getByRole("link", { name: "Novo agente" })).toHaveCount(
         0,
       );
@@ -122,6 +126,24 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
         .click();
       await expect(statusBanner(page)).toContainText("Indicação adicionada.");
       await expect(page.getByTestId("guid-referral")).toContainText("Dra. Ana");
+
+      // "Testar agente": the chat in the drawer.
+      await page.getByTestId("open-guid-test").click();
+      const chat = page.getByTestId("guid-test");
+      await expect(chat).toBeVisible();
+      await page.getByTestId("guid-test-input").fill("Olá, vocês atendem?");
+      await page.getByTestId("guid-test-send").click();
+      await expect(chat.getByTestId("guid-test-user")).toContainText(
+        "Olá, vocês atendem?",
+      );
+      // The worker answers, or the screen says it is answering.
+      await expect(
+        chat
+          .getByTestId("guid-test-waiting")
+          .or(chat.getByTestId("guid-test-agent")),
+      ).toBeVisible();
+      await chat.getByRole("link", { name: "Voltar à configuração" }).click();
+      await expect(page.getByTestId("guid-panel")).toBeVisible();
 
       await page.getByTestId("delete-guid").click();
       const remove = statusBanner(page);

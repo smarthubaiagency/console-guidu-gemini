@@ -3,9 +3,10 @@
  * within the plan limit, a new GUIDS from a published template or blank
  * ("Personalizado"), and the drawer (ADR 0015) at `?edit=<id>` with the
  * customer's division of fields, the key of the workspace's vault, the key
- * test, customization, deletion and the referrals. Members with
- * `ai_agents.use` read; owner and admin change. With the module flag off,
- * the page says the module is unavailable.
+ * test, customization, deletion and the referrals. At
+ * `?edit=<id>&view=test` the drawer holds "Testar agente" (A4b). Members
+ * with `ai_agents.use` read and test; owner and admin change. With the
+ * module flag off, the page says the module is unavailable.
  */
 
 import Link from "next/link";
@@ -34,12 +35,17 @@ import {
   listGuidTemplates,
 } from "@/modules/ai-agents/server/services/agents";
 import {
+  getGuidTestConversation,
+  type GuidTestConversationDto,
+} from "@/modules/ai-agents/server/services/conversations";
+import {
   type GuidDetailDto,
   getGuid,
 } from "@/modules/ai-agents/server/services/guid-config";
 import { AppError } from "@/shared/errors";
 
 import { CreateGuidForm, GuidPanel } from "./guid-forms";
+import { GuidTestPanel } from "./guid-test";
 
 const STATUSES = new Set(["draft", "active", "paused"]);
 const KEY_STATES = new Set(["ok", "backup", "failed"]);
@@ -56,7 +62,7 @@ export async function generateMetadata() {
 
 interface AiAgentsPageProps {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; view?: string }>;
 }
 
 export default async function AiAgentsPage({
@@ -104,8 +110,9 @@ export default async function AiAgentsPage({
     );
   }
 
-  const { edit } = await searchParams;
+  const { edit, view: drawerView } = await searchParams;
   const editKey = typeof edit === "string" && edit ? edit : null;
+  const testing = drawerView === "test";
   const view = await withContext(prisma, context, async (tx) => {
     const access = await resolveModulePageAccess(
       tx,
@@ -122,9 +129,13 @@ export default async function AiAgentsPage({
       resolveQuota(tx, context.organizationId, AI_AGENTS_MAX_QUOTA),
     ]);
     let opened: GuidDetailDto | null = null;
+    let test: GuidTestConversationDto | null = null;
     if (editKey && editKey !== "new") {
       try {
         opened = await getGuid(tx, context, editKey);
+        if (testing) {
+          test = await getGuidTestConversation(tx, context, editKey);
+        }
       } catch (error) {
         if (!(error instanceof AppError && error.code === "not_found")) {
           throw error;
@@ -145,6 +156,7 @@ export default async function AiAgentsPage({
       templates,
       limit: quota.limit,
       opened,
+      test,
       credentials,
     };
   });
@@ -196,6 +208,19 @@ export default async function AiAgentsPage({
         />
       </WorkbenchPanel>
     );
+  } else if (view.opened && testing) {
+    panel = (
+      <GuidTestPanel
+        key={view.opened.id}
+        workspaceSlug={workspaceSlug}
+        agentId={view.opened.id}
+        title={t("guids.test.title", {
+          name: view.opened.name ?? t("guids.unnamed"),
+        })}
+        backHref={`${base}?edit=${view.opened.id}`}
+        initial={view.test}
+      />
+    );
   } else if (view.opened) {
     const opened = view.opened;
     panel = (
@@ -204,6 +229,7 @@ export default async function AiAgentsPage({
         workspaceSlug={workspaceSlug}
         guid={opened}
         canManage={view.canManage}
+        testHref={`${base}?edit=${opened.id}&view=test`}
         credentials={view.credentials.map((key) => ({
           id: key.id,
           provider: key.provider,
@@ -224,6 +250,16 @@ export default async function AiAgentsPage({
               ]
                 .filter(Boolean)
                 .join(" · ")}
+            </p>
+            <p
+              className="text-12 text-text-secondary"
+              data-testid="guid-tested"
+            >
+              {opened.testedCurrent && opened.testedAt
+                ? t("guids.tested", { date: date(opened.testedAt) })
+                : opened.status === "active"
+                  ? t("guids.untestedActive")
+                  : t("guids.untested")}
             </p>
             {opened.missing.length > 0 ? (
               <p
