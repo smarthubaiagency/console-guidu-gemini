@@ -5,6 +5,8 @@ import { BrandTokens } from "@/shared/ui/brand-tokens";
 import { getRequestBrand } from "@/core/brand/resolve";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { headers } from "next/headers";
+import { NONCE_HEADER } from "@/core/security/headers";
 import { clientMessages } from "@/core/i18n/client-messages";
 import "./globals.css";
 
@@ -32,6 +34,8 @@ export default async function RootLayout({
   const brand = await getRequestBrand();
   const locale = await getLocale();
   const messages = await getMessages();
+  // Set by src/proxy.ts for the CSP; the theme script needs it to run.
+  const nonce = (await headers()).get(NONCE_HEADER) ?? undefined;
   return (
     <html lang={locale} className={outfit.variable} suppressHydrationWarning>
       <head>
@@ -44,7 +48,7 @@ export default async function RootLayout({
           messages={clientMessages(messages)}
           timeZone="America/Sao_Paulo"
         >
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider nonce={nonce}>{children}</ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

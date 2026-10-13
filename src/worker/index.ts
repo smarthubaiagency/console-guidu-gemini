@@ -11,6 +11,7 @@
  */
 import type { Server } from "node:http";
 
+import { assertEnv } from "@/core/config/env";
 import { createLogger, setLogSource } from "@/lib/telemetry/log";
 
 import { startHealthServer } from "./health";
@@ -25,6 +26,8 @@ function positiveInt(value: string | undefined, fallback: number): number {
 }
 
 async function main(): Promise<void> {
+  // Production refuses to start with an incomplete environment (F6a).
+  assertEnv("worker");
   const databaseUrl = process.env.WORKER_DATABASE_URL;
   if (!databaseUrl) {
     log.error("config.missing", {

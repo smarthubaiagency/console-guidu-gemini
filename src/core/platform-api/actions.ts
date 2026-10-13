@@ -89,12 +89,15 @@ export async function revokePlatformKeyAction(
   formData: FormData,
 ): Promise<PlatformKeyActionState> {
   try {
-    const { actor } = await platformActor();
+    const { identity, actor } = await platformActor();
     const keyId = z.string().uuid().parse(formData.get("keyId"));
     await withPlatformContext(
       prisma,
       { userId: actor.userId, keyId: null },
-      (tx) => revokePlatformApiKey(tx, actor, keyId),
+      (tx) =>
+        revokePlatformApiKey(tx, actor, keyId, {
+          mfaVerified: identity.mfaSatisfied,
+        }),
     );
     revalidatePath("/platform/api-keys");
     const t = await getTranslations("platformKeys");

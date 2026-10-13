@@ -1,12 +1,36 @@
+import { notFound } from "next/navigation";
 import { Store, Clock } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+
+import { requireUserPage } from "@/core/auth/page-guard";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
+import { prisma } from "@/lib/prisma/client";
 
 export async function generateMetadata() {
   const t = await getTranslations("googleBusiness");
   return { title: t("metaTitle") };
 }
 
-export default async function GoogleBusinessPage() {
+interface PageProps {
+  params: Promise<{ workspaceSlug: string }>;
+}
+
+export default async function GoogleBusinessPage({ params }: PageProps) {
+  // Even a static page checks the workspace on the server (F6a), so the
+  // layout is never the only guard.
+  const { workspaceSlug } = await params;
+  const identity = await requireUserPage(
+    `/app/${workspaceSlug}/google-business`,
+  );
+  try {
+    await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
+  } catch {
+    notFound();
+  }
   const t = await getTranslations("googleBusiness");
   return (
     <div className="mx-auto max-w-4xl space-y-6">

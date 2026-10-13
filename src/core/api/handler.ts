@@ -239,7 +239,10 @@ export async function handleApiRoute(
 
     let query: Record<string, unknown> = {};
     // Writes with the browser session: JSON from this very host only, so a
-    // cross-site form cannot act with the person's cookies (CSRF).
+    // cross-site form cannot act with the person's cookies (CSRF). A missing
+    // Origin is refused too (F6a): browsers send it on every same-origin
+    // fetch that writes, so only a non-browser client leaves it out, and
+    // those use API keys.
     if (route.method !== "GET" && principal.kind === "session") {
       const json = (request.headers.get("content-type") ?? "").startsWith(
         "application/json",
@@ -248,7 +251,7 @@ export async function handleApiRoute(
       const host =
         request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ??
         request.headers.get("host");
-      let sameOrigin = true;
+      let sameOrigin = false;
       if (origin) {
         try {
           sameOrigin = new URL(origin).host === host;

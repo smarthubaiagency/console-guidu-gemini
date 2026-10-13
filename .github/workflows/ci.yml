@@ -42,6 +42,10 @@ jobs:
           echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
           echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
+      # F6a: fails on a high or critical advisory in what ships to production.
+      # Dev-only tooling is reviewed in the audit report, not blocked here.
+      - name: Dependency audit (production, high and critical)
+        run: pnpm audit --prod --audit-level high
       - run: pnpm generate
       - run: pnpm typecheck
       - run: pnpm lint
@@ -198,6 +202,7 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/legal-translations-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/notification-locale-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/machine-translation-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/security-catalog.sql
 
       - name: Prisma and Data API isolation suite
         run: npx vitest run --project integration --reporter=default --reporter=json --outputFile=/tmp/db-tests.json
