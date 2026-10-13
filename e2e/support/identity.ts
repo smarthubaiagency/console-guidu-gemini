@@ -129,16 +129,16 @@ export async function seedPartner(
   return (await response.json()) as { partnerId: string };
 }
 
-/** Seeds a draft GUIDS in a workspace, with the AI module on (A3c). */
+/** Turns the AI module on in a workspace and, with a name, seeds a GUIDS. */
 export async function seedGuid(
   request: APIRequestContext,
-  params: { organizationId: string; workspaceId: string; agentName: string },
-): Promise<{ agentId: string }> {
+  params: { organizationId: string; workspaceId: string; agentName?: string },
+): Promise<{ agentId: string | null }> {
   const response = await request.post(`${AUTH_BASE_URL}/__control/seed-guid`, {
     data: params,
   });
   expect(response.status()).toBe(200);
-  return (await response.json()) as { agentId: string };
+  return (await response.json()) as { agentId: string | null };
 }
 
 /** Runs the job worker until no job waits; returns how many still wait. */

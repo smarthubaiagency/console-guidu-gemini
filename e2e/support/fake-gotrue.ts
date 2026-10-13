@@ -89,7 +89,7 @@ export type FakeGoTrueOptions = Readonly<{
   /** Seeds a partner with an active domain, a member and maybe a customer. */
   onSeedPartner?: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
   /** Seeds a draft GUIDS in a workspace (A3c). */
-  onSeedGuid?: (params: SeedGuidParams) => Promise<{ agentId: string }>;
+  onSeedGuid?: (params: SeedGuidParams) => Promise<{ agentId: string | null }>;
   /** Runs the job worker until no job is waiting (F3a). */
   onRunJobs?: () => Promise<{ remaining: number }>;
 }>;
@@ -344,8 +344,8 @@ export async function startFakeGoTrue(
       const body = await readBody(request);
       const organizationId = asString(body.organizationId);
       const workspaceId = asString(body.workspaceId);
-      const agentName = asString(body.agentName);
-      if (!organizationId || !workspaceId || !agentName || !options.onSeedGuid) {
+      const agentName = asString(body.agentName) ?? undefined;
+      if (!organizationId || !workspaceId || !options.onSeedGuid) {
         return json(response, 400, { msg: "invalid parameters" });
       }
       const seeded = await options.onSeedGuid({ organizationId, workspaceId, agentName });

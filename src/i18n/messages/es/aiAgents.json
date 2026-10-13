@@ -8,10 +8,6 @@
     "title": "Módulo No Disponible",
     "body": "El módulo de Agentes de IA aún no está disponible en este entorno."
   },
-  "building": {
-    "title": "En construcción",
-    "body": "El motor de los agentes se está construyendo. La creación y la configuración de los GUIDS llegan en las próximas etapas."
-  },
   "prompt": {
     "notConfigured": "(no configurado)",
     "notInformed": "(no informado)",
@@ -64,6 +60,51 @@
       "draft": "Borrador",
       "active": "Activo",
       "paused": "En pausa"
-    }
+    },
+    "new": "Nuevo agente",
+    "panelLabel": "Editor del agente",
+    "chooseTemplate": "Elija una plantilla lista o empiece de cero.",
+    "custom": "Personalizado",
+    "customHint": "Empieza vacío: usted completa todo antes de activarlo.",
+    "create": "Crear agente",
+    "quota": "{count} de {limit} agentes de su plan.",
+    "quotaUnlimited": "{count} agentes.",
+    "empty": "Aún no hay agentes.",
+    "emptyManage": "Aún no hay agentes. Cree el primero a partir de una plantilla.",
+    "customizedLabel": "Personalizado",
+    "fromTemplate": "De una plantilla",
+    "keyState": {
+      "ok": "Clave al día",
+      "backup": "En la clave de respaldo",
+      "failed": "Clave con falla"
+    },
+    "model": "modelo {model}",
+    "noModel": "sin modelo",
+    "lastTested": "clave probada el {date}",
+    "missing": "Falta completar para activar: {fields}.",
+    "readOnly": "Solo los dueños y administradores del workspace cambian los agentes.",
+    "invalidStored": "La configuración guardada de este agente no es válida. Revísela y guarde de nuevo.",
+    "noKeys": "Registre una clave de IA en Configuración › Credenciales para elegir el modelo.",
+    "active": "Agente activo",
+    "save": "Guardar",
+    "saved": "Agente guardado.",
+    "savedActive": "Agente guardado y activo.",
+    "keyTest": {
+      "run": "Probar clave",
+      "ok": "La clave respondió.",
+      "failed": "La clave no respondió ({code}). Revise la clave y el modelo."
+    },
+    "customize": "Personalizar",
+    "customizeHint": "Para cambiar lo que dice el agente, sus reglas y derivaciones, personalice el agente. La plantilla de origen queda solo como referencia.",
+    "customizeTitle": "Personalizar agente",
+    "customizeMessage": "La configuración pasa a ser de este agente y deja de seguir la plantilla. No se puede deshacer.",
+    "customized": "Agente personalizado.",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "deleteTitle": "Eliminar agente",
+    "deleteMessage": "El agente {name} y sus conversaciones serán eliminados. El consumo ya registrado se mantiene."
+  },
+  "errors": {
+    "notCustomized": "Personalice el agente para cambiar las derivaciones."
   }
 }
