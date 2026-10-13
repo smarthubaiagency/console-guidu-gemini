@@ -287,6 +287,72 @@ export async function buildWorkspaceExport(
     }),
     tx.workspaceLocation.findMany({ where, orderBy: { createdAt: "asc" } }),
   ]);
+  // Channels (A5a): the connections without their tokens, the routes and
+  // what the providers sent.
+  const [
+    channelConnections,
+    channelRoutes,
+    channelConversations,
+    channelEvents,
+  ] = await Promise.all([
+    tx.channelConnection.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        kind: true,
+        name: true,
+        status: true,
+        config: true,
+        maskedSecret: true,
+        createdAt: true,
+      },
+    }),
+    tx.channelRoute.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        connectionId: true,
+        scope: true,
+        consumerModule: true,
+        consumerRef: true,
+        status: true,
+        createdAt: true,
+      },
+    }),
+    tx.channelConversation.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        connectionId: true,
+        scope: true,
+        externalId: true,
+        externalContactId: true,
+        externalStatus: true,
+        createdAt: true,
+        lastEventAt: true,
+      },
+    }),
+    tx.channelInboundEvent.findMany({
+      where,
+      orderBy: { receivedAt: "asc" },
+      take: 50_000,
+      select: {
+        id: true,
+        connectionId: true,
+        conversationId: true,
+        kind: true,
+        sender: true,
+        scope: true,
+        payload: true,
+        status: true,
+        occurredAt: true,
+        receivedAt: true,
+      },
+    }),
+  ]);
 
   const moduleData: Record<string, Record<string, ExportedRows>> = {};
   for (const contract of listModuleDataContracts()) {
@@ -307,10 +373,16 @@ export async function buildWorkspaceExport(
       jobRuns: jobs,
       proposals,
       locations,
+      channels: {
+        connections: channelConnections,
+        routes: channelRoutes,
+        conversations: channelConversations,
+        events: channelEvents,
+      },
     },
     modules: moduleData,
     notes: [
-      "Chaves de API, credenciais e convites aparecem sem segredos (hash, conteúdo cifrado e token ficam fora).",
+      "Chaves de API, credenciais, conexões de canal e convites aparecem sem segredos (hash, conteúdo cifrado e token ficam fora).",
       "A auditoria do workspace não entra nesta exportação; é pedida ao suporte.",
     ],
   };

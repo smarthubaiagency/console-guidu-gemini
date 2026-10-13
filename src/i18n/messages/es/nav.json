@@ -21,6 +21,7 @@
     "core_locations": "Tiendas",
     "core_modules": "Módulos",
     "core_credentials": "Credenciales BYOK",
+    "core_channels": "Canales",
     "core_mcp": "Asistentes MCP",
     "core_api": "API y webhooks",
     "core_usage": "Consumo y límites",

@@ -1241,3 +1241,87 @@ model PlatformTranslation {
   @@id([locale, key])
   @@map("platform_translations")
 }
+
+/// Messaging channel of a workspace (A5a, ADR 0011): non-secret settings in
+/// `config`, the provider's tokens encrypted in `encryptedSecrets`.
+model ChannelConnection {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String    @map("organization_id") @db.Uuid
+  workspaceId      String    @map("workspace_id") @db.Uuid
+  kind             String
+  name             String
+  status           String    @default("active")
+  config           Json      @default("{}")
+  encryptedSecrets String    @map("encrypted_secrets")
+  maskedSecret     String    @map("masked_secret")
+  webhookTokenHash String    @unique @map("webhook_token_hash")
+  healthStatus     String    @default("unknown") @map("health_status")
+  healthError      String?   @map("health_error")
+  healthCheckedAt  DateTime? @map("health_checked_at") @db.Timestamptz()
+  lastEventAt      DateTime? @map("last_event_at") @db.Timestamptz()
+  createdBy        String    @map("created_by") @db.Uuid
+  updatedBy        String?   @map("updated_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([id, workspaceId])
+  @@map("channel_connections")
+}
+
+/// Owner of a (connection, scope): at most one active route (A5a).
+model ChannelRoute {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  connectionId   String   @map("connection_id") @db.Uuid
+  scope          String
+  consumerModule String   @map("consumer_module")
+  consumerRef    String   @map("consumer_ref") @db.Uuid
+  status         String   @default("active")
+  createdBy      String   @map("created_by") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([id, workspaceId])
+  @@map("channel_routes")
+}
+
+/// A conversation of the provider, per connection (A5a).
+model ChannelConversation {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId    String   @map("organization_id") @db.Uuid
+  workspaceId       String   @map("workspace_id") @db.Uuid
+  connectionId      String   @map("connection_id") @db.Uuid
+  scope             String
+  externalId        String   @map("external_id")
+  externalContactId String?  @map("external_contact_id")
+  externalStatus    String?  @map("external_status")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  lastEventAt       DateTime @default(now()) @map("last_event_at") @db.Timestamptz()
+
+  @@unique([id, workspaceId])
+  @@unique([connectionId, externalId])
+  @@map("channel_conversations")
+}
+
+/// A normalized inbound event, written only by the webhook (A5a).
+model ChannelInboundEvent {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  workspaceId     String    @map("workspace_id") @db.Uuid
+  connectionId    String    @map("connection_id") @db.Uuid
+  conversationId  String?   @map("conversation_id") @db.Uuid
+  externalId      String    @map("external_id")
+  contractVersion Int       @map("contract_version")
+  kind            String
+  sender          String
+  scope           String
+  payload         Json
+  status          String
+  occurredAt      DateTime? @map("occurred_at") @db.Timestamptz()
+  receivedAt      DateTime  @default(now()) @map("received_at") @db.Timestamptz()
+
+  @@unique([connectionId, externalId])
+  @@map("channel_inbound_events")
+}

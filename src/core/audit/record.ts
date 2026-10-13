@@ -89,6 +89,13 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "fields",
   "version",
   "published",
+  // Channel connections (A5a): provider, account and bot, never a token.
+  "kind",
+  "baseUrl",
+  "accountId",
+  "agentBotId",
+  "botRemoved",
+  "inboxes",
 ]);
 
 /**

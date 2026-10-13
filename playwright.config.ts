@@ -49,6 +49,8 @@ export default defineConfig({
       GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
       // Deterministic machine translation (I6); never the real provider.
       TRANSLATION_PROVIDER: "fake",
+      // The Chatwoot double of the rig listens on 127.0.0.1 over http (A5a).
+      GUIDU_CHANNELS_ALLOW_PRIVATE: "true",
       APP_NAME: process.env.APP_NAME || "GUIDU",
       APP_URL: process.env.APP_URL || RIG.appUrl,
     },

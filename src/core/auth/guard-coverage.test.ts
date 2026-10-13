@@ -46,6 +46,8 @@ const PUBLIC: Record<string, string> = {
   "api/health/live/route.ts": "saúde do processo",
   "api/health/ready/route.ts": "saúde das dependências",
   "api/v1/openapi.json/route.ts": "contrato público da API",
+  "api/channels/[connectionId]/[token]/route.ts":
+    "webhook de um canal; confere o hash do token da conexão (A5a)",
   "brand/logo/[version]/route.ts": "logo da marca do host",
 };
 

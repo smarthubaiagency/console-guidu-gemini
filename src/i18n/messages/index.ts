@@ -8,6 +8,7 @@ import ptBR_apiErrors from "./pt-BR/apiErrors.json";
 import ptBR_auth from "./pt-BR/auth.json";
 import ptBR_billing from "./pt-BR/billing.json";
 import ptBR_brand from "./pt-BR/brand.json";
+import ptBR_channels from "./pt-BR/channels.json";
 import ptBR_common from "./pt-BR/common.json";
 import ptBR_credentials from "./pt-BR/credentials.json";
 import ptBR_crm from "./pt-BR/crm.json";
@@ -50,6 +51,7 @@ import en_apiErrors from "./en/apiErrors.json";
 import en_auth from "./en/auth.json";
 import en_billing from "./en/billing.json";
 import en_brand from "./en/brand.json";
+import en_channels from "./en/channels.json";
 import en_common from "./en/common.json";
 import en_credentials from "./en/credentials.json";
 import en_crm from "./en/crm.json";
@@ -92,6 +94,7 @@ import es_apiErrors from "./es/apiErrors.json";
 import es_auth from "./es/auth.json";
 import es_billing from "./es/billing.json";
 import es_brand from "./es/brand.json";
+import es_channels from "./es/channels.json";
 import es_common from "./es/common.json";
 import es_credentials from "./es/credentials.json";
 import es_crm from "./es/crm.json";
@@ -138,6 +141,7 @@ export const MESSAGE_FILES = {
     auth: ptBR_auth,
     billing: ptBR_billing,
     brand: ptBR_brand,
+    channels: ptBR_channels,
     common: ptBR_common,
     credentials: ptBR_credentials,
     crm: ptBR_crm,
@@ -182,6 +186,7 @@ export const MESSAGE_FILES = {
     auth: en_auth,
     billing: en_billing,
     brand: en_brand,
+    channels: en_channels,
     common: en_common,
     credentials: en_credentials,
     crm: en_crm,
@@ -226,6 +231,7 @@ export const MESSAGE_FILES = {
     auth: es_auth,
     billing: es_billing,
     brand: es_brand,
+    channels: es_channels,
     common: es_common,
     credentials: es_credentials,
     crm: es_crm,
@@ -272,6 +278,7 @@ export const NAMESPACES = [
   "auth",
   "billing",
   "brand",
+  "channels",
   "common",
   "credentials",
   "crm",

@@ -32,6 +32,8 @@ Legenda: **[Decidido]** foi definido por Marcelo; **[Proposta]** é recomendaç�
 
 O que fica no módulo: agentes, vínculos e política de saída, estado da conversa na visão do agente, turno (agrupamento, transcrição, modelo, plano de resposta), consumo e auditoria do agente.
 
+**Implementado na A5a (13/10/2026):** `src/core/channels/` tem o contrato versionado dos eventos (`contract.ts`, versão 1), a guarda das chamadas aos provedores (`http.ts`: só https, sem redes internas, sem redirecionamento, resposta limitada), o adaptador Chatwoot (`chatwoot.ts`: normalização do webhook do Agent Bot, criação e remoção do bot, inboxes e verificação), o webhook por conexão (`webhook.ts` e `POST /api/channels/{conexão}/{token}`) e os serviços das conexões (`connections.ts`). As tabelas são `channel_connections`, `channel_routes`, `channel_conversations` e `channel_inbound_events`. O envio, a transferência e as entregas chegam com o primeiro consumidor, na A5b.
+
 ### 3.2 Contrato do adaptador
 
 O adaptador é interno do núcleo: nenhum módulo o chama diretamente. Todo canal implementa o mesmo contrato. A assinatura abaixo é ilustrativa; o tipo final nasce com o código.

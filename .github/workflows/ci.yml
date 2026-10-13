@@ -204,6 +204,7 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/machine-translation-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/ai-agents-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/ai-engine-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/channels-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/security-catalog.sql
 
       - name: Prisma and Data API isolation suite

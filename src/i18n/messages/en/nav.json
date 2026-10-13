@@ -21,6 +21,7 @@
     "core_locations": "Stores",
     "core_modules": "Modules",
     "core_credentials": "BYOK credentials",
+    "core_channels": "Channels",
     "core_mcp": "MCP assistants",
     "core_api": "API and Webhooks",
     "core_usage": "Usage & Limits",

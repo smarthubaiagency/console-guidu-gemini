@@ -48,6 +48,8 @@ As permissões possuem namespace estável declarado em [`src/core/permissions/ca
 | `workspace.members.manage` | Workspace | Atualizar papéis ou remover membros do workspace |
 | `credentials.read` | Credenciais BYOK | Visualizar metadados e valores mascarados de credenciais |
 | `credentials.manage` | Credenciais BYOK | Cadastrar, atualizar, substituir e revogar credenciais |
+| `channels.read` | Canais de mensagem | Ver conexões, rotas e eventos recebidos dos canais (A5a) |
+| `channels.manage` | Canais de mensagem | Cadastrar, testar e remover conexões e trocar rotas (ADR 0011) |
 | `api_keys.create_own` | Chaves de API | Criar chaves de API próprias para acesso à plataforma / MCP |
 | `api_keys.revoke_own` | Chaves de API | Revogar as próprias chaves de API |
 | `api_keys.revoke_any` | Chaves de API | Revogar chaves de API de qualquer membro do workspace |
@@ -77,6 +79,8 @@ As permissões possuem namespace estável declarado em [`src/core/permissions/ca
 | `workspace.members.manage` | ✅ | ✅* | ❌ | ❌ |
 | `credentials.read` | ✅ | ✅ | ✅ | ❌ |
 | `credentials.manage` | ✅ | ✅ | ❌ | ❌ |
+| `channels.read` | ✅ | ✅ | ✅ | ❌ |
+| `channels.manage` | ✅ | ✅ | ❌ | ❌ |
 | `api_keys.create_own` | ✅ | ✅ | ✅ | ✅** |
 | `api_keys.revoke_own` | ✅ | ✅ | ✅ | ✅ |
 | `api_keys.revoke_any` | ✅ | ✅ | ❌ | ❌ |
