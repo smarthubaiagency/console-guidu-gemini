@@ -69,3 +69,58 @@ export function assignRuleIds(
     return { ...rule, rule_id: id };
   });
 }
+
+export type LeadTemperature = "hot" | "warm" | "cold" | "suspect";
+
+export type LeadScore = Readonly<{
+  points: number;
+  temperature: LeadTemperature;
+  breakdown: readonly Readonly<{
+    rule_id: string;
+    label: string;
+    points: number;
+  }>[];
+  /** Ids the model sent that the agent does not have. */
+  unknown: readonly string[];
+}>;
+
+/**
+ * Score of the signals the agent saw in a turn (`score_lead`, A2b): the sum
+ * of the matched rules, each counted once, and the temperature from the
+ * thresholds. Without thresholds a positive score is `cold`; a negative
+ * score is always `suspect`.
+ */
+export function scoreLead(
+  rules: readonly ScoringRule[],
+  ruleIds: readonly string[],
+  thresholds: Readonly<{ hot?: number | undefined; warm?: number | undefined }>,
+): LeadScore {
+  const byId = new Map(rules.map((rule) => [rule.rule_id, rule]));
+  const seen = new Set<string>();
+  const breakdown: { rule_id: string; label: string; points: number }[] = [];
+  const unknown: string[] = [];
+  for (const id of ruleIds) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const rule = byId.get(id);
+    if (!rule) {
+      unknown.push(id);
+      continue;
+    }
+    breakdown.push({
+      rule_id: rule.rule_id,
+      label: rule.label,
+      points: rule.points,
+    });
+  }
+  const points = breakdown.reduce((sum, item) => sum + item.points, 0);
+  const temperature: LeadTemperature =
+    points < 0
+      ? "suspect"
+      : thresholds.hot !== undefined && points >= thresholds.hot
+        ? "hot"
+        : thresholds.warm !== undefined && points >= thresholds.warm
+          ? "warm"
+          : "cold";
+  return { points, temperature, breakdown, unknown };
+}

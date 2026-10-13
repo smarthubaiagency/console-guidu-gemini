@@ -1,6 +1,7 @@
 -- ============================================================================
--- SQL AI engine data (A2a): conversations and messages, usage, the partner
--- vault and the platform backup key.
+-- SQL AI engine data (A2a) and its write paths (A2b): conversations and
+-- messages, usage, the partner vault, the platform backup key and the
+-- Assistant's runtime functions.
 --   workspace A a…011 (org a…010, house partner): owner a…031, viewer a…033
 --   workspace B a…021 (org a…020, house partner): owner a…032
 --   partner P b1…001 (created per block, with its Assistant):
@@ -92,18 +93,40 @@ begin
     raise exception 'ai_messages: owner of A does not see exactly the messages of his conversations';
   end if;
 
-  -- The engine writes from A2b on: no write path yet.
+  -- The engine writes as the person of the turn (A2b): a GUIDS test
+  -- conversation of his own and its messages.
+  insert into public.ai_conversations (kind, agent_id, organization_id, workspace_id, user_id, channel)
+  values ('guid', 'a2a00000-0000-4000-8000-0000000000a1', 'a0000000-0000-4000-8000-000000000010',
+          'a0000000-0000-4000-8000-000000000011', 'a0000000-0000-4000-8000-000000000031', 'test');
+  insert into public.ai_messages (conversation_id, role, content)
+  values ('a2a00000-0000-4000-8000-0000000001a1', 'user', 'x');
+  update public.ai_conversations set status = 'handoff', variables = '{"etapa":"orcamento"}'
+  where id = 'a2a00000-0000-4000-8000-0000000001a1';
+  if not found then raise exception 'ai_conversations: owner could not update his conversation'; end if;
+  -- Never in another person's name, nor in another workspace.
   begin
-    insert into public.ai_conversations (kind, agent_id, organization_id, workspace_id, channel)
+    insert into public.ai_conversations (kind, agent_id, organization_id, workspace_id, user_id, channel)
     values ('guid', 'a2a00000-0000-4000-8000-0000000000a1', 'a0000000-0000-4000-8000-000000000010',
-            'a0000000-0000-4000-8000-000000000011', 'test');
-    raise exception 'ai_conversations: inserted without a write path';
+            'a0000000-0000-4000-8000-000000000011', 'a0000000-0000-4000-8000-000000000033', 'test');
+    raise exception 'ai_conversations: test conversation of another person';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.ai_conversations (kind, agent_id, organization_id, workspace_id, user_id, channel)
+    values ('guid', 'a2a00000-0000-4000-8000-0000000000b1', 'a0000000-0000-4000-8000-000000000020',
+            'a0000000-0000-4000-8000-000000000021', 'a0000000-0000-4000-8000-000000000031', 'test');
+    raise exception 'ai_conversations: conversation in another workspace';
   exception when insufficient_privilege then null;
   end;
   begin
     insert into public.ai_messages (conversation_id, role, content)
-    values ('a2a00000-0000-4000-8000-0000000001a1', 'user', 'x');
-    raise exception 'ai_messages: inserted without a write path';
+    values ('a2a00000-0000-4000-8000-0000000001b1', 'user', 'x');
+    raise exception 'ai_messages: message in a conversation of another workspace';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.ai_conversations set agent_id = 'a2a00000-0000-4000-8000-0000000000a1';
+    raise exception 'ai_conversations: agent changed';
   exception when insufficient_privilege then null;
   end;
   begin
@@ -118,6 +141,13 @@ begin
   if exists (select 1 from public.ai_conversations) or exists (select 1 from public.ai_messages) then
     raise exception 'ai_conversations: viewer sees conversations';
   end if;
+  begin
+    insert into public.ai_conversations (kind, agent_id, organization_id, workspace_id, user_id, channel)
+    values ('guid', 'a2a00000-0000-4000-8000-0000000000a1', 'a0000000-0000-4000-8000-000000000010',
+            'a0000000-0000-4000-8000-000000000011', 'a0000000-0000-4000-8000-000000000033', 'test');
+    raise exception 'ai_conversations: viewer tested a GUIDS';
+  exception when insufficient_privilege then null;
+  end;
 
   -- Owner of B: the GUIDS conversation of B and his own Assistant one.
   perform pg_temp.ctx('a0000000-0000-4000-8000-000000000032', 'a0000000-0000-4000-8000-000000000021',
@@ -245,11 +275,23 @@ begin
      <> array['backup:true', 'customer:false'] then
     raise exception 'ai_usage_events: owner of A does not see exactly his usage';
   end if;
+  -- The turn records its usage in the workspace of the turn only.
+  insert into public.ai_usage_events (execution_id, organization_id, workspace_id, key_source, provider, model)
+  values (gen_random_uuid(), 'a0000000-0000-4000-8000-000000000010',
+          'a0000000-0000-4000-8000-000000000011', 'customer', 'openai', 'gpt-test');
   begin
     insert into public.ai_usage_events (execution_id, organization_id, workspace_id, key_source, provider, model)
-    values (gen_random_uuid(), 'a0000000-0000-4000-8000-000000000010',
-            'a0000000-0000-4000-8000-000000000011', 'customer', 'openai', 'gpt-test');
-    raise exception 'ai_usage_events: inserted without a write path';
+    values (gen_random_uuid(), 'a0000000-0000-4000-8000-000000000020',
+            'a0000000-0000-4000-8000-000000000021', 'customer', 'openai', 'gpt-test');
+    raise exception 'ai_usage_events: usage written for another workspace';
+  exception when insufficient_privilege then null;
+  end;
+  -- The admin key of another partner is never charged from here.
+  begin
+    insert into public.ai_usage_events (execution_id, partner_id, organization_id, workspace_id, key_source, provider, model)
+    values (gen_random_uuid(), 'b1000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000010',
+            'a0000000-0000-4000-8000-000000000011', 'admin', 'openai', 'gpt-test');
+    raise exception 'ai_usage_events: admin usage charged to another partner';
   exception when insufficient_privilege then null;
   end;
 
@@ -270,9 +312,9 @@ begin
     raise exception 'ai_usage_events: support of P sees usage';
   end if;
 
-  -- The platform sees everything.
+  -- The platform sees everything (the fixture and the row written above).
   perform pg_temp.ctx('d0000000-0000-4000-8000-000000000003', null, null);
-  if (select count(*) from public.ai_usage_events) <> 5 then
+  if (select count(*) from public.ai_usage_events) <> 6 then
     raise exception 'ai_usage_events: platform does not see all usage';
   end if;
 end
@@ -398,6 +440,95 @@ begin
   end if;
 end
 $$;
+rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test 6: the Assistant's runtime (A2b), for the partner serving the context
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+insert into public.partner_credentials (id, partner_id, provider, label, masked_value, encrypted_payload, created_by)
+values
+  ('a2b00000-0000-4000-8000-0000000000f1', 'b1000000-0000-4000-8000-000000000001', 'openrouter', 'P',
+   'sk-or-…0001', 'cipher-p', 'd0000000-0000-4000-8000-000000000004'),
+  ('a2b00000-0000-4000-8000-0000000000f2', '00000000-0000-4000-8000-000000000000', 'anthropic', 'Casa',
+   'sk-ant-…0002', 'cipher-house', 'd0000000-0000-4000-8000-000000000003'),
+  ('a2b00000-0000-4000-8000-0000000000f3', 'b1000000-0000-4000-8000-000000000001', 'openai', 'P revogada',
+   'sk-…0003', 'cipher-revoked', 'd0000000-0000-4000-8000-000000000004');
+update public.partner_credentials set status = 'revoked' where id = 'a2b00000-0000-4000-8000-0000000000f3';
+set local role app_runtime;
+do $$
+declare
+  v_p_assistant uuid;
+  v_house_assistant uuid;
+begin
+  -- Support of P: the Assistant of P and its key, for the engine only.
+  perform pg_temp.ctx('d0000000-0000-4000-8000-000000000006', null, null, 'b1000000-0000-4000-8000-000000000001');
+  select agent_id into v_p_assistant from private.ai_assistant_runtime()
+  where partner_id = 'b1000000-0000-4000-8000-000000000001';
+  if v_p_assistant is null or (select count(*) from private.ai_assistant_runtime()) <> 1 then
+    raise exception 'ai_assistant_runtime: support of P does not get exactly the Assistant of P';
+  end if;
+  if (select encrypted_payload from private.ai_admin_key(null, null)) is distinct from 'cipher-p'
+     or exists (select 1 from private.ai_admin_key('a2b00000-0000-4000-8000-0000000000f2', null))
+     or exists (select 1 from private.ai_admin_key('a2b00000-0000-4000-8000-0000000000f3', null))
+     or exists (select 1 from private.ai_admin_key(null, 'anthropic')) then
+    raise exception 'ai_admin_key: support of P gets a key other than the active key of P';
+  end if;
+  if exists (select 1 from public.partner_credentials) then
+    raise exception 'partner_credentials: support reads the vault';
+  end if;
+  -- Talks to the Assistant of P in /admin, never in another partner's name.
+  insert into public.ai_conversations (kind, agent_id, partner_id, user_id, channel)
+  values ('assistant', v_p_assistant, 'b1000000-0000-4000-8000-000000000001',
+          'd0000000-0000-4000-8000-000000000006', 'panel');
+  insert into public.ai_usage_events (execution_id, partner_id, agent_id, key_source, provider, model)
+  values (gen_random_uuid(), 'b1000000-0000-4000-8000-000000000001', v_p_assistant, 'admin',
+          'openrouter', 'openai/gpt-test');
+  begin
+    insert into public.ai_conversations (kind, agent_id, partner_id, user_id, channel)
+    values ('assistant', v_p_assistant, 'b1000000-0000-4000-8000-000000000001',
+            'd0000000-0000-4000-8000-000000000004', 'panel');
+    raise exception 'ai_conversations: Assistant conversation of another person';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- Owner of A (customer of the house): the house Assistant and key.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  select agent_id into v_house_assistant from private.ai_assistant_runtime();
+  if v_house_assistant is null
+     or (select partner_id from private.ai_assistant_runtime()) <> '00000000-0000-4000-8000-000000000000' then
+    raise exception 'ai_assistant_runtime: workspace of the house does not get the house Assistant';
+  end if;
+  if (select encrypted_payload from private.ai_admin_key(null, null)) is distinct from 'cipher-house'
+     or exists (select 1 from private.ai_admin_key('a2b00000-0000-4000-8000-0000000000f1', null)) then
+    raise exception 'ai_admin_key: workspace of the house gets a key of another partner';
+  end if;
+  insert into public.ai_conversations (kind, agent_id, partner_id, organization_id, workspace_id, user_id, channel)
+  values ('assistant', v_house_assistant, '00000000-0000-4000-8000-000000000000',
+          'a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+          'a0000000-0000-4000-8000-000000000031', 'panel');
+  insert into public.ai_usage_events (execution_id, partner_id, organization_id, workspace_id, agent_id, key_source, provider, model)
+  values (gen_random_uuid(), '00000000-0000-4000-8000-000000000000', 'a0000000-0000-4000-8000-000000000010',
+          'a0000000-0000-4000-8000-000000000011', v_house_assistant, 'admin', 'anthropic', 'claude-test');
+  begin
+    insert into public.ai_conversations (kind, agent_id, partner_id, user_id, channel)
+    values ('assistant', v_p_assistant, 'b1000000-0000-4000-8000-000000000001',
+            'a0000000-0000-4000-8000-000000000031', 'panel');
+    raise exception 'ai_conversations: workspace member used the Assistant of another partner';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- Without a context, there is no Assistant and no key.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', null, null);
+  if exists (select 1 from private.ai_assistant_runtime())
+     or exists (select 1 from private.ai_admin_key(null, null)) then
+    raise exception 'ai_assistant_runtime: answers without a context';
+  end if;
+end
+$$;
+reset role;
 rollback;
 
 select 'ai-engine-rls: ok' as result;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { assignRuleIds, ruleIdFromLabel } from "./scoring";
+import { assignRuleIds, ruleIdFromLabel, scoreLead } from "./scoring";
 
 const rule = (label: string, rule_id?: string) => ({
   ...(rule_id ? { rule_id } : {}),
@@ -53,5 +53,59 @@ describe("lead scoring rule ids", () => {
       rule("Outro", "prazo"),
     ]);
     expect(twice.map((r) => r.rule_id)).toEqual(["prazo", "outro"]);
+  });
+});
+
+describe("scoreLead", () => {
+  const rules = [
+    {
+      rule_id: "pede_proposta",
+      key_group: "intencao",
+      label: "Pede proposta",
+      signal: "pede",
+      points: 30,
+    },
+    {
+      rule_id: "tem_prazo",
+      key_group: "intencao",
+      label: "Tem prazo",
+      signal: "prazo",
+      points: 20,
+    },
+    {
+      rule_id: "concorrente",
+      key_group: "risco",
+      label: "É concorrente",
+      signal: "conc",
+      points: -50,
+    },
+  ];
+
+  it("sums each matched rule once and reports unknown ids", () => {
+    const score = scoreLead(
+      rules,
+      ["pede_proposta", "tem_prazo", "pede_proposta", "x"],
+      { hot: 50, warm: 20 },
+    );
+    expect(score.points).toBe(50);
+    expect(score.temperature).toBe("hot");
+    expect(score.breakdown.map((b) => b.rule_id)).toEqual([
+      "pede_proposta",
+      "tem_prazo",
+    ]);
+    expect(score.unknown).toEqual(["x"]);
+  });
+
+  it("derives the temperature from the thresholds", () => {
+    expect(
+      scoreLead(rules, ["pede_proposta"], { hot: 50, warm: 20 }).temperature,
+    ).toBe("warm");
+    expect(scoreLead(rules, [], { hot: 50, warm: 20 }).temperature).toBe(
+      "cold",
+    );
+    expect(
+      scoreLead(rules, ["concorrente"], { hot: 50, warm: 20 }).temperature,
+    ).toBe("suspect");
+    expect(scoreLead(rules, ["pede_proposta"], {}).temperature).toBe("cold");
   });
 });

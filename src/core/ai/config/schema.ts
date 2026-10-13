@@ -66,6 +66,20 @@ function isTimeZone(value: string): boolean {
   }
 }
 
+/** Constants of the agent for the prompt, `{{agent.var.<key>}}` (variaveis.md §2.2). */
+export const AgentVariableSchema = z.strictObject({
+  key: z
+    .string()
+    .regex(/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/, {
+      error: "Use letras minúsculas, números e sublinhado.",
+    })
+    .max(60),
+  value: text(2000),
+  description: text(500).optional(),
+});
+
+export const MAX_AGENT_VARIABLES = 50;
+
 const OverviewTab = z.strictObject({
   agent_name: text(80).optional(),
   agent_tone: z.enum(AGENT_TONES).optional(),
@@ -77,6 +91,13 @@ const OverviewTab = z.strictObject({
   expected_output: text(5000).optional(),
   system_prompt: z.string().max(50_000).optional(),
   prompt_version: z.number().int().min(1).optional(),
+  variables: z
+    .array(AgentVariableSchema)
+    .max(MAX_AGENT_VARIABLES)
+    .refine((vars) => new Set(vars.map((v) => v.key)).size === vars.length, {
+      error: "Variável repetida.",
+    })
+    .optional(),
 });
 
 const AvailabilitySlot = z

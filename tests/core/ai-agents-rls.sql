@@ -357,7 +357,8 @@ begin
   if (select count(*) from public.ai_lead_activities) <> 1 then
     raise exception 'ai_lead_activities: owner of A does not read the log';
   end if;
-  -- The log is insert only, and only the engine writes it (A2).
+  -- The log is insert only: the engine writes it in the name of the person
+  -- of the turn (A2b), never edits or deletes it.
   begin
     update public.ai_lead_activities set points = 0;
     raise exception 'ai_lead_activities: log edited';
@@ -368,11 +369,17 @@ begin
     raise exception 'ai_lead_activities: log deleted';
   exception when insufficient_privilege then null;
   end;
+  insert into public.ai_lead_activities (organization_id, workspace_id, contact_id, agent_id, points, temperature)
+  values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+          'a1d00000-0000-4000-8000-0000000000a1', 'a1b00000-0000-4000-8000-0000000000a1', 1, 'cold');
+  -- A viewer does not run the engine.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000033', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
   begin
     insert into public.ai_lead_activities (organization_id, workspace_id, contact_id, agent_id, points, temperature)
     values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
             'a1d00000-0000-4000-8000-0000000000a1', 'a1b00000-0000-4000-8000-0000000000a1', 1, 'cold');
-    raise exception 'ai_lead_activities: written by the application';
+    raise exception 'ai_lead_activities: written by a viewer';
   exception when insufficient_privilege then null;
   end;
 
@@ -381,6 +388,13 @@ begin
   if exists (select 1 from public.ai_lead_activities) then
     raise exception 'ai_lead_activities: B reads the log of A';
   end if;
+  begin
+    insert into public.ai_lead_activities (organization_id, workspace_id, contact_id, agent_id, points, temperature)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'a1d00000-0000-4000-8000-0000000000a1', 'a1b00000-0000-4000-8000-0000000000a1', 1, 'cold');
+    raise exception 'ai_lead_activities: B wrote the log of A';
+  exception when insufficient_privilege then null;
+  end;
   begin
     insert into public.ai_agent_referrals (organization_id, workspace_id, name, referral_tag, created_by)
     values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',

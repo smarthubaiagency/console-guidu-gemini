@@ -103,6 +103,25 @@ export default defineConfig([
     },
   },
   {
+    // AI SDK (ADR 0017, A2b): only the engine in src/core/ai talks to
+    // models; everything else uses its services.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/core/ai/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^(ai|ai/.*|@ai-sdk/.*|@openrouter/.*)$",
+              message: "Só src/core/ai importa o SDK de IA (ADR 0017).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // UI standard (ADR 0014, U3e): screens use the shadcn components in
     // src/components/ui, never the raw HTML controls. Hidden inputs carry
     // form data only and stay raw.

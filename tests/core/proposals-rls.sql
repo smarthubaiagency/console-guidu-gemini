@@ -81,6 +81,26 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- The GUIDU Assistant (A2b) proposes in the name of the session, with the
+  -- execution id of its turn and no key; a key cannot claim a turn.
+  insert into public.execution_proposals
+    (organization_id, workspace_id, requested_by, ai_execution_id, operation, payload, payload_hash,
+     idempotency_key, expires_at)
+  values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+          'a0000000-0000-4000-8000-000000000031', 'a2b00000-0000-4000-8000-0000000000e1',
+          'crm.contacts.create', '{"name":"Do Assistente"}', v_hash, 'k-ai', now() + interval '1 hour');
+  begin
+    insert into public.execution_proposals
+      (organization_id, workspace_id, requested_by, api_key_id, ai_execution_id, operation, payload,
+       payload_hash, idempotency_key, expires_at)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'a0000000-0000-4000-8000-000000000031', 'f4d00000-0000-4000-8000-0000000000a1',
+            'a2b00000-0000-4000-8000-0000000000e2', 'crm.contacts.create', '{"name":"Mista"}', v_hash,
+            'k-ai-2', now() + interval '1 hour');
+    raise exception 'proposals: a session claimed an API key';
+  exception when insufficient_privilege or check_violation then null;
+  end;
+
   -- The content never changes.
   begin
     update public.execution_proposals set payload = '{"name":"Outra"}' where id = v_id;

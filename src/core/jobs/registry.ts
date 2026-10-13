@@ -1,3 +1,4 @@
+import { guidTurnJob } from "@/core/ai/turn/guid";
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
 import { translateTextsJob } from "@/core/i18n/machine/texts-job";
 import { translateDocumentJob } from "@/core/legal/machine-job";
@@ -20,6 +21,7 @@ const DEFINITIONS = [
   translateDocumentJob,
   workspaceExportJob,
   proposalExecuteJob,
+  guidTurnJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
 

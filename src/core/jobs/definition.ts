@@ -15,6 +15,13 @@ import type {
  *   permission revoked after the job was queued stops the effect.
  * - `platform` (F3c): scheduled work of the platform with no user, such as
  *   billing. Runs as app_worker through its own narrow policies.
+ *
+ * A workspace job may be `detached` (A2b): instead of one transaction for
+ * the whole run, it receives a `JobSession` that opens short transactions
+ * with the same context, role and membership check. It is for jobs that
+ * wait on the network (a model call), which must never hold a transaction
+ * open. A detached job has no workspace lock and may run again after a
+ * crash, so its effects must be idempotent.
  */
 type JobCommon<P> = Readonly<{
   /** `<namespace>.<name>`, e.g. `hello-world.create-record`. */
@@ -30,15 +37,34 @@ type JobCommon<P> = Readonly<{
   expireInSeconds?: number;
 }>;
 
+/** Short transactions of a detached job, each with the requester's context. */
+export type JobSession = Readonly<{
+  /** The run of `job_runs`; stable across the attempts of one run. */
+  jobRunId: string;
+  transaction<T>(operation: (tx: ContextTransaction) => Promise<T>): Promise<T>;
+}>;
+
 export type WorkspaceJobDefinition<P = unknown> = JobCommon<P> &
-  Readonly<{
-    scope: "workspace";
-    run(
-      tx: ContextTransaction,
-      ctx: RequestContext,
-      payload: P,
-    ): Promise<JobResult | void>;
-  }>;
+  (
+    | Readonly<{
+        scope: "workspace";
+        detached?: false;
+        run(
+          tx: ContextTransaction,
+          ctx: RequestContext,
+          payload: P,
+        ): Promise<JobResult | void>;
+      }>
+    | Readonly<{
+        scope: "workspace";
+        detached: true;
+        run(
+          session: JobSession,
+          ctx: RequestContext,
+          payload: P,
+        ): Promise<JobResult | void>;
+      }>
+  );
 
 export type PlatformJobDefinition<P = unknown> = JobCommon<P> &
   Readonly<{
@@ -69,10 +95,40 @@ function validate(definition: JobCommon<unknown>): void {
 }
 
 export function defineJob<P>(
-  definition: Omit<WorkspaceJobDefinition<P>, "scope">,
+  definition: JobCommon<P> &
+    Readonly<{
+      run(
+        tx: ContextTransaction,
+        ctx: RequestContext,
+        payload: P,
+      ): Promise<JobResult | void>;
+    }>,
 ): WorkspaceJobDefinition<P> {
   validate(definition as JobCommon<unknown>);
-  return Object.freeze({ ...definition, scope: "workspace" as const });
+  return Object.freeze({
+    ...definition,
+    scope: "workspace" as const,
+    detached: false as const,
+  });
+}
+
+/** A workspace job that opens its own short transactions (see above). */
+export function defineDetachedJob<P>(
+  definition: JobCommon<P> &
+    Readonly<{
+      run(
+        session: JobSession,
+        ctx: RequestContext,
+        payload: P,
+      ): Promise<JobResult | void>;
+    }>,
+): WorkspaceJobDefinition<P> {
+  validate(definition as JobCommon<unknown>);
+  return Object.freeze({
+    ...definition,
+    scope: "workspace" as const,
+    detached: true as const,
+  });
 }
 
 export function definePlatformJob<P>(

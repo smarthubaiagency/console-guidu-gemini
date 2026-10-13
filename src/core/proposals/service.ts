@@ -202,6 +202,48 @@ export async function createProposal(
       messageKey: "proposals.errors.createdByAssistants",
     });
   }
+  return insertProposal(tx, ctx, input, {
+    apiKeyId: ctx.grantId,
+    aiExecutionId: null,
+    origin: "mcp",
+  });
+}
+
+/**
+ * Creates a proposal for the GUIDU Assistant (A2b, propose_operation), in
+ * the name of the person who talks to it: same checks, same hash, no API
+ * key. The person reviews it on the proposals page; nothing runs now.
+ */
+export async function createAssistantProposal(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  executionId: string,
+  input: unknown,
+): Promise<{ proposal: ProposalView; created: boolean }> {
+  if ((ctx.principalType ?? "user") !== "user") {
+    throw new AppError({
+      code: "forbidden",
+      safeMessage: "Só o Assistente, em nome de uma pessoa, usa esta entrada.",
+      messageKey: "proposals.errors.createdByAssistants",
+    });
+  }
+  return insertProposal(tx, ctx, input, {
+    apiKeyId: null,
+    aiExecutionId: executionId,
+    origin: "app",
+  });
+}
+
+async function insertProposal(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  input: unknown,
+  source: Readonly<{
+    apiKeyId: string | null;
+    aiExecutionId: string | null;
+    origin: "mcp" | "app";
+  }>,
+): Promise<{ proposal: ProposalView; created: boolean }> {
   const parsed = ProposeInput.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0]?.message;
@@ -278,7 +320,8 @@ export async function createProposal(
       organizationId: ctx.organizationId,
       workspaceId: ctx.workspaceId,
       requestedBy: ctx.userId,
-      apiKeyId: ctx.grantId,
+      apiKeyId: source.apiKeyId,
+      aiExecutionId: source.aiExecutionId,
       operation,
       targetId: targetId ?? null,
       payload: payload as Prisma.InputJsonObject,
@@ -294,7 +337,7 @@ export async function createProposal(
     resourceType: "execution_proposal",
     resourceId: row.id,
     result: "success",
-    origin: "mcp",
+    origin: source.origin,
     metadata: { action: operation, target: targetId ?? null },
   });
   return { proposal: toView(row, ctx), created: true };

@@ -150,7 +150,7 @@ O prompt template do modelo e o `system_prompt` do agente aceitam as **25 tags**
 
 **Regras do renderizador** (iguais ao legado, salvo onde indicado):
 
-1. Substituição literal de cada `{{tag}}` por todas as ocorrências; tag desconhecida fica como está no texto.
+1. Substituição literal de cada `{{tag}}` por todas as ocorrências; tag desconhecida fica como está no texto. **[A2b]** A substituição é feita em uma passada: um valor que contém `{{...}}` não é expandido de novo.
 2. Campo vazio vira `(nao configurado)`; código de enum desconhecido vai como está.
 3. **[Proposta]** Sim/não: o legado escrevia `true` e `false` no prompt; o GUIDU escreve "sim" e "não" no idioma do agente.
 4. **[Proposta]** `availability_slots`: o legado guardava um objeto `{ "seg-sex": "09:00-18:00" }`; o GUIDU guarda a lista `{ weekday, start, end }` (seção 2) e o renderizador agrupa os dias com o mesmo horário para produzir o mesmo texto.

@@ -827,7 +827,8 @@ model AiConversation {
   lastMessageAt  DateTime? @map("last_message_at") @db.Timestamptz()
   closedAt       DateTime? @map("closed_at") @db.Timestamptz()
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  /// Kept by the trigger: the engine updates only the columns it is granted.
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
 
   @@map("ai_conversations")
 }
@@ -1004,6 +1005,8 @@ model ExecutionProposal {
   workspaceId     String    @map("workspace_id") @db.Uuid
   requestedBy     String    @map("requested_by") @db.Uuid
   apiKeyId        String?   @map("api_key_id") @db.Uuid
+  /// Turn of the GUIDU Assistant that proposed it (A2b), without an API key.
+  aiExecutionId   String?   @map("ai_execution_id") @db.Uuid
   operation       String
   targetId        String?   @map("target_id") @db.Uuid
   payload         Json
