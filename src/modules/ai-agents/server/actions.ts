@@ -1,0 +1,259 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { z } from "zod";
+
+import { testGuidKey } from "@/core/ai/key-test";
+import { ConfigValidationError } from "@/core/ai/templates";
+import { requireUser } from "@/core/auth/identity";
+import { actionFailure } from "@/core/i18n/errors";
+import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
+import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
+import { prisma } from "@/lib/prisma/client";
+import { withContext } from "@/lib/prisma/with-context";
+import { AppError } from "@/shared/errors";
+
+import { createGuid } from "./services/agents";
+import {
+  createReferral,
+  customizeGuid,
+  deleteGuid,
+  deleteReferral,
+  updateGuid,
+  updateReferral,
+} from "./services/guid-config";
+
+/**
+ * Server actions of the GUIDS screens of `/app` (A4a): create, save,
+ * customize, test the key, delete and the referrals. The services check the
+ * module, the role and the tenant again; RLS repeats them.
+ */
+
+export type GuidActionState = {
+  success?: boolean;
+  message?: string;
+  error?: string;
+  requestId?: string;
+  /** Message of each invalid field, by `tab.field` or form field name. */
+  fieldErrors?: Record<string, string>;
+};
+
+const slug = z.string().min(1).max(64);
+
+function text(formData: FormData, name: string): string {
+  const value = formData.get(name);
+  return typeof value === "string" ? value : "";
+}
+
+async function contextFor(formData: FormData) {
+  const workspaceSlug = slug.safeParse(formData.get("workspaceSlug"));
+  if (!workspaceSlug.success || !isModuleTechnicallyAvailable("ai-agents")) {
+    throw new AppError({
+      code: "not_found",
+      safeMessage: "Recurso não encontrado.",
+      messageKey: "apiErrors.notFound",
+    });
+  }
+  const identity = await requireUser();
+  const context = await resolveRequestWorkspaceContext(
+    prisma,
+    identity.userId,
+    workspaceSlug.data,
+  );
+  return {
+    context,
+    base: `/app/${workspaceSlug.data}/ai-agents`,
+  };
+}
+
+async function failure(err: unknown): Promise<GuidActionState> {
+  const { error, requestId } = await actionFailure(err);
+  return {
+    error,
+    requestId,
+    ...(err instanceof ConfigValidationError
+      ? { fieldErrors: err.fieldErrors }
+      : {}),
+  };
+}
+
+function parseJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new ConfigValidationError({ config: "Configuração ilegível." });
+  }
+}
+
+export async function createGuidAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  let target: string;
+  try {
+    const { context, base } = await contextFor(formData);
+    const templateId = text(formData, "templateId");
+    const created = await withContext(prisma, context, (tx) =>
+      // "custom" is the blank GUIDS ("Personalizado").
+      createGuid(tx, context, {
+        templateId: templateId && templateId !== "custom" ? templateId : null,
+      }),
+    );
+    revalidatePath(base);
+    target = `${base}?edit=${created.id}`;
+  } catch (err) {
+    return failure(err);
+  }
+  redirect(target);
+}
+
+export async function saveGuidAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    const saved = await withContext(prisma, context, (tx) =>
+      updateGuid(tx, context, text(formData, "agentId"), {
+        status: formData.get("active") === "on" ? "active" : "paused",
+        config: parseJson(text(formData, "config")),
+      }),
+    );
+    revalidatePath(base);
+    const t = await getTranslations("aiAgents.guids");
+    return {
+      success: true,
+      message: saved.status === "active" ? t("savedActive") : t("saved"),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function customizeGuidAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    await withContext(prisma, context, (tx) =>
+      customizeGuid(tx, context, text(formData, "agentId")),
+    );
+    revalidatePath(base);
+    const t = await getTranslations("aiAgents.guids");
+    return { success: true, message: t("customized") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function deleteGuidAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  let base: string;
+  try {
+    const resolved = await contextFor(formData);
+    base = resolved.base;
+    await withContext(prisma, resolved.context, (tx) =>
+      deleteGuid(tx, resolved.context, text(formData, "agentId")),
+    );
+  } catch (err) {
+    return failure(err);
+  }
+  revalidatePath(base);
+  redirect(base);
+}
+
+export async function testGuidKeyAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    const result = await testGuidKey(
+      prisma,
+      context,
+      text(formData, "agentId"),
+    );
+    revalidatePath(base);
+    const t = await getTranslations("aiAgents.guids");
+    return result.ok
+      ? { success: true, message: t("keyTest.ok") }
+      : {
+          error: t("keyTest.failed", {
+            code: result.errorCode ?? "unknown",
+          }),
+        };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+function referralInput(formData: FormData) {
+  return {
+    name: text(formData, "name"),
+    referralTag: text(formData, "referralTag"),
+    specialties: text(formData, "specialties")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+    phone: text(formData, "phone"),
+    city: text(formData, "city"),
+    remote: formData.get("remote") === "on",
+  };
+}
+
+export async function saveReferralAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    const agentId = text(formData, "agentId");
+    const referralId = text(formData, "referralId");
+    await withContext(prisma, context, (tx) =>
+      referralId
+        ? updateReferral(
+            tx,
+            context,
+            agentId,
+            referralId,
+            referralInput(formData),
+          )
+        : createReferral(tx, context, agentId, referralInput(formData)),
+    );
+    revalidatePath(base);
+    const t = await getTranslations("aiConsole.guids.referrals");
+    return {
+      success: true,
+      message: referralId ? t("saved") : t("created"),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function deleteReferralAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    await withContext(prisma, context, (tx) =>
+      deleteReferral(
+        tx,
+        context,
+        text(formData, "agentId"),
+        text(formData, "referralId"),
+      ),
+    );
+    revalidatePath(base);
+    const t = await getTranslations("aiConsole.guids.referrals");
+    return { success: true, message: t("deleted") };
+  } catch (err) {
+    return failure(err);
+  }
+}

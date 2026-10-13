@@ -8,10 +8,6 @@
     "title": "Módulo Indisponível",
     "body": "O módulo de Agentes de IA ainda não está disponível neste ambiente."
   },
-  "building": {
-    "title": "Em construção",
-    "body": "O motor dos agentes está sendo montado. A criação e a configuração dos GUIDS chegam nas próximas etapas."
-  },
   "prompt": {
     "notConfigured": "(nao configurado)",
     "notInformed": "(não informado)",
@@ -64,6 +60,51 @@
       "draft": "Rascunho",
       "active": "Ativo",
       "paused": "Pausado"
-    }
+    },
+    "new": "Novo agente",
+    "panelLabel": "Editor do agente",
+    "chooseTemplate": "Escolha um modelo pronto ou comece do zero.",
+    "custom": "Personalizado",
+    "customHint": "Começa vazio: você preenche tudo antes de ativar.",
+    "create": "Criar agente",
+    "quota": "{count} de {limit} agentes do seu plano.",
+    "quotaUnlimited": "{count} agentes.",
+    "empty": "Nenhum agente ainda.",
+    "emptyManage": "Nenhum agente ainda. Crie o primeiro a partir de um modelo.",
+    "customizedLabel": "Personalizado",
+    "fromTemplate": "Do modelo",
+    "keyState": {
+      "ok": "Chave em dia",
+      "backup": "Na chave de backup",
+      "failed": "Chave com falha"
+    },
+    "model": "modelo {model}",
+    "noModel": "sem modelo",
+    "lastTested": "chave testada em {date}",
+    "missing": "Falta preencher para ativar: {fields}.",
+    "readOnly": "Só os donos e administradores do workspace alteram os agentes.",
+    "invalidStored": "A configuração gravada deste agente não é válida. Revise e salve de novo.",
+    "noKeys": "Cadastre uma chave de IA em Configurações › Credenciais para escolher o modelo.",
+    "active": "Agente ativo",
+    "save": "Salvar",
+    "saved": "Agente salvo.",
+    "savedActive": "Agente salvo e ativo.",
+    "keyTest": {
+      "run": "Testar chave",
+      "ok": "A chave respondeu.",
+      "failed": "A chave não respondeu ({code}). Confira a chave e o modelo."
+    },
+    "customize": "Personalizar",
+    "customizeHint": "Para mudar o que o agente diz, as regras e as indicações, personalize o agente. O modelo de origem fica só como referência.",
+    "customizeTitle": "Personalizar agente",
+    "customizeMessage": "A configuração passa a ser deste agente e deixa de seguir o modelo. Não é possível voltar.",
+    "customized": "Agente personalizado.",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "deleteTitle": "Excluir agente",
+    "deleteMessage": "O agente {name} e as conversas dele serão excluídos. O consumo já registrado continua."
+  },
+  "errors": {
+    "notCustomized": "Personalize o agente para alterar as indicações."
   }
 }

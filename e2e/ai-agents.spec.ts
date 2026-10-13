@@ -7,18 +7,21 @@
  * - Validates freezing controls (ADR 0003 & C04):
  *   - When disabled (default), direct route shows "Módulo Indisponível" and sidebar
  *     omits the "Agentes de IA" navigation item.
- *   - When enabled explicitly in test rig, the page says it is under
- *     construction: the prototype left in A2a and the screens arrive in A4.
+ *   - When enabled explicitly in test rig (A4a), the owner creates a GUIDS
+ *     from a template, customizes it, renames it, adds a referral and
+ *     deletes it.
  * ============================================================================
  */
 
 import { expect, test } from "@playwright/test";
 import {
   createIdentity,
+  seedGuid,
   seedWorkspace,
   signIn,
   uniqueEmail,
 } from "./support/identity";
+import { statusBanner } from "./support/status";
 
 test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
   test("shows 'Indisponível' on direct route and hides sidebar item when module is disabled (default)", async ({
@@ -61,14 +64,15 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       "Module is frozen by default (C04); runs only when GUIDU_MODULE_AI_AGENTS_ENABLED is true",
     );
 
-    test("shows the module under construction until the A4 screens", async ({
+    test("the owner creates, customizes and deletes a GUIDS", async ({
       page,
       request,
     }) => {
+      test.setTimeout(120_000);
       const email = uniqueEmail("agent-tester");
       const wsSlug = `ws-agent-${Date.now()}`;
       await createIdentity(request, email);
-      await seedWorkspace(request, {
+      const workspace = await seedWorkspace(request, {
         email,
         orgName: "AI Enterprise",
         orgSlug: `org-ai-ent-${Date.now()}`,
@@ -76,13 +80,55 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
         wsSlug,
         role: "owner",
       });
+      await seedGuid(request, workspace);
 
       await signIn(page, email);
       await page.goto(`/app/${wsSlug}/ai-agents`);
+      await expect(page.getByTestId("guid-quota")).toContainText("0 de 1");
+      await page.getByRole("link", { name: "Novo agente" }).click();
+      const create = page.getByTestId("create-guid");
+      await create.getByRole("radio", { name: /Anna/ }).check();
+      await create.getByRole("button", { name: "Criar agente" }).click();
 
-      await expect(
-        page.getByRole("heading", { name: "Em construção" }),
-      ).toBeVisible();
+      const panel = page.getByTestId("guid-panel");
+      await expect(panel.getByTestId("guid-state")).toContainText("Rascunho");
+      await expect(panel.getByTestId("guid-missing")).toBeVisible();
+      // Following the template, only the model connection is the customer's.
+      await expect(page.getByTestId("guid-form").getByRole("tab")).toHaveText([
+        "Conexão de modelo",
+      ]);
+      await expect(page.getByRole("link", { name: "Novo agente" })).toHaveCount(
+        0,
+      );
+
+      await page.getByTestId("customize-guid").click();
+      const question = statusBanner(page);
+      await question.getByRole("checkbox").check();
+      await question.getByTestId("smart-status-action").click();
+      await expect(statusBanner(page)).toContainText("Agente personalizado.");
+
+      const form = page.getByTestId("guid-form");
+      await form.getByRole("tab", { name: "Visão geral" }).click();
+      await form.getByLabel("Nome do agente").fill("Clara");
+      await page.getByTestId("save-guid").click();
+      await expect(statusBanner(page)).toContainText("Agente salvo.");
+      await expect(page.getByTestId("workspace-guid")).toContainText("Clara");
+
+      const referral = page.getByTestId("create-referral");
+      await referral.getByLabel("Nome").fill("Dra. Ana");
+      await referral.getByLabel("Tag").fill("dra-ana");
+      await referral
+        .getByRole("button", { name: "Adicionar indicação" })
+        .click();
+      await expect(statusBanner(page)).toContainText("Indicação adicionada.");
+      await expect(page.getByTestId("guid-referral")).toContainText("Dra. Ana");
+
+      await page.getByTestId("delete-guid").click();
+      const remove = statusBanner(page);
+      await remove.getByRole("checkbox").check();
+      await remove.getByTestId("smart-status-action").click();
+      await expect(page.getByTestId("workspace-guid")).toHaveCount(0);
+      await expect(page.getByTestId("guid-quota")).toContainText("0 de 1");
     });
   });
 });

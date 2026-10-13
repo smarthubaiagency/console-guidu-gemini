@@ -8,10 +8,6 @@
     "title": "Module Unavailable",
     "body": "The AI agents module is not available in this environment yet."
   },
-  "building": {
-    "title": "Under construction",
-    "body": "The agent engine is being built. Creating and configuring GUIDS arrives in the next stages."
-  },
   "prompt": {
     "notConfigured": "(not configured)",
     "notInformed": "(not provided)",
@@ -64,6 +60,51 @@
       "draft": "Draft",
       "active": "Active",
       "paused": "Paused"
-    }
+    },
+    "new": "New agent",
+    "panelLabel": "Agent editor",
+    "chooseTemplate": "Pick a ready template or start from scratch.",
+    "custom": "Custom",
+    "customHint": "Starts empty: you fill everything in before turning it on.",
+    "create": "Create agent",
+    "quota": "{count} of {limit} agents in your plan.",
+    "quotaUnlimited": "{count} agents.",
+    "empty": "No agents yet.",
+    "emptyManage": "No agents yet. Create the first one from a template.",
+    "customizedLabel": "Custom",
+    "fromTemplate": "From a template",
+    "keyState": {
+      "ok": "Key OK",
+      "backup": "On the backup key",
+      "failed": "Key failing"
+    },
+    "model": "model {model}",
+    "noModel": "no model",
+    "lastTested": "key tested on {date}",
+    "missing": "Fill in to turn it on: {fields}.",
+    "readOnly": "Only the workspace's owners and admins change the agents.",
+    "invalidStored": "The stored configuration of this agent is not valid. Review it and save again.",
+    "noKeys": "Add an AI key in Settings › Credentials to choose the model.",
+    "active": "Agent on",
+    "save": "Save",
+    "saved": "Agent saved.",
+    "savedActive": "Agent saved and on.",
+    "keyTest": {
+      "run": "Test key",
+      "ok": "The key answered.",
+      "failed": "The key did not answer ({code}). Check the key and the model."
+    },
+    "customize": "Customize",
+    "customizeHint": "To change what the agent says, its rules and referrals, customize the agent. The source template stays only as a reference.",
+    "customizeTitle": "Customize agent",
+    "customizeMessage": "The configuration becomes this agent's own and stops following the template. This cannot be undone.",
+    "customized": "Agent customized.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteTitle": "Delete agent",
+    "deleteMessage": "The agent {name} and its conversations will be deleted. Usage already recorded stays."
+  },
+  "errors": {
+    "notCustomized": "Customize the agent to change the referrals."
   }
 }

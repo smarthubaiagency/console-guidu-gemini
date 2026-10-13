@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { flattenMessages } from "@/core/i18n/locales";
+import { flattenMessages, messageArguments } from "@/core/i18n/locales";
 import {
   latestTextsRun,
   requestTextsTranslation,
@@ -280,8 +280,12 @@ describeDatabase("I6: machine translation", requiredVars, () => {
         const out: Record<string, string> = {};
         entries.forEach((e, i) => {
           if (i % 3 === 0) return; // no answer
-          // Arguments lost on every text that has them.
-          out[e.key] = e.text.includes("{") ? "Sans arguments" : `FR ${e.text}`;
+          // Arguments lost on every text that has them (a literal brace,
+          // like '{{'…'}}', is not an argument).
+          out[e.key] =
+            messageArguments(e.text).length > 0
+              ? "Sans arguments"
+              : `FR ${e.text}`;
         });
         return out;
       },
@@ -289,8 +293,8 @@ describeDatabase("I6: machine translation", requiredVars, () => {
         throw new Error("unused");
       },
     };
-    const withArgs = Object.values(sourceTexts).filter((t) =>
-      t.includes("{"),
+    const withArgs = Object.values(sourceTexts).filter(
+      (t) => messageArguments(t).length > 0,
     ).length;
     const [run] = await admin.$queryRawUnsafe<{ id: string }[]>(
       `insert into public.job_runs (kind, scope, payload, idempotency_key)
