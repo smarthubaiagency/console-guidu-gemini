@@ -24,12 +24,25 @@ import {
   deleteChannelConnectionAction,
 } from "@/core/channels/actions";
 import type { ChannelConnectionDto } from "@/core/channels/connections";
+import type { InboxOwner } from "@/core/channels/registry";
 
 import { ServiceSettingsForm } from "./service-form";
 
 type FormState = ChannelActionState & { formKey?: number };
 
 const INITIAL: ChannelActionState = {};
+/** Codes with a text under `channels.health`. */
+const HEALTH_CODES = {
+  invalid_url: 1,
+  private_address: 1,
+  timeout: 1,
+  network: 1,
+  too_large: 1,
+  unauthorized: 1,
+  not_found: 1,
+  http_error: 1,
+  invalid_response: 1,
+} as const;
 const HEALTH_BADGE = {
   ok: "default",
   failed: "destructive",
@@ -39,10 +52,13 @@ const HEALTH_BADGE = {
 export function ChannelsClient({
   workspaceSlug,
   connections,
+  owners,
   canManage,
 }: Readonly<{
   workspaceSlug: string;
   connections: readonly ChannelConnectionDto[];
+  /** Who answers each inbox, by `connectionId:inboxId` (A5c). */
+  owners: Readonly<Record<string, InboxOwner>>;
   canManage: boolean;
 }>) {
   const t = useTranslations("channels");
@@ -60,6 +76,7 @@ export function ChannelsClient({
               key={connection.id}
               workspaceSlug={workspaceSlug}
               connection={connection}
+              owners={owners}
               canManage={canManage}
             />
           ))}
@@ -73,10 +90,12 @@ export function ChannelsClient({
 function ConnectionCard({
   workspaceSlug,
   connection,
+  owners,
   canManage,
 }: Readonly<{
   workspaceSlug: string;
   connection: ChannelConnectionDto;
+  owners: Readonly<Record<string, InboxOwner>>;
   canManage: boolean;
 }>) {
   const t = useTranslations("channels");
@@ -128,12 +147,25 @@ function ConnectionCard({
               className="text-12 text-text-secondary"
               data-testid="channel-inboxes"
             >
-              {connection.inboxes.map((inbox) => (
-                <li key={inbox.id}>
-                  {inbox.name}
-                  {inbox.channel_type ? ` · ${inbox.channel_type}` : ""}
-                </li>
-              ))}
+              {connection.inboxes.map((inbox) => {
+                const owner = owners[`${connection.id}:${inbox.id}`];
+                const name = owner?.name ?? t("owner.unnamed");
+                return (
+                  <li key={inbox.id}>
+                    {[
+                      inbox.name,
+                      inbox.channel_type,
+                      owner
+                        ? owner.active
+                          ? name
+                          : t("owner.paused", { name })
+                        : t("owner.none"),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -148,6 +180,38 @@ function ConnectionCard({
             .filter(Boolean)
             .join(" · ")}
         </p>
+        <div className="space-y-1" data-testid="channel-activity">
+          <p className="text-12 text-text font-medium">{t("activity.title")}</p>
+          <p className="text-12 text-text-secondary">
+            {[
+              t("activity.sent", { count: connection.activity.sent }),
+              connection.activity.failedDeliveries > 0
+                ? t("activity.failedDeliveries", {
+                    count: connection.activity.failedDeliveries,
+                  })
+                : null,
+              connection.activity.failedEvents > 0
+                ? t("activity.failedEvents", {
+                    count: connection.activity.failedEvents,
+                  })
+                : null,
+              t("activity.lastSent", {
+                date: when(connection.activity.lastSentAt),
+              }),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          {connection.activity.lastDeliveryError ? (
+            <p className="text-12 text-destructive">
+              {t("activity.lastError", {
+                reason: t(
+                  `health.${connection.activity.lastDeliveryError in HEALTH_CODES ? connection.activity.lastDeliveryError : "unknown"}`,
+                ),
+              })}
+            </p>
+          ) : null}
+        </div>
         {canManage && connection.inboxes.length > 0 ? (
           <ServiceSettingsForm
             workspaceSlug={workspaceSlug}

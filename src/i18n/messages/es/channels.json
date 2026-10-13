@@ -96,5 +96,18 @@
     "useDefaults": "Usar el predeterminado",
     "saved": "Atención guardada.",
     "reset": "La bandeja volvió a usar el predeterminado."
+  },
+  "activity": {
+    "title": "Atención en los últimos 7 días",
+    "sent": "{count, plural, =0 {ningún mensaje enviado} one {# mensaje enviado} other {# mensajes enviados}}",
+    "failedDeliveries": "{count, plural, one {# envío con falla} other {# envíos con falla}}",
+    "failedEvents": "{count, plural, one {# mensaje de contacto sin respuesta} other {# mensajes de contactos sin respuesta}}",
+    "lastSent": "último envío: {date}",
+    "lastError": "Última falla de envío: {reason}"
+  },
+  "owner": {
+    "none": "sin agente",
+    "unnamed": "agente sin nombre",
+    "paused": "{name}, en pausa: los mensajes de esta bandeja quedan sin respuesta"
   }
 }

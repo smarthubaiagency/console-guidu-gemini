@@ -96,5 +96,18 @@
     "useDefaults": "Usar o padrão",
     "saved": "Atendimento salvo.",
     "reset": "A inbox voltou a usar o padrão."
+  },
+  "activity": {
+    "title": "Atendimento nos últimos 7 dias",
+    "sent": "{count, plural, =0 {nenhuma mensagem enviada} one {# mensagem enviada} other {# mensagens enviadas}}",
+    "failedDeliveries": "{count, plural, one {# envio com falha} other {# envios com falha}}",
+    "failedEvents": "{count, plural, one {# mensagem do contato sem resposta} other {# mensagens de contatos sem resposta}}",
+    "lastSent": "último envio: {date}",
+    "lastError": "Última falha de envio: {reason}"
+  },
+  "owner": {
+    "none": "sem agente",
+    "unnamed": "agente sem nome",
+    "paused": "{name}, pausado: as mensagens desta caixa ficam sem resposta"
   }
 }

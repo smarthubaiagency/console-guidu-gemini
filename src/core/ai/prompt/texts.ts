@@ -35,6 +35,12 @@ export type PromptTexts = Readonly<{
   toolError: string;
   toolRestricted: string;
   toolDenied: string;
+  /** Notes of the files a contact sent (A5c). */
+  media: Readonly<Record<string, string>>;
+  /** A message the team wrote to the contact, in the agent's history. */
+  teamMessage: string;
+  /** The private note of a handoff to the team (A5c). */
+  handoffNote: Readonly<{ title: string; reason: string }>;
 }>;
 
 function promptOf(messages: unknown): PromptTexts | null {

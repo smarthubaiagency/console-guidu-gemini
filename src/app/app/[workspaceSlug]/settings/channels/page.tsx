@@ -8,6 +8,7 @@ import {
   type ChannelConnectionDto,
   listChannelConnections,
 } from "@/core/channels/connections";
+import { describeInboxOwners, type InboxOwner } from "@/core/channels/registry";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { Permissions } from "@/core/permissions/catalog";
 import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
@@ -21,7 +22,8 @@ import { ChannelsClient } from "./channels-client";
  * Configurações › Canais (A5a, ADR 0011): the workspace's connections to
  * messaging providers. Owner, admin and editor see them; owner and admin
  * connect Chatwoot, check and remove a connection. Which agent answers
- * each inbox comes with the A5b.
+ * each inbox is set on the agent (A5b); the card shows it, with the
+ * service of the last days (A5c).
  */
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -72,7 +74,10 @@ export default async function ChannelsSettingsPage({
     const connections: ChannelConnectionDto[] = canRead
       ? await listChannelConnections(tx, context)
       : [];
-    return { canRead, canManage, connections };
+    const owners: Record<string, InboxOwner> = canRead
+      ? await describeInboxOwners(tx, context)
+      : {};
+    return { canRead, canManage, connections, owners };
   });
 
   return (
@@ -94,6 +99,7 @@ export default async function ChannelsSettingsPage({
         <ChannelsClient
           workspaceSlug={workspaceSlug}
           connections={view.connections}
+          owners={view.owners}
           canManage={view.canManage}
         />
       ) : (

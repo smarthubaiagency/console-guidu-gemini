@@ -36,6 +36,8 @@ O que fica no módulo: agentes, vínculos e política de saída, estado da conve
 
 **Implementado na A5b (13/10/2026):** o primeiro consumidor é o módulo ai-agents (`consumer_ref` = o GUIDS). O contrato entre consumidor e núcleo está em `consumer.ts` (`ChannelConsumer.answer` recebe a rota, a conversa, os eventos agrupados e os limites e devolve as mensagens e se transfere); o despacho é o job `channels.dispatch` (`dispatch.ts`), agendado pela ingestão com a janela de agrupamento e agrupado por conversa no worker, que reivindica os eventos, chama o consumidor fora de transação, envia as partes (`channel_deliveries`, uma linha por execução e parte) e faz a transferência (`toggle_status` para "open"). As regras de atendimento ficam em `channel_connections.config.service` (`settings.ts`: `defaults` e `inboxes`, com agrupamento, máximo de mensagens, caracteres e intervalo). Só uma conversa sem status ou "pending" no Chatwoot é despachada.
 
+**Implementado na A5c (13/10/2026):** o consumidor recebe também o contexto (as mensagens públicas da equipe e as do contato que não dispararam resposta desde o último despacho, até 20) e baixa os arquivos do contato por `loadAttachment`, que passa pela guarda do núcleo (`providerDownload`: o primeiro endereço precisa ser da conexão, até 3 redirecionamentos para o armazenamento, cada um conferido, e tamanho limitado). Todas as chamadas aos provedores usam `pinnedFetch`, cuja resolução de DNS recusa endereços internos no próprio socket, fechando a janela de DNS rebinding. O contato vê "digitando…" (`toggle_typing_status`) enquanto o agente prepara a resposta. Na transferência, o consumidor pode devolver uma nota (`handoffNote`), publicada como mensagem privada antes de passar a conversa para "open". O consumidor descreve quem atende cada rota (`describe`), e o card da conexão mostra o dono de cada inbox (com aviso de agente pausado) e o atendimento dos últimos 7 dias (enviadas, envios com falha, mensagens sem resposta, última falha).
+
 ### 3.2 Contrato do adaptador
 
 O adaptador é interno do núcleo: nenhum módulo o chama diretamente. Todo canal implementa o mesmo contrato. A assinatura abaixo é ilustrativa; o tipo final nasce com o código.
@@ -196,7 +198,8 @@ Segue a [ADR 0002](../../adr/0002-jobs-e-hospedagem.md): o webhook só registra 
 
 - A transferência é uma **ferramenta do agente** com motivo obrigatório. O agente decide quando transferir a partir das instruções; a regra do que motiva uma transferência é de cada agente.
 - O estado do hub prevalece: se um atendente assumir no Chatwoot ou no chat interno, a conversa vai para `transferida` no próximo evento recebido.
-- **[Em aberto]** Se e quando a conversa volta para o bot depois da transferência (D-AG-09).
+- Volta ao bot: quando a equipe devolve a conversa para "pending" no Chatwoot (decisão de Marcelo, 13/10/2026, A5b).
+- A transferência pede também um **resumo para a equipe**, publicado como nota privada no Chatwoot antes da conversa ir para "open" (A5c).
 
 ## 6. Saídas: texto, áudio e JSON
 

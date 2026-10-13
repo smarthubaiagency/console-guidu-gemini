@@ -187,6 +187,31 @@ function attachmentKind(fileType: string | null | undefined) {
   }
 }
 
+const MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  ogg: "audio/ogg",
+  oga: "audio/ogg",
+  opus: "audio/ogg",
+  mp3: "audio/mpeg",
+  m4a: "audio/mp4",
+  aac: "audio/aac",
+  wav: "audio/wav",
+  webm: "audio/webm",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  pdf: "application/pdf",
+  txt: "text/plain",
+  csv: "text/csv",
+};
+
+/** The type of a file from its extension, when Chatwoot gives one. */
+function mimeOf(extension: string | null | undefined): string | null {
+  const key = (extension ?? "").replace(/^\./, "").toLowerCase();
+  return MIME_BY_EXTENSION[key] ?? null;
+}
+
 function attachmentsOf(
   list: z.infer<typeof Attachment>[] | null | undefined,
 ): InboundAttachment[] {
@@ -197,7 +222,7 @@ function attachmentsOf(
       {
         kind: attachmentKind(item.file_type),
         url,
-        mimeType: null,
+        mimeType: mimeOf(item.extension),
         size:
           typeof item.file_size === "number" && item.file_size >= 0
             ? Math.trunc(item.file_size)
@@ -452,13 +477,16 @@ export async function checkChatwoot(
 
 const MessageResponse = z.object({ id: numberish }).passthrough();
 
-/** Sends one public message to a conversation, as the account's bot. */
+/**
+ * Sends one message to a conversation, as the account's bot: public, to the
+ * contact, or private (a note only the team sees, A5c).
+ */
 export async function sendChatwootMessage(
   account: ChatwootAccount,
   botToken: string,
   conversationId: string,
   content: string,
-  deps: Deps = {},
+  deps: Deps & Readonly<{ private?: boolean }> = {},
 ): Promise<Readonly<{ id: string }>> {
   const raw = await providerJson(
     accountUrl(
@@ -471,10 +499,10 @@ export async function sendChatwootMessage(
       body: JSON.stringify({
         content,
         message_type: "outgoing",
-        private: false,
+        private: deps.private ?? false,
       }),
     },
-    deps,
+    deps.fetch ? { fetch: deps.fetch } : {},
   );
   const parsed = MessageResponse.safeParse(raw);
   if (!parsed.success) throw new ChannelHttpError("invalid_response");
@@ -500,6 +528,31 @@ export async function handoffChatwootConversation(
       method: "POST",
       headers: headers(botToken),
       body: JSON.stringify({ status: "open" }),
+    },
+    deps,
+  );
+}
+
+/**
+ * Shows (or hides) "typing…" to the contact while the bot prepares the
+ * answer (A5c). Chatwoot hides it by itself when a message arrives.
+ */
+export async function setChatwootTyping(
+  account: ChatwootAccount,
+  botToken: string,
+  conversationId: string,
+  typing: boolean,
+  deps: Deps = {},
+): Promise<void> {
+  await providerJson(
+    accountUrl(
+      account,
+      `/conversations/${encodeURIComponent(conversationId)}/toggle_typing_status`,
+    ),
+    {
+      method: "POST",
+      headers: headers(botToken),
+      body: JSON.stringify({ typing_status: typing ? "on" : "off" }),
     },
     deps,
   );

@@ -75,8 +75,31 @@ export type ChannelConnectionDto = Readonly<{
   lastEventAt: string | null;
   /** Events written without an owner of their scope (no route). */
   unroutedEvents: number;
+  /** Service of the last 7 days (A5c, health of the connection). */
+  activity: ChannelActivity;
   createdAt: string;
 }>;
+
+export type ChannelActivity = Readonly<{
+  sent: number;
+  failedDeliveries: number;
+  /** Contact messages whose answer failed (the consumer did not answer). */
+  failedEvents: number;
+  lastSentAt: string | null;
+  /** Code of the last failed delivery, as in `channels.health`. */
+  lastDeliveryError: string | null;
+}>;
+
+/** Window of the activity shown on a connection. */
+export const ACTIVITY_DAYS = 7;
+
+const NO_ACTIVITY: ChannelActivity = {
+  sent: 0,
+  failedDeliveries: 0,
+  failedEvents: 0,
+  lastSentAt: null,
+  lastDeliveryError: null,
+};
 
 export const ChatwootConnectionInput = z.strictObject({
   name: z
@@ -157,7 +180,11 @@ type Row = Awaited<
   ReturnType<ContextTransaction["channelConnection"]["findFirst"]>
 > & {};
 
-function toDto(row: Row, unroutedEvents: number): ChannelConnectionDto {
+function toDto(
+  row: Row,
+  unroutedEvents: number,
+  activity: ChannelActivity = NO_ACTIVITY,
+): ChannelConnectionDto {
   const config = ChatwootConfig.safeParse(row.config);
   return {
     id: row.id,
@@ -174,6 +201,7 @@ function toDto(row: Row, unroutedEvents: number): ChannelConnectionDto {
     healthCheckedAt: row.healthCheckedAt?.toISOString() ?? null,
     lastEventAt: row.lastEventAt?.toISOString() ?? null,
     unroutedEvents,
+    activity,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -208,7 +236,55 @@ export async function listChannelConnections(
   const counts = new Map(
     unrouted.map((row) => [row.connectionId, row._count._all]),
   );
-  return rows.map((row) => toDto(row, counts.get(row.id) ?? 0));
+  const since = new Date(Date.now() - ACTIVITY_DAYS * 86_400_000);
+  const [deliveries, failedEvents, lastErrors] = await Promise.all([
+    tx.channelDelivery.groupBy({
+      by: ["connectionId", "status"],
+      where: { workspaceId: ctx.workspaceId, createdAt: { gte: since } },
+      _count: { _all: true },
+      _max: { sentAt: true },
+    }),
+    tx.channelInboundEvent.groupBy({
+      by: ["connectionId"],
+      where: {
+        workspaceId: ctx.workspaceId,
+        status: "failed",
+        receivedAt: { gte: since },
+      },
+      _count: { _all: true },
+    }),
+    tx.channelDelivery.findMany({
+      where: {
+        workspaceId: ctx.workspaceId,
+        status: "failed",
+        createdAt: { gte: since },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      distinct: ["connectionId"],
+      select: { connectionId: true, error: true },
+    }),
+  ]);
+  const activityOf = (connectionId: string): ChannelActivity => {
+    const sent = deliveries.find(
+      (d) => d.connectionId === connectionId && d.status === "sent",
+    );
+    const failed = deliveries.find(
+      (d) => d.connectionId === connectionId && d.status === "failed",
+    );
+    return {
+      sent: sent?._count._all ?? 0,
+      failedDeliveries: failed?._count._all ?? 0,
+      failedEvents:
+        failedEvents.find((e) => e.connectionId === connectionId)?._count
+          ._all ?? 0,
+      lastSentAt: sent?._max.sentAt?.toISOString() ?? null,
+      lastDeliveryError:
+        lastErrors.find((e) => e.connectionId === connectionId)?.error ?? null,
+    };
+  };
+  return rows.map((row) =>
+    toDto(row, counts.get(row.id) ?? 0, activityOf(row.id)),
+  );
 }
 
 /**

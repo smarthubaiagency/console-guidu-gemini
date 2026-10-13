@@ -50,6 +50,16 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
     // Open registration modal
     await page.getByRole("button", { name: "Nova Credencial" }).click();
 
+    // What agents read with a key of each provider (A5c).
+    await expect(page.getByTestId("credential-media")).toHaveText(
+      "Com esta chave, os agentes leem áudios, imagens e documentos que os contatos enviam.",
+    );
+    await page.getByRole("button", { name: /Anthropic Claude/ }).click();
+    await expect(page.getByTestId("credential-media")).toContainText(
+      "os agentes não leem áudios que os contatos enviam",
+    );
+    await page.getByRole("button", { name: /^OpenAI/ }).click();
+
     // Fill form
     await page
       .getByPlaceholder("Ex: Chave de Produção 2026")

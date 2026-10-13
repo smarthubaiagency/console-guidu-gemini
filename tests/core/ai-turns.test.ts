@@ -576,7 +576,10 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
         toolStep([
           {
             name: "handoff",
-            input: { reason: "Pediu para falar com uma pessoa." },
+            input: {
+              reason: "Pediu para falar com uma pessoa.",
+              summary: "Contato quer falar com uma pessoa.",
+            },
           },
         ]),
         textStep(
@@ -638,7 +641,10 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
     });
     await call("score_lead", { rule_ids: ["pede_proposta"] });
     await call("add_note", { note: "Quer um orçamento de implante." });
-    await call("handoff", { reason: "Pediu uma pessoa." });
+    await call("handoff", {
+      reason: "Pediu uma pessoa.",
+      summary: "Quer um orçamento.",
+    });
     expect(env.state.records.map((r) => r.decision)).toEqual([
       "allow",
       "allow",

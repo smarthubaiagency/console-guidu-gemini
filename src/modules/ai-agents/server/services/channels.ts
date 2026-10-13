@@ -3,6 +3,7 @@ import "server-only";
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
+import { type MediaKind, missingMedia } from "@/core/ai/media";
 import {
   type ChannelDeps,
   closeChannelRoutes,
@@ -53,6 +54,11 @@ export type GuidChannelsDto = Readonly<{
   inboxes: readonly GuidInboxDto[];
   /** Turning inboxes on and off is open to this person. */
   canManage: boolean;
+  /**
+   * What the agent's key does not read of what contacts send (A5c); null
+   * while the agent has no key.
+   */
+  missingMedia: readonly MediaKind[] | null;
 }>;
 
 /**
@@ -70,6 +76,19 @@ export async function listGuidChannels(
     return null;
   }
   const inboxes = await listChannelInboxes(tx, ctx);
+  const agent = await tx.aiAgent.findFirst({
+    where: { id: agentId, workspaceId: ctx.workspaceId, kind: "guid" },
+    select: { config: true },
+  });
+  const credentialId = (
+    agent?.config as { model?: { credential_id?: string | null } } | null
+  )?.model?.credential_id;
+  const credential = credentialId
+    ? await tx.credential.findFirst({
+        where: { id: credentialId, workspaceId: ctx.workspaceId },
+        select: { provider: true },
+      })
+    : null;
   const others = inboxes
     .map((inbox) => inbox.route)
     .filter(
@@ -91,6 +110,7 @@ export async function listGuidChannels(
     ]),
   );
   return {
+    missingMedia: credential ? missingMedia(credential.provider) : null,
     canManage:
       hasWorkspaceRolePermission(role, Permissions.AI_AGENTS_MANAGE) &&
       hasWorkspaceRolePermission(role, Permissions.CHANNELS_MANAGE),

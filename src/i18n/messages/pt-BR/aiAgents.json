@@ -50,7 +50,25 @@
     },
     "toolError": "A ferramenta falhou (código {errorId}). Siga sem ela ou peça ajuda a uma pessoa.",
     "toolRestricted": "Ferramenta indisponível: {reason}",
-    "toolDenied": "Ferramenta não permitida para este agente."
+    "toolDenied": "Ferramenta não permitida para este agente.",
+    "media": {
+      "audioTranscript": "[Áudio do contato, transcrito]: {text}",
+      "audioUnsupported": "[O contato enviou um áudio, mas este agente não ouve áudios. Peça com educação que ele escreva a mensagem em texto.]",
+      "audioFailed": "[O contato enviou um áudio que não foi possível ouvir. Peça com educação que ele escreva a mensagem em texto.]",
+      "image": "[O contato enviou uma imagem, anexada a esta mensagem.]",
+      "imageUnsupported": "[O contato enviou uma imagem, mas este agente não vê imagens. Peça com educação que ele descreva em texto o que precisa.]",
+      "document": "[O contato enviou um documento, anexado a esta mensagem.]",
+      "documentText": "[Arquivo de texto do contato]:\n{text}",
+      "documentUnsupported": "[O contato enviou um documento que este agente não consegue ler. Peça com educação que ele escreva em texto o que precisa.]",
+      "fileFailed": "[O contato enviou um arquivo que não foi possível abrir. Peça com educação que ele escreva em texto o que precisa.]",
+      "video": "[O contato enviou um vídeo, mas este agente não assiste vídeos. Peça com educação que ele escreva em texto o que precisa.]",
+      "unreadable": "[O modelo não conseguiu abrir os arquivos desta mensagem. Peça com educação que o contato escreva em texto o que precisa.]"
+    },
+    "teamMessage": "[Mensagem da equipe ao contato]: {text}",
+    "handoffNote": {
+      "title": "Resumo de {agent} para a equipe",
+      "reason": "Motivo da transferência: {reason}"
+    }
   },
   "guids": {
     "unnamed": "GUIDS sem nome",
@@ -159,7 +177,13 @@
       "bind": "Atender",
       "unbind": "Parar de atender",
       "bound": "O agente passou a atender a inbox.",
-      "unbound": "O agente parou de atender a inbox."
+      "unbound": "O agente parou de atender a inbox.",
+      "mediaMissing": "Com a chave atual, este agente não lê {list} que os contatos enviam: ele pede ao contato para escrever em texto. Uma chave OpenAI ou Gemini faz o agente ler tudo.",
+      "mediaKinds": {
+        "audio": "áudios",
+        "image": "imagens",
+        "document": "documentos"
+      }
     }
   },
   "errors": {

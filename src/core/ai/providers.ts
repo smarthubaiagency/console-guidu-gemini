@@ -4,7 +4,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogle } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { LanguageModel } from "ai";
+import type { LanguageModel, TranscriptionModel } from "ai";
 
 import type { AIProvider } from "@/core/credentials/vault";
 
@@ -33,5 +33,34 @@ export const createChatModel: ModelFactory = ({ provider, secret, model }) => {
       return createGoogle({ apiKey: secret })(model);
     case "openrouter":
       return createOpenRouter({ apiKey: secret }).chat(model);
+  }
+};
+
+/** Speech model used to read a contact's audio with the customer's key (A5c). */
+export const TRANSCRIPTION_MODELS: Partial<Record<AIProvider, string>> = {
+  openai: "gpt-4o-mini-transcribe",
+  gemini: "gemini-3.5-transcribe",
+};
+
+export type TranscriptionFactory = (
+  key: Omit<ChatModelKey, "model">,
+) => TranscriptionModel | null;
+
+/** The provider's speech model, or null when it has none here. */
+export const createTranscriptionModel: TranscriptionFactory = ({
+  provider,
+  secret,
+}) => {
+  switch (provider) {
+    case "openai":
+      return createOpenAI({ apiKey: secret }).transcription(
+        TRANSCRIPTION_MODELS.openai!,
+      );
+    case "gemini":
+      return createGoogle({ apiKey: secret }).transcription(
+        TRANSCRIPTION_MODELS.gemini!,
+      );
+    default:
+      return null;
   }
 };

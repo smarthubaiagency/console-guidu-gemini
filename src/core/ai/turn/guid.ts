@@ -40,11 +40,18 @@ import {
   type ChatModelKey,
   createChatModel,
   type ModelFactory,
+  type TranscriptionFactory,
 } from "../providers";
 import { renderSystemPrompt } from "../prompt/render";
-import { promptLocale } from "../prompt/texts";
+import { promptLocale, promptTexts } from "../prompt/texts";
 import { buildTools, recordRefusedCall, type ToolEnv } from "../tools/catalog";
 import { contextValues } from "./context";
+import {
+  mediaTexts,
+  type PreparedMedia,
+  prepareMedia,
+  type TurnAttachment,
+} from "./media";
 import { persistKeyFailure, persistTurn, persistTurnError } from "./persist";
 import { ResponsePlan, turnErrorCode } from "./plan";
 import { TURN_LIMITS, type TurnState } from "./types";
@@ -87,6 +94,9 @@ export type GuidTurnDeps = Readonly<{
   now?: () => Date;
   /** Shape of the answer on a channel (A5b, the integration's settings). */
   answerLimits?: Readonly<{ maxMessages: number; maxChars: number }>;
+  /** Files the contact sent with the message (A5c, channels). */
+  media?: readonly TurnAttachment[];
+  createTranscription?: TranscriptionFactory;
 }>;
 
 /** The answer's shape, told to the model in the agent's language. */
@@ -391,13 +401,30 @@ export async function runGuidTurn(
   payload: GuidTurnPayload,
   deps: GuidTurnDeps = {},
 ): Promise<Record<string, string | number>> {
+  return (await runGuidTurnWithState(session, ctx, payload, deps)).result;
+}
+
+/** The turn, with what its tools changed (the channels read the handoff). */
+export async function runGuidTurnWithState(
+  session: JobSession,
+  ctx: RequestContext,
+  payload: GuidTurnPayload,
+  deps: GuidTurnDeps = {},
+): Promise<
+  Readonly<{
+    result: Record<string, string | number>;
+    state: TurnState | null;
+  }>
+> {
   const executionId = session.jobRunId;
   const now = deps.now ?? (() => new Date());
   const audit = { ctx, origin: "worker" as const };
   const loaded = await session.transaction((tx) =>
     loadTurn(tx, ctx, payload, executionId, now()),
   );
-  if (loaded.kind === "done") return { status: "already_answered" };
+  if (loaded.kind === "done") {
+    return { result: { status: "already_answered" }, state: null };
+  }
   if (loaded.kind === "blocked") {
     await session.transaction((tx) =>
       persistTurnError(tx, {
@@ -433,16 +460,78 @@ export async function runGuidTurn(
     audit,
   };
 
+  // Files of the message (A5c): their notes and transcripts are kept as a
+  // message of the contact right after it (messages are never rewritten);
+  // images and PDFs go only to this turn's model call.
+  const texts = mediaTexts(promptTexts(env.locale));
+  const history = [...loaded.history];
+  const withMedia = async (key: TurnKey): Promise<PreparedMedia> => {
+    if (!deps.media?.length) return { notes: [], parts: [] };
+    const prepared = await prepareMedia(deps.media, key, texts, {
+      ...(deps.createTranscription
+        ? { createTranscription: deps.createTranscription }
+        : {}),
+    });
+    if (prepared.notes.length > 0) {
+      const notes = prepared.notes.join("\n").slice(0, 100_000);
+      const message = await session.transaction(async (tx) => {
+        await tx.aiMessage.create({
+          data: {
+            conversationId: loaded.conversationId,
+            role: "user",
+            content: notes,
+          },
+          select: { id: true },
+        });
+        return tx.aiMessage.findFirst({
+          where: { id: payload.messageId },
+          select: { content: true },
+        });
+      });
+      // The model reads the message and its files as one; a message of
+      // files only has no text in the history.
+      const last = history.at(-1);
+      const base = typeof last?.content === "string" ? last.content : "";
+      if (last?.role === "user" && base !== "" && message?.content) {
+        history[history.length - 1] = {
+          role: "user",
+          content: `${base}\n${notes}`,
+        };
+      } else {
+        history.push({ role: "user", content: notes });
+      }
+    }
+    return prepared;
+  };
+  const messagesWith = (
+    parts: PreparedMedia["parts"],
+    note: string | null,
+  ): ModelMessage[] => {
+    const last = history.at(-1);
+    if (last?.role !== "user" || typeof last.content !== "string") {
+      return history;
+    }
+    const text = note ? `${last.content}\n${note}` : last.content;
+    if (parts.length === 0 && !note) return history;
+    return [
+      ...history.slice(0, -1),
+      {
+        role: "user",
+        content: parts.length > 0 ? [{ type: "text", text }, ...parts] : text,
+      },
+    ];
+  };
+
   // The tools keep their state between the two attempts: a contact
   // created by the first is not created again by the second.
   const instructions = deps.answerLimits
     ? `${loaded.systemPrompt}\n\n${limitsInstruction(env.locale, deps.answerLimits)}`
     : loaded.systemPrompt;
-  const answerWith = async (key: TurnKey) => {
+  const answerOnce = async (key: TurnKey, messages: ModelMessage[]) => {
     const result = await generateText({
       model: (deps.createModel ?? createChatModel)(key),
       instructions,
-      messages: loaded.history,
+      messages,
       tools: buildTools(env),
       output: Output.object({ schema: ResponsePlan }),
       stopWhen: isStepCount(TURN_LIMITS.maxSteps),
@@ -469,6 +558,26 @@ export async function runGuidTurn(
         outputTokens: result.totalUsage.outputTokens ?? 0,
       },
     };
+  };
+  // Read once, with the turn's first key; the platform's backup answers
+  // in text only.
+  const media = await withMedia(loaded.key);
+  const answerWith = async (key: TurnKey) => {
+    const parts = key.source === "customer" ? media.parts : [];
+    if (parts.length === 0 && media.parts.length > 0) {
+      return answerOnce(key, messagesWith([], texts.unreadable));
+    }
+    try {
+      return await answerOnce(key, messagesWith(parts, null));
+    } catch (error) {
+      // A model that cannot open the files answers without them, asking
+      // the contact to write; a failing key is handled by the caller.
+      if (parts.length === 0 || turnErrorCode(error) !== "provider_error") {
+        throw error;
+      }
+      appLog.warn("ai.turn.media_refused", { executionId });
+      return answerOnce(key, messagesWith([], texts.unreadable));
+    }
   };
 
   const fail = async (key: TurnKey, error: unknown): Promise<never> => {
@@ -565,11 +674,14 @@ export async function runGuidTurn(
     return rows[0]?.passed === true;
   });
   return {
-    status: state.status,
-    ...(loaded.test ? { tested: tested ? 1 : 0 } : {}),
-    keySource: used.source,
-    messages: outcome.answer.messages.length,
-    tools: state.records.length,
+    result: {
+      status: state.status,
+      ...(loaded.test ? { tested: tested ? 1 : 0 } : {}),
+      keySource: used.source,
+      messages: outcome.answer.messages.length,
+      tools: state.records.length,
+    },
+    state,
   };
 }
 

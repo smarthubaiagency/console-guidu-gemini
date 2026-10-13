@@ -31,4 +31,6 @@ export type TurnState = {
   status: "active" | "handoff" | "closed";
   memory: Record<string, unknown>;
   records: ToolCallRecord[];
+  /** What the agent told the team when it handed over (A5c). */
+  handoff?: Readonly<{ reason: string; summary: string }>;
 };

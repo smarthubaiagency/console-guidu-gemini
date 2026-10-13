@@ -19,10 +19,11 @@ import {
   handoffChatwootConversation,
   isTrigger,
   sendChatwootMessage,
+  setChatwootTyping,
 } from "./chatwoot";
 import type { ChannelConsumer } from "./consumer";
 import { InboundEvent } from "./contract";
-import { type ChannelFetch, ChannelHttpError } from "./http";
+import { type ChannelFetch, ChannelHttpError, providerDownload } from "./http";
 import { resolveServiceSettings, shapeAnswer } from "./settings";
 
 /**
@@ -36,11 +37,13 @@ import { resolveServiceSettings, shapeAnswer } from "./settings";
  *    notes, status) is context and is set aside. Nothing is dispatched
  *    while the conversation is not "pending" in Chatwoot: the team has it.
  * 2. The route's consumer answers (ai-agents: the GUIDS's turn), outside
- *    any transaction.
+ *    any transaction, with what the team and the contact said since its
+ *    last answer as context and the contact's files through the core's
+ *    guard (A5c). The contact sees "typing…" meanwhile.
  * 3. The core sends the answer in at most `max_messages` parts, with the
  *    pause of the settings between them, each part recorded once per run
  *    (`channel_deliveries`), and hands the conversation to the team when
- *    the consumer asks.
+ *    the consumer asks, after a private note with its summary (A5c).
  *
  * One conversation is answered at a time (job group per conversation); two
  * conversations of a workspace are answered side by side.
@@ -73,9 +76,13 @@ type Claimed = Readonly<{
   }>;
   events: InboundEvent[];
   eventIds: string[];
+  context: InboundEvent[];
   config: ChatwootConfig;
   secrets: ChatwootSecrets;
 }>;
+
+/** Messages of context given to the consumer, the most recent ones. */
+const MAX_CONTEXT_EVENTS = 20;
 
 type Outcome =
   | Readonly<{ kind: "claimed"; claimed: Claimed }>
@@ -104,6 +111,25 @@ async function claim(
       where: { conversationId: conversation.id, status: "routed" },
       orderBy: [{ receivedAt: "asc" }, { id: "asc" }],
       take: 100,
+    });
+    // Context (A5c): public messages of the team and of the contact that
+    // started no answer since the last one dispatched.
+    const lastDispatched = await tx.channelInboundEvent.findFirst({
+      where: { conversationId: conversation.id, status: "dispatched" },
+      orderBy: [{ receivedAt: "desc" }, { id: "desc" }],
+      select: { receivedAt: true },
+    });
+    const recent = await tx.channelInboundEvent.findMany({
+      where: {
+        conversationId: conversation.id,
+        kind: "message",
+        status: { in: ["routed", "ignored", "failed"] },
+        ...(lastDispatched
+          ? { receivedAt: { gt: lastDispatched.receivedAt } }
+          : {}),
+      },
+      orderBy: [{ receivedAt: "desc" }, { id: "desc" }],
+      take: MAX_CONTEXT_EVENTS * 2,
     });
     const triggers: { id: string; event: InboundEvent }[] = [];
     for (const row of events) {
@@ -142,6 +168,22 @@ async function claim(
     if (!route) return { kind: "idle", reason: "no_route" };
     if (!ours) return { kind: "idle", reason: "with_team" };
     if (dispatch.length === 0) return { kind: "idle", reason: "nothing_new" };
+    const triggerIds = new Set(dispatch);
+    const context = recent
+      .filter((row) => !triggerIds.has(row.id))
+      .flatMap((row) => {
+        const parsed = InboundEvent.safeParse(row.payload);
+        if (!parsed.success) return [];
+        const event = parsed.data;
+        const said =
+          (event.sender === "agent" || event.sender === "contact") &&
+          event.message !== null &&
+          !event.message.private &&
+          event.message.text.trim() !== "";
+        return said ? [event] : [];
+      })
+      .slice(0, MAX_CONTEXT_EVENTS)
+      .reverse();
     const config = ChatwootConfig.safeParse(connection.config);
     const secrets = ChatwootSecrets.safeParse(
       JSON.parse(decryptSecret(connection.encryptedSecrets)),
@@ -165,6 +207,7 @@ async function claim(
         },
         events: triggers.map((t) => t.event),
         eventIds: dispatch,
+        context,
         config: config.data,
         secrets: secrets.data,
       },
@@ -189,6 +232,26 @@ export async function runChannelDispatch(
     throw new SkipJobError("O módulo desta inbox não atende canais.");
   }
   const settings = resolveServiceSettings(claimed.config, claimed.scope);
+  const account = {
+    baseUrl: claimed.config.base_url,
+    accountId: claimed.config.account_id,
+  };
+  const http = deps.fetch ? { fetch: deps.fetch } : {};
+  const typing = (on: boolean) =>
+    setChatwootTyping(
+      account,
+      claimed.secrets.botToken,
+      claimed.conversation.externalId,
+      on,
+      http,
+    ).catch((error: unknown) => {
+      // Only a courtesy to the contact: the answer goes on without it.
+      appLog.warn("channels.typing.failed", {
+        executionId,
+        code: error instanceof ChannelHttpError ? error.code : "unknown",
+      });
+    });
+  await typing(true);
   let answer: Awaited<ReturnType<ChannelConsumer["answer"]>>;
   try {
     answer = await consumer.answer(session, ctx, {
@@ -199,6 +262,12 @@ export async function runChannelDispatch(
       scope: claimed.scope,
       conversation: claimed.conversation,
       events: claimed.events,
+      context: claimed.context,
+      loadAttachment: (attachment, maxBytes) =>
+        providerDownload(attachment.url, claimed.config.base_url, {
+          ...http,
+          maxBytes,
+        }),
       limits: {
         maxMessages: settings.max_messages,
         maxChars: settings.max_chars,
@@ -214,20 +283,16 @@ export async function runChannelDispatch(
         }),
       )
       .catch(() => undefined);
+    await typing(false);
     throw error;
   }
 
-  const account = {
-    baseUrl: claimed.config.base_url,
-    accountId: claimed.config.account_id,
-  };
   const parts = shapeAnswer(
     answer.messages,
     settings,
     CHATWOOT_CAPABILITIES.output.text?.maxLength ?? 4000,
   );
   const pause = deps.sleep ?? sleep;
-  const http = deps.fetch ? { fetch: deps.fetch } : {};
   let sent = 0;
   let failed: string | null = null;
   for (const [part, content] of parts.entries()) {
@@ -289,8 +354,29 @@ export async function runChannelDispatch(
     }
   }
 
+  if (sent < parts.length || parts.length === 0) await typing(false);
+
   let handoff = 0;
   if (answer.handoff) {
+    if (answer.handoffNote) {
+      // The team reads the agent's summary before the conversation.
+      await sendChatwootMessage(
+        account,
+        claimed.secrets.botToken,
+        claimed.conversation.externalId,
+        answer.handoffNote.slice(
+          0,
+          CHATWOOT_CAPABILITIES.output.text?.maxLength ?? 4000,
+        ),
+        { ...http, private: true },
+      ).catch((error: unknown) => {
+        appLog.warn("channels.handoff_note.failed", {
+          executionId,
+          connectionId: claimed.connectionId,
+          code: error instanceof ChannelHttpError ? error.code : "unknown",
+        });
+      });
+    }
     try {
       await handoffChatwootConversation(
         account,
