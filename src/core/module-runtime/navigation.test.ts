@@ -242,6 +242,25 @@ describe("generated navigation", () => {
     expect(find(nav("support"), "platform.ai.templates")).toBeUndefined();
   });
 
+  it("shows the partner's AI screens only with the module flag, by role", () => {
+    const hrefs = (role: "partner_owner" | "partner_support") =>
+      buildPartnerNavigation(partnerGrants(role), { aiAgents: true })
+        .flatMap((s) => s.items)
+        .flatMap((i) => i.children.map((c) => c.href));
+    expect(hrefs("partner_owner")).toEqual([
+      "/admin/ai/assistant",
+      "/admin/ai/keys",
+      "/admin/ai/templates",
+    ]);
+    expect(hrefs("partner_support")).toEqual(["/admin/ai/assistant"]);
+    expect(
+      find(
+        buildPartnerNavigation(partnerGrants("partner_owner")),
+        "partner.ai",
+      ),
+    ).toBeUndefined();
+  });
+
   it("builds the partner console by partner role (D-PA-02)", () => {
     const owner = buildPartnerNavigation(partnerGrants("partner_owner"));
     expect(owner.flatMap((s) => s.items).map((i) => i.href)).toEqual([

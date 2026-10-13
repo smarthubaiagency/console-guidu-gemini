@@ -28,6 +28,16 @@ describe("division of the configuration fields (especificação §5.2)", () => {
     expect(fields.has("integration.crm_webhook_url")).toBe(true);
   });
 
+  it("gives the partner's Assistant its overview and model connection only", () => {
+    expect(editableTabs("assistant")).toEqual(["overview", "model"]);
+    const fields = editableFields("assistant");
+    expect(fields.has("overview.system_prompt")).toBe(true);
+    expect(fields.has("model.credential_id")).toBe(true);
+    expect(fields.has("model.audio_enabled")).toBe(false);
+    expect(fields.has("integration.tools")).toBe(false);
+    expect(fields.has("model.model_provider")).toBe(false);
+  });
+
   it("limits the customer to the model connection", () => {
     expect(editableTabs("customer")).toEqual(["model"]);
     const fields = editableFields("customer");
@@ -125,6 +135,15 @@ describe("applyConfigEdit", () => {
     expect(versioned.config.overview.prompt_version).toBe(3);
   });
 
+  it("never reports the provider as forbidden: it follows the key", () => {
+    const edit = applyConfigEdit(
+      current,
+      { ...current, model: { ...current.model, model_provider: "openai" } },
+      "assistant",
+    );
+    expect(edit.forbidden).toEqual([]);
+  });
+
   it("compares JSON values whatever the order of the keys", () => {
     expect(
       sameValue({ a: 1, b: [1, { c: 2 }] }, { b: [1, { c: 2 }], a: 1 }),
@@ -141,14 +160,23 @@ describe("missingConfigFields (campos.md §9)", () => {
       "overview.agent_name",
       "overview.language",
       "overview.agent_tone",
+      "overview.system_prompt",
       "overview.business_summary",
       "overview.products_services",
-      "overview.system_prompt",
       "scope.timezone",
       "scope.availability_slots",
       "rules.handoff_mode",
       "rules.after_hours_behavior",
       "rules.out_of_scope_action",
+      "model.credential_id",
+      "model.model_name",
+    ]);
+    // The Assistant answers in the panel: no hours nor lead rules.
+    expect(missingConfigFields(empty, "assistant")).toEqual([
+      "overview.agent_name",
+      "overview.language",
+      "overview.agent_tone",
+      "overview.system_prompt",
       "model.credential_id",
       "model.model_name",
     ]);

@@ -245,5 +245,64 @@
         "desc": "Suggests an action the person confirms."
       }
     }
+  },
+  "assistant": {
+    "metaTitle": "GUIDU Assistant",
+    "title": "GUIDU Assistant",
+    "description": "The dashboard assistant: answers your team in /admin and your customers in /app, with your brand. It uses an admin AI key.",
+    "unnamed": "Unnamed Assistant",
+    "status": {
+      "draft": "Draft",
+      "active": "On",
+      "paused": "Off"
+    },
+    "model": "model {model}",
+    "noModel": "no model",
+    "missing": "Fill in to turn it on: {fields}.",
+    "noKeys": "Add a key in AI keys to choose the Assistant's model.",
+    "readOnly": "Only the partner's owners and admins change the Assistant.",
+    "invalidStored": "The stored configuration of the Assistant is not valid. Review it and save again.",
+    "active": "Assistant on",
+    "save": "Save",
+    "saved": "Assistant saved.",
+    "savedActive": "Assistant saved and on."
+  },
+  "keys": {
+    "metaTitle": "AI keys",
+    "title": "AI keys",
+    "description": "Admin keys, used by the GUIDU Assistant in /admin and for your customers' questions in /app. Your customers' GUIDS use each customer's own key.",
+    "new": "New key",
+    "list": "Keys ({count})",
+    "empty": "No keys yet.",
+    "created": "Key added.",
+    "revoked": "Key revoked.",
+    "created_at": "added on {date}",
+    "status": {
+      "active": "Active",
+      "revoked": "Revoked"
+    },
+    "purpose": {
+      "all": "Chat and embeddings",
+      "chat": "Chat",
+      "embeddings": "Embeddings"
+    },
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke key",
+    "revokeMessage": "Revoke the key {label}? The Assistant stops using it at once.",
+    "cancel": "Cancel",
+    "form": {
+      "provider": "Provider",
+      "purpose": "Use",
+      "label": "Name",
+      "secret": "Key",
+      "hint": "The key is encrypted and shown masked only.",
+      "save": "Add key"
+    }
+  },
+  "partnerTemplates": {
+    "metaTitle": "Agent templates",
+    "title": "Agent templates",
+    "description": "The partner's GUIDS templates. Once published, your customers see them next to the house's templates.",
+    "published": "Published (your customers see it when creating a GUIDS)"
   }
 }

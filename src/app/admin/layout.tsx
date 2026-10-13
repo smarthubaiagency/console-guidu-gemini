@@ -7,6 +7,7 @@ import { getRequestBrand } from "@/core/brand/resolve";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { buildPartnerNavigation } from "@/core/module-runtime/navigation";
 import { translateNavigation } from "@/core/i18n/navigation";
+import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
 import { getTranslations } from "next-intl/server";
 
 /** Partner console (ADR 0012): host selects the partner, role selects pages. */
@@ -25,7 +26,9 @@ export default async function PartnerConsoleLayout({
       access={await getConsoleAccess(identity.userId)}
       area="admin"
       sections={translateNavigation(
-        buildPartnerNavigation(partnerGrants(membership.role)),
+        buildPartnerNavigation(partnerGrants(membership.role), {
+          aiAgents: isModuleTechnicallyAvailable("ai-agents"),
+        }),
         "partner",
         t,
       )}

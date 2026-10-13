@@ -255,7 +255,7 @@ jobs:
       # The AI agents module is behind its flag (C04); its screens run here
       # with the flag on, in a server of their own.
       - name: Run AI agents E2E tests with the module flag
-        run: pnpm test:e2e e2e/ai-agents.spec.ts e2e/platform-ai.spec.ts
+        run: pnpm test:e2e e2e/ai-agents.spec.ts e2e/platform-ai.spec.ts e2e/partner-ai.spec.ts
         env:
           GUIDU_MODULE_AI_AGENTS_ENABLED: "true"
       - name: Upload Playwright report on failure

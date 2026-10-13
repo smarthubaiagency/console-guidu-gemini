@@ -245,5 +245,64 @@
         "desc": "Sugere uma ação, que a pessoa confirma."
       }
     }
+  },
+  "assistant": {
+    "metaTitle": "Assistente GUIDU",
+    "title": "Assistente GUIDU",
+    "description": "O assistente do painel: tira dúvidas da sua equipe no /admin e dos seus clientes no /app, com a sua marca. Usa uma chave de IA do admin.",
+    "unnamed": "Assistente sem nome",
+    "status": {
+      "draft": "Rascunho",
+      "active": "Ativo",
+      "paused": "Desligado"
+    },
+    "model": "modelo {model}",
+    "noModel": "sem modelo",
+    "missing": "Falta preencher para ativar: {fields}.",
+    "noKeys": "Cadastre uma chave em Chaves de IA para escolher o modelo do Assistente.",
+    "readOnly": "Só os donos e administradores do parceiro alteram o Assistente.",
+    "invalidStored": "A configuração gravada do Assistente não é válida. Revise e salve de novo.",
+    "active": "Assistente ativo",
+    "save": "Salvar",
+    "saved": "Assistente salvo.",
+    "savedActive": "Assistente salvo e ativo."
+  },
+  "keys": {
+    "metaTitle": "Chaves de IA",
+    "title": "Chaves de IA",
+    "description": "Chaves do admin, usadas pelo Assistente GUIDU no /admin e nas dúvidas dos seus clientes no /app. Os GUIDS dos clientes usam a chave de cada cliente.",
+    "new": "Nova chave",
+    "list": "Chaves ({count})",
+    "empty": "Nenhuma chave ainda.",
+    "created": "Chave cadastrada.",
+    "revoked": "Chave revogada.",
+    "created_at": "criada em {date}",
+    "status": {
+      "active": "Ativa",
+      "revoked": "Revogada"
+    },
+    "purpose": {
+      "all": "Chat e embeddings",
+      "chat": "Chat",
+      "embeddings": "Embeddings"
+    },
+    "revoke": "Revogar",
+    "revokeTitle": "Revogar chave",
+    "revokeMessage": "Revogar a chave {label}? O Assistente para de usá-la na hora.",
+    "cancel": "Cancelar",
+    "form": {
+      "provider": "Provedor",
+      "purpose": "Uso",
+      "label": "Nome",
+      "secret": "Chave",
+      "hint": "A chave é cifrada e aparece só mascarada.",
+      "save": "Cadastrar chave"
+    }
+  },
+  "partnerTemplates": {
+    "metaTitle": "Modelos de agente",
+    "title": "Modelos de agente",
+    "description": "Modelos de GUIDS do parceiro. Publicados, aparecem para os seus clientes ao lado dos modelos da casa.",
+    "published": "Publicado (aparece para os seus clientes na criação de GUIDS)"
   }
 }

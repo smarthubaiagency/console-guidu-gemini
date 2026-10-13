@@ -54,6 +54,10 @@
     "platform_design_components": "Componentes",
     "platform_ai": "Agentes de IA",
     "platform_ai_templates": "Plantillas de agente",
-    "platform_ai_backup": "Respaldo de IA"
+    "platform_ai_backup": "Respaldo de IA",
+    "partner_ai": "Agentes de IA",
+    "partner_ai_assistant": "Asistente GUIDU",
+    "partner_ai_keys": "Claves de IA",
+    "partner_ai_templates": "Plantillas de agente"
   }
 }
