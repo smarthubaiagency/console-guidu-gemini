@@ -224,6 +224,24 @@ describe("generated navigation", () => {
     expect(find(support, "platform.api-keys")).toBeDefined();
   });
 
+  it("shows the AI screens of /platform only with the module flag and platform.ai.manage", () => {
+    const nav = (role: "owner" | "operations" | "support") =>
+      buildPlatformNavigation({
+        modules: listRegisteredModules(),
+        grants: platformGrants(role),
+      });
+    vi.stubEnv("GUIDU_MODULE_AI_AGENTS_ENABLED", "");
+    expect(find(nav("owner"), "platform.ai.templates")).toBeUndefined();
+    vi.stubEnv("GUIDU_MODULE_AI_AGENTS_ENABLED", "true");
+    expect(find(nav("owner"), "platform.ai.templates")?.href).toBe(
+      "/platform/ai/templates",
+    );
+    expect(find(nav("operations"), "platform.ai.backup")?.href).toBe(
+      "/platform/ai/backup",
+    );
+    expect(find(nav("support"), "platform.ai.templates")).toBeUndefined();
+  });
+
   it("builds the partner console by partner role (D-PA-02)", () => {
     const owner = buildPartnerNavigation(partnerGrants("partner_owner"));
     expect(owner.flatMap((s) => s.items).map((i) => i.href)).toEqual([

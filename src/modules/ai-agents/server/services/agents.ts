@@ -171,6 +171,13 @@ export async function createGuid(
       template.defaults,
     );
     if (!config.success) throw invalidTemplate();
+    // Templates of the A1 keep the prompt only in `prompt_template` (A3a).
+    if (
+      !config.data.overview.system_prompt?.trim() &&
+      template.promptTemplate.trim()
+    ) {
+      config.data.overview.system_prompt = template.promptTemplate;
+    }
     source = {
       templateId: template.id,
       templateVersion: template.version,

@@ -22,6 +22,7 @@ export const CLIENT_NAMESPACES = [
   "crm",
   "helloWorld",
   "aiAgents",
+  "aiConsole",
   "designLab",
 ] as const;
 

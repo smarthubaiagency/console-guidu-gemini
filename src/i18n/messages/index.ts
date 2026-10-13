@@ -2,6 +2,7 @@
 
 import ptBR_account from "./pt-BR/account.json";
 import ptBR_aiAgents from "./pt-BR/aiAgents.json";
+import ptBR_aiConsole from "./pt-BR/aiConsole.json";
 import ptBR_api from "./pt-BR/api.json";
 import ptBR_apiErrors from "./pt-BR/apiErrors.json";
 import ptBR_auth from "./pt-BR/auth.json";
@@ -43,6 +44,7 @@ import ptBR_usage from "./pt-BR/usage.json";
 import ptBR_workspace from "./pt-BR/workspace.json";
 import en_account from "./en/account.json";
 import en_aiAgents from "./en/aiAgents.json";
+import en_aiConsole from "./en/aiConsole.json";
 import en_api from "./en/api.json";
 import en_apiErrors from "./en/apiErrors.json";
 import en_auth from "./en/auth.json";
@@ -84,6 +86,7 @@ import en_usage from "./en/usage.json";
 import en_workspace from "./en/workspace.json";
 import es_account from "./es/account.json";
 import es_aiAgents from "./es/aiAgents.json";
+import es_aiConsole from "./es/aiConsole.json";
 import es_api from "./es/api.json";
 import es_apiErrors from "./es/apiErrors.json";
 import es_auth from "./es/auth.json";
@@ -129,6 +132,7 @@ export const MESSAGE_FILES = {
   "pt-BR": {
     account: ptBR_account,
     aiAgents: ptBR_aiAgents,
+    aiConsole: ptBR_aiConsole,
     api: ptBR_api,
     apiErrors: ptBR_apiErrors,
     auth: ptBR_auth,
@@ -172,6 +176,7 @@ export const MESSAGE_FILES = {
   en: {
     account: en_account,
     aiAgents: en_aiAgents,
+    aiConsole: en_aiConsole,
     api: en_api,
     apiErrors: en_apiErrors,
     auth: en_auth,
@@ -215,6 +220,7 @@ export const MESSAGE_FILES = {
   es: {
     account: es_account,
     aiAgents: es_aiAgents,
+    aiConsole: es_aiConsole,
     api: es_api,
     apiErrors: es_apiErrors,
     auth: es_auth,
@@ -260,6 +266,7 @@ export const MESSAGE_FILES = {
 export const NAMESPACES = [
   "account",
   "aiAgents",
+  "aiConsole",
   "api",
   "apiErrors",
   "auth",
