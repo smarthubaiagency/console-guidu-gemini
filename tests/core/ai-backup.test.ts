@@ -156,6 +156,7 @@ describeDatabase("A2c: backup of the customer's key", requiredVars, () => {
         status: true,
         keyState: true,
         backupStartedAt: true,
+        testedConfigHash: true,
         lastTestedAt: true,
       },
     });
@@ -305,6 +306,8 @@ describeDatabase("A2c: backup of the customer's key", requiredVars, () => {
 
     await expect(turn(message, createModel)).resolves.toEqual({
       status: "active",
+      // A test answered by the platform's key proves nothing (A4b).
+      tested: 0,
       keySource: "backup",
       messages: 1,
       tools: 0,
@@ -319,6 +322,7 @@ describeDatabase("A2c: backup of the customer's key", requiredVars, () => {
     const state = await agent();
     expect(state).toMatchObject({ status: "active", keyState: "backup" });
     expect(state.backupStartedAt).toBeInstanceOf(Date);
+    expect(state.testedConfigHash).toBeNull();
 
     const conversation = await admin.aiConversation.findUniqueOrThrow({
       where: { id: message.conversationId },

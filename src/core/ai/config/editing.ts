@@ -17,7 +17,8 @@ import type { AgentConfig } from "./schema";
  *   instructions and the model connection; the tools and the rest stay as
  *   the house's admin template defines them;
  * - `customer`: the customer with a GUIDS that follows its template: the
- *   model connection only;
+ *   model connection and the two fields of its business (summary, products
+ *   and services), which the house's templates leave empty;
  * - `customer_custom`: the customer with a customized GUIDS: everything but
  *   the tools, the expected output and the leads' destination.
  *
@@ -111,6 +112,11 @@ const ASSISTANT_MODEL = new Set([
   "model.rag_enabled",
   "model.embedding_model",
 ]);
+/** The customer's business, theirs even while following a template. */
+const CUSTOMER_BUSINESS = new Set([
+  "overview.business_summary",
+  "overview.products_services",
+]);
 /** Never the customer's, even when customized (campos.md, "P" only). */
 const PARTNER_ONLY = new Set(["overview.expected_output"]);
 
@@ -134,7 +140,10 @@ export function editableFields(editor: ConfigEditor): ReadonlySet<string> {
         case "assistant":
           return tab === "overview" || ASSISTANT_MODEL.has(path);
         case "customer":
-          return tab === "model" && path !== "model.model_provider";
+          return (
+            (tab === "model" && path !== "model.model_provider") ||
+            CUSTOMER_BUSINESS.has(path)
+          );
         case "customer_custom":
           return (
             tab !== "integration" &&

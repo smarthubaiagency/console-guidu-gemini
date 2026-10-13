@@ -40,11 +40,14 @@ describe("division of the configuration fields (especificação §5.2)", () => {
     expect(fields.has("model.model_provider")).toBe(false);
   });
 
-  it("limits the customer to the model connection", () => {
-    expect(editableTabs("customer")).toEqual(["model"]);
+  it("limits the customer to the model connection and the business", () => {
+    expect(editableTabs("customer")).toEqual(["overview", "model"]);
     const fields = editableFields("customer");
     expect(fields.has("model.model_name")).toBe(true);
+    expect(fields.has("overview.business_summary")).toBe(true);
+    expect(fields.has("overview.products_services")).toBe(true);
     expect(fields.has("overview.agent_name")).toBe(false);
+    expect(fields.has("overview.system_prompt")).toBe(false);
   });
 
   it("never gives the customizing customer tools, expected output or integration", () => {

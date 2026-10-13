@@ -5,6 +5,9 @@ import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+import { parseAgentConfig } from "@/core/ai/config/schema";
+import { promptLocale } from "@/core/ai/prompt/texts";
+import { buildTools, type ToolEnv } from "@/core/ai/tools/catalog";
 import { createGuidTurnJob, runGuidTurn } from "@/core/ai/turn/guid";
 import { startAssistantTurn } from "@/core/ai/turn/assistant";
 import { encryptSecret } from "@/core/credentials/crypto";
@@ -16,7 +19,10 @@ import {
   type RequestContext,
   withContext,
 } from "@/lib/prisma/with-context";
-import { sendGuidTestMessage } from "@/modules/ai-agents/server";
+import {
+  getGuidTestConversation,
+  sendGuidTestMessage,
+} from "@/modules/ai-agents/server";
 import { AppError } from "@/shared/errors";
 import { createJobWorker } from "@/worker/runtime";
 
@@ -27,6 +33,9 @@ import { describeDatabase } from "../prisma-rls/describe-database.js";
  * A2b: the turns of the engine with a mock model of the SDK, no network.
  * GUIDS through the worker (detached job, short transactions), the tool
  * guard and its audit, and the Assistant streaming in /admin and /app.
+ * A4b: the GUIDS's test conversation runs the tools simulated and records
+ * the configuration that passed; the real effects of the tools are run
+ * directly, as the channels of the A5 will.
  */
 
 const databaseUrl = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
@@ -312,7 +321,7 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
       }),
     );
 
-  it("answers a GUIDS in the worker, with tools under the guard", async () => {
+  it("answers a GUIDS test in the worker, with tools simulated under the guard", async () => {
     const model = new MockLanguageModelV4({
       doGenerate: [
         toolStep([
@@ -382,6 +391,7 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
     });
     expect(run.result).toMatchObject({
       status: "active",
+      tested: 1,
       messages: 2,
       tools: 6,
     });
@@ -427,29 +437,59 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
     });
     expect(JSON.parse(messages[5]!.content)).toMatchObject({ ok: false });
 
-    // Effects through the CRM and the conversation, in the workspace.
+    // A test: only the conversation's own memory is written; the CRM and
+    // the score are described, with `simulated: true`.
     const conversation = await admin.aiConversation.findUniqueOrThrow({
       where: { id: conversationId },
     });
     expect(conversation.variables).toEqual({ etapa: "orcamento" });
-    const contact = await admin.crmContact.findUniqueOrThrow({
-      where: { id: conversation.contactId ?? "" },
+    expect(conversation.contactId).toBeNull();
+    expect(
+      await admin.crmContact.count({ where: { workspaceId: ids.workspaceA } }),
+    ).toBe(0);
+    expect(
+      await admin.aiLeadActivity.count({
+        where: { workspaceId: ids.workspaceA },
+      }),
+    ).toBe(0);
+    const outputs = Object.fromEntries(
+      messages
+        .filter((m) => m.role === "tool")
+        .map((m) => [m.toolName, JSON.parse(m.content) as unknown]),
+    );
+    expect(outputs.create_contact).toMatchObject({
+      result: { simulated: true },
     });
-    expect(contact).toMatchObject({
-      name: "Maria Souza",
-      email: "maria@exemplo.com",
-      workspaceId: ids.workspaceA,
-      createdBy: ids.userA,
+    expect(outputs.score_lead).toMatchObject({
+      result: { points: 30, temperature: "warm", simulated: true },
     });
-    expect(contact.notes).toMatch(/Quer um orçamento de implante\.$/);
-    const score = await admin.aiLeadActivity.findFirstOrThrow({
-      where: { contactId: contact.id },
+    expect(outputs.add_note).toMatchObject({
+      result: { added: true, simulated: true },
     });
-    expect(score).toMatchObject({
-      points: 30,
-      temperature: "warm",
-      agentId: GUID,
+
+    // The screen reads it back with the tools before each answer.
+    const chat = await withContext(prisma, contextA, (tx) =>
+      getGuidTestConversation(tx, contextA, GUID, conversationId),
+    );
+    expect(chat?.waiting).toBe(false);
+    expect(
+      chat?.messages.map((m) => [m.role, m.content, m.tools.length]),
+    ).toEqual([
+      ["user", "Quero uma proposta", 0],
+      ["assistant", "Oi, Maria!", 6],
+      ["assistant", "Já anotei o seu pedido.", 0],
+    ]);
+    expect(chat?.messages[1]?.tools[0]).toMatchObject({
+      name: "create_contact",
+      output: { result: { simulated: true } },
     });
+
+    // The configuration that answered is the one that passed the test.
+    const [tested] = await admin.$queryRawUnsafe<{ same: boolean }[]>(
+      `select tested_config_hash = md5(config::text) as same
+       from public.ai_agents where id = '${GUID}'`,
+    );
+    expect(tested?.same).toBe(true);
 
     const usageRows = await admin.aiUsageEvent.findMany({
       where: { executionId: jobRunId },
@@ -530,7 +570,7 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
     expect(model.doGenerateCalls).toHaveLength(3);
   });
 
-  it("hands over to a person and then refuses new messages", async () => {
+  it("simulates a handoff in a test, and the test goes on", async () => {
     const model = new MockLanguageModelV4({
       doGenerate: [
         toolStep([
@@ -549,33 +589,104 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
       runGuidTurn(session(sent.jobRunId, contextA), contextA, sent, {
         createModel: () => model,
       }),
-    ).resolves.toMatchObject({ status: "handoff" });
+    ).resolves.toMatchObject({ status: "active" });
+    const conversation = await admin.aiConversation.findUniqueOrThrow({
+      where: { id: sent.conversationId },
+    });
+    expect(conversation.status).toBe("active");
+    const output = await admin.aiMessage.findFirstOrThrow({
+      where: { conversationId: sent.conversationId, toolName: "handoff" },
+    });
+    expect(JSON.parse(output.content)).toMatchObject({
+      result: { handed_over: true, simulated: true },
+    });
+    await expect(send("Oi?", sent.conversationId)).resolves.toMatchObject({
+      conversationId: sent.conversationId,
+    });
+  });
+
+  it("runs the real effects of the tools outside a test", async () => {
+    const sent = await send("Quero uma proposta");
+    const parsed = parseAgentConfig("guid", 1, guidConfig(credentialId));
+    if (!parsed.success) throw new Error("invalid config");
+    const env: ToolEnv = {
+      kind: "guid",
+      executionId: sent.jobRunId,
+      agentId: GUID,
+      conversationId: sent.conversationId,
+      config: parsed.data,
+      locale: promptLocale("pt-BR"),
+      db: session(sent.jobRunId, contextA),
+      workspace: contextA,
+      prisma: null,
+      now: () => new Date(),
+      state: { contactId: null, status: "active", memory: {}, records: [] },
+      simulate: false,
+    };
+    const tools = buildTools(env);
+    const call = (name: string, input: unknown) =>
+      (
+        tools[name]!.execute as unknown as (
+          input: unknown,
+          options: { toolCallId: string; messages: [] },
+        ) => Promise<unknown>
+      )(input, { toolCallId: `call-${name}`, messages: [] });
+
+    await call("create_contact", {
+      name: "Maria Souza",
+      email: "maria@exemplo.com",
+    });
+    await call("score_lead", { rule_ids: ["pede_proposta"] });
+    await call("add_note", { note: "Quer um orçamento de implante." });
+    await call("handoff", { reason: "Pediu uma pessoa." });
+    expect(env.state.records.map((r) => r.decision)).toEqual([
+      "allow",
+      "allow",
+      "allow",
+      "allow",
+    ]);
+
     const conversation = await admin.aiConversation.findUniqueOrThrow({
       where: { id: sent.conversationId },
     });
     expect(conversation.status).toBe("handoff");
+    const contact = await admin.crmContact.findUniqueOrThrow({
+      where: { id: conversation.contactId ?? "" },
+    });
+    expect(contact).toMatchObject({
+      name: "Maria Souza",
+      email: "maria@exemplo.com",
+      workspaceId: ids.workspaceA,
+      createdBy: ids.userA,
+    });
+    expect(contact.notes).toMatch(/Quer um orçamento de implante\.$/);
+    expect(
+      await admin.aiLeadActivity.findFirstOrThrow({
+        where: { contactId: contact.id },
+      }),
+    ).toMatchObject({ points: 30, temperature: "warm", agentId: GUID });
+    // A conversation handed over takes no new message.
     await expect(send("Oi?", sent.conversationId)).rejects.toSatisfy(
       (e: unknown) => e instanceof AppError && e.code === "conflict",
     );
   });
 
-  it("blocks a paused agent and a module turned off, and records why", async () => {
-    const model = new MockLanguageModelV4({ doGenerate: [textStep("{}")] });
-    const sent = await send("Olá");
+  it("tests a paused agent, and blocks a module turned off", async () => {
+    const model = new MockLanguageModelV4({
+      doGenerate: [textStep(JSON.stringify({ messages: ["Oi!"] }))],
+    });
+    // A paused agent is tested before it is turned on again.
     await admin.aiAgent.update({
       where: { id: GUID },
       data: { status: "paused" },
     });
+    const sent = await send("Olá");
     await expect(
       runGuidTurn(session(sent.jobRunId, contextA), contextA, sent, {
         createModel: () => model,
       }),
-    ).rejects.toBeInstanceOf(SkipJobError);
-    expect(model.doGenerateCalls).toHaveLength(0);
-    const blocked = await admin.aiMessage.findFirstOrThrow({
-      where: { conversationId: sent.conversationId, role: "assistant" },
-    });
-    expect(blocked).toMatchObject({ errorCode: "agent_paused", content: "" });
+    ).resolves.toMatchObject({ tested: 1, messages: 1 });
+    expect(model.doGenerateCalls).toHaveLength(1);
 
     await admin.aiAgent.update({
       where: { id: GUID },

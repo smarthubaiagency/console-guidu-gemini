@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useActionState, useState, useTransition } from "react";
 
@@ -109,12 +110,15 @@ export function GuidPanel({
   workspaceSlug,
   guid,
   canManage,
+  testHref,
   credentials,
   summary,
 }: Readonly<{
   workspaceSlug: string;
   guid: GuidDetailDto;
   canManage: boolean;
+  /** The drawer of "Testar agente". */
+  testHref: string;
   credentials: readonly EditorCredential[];
   /** Status, origin, key and missing fields, rendered by the page. */
   summary: React.ReactNode;
@@ -122,6 +126,13 @@ export function GuidPanel({
   const t = useTranslations("aiAgents.guids");
   const [state, action, pending] = useActionState(saveGuidAction, INITIAL);
   useActionStatus(state);
+  const testLink = (
+    <Button asChild variant="outline" data-testid="open-guid-test">
+      <Link href={testHref} scroll={false}>
+        {t("test.open")}
+      </Link>
+    </Button>
+  );
 
   return (
     <WorkbenchPanel
@@ -130,6 +141,7 @@ export function GuidPanel({
         canManage ? (
           <>
             <DeleteGuidButton workspaceSlug={workspaceSlug} guid={guid} />
+            {testLink}
             <GuidButton
               action={testGuidKeyAction}
               fields={{ workspaceSlug, agentId: guid.id }}
@@ -145,7 +157,9 @@ export function GuidPanel({
               {t("save")}
             </Button>
           </>
-        ) : undefined
+        ) : (
+          testLink
+        )
       }
     >
       <div className="space-y-6" data-testid="guid-panel">
@@ -176,8 +190,21 @@ export function GuidPanel({
                   id="guid-active"
                   name="active"
                   defaultChecked={guid.status === "active"}
+                  aria-invalid={state.fieldErrors?.active ? true : undefined}
+                  aria-describedby={
+                    state.fieldErrors?.active ? "guid-active-error" : undefined
+                  }
                 />
               </div>
+              {state.fieldErrors?.active ? (
+                <p
+                  id="guid-active-error"
+                  className="text-12 text-destructive"
+                  role="alert"
+                >
+                  {state.fieldErrors.active}
+                </p>
+              ) : null}
               {credentials.length === 0 ? (
                 <p className="text-11 text-text-secondary">{t("noKeys")}</p>
               ) : null}

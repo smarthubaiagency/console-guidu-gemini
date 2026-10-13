@@ -682,4 +682,64 @@ $$;
 reset role;
 rollback;
 
+-- ----------------------------------------------------------------------------
+-- Test 9: the pass of "Testar agente" (A4b), from the turn
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+update public.ai_agents set key_state = 'backup', backup_started_at = now()
+where id = 'a2a00000-0000-4000-8000-0000000000a1';
+set local role app_runtime;
+do $$
+declare
+  v_hash text;
+begin
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  select md5(config::text) into v_hash from public.ai_agents
+  where id = 'a2a00000-0000-4000-8000-0000000000a1';
+
+  -- The owner cannot mark a configuration as tested, nor create one tested.
+  begin
+    update public.ai_agents set tested_config_hash = v_hash, tested_at = now()
+    where id = 'a2a00000-0000-4000-8000-0000000000a1';
+    raise exception 'ai_agents: the owner recorded a test';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- A stale configuration and another workspace's agent record nothing.
+  if private.ai_agent_test_passed('a2a00000-0000-4000-8000-0000000000a1', md5('outra'))
+     or private.ai_agent_test_passed('a2a00000-0000-4000-8000-0000000000b1', v_hash) then
+    raise exception 'ai_agent_test_passed: recorded a stale or foreign test';
+  end if;
+  -- Nor does a viewer.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000033', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if private.ai_agent_test_passed('a2a00000-0000-4000-8000-0000000000a1', v_hash) then
+    raise exception 'ai_agent_test_passed: viewer recorded a test';
+  end if;
+
+  -- The person of the turn: the pass is recorded and the backup ends.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if not private.ai_agent_test_passed('a2a00000-0000-4000-8000-0000000000a1', v_hash) then
+    raise exception 'ai_agent_test_passed: pass not recorded';
+  end if;
+  if not exists (
+    select 1 from public.ai_agents
+    where id = 'a2a00000-0000-4000-8000-0000000000a1'
+      and tested_config_hash = v_hash and tested_at is not null
+      and key_state = 'ok' and backup_started_at is null
+  ) then
+    raise exception 'ai_agent_test_passed: wrong state after the pass';
+  end if;
+  -- The flag of the function does not outlive it.
+  if current_setting('app.ai_test_pass', true) = 'on' then
+    raise exception 'ai_agent_test_passed: flag left on';
+  end if;
+end
+$$;
+reset role;
+rollback;
+
 select 'ai-engine-rls: ok' as result;

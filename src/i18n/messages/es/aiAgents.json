@@ -102,9 +102,51 @@
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "deleteTitle": "Eliminar agente",
-    "deleteMessage": "El agente {name} y sus conversaciones serán eliminados. El consumo ya registrado se mantiene."
+    "deleteMessage": "El agente {name} y sus conversaciones serán eliminados. El consumo ya registrado se mantiene.",
+    "tested": "Probado con esta configuración el {date}.",
+    "untested": "Esta configuración aún no se ha probado. Prueba el agente antes de activarlo.",
+    "untestedActive": "La configuración cambió después de la última prueba. Prueba el agente de nuevo.",
+    "test": {
+      "open": "Probar agente",
+      "title": "Probar {name}",
+      "intro": "Conversa como lo haría un cliente. El agente usa el prompt, la clave y el modelo reales; las herramientas solo muestran lo que harían. La prueba cuenta en el consumo.",
+      "back": "Volver a la configuración",
+      "newConversation": "Nueva conversación",
+      "placeholder": "Escribe como lo haría un cliente",
+      "send": "Enviar",
+      "empty": "Envía el primer mensaje para empezar la prueba.",
+      "waiting": "El agente está respondiendo…",
+      "slow": "El agente aún no ha respondido. La respuesta aparecerá aquí cuando llegue.",
+      "you": "Tú",
+      "agent": "Agente",
+      "tools": "{count, plural, one {# herramienta (simulada)} other {# herramientas (simuladas)}}",
+      "input": "Entrada",
+      "output": "Resultado",
+      "refused": "sin resultado",
+      "failed": "El agente no respondió: {reason}",
+      "errors": {
+        "module_unavailable": "el módulo de agentes no está disponible.",
+        "conversation_handoff": "la conversación pasó a una persona.",
+        "conversation_closed": "la conversación se cerró.",
+        "agent_paused": "el agente está en pausa.",
+        "key_failed": "la clave falló. Usa \"Probar clave\".",
+        "plan_limit": "el workspace tiene más agentes de los que permite el plan.",
+        "invalid_config": "la configuración no es válida.",
+        "no_model": "elige la clave y el modelo.",
+        "no_key": "la clave elegida no está activa en el almacén.",
+        "no_prompt": "el agente no tiene prompt.",
+        "engine_error": "error interno. Inténtalo de nuevo.",
+        "invalid_output": "el modelo respondió en un formato inesperado.",
+        "provider_auth": "el proveedor rechazó la clave.",
+        "provider_error": "el proveedor del modelo falló.",
+        "provider_limit": "la clave alcanzó un límite del proveedor.",
+        "timeout": "el modelo tardó demasiado.",
+        "unknown": "error desconocido."
+      }
+    }
   },
   "errors": {
-    "notCustomized": "Personalice el agente para cambiar las derivaciones."
+    "notCustomized": "Personalice el agente para cambiar las derivaciones.",
+    "keyFailed": "La clave del agente falló. Prueba la clave antes de conversar."
   }
 }

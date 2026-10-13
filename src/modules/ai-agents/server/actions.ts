@@ -17,6 +17,11 @@ import { AppError } from "@/shared/errors";
 
 import { createGuid } from "./services/agents";
 import {
+  getGuidTestConversation,
+  type GuidTestConversationDto,
+  sendGuidTestMessage,
+} from "./services/conversations";
+import {
   createReferral,
   customizeGuid,
   deleteGuid,
@@ -26,8 +31,9 @@ import {
 } from "./services/guid-config";
 
 /**
- * Server actions of the GUIDS screens of `/app` (A4a): create, save,
- * customize, test the key, delete and the referrals. The services check the
+ * Server actions of the GUIDS screens of `/app` (A4a and A4b): create,
+ * save, customize, test the key, delete, the referrals and the chat of
+ * "Testar agente". The services check the
  * module, the role and the tenant again; RLS repeats them.
  */
 
@@ -38,6 +44,11 @@ export type GuidActionState = {
   requestId?: string;
   /** Message of each invalid field, by `tab.field` or form field name. */
   fieldErrors?: Record<string, string>;
+};
+
+export type GuidTestActionState = GuidActionState & {
+  /** The conversation the message went to. */
+  conversationId?: string;
 };
 
 const slug = z.string().min(1).max(64);
@@ -255,5 +266,47 @@ export async function deleteReferralAction(
     return { success: true, message: t("deleted") };
   } catch (err) {
     return failure(err);
+  }
+}
+
+export async function sendGuidTestAction(
+  _prev: GuidTestActionState,
+  formData: FormData,
+): Promise<GuidTestActionState> {
+  try {
+    const { context } = await contextFor(formData);
+    const conversationId = text(formData, "conversationId");
+    const sent = await withContext(prisma, context, (tx) =>
+      sendGuidTestMessage(tx, context, {
+        agentId: text(formData, "agentId"),
+        text: text(formData, "text"),
+        ...(conversationId ? { conversationId } : {}),
+      }),
+    );
+    return { success: true, conversationId: sent.conversationId };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** The test conversation, read again while the answer is on its way. */
+export async function loadGuidTestAction(
+  workspaceSlug: string,
+  agentId: string,
+  conversationId: string,
+): Promise<
+  { conversation: GuidTestConversationDto | null } | { error: string }
+> {
+  try {
+    const formData = new FormData();
+    formData.append("workspaceSlug", workspaceSlug);
+    const { context } = await contextFor(formData);
+    const conversation = await withContext(prisma, context, (tx) =>
+      getGuidTestConversation(tx, context, agentId, conversationId),
+    );
+    return { conversation };
+  } catch (err) {
+    const { error } = await actionFailure(err);
+    return { error };
   }
 }

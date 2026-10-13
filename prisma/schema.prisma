@@ -759,6 +759,10 @@ model AiAgent {
   keyState           String    @default("ok") @map("key_state")
   backupStartedAt    DateTime? @map("backup_started_at") @db.Timestamptz()
   lastTestedAt       DateTime? @map("last_tested_at") @db.Timestamptz()
+  /// md5(config::text) of the last successful test (A4b); written only by
+  /// `private.ai_agent_test_passed`.
+  testedConfigHash   String?   @map("tested_config_hash")
+  testedAt           DateTime? @map("tested_at") @db.Timestamptz()
   createdBy          String?   @map("created_by") @db.Uuid
   updatedBy          String?   @map("updated_by") @db.Uuid
   updatedByPartnerId String?   @map("updated_by_partner_id") @db.Uuid

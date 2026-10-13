@@ -42,6 +42,12 @@ import {
  * agent's allowlist are offered; each call still goes through the guard,
  * and each effect opens its own short transaction through the services of
  * the owning module, with the permissions of who talks.
+ *
+ * In a test of a GUIDS ("Testar agente", A4b, §5.3) the tools are
+ * simulated: they check what they check for real and answer what they would
+ * do, with `simulated: true`, without writing the contact, the note, the
+ * score, the handoff or the proposal. The memory of the test conversation
+ * is the test's own and is written.
  */
 
 export type ToolEnv = Readonly<{
@@ -58,6 +64,8 @@ export type ToolEnv = Readonly<{
   prisma: PrismaClient | null;
   now: () => Date;
   state: TurnState;
+  /** A test of the agent: effects are described, not written. */
+  simulate?: boolean;
 }>;
 
 /** Reads of the workspace the Assistant may use (MCP tools of risk read). */
@@ -78,6 +86,9 @@ export const WORKSPACE_READ_TOOLS = [
 ] as const;
 
 const MAX_NOTES = 5000;
+
+/** The contact a simulated `create_contact` stands for, in this turn. */
+export const SIMULATED_CONTACT_ID = "simulated-contact";
 
 function restricted(rule: string, reason: string): ToolRestrictedError {
   return new ToolRestrictedError(rule, reason);
@@ -175,6 +186,12 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
         if (score.breakdown.length === 0) {
           throw restricted("no_rule", "Nenhuma regra de pontuação conhecida.");
         }
+        const result = {
+          points: score.points,
+          temperature: score.temperature,
+          unknown_rule_ids: score.unknown,
+        };
+        if (env.simulate) return { ...result, simulated: true };
         await env.db.transaction((tx) =>
           tx.aiLeadActivity.create({
             data: {
@@ -190,11 +207,7 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
             select: { id: true },
           }),
         );
-        return {
-          points: score.points,
-          temperature: score.temperature,
-          unknown_rule_ids: score.unknown,
-        };
+        return result;
       },
     },
 
@@ -212,6 +225,10 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
         const ws = requireWorkspace(env);
         if (env.state.contactId) {
           throw restricted("contact_exists", "A conversa já tem um contato.");
+        }
+        if (env.simulate) {
+          env.state.contactId = SIMULATED_CONTACT_ID;
+          return { contact_id: SIMULATED_CONTACT_ID, simulated: true };
         }
         const contact = await env.db.transaction(async (tx) => {
           const created = await createContact(tx, ws, {
@@ -242,6 +259,13 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
       run: async (input) => {
         const ws = requireWorkspace(env);
         const contactId = requireContact(env);
+        if (env.simulate) {
+          return {
+            added: true,
+            note: String(input.note).trim(),
+            simulated: true,
+          };
+        }
         const stamp = env.now().toISOString().slice(0, 16).replace("T", " ");
         await env.db.transaction(async (tx) => {
           const contact = await getContact(tx, ws, contactId);
@@ -260,8 +284,16 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
       description:
         "Hand the conversation over to a person of the team. Give the reason. After it, you stop answering.",
       input: z.object({ reason: z.string().min(1).max(500) }),
-      run: async () => {
+      run: async (input) => {
         requireWorkspace(env);
+        if (env.simulate) {
+          // The test goes on: the person keeps testing after a handoff.
+          return {
+            handed_over: true,
+            reason: String(input.reason),
+            simulated: true,
+          };
+        }
         await env.db.transaction((tx) =>
           tx.aiConversation.updateMany({
             where: { id: conversationId, status: "active" },
@@ -357,6 +389,13 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
       }),
       run: async (input, toolCallId) => {
         const ws = requireWorkspace(env);
+        if (env.simulate) {
+          return {
+            proposed: input.operation,
+            status: "pending",
+            simulated: true,
+          };
+        }
         const idempotencyKey = `ai.${env.executionId}.${toolCallId}`
           .replace(/[^\w.:-]/g, "_")
           .slice(0, 128);
