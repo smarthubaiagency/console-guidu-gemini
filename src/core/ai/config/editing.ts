@@ -11,7 +11,8 @@ import type { AgentConfig } from "./schema";
  * - `template`: the owner of a template (the house in `/platform`, a
  *   partner in `/admin`): every field but the key, which is the
  *   workspace's or the partner's, never the template's;
- * - `partner`: the partner editing a customer's GUIDS;
+ * - `partner`: the partner editing a customer's GUIDS: every field but the
+ *   key, which is in the customer's vault (the partner does not read it);
  * - `assistant`: the partner editing its GUIDU Assistant (§4): name,
  *   instructions and the model connection; the tools and the rest stay as
  *   the house's admin template defines them;
@@ -127,7 +128,9 @@ export function editableFields(editor: ConfigEditor): ReadonlySet<string> {
         case "template":
           return path !== "model.credential_id";
         case "partner":
-          return path !== "model.model_provider";
+          return (
+            path !== "model.model_provider" && path !== "model.credential_id"
+          );
         case "assistant":
           return tab === "overview" || ASSISTANT_MODEL.has(path);
         case "customer":

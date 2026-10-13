@@ -8,6 +8,8 @@
  * - With GUIDU_MODULE_AI_AGENTS_ENABLED, a partner owner adds an admin key,
  *   gives its GUIDU Assistant a model with that key and turns it on, and
  *   creates and publishes a GUIDS template of its own.
+ * - A3c: the partner finds a customer's GUIDS, changes it and adds a
+ *   referral; the customer sees "Alterado por <parceiro> em <data>".
  * ============================================================================
  */
 
@@ -21,7 +23,9 @@ import {
 
 import {
   createIdentity,
+  seedGuid,
   seedPartner,
+  seedWorkspace,
   signIn,
   uniqueEmail,
 } from "./support/identity";
@@ -34,8 +38,9 @@ async function partnerOwner(
   browser: Browser,
   request: APIRequestContext,
   prefix: string,
+  options: { organizationId?: string; stamp?: string } = {},
 ): Promise<Page> {
-  const stamp = Date.now().toString(36);
+  const stamp = options.stamp ?? Date.now().toString(36);
   const host = `${prefix}-${stamp}.localhost`;
   const email = uniqueEmail(prefix);
   await createIdentity(request, email);
@@ -45,6 +50,9 @@ async function partnerOwner(
     host,
     memberEmail: email,
     role: "partner_owner",
+    ...(options.organizationId
+      ? { organizationId: options.organizationId }
+      : {}),
   });
   const context = await browser.newContext({
     baseURL: `http://${host}:3000`,
@@ -141,5 +149,73 @@ test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
         .getByTestId("template-row")
         .filter({ hasText: "Recepção da clínica" }),
     ).toContainText("Publicado");
+  });
+
+  test("a partner changes a customer's GUIDS and the customer sees it", async ({
+    browser,
+    request,
+  }) => {
+    test.setTimeout(180_000);
+    const stamp = Date.now().toString(36);
+    const customerEmail = uniqueEmail("cliente-guids");
+    await createIdentity(request, customerEmail);
+    const workspace = await seedWorkspace(request, {
+      email: customerEmail,
+      orgName: "Clínica Sorriso",
+      orgSlug: `clinica-${stamp}`,
+      wsName: "Clínica Sorriso",
+      wsSlug: `clinica-${stamp}`,
+    });
+    await seedGuid(request, { ...workspace, agentName: "Sofia" });
+    const page = await partnerOwner(browser, request, "parceiro-guids", {
+      organizationId: workspace.organizationId,
+      stamp,
+    });
+    const sidebar = page.locator('[data-slot="sidebar"]');
+
+    await page.goto("/admin");
+    await expandSidebarGroup(page, "Agentes de IA");
+    await sidebar.getByRole("link", { name: "GUIDS dos clientes" }).click();
+    const row = page.getByTestId("guid-row").filter({ hasText: "Sofia" });
+    await expect(row).toContainText("Clínica Sorriso");
+    await expect(row).toContainText("Rascunho");
+
+    // The search narrows the list; clearing it brings the GUIDS back.
+    const filters = page.getByTestId("guid-filters");
+    await filters.getByLabel("Buscar").fill("inexistente");
+    await filters.getByRole("button", { name: "Filtrar" }).click();
+    await expect(page.getByText("Nenhum GUIDS encontrado.")).toBeVisible();
+    await filters.getByRole("link", { name: "Limpar" }).click();
+    await row.getByRole("link", { name: "Sofia" }).click();
+
+    const form = page.getByTestId("guid-form");
+    await form.getByLabel("Nome do agente").fill("Sofia da clínica");
+    await page.getByTestId("save-guid").click();
+    await expect(page.getByText("GUIDS salvo.")).toBeVisible();
+    await expect(
+      page.getByTestId("guid-row").filter({ hasText: "Sofia da clínica" }),
+    ).toContainText("Alterado por vocês");
+
+    const referral = page.getByTestId("create-referral");
+    await referral.getByLabel("Nome").fill("Dra. Ana");
+    await referral.getByLabel("Tag").fill("dra-ana");
+    await referral.getByLabel("Especialidades").fill("Ortodontia, Implantes");
+    await referral.getByLabel("Telefone").fill("+5511999998888");
+    await referral.getByRole("button", { name: "Adicionar indicação" }).click();
+    await expect(page.getByText("Indicação adicionada.")).toBeVisible();
+    await expect(page.getByTestId("guid-referral")).toContainText(
+      "Ortodontia, Implantes",
+    );
+
+    // The customer, on the partner's host, sees who changed its agent.
+    const context = await browser.newContext({
+      baseURL: `http://parceiro-guids-${stamp}.localhost:3000`,
+    });
+    const customer = await context.newPage();
+    await signIn(customer, customerEmail);
+    await customer.goto(`/app/clinica-${stamp}/ai-agents`);
+    await expect(customer.getByTestId("workspace-guid")).toContainText(
+      `Alterado por Agência ${stamp} em`,
+    );
   });
 });

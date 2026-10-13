@@ -17,6 +17,12 @@ import { AppError } from "@/shared/errors";
 
 import { updatePartnerAssistant } from "./assistant-config";
 import {
+  createCustomerReferral,
+  deleteCustomerReferral,
+  updateCustomerGuid,
+  updateCustomerReferral,
+} from "./customer-guids";
+import {
   registerPartnerCredential,
   revokePartnerCredential,
   saveBackupSettings,
@@ -32,7 +38,8 @@ import {
 /**
  * Server actions of the AI screens of `/platform` (A3a: the house's agent
  * templates and the backup key) and of `/admin` (A3b: the partner's
- * Assistant, admin keys and templates). AAL2, the console's host, the
+ * Assistant, admin keys and templates; A3c: the customers' GUIDS and their
+ * referrals). AAL2, the console's host, the
  * module flag and the role, checked here and again by the services and RLS.
  */
 
@@ -50,6 +57,7 @@ const BACKUP_PATH = "/platform/ai/backup";
 const PARTNER_TEMPLATES_PATH = "/admin/ai/templates";
 const PARTNER_ASSISTANT_PATH = "/admin/ai/assistant";
 const PARTNER_KEYS_PATH = "/admin/ai/keys";
+const PARTNER_GUIDS_PATH = "/admin/ai/guids";
 
 function notFound(): AppError {
   return new AppError({
@@ -338,4 +346,96 @@ export async function deletePartnerTemplateAction(
   }
   revalidatePath(PARTNER_TEMPLATES_PATH);
   redirect(PARTNER_TEMPLATES_PATH);
+}
+
+export async function saveCustomerGuidAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    const saved = await inPartner(actor, (tx) =>
+      updateCustomerGuid(tx, actor, text(formData, "agentId"), {
+        status: formData.get("active") === "on" ? "active" : "paused",
+        config: parseJson(text(formData, "config")),
+      }),
+    );
+    revalidatePath(PARTNER_GUIDS_PATH);
+    const t = await getTranslations("aiConsole");
+    return {
+      success: true,
+      message:
+        saved.status === "active" ? t("guids.savedActive") : t("guids.saved"),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+function referralInput(formData: FormData) {
+  return {
+    name: text(formData, "name"),
+    referralTag: text(formData, "referralTag"),
+    specialties: text(formData, "specialties")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+    phone: text(formData, "phone"),
+    city: text(formData, "city"),
+    remote: formData.get("remote") === "on",
+  };
+}
+
+export async function saveCustomerReferralAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    const agentId = text(formData, "agentId");
+    const referralId = text(formData, "referralId");
+    await inPartner(actor, (tx) =>
+      referralId
+        ? updateCustomerReferral(
+            tx,
+            actor,
+            agentId,
+            referralId,
+            referralInput(formData),
+          )
+        : createCustomerReferral(tx, actor, agentId, referralInput(formData)),
+    );
+    revalidatePath(PARTNER_GUIDS_PATH);
+    const t = await getTranslations("aiConsole");
+    return {
+      success: true,
+      message: referralId
+        ? t("guids.referrals.saved")
+        : t("guids.referrals.created"),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function deleteCustomerReferralAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    await inPartner(actor, (tx) =>
+      deleteCustomerReferral(
+        tx,
+        actor,
+        text(formData, "agentId"),
+        text(formData, "referralId"),
+      ),
+    );
+    revalidatePath(PARTNER_GUIDS_PATH);
+    const t = await getTranslations("aiConsole");
+    return { success: true, message: t("guids.referrals.deleted") };
+  } catch (err) {
+    return failure(err);
+  }
 }

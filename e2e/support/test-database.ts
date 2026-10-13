@@ -81,6 +81,8 @@ export type TestDatabase = Readonly<{
     expiresInHours?: number | undefined;
   }) => Promise<{ id: string; rawToken: string }>;
   seedPartner: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
+  /** A draft GUIDS in the workspace, with the AI module on (A3c). */
+  seedGuid: (params: SeedGuidParams) => Promise<{ agentId: string }>;
   /** Runs the real worker (`pnpm worker`) until no job is waiting. */
   runJobs: () => Promise<{ remaining: number }>;
   close: () => Promise<void>;
@@ -98,6 +100,13 @@ export type SeedPartnerParams = {
     | "partner_finance"
     | "partner_support";
   organizationId?: string | undefined;
+};
+
+/** A GUIDS of a workspace, until the `/app` screens create them (A4). */
+export type SeedGuidParams = {
+  organizationId: string;
+  workspaceId: string;
+  agentName: string;
 };
 
 export async function startTestDatabase(
@@ -308,6 +317,21 @@ export async function startTestDatabase(
         );
       }
       return { partnerId };
+    },
+    seedGuid: async (params) => {
+      await pool.query(
+        `insert into public.workspace_modules (organization_id, workspace_id, module_key, status)
+         values ($1, $2, 'ai-agents', 'enabled')
+         on conflict (workspace_id, module_key) do update set status = 'enabled'`,
+        [params.organizationId, params.workspaceId],
+      );
+      const agentRes = await pool.query<{ id: string }>(
+        `insert into public.ai_agents (kind, organization_id, workspace_id, config)
+         values ('guid', $1, $2, jsonb_build_object('overview', jsonb_build_object('agent_name', $3::text)))
+         returning id`,
+        [params.organizationId, params.workspaceId, params.agentName],
+      );
+      return { agentId: agentRes.rows[0]!.id };
     },
     runJobs: async () => {
       // A worker process only while jobs wait: constant polling would add

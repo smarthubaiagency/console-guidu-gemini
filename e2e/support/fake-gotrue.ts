@@ -7,7 +7,7 @@ import {
 import { randomUUID } from "node:crypto";
 
 import { signAccessToken } from "./jwt";
-import type { SeedPartnerParams } from "./test-database";
+import type { SeedGuidParams, SeedPartnerParams } from "./test-database";
 import { generateBase32Secret, totpMatches } from "./totp";
 
 /**
@@ -88,6 +88,8 @@ export type FakeGoTrueOptions = Readonly<{
   }) => Promise<{ id: string; rawToken: string }>;
   /** Seeds a partner with an active domain, a member and maybe a customer. */
   onSeedPartner?: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
+  /** Seeds a draft GUIDS in a workspace (A3c). */
+  onSeedGuid?: (params: SeedGuidParams) => Promise<{ agentId: string }>;
   /** Runs the job worker until no job is waiting (F3a). */
   onRunJobs?: () => Promise<{ remaining: number }>;
 }>;
@@ -335,6 +337,18 @@ export async function startFakeGoTrue(
         role,
         organizationId: asString(body.organizationId) ?? undefined,
       });
+      return json(response, 200, seeded);
+    }
+
+    if (path === "/__control/seed-guid" && method === "POST") {
+      const body = await readBody(request);
+      const organizationId = asString(body.organizationId);
+      const workspaceId = asString(body.workspaceId);
+      const agentName = asString(body.agentName);
+      if (!organizationId || !workspaceId || !agentName || !options.onSeedGuid) {
+        return json(response, 400, { msg: "invalid parameters" });
+      }
+      const seeded = await options.onSeedGuid({ organizationId, workspaceId, agentName });
       return json(response, 200, seeded);
     }
 

@@ -21,9 +21,11 @@ describe("division of the configuration fields (especificação §5.2)", () => {
     expect(editableTabs("template")).toHaveLength(5);
   });
 
-  it("gives the partner the key, never the provider (it comes from the key)", () => {
+  it("keeps the customer's key and its provider out of the partner's reach", () => {
     const fields = editableFields("partner");
-    expect(fields.has("model.credential_id")).toBe(true);
+    // The key is in the customer's vault, which the partner does not read.
+    expect(fields.has("model.credential_id")).toBe(false);
+    expect(fields.has("model.model_name")).toBe(true);
     expect(fields.has("model.model_provider")).toBe(false);
     expect(fields.has("integration.crm_webhook_url")).toBe(true);
   });
