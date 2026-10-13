@@ -25,6 +25,8 @@ import {
 } from "@/core/channels/actions";
 import type { ChannelConnectionDto } from "@/core/channels/connections";
 
+import { ServiceSettingsForm } from "./service-form";
+
 type FormState = ChannelActionState & { formKey?: number };
 
 const INITIAL: ChannelActionState = {};
@@ -146,6 +148,12 @@ function ConnectionCard({
             .filter(Boolean)
             .join(" · ")}
         </p>
+        {canManage && connection.inboxes.length > 0 ? (
+          <ServiceSettingsForm
+            workspaceSlug={workspaceSlug}
+            connection={connection}
+          />
+        ) : null}
         {canManage ? (
           <div className="flex flex-wrap gap-2">
             <CheckButton

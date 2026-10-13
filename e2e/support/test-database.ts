@@ -102,11 +102,15 @@ export type SeedPartnerParams = {
   organizationId?: string | undefined;
 };
 
-/** The AI module on in a workspace and, with a name, a draft GUIDS. */
+/**
+ * The AI module on in a workspace and, with a name, a draft GUIDS; with
+ * `ready`, turned on with its configuration tested (A5b: takes an inbox).
+ */
 export type SeedGuidParams = {
   organizationId: string;
   workspaceId: string;
   agentName?: string | undefined;
+  ready?: boolean | undefined;
 };
 
 export async function startTestDatabase(
@@ -332,7 +336,16 @@ export async function startTestDatabase(
          returning id`,
         [params.organizationId, params.workspaceId, params.agentName],
       );
-      return { agentId: agentRes.rows[0]!.id };
+      const agentId = agentRes.rows[0]!.id;
+      if (params.ready) {
+        await pool.query(
+          `update public.ai_agents
+           set status = 'active', tested_config_hash = md5(config::text), tested_at = now()
+           where id = $1`,
+          [agentId],
+        );
+      }
+      return { agentId };
     },
     runJobs: async () => {
       // A worker process only while jobs wait: constant polling would add

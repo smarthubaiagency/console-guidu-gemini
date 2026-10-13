@@ -56,7 +56,8 @@
       "http_error": "Chatwoot answered with an error.",
       "invalid_response": "Chatwoot answered in an unexpected format.",
       "unknown": "Unknown failure talking to Chatwoot."
-    }
+    },
+    "inboxTaken": "Another agent already answers this inbox."
   },
   "health": {
     "invalid_url": "The Chatwoot address is invalid.",
@@ -71,5 +72,29 @@
     "account_missing": "The account was not found in Chatwoot.",
     "bot_missing": "The GUIDU bot was removed from Chatwoot. Remove the connection and connect again.",
     "unknown": "Unknown failure talking to Chatwoot."
+  },
+  "service": {
+    "title": "Service",
+    "description": "How the agent answers on this connection's inboxes. An inbox may have its own adjustment.",
+    "scope": "Apply to",
+    "defaults": "Every inbox (default)",
+    "inboxOwn": "{name} (own adjustment)",
+    "fields": {
+      "grouping_seconds": "Wait to group messages (seconds)",
+      "max_messages": "Messages per answer",
+      "max_chars": "Characters per message",
+      "interval_ms": "Interval between messages (milliseconds)"
+    },
+    "hints": {
+      "grouping_seconds": "Messages the contact sends in a row get one answer. From 0 to 30.",
+      "max_messages": "Longer answers are joined in the last message. From 1 to 5.",
+      "max_chars": "Guidance to the agent for short texts. From 100 to 1,000.",
+      "interval_ms": "Pause between the messages of one answer. Up to 5,000."
+    },
+    "backToBot": "After a handoff, the conversation returns to the agent when the team sets it back to \"pending\" in Chatwoot.",
+    "save": "Save service",
+    "useDefaults": "Use the default",
+    "saved": "Service saved.",
+    "reset": "The inbox uses the default again."
   }
 }

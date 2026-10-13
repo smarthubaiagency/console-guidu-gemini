@@ -345,10 +345,11 @@ export async function startFakeGoTrue(
       const organizationId = asString(body.organizationId);
       const workspaceId = asString(body.workspaceId);
       const agentName = asString(body.agentName) ?? undefined;
+      const ready = body.ready === true;
       if (!organizationId || !workspaceId || !options.onSeedGuid) {
         return json(response, 400, { msg: "invalid parameters" });
       }
-      const seeded = await options.onSeedGuid({ organizationId, workspaceId, agentName });
+      const seeded = await options.onSeedGuid({ organizationId, workspaceId, agentName, ready });
       return json(response, 200, seeded);
     }
 

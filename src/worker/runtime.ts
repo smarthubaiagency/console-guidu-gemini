@@ -154,6 +154,23 @@ function prismaDb(tx: ContextTransaction): IDatabase {
   };
 }
 
+/** pg-boss group of a run: the definition's, else its workspace. */
+function groupOf(
+  definition: JobDefinition<unknown>,
+  row: Readonly<{ workspace_id: string | null; payload: unknown }>,
+): string {
+  if (definition.group) {
+    const payload = definition.payload.safeParse(row.payload);
+    if (payload.success) {
+      return `${definition.kind}:${definition.group(payload.data)}`.slice(
+        0,
+        200,
+      );
+    }
+  }
+  return row.workspace_id ?? "platform";
+}
+
 export function createJobWorker(options: WorkerOptions): JobWorker {
   const log = options.log ?? defaultLog;
   const definitions = options.definitions ?? listJobDefinitions();
@@ -198,9 +215,14 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     dispatching = prisma
       .$transaction(async (tx) => {
         const rows = await tx.$queryRaw<
-          { id: string; kind: string; workspace_id: string | null }[]
+          {
+            id: string;
+            kind: string;
+            workspace_id: string | null;
+            payload: unknown;
+          }[]
         >`
-          select id, kind, workspace_id
+          select id, kind, workspace_id, payload
           from public.job_runs
           where status = 'pending' and run_after <= now()
           order by run_after
@@ -225,7 +247,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
             // No fixed job id: a retried run is dispatched again as a new
             // job; the row lock and this transaction keep it to one send.
             {
-              group: { id: row.workspace_id ?? "platform" },
+              group: { id: groupOf(definition, row) },
               db: prismaDb(tx),
             },
           );

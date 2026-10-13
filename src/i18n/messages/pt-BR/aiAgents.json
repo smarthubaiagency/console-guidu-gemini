@@ -143,6 +143,23 @@
         "timeout": "o modelo demorou demais.",
         "unknown": "erro desconhecido."
       }
+    },
+    "channels": {
+      "title": "Canais",
+      "description": "As inboxes que este agente atende. Conexões e atendimento ficam em <link>Configurações › Canais</link>.",
+      "noAccess": "Você não vê os canais deste workspace.",
+      "empty": "Nenhuma inbox conectada ainda.",
+      "needsActive": "Teste e ative o agente nesta configuração para ligá-lo a uma inbox.",
+      "state": {
+        "mine": "Este agente",
+        "other": "Outro agente",
+        "otherNamed": "Com {name}",
+        "free": "Livre"
+      },
+      "bind": "Atender",
+      "unbind": "Parar de atender",
+      "bound": "O agente passou a atender a inbox.",
+      "unbound": "O agente parou de atender a inbox."
     }
   },
   "errors": {

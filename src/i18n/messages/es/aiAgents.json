@@ -143,6 +143,23 @@
         "timeout": "el modelo tardó demasiado.",
         "unknown": "error desconocido."
       }
+    },
+    "channels": {
+      "title": "Canales",
+      "description": "Las bandejas que atiende este agente. Las conexiones y la atención están en <link>Configuración › Canales</link>.",
+      "noAccess": "No ve los canales de este workspace.",
+      "empty": "Todavía no hay bandejas conectadas.",
+      "needsActive": "Pruebe y active el agente en esta configuración para asignarlo a una bandeja.",
+      "state": {
+        "mine": "Este agente",
+        "other": "Otro agente",
+        "otherNamed": "Con {name}",
+        "free": "Libre"
+      },
+      "bind": "Atender",
+      "unbind": "Dejar de atender",
+      "bound": "El agente pasó a atender la bandeja.",
+      "unbound": "El agente dejó de atender la bandeja."
     }
   },
   "errors": {

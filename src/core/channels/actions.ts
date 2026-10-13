@@ -8,6 +8,7 @@ import { requireUser } from "@/core/auth/identity";
 import { actionFailure } from "@/core/i18n/errors";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
+import { withContext } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
 import {
@@ -15,6 +16,7 @@ import {
   checkChannelConnection,
   createChatwootConnection,
   deleteChannelConnection,
+  updateServiceSettings,
 } from "./connections";
 
 /**
@@ -138,6 +140,44 @@ export async function deleteChannelConnectionAction(
     revalidatePath(path);
     const t = await getTranslations("channels");
     return { success: true, message: t("deleted") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+const SETTING_FIELDS = [
+  "grouping_seconds",
+  "max_messages",
+  "max_chars",
+  "interval_ms",
+] as const;
+
+/** Service settings of the integration, for every inbox or for one. */
+export async function updateServiceSettingsAction(
+  _prev: ChannelActionState,
+  formData: FormData,
+): Promise<ChannelActionState> {
+  try {
+    const { context, path } = await contextFor(formData);
+    const scope = text(formData, "scope");
+    const reset = formData.get("reset") === "1";
+    await withContext(prisma, context, (tx) =>
+      updateServiceSettings(tx, context, {
+        connectionId: text(formData, "connectionId"),
+        scope: scope && scope !== "defaults" ? scope : null,
+        settings: reset
+          ? null
+          : Object.fromEntries(
+              SETTING_FIELDS.map((field) => [field, text(formData, field)]),
+            ),
+      }),
+    );
+    revalidatePath(path);
+    const t = await getTranslations("channels");
+    return {
+      success: true,
+      message: reset ? t("service.reset") : t("service.saved"),
+    };
   } catch (err) {
     return failure(err);
   }

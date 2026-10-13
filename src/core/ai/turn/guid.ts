@@ -85,7 +85,25 @@ export type GuidTurnPayload = z.infer<typeof GuidTurnPayload>;
 export type GuidTurnDeps = Readonly<{
   createModel?: ModelFactory;
   now?: () => Date;
+  /** Shape of the answer on a channel (A5b, the integration's settings). */
+  answerLimits?: Readonly<{ maxMessages: number; maxChars: number }>;
 }>;
+
+/** The answer's shape, told to the model in the agent's language. */
+function limitsInstruction(
+  locale: string,
+  limits: Readonly<{ maxMessages: number; maxChars: number }>,
+): string {
+  const { maxMessages: m, maxChars: c } = limits;
+  switch (locale) {
+    case "en":
+      return `Answer in at most ${m} short messages, each up to ${c} characters.`;
+    case "es":
+      return `Responde en como máximo ${m} mensajes cortos, cada uno de hasta ${c} caracteres.`;
+    default:
+      return `Responda em no máximo ${m} mensagens curtas, cada uma com até ${c} caracteres.`;
+  }
+}
 
 const MODULE_KEY = "ai-agents";
 
@@ -417,10 +435,13 @@ export async function runGuidTurn(
 
   // The tools keep their state between the two attempts: a contact
   // created by the first is not created again by the second.
+  const instructions = deps.answerLimits
+    ? `${loaded.systemPrompt}\n\n${limitsInstruction(env.locale, deps.answerLimits)}`
+    : loaded.systemPrompt;
   const answerWith = async (key: TurnKey) => {
     const result = await generateText({
       model: (deps.createModel ?? createChatModel)(key),
-      instructions: loaded.systemPrompt,
+      instructions,
       messages: loaded.history,
       tools: buildTools(env),
       output: Output.object({ schema: ResponsePlan }),

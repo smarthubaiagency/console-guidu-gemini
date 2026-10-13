@@ -35,6 +35,13 @@ type JobCommon<P> = Readonly<{
   retryDelaySeconds?: number;
   /** Time an attempt may run before it is retried or failed. */
   expireInSeconds?: number;
+  /**
+   * Runs of the same group run one at a time in each worker process
+   * (pg-boss group). Default: the workspace. A channel's dispatch (A5b)
+   * groups by conversation, so two conversations of a workspace are
+   * answered side by side and one conversation in order.
+   */
+  group?: (payload: P) => string;
 }>;
 
 /** Short transactions of a detached job, each with the requester's context. */

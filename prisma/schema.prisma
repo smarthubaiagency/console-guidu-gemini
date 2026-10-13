@@ -815,24 +815,26 @@ model AiLeadActivity {
 /// owned by the person who talks to it) (A2a). Messages follow its
 /// visibility; the engine writes both from A2b on.
 model AiConversation {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  kind           String
-  agentId        String    @map("agent_id") @db.Uuid
-  partnerId      String?   @map("partner_id") @db.Uuid
-  organizationId String?   @map("organization_id") @db.Uuid
-  workspaceId    String?   @map("workspace_id") @db.Uuid
-  contactId      String?   @map("contact_id") @db.Uuid
-  userId         String?   @map("user_id") @db.Uuid
-  channel        String
-  status         String    @default("active")
-  variables      Json      @default("{}")
-  summary        String?
-  keyMode        String    @default("own") @map("key_mode")
-  lastMessageAt  DateTime? @map("last_message_at") @db.Timestamptz()
-  closedAt       DateTime? @map("closed_at") @db.Timestamptz()
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind                  String
+  agentId               String    @map("agent_id") @db.Uuid
+  partnerId             String?   @map("partner_id") @db.Uuid
+  organizationId        String?   @map("organization_id") @db.Uuid
+  workspaceId           String?   @map("workspace_id") @db.Uuid
+  contactId             String?   @map("contact_id") @db.Uuid
+  userId                String?   @map("user_id") @db.Uuid
+  channel               String
+  status                String    @default("active")
+  variables             Json      @default("{}")
+  summary               String?
+  keyMode               String    @default("own") @map("key_mode")
+  lastMessageAt         DateTime? @map("last_message_at") @db.Timestamptz()
+  closedAt              DateTime? @map("closed_at") @db.Timestamptz()
+  /// Chatwoot (A5b): the external conversation this one answers.
+  channelConversationId String?   @map("channel_conversation_id") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   /// Kept by the trigger: the engine updates only the columns it is granted.
-  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+  updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
 
   @@map("ai_conversations")
 }
@@ -1324,4 +1326,24 @@ model ChannelInboundEvent {
 
   @@unique([connectionId, externalId])
   @@map("channel_inbound_events")
+}
+
+/// Each part of an answer sent to a provider (A5b), once per (run, part).
+model ChannelDelivery {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  connectionId   String    @map("connection_id") @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  executionId    String    @map("execution_id") @db.Uuid
+  part           Int
+  content        String
+  status         String    @default("pending")
+  externalId     String?   @map("external_id")
+  error          String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz()
+
+  @@unique([executionId, part])
+  @@map("channel_deliveries")
 }

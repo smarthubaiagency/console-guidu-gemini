@@ -56,7 +56,8 @@
       "http_error": "Chatwoot respondió con un error.",
       "invalid_response": "Chatwoot respondió en un formato inesperado.",
       "unknown": "Falla desconocida al hablar con Chatwoot."
-    }
+    },
+    "inboxTaken": "Otro agente ya atiende esta bandeja."
   },
   "health": {
     "invalid_url": "La dirección de Chatwoot no es válida.",
@@ -71,5 +72,29 @@
     "account_missing": "La cuenta no se encontró en Chatwoot.",
     "bot_missing": "El bot de GUIDU fue eliminado de Chatwoot. Elimine la conexión y conecte de nuevo.",
     "unknown": "Falla desconocida al hablar con Chatwoot."
+  },
+  "service": {
+    "title": "Atención",
+    "description": "Cómo responde el agente en las bandejas de esta conexión. Una bandeja puede tener un ajuste propio.",
+    "scope": "Aplicar a",
+    "defaults": "Todas las bandejas (predeterminado)",
+    "inboxOwn": "{name} (ajuste propio)",
+    "fields": {
+      "grouping_seconds": "Espera para juntar mensajes (segundos)",
+      "max_messages": "Mensajes por respuesta",
+      "max_chars": "Caracteres por mensaje",
+      "interval_ms": "Intervalo entre mensajes (milisegundos)"
+    },
+    "hints": {
+      "grouping_seconds": "Los mensajes seguidos del contacto reciben una sola respuesta. De 0 a 30.",
+      "max_messages": "Las respuestas más largas se juntan en el último mensaje. De 1 a 5.",
+      "max_chars": "Orientación al agente para textos cortos. De 100 a 1.000.",
+      "interval_ms": "Pausa entre los mensajes de una respuesta. Hasta 5.000."
+    },
+    "backToBot": "Después de una transferencia, la conversación vuelve al agente cuando el equipo la devuelve a \"pendiente\" en Chatwoot.",
+    "save": "Guardar atención",
+    "useDefaults": "Usar el predeterminado",
+    "saved": "Atención guardada.",
+    "reset": "La bandeja volvió a usar el predeterminado."
   }
 }
