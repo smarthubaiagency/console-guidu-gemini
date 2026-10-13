@@ -12,7 +12,7 @@
 | Crítica    | 1       | 0                   | 1 (só o Marcelo resolve: troca de senha) |
 | Alta       | 2       | 2                   | 0                                        |
 | Média      | 5       | 5                   | 0                                        |
-| Baixa      | 9       | 1                   | 8                                        |
+| Baixa      | 10      | 2                   | 8                                        |
 
 O que entra no CI a partir deste PR:
 
@@ -99,6 +99,8 @@ O que entra no CI a partir deste PR:
 **B8. `braces` 3.0.3 com aviso alto, só em ferramentas de desenvolvimento** (`eslint-config-next` e a CLI do `shadcn`). Pendente: não há versão corrigida, e o pacote não vai para a produção. Por isso o passo do CI audita só as dependências de produção (`--prod`).
 
 **B9. Senhas locais curtas nos handoffs** (`docs/handoff/2026-10-10-handoff.md`, `2026-10-12-handoff.md`) para `app_runtime` e `app_worker` em `127.0.0.1`. Pendente. Valem só para o banco descartável; não reutilizar em nenhum banco remoto.
+
+**B10. Sequence de `public.queue_metrics` com grant para `anon` e `authenticated`.** Corrigido. O Supabase concede toda sequence nova de `public` a esses papéis; a migration da F3d revogou a tabela, mas não a sequence da coluna identity. Ninguém a alcançava (a Data API não expõe nada a esses papéis), mas a regra é que eles não tenham nada nos schemas da aplicação. A suíte nova pegou no CI; a migration `20261028090000_f6a_revoke_sequence_grants.sql` revoga, e `scripts/local/rebuild-db.sh` passa a reproduzir o padrão do Supabase para sequences.
 
 ## Pontos conferidos sem achado
 
