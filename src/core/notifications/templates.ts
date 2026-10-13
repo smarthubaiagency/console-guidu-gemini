@@ -204,5 +204,29 @@ export function renderNotification(
         ),
       };
     }
+    case "ai.agent.key_backup":
+    case "ai.agent.key_paused": {
+      const { data } = event;
+      const prefix =
+        event.type === "ai.agent.key_backup" ? "aiKeyBackup" : "aiKeyPaused";
+      const names = {
+        workspace: data.workspaceName,
+        agent: data.agentName ?? t("aiKey.unnamedAgent"),
+      };
+      return {
+        subject: t(`${prefix}.subject`, names),
+        ...layout(
+          t,
+          brand,
+          [
+            t(`${prefix}.body`, names),
+            t(`${prefix}.nextStep`, {
+              date: formatDate(locale, data.backupUntil),
+            }),
+          ],
+          { label: t("aiKey.action"), url: safeLink(data.credentialsUrl) },
+        ),
+      };
+    }
   }
 }

@@ -29,13 +29,23 @@ import type {
 import { appLog } from "@/lib/telemetry/log";
 import { AppError } from "@/shared/errors";
 
+import {
+  backupServes,
+  isKeyFailure,
+  loadBackupKey,
+  startKeyBackup,
+} from "../backup";
 import { type AgentConfig, parseAgentConfig } from "../config/schema";
-import { createChatModel, type ModelFactory } from "../providers";
+import {
+  type ChatModelKey,
+  createChatModel,
+  type ModelFactory,
+} from "../providers";
 import { renderSystemPrompt } from "../prompt/render";
 import { promptLocale } from "../prompt/texts";
 import { buildTools, recordRefusedCall, type ToolEnv } from "../tools/catalog";
 import { contextValues } from "./context";
-import { persistTurn, persistTurnError } from "./persist";
+import { persistKeyFailure, persistTurn, persistTurnError } from "./persist";
 import { ResponsePlan, turnErrorCode } from "./plan";
 import { TURN_LIMITS, type TurnState } from "./types";
 
@@ -49,6 +59,9 @@ import { TURN_LIMITS, type TurnState } from "./types";
  *    limit, prompt, model and key).
  * 2. The model runs outside any transaction; each tool opens its own.
  * 3. A short transaction writes the answer, the usage and the audit.
+ *
+ * When the customer's key fails, the turn goes on with the platform key
+ * (A2c, `../backup.ts`), only in a conversation opened before the failure.
  *
  * The answer is a response plan (canais.md §6.1) validated by Zod before
  * it is written. The job's run id is the turn's execution id: a turn that
@@ -78,12 +91,15 @@ type Blocked = Readonly<{
   agentId: string;
 }>;
 
+type TurnKey = ChatModelKey & Readonly<{ source: "customer" | "backup" }>;
+
 type Ready = Readonly<{
   kind: "ready";
   conversationId: string;
   agentId: string;
+  conversationCreatedAt: Date;
   config: AgentConfig;
-  key: Readonly<{ provider: AIProvider; secret: string; model: string }>;
+  key: TurnKey;
   systemPrompt: string;
   history: ModelMessage[];
   state: TurnState;
@@ -164,6 +180,18 @@ async function loadTurn(
   if (agent.keyState === "failed") {
     return blocked("key_failed", "A chave do agente falhou.", ids);
   }
+  if (
+    agent.keyState === "backup" &&
+    (!agent.backupStartedAt ||
+      !backupServes(conversation.createdAt, agent.backupStartedAt, now))
+  ) {
+    // The backup only finishes conversations already open (§9.2).
+    return blocked(
+      "key_failed",
+      "A chave do agente falhou; o backup só termina conversas já abertas.",
+      ids,
+    );
+  }
   const [count, quota] = await Promise.all([
     tx.aiAgent.count({ where: { workspaceId: ctx.workspaceId, kind: "guid" } }),
     resolveQuota(tx, ctx.organizationId, "ai-agents.max"),
@@ -184,26 +212,45 @@ async function loadTurn(
     );
   }
   const config = parsed.data;
-  const credentialId = config.model.credential_id;
-  const modelName = config.model.model_name;
-  if (!credentialId || !modelName) {
-    return blocked(
-      "no_model",
-      "O agente não tem chave e modelo escolhidos.",
-      ids,
-    );
-  }
-  const credential = await tx.credential.findFirst({
-    where: {
-      id: credentialId,
-      workspaceId: ctx.workspaceId,
-      status: "active",
-      purpose: { in: ["chat", "all"] },
-    },
-    select: { provider: true, encryptedPayload: true },
-  });
-  if (!credential) {
-    return blocked("no_key", "A chave do agente não está ativa.", ids);
+  let key: TurnKey;
+  if (agent.keyState === "backup") {
+    const backup = await loadBackupKey(tx, agent.id);
+    if (!backup) {
+      return blocked(
+        "key_failed",
+        "A chave do agente falhou e não há chave de backup.",
+        ids,
+      );
+    }
+    key = { ...backup, source: "backup" };
+  } else {
+    const credentialId = config.model.credential_id;
+    const modelName = config.model.model_name;
+    if (!credentialId || !modelName) {
+      return blocked(
+        "no_model",
+        "O agente não tem chave e modelo escolhidos.",
+        ids,
+      );
+    }
+    const credential = await tx.credential.findFirst({
+      where: {
+        id: credentialId,
+        workspaceId: ctx.workspaceId,
+        status: "active",
+        purpose: { in: ["chat", "all"] },
+      },
+      select: { provider: true, encryptedPayload: true },
+    });
+    if (!credential) {
+      return blocked("no_key", "A chave do agente não está ativa.", ids);
+    }
+    key = {
+      provider: credential.provider as AIProvider,
+      secret: decryptSecret(credential.encryptedPayload),
+      model: modelName,
+      source: "customer",
+    };
   }
 
   const [contact, organization, workspace, role, messagesCount, recent] =
@@ -280,12 +327,9 @@ async function loadTurn(
   return {
     kind: "ready",
     ...ids,
+    conversationCreatedAt: conversation.createdAt,
     config,
-    key: {
-      provider: credential.provider as AIProvider,
-      secret: decryptSecret(credential.encryptedPayload),
-      model: modelName,
-    },
+    key,
     systemPrompt,
     history: recent
       .reverse()
@@ -329,7 +373,7 @@ export async function runGuidTurn(
     throw new SkipJobError(loaded.message);
   }
 
-  const { config, key, state } = loaded;
+  const { config, state } = loaded;
   const env: ToolEnv = {
     kind: "guid",
     executionId,
@@ -343,11 +387,16 @@ export async function runGuidTurn(
     now,
     state,
   };
+  const turn = {
+    conversationId: loaded.conversationId,
+    agentId: loaded.agentId,
+    executionId,
+    audit,
+  };
 
-  let answer: z.infer<typeof ResponsePlan>;
-  let steps: Awaited<ReturnType<typeof generateText>>["steps"];
-  let usage = { inputTokens: 0, outputTokens: 0 };
-  try {
+  // The tools keep their state between the two attempts: a contact
+  // created by the first is not created again by the second.
+  const answerWith = async (key: TurnKey) => {
     const result = await generateText({
       model: (deps.createModel ?? createChatModel)(key),
       instructions: loaded.systemPrompt,
@@ -370,60 +419,105 @@ export async function runGuidTurn(
         return null;
       },
     });
-    answer = ResponsePlan.parse(result.output);
-    steps = result.steps;
-    usage = {
-      inputTokens: result.totalUsage.inputTokens ?? 0,
-      outputTokens: result.totalUsage.outputTokens ?? 0,
+    return {
+      answer: ResponsePlan.parse(result.output),
+      steps: result.steps,
+      usage: {
+        inputTokens: result.totalUsage.inputTokens ?? 0,
+        outputTokens: result.totalUsage.outputTokens ?? 0,
+      },
     };
-  } catch (error) {
+  };
+
+  const fail = async (key: TurnKey, error: unknown): Promise<never> => {
     const errorCode = turnErrorCode(error);
     appLog.warn("ai.turn.failed", {
       executionId,
       errorCode,
+      keySource: key.source,
       status: APICallError.isInstance(error) ? error.statusCode : undefined,
     });
     await session.transaction((tx) =>
       persistTurnError(tx, {
-        conversationId: loaded.conversationId,
-        agentId: loaded.agentId,
-        executionId,
+        ...turn,
         errorCode,
         provider: key.provider,
         model: key.model,
         records: state.records,
-        audit,
       }),
     );
     throw new AppError({
       code: "provider_error",
       safeMessage: "O modelo do agente não respondeu.",
     });
+  };
+
+  let key = loaded.key;
+  let outcome: Awaited<ReturnType<typeof answerWith>>;
+  try {
+    outcome = await answerWith(key);
+  } catch (error) {
+    const errorCode = turnErrorCode(error);
+    if (key.source !== "customer" || !isKeyFailure(errorCode)) {
+      return fail(key, error);
+    }
+    appLog.warn("ai.turn.key_failed", { executionId, errorCode });
+    const backup = await session.transaction(async (tx) => {
+      const started = await startKeyBackup(tx, loaded.agentId);
+      await persistKeyFailure(tx, {
+        ...turn,
+        errorCode,
+        started: started?.started ?? false,
+        records: state.records,
+      });
+      if (
+        !started ||
+        !backupServes(loaded.conversationCreatedAt, started.startedAt, now())
+      ) {
+        return null;
+      }
+      return loadBackupKey(tx, loaded.agentId);
+    });
+    // Already in the audit with the failure.
+    state.records.length = 0;
+    if (!backup) return fail(key, error);
+    key = { ...backup, source: "backup" };
+    try {
+      outcome = await answerWith(key);
+    } catch (backupError) {
+      return fail(key, backupError);
+    }
   }
 
-  await session.transaction((tx) =>
-    persistTurn(tx, {
-      conversationId: loaded.conversationId,
-      agentId: loaded.agentId,
-      executionId,
-      provider: key.provider,
-      model: key.model,
-      steps,
-      answer: answer.messages,
-      usage,
+  const used = key;
+  await session.transaction(async (tx) => {
+    await persistTurn(tx, {
+      ...turn,
+      provider: used.provider,
+      model: used.model,
+      steps: outcome.steps,
+      answer: outcome.answer.messages,
+      usage: outcome.usage,
       records: state.records,
       owner: {
-        keySource: "customer",
+        // The backup is a courtesy of the platform (§9.2).
+        keySource: used.source,
         partnerId: null,
         organizationId: ctx.organizationId,
         workspaceId: ctx.workspaceId,
       },
-      audit,
-    }),
-  );
+    });
+    if (used.source === "backup") {
+      await tx.aiConversation.updateMany({
+        where: { id: loaded.conversationId, keyMode: "own" },
+        data: { keyMode: "backup" },
+      });
+    }
+  });
   return {
     status: state.status,
-    messages: answer.messages.length,
+    keySource: used.source,
+    messages: outcome.answer.messages.length,
     tools: state.records.length,
   };
 }
@@ -435,7 +529,7 @@ export function createGuidTurnJob(deps: GuidTurnDeps = {}) {
     description: "Resposta de um GUIDS a uma mensagem da conversa.",
     payload: GuidTurnPayload,
     // A model call is not repeated by the queue: the turn records its own
-    // error, and the backup of the A2c decides what to try next.
+    // error and, when the customer's key fails, tries the backup itself.
     maxAttempts: 1,
     expireInSeconds: 180,
     run: (session, ctx, payload) => runGuidTurn(session, ctx, payload, deps),

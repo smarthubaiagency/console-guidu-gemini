@@ -23,6 +23,15 @@ export type SubscriptionNoticeData = Readonly<{
   billingUrl: string;
 }>;
 
+/** Notice to the customer about the key of a GUIDS (A2c, §9.2). */
+export type AgentKeyNoticeData = Readonly<{
+  workspaceName: string;
+  agentName: string | null;
+  /** End of the 24 hours of backup. */
+  backupUntil: Date;
+  credentialsUrl: string;
+}>;
+
 /** Events with a template. Add one template per new event. */
 export type NotificationEvent = EventBase &
   (
@@ -41,6 +50,14 @@ export type NotificationEvent = EventBase &
     | Readonly<{
         type: "billing.subscription.suspended";
         data: SubscriptionNoticeData;
+      }>
+    | Readonly<{
+        type: "ai.agent.key_backup";
+        data: AgentKeyNoticeData;
+      }>
+    | Readonly<{
+        type: "ai.agent.key_paused";
+        data: AgentKeyNoticeData;
       }>
   );
 

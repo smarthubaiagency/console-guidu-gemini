@@ -4,11 +4,12 @@ import { recordAudit } from "@/core/audit/record";
 import { appConfig } from "@/core/config/app";
 import { definePlatformJob, type JobSchedule } from "@/core/jobs/definition";
 import { notificationLanguages } from "@/core/notifications/language";
-import { notify, type NotificationLanguage } from "@/core/notifications/notify";
-import { renderNotification } from "@/core/notifications/templates";
+import { deliverNotification } from "@/core/notifications/delivery";
+import type { NotificationLanguage } from "@/core/notifications/notify";
 import { getNotificationTransport } from "@/core/notifications/transport";
 import type {
   NotificationBrand,
+  NotificationEvent,
   NotificationTransport,
 } from "@/core/notifications/types";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
@@ -283,50 +284,22 @@ export async function runDailyTransitions(
   return { date, pastDue, suspended, notices };
 }
 
-/**
- * Records the delivery once per key, then hands it to the transport and
- * keeps the outcome. Returns 1 for a new delivery, 0 for a repeated key.
- * The message is rendered in the recipient's language (I5); the subject
- * kept is the one sent.
- */
 async function deliver(
   tx: ContextTransaction,
   transport: NotificationTransport,
   language: NotificationLanguage,
-  event: Parameters<typeof notify>[0],
+  event: NotificationEvent,
   partnerId: string,
   relatedId: string,
 ): Promise<number> {
-  const brand = platformBrand();
-  const subject = renderNotification(
+  return deliverNotification(tx, {
+    transport,
+    language,
     event,
-    brand,
-    language.locale,
-    language.messages,
-  ).subject.slice(0, 200);
-  const inserted = await tx.$executeRaw`
-    insert into public.notification_deliveries
-      (partner_id, event_type, recipient_email, subject, idempotency_key, related_id)
-    values (${partnerId}::uuid, ${event.type}, ${event.recipientEmail}, ${subject},
-            ${event.idempotencyKey}, ${relatedId}::uuid)
-    on conflict (idempotency_key) do nothing
-  `;
-  if (inserted === 0) return 0;
-  let status: "sent" | "skipped" | "failed";
-  let reason: string | null;
-  try {
-    const result = await notify(event, brand, transport, language);
-    status = result.status;
-    reason = result.status === "skipped" ? result.reason : null;
-  } catch {
-    status = "failed";
-    reason = "transport_error";
-  }
-  await tx.notificationDelivery.updateMany({
-    where: { idempotencyKey: event.idempotencyKey, status: "pending" },
-    data: { status, reason },
+    brand: platformBrand(),
+    partnerId,
+    relatedId,
   });
-  return 1;
 }
 
 export const dailyTransitionsJob = definePlatformJob({

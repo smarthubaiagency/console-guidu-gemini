@@ -258,3 +258,37 @@ export async function persistTurnError(
     },
   });
 }
+
+/**
+ * The customer's key failed (A2c): the tool calls already made and the
+ * failure go to the audit; the turn goes on with the backup, or ends with
+ * `persistTurnError`.
+ */
+export async function persistKeyFailure(
+  tx: ContextTransaction,
+  args: Readonly<{
+    conversationId: string;
+    agentId: string;
+    executionId: string;
+    errorCode: string;
+    /** Whether this failure started the backup. */
+    started: boolean;
+    records: readonly ToolCallRecord[];
+    audit: Readonly<{ ctx: RequestContext; origin: AuditOrigin }>;
+  }>,
+): Promise<void> {
+  await auditCalls(tx, args, args.records);
+  await recordAudit(tx, args.audit.ctx, {
+    action: "ai.agent.key_failure",
+    resourceType: "ai_agent",
+    resourceId: args.agentId,
+    result: "error",
+    origin: args.audit.origin,
+    metadata: {
+      executionId: args.executionId,
+      agentId: args.agentId,
+      reason: args.errorCode,
+      to: args.started ? "backup" : "unchanged",
+    },
+  });
+}

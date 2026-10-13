@@ -21,5 +21,19 @@
     "subject": "Suscripción suspendida: {organization}",
     "body": "La suscripción de {organization} fue suspendida por falta de pago del período que terminó el {periodEnd}.",
     "access": "El cliente mantiene el acceso de lectura y exportación, sin nuevos cambios. Registrar el pago reactiva la suscripción."
+  },
+  "aiKey": {
+    "unnamedAgent": "su agente de IA",
+    "action": "Cambiar la clave"
+  },
+  "aiKeyBackup": {
+    "subject": "La clave de IA de {workspace} falló",
+    "body": "La clave de IA usada por {agent} en {workspace} falló (inválida, revocada, sin crédito o en el límite del proveedor). Mientras tanto, la plataforma solo termina las conversaciones que ya estaban abiertas, con un modelo de cortesía que no cuenta en su consumo. Las conversaciones nuevas no se atienden.",
+    "nextStep": "Cambie o pruebe la clave hasta el {date}; sin corrección, el agente se pausará."
+  },
+  "aiKeyPaused": {
+    "subject": "Agente de IA pausado en {workspace}",
+    "body": "{agent} en {workspace} se pausó porque la clave de IA no se corrigió en 24 horas.",
+    "nextStep": "El respaldo terminó el {date}. Cambie y pruebe la clave y luego reactive el agente."
   }
 }
