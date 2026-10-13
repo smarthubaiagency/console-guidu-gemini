@@ -40,7 +40,7 @@ export const Permissions = {
   API_KEYS_REVOKE_ANY: "api_keys.revoke_any",
   API_KEYS_READ_ALL: "api_keys.read_all",
 
-  // AI Agents (Spec §7, declared only — module technically frozen by C04)
+  // AI Agents: GUIDS of the workspace (especificação de agentes §11)
   AI_AGENTS_USE: "ai_agents.use",
   AI_AGENTS_MANAGE: "ai_agents.manage",
 
@@ -75,6 +75,9 @@ export const Permissions = {
   // Languages and texts of the dashboard (I1, Plataforma › Configurações ›
   // Idiomas).
   PLATFORM_LANGUAGES_MANAGE: "platform.languages.manage",
+  // House agent templates, the admin template of the partner Assistants,
+  // the GUIDU knowledge base and the backup key and model (A1, §11).
+  PLATFORM_AI_MANAGE: "platform.ai.manage",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
@@ -90,6 +93,10 @@ export const Permissions = {
   // and the "Ativar checkout" switch (P5m).
   PARTNER_BILLING_READ: "partner.billing.read",
   PARTNER_BILLING_MANAGE: "partner.billing.manage",
+  // The partner's Assistant, its agent templates and the configuration of
+  // its customers' GUIDS, never their conversations (A1, D-AG-17).
+  PARTNER_AI_AGENTS_READ: "partner.ai_agents.read",
+  PARTNER_AI_AGENTS_MANAGE: "partner.ai_agents.manage",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

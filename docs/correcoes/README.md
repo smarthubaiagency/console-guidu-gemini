@@ -15,7 +15,7 @@
 
 | # | Quando | Ação |
 | --- | --- | --- |
-| M1 | **Imediatamente** | Trocar a senha do papel `app_migrations` no `console-guidu`. A senha atual está no histórico do Git (`scripts/migrate.ts:22`, `scripts/seed-admin.ts:7`) e deve ser considerada vazada. Exemplo: `alter role app_migrations password '<nova>'` no SQL Editor. Atualizar o `.env.local` de quem usa. |
+| M1 | Feito em 13/10/2026 | Trocar a senha do papel `app_migrations` no `console-guidu`. A senha atual está no histórico do Git (`scripts/migrate.ts:22`, `scripts/seed-admin.ts:7`) e deve ser considerada vazada. Exemplo: `alter role app_migrations password '<nova>'` no SQL Editor. Atualizar o `.env.local` de quem usa. |
 | M2 | Junto com a C02 | No painel do Supabase `console-guidu` → Authentication → *Leaked password protection*: ligar. |
 | M3 | Junto com a C02 | Conferir se o Dynamic Client Registration / OAuth Server está ligado no `console-guidu` e desligar (ADR 0009). |
 | M4 | Antes de cada merge com migration | Aprovar o PR. A migration é aplicada no `console-guidu` só depois da aprovação. |

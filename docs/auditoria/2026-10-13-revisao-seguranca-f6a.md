@@ -26,11 +26,11 @@ O que entra no CI a partir deste PR:
 
 ### Crítica
 
-**C1. Senha do `app_migrations` do projeto dev no histórico do git.** Pendente, depende do Marcelo.
+**C1. Senha do `app_migrations` do projeto dev no histórico do git.** Corrigido: Marcelo trocou a senha em 13/10/2026.
 
 - Evidência: os commits `98ace62`, `f370c9f` e `b3c192b` (08/10) têm a URL completa com senha em `scripts/migrate.ts` e `scripts/seed-admin.ts`; `git merge-base --is-ancestor 98ace62 origin/main` confirma que estão na `main`. O `c17f998` (C01) tirou do código, mas o histórico continua público.
 - Já registrado como M1 em [`docs/correcoes/README.md`](../correcoes/README.md) e na [homologação de 09/10](2026-10-09-homologacao-correcoes.md), sem confirmação de que a troca foi feita.
-- Ação: `alter role app_migrations password '<nova>'` no SQL Editor do `console-guidu` e atualizar o `.env.local` de quem usa. Reescrever o histórico é opcional depois da troca.
+- Feito: a senha foi trocada no `console-guidu` (confirmação do Marcelo em 13/10/2026). A senha antiga do histórico não vale mais; reescrever o histórico continua opcional.
 
 ### Alta
 
@@ -128,7 +128,7 @@ O que entra no CI a partir deste PR:
 - **MCP:** recusa `Origin` de outro host. Sem `Origin` é aceito, porque é o caso normal de clientes MCP, e só autentica com chave (nunca com cookie).
 - **Server Actions e CSRF:** o Next.js compara `Origin` com o host (`X-Forwarded-Host` ou `Host`). Domínios de parceiro funcionam, porque a origem e o host são o mesmo domínio. `serverActions.allowedOrigins` não é necessário.
 - **Segredos no código atual:**
-  - nenhuma chave privada, token, `service_role` ou senha remota no código nem no histórico, fora C1;
+  - nenhuma chave privada, token, `service_role` ou senha remota válida no código nem no histórico (a de C1 foi trocada);
   - as chaves que aparecem em testes são falsas;
   - o `.gitignore` cobre `.env*`;
   - as três variáveis `NEXT_PUBLIC_*` (URL e chave pública do Supabase) podem ser públicas.

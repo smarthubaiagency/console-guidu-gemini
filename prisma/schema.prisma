@@ -776,6 +776,99 @@ model AgentMessage {
   @@map("agent_messages")
 }
 
+/// Agent template (A1, the legacy preset). `partnerId` null is the house;
+/// `kind = "admin"` is the single template of every partner Assistant.
+/// `defaults` is the configuration document of `configVersion`
+/// (src/core/ai/config).
+model AiAgentTemplate {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId      String?   @map("partner_id") @db.Uuid
+  kind           String
+  name           String
+  description    String?
+  segment        String?
+  promptTemplate String    @default("") @map("prompt_template")
+  defaults       Json      @default("{}")
+  configVersion  Int       @default(1) @map("config_version")
+  version        Int       @default(1)
+  published      Boolean   @default(false)
+  approvedBy     String?   @map("approved_by") @db.Uuid
+  approvedAt     DateTime? @map("approved_at") @db.Timestamptz()
+  createdBy      String?   @map("created_by") @db.Uuid
+  updatedBy      String?   @map("updated_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("ai_agent_templates")
+}
+
+/// AI agent (A1): the partner's Assistant (`kind = "assistant"`, owned by
+/// `partnerId`) or a GUIDS of a workspace (`kind = "guid"`). `config` is the
+/// configuration document of `configVersion`; `updatedByPartnerId` marks a
+/// change made by the partner (especificação §6).
+model AiAgent {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind               String
+  partnerId          String?   @map("partner_id") @db.Uuid
+  organizationId     String?   @map("organization_id") @db.Uuid
+  workspaceId        String?   @map("workspace_id") @db.Uuid
+  templateId         String?   @map("template_id") @db.Uuid
+  templateVersion    Int?      @map("template_version")
+  customized         Boolean   @default(false)
+  config             Json      @default("{}")
+  configVersion      Int       @default(1) @map("config_version")
+  status             String    @default("draft")
+  keyState           String    @default("ok") @map("key_state")
+  backupStartedAt    DateTime? @map("backup_started_at") @db.Timestamptz()
+  lastTestedAt       DateTime? @map("last_tested_at") @db.Timestamptz()
+  createdBy          String?   @map("created_by") @db.Uuid
+  updatedBy          String?   @map("updated_by") @db.Uuid
+  updatedByPartnerId String?   @map("updated_by_partner_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([id, workspaceId])
+  @@map("ai_agents")
+}
+
+/// Where a GUIDS forwards out-of-scope leads (A1, legacy `ai_agent_partners`).
+model AiAgentReferral {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  name           String
+  referralTag    String   @map("referral_tag")
+  specialties    String[] @default([])
+  phone          String?
+  city           String?
+  remote         Boolean  @default(false)
+  createdBy      String   @map("created_by") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([workspaceId, referralTag])
+  @@map("ai_agent_referrals")
+}
+
+/// Lead scoring log per CRM contact (A1), insert only; written by the engine.
+model AiLeadActivity {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId      String   @map("organization_id") @db.Uuid
+  workspaceId         String   @map("workspace_id") @db.Uuid
+  contactId           String   @map("contact_id") @db.Uuid
+  agentId             String   @map("agent_id") @db.Uuid
+  referralId          String?  @map("referral_id") @db.Uuid
+  points              Int
+  temperature         String
+  scoreBreakdown      Json     @default("[]") @map("score_breakdown")
+  scoringRulesVersion Int?     @map("scoring_rules_version")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([workspaceId, contactId, createdAt(sort: Desc)])
+  @@map("ai_lead_activities")
+}
+
 model AuditEvent {
   id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   occurredAt         DateTime      @default(now()) @map("occurred_at") @db.Timestamptz()

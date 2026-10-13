@@ -30,8 +30,9 @@
   },
   "ai_agents": {
     "name": "AI Agents",
-    "description": "Contextual assistants (frozen until the specification is approved).",
-    "nav": { "ai_agents": "AI Agents" }
+    "description": "GUIDS: AI agents that serve the workspace's contacts.",
+    "nav": { "ai_agents": "AI Agents" },
+    "quotas": { "ai_agents_max": "AI agents (GUIDS) per workspace." }
   },
   "hello_world": {
     "name": "Hello World",

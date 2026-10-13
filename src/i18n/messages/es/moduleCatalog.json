@@ -30,8 +30,9 @@
   },
   "ai_agents": {
     "name": "Agentes de IA",
-    "description": "Asistentes contextuales (congelado hasta que se apruebe la especificación).",
-    "nav": { "ai_agents": "Agentes de IA" }
+    "description": "GUIDS: agentes de IA que atienden a los contactos del workspace.",
+    "nav": { "ai_agents": "Agentes de IA" },
+    "quotas": { "ai_agents_max": "Agentes de IA (GUIDS) por workspace." }
   },
   "hello_world": {
     "name": "Hello World",
