@@ -51,6 +51,15 @@ export const AI_PROVIDERS: Record<AIProvider, AIProviderMetadata> = {
     supportedModels: [],
     documentationUrl: "https://aistudio.google.com/app/apikey",
   },
+  // Gateway to the models of several providers, used by the legacy (A2a).
+  openrouter: {
+    id: "openrouter",
+    name: "OpenRouter",
+    description: "Gateway OpenRouter para modelos de vários provedores.",
+    keyPrefix: "sk-or-",
+    supportedModels: [],
+    documentationUrl: "https://openrouter.ai/settings/keys",
+  },
 };
 
 /**

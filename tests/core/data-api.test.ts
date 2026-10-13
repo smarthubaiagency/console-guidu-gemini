@@ -25,13 +25,15 @@ const domainTables = [
   "invitations",
   "credentials",
   "api_keys",
-  "agent_configs",
-  "agent_sessions",
-  "agent_messages",
   "ai_agent_templates",
   "ai_agents",
   "ai_agent_referrals",
   "ai_lead_activities",
+  "ai_conversations",
+  "ai_messages",
+  "ai_usage_events",
+  "partner_credentials",
+  "platform_ai_settings",
 ] as const;
 
 describeDatabase(

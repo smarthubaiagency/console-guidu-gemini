@@ -13,21 +13,20 @@ datasource db {
 /// identity from writing its own row, even with a still-valid JWT.
 /// SMA-98 adds the remaining auth-slice columns on top of this model.
 model Profile {
-  id                  String         @id @db.Uuid
-  fullName            String?        @map("full_name")
-  preferences         Json           @default("{}")
+  id                  String       @id @db.Uuid
+  fullName            String?      @map("full_name")
+  preferences         Json         @default("{}")
   /// Language of the person (I1); wins over the workspace default.
   locale              String?
-  status              String         @default("active")
-  statusReason        String?        @map("status_reason")
-  statusChangedAt     DateTime       @default(now()) @map("status_changed_at") @db.Timestamptz()
-  lastSignInAt        DateTime?      @map("last_sign_in_at") @db.Timestamptz()
-  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
-  sentInvitations     Invitation[]   @relation("InvitationsSent")
-  acceptedInvitations Invitation[]   @relation("InvitationsAccepted")
+  status              String       @default("active")
+  statusReason        String?      @map("status_reason")
+  statusChangedAt     DateTime     @default(now()) @map("status_changed_at") @db.Timestamptz()
+  lastSignInAt        DateTime?    @map("last_sign_in_at") @db.Timestamptz()
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+  sentInvitations     Invitation[] @relation("InvitationsSent")
+  acceptedInvitations Invitation[] @relation("InvitationsAccepted")
   apiKeys             ApiKey[]
-  agentSessions       AgentSession[]
 
   @@map("profiles")
 }
@@ -620,9 +619,6 @@ model Workspace {
   invitations         Invitation[]
   credentials         Credential[]
   apiKeys             ApiKey[]
-  agentConfigs        AgentConfig[]
-  agentSessions       AgentSession[]
-  agentMessages       AgentMessage[]
   auditEvents         AuditEvent[]
   modules             WorkspaceModule[]
   helloRecords        HelloWorldRecord[]
@@ -718,64 +714,6 @@ model ApiKey {
   @@map("api_keys")
 }
 
-model AgentConfig {
-  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId   String         @map("organization_id") @db.Uuid
-  workspaceId      String         @map("workspace_id") @db.Uuid
-  name             String
-  description      String?
-  systemPrompt     String         @map("system_prompt")
-  primaryProvider  String         @map("primary_provider")
-  primaryModel     String         @map("primary_model")
-  fallbackProvider String?        @map("fallback_provider")
-  fallbackModel    String?        @map("fallback_model")
-  temperature      Decimal        @default(0.70) @db.Decimal(3, 2)
-  status           String         @default("active")
-  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
-  workspace        Workspace      @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  sessions         AgentSession[]
-
-  @@map("agent_configs")
-}
-
-model AgentSession {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId  String         @map("organization_id") @db.Uuid
-  workspaceId     String         @map("workspace_id") @db.Uuid
-  agentConfigId   String?        @map("agent_config_id") @db.Uuid
-  title           String         @default("Nova Conversa")
-  createdByUserId String         @map("created_by_user_id") @db.Uuid
-  status          String         @default("active")
-  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
-  workspace       Workspace      @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  agentConfig     AgentConfig?   @relation(fields: [agentConfigId], references: [id], onDelete: SetNull)
-  createdByUser   Profile        @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
-  messages        AgentMessage[]
-
-  @@map("agent_sessions")
-}
-
-model AgentMessage {
-  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId    String       @map("organization_id") @db.Uuid
-  workspaceId       String       @map("workspace_id") @db.Uuid
-  sessionId         String       @map("session_id") @db.Uuid
-  role              String
-  content           String
-  providerUsed      String       @map("provider_used")
-  modelUsed         String       @map("model_used")
-  fallbackTriggered Boolean      @default(false) @map("fallback_triggered")
-  latencyMs         Int          @default(0) @map("latency_ms")
-  tokensEstimated   Int          @default(0) @map("tokens_estimated")
-  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz()
-  workspace         Workspace    @relation(fields: [workspaceId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  session           AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@map("agent_messages")
-}
-
 /// Agent template (A1, the legacy preset). `partnerId` null is the house;
 /// `kind = "admin"` is the single template of every partner Assistant.
 /// `defaults` is the configuration document of `configVersion`
@@ -867,6 +805,105 @@ model AiLeadActivity {
 
   @@index([workspaceId, contactId, createdAt(sort: Desc)])
   @@map("ai_lead_activities")
+}
+
+/// Conversation of a GUIDS (workspace) or of the Assistant (partner agent,
+/// owned by the person who talks to it) (A2a). Messages follow its
+/// visibility; the engine writes both from A2b on.
+model AiConversation {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind           String
+  agentId        String    @map("agent_id") @db.Uuid
+  partnerId      String?   @map("partner_id") @db.Uuid
+  organizationId String?   @map("organization_id") @db.Uuid
+  workspaceId    String?   @map("workspace_id") @db.Uuid
+  contactId      String?   @map("contact_id") @db.Uuid
+  userId         String?   @map("user_id") @db.Uuid
+  channel        String
+  status         String    @default("active")
+  variables      Json      @default("{}")
+  summary        String?
+  keyMode        String    @default("own") @map("key_mode")
+  lastMessageAt  DateTime? @map("last_message_at") @db.Timestamptz()
+  closedAt       DateTime? @map("closed_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  role           String
+  content        String   @default("")
+  toolCalls      Json     @default("[]") @map("tool_calls")
+  toolCallId     String?  @map("tool_call_id")
+  toolName       String?  @map("tool_name")
+  executionId    String?  @map("execution_id") @db.Uuid
+  provider       String?
+  model          String?
+  inputTokens    Int?     @map("input_tokens")
+  outputTokens   Int?     @map("output_tokens")
+  errorCode      String?  @map("error_code")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([conversationId, createdAt, id])
+  @@map("ai_messages")
+}
+
+/// Consumption per model call (A2a, especificação §9.3). `keySource`
+/// "backup" is the platform courtesy and never counts for the customer.
+model AiUsageEvent {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  executionId    String   @map("execution_id") @db.Uuid
+  partnerId      String?  @map("partner_id") @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  workspaceId    String?  @map("workspace_id") @db.Uuid
+  agentId        String?  @map("agent_id") @db.Uuid
+  conversationId String?  @map("conversation_id") @db.Uuid
+  keySource      String   @map("key_source")
+  provider       String
+  model          String
+  usageKind      String   @default("chat") @map("usage_kind")
+  inputTokens    Int      @default(0) @map("input_tokens")
+  outputTokens   Int      @default(0) @map("output_tokens")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("ai_usage_events")
+}
+
+/// The partner's vault: the admin key of its Assistant (A2a, §9.1). Only
+/// `status` is updated (revoke); `updated_at` is set by the database.
+model PartnerCredential {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId        String   @map("partner_id") @db.Uuid
+  provider         String
+  purpose          String   @default("all")
+  label            String
+  maskedValue      String   @map("masked_value")
+  encryptedPayload String   @map("encrypted_payload")
+  status           String   @default("active")
+  createdBy        String   @map("created_by") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("partner_credentials")
+}
+
+/// The platform backup key and its cheap model (A2a, §9.2). One row;
+/// `updated_at` is set by the database.
+model PlatformAiSettings {
+  id                     Boolean  @id @default(true)
+  backupProvider         String?  @map("backup_provider")
+  backupMaskedValue      String?  @map("backup_masked_value")
+  backupEncryptedPayload String?  @map("backup_encrypted_payload")
+  backupModel            String?  @map("backup_model")
+  updatedBy              String   @map("updated_by") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("platform_ai_settings")
 }
 
 model AuditEvent {

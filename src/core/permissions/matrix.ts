@@ -42,6 +42,7 @@ const ALL_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permissions.API_KEYS_READ_ALL,
   Permissions.AI_AGENTS_USE,
   Permissions.AI_AGENTS_MANAGE,
+  Permissions.AI_AGENTS_CONVERSATIONS_READ,
   Permissions.WORKSPACE_DATA_EXPORT,
   Permissions.WORKSPACE_PROPOSALS_REVIEW,
   Permissions.WORKSPACE_LOCATIONS_MANAGE,
@@ -66,7 +67,8 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
   // Workspace Admin: tudo do workspace (regras de escalonamento contra owners em roles.ts).
   [WorkspaceRoles.ADMIN]: ALL_WORKSPACE_PERMISSIONS,
 
-  // Workspace Editor: leitura, credenciais mascaradas, chaves próprias e uso de agentes.
+  // Workspace Editor: leitura, credenciais mascaradas, chaves próprias, uso de
+  // agentes e leitura das conversas dos GUIDS.
   [WorkspaceRoles.EDITOR]: new Set([
     Permissions.WORKSPACE_READ,
     Permissions.WORKSPACE_MEMBERS_READ,
@@ -74,6 +76,7 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
     Permissions.API_KEYS_CREATE_OWN,
     Permissions.API_KEYS_REVOKE_OWN,
     Permissions.AI_AGENTS_USE,
+    Permissions.AI_AGENTS_CONVERSATIONS_READ,
   ]),
 
   // Workspace Viewer: leitura básica e chaves próprias (restrição a escopos read-only na C12).

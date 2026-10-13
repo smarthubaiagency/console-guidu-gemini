@@ -43,6 +43,8 @@ export const Permissions = {
   // AI Agents: GUIDS of the workspace (especificação de agentes §11)
   AI_AGENTS_USE: "ai_agents.use",
   AI_AGENTS_MANAGE: "ai_agents.manage",
+  // Conversations, transcripts and audio of the GUIDS (A2a).
+  AI_AGENTS_CONVERSATIONS_READ: "ai_agents.conversations.read",
 
   // Organization core
   ORGANIZATION_READ: "organization.read",

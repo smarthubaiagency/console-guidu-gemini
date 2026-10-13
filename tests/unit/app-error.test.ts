@@ -25,7 +25,7 @@ import {
 } from "@/core/organizations/errors";
 import { ModuleUnavailableError } from "@/core/modules/availability";
 import { CredentialNotFoundError } from "@/core/credentials/vault";
-import { ProviderError } from "@/core/agents/providers/executor";
+import { ProviderError } from "@/core/ai/errors";
 
 describe("Secure Application Errors & Redaction (C10, Spec §15, §16, §24 AC07)", () => {
   describe("Secret and PII Redaction (redact)", () => {

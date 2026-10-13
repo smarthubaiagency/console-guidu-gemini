@@ -48,7 +48,7 @@ function keyFormatMessage(
 
 const RegisterInput = z.object({
   workspaceSlug: z.string().min(1),
-  provider: z.enum(["openai", "anthropic", "gemini"]),
+  provider: z.enum(["openai", "anthropic", "gemini", "openrouter"]),
   label: z.string().min(1).max(64),
   secret: z.string().min(10),
   purpose: z.enum(["all", "chat", "embeddings"]).default("all"),

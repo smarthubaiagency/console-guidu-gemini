@@ -2,15 +2,17 @@ import type { ModuleDataContract } from "@/core/privacy/contract";
 
 /**
  * Export and purge of the AI agents' data (F3e): the GUIDS (A1) with their
- * referrals and scoring log, and the rows of the prototype until A2 removes
- * it. Credentials live in the core vault and are never exported; the
- * configuration only names the credential it uses.
+ * referrals and scoring log, and their conversations, messages and usage
+ * (A2a). Credentials live in the vaults and are never exported; the
+ * configuration only names the credential it uses. The Assistant's
+ * conversations belong to the person who had them, not to the workspace:
+ * they leave with the workspace's purge but are not in its export.
  */
 export const aiAgentsDataContract: ModuleDataContract = {
   moduleKey: "ai-agents",
   async export(tx, ctx) {
     const where = { workspaceId: ctx.workspaceId };
-    const [guids, referrals, leadActivities, agents, sessions, messages] =
+    const [guids, referrals, leadActivities, conversations, usage] =
       await Promise.all([
         tx.aiAgent.findMany({
           where: { ...where, kind: "guid" },
@@ -55,65 +57,80 @@ export const aiAgentsDataContract: ModuleDataContract = {
             createdAt: true,
           },
         }),
-        tx.agentConfig.findMany({
-          where,
+        tx.aiConversation.findMany({
+          where: { ...where, kind: "guid" },
           orderBy: { createdAt: "asc" },
           select: {
             id: true,
-            name: true,
-            description: true,
-            systemPrompt: true,
-            primaryProvider: true,
-            primaryModel: true,
-            fallbackProvider: true,
-            fallbackModel: true,
+            agentId: true,
+            contactId: true,
+            channel: true,
             status: true,
+            variables: true,
+            summary: true,
+            lastMessageAt: true,
+            closedAt: true,
             createdAt: true,
           },
         }),
-        tx.agentSession.findMany({
-          where,
+        // The workspace's own consumption and the backup courtesy.
+        tx.aiUsageEvent.findMany({
+          where: { ...where, keySource: { in: ["customer", "backup"] } },
           orderBy: { createdAt: "asc" },
           select: {
             id: true,
-            agentConfigId: true,
-            title: true,
-            createdByUserId: true,
-            status: true,
-            createdAt: true,
-          },
-        }),
-        tx.agentMessage.findMany({
-          where,
-          orderBy: { createdAt: "asc" },
-          select: {
-            id: true,
-            sessionId: true,
-            role: true,
-            content: true,
-            modelUsed: true,
+            executionId: true,
+            agentId: true,
+            conversationId: true,
+            keySource: true,
+            provider: true,
+            model: true,
+            usageKind: true,
+            inputTokens: true,
+            outputTokens: true,
             createdAt: true,
           },
         }),
       ]);
-    return { guids, referrals, leadActivities, agents, sessions, messages };
+    const messages = await tx.aiMessage.findMany({
+      where: { conversationId: { in: conversations.map((c) => c.id) } },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        conversationId: true,
+        role: true,
+        content: true,
+        toolCalls: true,
+        toolCallId: true,
+        toolName: true,
+        model: true,
+        createdAt: true,
+      },
+    });
+    return {
+      guids,
+      referrals,
+      leadActivities,
+      conversations,
+      messages,
+      usage,
+    };
   },
   async purge(tx, workspaceId) {
     const where = { workspaceId };
-    // The scoring log references agents and referrals: it goes first.
+    // Usage and the scoring log reference agents, conversations, referrals
+    // and contacts: they go first. Messages leave with their conversations.
+    const usage = await tx.aiUsageEvent.deleteMany({ where });
     const leadActivities = await tx.aiLeadActivity.deleteMany({ where });
+    const conversations = await tx.aiConversation.deleteMany({ where });
     const referrals = await tx.aiAgentReferral.deleteMany({ where });
     const guids = await tx.aiAgent.deleteMany({ where });
-    const messages = await tx.agentMessage.deleteMany({ where });
-    const sessions = await tx.agentSession.deleteMany({ where });
-    const agents = await tx.agentConfig.deleteMany({ where });
     return {
+      ai_usage_events: usage.count,
       ai_lead_activities: leadActivities.count,
+      ai_conversations: conversations.count,
       ai_agent_referrals: referrals.count,
       ai_agents: guids.count,
-      agent_messages: messages.count,
-      agent_sessions: sessions.count,
-      agent_configs: agents.count,
     };
   },
 };

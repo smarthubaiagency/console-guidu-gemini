@@ -217,7 +217,8 @@ Toda tabela tem RLS forçado ([ADR 0001](../../adr/0001-prisma-como-caminho-unic
 
 - **Configuração em JSON tipado por aba**, com um schema Zod por versão: clonar um modelo copia o documento inteiro, então um campo novo nunca fica para trás (no legado, um clone sem `tools` ou sem score ficava mudo, sem erro). Ficam como colunas só o que é filtrado ou tem restrição.
 - **Unicidade:** um `assistant` por parceiro (índice único parcial).
-- **Tabelas do protótipo** (`agent_configs`, `agent_sessions`, `agent_messages`): não têm dados de produção; ficam até a A2, que as remove junto com o código do protótipo **[Decidido em 13/10/2026]**.
+- **Tabelas do protótipo** (`agent_configs`, `agent_sessions`, `agent_messages`): não tinham dados de produção e saíram na A2a, junto com o código do protótipo **[Decidido em 13/10/2026]**.
+- **Conversas:** as do GUIDS são do workspace e exigem `ai_agents.conversations.read`; as do Assistente são de quem conversa com ele. O parceiro não lê nenhuma das duas sem concessão (A2a).
 
 ## 13. Telas
 
@@ -287,18 +288,18 @@ Todas seguem o shadcn (ADR 0014), a gaveta interna (ADR 0015) e o SmartStatusBan
 
 Uma PR por etapa, cada uma com o "pode começar" do Marcelo. A A0 corre em paralelo com S2, U3 e F6a; o código começa depois da F6a **[Decidido]**.
 
-| Etapa     | Entrega                                                                                                                                                                                  |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A0**    | Esta especificação, [campos.md](campos.md), [canais.md](canais.md), ADR 0017 e revisão da ADR 0012                                                                                       |
-| **A1**    | Migrations, RLS (com o acesso do parceiro à configuração), limite `ai-agents.max`, dados iniciais (modelo de admin, Anna e Onboarding, um Assistente por parceiro), testes de isolamento |
-| **CRM-P** | Campos personalizados do contato no CRM, com as flags da IA e os valores ([variaveis.md](variaveis.md))                                                                                  |
-| **A2**    | Motor: runtime com o SDK, renderizador e variáveis, chaves com backup, ferramentas, pontuação, consumo e auditoria; remove o protótipo                                                   |
-| **A3**    | Telas do `/platform` e do `/admin` (modelos, Assistente, GUIDS dos clientes)                                                                                                             |
-| **A4**    | Telas do `/app` (GUIDS) e "Testar agente"                                                                                                                                                |
-| **A5**    | Camada de canais e o adaptador Chatwoot; troca do n8n inbox por inbox                                                                                                                    |
-| **A6**    | Avisos ao responsável, indicações, regras de horário e de fora do escopo                                                                                                                 |
-| **A7**    | Base de conhecimento                                                                                                                                                                     |
-| **A8**    | Assistente GUIDU na gaveta do cabeçalho; depois, as ações por proposta                                                                                                                   |
+| Etapa     | Entrega                                                                                                                                                                                                                                                                            |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A0**    | Esta especificação, [campos.md](campos.md), [canais.md](canais.md), ADR 0017 e revisão da ADR 0012                                                                                                                                                                                 |
+| **A1**    | Migrations, RLS (com o acesso do parceiro à configuração), limite `ai-agents.max`, dados iniciais (modelo de admin, Anna e Onboarding, um Assistente por parceiro), testes de isolamento                                                                                           |
+| **CRM-P** | Campos personalizados do contato no CRM, com as flags da IA e os valores ([variaveis.md](variaveis.md)). Adiada em 13/10/2026 para a etapa própria do CRM; até lá `update_contact_property` fica desligada                                                                         |
+| **A2**    | Motor, em três PRs: **A2a** dados e chaves (conversas, consumo, cofre do parceiro, backup da plataforma, OpenRouter; remove o protótipo), **A2b** runtime (SDK, renderizador e variáveis, ferramentas com guarda, pontuação, turnos), **A2c** backup de 24 horas, consumo e avisos |
+| **A3**    | Telas do `/platform` e do `/admin` (modelos, Assistente, GUIDS dos clientes)                                                                                                                                                                                                       |
+| **A4**    | Telas do `/app` (GUIDS) e "Testar agente"                                                                                                                                                                                                                                          |
+| **A5**    | Camada de canais e o adaptador Chatwoot; troca do n8n inbox por inbox                                                                                                                                                                                                              |
+| **A6**    | Avisos ao responsável, indicações, regras de horário e de fora do escopo                                                                                                                                                                                                           |
+| **A7**    | Base de conhecimento                                                                                                                                                                                                                                                               |
+| **A8**    | Assistente GUIDU na gaveta do cabeçalho; depois, as ações por proposta                                                                                                                                                                                                             |
 
 ## 19. Do legado para o GUIDU
 
