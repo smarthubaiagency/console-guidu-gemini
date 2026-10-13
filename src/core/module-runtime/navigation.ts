@@ -592,8 +592,44 @@ export function buildPlatformNavigation(
   ];
 }
 
-/** Partner console sidebar (/admin, ADR 0012): driven by partner grants. */
-export function buildPartnerNavigation(grants: Grants): NavSection[] {
+/**
+ * Partner console sidebar (/admin, ADR 0012): driven by partner grants. The
+ * AI screens (A3b) also need the module flag, passed by the layout.
+ */
+export function buildPartnerNavigation(
+  grants: Grants,
+  options: Readonly<{ aiAgents?: boolean }> = {},
+): NavSection[] {
+  const aiItems = options.aiAgents
+    ? [
+        ...(grants("partner.ai_agents.read")
+          ? [
+              item({
+                id: "partner.ai.assistant",
+                label: "Assistente GUIDU",
+                href: "/admin/ai/assistant",
+                iconKey: "bot",
+              }),
+            ]
+          : []),
+        ...(grants("partner.ai_agents.manage")
+          ? [
+              item({
+                id: "partner.ai.keys",
+                label: "Chaves de IA",
+                href: "/admin/ai/keys",
+                iconKey: "bot",
+              }),
+              item({
+                id: "partner.ai.templates",
+                label: "Modelos de agente",
+                href: "/admin/ai/templates",
+                iconKey: "bot",
+              }),
+            ]
+          : []),
+      ]
+    : [];
   return [
     {
       id: "partner",
@@ -629,6 +665,17 @@ export function buildPartnerNavigation(grants: Grants): NavSection[] {
                 label: "Modelos de workspace",
                 href: "/admin/templates",
                 iconKey: "layers",
+              }),
+            ]
+          : []),
+        ...(aiItems.length > 0
+          ? [
+              item({
+                id: "partner.ai",
+                label: "Agentes de IA",
+                href: null,
+                iconKey: "bot",
+                children: aiItems,
               }),
             ]
           : []),

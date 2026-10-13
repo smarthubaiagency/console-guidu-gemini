@@ -387,3 +387,24 @@ export async function deleteTemplate(
     },
   });
 }
+
+/** The list and the template named in the URL, for the screens. */
+export async function loadTemplatesView(
+  tx: ContextTransaction,
+  actor: TemplateActor,
+  editKey: string | null,
+): Promise<{
+  templates: TemplateSummaryDto[];
+  opened: TemplateDetailDto | null;
+}> {
+  const templates = await listTemplates(tx, actor);
+  let opened: TemplateDetailDto | null = null;
+  if (editKey && editKey !== "new") {
+    try {
+      opened = await getTemplate(tx, actor, editKey);
+    } catch (err) {
+      if (!(err instanceof AppError && err.code === "not_found")) throw err;
+    }
+  }
+  return { templates, opened };
+}

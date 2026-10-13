@@ -245,5 +245,64 @@
         "desc": "Sugiere una acción que la persona confirma."
       }
     }
+  },
+  "assistant": {
+    "metaTitle": "Asistente GUIDU",
+    "title": "Asistente GUIDU",
+    "description": "El asistente del panel: responde a tu equipo en /admin y a tus clientes en /app, con tu marca. Usa una clave de IA del admin.",
+    "unnamed": "Asistente sin nombre",
+    "status": {
+      "draft": "Borrador",
+      "active": "Activo",
+      "paused": "Apagado"
+    },
+    "model": "modelo {model}",
+    "noModel": "sin modelo",
+    "missing": "Falta completar para activarlo: {fields}.",
+    "noKeys": "Registra una clave en Claves de IA para elegir el modelo del Asistente.",
+    "readOnly": "Solo los dueños y administradores del socio cambian el Asistente.",
+    "invalidStored": "La configuración guardada del Asistente no es válida. Revísala y guarda de nuevo.",
+    "active": "Asistente activo",
+    "save": "Guardar",
+    "saved": "Asistente guardado.",
+    "savedActive": "Asistente guardado y activo."
+  },
+  "keys": {
+    "metaTitle": "Claves de IA",
+    "title": "Claves de IA",
+    "description": "Claves del admin, usadas por el Asistente GUIDU en /admin y en las dudas de tus clientes en /app. Los GUIDS de los clientes usan la clave de cada cliente.",
+    "new": "Nueva clave",
+    "list": "Claves ({count})",
+    "empty": "Aún no hay claves.",
+    "created": "Clave registrada.",
+    "revoked": "Clave revocada.",
+    "created_at": "creada el {date}",
+    "status": {
+      "active": "Activa",
+      "revoked": "Revocada"
+    },
+    "purpose": {
+      "all": "Chat y embeddings",
+      "chat": "Chat",
+      "embeddings": "Embeddings"
+    },
+    "revoke": "Revocar",
+    "revokeTitle": "Revocar clave",
+    "revokeMessage": "¿Revocar la clave {label}? El Asistente deja de usarla en el momento.",
+    "cancel": "Cancelar",
+    "form": {
+      "provider": "Proveedor",
+      "purpose": "Uso",
+      "label": "Nombre",
+      "secret": "Clave",
+      "hint": "La clave se cifra y solo se muestra enmascarada.",
+      "save": "Registrar clave"
+    }
+  },
+  "partnerTemplates": {
+    "metaTitle": "Plantillas de agente",
+    "title": "Plantillas de agente",
+    "description": "Plantillas de GUIDS del socio. Publicadas, tus clientes las ven junto a las plantillas de la casa.",
+    "published": "Publicada (tus clientes la ven al crear un GUIDS)"
   }
 }

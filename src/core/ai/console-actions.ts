@@ -8,13 +8,19 @@ import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requireMfa } from "@/core/auth/identity";
 import { actionFailure } from "@/core/i18n/errors";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
+import { partnerActor } from "@/core/partners/actors";
 import { getRequestPartner } from "@/core/partners/resolve";
 import type { PlatformAdminRoleKey } from "@/core/permissions/matrix";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError } from "@/shared/errors";
 
-import { saveBackupSettings } from "./keys";
+import { updatePartnerAssistant } from "./assistant-config";
+import {
+  registerPartnerCredential,
+  revokePartnerCredential,
+  saveBackupSettings,
+} from "./keys";
 import {
   ConfigValidationError,
   createTemplate,
@@ -24,9 +30,10 @@ import {
 } from "./templates";
 
 /**
- * Server actions of the AI screens of `/platform` (A3a): the house's agent
- * templates and the backup key. AAL2, the platform host, the module flag
- * and `platform.ai.manage`, checked here and again by the services and RLS.
+ * Server actions of the AI screens of `/platform` (A3a: the house's agent
+ * templates and the backup key) and of `/admin` (A3b: the partner's
+ * Assistant, admin keys and templates). AAL2, the console's host, the
+ * module flag and the role, checked here and again by the services and RLS.
  */
 
 export type AiConsoleActionState = {
@@ -40,6 +47,9 @@ export type AiConsoleActionState = {
 
 const TEMPLATES_PATH = "/platform/ai/templates";
 const BACKUP_PATH = "/platform/ai/backup";
+const PARTNER_TEMPLATES_PATH = "/admin/ai/templates";
+const PARTNER_ASSISTANT_PATH = "/admin/ai/assistant";
+const PARTNER_KEYS_PATH = "/admin/ai/keys";
 
 function notFound(): AppError {
   return new AppError({
@@ -175,4 +185,157 @@ export async function saveBackupAction(
   } catch (err) {
     return failure(err);
   }
+}
+
+// ----------------------------------------------------------------------------
+// Partner console (/admin, A3b)
+// ----------------------------------------------------------------------------
+
+async function partnerAiActor() {
+  const actor = await partnerActor();
+  if (!isModuleTechnicallyAvailable("ai-agents")) throw notFound();
+  return actor;
+}
+
+function inPartner<T>(
+  actor: Readonly<{ userId: string; partnerId: string }>,
+  op: Parameters<typeof withIdentityContext<T>>[2],
+): Promise<T> {
+  return withIdentityContext(prisma, actor.userId, op, {
+    partnerId: actor.partnerId,
+  });
+}
+
+export async function savePartnerAssistantAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    const saved = await inPartner(actor, (tx) =>
+      updatePartnerAssistant(tx, actor, {
+        status: formData.get("active") === "on" ? "active" : "paused",
+        config: parseJson(text(formData, "config")),
+      }),
+    );
+    revalidatePath(PARTNER_ASSISTANT_PATH);
+    const t = await getTranslations("aiConsole");
+    return {
+      success: true,
+      message:
+        saved.status === "active"
+          ? t("assistant.savedActive")
+          : t("assistant.saved"),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function registerPartnerKeyAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    await inPartner(actor, (tx) =>
+      registerPartnerCredential(tx, actor, actor.partnerId, {
+        provider: text(formData, "provider"),
+        label: text(formData, "label"),
+        secret: text(formData, "secret"),
+        purpose: text(formData, "purpose") || "all",
+      }),
+    );
+    revalidatePath(PARTNER_KEYS_PATH);
+    const t = await getTranslations("aiConsole");
+    return { success: true, message: t("keys.created") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function revokePartnerKeyAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    await inPartner(actor, (tx) =>
+      revokePartnerCredential(
+        tx,
+        actor,
+        actor.partnerId,
+        text(formData, "credentialId"),
+      ),
+    );
+    revalidatePath(PARTNER_KEYS_PATH);
+    const t = await getTranslations("aiConsole");
+    return { success: true, message: t("keys.revoked") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function createPartnerTemplateAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  let id: string;
+  try {
+    const actor = await partnerAiActor();
+    const created = await inPartner(actor, (tx) =>
+      createTemplate(tx, actor, {
+        name: text(formData, "name"),
+        description: text(formData, "description"),
+        segment: text(formData, "segment"),
+      }),
+    );
+    id = created.id;
+  } catch (err) {
+    return failure(err);
+  }
+  revalidatePath(PARTNER_TEMPLATES_PATH);
+  redirect(`${PARTNER_TEMPLATES_PATH}?edit=${id}`);
+}
+
+export async function savePartnerTemplateAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    const saved = await inPartner(actor, (tx) =>
+      updateTemplate(tx, actor, text(formData, "templateId"), {
+        name: text(formData, "name"),
+        description: text(formData, "description"),
+        segment: text(formData, "segment"),
+        published: formData.get("published") === "on",
+        config: parseJson(text(formData, "config")),
+      }),
+    );
+    revalidatePath(PARTNER_TEMPLATES_PATH);
+    const t = await getTranslations("aiConsole");
+    return {
+      success: true,
+      message: t("templates.saved", { version: saved.version }),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function deletePartnerTemplateAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    await inPartner(actor, (tx) =>
+      deleteTemplate(tx, actor, text(formData, "templateId")),
+    );
+  } catch (err) {
+    return failure(err);
+  }
+  revalidatePath(PARTNER_TEMPLATES_PATH);
+  redirect(PARTNER_TEMPLATES_PATH);
 }

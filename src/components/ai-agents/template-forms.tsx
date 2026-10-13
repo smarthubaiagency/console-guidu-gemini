@@ -13,13 +13,18 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { agentKindOfTemplate } from "@/core/ai/config/schema";
-import {
-  type AiConsoleActionState,
-  createHouseTemplateAction,
-  deleteHouseTemplateAction,
-  saveHouseTemplateAction,
-} from "@/core/ai/console-actions";
+import type { AiConsoleActionState } from "@/core/ai/console-actions";
 import type { TemplateDetailDto } from "@/core/ai/templates";
+
+/**
+ * Forms of the agent templates (A3a and A3b), shared by `/platform` (the
+ * house's) and `/admin` (the partner's): each console passes its actions.
+ */
+
+type FormAction = (
+  prev: AiConsoleActionState,
+  formData: FormData,
+) => Promise<AiConsoleActionState>;
 
 const INITIAL: AiConsoleActionState = {};
 const FORM_ID = "template-form";
@@ -91,12 +96,11 @@ function MetaFields({
 }
 
 /** A new GUIDS template: name first, the configuration after. */
-export function CreateTemplateForm() {
+export function CreateTemplateForm({
+  createAction,
+}: Readonly<{ createAction: FormAction }>) {
   const t = useTranslations("aiConsole.templates.form");
-  const [state, action, pending] = useActionState(
-    createHouseTemplateAction,
-    INITIAL,
-  );
+  const [state, action, pending] = useActionState(createAction, INITIAL);
   useActionStatus(state);
   return (
     <form action={action} className="space-y-4" data-testid="create-template">
@@ -115,12 +119,18 @@ export function CreateTemplateForm() {
  */
 export function TemplateEditorPanel({
   template,
-}: Readonly<{ template: TemplateDetailDto }>) {
+  saveAction,
+  deleteAction,
+  publishedLabel,
+}: Readonly<{
+  template: TemplateDetailDto;
+  saveAction: FormAction;
+  deleteAction: FormAction;
+  /** Who sees a published template, in the console's words. */
+  publishedLabel: string;
+}>) {
   const t = useTranslations("aiConsole.templates");
-  const [state, action, pending] = useActionState(
-    saveHouseTemplateAction,
-    INITIAL,
-  );
+  const [state, action, pending] = useActionState(saveAction, INITIAL);
   useActionStatus(state);
   const errors = state.fieldErrors ?? {};
   const admin = template.kind === "admin";
@@ -131,7 +141,12 @@ export function TemplateEditorPanel({
       description={t("version", { version: template.version })}
       footer={
         <>
-          {admin ? null : <DeleteTemplateButton template={template} />}
+          {admin ? null : (
+            <DeleteTemplateButton
+              template={template}
+              deleteAction={deleteAction}
+            />
+          )}
           <Button
             type="submit"
             form={FORM_ID}
@@ -163,7 +178,7 @@ export function TemplateEditorPanel({
         />
         <div className="flex items-center justify-between gap-3">
           <Label htmlFor="template-published" className="text-12 font-normal">
-            {admin ? t("form.publishedAdmin") : t("form.published")}
+            {admin ? t("form.publishedAdmin") : publishedLabel}
           </Label>
           <Switch
             id="template-published"
@@ -187,7 +202,8 @@ export function TemplateEditorPanel({
 
 function DeleteTemplateButton({
   template,
-}: Readonly<{ template: TemplateDetailDto }>) {
+  deleteAction,
+}: Readonly<{ template: TemplateDetailDto; deleteAction: FormAction }>) {
   const t = useTranslations("aiConsole.templates.form");
   const tCommon = useTranslations("common");
   const { confirmStatus, showStatus } = useStatus();
@@ -206,7 +222,7 @@ function DeleteTemplateButton({
     startTransition(async () => {
       const formData = new FormData();
       formData.append("templateId", template.id);
-      const result = await deleteHouseTemplateAction({}, formData);
+      const result = await deleteAction({}, formData);
       // Success redirects to the list; only an error comes back.
       if (result?.error) {
         showStatus({ type: "down", title: result.error });

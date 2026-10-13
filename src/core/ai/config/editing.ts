@@ -11,7 +11,10 @@ import type { AgentConfig } from "./schema";
  * - `template`: the owner of a template (the house in `/platform`, a
  *   partner in `/admin`): every field but the key, which is the
  *   workspace's or the partner's, never the template's;
- * - `partner`: the partner editing a customer's GUIDS or its Assistant;
+ * - `partner`: the partner editing a customer's GUIDS;
+ * - `assistant`: the partner editing its GUIDU Assistant (§4): name,
+ *   instructions and the model connection; the tools and the rest stay as
+ *   the house's admin template defines them;
  * - `customer`: the customer with a GUIDS that follows its template: the
  *   model connection only;
  * - `customer_custom`: the customer with a customized GUIDS: everything but
@@ -23,7 +26,7 @@ import type { AgentConfig } from "./schema";
  */
 
 export type ConfigEditor =
-  "template" | "partner" | "customer" | "customer_custom";
+  "template" | "partner" | "assistant" | "customer" | "customer_custom";
 
 export const CONFIG_TABS = [
   "overview",
@@ -100,6 +103,13 @@ const SYSTEM_FIELDS = new Set([
   "overview.prompt_version",
   "rules.scoring_rules_version",
 ]);
+/** The model connection of the Assistant: a text chat in the panel. */
+const ASSISTANT_MODEL = new Set([
+  "model.credential_id",
+  "model.model_name",
+  "model.rag_enabled",
+  "model.embedding_model",
+]);
 /** Never the customer's, even when customized (campos.md, "P" only). */
 const PARTNER_ONLY = new Set(["overview.expected_output"]);
 
@@ -118,6 +128,8 @@ export function editableFields(editor: ConfigEditor): ReadonlySet<string> {
           return path !== "model.credential_id";
         case "partner":
           return path !== "model.model_provider";
+        case "assistant":
+          return tab === "overview" || ASSISTANT_MODEL.has(path);
         case "customer":
           return tab === "model" && path !== "model.model_provider";
         case "customer_custom":
@@ -210,7 +222,10 @@ export function applyConfigEdit(
       const old = before[field];
       const value = fields.has(path) ? sent[field] : old;
       if (!fields.has(path) && field in sent && !sameValue(sent[field], old)) {
-        if (!SYSTEM_FIELDS.has(path)) forbidden.push(path);
+        // The provider follows the key: the service sets it.
+        if (!SYSTEM_FIELDS.has(path) && path !== "model.model_provider") {
+          forbidden.push(path);
+        }
       }
       if (value !== undefined) next[field] = value;
       if (!sameValue(value, old)) changed.push(path);
@@ -253,7 +268,8 @@ export function configFieldErrors(error: z.ZodError): Record<string, string> {
 }
 
 /**
- * Minimum fields for an agent to be tested or activated (campos.md §9),
+ * Minimum fields for an agent to be tested or activated (campos.md §9;
+ * for the Assistant, its name, language, tone, prompt and model),
  * as `tab.field`. Empty means ready. A template is never tested: the key
  * is the agent's, so `template` skips the model connection.
  */
@@ -267,20 +283,23 @@ export function missingConfigFields(
   if (blank(overview.agent_name)) missing.push("overview.agent_name");
   if (!overview.language) missing.push("overview.language");
   if (!overview.agent_tone) missing.push("overview.agent_tone");
-  if (blank(overview.business_summary)) {
-    missing.push("overview.business_summary");
-  }
-  if (blank(overview.products_services)) {
-    missing.push("overview.products_services");
-  }
   if (blank(overview.system_prompt)) missing.push("overview.system_prompt");
-  if (!scope.timezone) missing.push("scope.timezone");
-  if (!scope.availability_slots?.length) {
-    missing.push("scope.availability_slots");
+  // The Assistant answers in the panel: no business, hours nor lead rules.
+  if (editor !== "assistant") {
+    if (blank(overview.business_summary)) {
+      missing.push("overview.business_summary");
+    }
+    if (blank(overview.products_services)) {
+      missing.push("overview.products_services");
+    }
+    if (!scope.timezone) missing.push("scope.timezone");
+    if (!scope.availability_slots?.length) {
+      missing.push("scope.availability_slots");
+    }
+    if (!rules.handoff_mode) missing.push("rules.handoff_mode");
+    if (!rules.after_hours_behavior) missing.push("rules.after_hours_behavior");
+    if (!rules.out_of_scope_action) missing.push("rules.out_of_scope_action");
   }
-  if (!rules.handoff_mode) missing.push("rules.handoff_mode");
-  if (!rules.after_hours_behavior) missing.push("rules.after_hours_behavior");
-  if (!rules.out_of_scope_action) missing.push("rules.out_of_scope_action");
   if (editor !== "template") {
     if (!model.credential_id) missing.push("model.credential_id");
     if (blank(model.model_name)) missing.push("model.model_name");
