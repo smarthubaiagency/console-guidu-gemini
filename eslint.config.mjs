@@ -102,6 +102,38 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // UI standard (ADR 0014, U3e): screens use the shadcn components in
+    // src/components/ui, never the raw HTML controls. Hidden inputs carry
+    // form data only and stay raw. The frozen AI agents prototype is left out:
+    // it is replaced, not migrated, in stage A2 (docs/modules/ai-agents).
+    files: ["src/**/*.tsx"],
+    ignores: [
+      "src/components/ui/**",
+      "src/**/*.test.tsx",
+      "src/app/app/*/ai-agents/**",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...[
+          ["button", "Button"],
+          ["select", "NativeSelect (formulários) ou Select"],
+          ["textarea", "Textarea"],
+          ["table", "Table"],
+        ].map(([tag, component]) => ({
+          selector: `JSXOpeningElement[name.name="${tag}"]`,
+          message: `<${tag}> cru fora de src/components/ui: use ${component} de @/components/ui (ADR 0014).`,
+        })),
+        {
+          selector:
+            'JSXOpeningElement[name.name="input"]:not(:has(JSXAttribute[name.name="type"][value.value="hidden"]))',
+          message:
+            '<input> cru fora de src/components/ui: use Input, Checkbox, Switch ou RadioGroup de @/components/ui (ADR 0014). Só type="hidden" fica cru.',
+        },
+      ],
+    },
+  },
   globalIgnores([
     ".next/**",
     "coverage/**",

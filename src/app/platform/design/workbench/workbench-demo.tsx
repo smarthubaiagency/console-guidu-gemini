@@ -7,6 +7,16 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useWorkbench,
   WorkbenchLayout,
@@ -77,12 +87,13 @@ function SampleList({
     <ul className="space-y-1 p-3">
       {SAMPLES.map((row) => (
         <li key={row.id}>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => onSelect(row)}
             aria-current={row.id === selected ? "true" : undefined}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",
+              "h-auto w-full justify-start gap-3 rounded-lg px-3 py-2 text-left",
               row.id === selected
                 ? "bg-surface-strong"
                 : "hover:bg-surface-hover",
@@ -99,7 +110,7 @@ function SampleList({
                 {row.city}
               </span>
             </span>
-          </button>
+          </Button>
         </li>
       ))}
     </ul>
@@ -111,22 +122,26 @@ function SampleTable({ onEdit }: Readonly<{ onEdit: (row: Sample) => void }>) {
   return (
     <div className="px-4 pb-6 md:px-6">
       <div className="border-card-border bg-surface-card overflow-x-auto rounded-xl border">
-        <table className="text-12 w-full">
-          <thead className="bg-surface-sidebar text-text-secondary text-left">
-            <tr>
-              <th className="px-4 py-2 font-semibold">{t("field.name")}</th>
-              <th className="px-4 py-2 font-semibold">{t("field.email")}</th>
-              <th className="px-4 py-2 font-semibold">{t("field.city")}</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader className="bg-surface-sidebar">
+            <TableRow>
+              <TableHead className="px-4">{t("field.name")}</TableHead>
+              <TableHead className="px-4">{t("field.email")}</TableHead>
+              <TableHead className="px-4">{t("field.city")}</TableHead>
+              <TableHead className="px-4" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {SAMPLES.map((row) => (
-              <tr key={row.id} className="border-border border-t">
-                <td className="text-text px-4 py-3 font-medium">{row.name}</td>
-                <td className="text-text-subtle px-4 py-3">{row.email}</td>
-                <td className="text-text-subtle px-4 py-3">{row.city}</td>
-                <td className="px-4 py-3 text-right">
+              <TableRow key={row.id}>
+                <TableCell className="px-4 font-medium">{row.name}</TableCell>
+                <TableCell className="text-text-subtle px-4">
+                  {row.email}
+                </TableCell>
+                <TableCell className="text-text-subtle px-4">
+                  {row.city}
+                </TableCell>
+                <TableCell className="px-4 text-right">
                   <Button
                     variant="outline"
                     size="sm"
@@ -135,11 +150,11 @@ function SampleTable({ onEdit }: Readonly<{ onEdit: (row: Sample) => void }>) {
                     <Pencil />
                     {t("edit")}
                   </Button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
@@ -154,13 +169,8 @@ function EditForm({ row }: Readonly<{ row: Sample }>) {
       onSubmit={(event) => event.preventDefault()}
     >
       {(["name", "email", "city"] as const).map((field) => (
-        <div key={field} className="space-y-1.5">
-          <label
-            htmlFor={`sample-${field}`}
-            className="text-12 text-text-subtle font-medium"
-          >
-            {t(`field.${field}`)}
-          </label>
+        <div key={field} className="grid gap-2">
+          <Label htmlFor={`sample-${field}`}>{t(`field.${field}`)}</Label>
           <Input
             id={`sample-${field}`}
             key={`${row.id}-${field}`}
@@ -168,18 +178,9 @@ function EditForm({ row }: Readonly<{ row: Sample }>) {
           />
         </div>
       ))}
-      <div className="space-y-1.5">
-        <label
-          htmlFor="sample-notes"
-          className="text-12 text-text-subtle font-medium"
-        >
-          {t("field.notes")}
-        </label>
-        <textarea
-          id="sample-notes"
-          rows={5}
-          className="border-input text-14 text-text w-full rounded-md border bg-transparent px-3 py-2"
-        />
+      <div className="grid gap-2">
+        <Label htmlFor="sample-notes">{t("field.notes")}</Label>
+        <Textarea id="sample-notes" rows={5} />
       </div>
     </form>
   );
