@@ -288,12 +288,13 @@ export async function buildWorkspaceExport(
     tx.workspaceLocation.findMany({ where, orderBy: { createdAt: "asc" } }),
   ]);
   // Channels (A5a): the connections without their tokens, the routes and
-  // what the providers sent.
+  // what the providers sent, and what was sent back (A5b).
   const [
     channelConnections,
     channelRoutes,
     channelConversations,
     channelEvents,
+    channelDeliveries,
   ] = await Promise.all([
     tx.channelConnection.findMany({
       where,
@@ -352,6 +353,24 @@ export async function buildWorkspaceExport(
         receivedAt: true,
       },
     }),
+    tx.channelDelivery.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      take: 50_000,
+      select: {
+        id: true,
+        connectionId: true,
+        conversationId: true,
+        executionId: true,
+        part: true,
+        content: true,
+        status: true,
+        externalId: true,
+        error: true,
+        createdAt: true,
+        sentAt: true,
+      },
+    }),
   ]);
 
   const moduleData: Record<string, Record<string, ExportedRows>> = {};
@@ -378,6 +397,7 @@ export async function buildWorkspaceExport(
         routes: channelRoutes,
         conversations: channelConversations,
         events: channelEvents,
+        deliveries: channelDeliveries,
       },
     },
     modules: moduleData,

@@ -72,6 +72,11 @@ export async function startFakeChatwoot(port: number): Promise<FakeChatwoot> {
       });
       return;
     }
+    if (/^\/inboxes\/\d+\/set_agent_bot$/.test(rest) && method === "POST") {
+      response.writeHead(204);
+      response.end();
+      return;
+    }
     const bot = /^\/agent_bots\/(\d+)$/.exec(rest);
     if (bot && bots.has(Number(bot[1]))) {
       if (method === "DELETE") bots.delete(Number(bot[1]));

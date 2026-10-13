@@ -39,11 +39,16 @@ import {
   type GuidTestConversationDto,
 } from "@/modules/ai-agents/server/services/conversations";
 import {
+  type GuidChannelsDto,
+  listGuidChannels,
+} from "@/modules/ai-agents/server/services/channels";
+import {
   type GuidDetailDto,
   getGuid,
 } from "@/modules/ai-agents/server/services/guid-config";
 import { AppError } from "@/shared/errors";
 
+import { GuidChannels } from "./guid-channels";
 import { CreateGuidForm, GuidPanel } from "./guid-forms";
 import { GuidTestPanel } from "./guid-test";
 
@@ -130,11 +135,14 @@ export default async function AiAgentsPage({
     ]);
     let opened: GuidDetailDto | null = null;
     let test: GuidTestConversationDto | null = null;
+    let channels: GuidChannelsDto | null = null;
     if (editKey && editKey !== "new") {
       try {
         opened = await getGuid(tx, context, editKey);
         if (testing) {
           test = await getGuidTestConversation(tx, context, editKey);
+        } else {
+          channels = await listGuidChannels(tx, context, editKey);
         }
       } catch (error) {
         if (!(error instanceof AppError && error.code === "not_found")) {
@@ -157,6 +165,7 @@ export default async function AiAgentsPage({
       limit: quota.limit,
       opened,
       test,
+      channels,
       credentials,
     };
   });
@@ -230,6 +239,16 @@ export default async function AiAgentsPage({
         guid={opened}
         canManage={view.canManage}
         testHref={`${base}?edit=${opened.id}&view=test`}
+        channels={
+          <GuidChannels
+            key="channels"
+            workspaceSlug={workspaceSlug}
+            agentId={opened.id}
+            channels={view.channels}
+            ready={opened.status === "active" && opened.testedCurrent}
+            settingsHref={`/app/${workspaceSlug}/settings/channels`}
+          />
+        }
         credentials={view.credentials.map((key) => ({
           id: key.id,
           provider: key.provider,

@@ -12,6 +12,7 @@ import {
   MAX_INBOUND_TEXT,
 } from "./contract";
 import { type ChannelFetch, ChannelHttpError, providerJson } from "./http";
+import { ServiceConfig } from "./settings";
 
 /**
  * Adapter of Chatwoot through an Agent Bot (canais.md §3.3, ADR 0011).
@@ -52,6 +53,8 @@ export const ChatwootConfig = z.object({
       }),
     )
     .default([]),
+  /** Service settings of the integration (A5b, `./settings.ts`). */
+  service: ServiceConfig.optional(),
 });
 export type ChatwootConfig = z.infer<typeof ChatwootConfig>;
 
@@ -445,4 +448,81 @@ export async function checkChatwoot(
     return failed(error, "bot_missing");
   }
   return { ok: true, code: null, inboxes };
+}
+
+const MessageResponse = z.object({ id: numberish }).passthrough();
+
+/** Sends one public message to a conversation, as the account's bot. */
+export async function sendChatwootMessage(
+  account: ChatwootAccount,
+  botToken: string,
+  conversationId: string,
+  content: string,
+  deps: Deps = {},
+): Promise<Readonly<{ id: string }>> {
+  const raw = await providerJson(
+    accountUrl(
+      account,
+      `/conversations/${encodeURIComponent(conversationId)}/messages`,
+    ),
+    {
+      method: "POST",
+      headers: headers(botToken),
+      body: JSON.stringify({
+        content,
+        message_type: "outgoing",
+        private: false,
+      }),
+    },
+    deps,
+  );
+  const parsed = MessageResponse.safeParse(raw);
+  if (!parsed.success) throw new ChannelHttpError("invalid_response");
+  return { id: String(parsed.data.id) };
+}
+
+/**
+ * Hands the conversation to the team: Chatwoot's status goes from
+ * "pending" (the bot's) to "open", where the agents see it.
+ */
+export async function handoffChatwootConversation(
+  account: ChatwootAccount,
+  botToken: string,
+  conversationId: string,
+  deps: Deps = {},
+): Promise<void> {
+  await providerJson(
+    accountUrl(
+      account,
+      `/conversations/${encodeURIComponent(conversationId)}/toggle_status`,
+    ),
+    {
+      method: "POST",
+      headers: headers(botToken),
+      body: JSON.stringify({ status: "open" }),
+    },
+    deps,
+  );
+}
+
+/** Puts the account's bot on an inbox, or takes it off (`null`). */
+export async function setInboxAgentBot(
+  account: ChatwootAccount,
+  userToken: string,
+  inboxId: string,
+  botId: number | null,
+  deps: Deps = {},
+): Promise<void> {
+  await providerJson(
+    accountUrl(
+      account,
+      `/inboxes/${encodeURIComponent(inboxId)}/set_agent_bot`,
+    ),
+    {
+      method: "POST",
+      headers: headers(userToken),
+      body: JSON.stringify({ agent_bot: botId }),
+    },
+    deps,
+  );
 }

@@ -2,7 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
-import type { PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
 import { recordAudit } from "@/core/audit/record";
@@ -29,9 +29,15 @@ import {
   checkChatwoot,
   createAgentBot,
   deleteAgentBot,
+  setInboxAgentBot,
 } from "./chatwoot";
 import type { ChannelKind } from "./contract";
 import { type ChannelFetch, ChannelHttpError, providerOrigin } from "./http";
+import {
+  type ServiceConfig,
+  ServiceSettings,
+  serviceConfigOf,
+} from "./settings";
 import { newWebhookToken, webhookPath } from "./webhook";
 
 /**
@@ -60,6 +66,8 @@ export type ChannelConnectionDto = Readonly<{
   baseUrl: string | null;
   accountId: number | null;
   inboxes: readonly ChatwootInbox[];
+  /** Service settings of the integration (A5b). */
+  service: ServiceConfig;
   maskedSecret: string;
   healthStatus: "unknown" | "ok" | "failed";
   healthError: string | null;
@@ -159,6 +167,7 @@ function toDto(row: Row, unroutedEvents: number): ChannelConnectionDto {
     baseUrl: config.success ? config.data.base_url : null,
     accountId: config.success ? config.data.account_id : null,
     inboxes: config.success ? config.data.inboxes : [],
+    service: serviceConfigOf(row.config),
     maskedSecret: row.maskedSecret,
     healthStatus: row.healthStatus as ChannelConnectionDto["healthStatus"],
     healthError: row.healthError,
@@ -414,4 +423,318 @@ export async function deleteChannelConnection(
       metadata: { kind: row.kind, name: row.name, botRemoved },
     });
   });
+}
+
+// ---------------------------------------------------------------------------
+// Service settings of the integration (A5b)
+// ---------------------------------------------------------------------------
+
+export const ServiceSettingsInput = z.strictObject({
+  connectionId: z.uuid(),
+  /** An inbox; absent: the defaults of every inbox. */
+  scope: z.string().trim().min(1).max(200).nullable(),
+  /** Null with a scope: back to the defaults. */
+  settings: ServiceSettings.nullable(),
+});
+
+/**
+ * Saves the service settings of a connection, for every inbox or for one
+ * (decided by Marcelo on 13/10/2026: they live in the integration).
+ */
+export async function updateServiceSettings(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  input: unknown,
+): Promise<ChannelConnectionDto> {
+  await requireWorkspacePermission(tx, ctx, Permissions.CHANNELS_MANAGE);
+  const parsed = ServiceSettingsInput.safeParse(input);
+  if (!parsed.success) {
+    throw new ChannelInputError(
+      Object.fromEntries(
+        parsed.error.issues.map((issue) => [
+          String(issue.path.at(-1) ?? "form"),
+          "Valor fora do permitido.",
+        ]),
+      ),
+    );
+  }
+  const { connectionId, scope, settings } = parsed.data;
+  const row = await loadRow(tx, ctx, connectionId);
+  const config = ChatwootConfig.parse(row.config);
+  if (scope !== null && !config.inboxes.some((i) => String(i.id) === scope)) {
+    throw notFound();
+  }
+  if (scope === null && settings === null) {
+    throw new ChannelInputError({ form: "Informe as configurações." });
+  }
+  const service = serviceConfigOf(config);
+  const inboxes = { ...service.inboxes };
+  if (scope === null) {
+    service.defaults = settings ?? {};
+  } else if (settings === null) {
+    delete inboxes[scope];
+  } else {
+    inboxes[scope] = settings;
+  }
+  const updated = await tx.channelConnection.update({
+    where: { id: row.id },
+    data: {
+      config: { ...config, service: { defaults: service.defaults, inboxes } },
+      updatedBy: ctx.userId,
+    },
+  });
+  await recordAudit(tx, ctx, {
+    action: "channels.connection.settings",
+    resourceType: "channel_connection",
+    resourceId: row.id,
+    result: "success",
+    origin: origin(ctx),
+    metadata: {
+      kind: row.kind,
+      target: scope ?? "defaults",
+      to: settings ?? "defaults",
+    },
+  });
+  const unrouted = await tx.channelInboundEvent.count({
+    where: { connectionId: row.id, status: "no_route" },
+  });
+  return toDto(updated, unrouted);
+}
+
+// ---------------------------------------------------------------------------
+// Routes: which consumer answers an inbox (A5b)
+// ---------------------------------------------------------------------------
+
+export type ChannelInboxDto = Readonly<{
+  connectionId: string;
+  connectionName: string;
+  kind: ChannelKind;
+  inboxId: string;
+  inboxName: string;
+  channelType: string | null;
+  route: Readonly<{
+    id: string;
+    consumerModule: string;
+    consumerRef: string;
+  }> | null;
+}>;
+
+/** Every inbox of the workspace's active connections, with its route. */
+export async function listChannelInboxes(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+): Promise<ChannelInboxDto[]> {
+  await requireWorkspacePermission(tx, ctx, Permissions.CHANNELS_READ);
+  const [connections, routes] = await Promise.all([
+    tx.channelConnection.findMany({
+      where: { workspaceId: ctx.workspaceId, status: "active" },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    }),
+    tx.channelRoute.findMany({
+      where: { workspaceId: ctx.workspaceId, status: "active" },
+      select: {
+        id: true,
+        connectionId: true,
+        scope: true,
+        consumerModule: true,
+        consumerRef: true,
+      },
+    }),
+  ]);
+  return connections.flatMap((connection) => {
+    const config = ChatwootConfig.safeParse(connection.config);
+    if (!config.success) return [];
+    return config.data.inboxes.map((inbox) => {
+      const route = routes.find(
+        (r) => r.connectionId === connection.id && r.scope === String(inbox.id),
+      );
+      return {
+        connectionId: connection.id,
+        connectionName: connection.name,
+        kind: connection.kind as ChannelKind,
+        inboxId: String(inbox.id),
+        inboxName: inbox.name,
+        channelType: inbox.channel_type,
+        route: route
+          ? {
+              id: route.id,
+              consumerModule: route.consumerModule,
+              consumerRef: route.consumerRef,
+            }
+          : null,
+      };
+    });
+  });
+}
+
+export const OpenRouteInput = z.strictObject({
+  connectionId: z.uuid(),
+  scope: z.string().trim().min(1).max(200),
+  consumerModule: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
+  consumerRef: z.uuid(),
+});
+export type OpenRouteInput = z.infer<typeof OpenRouteInput>;
+
+function inboxTaken(): AppError {
+  return new AppError({
+    code: "conflict",
+    safeMessage: "Esta inbox já é atendida por outro agente.",
+    messageKey: "channels.errors.inboxTaken",
+  });
+}
+
+/**
+ * Gives an inbox to a consumer: the route (one active per inbox, unique in
+ * the database) and the account's bot on the inbox in Chatwoot. The person
+ * who opens it is who the dispatch runs as. The caller checks its own
+ * module's permission first.
+ */
+export async function openChannelRoute(
+  prisma: PrismaClient,
+  ctx: RequestContext,
+  input: OpenRouteInput,
+  deps: ChannelDeps = {},
+): Promise<{ id: string }> {
+  const parsed = OpenRouteInput.parse(input);
+  const { row, route } = await withContext(prisma, ctx, async (tx) => {
+    await requireWorkspacePermission(tx, ctx, Permissions.CHANNELS_MANAGE);
+    const row = await loadRow(tx, ctx, parsed.connectionId);
+    if (row.status !== "active") throw notFound();
+    const config = ChatwootConfig.parse(row.config);
+    if (!config.inboxes.some((i) => String(i.id) === parsed.scope)) {
+      throw notFound();
+    }
+    const taken = await tx.channelRoute.findFirst({
+      where: {
+        connectionId: row.id,
+        scope: parsed.scope,
+        status: "active",
+      },
+      select: { id: true },
+    });
+    if (taken) throw inboxTaken();
+    let route: { id: string };
+    try {
+      route = await tx.channelRoute.create({
+        data: {
+          organizationId: ctx.organizationId,
+          workspaceId: ctx.workspaceId,
+          connectionId: row.id,
+          scope: parsed.scope,
+          consumerModule: parsed.consumerModule,
+          consumerRef: parsed.consumerRef,
+          createdBy: ctx.userId,
+        },
+        select: { id: true },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw inboxTaken();
+      }
+      throw error;
+    }
+    await recordAudit(tx, ctx, {
+      action: "channels.route.open",
+      resourceType: "channel_route",
+      resourceId: route.id,
+      result: "success",
+      origin: origin(ctx),
+      metadata: {
+        kind: row.kind,
+        target: parsed.scope,
+        agentId: parsed.consumerRef,
+      },
+    });
+    return { row, route };
+  });
+  const config = ChatwootConfig.parse(row.config);
+  try {
+    await setInboxAgentBot(
+      accountOf(config),
+      secretsOf(row.encryptedSecrets).userToken,
+      parsed.scope,
+      config.agent_bot_id,
+      deps,
+    );
+  } catch (error) {
+    if (!(error instanceof ChannelHttpError)) throw error;
+    // Without the bot on the inbox nothing arrives: the route goes away.
+    await withContext(prisma, ctx, (tx) =>
+      tx.channelRoute.update({
+        where: { id: route.id },
+        data: { status: "closed", updatedBy: ctx.userId },
+      }),
+    );
+    throw new ChannelProviderError(error.code);
+  }
+  return route;
+}
+
+/**
+ * Takes an inbox back from its consumer: the route is closed and the bot
+ * leaves the inbox in Chatwoot (best effort: the route decides). With
+ * `consumerRef`, only that consumer's routes.
+ */
+export async function closeChannelRoutes(
+  prisma: PrismaClient,
+  ctx: RequestContext,
+  where: Readonly<{
+    consumerModule: string;
+    consumerRef: string;
+    routeId?: string;
+  }>,
+  deps: ChannelDeps = {},
+): Promise<number> {
+  const closed = await withContext(prisma, ctx, async (tx) => {
+    await requireWorkspacePermission(tx, ctx, Permissions.CHANNELS_MANAGE);
+    const routes = await tx.channelRoute.findMany({
+      where: {
+        workspaceId: ctx.workspaceId,
+        status: "active",
+        consumerModule: where.consumerModule,
+        consumerRef: where.consumerRef,
+        ...(where.routeId ? { id: where.routeId } : {}),
+      },
+    });
+    const rows = [];
+    for (const route of routes) {
+      await tx.channelRoute.update({
+        where: { id: route.id },
+        data: { status: "closed", updatedBy: ctx.userId },
+      });
+      await recordAudit(tx, ctx, {
+        action: "channels.route.close",
+        resourceType: "channel_route",
+        resourceId: route.id,
+        result: "success",
+        origin: origin(ctx),
+        metadata: { target: route.scope, agentId: route.consumerRef },
+      });
+      const connection = await tx.channelConnection.findFirst({
+        where: { id: route.connectionId },
+      });
+      if (connection) rows.push({ route, connection });
+    }
+    return rows;
+  });
+  for (const { route, connection } of closed) {
+    const config = ChatwootConfig.safeParse(connection.config);
+    if (!config.success) continue;
+    await setInboxAgentBot(
+      accountOf(config.data),
+      secretsOf(connection.encryptedSecrets).userToken,
+      route.scope,
+      null,
+      deps,
+    ).catch((error: unknown) => {
+      appLog.warn("channels.route.bot_not_removed", {
+        routeId: route.id,
+        code: error instanceof ChannelHttpError ? error.code : "unknown",
+      });
+    });
+  }
+  return closed.length;
 }

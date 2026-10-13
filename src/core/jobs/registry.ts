@@ -1,6 +1,7 @@
 import { keyWatchJob, keyWatchSchedule } from "@/core/ai/key-watch";
 import { guidTurnJob } from "@/core/ai/turn/guid";
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
+import { channelDispatchJob } from "@/core/channels/registry";
 import { translateTextsJob } from "@/core/i18n/machine/texts-job";
 import { translateDocumentJob } from "@/core/legal/machine-job";
 import { workspaceExportJob } from "@/core/privacy/export";
@@ -24,6 +25,7 @@ const DEFINITIONS = [
   proposalExecuteJob,
   guidTurnJob,
   keyWatchJob,
+  channelDispatchJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
 

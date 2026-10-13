@@ -17,6 +17,11 @@ import { AppError } from "@/shared/errors";
 
 import { createGuid } from "./services/agents";
 import {
+  bindGuidInbox,
+  releaseGuidInboxes,
+  unbindGuidInbox,
+} from "./services/channels";
+import {
   getGuidTestConversation,
   type GuidTestConversationDto,
   sendGuidTestMessage,
@@ -168,8 +173,11 @@ export async function deleteGuidAction(
   try {
     const resolved = await contextFor(formData);
     base = resolved.base;
+    const agentId = text(formData, "agentId");
+    // Its inboxes go back to nobody (and the bot leaves them) first.
+    await releaseGuidInboxes(prisma, resolved.context, agentId);
     await withContext(prisma, resolved.context, (tx) =>
-      deleteGuid(tx, resolved.context, text(formData, "agentId")),
+      deleteGuid(tx, resolved.context, agentId),
     );
   } catch (err) {
     return failure(err);
@@ -308,5 +316,42 @@ export async function loadGuidTestAction(
   } catch (err) {
     const { error } = await actionFailure(err);
     return { error };
+  }
+}
+
+export async function bindGuidInboxAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    await bindGuidInbox(prisma, context, {
+      agentId: text(formData, "agentId"),
+      connectionId: text(formData, "connectionId"),
+      inboxId: text(formData, "inboxId"),
+    });
+    revalidatePath(base);
+    const t = await getTranslations("aiAgents.guids.channels");
+    return { success: true, message: t("bound") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function unbindGuidInboxAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    await unbindGuidInbox(prisma, context, {
+      agentId: text(formData, "agentId"),
+      routeId: text(formData, "routeId"),
+    });
+    revalidatePath(base);
+    const t = await getTranslations("aiAgents.guids.channels");
+    return { success: true, message: t("unbound") };
+  } catch (err) {
+    return failure(err);
   }
 }

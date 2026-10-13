@@ -56,7 +56,8 @@
       "http_error": "O Chatwoot respondeu com erro.",
       "invalid_response": "O Chatwoot respondeu em um formato inesperado.",
       "unknown": "Falha desconhecida ao falar com o Chatwoot."
-    }
+    },
+    "inboxTaken": "Esta inbox já é atendida por outro agente."
   },
   "health": {
     "invalid_url": "O endereço do Chatwoot é inválido.",
@@ -71,5 +72,29 @@
     "account_missing": "A conta não foi encontrada no Chatwoot.",
     "bot_missing": "O bot do GUIDU foi removido do Chatwoot. Remova a conexão e conecte de novo.",
     "unknown": "Falha desconhecida ao falar com o Chatwoot."
+  },
+  "service": {
+    "title": "Atendimento",
+    "description": "Como o agente responde nas inboxes desta conexão. A inbox pode ter um ajuste próprio.",
+    "scope": "Aplicar a",
+    "defaults": "Todas as inboxes (padrão)",
+    "inboxOwn": "{name} (ajuste próprio)",
+    "fields": {
+      "grouping_seconds": "Espera para juntar mensagens (segundos)",
+      "max_messages": "Mensagens por resposta",
+      "max_chars": "Caracteres por mensagem",
+      "interval_ms": "Intervalo entre mensagens (milissegundos)"
+    },
+    "hints": {
+      "grouping_seconds": "Mensagens seguidas do contato viram uma só resposta. De 0 a 30.",
+      "max_messages": "Respostas maiores são juntadas na última mensagem. De 1 a 5.",
+      "max_chars": "Orientação ao agente para textos curtos. De 100 a 1.000.",
+      "interval_ms": "Pausa entre uma mensagem e outra da mesma resposta. Até 5.000."
+    },
+    "backToBot": "Depois de uma transferência, a conversa volta para o agente quando a equipe a devolve para \"pendente\" no Chatwoot.",
+    "save": "Salvar atendimento",
+    "useDefaults": "Usar o padrão",
+    "saved": "Atendimento salvo.",
+    "reset": "A inbox voltou a usar o padrão."
   }
 }

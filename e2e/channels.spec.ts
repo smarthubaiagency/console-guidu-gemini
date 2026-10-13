@@ -9,6 +9,7 @@ import { expect, test } from "@playwright/test";
 import { FAKE_CHATWOOT_TOKEN } from "./support/fake-chatwoot";
 import {
   createIdentity,
+  seedGuid,
   seedWorkspace,
   signIn,
   uniqueEmail,
@@ -115,4 +116,76 @@ test("viewer has no access to the channels", async ({ page, request }) => {
     page.getByText("Você não tem acesso aos canais deste workspace."),
   ).toBeVisible();
   await expect(page.getByTestId("create-chatwoot")).toHaveCount(0);
+});
+
+test.describe("GUIDS on a Chatwoot inbox (A5b)", () => {
+  test.skip(
+    process.env.GUIDU_MODULE_AI_AGENTS_ENABLED !== "true",
+    "Module is frozen by default (C04); runs only when GUIDU_MODULE_AI_AGENTS_ENABLED is true",
+  );
+
+  test("owner adjusts the service of an inbox and puts a GUIDS on it", async ({
+    page,
+    request,
+  }) => {
+    const email = uniqueEmail("channels-guid");
+    const wsSlug = `ws-channels-guid-${Date.now()}`;
+    await createIdentity(request, email);
+    const workspace = await seedWorkspace(request, {
+      email,
+      orgName: "Loja GUIDS",
+      orgSlug: `org-channels-guid-${Date.now()}`,
+      wsName: "Loja GUIDS",
+      wsSlug,
+      role: "owner",
+    });
+    const { agentId } = await seedGuid(request, {
+      ...workspace,
+      agentName: "Anna",
+      ready: true,
+    });
+    await signIn(page, email);
+
+    await page.goto(`/app/${wsSlug}/settings/channels`);
+    const form = page.getByTestId("create-chatwoot");
+    await form.getByLabel("Nome").fill("Atendimento");
+    await form.getByLabel("Endereço do Chatwoot").fill(CHATWOOT_URL);
+    await form.getByLabel("ID da conta").fill("1");
+    await form.getByLabel("Token de acesso").fill(FAKE_CHATWOOT_TOKEN);
+    await form.getByRole("button", { name: "Conectar" }).click();
+    await expect(statusBanner(page)).toContainText("Chatwoot conectado.");
+
+    // The inbox gets its own grouping window; the defaults stay.
+    const service = page.getByTestId("channel-service");
+    await service.getByTestId("channel-service-scope").selectOption("3");
+    await service
+      .getByLabel("Espera para juntar mensagens (segundos)")
+      .fill("8");
+    await service.getByRole("button", { name: "Salvar atendimento" }).click();
+    await expect(statusBanner(page)).toContainText("Atendimento salvo.");
+    await expect(
+      service.getByTestId("channel-service-scope").locator("option"),
+    ).toContainText([
+      "Todas as inboxes (padrão)",
+      "WhatsApp Loja (ajuste próprio)",
+    ]);
+
+    await page.goto(`/app/${wsSlug}/ai-agents?edit=${agentId}`);
+    const channels = page.getByTestId("guid-channels");
+    const inbox = channels.getByTestId("guid-inbox");
+    await expect(inbox).toContainText("WhatsApp Loja");
+    await expect(inbox.getByTestId("guid-inbox-state")).toHaveText("Livre");
+    await inbox.getByTestId("bind-inbox").click();
+    await expect(statusBanner(page)).toContainText(
+      "O agente passou a atender a inbox.",
+    );
+    await expect(inbox.getByTestId("guid-inbox-state")).toHaveText(
+      "Este agente",
+    );
+    await inbox.getByTestId("unbind-inbox").click();
+    await expect(statusBanner(page)).toContainText(
+      "O agente parou de atender a inbox.",
+    );
+    await expect(inbox.getByTestId("guid-inbox-state")).toHaveText("Livre");
+  });
 });

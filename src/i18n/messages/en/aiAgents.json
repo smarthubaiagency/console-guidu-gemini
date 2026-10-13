@@ -143,6 +143,23 @@
         "timeout": "the model took too long.",
         "unknown": "unknown error."
       }
+    },
+    "channels": {
+      "title": "Channels",
+      "description": "The inboxes this agent answers. Connections and service are set in <link>Settings › Channels</link>.",
+      "noAccess": "You do not see this workspace's channels.",
+      "empty": "No inbox connected yet.",
+      "needsActive": "Test and turn on the agent in this configuration to put it on an inbox.",
+      "state": {
+        "mine": "This agent",
+        "other": "Another agent",
+        "otherNamed": "With {name}",
+        "free": "Free"
+      },
+      "bind": "Answer",
+      "unbind": "Stop answering",
+      "bound": "The agent now answers the inbox.",
+      "unbound": "The agent stopped answering the inbox."
     }
   },
   "errors": {

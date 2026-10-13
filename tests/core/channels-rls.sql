@@ -303,4 +303,202 @@ end
 $$;
 rollback;
 
+-- ----------------------------------------------------------------------------
+-- Test 6 (A5b): the ingestion enqueues one dispatch per conversation, as
+-- the person who opened the route, only for a contact's public message on
+-- a routed inbox, with the grouping window of the settings
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+update public.channel_connections
+set config = config || '{"service": {"defaults": {"grouping_seconds": 7}, "inboxes": {"20": {"grouping_seconds": 0}}}}'
+where id = 'c5a00000-0000-4000-8000-0000000000a1';
+insert into public.channel_routes (organization_id, workspace_id, connection_id, scope, consumer_module, consumer_ref, created_by)
+values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+        'c5a00000-0000-4000-8000-0000000000a1', '10', 'ai-agents', gen_random_uuid(),
+        'a0000000-0000-4000-8000-000000000031'),
+       ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+        'c5a00000-0000-4000-8000-0000000000a1', '20', 'ai-agents', gen_random_uuid(),
+        'a0000000-0000-4000-8000-000000000031');
+set local role app_runtime;
+do $$
+declare
+  v_hash text := encode(sha256('token-a'::bytea), 'hex');
+  v_run record;
+begin
+  perform private.channel_ingest('c5a00000-0000-4000-8000-0000000000a1', v_hash, '[
+    {"externalId": "message:1", "kind": "message", "sender": "contact", "scope": "10",
+     "conversation": {"externalId": "500", "contactId": "9", "status": "pending"},
+     "message": {"text": "Olá", "private": false, "attachments": []}},
+    {"externalId": "message:2", "kind": "message", "sender": "contact", "scope": "10",
+     "conversation": {"externalId": "500", "contactId": "9", "status": "pending"},
+     "message": {"text": "Quero o preço", "private": false, "attachments": []}},
+    {"externalId": "message:3", "kind": "message", "sender": "agent", "scope": "10",
+     "conversation": {"externalId": "501", "contactId": null, "status": "pending"},
+     "message": {"text": "Oi", "private": false, "attachments": []}},
+    {"externalId": "message:4", "kind": "message", "sender": "contact", "scope": "10",
+     "conversation": {"externalId": "502", "contactId": null, "status": "pending"},
+     "message": {"text": "nota", "private": true, "attachments": []}},
+    {"externalId": "message:5", "kind": "message", "sender": "contact", "scope": "30",
+     "conversation": {"externalId": "503", "contactId": null, "status": "pending"},
+     "message": {"text": "sem rota", "private": false, "attachments": []}},
+    {"externalId": "message:6", "kind": "message", "sender": "contact", "scope": "20",
+     "conversation": {"externalId": "504", "contactId": null, "status": "pending"},
+     "message": {"text": "", "private": false,
+                 "attachments": [{"kind": "audio", "url": "https://chat.a.test/a.ogg", "mimeType": null, "size": null}]}}
+  ]');
+  -- A retry of the provider enqueues nothing more.
+  perform private.channel_ingest('c5a00000-0000-4000-8000-0000000000a1', v_hash, '[
+    {"externalId": "message:1", "kind": "message", "sender": "contact", "scope": "10",
+     "conversation": {"externalId": "500", "contactId": "9", "status": "pending"},
+     "message": {"text": "Olá", "private": false, "attachments": []}}
+  ]');
+
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if (select count(*) from public.job_runs where kind = 'channels.dispatch') <> 2 then
+    raise exception 'channels: expected 2 dispatch runs, got %',
+      (select count(*) from public.job_runs where kind = 'channels.dispatch');
+  end if;
+  select run.* into v_run from public.job_runs run
+  join public.channel_conversations conversation on conversation.id::text = run.payload->>'conversationId'
+  where conversation.external_id = '500';
+  if v_run.requested_by is distinct from 'a0000000-0000-4000-8000-000000000031'::uuid
+     or v_run.status <> 'pending' or v_run.scope <> 'workspace' or v_run.max_attempts <> 1
+     or v_run.run_after <> now() + interval '7 seconds' then
+    raise exception 'channels: dispatch of 500 is wrong (%, %, %)', v_run.requested_by, v_run.status, v_run.run_after - now();
+  end if;
+  select run.* into v_run from public.job_runs run
+  join public.channel_conversations conversation on conversation.id::text = run.payload->>'conversationId'
+  where conversation.external_id = '504';
+  if v_run.run_after <> now() then
+    raise exception 'channels: the inbox''s own window was not used';
+  end if;
+  if current_setting('app.channel_ingest', true) = 'on' then
+    raise exception 'channels: ingestion flag left on';
+  end if;
+end
+$$;
+reset role;
+set local role app_rls_helper;
+do $$
+begin
+  if exists (select 1 from public.job_runs) then
+    raise exception 'channels: helper sees job runs outside the ingestion';
+  end if;
+end
+$$;
+rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test 7 (A5b): the dispatch claims events and records deliveries as an
+-- owner or admin; an editor reads them; another workspace sees nothing
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+insert into public.channel_conversations (id, organization_id, workspace_id, connection_id, scope, external_id)
+values ('c5a00000-0000-4000-8000-0000000000c1', 'a0000000-0000-4000-8000-000000000010',
+        'a0000000-0000-4000-8000-000000000011', 'c5a00000-0000-4000-8000-0000000000a1', '10', '500');
+insert into public.channel_inbound_events (id, organization_id, workspace_id, connection_id, conversation_id,
+  external_id, contract_version, kind, sender, scope, payload, status)
+values ('c5a00000-0000-4000-8000-0000000000e1', 'a0000000-0000-4000-8000-000000000010',
+        'a0000000-0000-4000-8000-000000000011', 'c5a00000-0000-4000-8000-0000000000a1',
+        'c5a00000-0000-4000-8000-0000000000c1', 'message:1', 1, 'message', 'contact', '10', '{}', 'routed');
+set local role app_runtime;
+do $$
+declare
+  v_delivery uuid;
+begin
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  update public.channel_inbound_events set status = 'dispatched'
+  where id = 'c5a00000-0000-4000-8000-0000000000e1';
+  if not found then raise exception 'channels: owner could not claim an event'; end if;
+  begin
+    update public.channel_inbound_events set scope = '99'
+    where id = 'c5a00000-0000-4000-8000-0000000000e1';
+    raise exception 'channels: owner changed the scope of an event';
+  exception when insufficient_privilege then null;
+  end;
+
+  insert into public.channel_deliveries (organization_id, workspace_id, connection_id, conversation_id,
+    execution_id, part, content)
+  values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+          'c5a00000-0000-4000-8000-0000000000a1', 'c5a00000-0000-4000-8000-0000000000c1',
+          'c5a00000-0000-4000-8000-0000000000f1', 0, 'Oi!')
+  returning id into v_delivery;
+  begin
+    insert into public.channel_deliveries (organization_id, workspace_id, connection_id, conversation_id,
+      execution_id, part, content)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'c5a00000-0000-4000-8000-0000000000a1', 'c5a00000-0000-4000-8000-0000000000c1',
+            'c5a00000-0000-4000-8000-0000000000f1', 0, 'De novo');
+    raise exception 'channels: the same part was recorded twice';
+  exception when unique_violation then null;
+  end;
+  update public.channel_deliveries set status = 'sent', external_id = '900', sent_at = now()
+  where id = v_delivery;
+  begin
+    update public.channel_deliveries set content = 'outro' where id = v_delivery;
+    raise exception 'channels: the content of a delivery changed';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- A conversation of a GUIDS from Chatwoot: no person, an external one.
+  insert into public.ai_agents (id, kind, organization_id, workspace_id, config, created_by)
+  values ('c5a00000-0000-4000-8000-0000000000d1', 'guid', 'a0000000-0000-4000-8000-000000000010',
+          'a0000000-0000-4000-8000-000000000011', '{}', 'a0000000-0000-4000-8000-000000000031');
+  insert into public.ai_conversations (kind, agent_id, organization_id, workspace_id, channel, channel_conversation_id)
+  values ('guid', 'c5a00000-0000-4000-8000-0000000000d1', 'a0000000-0000-4000-8000-000000000010',
+          'a0000000-0000-4000-8000-000000000011', 'chatwoot', 'c5a00000-0000-4000-8000-0000000000c1');
+  begin
+    insert into public.ai_conversations (kind, agent_id, organization_id, workspace_id, channel, channel_conversation_id)
+    values ('guid', 'c5a00000-0000-4000-8000-0000000000d1', 'a0000000-0000-4000-8000-000000000010',
+            'a0000000-0000-4000-8000-000000000011', 'chatwoot', 'c5a00000-0000-4000-8000-0000000000c1');
+    raise exception 'channels: two open conversations of an agent for one external conversation';
+  exception when unique_violation then null;
+  end;
+  begin
+    insert into public.ai_conversations (kind, agent_id, organization_id, workspace_id, channel, channel_conversation_id, user_id)
+    values ('guid', 'c5a00000-0000-4000-8000-0000000000d1', 'a0000000-0000-4000-8000-000000000010',
+            'a0000000-0000-4000-8000-000000000011', 'chatwoot', gen_random_uuid(),
+            'a0000000-0000-4000-8000-000000000031');
+    raise exception 'channels: a Chatwoot conversation with a person or an unknown external one';
+  exception when insufficient_privilege or check_violation then null;
+  end;
+
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000032', 'a0000000-0000-4000-8000-000000000021',
+                      'a0000000-0000-4000-8000-000000000020');
+  if exists (select 1 from public.channel_deliveries) then
+    raise exception 'channels: owner of B sees deliveries of A';
+  end if;
+end
+$$;
+reset role;
+select set_config('app.user_id', '', true);
+update public.workspace_members set role = 'editor'
+where workspace_id = 'a0000000-0000-4000-8000-000000000011' and user_id = 'a0000000-0000-4000-8000-000000000033';
+set local role app_runtime;
+do $$
+begin
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000033', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if (select count(*) from public.channel_deliveries) <> 1 then
+    raise exception 'channels: editor does not read the deliveries';
+  end if;
+  update public.channel_inbound_events set status = 'ignored';
+  if found then raise exception 'channels: editor claimed an event'; end if;
+  begin
+    insert into public.channel_deliveries (organization_id, workspace_id, connection_id, conversation_id,
+      execution_id, part, content)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'c5a00000-0000-4000-8000-0000000000a1', 'c5a00000-0000-4000-8000-0000000000c1',
+            gen_random_uuid(), 0, 'x');
+    raise exception 'channels: editor recorded a delivery';
+  exception when insufficient_privilege then null;
+  end;
+end
+$$;
+rollback;
+
 select 'channels-rls: all tests passed' as result;

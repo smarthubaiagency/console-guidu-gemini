@@ -132,7 +132,12 @@ export async function seedPartner(
 /** Turns the AI module on in a workspace and, with a name, seeds a GUIDS. */
 export async function seedGuid(
   request: APIRequestContext,
-  params: { organizationId: string; workspaceId: string; agentName?: string },
+  params: {
+    organizationId: string;
+    workspaceId: string;
+    agentName?: string;
+    ready?: boolean;
+  },
 ): Promise<{ agentId: string | null }> {
   const response = await request.post(`${AUTH_BASE_URL}/__control/seed-guid`, {
     data: params,
