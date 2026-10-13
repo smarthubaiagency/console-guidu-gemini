@@ -311,6 +311,17 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
           href: `${base}/settings/credentials`,
           iconKey: "key",
         }),
+        // Messaging channels (A5a, ADR 0011): owner, admin and editor.
+        ...(input.grants("channels.read")
+          ? [
+              item({
+                id: "core.channels",
+                label: "Canais",
+                href: `${base}/settings/channels`,
+                iconKey: "inbox",
+              }),
+            ]
+          : []),
         item({
           id: "core.mcp",
           label: "Assistentes MCP",

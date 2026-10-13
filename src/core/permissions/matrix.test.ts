@@ -59,6 +59,8 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
+        [Permissions.CHANNELS_READ]: true,
+        [Permissions.CHANNELS_MANAGE]: true,
         [Permissions.API_KEYS_CREATE_OWN]: true,
         [Permissions.API_KEYS_REVOKE_OWN]: true,
         [Permissions.API_KEYS_REVOKE_ANY]: true,
@@ -107,6 +109,8 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
+        [Permissions.CHANNELS_READ]: true,
+        [Permissions.CHANNELS_MANAGE]: true,
         [Permissions.API_KEYS_CREATE_OWN]: true,
         [Permissions.API_KEYS_REVOKE_OWN]: true,
         [Permissions.API_KEYS_REVOKE_ANY]: true,
@@ -155,6 +159,8 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: false,
+        [Permissions.CHANNELS_READ]: true,
+        [Permissions.CHANNELS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: true,
         [Permissions.API_KEYS_REVOKE_OWN]: true,
         [Permissions.API_KEYS_REVOKE_ANY]: false,
@@ -203,6 +209,8 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
+        [Permissions.CHANNELS_READ]: false,
+        [Permissions.CHANNELS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: true,
         [Permissions.API_KEYS_REVOKE_OWN]: true,
         [Permissions.API_KEYS_REVOKE_ANY]: false,
@@ -236,9 +244,9 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(19);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(18);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(7);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(21);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(20);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(8);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(4);
     });
   });
@@ -287,6 +295,8 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
+        [Permissions.CHANNELS_READ]: false,
+        [Permissions.CHANNELS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: false,
         [Permissions.API_KEYS_REVOKE_OWN]: false,
         [Permissions.API_KEYS_REVOKE_ANY]: false,
@@ -335,6 +345,8 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
+        [Permissions.CHANNELS_READ]: false,
+        [Permissions.CHANNELS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: false,
         [Permissions.API_KEYS_REVOKE_OWN]: false,
         [Permissions.API_KEYS_REVOKE_ANY]: false,
@@ -383,6 +395,8 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
+        [Permissions.CHANNELS_READ]: false,
+        [Permissions.CHANNELS_MANAGE]: false,
         [Permissions.API_KEYS_CREATE_OWN]: false,
         [Permissions.API_KEYS_REVOKE_OWN]: false,
         [Permissions.API_KEYS_REVOKE_ANY]: false,

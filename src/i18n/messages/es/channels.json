@@ -1,0 +1,75 @@
+{
+  "metaTitle": "Canales",
+  "title": "Canales",
+  "description": "Conecte los proveedores de mensajería del workspace.",
+  "noAccess": "No tiene acceso a los canales de este workspace.",
+  "intro": "Cada conexión trae los mensajes del proveedor a GUIDU. Qué agente responde cada bandeja de entrada se define en el agente.",
+  "empty": "Ningún canal conectado.",
+  "emptyManage": "Ningún canal conectado. Conecte Chatwoot abajo.",
+  "never": "nunca",
+  "kinds": {
+    "chatwoot": "Chatwoot"
+  },
+  "healthStatus": {
+    "ok": "Funcionando",
+    "failed": "Con falla",
+    "unknown": "No verificado"
+  },
+  "account": "cuenta {id}",
+  "token": "token {masked}",
+  "inboxes": "Bandejas de entrada",
+  "noInboxes": "No se encontró ninguna bandeja de entrada.",
+  "lastEvent": "último evento: {date}",
+  "checked": "verificado: {date}",
+  "unrouted": "{count, plural, one {# evento sin agente} other {# eventos sin agente}}",
+  "check": "Verificar",
+  "delete": "Eliminar",
+  "deleteTitle": "Eliminar conexión",
+  "deleteMessage": "La conexión {name} y el bot de GUIDU en Chatwoot serán eliminados. Los mensajes dejan de llegar a GUIDU.",
+  "cancel": "Cancelar",
+  "new": {
+    "title": "Conectar Chatwoot",
+    "description": "GUIDU crea un bot en la cuenta de Chatwoot para recibir los mensajes.",
+    "name": "Nombre",
+    "namePlaceholder": "Atención",
+    "baseUrl": "Dirección de Chatwoot",
+    "accountId": "ID de la cuenta",
+    "accessToken": "Token de acceso",
+    "accessTokenHint": "Use el token de acceso de un administrador de la cuenta (Perfil › Token de acceso). Se guarda cifrado y solo se muestra enmascarado.",
+    "submit": "Conectar"
+  },
+  "created": "Chatwoot conectado. {count, plural, one {# bandeja de entrada encontrada.} other {# bandejas de entrada encontradas.}}",
+  "createdUnchecked": "Chatwoot conectado, pero la verificación falló. Vea el motivo en la conexión.",
+  "checkOk": "Conexión funcionando. {count, plural, one {# bandeja de entrada.} other {# bandejas de entrada.}}",
+  "checkFailed": "La verificación falló: {reason}",
+  "deleted": "Conexión eliminada.",
+  "errors": {
+    "invalidInput": "Revise los campos destacados.",
+    "provider": {
+      "invalid_url": "La dirección de Chatwoot no es válida.",
+      "private_address": "La dirección apunta a una red interna y no se acepta.",
+      "timeout": "Chatwoot tardó demasiado en responder.",
+      "network": "No fue posible conectar con Chatwoot.",
+      "too_large": "Chatwoot respondió con demasiados datos.",
+      "unauthorized": "Chatwoot rechazó el token de acceso.",
+      "not_found": "Chatwoot no encontró el recurso solicitado.",
+      "http_error": "Chatwoot respondió con un error.",
+      "invalid_response": "Chatwoot respondió en un formato inesperado.",
+      "unknown": "Falla desconocida al hablar con Chatwoot."
+    }
+  },
+  "health": {
+    "invalid_url": "La dirección de Chatwoot no es válida.",
+    "private_address": "La dirección apunta a una red interna y no se acepta.",
+    "timeout": "Chatwoot tardó demasiado en responder.",
+    "network": "No fue posible conectar con Chatwoot.",
+    "too_large": "Chatwoot respondió con demasiados datos.",
+    "unauthorized": "Chatwoot rechazó el token de acceso.",
+    "not_found": "Chatwoot no encontró el recurso solicitado.",
+    "http_error": "Chatwoot respondió con un error.",
+    "invalid_response": "Chatwoot respondió en un formato inesperado.",
+    "account_missing": "La cuenta no se encontró en Chatwoot.",
+    "bot_missing": "El bot de GUIDU fue eliminado de Chatwoot. Elimine la conexión y conecte de nuevo.",
+    "unknown": "Falla desconocida al hablar con Chatwoot."
+  }
+}

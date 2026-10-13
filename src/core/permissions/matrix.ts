@@ -36,6 +36,8 @@ const ALL_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permissions.WORKSPACE_MODULES_MANAGE,
   Permissions.CREDENTIALS_READ,
   Permissions.CREDENTIALS_MANAGE,
+  Permissions.CHANNELS_READ,
+  Permissions.CHANNELS_MANAGE,
   Permissions.API_KEYS_CREATE_OWN,
   Permissions.API_KEYS_REVOKE_OWN,
   Permissions.API_KEYS_REVOKE_ANY,
@@ -68,11 +70,12 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
   [WorkspaceRoles.ADMIN]: ALL_WORKSPACE_PERMISSIONS,
 
   // Workspace Editor: leitura, credenciais mascaradas, chaves próprias, uso de
-  // agentes e leitura das conversas dos GUIDS.
+  // agentes, leitura das conversas dos GUIDS e dos canais.
   [WorkspaceRoles.EDITOR]: new Set([
     Permissions.WORKSPACE_READ,
     Permissions.WORKSPACE_MEMBERS_READ,
     Permissions.CREDENTIALS_READ,
+    Permissions.CHANNELS_READ,
     Permissions.API_KEYS_CREATE_OWN,
     Permissions.API_KEYS_REVOKE_OWN,
     Permissions.AI_AGENTS_USE,

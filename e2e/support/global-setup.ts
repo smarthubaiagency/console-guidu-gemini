@@ -1,10 +1,11 @@
+import { startFakeChatwoot } from "./fake-chatwoot";
 import { startFakeGoTrue } from "./fake-gotrue";
 import { RIG } from "./rig";
 import { startTestDatabase } from "./test-database";
 
 /**
- * Brings up the identity rig — Postgres with the versioned auth migration and
- * the GoTrue test double — and tears it down when the run ends. The dev server
+ * Brings up the identity rig — Postgres with the versioned auth migration,
+ * the GoTrue test double and the Chatwoot double (A5a) — and tears it down when the run ends. The dev server
  * reaches both over fixed local ports configured in `playwright.config.ts`.
  */
 export default async function globalSetup(): Promise<() => Promise<void>> {
@@ -22,8 +23,10 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     onSeedGuid: (params) => database.seedGuid(params),
     onRunJobs: () => database.runJobs(),
   });
+  const chatwoot = await startFakeChatwoot(RIG.chatwootPort);
 
   return async () => {
+    await chatwoot.close();
     await auth.close();
     await database.close();
   };

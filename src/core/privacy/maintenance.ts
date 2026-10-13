@@ -44,6 +44,17 @@ export async function purgeWorkspace(
     ["workspace_locations", () => tx.workspaceLocation.deleteMany({ where })],
     ["execution_proposals", () => tx.executionProposal.deleteMany({ where })],
     ["job_runs", () => tx.jobRun.deleteMany({ where })],
+    // Channels (A5a): events and conversations before their connection.
+    [
+      "channel_inbound_events",
+      () => tx.channelInboundEvent.deleteMany({ where }),
+    ],
+    [
+      "channel_conversations",
+      () => tx.channelConversation.deleteMany({ where }),
+    ],
+    ["channel_routes", () => tx.channelRoute.deleteMany({ where })],
+    ["channel_connections", () => tx.channelConnection.deleteMany({ where })],
     ["api_keys", () => tx.apiKey.deleteMany({ where })],
     ["credentials", () => tx.credential.deleteMany({ where })],
     ["invitations", () => tx.invitation.deleteMany({ where })],

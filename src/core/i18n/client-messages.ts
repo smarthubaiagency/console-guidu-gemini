@@ -16,6 +16,7 @@ export const CLIENT_NAMESPACES = [
   "team",
   "modules",
   "credentials",
+  "channels",
   "mcp",
   "brand",
   "platformKeys",

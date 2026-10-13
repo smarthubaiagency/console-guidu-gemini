@@ -34,6 +34,10 @@ export const Permissions = {
   CREDENTIALS_READ: "credentials.read",
   CREDENTIALS_MANAGE: "credentials.manage",
 
+  // Messaging channels of the workspace (ADR 0011, A5a)
+  CHANNELS_READ: "channels.read",
+  CHANNELS_MANAGE: "channels.manage",
+
   // Platform API Keys & MCP Token Authentication (ADR 0009, Spec §17.3)
   API_KEYS_CREATE_OWN: "api_keys.create_own",
   API_KEYS_REVOKE_OWN: "api_keys.revoke_own",
