@@ -51,6 +51,9 @@
     "platform_design": "Interface patterns",
     "platform_design_workbench": "Edit window",
     "platform_design_status": "Notices",
-    "platform_design_components": "Components"
+    "platform_design_components": "Components",
+    "platform_ai": "AI agents",
+    "platform_ai_templates": "Agent templates",
+    "platform_ai_backup": "AI backup"
   }
 }

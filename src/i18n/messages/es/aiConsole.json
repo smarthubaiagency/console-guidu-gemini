@@ -1,0 +1,249 @@
+{
+  "providers": {
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "gemini": "Google Gemini",
+    "openrouter": "OpenRouter"
+  },
+  "errors": {
+    "invalidConfig": "Revisa los campos destacados.",
+    "adminTemplateDelete": "La plantilla del Asistente no se puede eliminar."
+  },
+  "templates": {
+    "metaTitle": "Plantillas de agente",
+    "title": "Plantillas de agente",
+    "description": "Plantillas de la casa: la del Asistente GUIDU de cada socio y los GUIDS que cualquier cliente puede usar como punto de partida.",
+    "new": "Nueva plantilla",
+    "panelLabel": "Plantilla de agente",
+    "empty": "Aún no hay plantillas.",
+    "published": "Publicada",
+    "draft": "Borrador",
+    "version": "Versión {version}",
+    "updated": "modificada el {date}",
+    "saved": "Plantilla guardada (versión {version}).",
+    "kind": {
+      "guid": "GUIDS",
+      "admin": "Asistente GUIDU"
+    },
+    "form": {
+      "name": "Nombre de la plantilla",
+      "segment": "Segmento",
+      "description": "Descripción",
+      "createHint": "Empieza por el nombre. La configuración de las cinco pestañas viene después, en el mismo panel.",
+      "create": "Crear plantilla",
+      "save": "Guardar",
+      "published": "Publicada (los clientes la ven al crear un GUIDS)",
+      "publishedAdmin": "La plantilla del Asistente siempre está publicada",
+      "invalidStored": "La configuración guardada de esta plantilla no es válida. Revisa las pestañas y guarda de nuevo.",
+      "delete": "Eliminar",
+      "deleteTitle": "Eliminar plantilla",
+      "deleteMessage": "¿Eliminar la plantilla {name}? Los GUIDS creados a partir de ella mantienen la configuración que ya tienen.",
+      "cancel": "Cancelar"
+    }
+  },
+  "backup": {
+    "metaTitle": "Respaldo de IA",
+    "title": "Respaldo de IA",
+    "description": "Clave de la plataforma y modelo económico usados solo para terminar, por hasta 24 horas, las conversaciones abiertas de un GUIDS cuya clave del cliente falló. No cuenta en el consumo del cliente.",
+    "current": "Configuración actual",
+    "keySet": "Clave {provider} {masked}",
+    "noKey": "Sin clave",
+    "modelSet": "modelo {model}",
+    "noModel": "sin modelo",
+    "updated": "modificado el {date}",
+    "off": "Sin clave y modelo, el respaldo queda apagado: el GUIDS deja de responder en cuanto falla la clave del cliente.",
+    "edit": "Cambiar",
+    "saved": "Respaldo de IA guardado.",
+    "form": {
+      "provider": "Proveedor",
+      "model": "Modelo económico",
+      "modelPlaceholder": "Ej.: gpt-4o-mini",
+      "key": "Clave",
+      "replaceKey": "Nueva clave (opcional)",
+      "keyHint": "Déjala en blanco para mantener la clave guardada. La clave se cifra y solo se muestra enmascarada.",
+      "clearKey": "Quitar la clave (apaga el respaldo)",
+      "save": "Guardar"
+    }
+  },
+  "editor": {
+    "choose": "Elige",
+    "onePerLine": "Uno por línea",
+    "remove": "Quitar",
+    "tabs": {
+      "overview": "Resumen",
+      "scope": "Alcance",
+      "rules": "Reglas",
+      "integration": "Integración",
+      "model": "Conexión de modelo"
+    },
+    "fields": {
+      "agent_name": "Nombre del agente",
+      "agent_tone": "Tono",
+      "language": "Idioma",
+      "segment": "Segmento",
+      "business_summary": "Resumen del negocio",
+      "products_services": "Productos y servicios",
+      "persona_context": "Contexto de la persona",
+      "expected_output": "Resultado esperado",
+      "system_prompt": "Prompt del sistema",
+      "variables": "Variables del agente",
+      "base_city": "Ciudad base",
+      "base_state": "Estado",
+      "remote_allowed": "Atiende en remoto",
+      "travel_allowed": "Acepta desplazarse",
+      "coverage_areas": "Áreas de actuación",
+      "coverage_cities": "Ciudades de cobertura",
+      "coverage_radius_km": "Radio de atención (km)",
+      "timezone": "Zona horaria",
+      "availability_slots": "Horario de atención",
+      "hot_score_threshold": "Lead caliente desde",
+      "warm_score_threshold": "Lead tibio desde",
+      "notify_on_score": "Avisar desde",
+      "lead_scoring_rules": "Reglas de puntuación",
+      "owner_phone": "Teléfono del responsable",
+      "notify_channel": "Canal del aviso",
+      "notify_template": "Plantilla del aviso",
+      "handoff_mode": "Transferencia a una persona",
+      "after_hours_behavior": "Fuera de horario",
+      "out_of_scope_action": "Pedido fuera de alcance",
+      "refuses_pricing": "No informa precios",
+      "refuses_competitor_comparison": "No compara con competidores",
+      "refuses_delivery_commitment": "No promete plazos",
+      "partner_referral_notify": "Avisa a la recomendación al derivar",
+      "partner_message_template": "Mensaje de derivación",
+      "tools": "Herramientas",
+      "lead_destination": "Destino de los leads",
+      "crm_webhook_url": "Dirección del webhook",
+      "onboarding_completed": "Onboarding completado",
+      "credential_id": "Clave",
+      "model_provider": "Proveedor sugerido",
+      "model_name": "Modelo",
+      "audio_enabled": "Audio",
+      "audio_model": "Modelo de audio",
+      "audio_voice": "Voz",
+      "rag_enabled": "Búsqueda en las bases de conocimiento",
+      "embedding_model": "Modelo de embeddings"
+    },
+    "hints": {
+      "variables": "Constantes del agente, usadas en el prompt como '{{'agent.var.clave'}}'."
+    },
+    "variable": {
+      "key": "clave",
+      "value": "Valor",
+      "add": "Agregar variable"
+    },
+    "slot": {
+      "weekday": "Día",
+      "start": "Inicio",
+      "end": "Fin",
+      "add": "Agregar horario"
+    },
+    "rule": {
+      "label": "Nombre de la regla",
+      "points": "Puntos",
+      "signal": "Señal que busca el agente",
+      "group": "Grupo",
+      "captureField": "Campo del contacto (opcional)",
+      "notifyImmediately": "Avisar al responsable en el momento",
+      "add": "Agregar regla"
+    },
+    "weekdays": {
+      "mon": "Lunes",
+      "tue": "Martes",
+      "wed": "Miércoles",
+      "thu": "Jueves",
+      "fri": "Viernes",
+      "sat": "Sábado",
+      "sun": "Domingo"
+    },
+    "enums": {
+      "agent_tone": {
+        "professional": "Profesional",
+        "friendly": "Amigable",
+        "technical": "Técnico",
+        "casual": "Relajado"
+      },
+      "language": {
+        "pt-BR": "Portugués (Brasil)",
+        "en-US": "Inglés",
+        "es": "Español"
+      },
+      "handoff_mode": {
+        "high_intent": "Transferir cuando el lead muestre alta intención",
+        "always_ask": "Preguntar siempre si el lead quiere hablar con una persona",
+        "never": "Nunca transferir"
+      },
+      "after_hours_behavior": {
+        "offer_callback": "Ofrecer contacto en el horario de atención",
+        "inform_hours": "Informar el horario de atención",
+        "auto_reply_only": "Solo la respuesta automática"
+      },
+      "out_of_scope_action": {
+        "escalate_team": "Derivar al equipo (o a una recomendación)",
+        "say_dont_know": "Decir que no sabe y seguir"
+      },
+      "notify_channel": {
+        "whatsapp": "WhatsApp",
+        "email": "Correo",
+        "sms": "SMS"
+      },
+      "lead_destination": {
+        "crm": "CRM de GUIDU",
+        "webhook": "Webhook",
+        "both": "CRM y webhook"
+      },
+      "model_provider": {
+        "openai": "OpenAI",
+        "anthropic": "Anthropic",
+        "gemini": "Google Gemini",
+        "openrouter": "OpenRouter"
+      }
+    },
+    "tools": {
+      "create_contact": {
+        "label": "Crear contacto",
+        "desc": "Crea el contacto en el CRM del workspace."
+      },
+      "add_note": {
+        "label": "Agregar nota",
+        "desc": "Registra una nota en el contacto."
+      },
+      "update_contact_property": {
+        "label": "Actualizar campo del contacto",
+        "desc": "Graba los campos del contacto liberados para la IA."
+      },
+      "set_conversation_variable": {
+        "label": "Memoria de la conversación",
+        "desc": "Guarda un dato para el resto de la conversación."
+      },
+      "add_tag": {
+        "label": "Agregar etiqueta",
+        "desc": "Depende de las etiquetas en el CRM."
+      },
+      "think": {
+        "label": "Pensar",
+        "desc": "Ordena el razonamiento antes de responder, sin efecto."
+      },
+      "score_lead": {
+        "label": "Puntuar lead",
+        "desc": "Aplica las reglas de puntuación de la pestaña Reglas."
+      },
+      "handoff": {
+        "label": "Transferir a una persona",
+        "desc": "Pasa la conversación al equipo."
+      },
+      "search_knowledge": {
+        "label": "Buscar en la base",
+        "desc": "Consulta las bases de conocimiento vinculadas."
+      },
+      "workspace_read": {
+        "label": "Leer el workspace",
+        "desc": "Consulta datos del panel con los permisos de quien pregunta."
+      },
+      "propose_operation": {
+        "label": "Proponer una acción",
+        "desc": "Sugiere una acción que la persona confirma."
+      }
+    }
+  }
+}

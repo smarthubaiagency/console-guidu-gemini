@@ -85,6 +85,10 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "outputHash",
   "payload",
   "errorId",
+  // Agent templates (A3a): changed fields, version and publication.
+  "fields",
+  "version",
+  "published",
 ]);
 
 /**

@@ -121,9 +121,16 @@ describeDatabase("A1: GUIDS of the workspace", requiredVars, () => {
       admin.aiAgentTemplate.findUniqueOrThrow({ where: { id: ANNA } }),
     ]);
     const defaults = parseAgentConfig("guid", 1, template.defaults);
-    expect(defaults.success && row.config).toEqual(
-      defaults.success && defaults.data,
-    );
+    if (!defaults.success) throw defaults.error;
+    // The prompt of the template comes with the copy (A3a).
+    expect(template.promptTemplate).not.toBe("");
+    expect(row.config).toEqual({
+      ...defaults.data,
+      overview: {
+        ...defaults.data.overview,
+        system_prompt: template.promptTemplate,
+      },
+    });
     expect(row).toMatchObject({
       kind: "guid",
       workspaceId: ids.workspaceA,

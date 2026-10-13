@@ -1,0 +1,249 @@
+{
+  "providers": {
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "gemini": "Google Gemini",
+    "openrouter": "OpenRouter"
+  },
+  "errors": {
+    "invalidConfig": "Check the highlighted fields.",
+    "adminTemplateDelete": "The Assistant's template cannot be deleted."
+  },
+  "templates": {
+    "metaTitle": "Agent templates",
+    "title": "Agent templates",
+    "description": "House templates: the GUIDU Assistant template of every partner and the GUIDS any customer can start from.",
+    "new": "New template",
+    "panelLabel": "Agent template",
+    "empty": "No templates yet.",
+    "published": "Published",
+    "draft": "Draft",
+    "version": "Version {version}",
+    "updated": "changed on {date}",
+    "saved": "Template saved (version {version}).",
+    "kind": {
+      "guid": "GUIDS",
+      "admin": "GUIDU Assistant"
+    },
+    "form": {
+      "name": "Template name",
+      "segment": "Segment",
+      "description": "Description",
+      "createHint": "Start with the name. The configuration of the five tabs comes next, in the same panel.",
+      "create": "Create template",
+      "save": "Save",
+      "published": "Published (customers see it when creating a GUIDS)",
+      "publishedAdmin": "The Assistant's template is always published",
+      "invalidStored": "The stored configuration of this template is not valid. Review the tabs and save again.",
+      "delete": "Delete",
+      "deleteTitle": "Delete template",
+      "deleteMessage": "Delete the template {name}? GUIDS created from it keep the configuration they already have.",
+      "cancel": "Cancel"
+    }
+  },
+  "backup": {
+    "metaTitle": "AI backup",
+    "title": "AI backup",
+    "description": "Platform key and cheap model used only to finish, for up to 24 hours, the open conversations of a GUIDS whose customer key failed. It does not count toward the customer's usage.",
+    "current": "Current setup",
+    "keySet": "{provider} key {masked}",
+    "noKey": "No key",
+    "modelSet": "model {model}",
+    "noModel": "no model",
+    "updated": "changed on {date}",
+    "off": "Without a key and model the backup is off: a GUIDS stops answering as soon as the customer's key fails.",
+    "edit": "Change",
+    "saved": "AI backup saved.",
+    "form": {
+      "provider": "Provider",
+      "model": "Cheap model",
+      "modelPlaceholder": "E.g. gpt-4o-mini",
+      "key": "Key",
+      "replaceKey": "New key (optional)",
+      "keyHint": "Leave blank to keep the saved key. The key is encrypted and shown masked only.",
+      "clearKey": "Remove the key (turns the backup off)",
+      "save": "Save"
+    }
+  },
+  "editor": {
+    "choose": "Choose",
+    "onePerLine": "One per line",
+    "remove": "Remove",
+    "tabs": {
+      "overview": "Overview",
+      "scope": "Scope",
+      "rules": "Rules",
+      "integration": "Integration",
+      "model": "Model connection"
+    },
+    "fields": {
+      "agent_name": "Agent name",
+      "agent_tone": "Tone",
+      "language": "Language",
+      "segment": "Segment",
+      "business_summary": "Business summary",
+      "products_services": "Products and services",
+      "persona_context": "Persona context",
+      "expected_output": "Expected output",
+      "system_prompt": "System prompt",
+      "variables": "Agent variables",
+      "base_city": "Base city",
+      "base_state": "State",
+      "remote_allowed": "Serves remotely",
+      "travel_allowed": "Travels to the customer",
+      "coverage_areas": "Areas of work",
+      "coverage_cities": "Covered cities",
+      "coverage_radius_km": "Service radius (km)",
+      "timezone": "Time zone",
+      "availability_slots": "Service hours",
+      "hot_score_threshold": "Hot lead from",
+      "warm_score_threshold": "Warm lead from",
+      "notify_on_score": "Notify from",
+      "lead_scoring_rules": "Scoring rules",
+      "owner_phone": "Owner's phone",
+      "notify_channel": "Notification channel",
+      "notify_template": "Notification template",
+      "handoff_mode": "Handoff to a person",
+      "after_hours_behavior": "After hours",
+      "out_of_scope_action": "Out-of-scope request",
+      "refuses_pricing": "Does not share prices",
+      "refuses_competitor_comparison": "Does not compare with competitors",
+      "refuses_delivery_commitment": "Does not promise deadlines",
+      "partner_referral_notify": "Notifies the referral when forwarding",
+      "partner_message_template": "Forwarding message",
+      "tools": "Tools",
+      "lead_destination": "Lead destination",
+      "crm_webhook_url": "Webhook address",
+      "onboarding_completed": "Onboarding completed",
+      "credential_id": "Key",
+      "model_provider": "Suggested provider",
+      "model_name": "Model",
+      "audio_enabled": "Audio",
+      "audio_model": "Audio model",
+      "audio_voice": "Voice",
+      "rag_enabled": "Knowledge base search",
+      "embedding_model": "Embedding model"
+    },
+    "hints": {
+      "variables": "Agent constants, used in the prompt as '{{'agent.var.key'}}'."
+    },
+    "variable": {
+      "key": "key",
+      "value": "Value",
+      "add": "Add variable"
+    },
+    "slot": {
+      "weekday": "Day",
+      "start": "Start",
+      "end": "End",
+      "add": "Add hours"
+    },
+    "rule": {
+      "label": "Rule name",
+      "points": "Points",
+      "signal": "Signal the agent looks for",
+      "group": "Group",
+      "captureField": "Contact field (optional)",
+      "notifyImmediately": "Notify the owner right away",
+      "add": "Add rule"
+    },
+    "weekdays": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
+    "enums": {
+      "agent_tone": {
+        "professional": "Professional",
+        "friendly": "Friendly",
+        "technical": "Technical",
+        "casual": "Casual"
+      },
+      "language": {
+        "pt-BR": "Portuguese (Brazil)",
+        "en-US": "English",
+        "es": "Spanish"
+      },
+      "handoff_mode": {
+        "high_intent": "Hand off when the lead shows high intent",
+        "always_ask": "Always ask whether the lead wants to talk to a person",
+        "never": "Never hand off"
+      },
+      "after_hours_behavior": {
+        "offer_callback": "Offer a callback during service hours",
+        "inform_hours": "Inform the service hours",
+        "auto_reply_only": "Automatic reply only"
+      },
+      "out_of_scope_action": {
+        "escalate_team": "Forward to the team (or to a referral)",
+        "say_dont_know": "Say it does not know and move on"
+      },
+      "notify_channel": {
+        "whatsapp": "WhatsApp",
+        "email": "Email",
+        "sms": "SMS"
+      },
+      "lead_destination": {
+        "crm": "GUIDU CRM",
+        "webhook": "Webhook",
+        "both": "CRM and webhook"
+      },
+      "model_provider": {
+        "openai": "OpenAI",
+        "anthropic": "Anthropic",
+        "gemini": "Google Gemini",
+        "openrouter": "OpenRouter"
+      }
+    },
+    "tools": {
+      "create_contact": {
+        "label": "Create contact",
+        "desc": "Creates the contact in the workspace CRM."
+      },
+      "add_note": {
+        "label": "Add note",
+        "desc": "Records a note on the contact."
+      },
+      "update_contact_property": {
+        "label": "Update contact field",
+        "desc": "Writes the contact fields open to the AI."
+      },
+      "set_conversation_variable": {
+        "label": "Conversation memory",
+        "desc": "Keeps a value for the rest of the conversation."
+      },
+      "add_tag": {
+        "label": "Add tag",
+        "desc": "Depends on tags in the CRM."
+      },
+      "think": {
+        "label": "Think",
+        "desc": "Organizes its reasoning before answering, with no effect."
+      },
+      "score_lead": {
+        "label": "Score lead",
+        "desc": "Applies the scoring rules of the Rules tab."
+      },
+      "handoff": {
+        "label": "Hand off to a person",
+        "desc": "Passes the conversation to the team."
+      },
+      "search_knowledge": {
+        "label": "Search the base",
+        "desc": "Searches the linked knowledge bases."
+      },
+      "workspace_read": {
+        "label": "Read the workspace",
+        "desc": "Reads dashboard data with the permissions of who asks."
+      },
+      "propose_operation": {
+        "label": "Propose an action",
+        "desc": "Suggests an action the person confirms."
+      }
+    }
+  }
+}

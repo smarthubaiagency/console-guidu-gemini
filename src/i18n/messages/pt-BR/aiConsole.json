@@ -1,0 +1,249 @@
+{
+  "providers": {
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "gemini": "Google Gemini",
+    "openrouter": "OpenRouter"
+  },
+  "errors": {
+    "invalidConfig": "Revise os campos destacados.",
+    "adminTemplateDelete": "O modelo do Assistente não pode ser excluído."
+  },
+  "templates": {
+    "metaTitle": "Modelos de agente",
+    "title": "Modelos de agente",
+    "description": "Modelos da casa: o do Assistente GUIDU de cada parceiro e os GUIDS que qualquer cliente pode usar como ponto de partida.",
+    "new": "Novo modelo",
+    "panelLabel": "Modelo de agente",
+    "empty": "Nenhum modelo ainda.",
+    "published": "Publicado",
+    "draft": "Rascunho",
+    "version": "Versão {version}",
+    "updated": "alterado em {date}",
+    "saved": "Modelo salvo (versão {version}).",
+    "kind": {
+      "guid": "GUIDS",
+      "admin": "Assistente GUIDU"
+    },
+    "form": {
+      "name": "Nome do modelo",
+      "segment": "Segmento",
+      "description": "Descrição",
+      "createHint": "Comece pelo nome. A configuração das cinco abas vem em seguida, no mesmo painel.",
+      "create": "Criar modelo",
+      "save": "Salvar",
+      "published": "Publicado (aparece para os clientes na criação de GUIDS)",
+      "publishedAdmin": "O modelo do Assistente fica sempre publicado",
+      "invalidStored": "A configuração gravada deste modelo não é válida. Revise as abas e salve de novo.",
+      "delete": "Excluir",
+      "deleteTitle": "Excluir modelo",
+      "deleteMessage": "Excluir o modelo {name}? Os GUIDS criados a partir dele continuam com a configuração que já têm.",
+      "cancel": "Cancelar"
+    }
+  },
+  "backup": {
+    "metaTitle": "Backup de IA",
+    "title": "Backup de IA",
+    "description": "Chave da plataforma e modelo barato usados só para terminar, por até 24 horas, as conversas abertas de um GUIDS cuja chave do cliente falhou. Não conta no consumo do cliente.",
+    "current": "Configuração atual",
+    "keySet": "Chave {provider} {masked}",
+    "noKey": "Sem chave",
+    "modelSet": "modelo {model}",
+    "noModel": "sem modelo",
+    "updated": "alterado em {date}",
+    "off": "Sem chave e modelo, o backup fica desligado: o GUIDS para de responder assim que a chave do cliente falhar.",
+    "edit": "Alterar",
+    "saved": "Backup de IA salvo.",
+    "form": {
+      "provider": "Provedor",
+      "model": "Modelo barato",
+      "modelPlaceholder": "Ex.: gpt-4o-mini",
+      "key": "Chave",
+      "replaceKey": "Nova chave (opcional)",
+      "keyHint": "Deixe em branco para manter a chave salva. A chave é cifrada e aparece só mascarada.",
+      "clearKey": "Remover a chave (desliga o backup)",
+      "save": "Salvar"
+    }
+  },
+  "editor": {
+    "choose": "Escolha",
+    "onePerLine": "Um por linha",
+    "remove": "Remover",
+    "tabs": {
+      "overview": "Visão geral",
+      "scope": "Escopo",
+      "rules": "Regras",
+      "integration": "Integração",
+      "model": "Conexão de modelo"
+    },
+    "fields": {
+      "agent_name": "Nome do agente",
+      "agent_tone": "Tom",
+      "language": "Idioma",
+      "segment": "Segmento",
+      "business_summary": "Resumo do negócio",
+      "products_services": "Produtos e serviços",
+      "persona_context": "Contexto da persona",
+      "expected_output": "Resultado esperado",
+      "system_prompt": "Prompt do sistema",
+      "variables": "Variáveis do agente",
+      "base_city": "Cidade base",
+      "base_state": "Estado",
+      "remote_allowed": "Atende remoto",
+      "travel_allowed": "Aceita deslocamento",
+      "coverage_areas": "Áreas de atuação",
+      "coverage_cities": "Cidades de cobertura",
+      "coverage_radius_km": "Raio de atendimento (km)",
+      "timezone": "Fuso horário",
+      "availability_slots": "Horário de atendimento",
+      "hot_score_threshold": "Lead quente a partir de",
+      "warm_score_threshold": "Lead morno a partir de",
+      "notify_on_score": "Avisar a partir de",
+      "lead_scoring_rules": "Regras de pontuação",
+      "owner_phone": "Telefone do responsável",
+      "notify_channel": "Canal do aviso",
+      "notify_template": "Modelo do aviso",
+      "handoff_mode": "Transferência para humano",
+      "after_hours_behavior": "Fora do horário",
+      "out_of_scope_action": "Pedido fora do escopo",
+      "refuses_pricing": "Não informa preços",
+      "refuses_competitor_comparison": "Não compara com concorrentes",
+      "refuses_delivery_commitment": "Não promete prazos",
+      "partner_referral_notify": "Avisa a indicação ao encaminhar",
+      "partner_message_template": "Mensagem de encaminhamento",
+      "tools": "Ferramentas",
+      "lead_destination": "Destino dos leads",
+      "crm_webhook_url": "Endereço do webhook",
+      "onboarding_completed": "Onboarding concluído",
+      "credential_id": "Chave",
+      "model_provider": "Provedor sugerido",
+      "model_name": "Modelo",
+      "audio_enabled": "Áudio",
+      "audio_model": "Modelo de áudio",
+      "audio_voice": "Voz",
+      "rag_enabled": "Busca nas bases de conhecimento",
+      "embedding_model": "Modelo de embeddings"
+    },
+    "hints": {
+      "variables": "Constantes do agente, usadas no prompt como '{{'agent.var.chave'}}'."
+    },
+    "variable": {
+      "key": "chave",
+      "value": "Valor",
+      "add": "Adicionar variável"
+    },
+    "slot": {
+      "weekday": "Dia",
+      "start": "Início",
+      "end": "Fim",
+      "add": "Adicionar horário"
+    },
+    "rule": {
+      "label": "Nome da regra",
+      "points": "Pontos",
+      "signal": "Sinal que o agente procura",
+      "group": "Grupo",
+      "captureField": "Campo do contato (opcional)",
+      "notifyImmediately": "Avisar o responsável na hora",
+      "add": "Adicionar regra"
+    },
+    "weekdays": {
+      "mon": "Segunda",
+      "tue": "Terça",
+      "wed": "Quarta",
+      "thu": "Quinta",
+      "fri": "Sexta",
+      "sat": "Sábado",
+      "sun": "Domingo"
+    },
+    "enums": {
+      "agent_tone": {
+        "professional": "Profissional",
+        "friendly": "Amigável",
+        "technical": "Técnico",
+        "casual": "Descontraído"
+      },
+      "language": {
+        "pt-BR": "Português (Brasil)",
+        "en-US": "Inglês",
+        "es": "Espanhol"
+      },
+      "handoff_mode": {
+        "high_intent": "Transferir quando o lead mostrar alta intenção",
+        "always_ask": "Sempre perguntar se o lead quer falar com uma pessoa",
+        "never": "Nunca transferir"
+      },
+      "after_hours_behavior": {
+        "offer_callback": "Oferecer retorno no horário de atendimento",
+        "inform_hours": "Informar o horário de atendimento",
+        "auto_reply_only": "Só a resposta automática"
+      },
+      "out_of_scope_action": {
+        "escalate_team": "Encaminhar para a equipe (ou para uma indicação)",
+        "say_dont_know": "Dizer que não sabe e seguir"
+      },
+      "notify_channel": {
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "sms": "SMS"
+      },
+      "lead_destination": {
+        "crm": "CRM do GUIDU",
+        "webhook": "Webhook",
+        "both": "CRM e webhook"
+      },
+      "model_provider": {
+        "openai": "OpenAI",
+        "anthropic": "Anthropic",
+        "gemini": "Google Gemini",
+        "openrouter": "OpenRouter"
+      }
+    },
+    "tools": {
+      "create_contact": {
+        "label": "Criar contato",
+        "desc": "Cria o contato no CRM do workspace."
+      },
+      "add_note": {
+        "label": "Adicionar nota",
+        "desc": "Registra uma nota no contato."
+      },
+      "update_contact_property": {
+        "label": "Atualizar campo do contato",
+        "desc": "Grava os campos do contato liberados para a IA."
+      },
+      "set_conversation_variable": {
+        "label": "Memória da conversa",
+        "desc": "Guarda um dado para o resto da conversa."
+      },
+      "add_tag": {
+        "label": "Adicionar etiqueta",
+        "desc": "Depende das etiquetas no CRM."
+      },
+      "think": {
+        "label": "Pensar",
+        "desc": "Organiza o raciocínio antes de responder, sem efeito."
+      },
+      "score_lead": {
+        "label": "Pontuar lead",
+        "desc": "Aplica as regras de pontuação da aba Regras."
+      },
+      "handoff": {
+        "label": "Transferir para humano",
+        "desc": "Passa a conversa para a equipe."
+      },
+      "search_knowledge": {
+        "label": "Buscar na base",
+        "desc": "Consulta as bases de conhecimento ligadas."
+      },
+      "workspace_read": {
+        "label": "Ler o workspace",
+        "desc": "Consulta dados do painel com as permissões de quem pergunta."
+      },
+      "propose_operation": {
+        "label": "Propor uma ação",
+        "desc": "Sugere uma ação, que a pessoa confirma."
+      }
+    }
+  }
+}

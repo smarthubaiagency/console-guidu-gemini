@@ -404,6 +404,12 @@ export function buildPlatformNavigation(
   const canReadBilling = input.grants("platform.billing.read");
   const canReadOperations = input.grants("platform.operations.read");
   const canManageLanguages = input.grants("platform.languages.manage");
+  // AI of the house (A3a): templates and backup key, behind the module flag.
+  const canManageAi =
+    input.grants("platform.ai.manage") &&
+    input.modules.some(
+      (mod) => mod.manifest.moduleKey === "ai-agents" && mod.technicalGate(),
+    );
 
   return [
     {
@@ -483,6 +489,30 @@ export function buildPlatformNavigation(
           href: "/platform/api-keys",
           iconKey: "key",
         }),
+        ...(canManageAi
+          ? [
+              item({
+                id: "platform.ai",
+                label: "Agentes de IA",
+                href: null,
+                iconKey: "bot",
+                children: [
+                  item({
+                    id: "platform.ai.templates",
+                    label: "Modelos de agente",
+                    href: "/platform/ai/templates",
+                    iconKey: "bot",
+                  }),
+                  item({
+                    id: "platform.ai.backup",
+                    label: "Backup de IA",
+                    href: "/platform/ai/backup",
+                    iconKey: "bot",
+                  }),
+                ],
+              }),
+            ]
+          : []),
         ...(canManageLegal
           ? [
               item({

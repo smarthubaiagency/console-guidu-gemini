@@ -25,6 +25,10 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
     page,
     request,
   }) => {
+    test.skip(
+      process.env.GUIDU_MODULE_AI_AGENTS_ENABLED === "true",
+      "Runs with the module flag off (default)",
+    );
     const email = uniqueEmail("agent-disabled");
     const wsSlug = `ws-agent-off-${Date.now()}`;
     await createIdentity(request, email);
