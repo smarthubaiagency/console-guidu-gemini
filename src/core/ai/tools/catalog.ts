@@ -282,8 +282,17 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
 
     handoff: {
       description:
-        "Hand the conversation over to a person of the team. Give the reason. After it, you stop answering.",
-      input: z.object({ reason: z.string().min(1).max(500) }),
+        "Hand the conversation over to a person of the team. Give the reason and a short summary for the team (who the contact is, what they want, what was already said or promised). After it, you stop answering.",
+      input: z.object({
+        reason: z.string().min(1).max(500),
+        summary: z
+          .string()
+          .min(1)
+          .max(1500)
+          .describe(
+            "For the team, not the contact: who the contact is, what they want and what was already said.",
+          ),
+      }),
       run: async (input) => {
         requireWorkspace(env);
         if (env.simulate) {
@@ -301,6 +310,10 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
           }),
         );
         env.state.status = "handoff";
+        env.state.handoff = {
+          reason: String(input.reason).trim(),
+          summary: String(input.summary).trim(),
+        };
         return { handed_over: true };
       },
     },

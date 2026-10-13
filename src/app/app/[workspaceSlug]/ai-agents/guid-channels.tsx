@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 
 import { useActionStatus } from "@/components/feedback/use-action-status";
@@ -35,6 +35,8 @@ export function GuidChannels({
   settingsHref: string;
 }>) {
   const t = useTranslations("aiAgents.guids.channels");
+  const locale = useLocale();
+  const missing = channels?.missingMedia ?? [];
   return (
     <section className="space-y-2" data-testid="guid-channels">
       <div className="space-y-1">
@@ -49,6 +51,18 @@ export function GuidChannels({
           })}
         </p>
       </div>
+      {missing.length > 0 ? (
+        <p
+          className="text-12 text-warning-text bg-warning-bg border-warning-border rounded-md border p-2"
+          data-testid="guid-media-missing"
+        >
+          {t("mediaMissing", {
+            list: new Intl.ListFormat(locale, { type: "conjunction" }).format(
+              missing.map((kind) => t(`mediaKinds.${kind}`)),
+            ),
+          })}
+        </p>
+      ) : null}
       {channels === null ? (
         <p className="text-12 text-text-secondary">{t("noAccess")}</p>
       ) : channels.inboxes.length === 0 ? (

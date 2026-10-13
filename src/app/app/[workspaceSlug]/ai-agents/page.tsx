@@ -255,7 +255,7 @@ export default async function AiAgentsPage({
           label: `${key.label} · ${tConsole(`providers.${key.provider}`)} · ${key.maskedValue}`,
         }))}
         summary={
-          <div className="space-y-1">
+          <div key="summary" className="space-y-1">
             <p className="text-12 text-text-secondary" data-testid="guid-state">
               {[
                 statusLabel(opened.status),

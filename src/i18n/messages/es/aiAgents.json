@@ -50,7 +50,25 @@
     },
     "toolError": "La herramienta falló (código {errorId}). Continúa sin ella o pide ayuda a una persona.",
     "toolRestricted": "Herramienta no disponible: {reason}",
-    "toolDenied": "Herramienta no permitida para este agente."
+    "toolDenied": "Herramienta no permitida para este agente.",
+    "media": {
+      "audioTranscript": "[Audio del contacto, transcrito]: {text}",
+      "audioUnsupported": "[El contacto envió un audio, pero este agente no escucha audios. Pídele con amabilidad que escriba el mensaje en texto.]",
+      "audioFailed": "[El contacto envió un audio que no se pudo escuchar. Pídele con amabilidad que escriba el mensaje en texto.]",
+      "image": "[El contacto envió una imagen, adjunta a este mensaje.]",
+      "imageUnsupported": "[El contacto envió una imagen, pero este agente no ve imágenes. Pídele con amabilidad que describa en texto lo que necesita.]",
+      "document": "[El contacto envió un documento, adjunto a este mensaje.]",
+      "documentText": "[Archivo de texto del contacto]:\n{text}",
+      "documentUnsupported": "[El contacto envió un documento que este agente no puede leer. Pídele con amabilidad que escriba en texto lo que necesita.]",
+      "fileFailed": "[El contacto envió un archivo que no se pudo abrir. Pídele con amabilidad que escriba en texto lo que necesita.]",
+      "video": "[El contacto envió un video, pero este agente no ve videos. Pídele con amabilidad que escriba en texto lo que necesita.]",
+      "unreadable": "[El modelo no pudo abrir los archivos de este mensaje. Pídele con amabilidad al contacto que escriba en texto lo que necesita.]"
+    },
+    "teamMessage": "[Mensaje del equipo al contacto]: {text}",
+    "handoffNote": {
+      "title": "Resumen de {agent} para el equipo",
+      "reason": "Motivo de la transferencia: {reason}"
+    }
   },
   "guids": {
     "unnamed": "GUIDS sin nombre",
@@ -159,7 +177,13 @@
       "bind": "Atender",
       "unbind": "Dejar de atender",
       "bound": "El agente pasó a atender la bandeja.",
-      "unbound": "El agente dejó de atender la bandeja."
+      "unbound": "El agente dejó de atender la bandeja.",
+      "mediaMissing": "Con la clave actual, este agente no lee los {list} que envían los contactos: pide al contacto que escriba en texto. Una clave de OpenAI o Gemini hace que el agente lo lea todo.",
+      "mediaKinds": {
+        "audio": "audios",
+        "image": "imágenes",
+        "document": "documentos"
+      }
     }
   },
   "errors": {

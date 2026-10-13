@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { KeyRound, Plus, Shield, Trash2, Lock } from "lucide-react";
 import {
   registerCredentialAction,
   revokeCredentialAction,
   type CredentialActionState,
 } from "@/core/credentials/credentials-actions";
+import { type MediaKind, missingMedia } from "@/core/ai/media";
 import { AI_PROVIDERS } from "@/core/credentials/providers";
 import type {
   CredentialItem,
@@ -71,6 +72,13 @@ export function CredentialsClient({
   const [purpose, setPurpose] = useState<CredentialPurpose>("all");
 
   const activeProviderMeta = AI_PROVIDERS[provider];
+  const locale = useLocale();
+  // What the agents cannot read with a key of this provider (A5c).
+  const mediaList = (kinds: readonly MediaKind[]) =>
+    new Intl.ListFormat(locale, { type: "conjunction" }).format(
+      kinds.map((kind) => t(`mediaKinds.${kind}`)),
+    );
+  const activeMissing = missingMedia(provider);
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,6 +223,14 @@ export function CredentialsClient({
                     prefix: activeProviderMeta.keyPrefix,
                   })}
                 </p>
+                <p
+                  className="text-11 text-text-secondary"
+                  data-testid="credential-media"
+                >
+                  {activeMissing.length === 0
+                    ? t("mediaAll")
+                    : t("mediaMissing", { list: mediaList(activeMissing) })}
+                </p>
               </div>
 
               <div className="grid gap-2">
@@ -298,8 +314,18 @@ export function CredentialsClient({
               <TableBody>
                 {credentials.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="text-text px-5 font-semibold capitalize">
-                      {item.provider}
+                    <TableCell className="text-text px-5 font-semibold">
+                      <span className="capitalize">{item.provider}</span>
+                      {missingMedia(item.provider).length > 0 ? (
+                        <span
+                          className="text-10 text-text-tertiary block font-normal"
+                          data-testid="credential-media-short"
+                        >
+                          {t("mediaShort", {
+                            list: mediaList(missingMedia(item.provider)),
+                          })}
+                        </span>
+                      ) : null}
                     </TableCell>
                     <TableCell className="text-text px-5 font-medium">
                       {item.label}

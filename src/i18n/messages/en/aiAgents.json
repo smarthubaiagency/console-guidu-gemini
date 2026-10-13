@@ -50,7 +50,25 @@
     },
     "toolError": "The tool failed (code {errorId}). Continue without it or ask a person for help.",
     "toolRestricted": "Tool unavailable: {reason}",
-    "toolDenied": "Tool not allowed for this agent."
+    "toolDenied": "Tool not allowed for this agent.",
+    "media": {
+      "audioTranscript": "[Contact's audio, transcribed]: {text}",
+      "audioUnsupported": "[The contact sent an audio, but this agent cannot listen to audio. Politely ask them to write the message as text.]",
+      "audioFailed": "[The contact sent an audio that could not be played. Politely ask them to write the message as text.]",
+      "image": "[The contact sent an image, attached to this message.]",
+      "imageUnsupported": "[The contact sent an image, but this agent cannot see images. Politely ask them to describe what they need in text.]",
+      "document": "[The contact sent a document, attached to this message.]",
+      "documentText": "[Contact's text file]:\n{text}",
+      "documentUnsupported": "[The contact sent a document this agent cannot read. Politely ask them to write what they need as text.]",
+      "fileFailed": "[The contact sent a file that could not be opened. Politely ask them to write what they need as text.]",
+      "video": "[The contact sent a video, but this agent cannot watch videos. Politely ask them to write what they need as text.]",
+      "unreadable": "[The model could not open the files of this message. Politely ask the contact to write what they need as text.]"
+    },
+    "teamMessage": "[Message from the team to the contact]: {text}",
+    "handoffNote": {
+      "title": "Summary from {agent} for the team",
+      "reason": "Reason for the handoff: {reason}"
+    }
   },
   "guids": {
     "unnamed": "Unnamed GUIDS",
@@ -159,7 +177,13 @@
       "bind": "Answer",
       "unbind": "Stop answering",
       "bound": "The agent now answers the inbox.",
-      "unbound": "The agent stopped answering the inbox."
+      "unbound": "The agent stopped answering the inbox.",
+      "mediaMissing": "With its current key, this agent does not read the {list} contacts send: it asks the contact to write instead. An OpenAI or Gemini key lets the agent read it all.",
+      "mediaKinds": {
+        "audio": "audio",
+        "image": "images",
+        "document": "documents"
+      }
     }
   },
   "errors": {

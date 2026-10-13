@@ -1,14 +1,17 @@
 import { PrismaClient } from "@prisma/client";
-import { MockLanguageModelV4 } from "ai/test";
+import type { TranscriptionModel } from "ai";
+import { MockLanguageModelV4, MockTranscriptionModelV4 } from "ai/test";
 import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
 import {
   createChatwootConnection,
+  listChannelConnections,
   updateServiceSettings,
 } from "@/core/channels/connections";
 import { runChannelDispatch } from "@/core/channels/dispatch";
+import { describeInboxOwners } from "@/core/channels/registry";
 import { receiveChannelWebhook } from "@/core/channels/webhook";
 import { encryptSecret } from "@/core/credentials/crypto";
 import type { JobSession } from "@/core/jobs/definition";
@@ -74,7 +77,10 @@ function handoffStep() {
         type: "tool-call" as const,
         toolCallId: "call-handoff",
         toolName: "handoff",
-        input: JSON.stringify({ reason: "Pediu uma pessoa." }),
+        input: JSON.stringify({
+          reason: "Pediu uma pessoa.",
+          summary: "Maria quer um orçamento de 10 unidades.",
+        }),
       },
     ],
     finishReason: { unified: "tool-calls" as const, raw: undefined },
@@ -108,11 +114,30 @@ function fakeChatwoot() {
     const body = init?.body ? (JSON.parse(String(init.body)) as unknown) : null;
     calls.push({ method, path: url.pathname, token, body });
     const rest = url.pathname.replace("/api/v1/accounts/1", "");
-    if (/^\/conversations\/\d+\/(messages|toggle_status)$/.test(rest)) {
+    if (
+      /^\/conversations\/\d+\/(messages|toggle_status|toggle_typing_status)$/.test(
+        rest,
+      )
+    ) {
       if (!token || !botTokens.has(token)) {
         return new Response("", { status: 401 });
       }
       return Response.json({ id: nextMessage++ });
+    }
+    // Files of the contact (A5c): signed links, then the storage.
+    if (url.pathname === "/rails/active_storage/blobs/photo.png") {
+      return new Response(null, {
+        status: 302,
+        headers: { location: "https://198.51.100.7/bucket/photo.png" },
+      });
+    }
+    if (url.hostname === "198.51.100.7") {
+      return new Response(new Uint8Array([137, 80, 78, 71]), {
+        headers: { "content-type": "image/png" },
+      });
+    }
+    if (url.pathname === "/rails/active_storage/blobs/voice.ogg") {
+      return new Response("OggS", { headers: { "content-type": "audio/ogg" } });
     }
     if (token !== USER_TOKEN) return new Response("", { status: 401 });
     if (rest === "/agent_bots" && method === "POST") {
@@ -332,7 +357,23 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
 
   function consumer(steps: Step[]) {
     const model = new MockLanguageModelV4({ doGenerate: steps });
-    return createAiAgentsChannelConsumer({ createModel: () => model });
+    const transcriber = new MockTranscriptionModelV4({
+      doGenerate: async () => ({
+        text: "Quero agendar para sexta",
+        segments: [],
+        language: "pt",
+        durationInSeconds: 2,
+        warnings: [],
+        response: { timestamp: new Date(), modelId: "mock" },
+      }),
+    });
+    return {
+      model,
+      consumer: createAiAgentsChannelConsumer({
+        createModel: () => model,
+        createTranscription: () => transcriber as unknown as TranscriptionModel,
+      }),
+    };
   }
 
   async function dispatch(
@@ -341,13 +382,25 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
     fake: ReturnType<typeof fakeChatwoot>,
     sleep = vi.fn(async () => undefined),
   ) {
+    const built = consumer(steps);
     const result = await runChannelDispatch(
       session(run.id, contextA),
       contextA,
       run.payload as { conversationId: string },
-      { consumers: [consumer(steps)], fetch: fake.fetch, sleep },
+      { consumers: [built.consumer], fetch: fake.fetch, sleep },
     );
-    return { result, sleep };
+    return { result, sleep, model: built.model };
+  }
+
+  /** Public messages sent to the contact, and the team's private notes. */
+  function sentTo(fake: ReturnType<typeof fakeChatwoot>, team = false) {
+    return fake.calls
+      .filter(
+        (c) =>
+          c.path.endsWith("/messages") &&
+          (c.body as { private: boolean }).private === team,
+      )
+      .map((c) => (c.body as { content: string }).content);
   }
 
   it("only a GUIDS turned on and tested takes an inbox, one agent per inbox", async () => {
@@ -445,13 +498,22 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
     expect(sleep.mock.calls).toEqual([[1500], [1500]]);
 
     const sent = fake.calls.filter((c) => c.path.endsWith("/messages"));
-    expect(sent.map((c) => (c.body as { content: string }).content)).toEqual([
+    expect(sentTo(fake)).toEqual([
       "Oi, Maria!",
       "O preço é R$ 10.",
       "Algo mais?\n\nAté já.",
     ]);
     expect(sent.every((c) => c.token === "bot-token-7-abcdef")).toBe(true);
     expect(sent[0]!.path).toBe("/api/v1/accounts/1/conversations/55/messages");
+    // "Typing…" while the agent prepares the answer (A5c).
+    expect(
+      fake.calls.find((c) => c.path.endsWith("/toggle_typing_status")),
+    ).toMatchObject({ body: { typing_status: "on" } });
+    // The team reads the agent's summary, privately, before the handoff.
+    expect(sentTo(fake, true)).toEqual([
+      "Resumo de Anna para a equipe\n\nMaria quer um orçamento de 10 unidades.\n\nMotivo da transferência: Pediu uma pessoa.",
+    ]);
+    expect(fake.calls.at(-2)).toMatchObject({ body: { private: true } });
     expect(fake.calls.at(-1)).toMatchObject({
       path: "/api/v1/accounts/1/conversations/55/toggle_status",
       body: { status: "open" },
@@ -584,5 +646,184 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
       ["sent", null],
       ["failed", "http_error"],
     ]);
+  });
+  it("puts what the team said, and the contact meanwhile, in the history", async () => {
+    const { fake, connectionId, token } = await connectAndBind();
+    await webhook(connectionId, token, message(1, "Olá"));
+    await dispatch(
+      (await pendingRuns())[0]!,
+      [handoffStep(), planStep(["Já chamo alguém."])],
+      fake,
+    );
+    // The bot's own messages come back from Chatwoot: never context.
+    await webhook(connectionId, token, {
+      ...message(2, "Já chamo alguém.", "open"),
+      message_type: "outgoing",
+      sender: { id: 7, name: "GUIDU", type: "agent_bot" },
+    });
+    await webhook(connectionId, token, statusChanged("open", 1_760_000_000));
+    await webhook(connectionId, token, {
+      ...message(3, "Oi Maria, aqui é o João.", "open"),
+      message_type: "outgoing",
+      sender: { id: 2, name: "João", type: "user" },
+    });
+    await webhook(connectionId, token, {
+      ...message(4, "Nota interna", "open"),
+      message_type: "outgoing",
+      private: true,
+      sender: { id: 2, name: "João", type: "user" },
+    });
+    await webhook(connectionId, token, message(5, "Pode ser na sexta", "open"));
+    const withTeam = (await pendingRuns()).find((r) => r.status === "pending")!;
+    await dispatch(withTeam, [planStep(["não"])], fake);
+    await admin.jobRun.updateMany({
+      where: { id: withTeam.id },
+      data: { status: "succeeded" },
+    });
+
+    await webhook(connectionId, token, statusChanged("pending", 1_760_000_100));
+    await webhook(connectionId, token, message(6, "Confirmado?"));
+    const back = (await pendingRuns()).find((r) => r.status === "pending")!;
+    const { model } = await dispatch(back, [planStep(["Confirmado!"])], fake);
+
+    const conversation = await admin.aiConversation.findFirstOrThrow({
+      where: { agentId: GUID, channel: "chatwoot" },
+    });
+    const history = await admin.aiMessage.findMany({
+      where: {
+        conversationId: conversation.id,
+        role: { in: ["user", "assistant"] },
+        content: { not: "" },
+      },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: { role: true, content: true },
+    });
+    expect(history.map((m) => [m.role, m.content])).toEqual([
+      ["user", "Olá"],
+      ["assistant", "Já chamo alguém."],
+      [
+        "assistant",
+        "[Mensagem da equipe ao contato]: Oi Maria, aqui é o João.",
+      ],
+      ["user", "Pode ser na sexta"],
+      ["user", "Confirmado?"],
+      ["assistant", "Confirmado!"],
+    ]);
+    // The model read them in that order.
+    const prompt = JSON.stringify(model.doGenerateCalls[0]!.prompt);
+    expect(prompt.indexOf("aqui é o João")).toBeLessThan(
+      prompt.indexOf("Confirmado?"),
+    );
+    expect(prompt).not.toContain("Nota interna");
+  });
+
+  it("reads the contact's audio and image with the customer's key", async () => {
+    const { fake, connectionId, token } = await connectAndBind();
+    await webhook(connectionId, token, {
+      ...message(1, ""),
+      attachments: [
+        {
+          file_type: "audio",
+          extension: "ogg",
+          data_url: `${BASE_URL}/rails/active_storage/blobs/voice.ogg`,
+        },
+        {
+          file_type: "image",
+          extension: "png",
+          data_url: `${BASE_URL}/rails/active_storage/blobs/photo.png`,
+        },
+      ],
+    });
+    const [run] = await pendingRuns();
+    const { result, model } = await dispatch(
+      run!,
+      [planStep(["Sexta às 10h, combinado."])],
+      fake,
+    );
+    expect(result).toMatchObject({ status: "answered", sent: 1 });
+    const conversation = await admin.aiConversation.findFirstOrThrow({
+      where: { agentId: GUID, channel: "chatwoot" },
+    });
+    const user = await admin.aiMessage.findFirstOrThrow({
+      where: {
+        role: "user",
+        conversationId: conversation.id,
+        content: { not: "" },
+      },
+    });
+    expect(user.content).toBe(
+      "[Áudio do contato, transcrito]: Quero agendar para sexta\n[O contato enviou uma imagem, anexada a esta mensagem.]",
+    );
+    const last = model.doGenerateCalls[0]!.prompt.at(-1)!;
+    expect(last.role).toBe("user");
+    expect(
+      (last.content as { type: string; mediaType?: string }[]).map((part) => [
+        part.type,
+        part.mediaType ?? null,
+      ]),
+    ).toEqual([
+      ["text", null],
+      ["file", "image/png"],
+    ]);
+
+    // A key that cannot hear makes the agent ask for text instead.
+    await admin.jobRun.updateMany({
+      where: { id: run!.id },
+      data: { status: "succeeded" },
+    });
+    await admin.credential.update({
+      where: { id: credentialId },
+      data: { provider: "anthropic" },
+    });
+    try {
+      await webhook(connectionId, token, {
+        ...message(2, ""),
+        attachments: [
+          {
+            file_type: "audio",
+            extension: "ogg",
+            data_url: `${BASE_URL}/rails/active_storage/blobs/voice.ogg`,
+          },
+        ],
+      });
+      const next = (await pendingRuns()).find((r) => r.status === "pending")!;
+      const asked = await dispatch(next, [planStep(["Pode escrever?"])], fake);
+      expect(JSON.stringify(asked.model.doGenerateCalls[0]!.prompt)).toContain(
+        "este agente não ouve áudios",
+      );
+      const listed = await withContext(prisma, contextA, (tx) =>
+        listGuidChannels(tx, contextA, GUID),
+      );
+      expect(listed?.missingMedia).toEqual(["audio"]);
+    } finally {
+      await admin.credential.update({
+        where: { id: credentialId },
+        data: { provider: "openai" },
+      });
+    }
+  });
+
+  it("shows the connection's service and who answers each inbox", async () => {
+    const { fake, connectionId, token } = await connectAndBind();
+    await webhook(connectionId, token, message(1, "Olá"));
+    await dispatch((await pendingRuns())[0]!, [planStep(["Oi!"])], fake);
+    await admin.aiAgent.update({
+      where: { id: GUID },
+      data: { status: "paused" },
+    });
+    const [connections, owners] = await withContext(prisma, contextA, (tx) =>
+      Promise.all([
+        listChannelConnections(tx, contextA),
+        describeInboxOwners(tx, contextA),
+      ]),
+    );
+    expect(
+      connections.find((c) => c.id === connectionId)?.activity,
+    ).toMatchObject({ sent: 1, failedDeliveries: 0, failedEvents: 0 });
+    expect(owners[`${connectionId}:3`]).toEqual({
+      module: "ai-agents",
+      name: "Anna",
+      active: false,
+    });
   });
 });

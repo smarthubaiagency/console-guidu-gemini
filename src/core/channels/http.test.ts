@@ -1,10 +1,23 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { createServer, type Server } from "node:http";
+import type { AddressInfo } from "node:net";
+
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 vi.mock("server-only", () => ({}));
 
 import {
   ChannelHttpError,
   isPrivateAddress,
+  pinnedFetch,
+  providerDownload,
   providerJson,
   providerOrigin,
   readLimited,
@@ -159,5 +172,112 @@ describe("readLimited", () => {
       body: "ok",
     });
     await expect(readLimited(fits, 100)).resolves.toBe("ok");
+  });
+});
+
+describe("providerDownload", () => {
+  const base = "https://203.0.113.10";
+
+  it("starts only on the provider's origin", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    const error = await failure(
+      providerDownload("https://203.0.113.99/file.ogg", base, {
+        fetch,
+        maxBytes: 100,
+      }),
+    );
+    expect(error.code).toBe("invalid_url");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("follows the storage redirect and returns the type", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input) =>
+      String(input).startsWith(base)
+        ? new Response(null, {
+            status: 302,
+            headers: { location: "https://198.51.100.7/blob?sig=1" },
+          })
+        : new Response("OggS", {
+            headers: { "content-type": "audio/ogg; codecs=opus" },
+          }),
+    );
+    const file = await providerDownload(`${base}/rails/blob/1`, base, {
+      fetch,
+      maxBytes: 100,
+    });
+    expect(file.mediaType).toBe("audio/ogg");
+    expect(file.data.toString()).toBe("OggS");
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("checks every hop and the size", async () => {
+    const toPrivate = await failure(
+      providerDownload(`${base}/a`, base, {
+        fetch: async () =>
+          new Response(null, {
+            status: 302,
+            headers: { location: "https://10.0.0.5/secret" },
+          }),
+        maxBytes: 100,
+      }),
+    );
+    expect(toPrivate.code).toBe("private_address");
+    const loop = await failure(
+      providerDownload(`${base}/a`, base, {
+        fetch: async () =>
+          new Response(null, {
+            status: 302,
+            headers: { location: `${base}/a` },
+          }),
+        maxBytes: 100,
+      }),
+    );
+    expect(loop.code).toBe("http_error");
+    const big = await failure(
+      providerDownload(`${base}/a`, base, {
+        fetch: async () => new Response("x".repeat(500)),
+        maxBytes: 100,
+      }),
+    );
+    expect(big.code).toBe("too_large");
+  });
+});
+
+describe("pinnedFetch", () => {
+  let server: Server;
+  let origin: string;
+
+  beforeAll(async () => {
+    server = createServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify({ method: request.method }));
+    });
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
+    origin = `http://localhost:${(server.address() as AddressInfo).port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise((resolve) => server.close(resolve));
+  });
+
+  it("refuses a host that resolves to a private address at connect time", async () => {
+    // providerJson's own check is skipped here: only the socket's lookup.
+    const error = await pinnedFetch(`${origin}/x`).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    expect(error).toBeInstanceOf(ChannelHttpError);
+    expect((error as ChannelHttpError).code).toBe("private_address");
+  });
+
+  it("connects when private hosts are allowed (local tests)", async () => {
+    vi.stubEnv("GUIDU_CHANNELS_ALLOW_PRIVATE", "true");
+    const response = await pinnedFetch(`${origin}/x`, {
+      method: "POST",
+      body: "{}",
+    });
+    expect(await response.json()).toEqual({ method: "POST" });
   });
 });

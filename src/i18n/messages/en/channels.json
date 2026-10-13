@@ -96,5 +96,18 @@
     "useDefaults": "Use the default",
     "saved": "Service saved.",
     "reset": "The inbox uses the default again."
+  },
+  "activity": {
+    "title": "Service in the last 7 days",
+    "sent": "{count, plural, =0 {no messages sent} one {# message sent} other {# messages sent}}",
+    "failedDeliveries": "{count, plural, one {# failed delivery} other {# failed deliveries}}",
+    "failedEvents": "{count, plural, one {# contact message without an answer} other {# contact messages without an answer}}",
+    "lastSent": "last sent: {date}",
+    "lastError": "Last failed delivery: {reason}"
+  },
+  "owner": {
+    "none": "no agent",
+    "unnamed": "unnamed agent",
+    "paused": "{name}, paused: messages in this inbox go unanswered"
   }
 }

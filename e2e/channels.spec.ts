@@ -182,6 +182,17 @@ test.describe("GUIDS on a Chatwoot inbox (A5b)", () => {
     await expect(inbox.getByTestId("guid-inbox-state")).toHaveText(
       "Este agente",
     );
+
+    // The connection shows who answers the inbox and its service (A5c).
+    await page.goto(`/app/${wsSlug}/settings/channels`);
+    await expect(page.getByTestId("channel-inboxes")).toContainText(
+      "WhatsApp Loja · Channel::Api · Anna",
+    );
+    await expect(page.getByTestId("channel-activity")).toContainText(
+      "nenhuma mensagem enviada",
+    );
+
+    await page.goto(`/app/${wsSlug}/ai-agents?edit=${agentId}`);
     await inbox.getByTestId("unbind-inbox").click();
     await expect(statusBanner(page)).toContainText(
       "O agente parou de atender a inbox.",
