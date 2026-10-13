@@ -72,6 +72,19 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "invalid",
   "skipped",
   "remaining",
+  // Keys of the AI engine (A2a and A2b): vaults, turns and the tool guard.
+  "partnerId",
+  "model",
+  "keyChanged",
+  "executionId",
+  "agentId",
+  "tool",
+  "decision",
+  "rule",
+  "inputHash",
+  "outputHash",
+  "payload",
+  "errorId",
 ]);
 
 /**

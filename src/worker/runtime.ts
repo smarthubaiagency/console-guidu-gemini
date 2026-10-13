@@ -6,6 +6,7 @@ import { PgBoss, type Job } from "pg-boss";
 import {
   DEAD_LETTER_QUEUE,
   type JobDefinition,
+  type JobSession,
   type JobResult,
   type JobSchedule,
   queueName,
@@ -37,6 +38,11 @@ import { createLogger, type LogLevel } from "@/lib/telemetry/log";
  * pg-boss group limit avoids most collisions, and a transaction advisory
  * lock per workspace guarantees it (pg-boss alone is racy between
  * processes; measured in tests/core/jobs.test.ts).
+ *
+ * A detached workspace job (A2b) is marked running and checked in that
+ * first transaction, then runs outside it through short transactions that
+ * each set the context and re-check access, so a model call never holds a
+ * transaction or the workspace lock.
  *
  * Platform jobs (F3c) have no requester: they run as app_worker through
  * their own narrow policies, one run per kind at a time. The scheduler
@@ -105,6 +111,15 @@ type RunRow = {
 };
 
 const FINISHED = new Set(["succeeded", "skipped", "canceled", "failed"]);
+
+type DetachedRun = {
+  definition: Extract<JobDefinition<unknown>, { detached: true }>;
+  ctx: RequestContext;
+  payload: unknown;
+};
+
+/** Each short transaction of a detached job (A2b). */
+const DETACHED_TRANSACTION_MS = 30_000;
 
 const workerLog = createLogger("worker");
 const LEVELS = new Set<LogLevel>(["debug", "info", "warn", "error"]);
@@ -383,10 +398,51 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     `;
   }
 
+  /** Sets the requester's context and switches to app_runtime. */
+  async function enterContext(
+    tx: ContextTransaction,
+    ctx: RequestContext,
+  ): Promise<void> {
+    await tx.$executeRaw`
+      select
+        set_config('app.user_id', ${ctx.userId}, true),
+        set_config('app.workspace_id', ${ctx.workspaceId}, true),
+        set_config('app.organization_id', ${ctx.organizationId}, true),
+        set_config('app.partner_id', ${ctx.partnerId ?? ""}, true),
+        set_config('app.principal_type', 'user', true),
+        set_config('app.grant_id', '', true)
+    `;
+    await tx.$executeRawUnsafe("set local role app_runtime");
+    // Re-check before the effect: a member removed after the enqueue has
+    // no role now, and the job stops here.
+    if (!(await getEffectiveWorkspaceRole(tx, ctx))) {
+      throw new SkipJobError(
+        "Quem pediu a execução não tem mais acesso a este workspace.",
+      );
+    }
+  }
+
+  /** Short transactions of a detached job (A2b), each re-checking access. */
+  function jobSession(jobRunId: string, ctx: RequestContext): JobSession {
+    return {
+      jobRunId,
+      transaction: (operation) =>
+        prisma.$transaction(
+          async (tx) => {
+            await enterContext(tx, ctx);
+            return operation(tx);
+          },
+          { timeout: DETACHED_TRANSACTION_MS, maxWait: 30_000 },
+        ),
+    };
+  }
+
   async function execute(job: Job<{ jobRunId: string }>): Promise<void> {
     const jobRunId = job.data?.jobRunId;
     if (!jobRunId) return;
     let run: RunRow | null = null;
+    // A detached job leaves the first transaction with what it needs.
+    let detached: DetachedRun | null = null;
     try {
       await prisma.$transaction(
         async (tx) => {
@@ -427,13 +483,6 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
           ) {
             throw new SkipJobError("Escopo de job não suportado.");
           }
-          // One job per workspace at a time, across processes; waits for the
-          // other job of the workspace to commit.
-          await tx.$executeRaw`
-            select pg_advisory_xact_lock(hashtext('job_workspace:' || ${run.workspace_id}))
-          `;
-          await markRunning(tx, run.id);
-
           const ctx: RequestContext = {
             userId: run.requested_by,
             workspaceId: run.workspace_id,
@@ -441,28 +490,25 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
             partnerId: run.partner_id,
             principalType: "user",
           };
-          await tx.$executeRaw`
-            select
-              set_config('app.user_id', ${ctx.userId}, true),
-              set_config('app.workspace_id', ${ctx.workspaceId}, true),
-              set_config('app.organization_id', ${ctx.organizationId}, true),
-              set_config('app.partner_id', ${ctx.partnerId ?? ""}, true),
-              set_config('app.principal_type', 'user', true),
-              set_config('app.grant_id', '', true)
-          `;
-          await tx.$executeRawUnsafe("set local role app_runtime");
-
-          // Re-check before the effect: a member removed after the enqueue
-          // has no role now, and the job stops here.
-          if (!(await getEffectiveWorkspaceRole(tx, ctx))) {
-            throw new SkipJobError(
-              "Quem pediu a execução não tem mais acesso a este workspace.",
-            );
-          }
           const payload = definition.payload.safeParse(run.payload);
           if (!payload.success) {
             throw new SkipJobError("Dados do job inválidos para esta versão.");
           }
+          if (definition.detached) {
+            // Marked running and checked here; the work runs outside this
+            // transaction, in its own short ones.
+            await markRunning(tx, run.id);
+            await enterContext(tx, ctx);
+            detached = { definition, ctx, payload: payload.data };
+            return;
+          }
+          // One job per workspace at a time, across processes; waits for the
+          // other job of the workspace to commit.
+          await tx.$executeRaw`
+            select pg_advisory_xact_lock(hashtext('job_workspace:' || ${run.workspace_id}))
+          `;
+          await markRunning(tx, run.id);
+          await enterContext(tx, ctx);
           const result = (await definition.run(tx, ctx, payload.data)) ?? null;
 
           await tx.$executeRawUnsafe("reset role");
@@ -470,6 +516,15 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
         },
         { timeout: maxRunMs, maxWait: 30_000 },
       );
+      // Assigned inside the transaction callback, which TypeScript cannot see.
+      const pending = detached as DetachedRun | null;
+      if (pending) {
+        const { definition, ctx, payload } = pending;
+        const result =
+          (await definition.run(jobSession(jobRunId, ctx), ctx, payload)) ??
+          null;
+        await prisma.$transaction((tx) => markSucceeded(tx, jobRunId, result));
+      }
       if (run) {
         log({
           event: "job.succeeded",

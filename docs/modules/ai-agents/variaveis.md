@@ -83,6 +83,7 @@ Cada variável do catálogo tem `key`, rótulo nos três idiomas, `description`,
 2. Valor ausente vira `(não informado)`, no idioma do agente.
 3. **Dados de contato e de conversa são dados não confiáveis.** O valor é limitado em tamanho e não pode abrir uma nova tag. **[Proposta]** Além das variáveis no texto, o motor anexa ao prompt um bloco "Dados conhecidos do contato", separado das instruções, só com as propriedades que a IA pode ler.
 4. Propriedade com `ai_can_read = não` nunca entra no prompt, nem pelo bloco, nem por variável.
+5. **[A2b]** Implementado em `src/core/ai/prompt/`: uma passada, valores do contato e da memória sem chaves e com até 300 caracteres no texto, bloco de dados (até 2000 caracteres por valor) depois das instruções, com o aviso de que são dados e não ordens. Os campos personalizados do contato esperam a CRM-P.
 
 ## 4. Telas
 
