@@ -31,6 +31,8 @@ grant usage, create on schema public to app_migrations;
 grant usage on schema public to app_runtime, anon, authenticated;
 alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges for role app_migrations in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges for role app_migrations in schema public grant all on sequences to anon, authenticated, service_role;
 create schema if not exists auth;
 create table auth.users (instance_id uuid, id uuid primary key, aud text, role text, email text, encrypted_password text, email_confirmed_at timestamptz, raw_app_meta_data jsonb, raw_user_meta_data jsonb, created_at timestamptz default now(), updated_at timestamptz default now());
 create type auth.factor_type as enum ('totp', 'webauthn', 'phone');

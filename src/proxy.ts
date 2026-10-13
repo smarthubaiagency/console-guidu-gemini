@@ -7,6 +7,11 @@ import {
   platformHosts,
   requestHost,
 } from "@/core/partners/hosts";
+import {
+  contentSecurityPolicy,
+  createNonce,
+  NONCE_HEADER,
+} from "@/core/security/headers";
 import { refreshSupabaseSession } from "@/lib/supabase/session";
 
 /**
@@ -56,9 +61,18 @@ export default async function proxy(request: NextRequest) {
   // so a client cannot choose it; it only picks a language anyway.
   const forwarded = new Headers(request.headers);
   forwarded.set(PATH_HEADER, pathname);
+  // CSP with a fresh nonce (F6a). Next.js reads it from the request header to
+  // stamp its own scripts; the root layout hands it to next-themes.
+  const nonce = createNonce();
+  const csp = contentSecurityPolicy(nonce, {
+    production: process.env.NODE_ENV === "production",
+  });
+  forwarded.set(NONCE_HEADER, nonce);
+  forwarded.set("content-security-policy", csp);
   const { response, claims } = await refreshSupabaseSession(
     new NextRequest(request, { headers: forwarded }),
   );
+  response.headers.set("content-security-policy", csp);
   const signedIn = Boolean(claims?.sub);
 
   if (

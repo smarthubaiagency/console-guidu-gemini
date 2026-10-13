@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { readSupabasePublicConfig } from "./config";
+import { readSupabasePublicConfig, supabaseCookieOptions } from "./config";
 import type { SessionClaims } from "@/core/auth/claims";
 
 export type SessionRefresh = Readonly<{
@@ -27,6 +27,7 @@ export async function refreshSupabaseSession(
   const { url, publishableKey } = readSupabasePublicConfig();
 
   const supabase = createServerClient(url, publishableKey, {
+    cookieOptions: supabaseCookieOptions(),
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet, headers) => {

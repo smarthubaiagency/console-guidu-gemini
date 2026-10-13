@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { readSupabasePublicConfig } from "./config";
+import { readSupabasePublicConfig, supabaseCookieOptions } from "./config";
 
 /**
  * Supabase client for Server Components, Server Actions and Route Handlers.
@@ -17,6 +17,7 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient> {
   const { url, publishableKey } = readSupabasePublicConfig();
 
   return createServerClient(url, publishableKey, {
+    cookieOptions: supabaseCookieOptions(),
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {

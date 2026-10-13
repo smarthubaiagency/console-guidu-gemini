@@ -187,8 +187,11 @@ export async function revokePlatformApiKey(
   tx: ContextTransaction,
   actor: CreateActor,
   keyId: string,
+  assurance: Assurance,
 ): Promise<void> {
   if (!actor.role) throw new PermissionDeniedError();
+  // Same second factor as creating one (F6a): /platform runs at AAL2.
+  requireMfa(assurance);
   const id = z.string().uuid().safeParse(keyId);
   const changed = id.success
     ? await tx.platformApiKey.updateMany({

@@ -43,3 +43,14 @@ export function readSupabasePublicConfig(): SupabasePublicConfig {
 
   return { url, publishableKey };
 }
+
+/**
+ * Options of the auth cookies set on the server (F6a). `Secure` whenever the
+ * app is served over HTTPS, so the session never travels in clear text;
+ * `SameSite=Lax` and the lifetime stay as @supabase/ssr sets them. The
+ * cookies are not `HttpOnly` by design of @supabase/ssr; the CSP of
+ * src/proxy.ts is the mitigation against scripts reading them.
+ */
+export function supabaseCookieOptions(): { secure: boolean } {
+  return { secure: (serverEnv("APP_URL") ?? "").startsWith("https://") };
+}

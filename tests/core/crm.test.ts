@@ -79,11 +79,13 @@ describeDatabase("F4c: CRM module — contacts", requiredVars, () => {
       contactId?: string;
       query?: string;
       contentType?: string;
+      origin?: string;
     }> = {},
   ) {
     const def = API_ROUTES[route];
     const headers = new Headers({ host: "localhost:3000" });
     if (options.key) headers.set("authorization", `Bearer ${options.key}`);
+    if (options.origin) headers.set("origin", options.origin);
     if (options.body !== undefined) {
       headers.set("content-type", options.contentType ?? "application/json");
     }
@@ -319,10 +321,22 @@ describeDatabase("F4c: CRM module — contacts", requiredVars, () => {
       const form = await rest("createCrmContact", {
         body: { name: "Formulário" },
         contentType: "application/x-www-form-urlencoded",
+        origin: "http://localhost:3000",
       });
       expect(form.status).toBe(403);
+      const crossSite = await rest("createCrmContact", {
+        body: { name: "Outro site" },
+        origin: "https://atacante.test",
+      });
+      expect(crossSite.status).toBe(403);
+      // Browsers always send Origin on a write, so its absence is refused.
+      const noOrigin = await rest("createCrmContact", {
+        body: { name: "Sem origem" },
+      });
+      expect(noOrigin.status).toBe(403);
       const json = await rest("createCrmContact", {
         body: { name: "Sessão JSON" },
+        origin: "http://localhost:3000",
       });
       expect(json.status).toBe(201);
     } finally {

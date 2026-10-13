@@ -391,8 +391,22 @@ describeDatabase("F4e: platform API and MCP", requiredVars, () => {
       where: { userId: owner },
       orderBy: { createdAt: "desc" },
     });
+    // Revoking also needs the second factor (F6a).
+    await expect(
+      withPlatformContext(prisma, { userId: owner, keyId: null }, (tx) =>
+        revokePlatformApiKey(tx, { userId: owner, role: "owner" }, keyRow.id, {
+          mfaVerified: false,
+        }),
+      ),
+    ).rejects.toBeInstanceOf(AppError);
+    expect((await rest("listCustomers", { key: full })).status).toBe(200);
     await withPlatformContext(prisma, { userId: owner, keyId: null }, (tx) =>
-      revokePlatformApiKey(tx, { userId: owner, role: "owner" }, keyRow.id),
+      revokePlatformApiKey(
+        tx,
+        { userId: owner, role: "owner" },
+        keyRow.id,
+        mfa,
+      ),
     );
     expect((await rest("listCustomers", { key: full })).status).toBe(401);
   });
