@@ -134,6 +134,51 @@ describe("billing notices (F3c)", () => {
   });
 });
 
+describe("notices of the AI key (A2c)", () => {
+  const data = {
+    workspaceName: "Clínica <Sorriso>",
+    agentName: null,
+    backupUntil: new Date("2026-10-14T15:00:00Z"),
+    credentialsUrl: "https://agencia-b.com.br/app/clinica/settings/credentials",
+  };
+
+  it("tells the customer about the backup and its end", () => {
+    const message = renderNotification(
+      {
+        type: "ai.agent.key_backup",
+        recipientEmail: "dono@clinica.test",
+        idempotencyKey: "k",
+        data,
+      },
+      brand,
+    );
+    expect(message.subject).toBe("A chave de IA de Clínica <Sorriso> falhou");
+    expect(message.text).toContain("seu agente de IA em Clínica <Sorriso>");
+    expect(message.text).toContain("Conversas novas não são atendidas.");
+    expect(message.text).toContain("até 14/10/2026, 12:00");
+    expect(message.text).toContain(
+      "Trocar a chave: https://agencia-b.com.br/app/clinica/settings/credentials",
+    );
+    expect(message.html).toContain("Clínica &lt;Sorriso&gt;");
+  });
+
+  it("tells the customer about the pause, in English too", () => {
+    const message = renderNotification(
+      {
+        type: "ai.agent.key_paused",
+        recipientEmail: "dono@clinica.test",
+        idempotencyKey: "k",
+        data: { ...data, agentName: "Anna" },
+      },
+      brand,
+      "en",
+    );
+    expect(message.subject).toBe("AI agent paused in Clínica <Sorriso>");
+    expect(message.text).toContain("Anna in Clínica <Sorriso> was paused");
+    expect(message.text).toContain("Replace the key: https://");
+  });
+});
+
 describe("languages of the recipient (I5)", () => {
   const notice = {
     type: "billing.subscription.past_due" as const,

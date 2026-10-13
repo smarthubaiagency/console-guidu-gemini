@@ -21,5 +21,19 @@
     "subject": "Subscription suspended: {organization}",
     "body": "The subscription of {organization} was suspended for lack of payment of the period that ended on {periodEnd}.",
     "access": "The customer keeps read and export access, without new changes. Recording the payment reactivates the subscription."
+  },
+  "aiKey": {
+    "unnamedAgent": "your AI agent",
+    "action": "Replace the key"
+  },
+  "aiKeyBackup": {
+    "subject": "The AI key of {workspace} failed",
+    "body": "The AI key used by {agent} in {workspace} failed (invalid, revoked, out of credit or at the provider's limit). Meanwhile, the platform only finishes the conversations that were already open, with a courtesy model that does not count toward your usage. New conversations are not answered.",
+    "nextStep": "Replace or test the key by {date}; without a fix, the agent will be paused."
+  },
+  "aiKeyPaused": {
+    "subject": "AI agent paused in {workspace}",
+    "body": "{agent} in {workspace} was paused because the AI key was not fixed within 24 hours.",
+    "nextStep": "The backup ended on {date}. Replace and test the key, then turn the agent back on."
   }
 }

@@ -1,3 +1,4 @@
+import { keyWatchJob, keyWatchSchedule } from "@/core/ai/key-watch";
 import { guidTurnJob } from "@/core/ai/turn/guid";
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
 import { translateTextsJob } from "@/core/i18n/machine/texts-job";
@@ -22,6 +23,7 @@ const DEFINITIONS = [
   workspaceExportJob,
   proposalExecuteJob,
   guidTurnJob,
+  keyWatchJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
 
@@ -43,5 +45,5 @@ export function getJobDefinition(kind: string): JobDefinition<unknown> | null {
 
 /** Recurring platform jobs started by the worker's scheduler. */
 export function listJobSchedules(): readonly JobSchedule[] {
-  return [...billingSchedules, ...privacySchedules];
+  return [...billingSchedules, ...privacySchedules, keyWatchSchedule];
 }

@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SQL AI engine data (A2a) and its write paths (A2b): conversations and
--- messages, usage, the partner vault, the platform backup key and the
--- Assistant's runtime functions.
+-- messages, usage, the partner vault, the platform backup key, the
+-- Assistant's runtime functions and the backup of the customer's key (A2c).
 --   workspace A a…011 (org a…010, house partner): owner a…031, viewer a…033
 --   workspace B a…021 (org a…020, house partner): owner a…032
 --   partner P b1…001 (created per block, with its Assistant):
@@ -526,6 +526,157 @@ begin
      or exists (select 1 from private.ai_admin_key(null, null)) then
     raise exception 'ai_assistant_runtime: answers without a context';
   end if;
+end
+$$;
+reset role;
+rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test 7: backup of the customer's key (A2c), from the turn
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+insert into public.platform_ai_settings (backup_provider, backup_masked_value, backup_encrypted_payload, backup_model, updated_by)
+values ('openai', 'sk-…9999', 'cipher-backup', 'gpt-cheap', 'd0000000-0000-4000-8000-000000000003');
+set local role app_runtime;
+do $$
+declare
+  v_started timestamptz;
+  v_first boolean;
+begin
+  -- Nothing for the agent of another workspace, nor for a viewer.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000032', 'a0000000-0000-4000-8000-000000000021',
+                      'a0000000-0000-4000-8000-000000000020');
+  if exists (select 1 from private.ai_agent_key_failed('a2a00000-0000-4000-8000-0000000000a1')) then
+    raise exception 'ai_agent_key_failed: started the backup of another workspace';
+  end if;
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000033', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if exists (select 1 from private.ai_agent_key_failed('a2a00000-0000-4000-8000-0000000000a1')) then
+    raise exception 'ai_agent_key_failed: viewer started the backup';
+  end if;
+
+  -- The person of the turn: the key is not reachable before the failure.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if exists (select 1 from private.ai_backup_key('a2a00000-0000-4000-8000-0000000000a1')) then
+    raise exception 'ai_backup_key: key before the failure';
+  end if;
+  select backup_started_at, started into v_started, v_first
+  from private.ai_agent_key_failed('a2a00000-0000-4000-8000-0000000000a1');
+  if v_started is null or not v_first then
+    raise exception 'ai_agent_key_failed: first failure did not start the backup';
+  end if;
+  -- A second failure keeps the start.
+  if (select started from private.ai_agent_key_failed('a2a00000-0000-4000-8000-0000000000a1'))
+     or (select backup_started_at from private.ai_agent_key_failed('a2a00000-0000-4000-8000-0000000000a1')) <> v_started then
+    raise exception 'ai_agent_key_failed: second failure restarted the backup';
+  end if;
+  if (select encrypted_payload from private.ai_backup_key('a2a00000-0000-4000-8000-0000000000a1')) is distinct from 'cipher-backup'
+     or (select model from private.ai_backup_key('a2a00000-0000-4000-8000-0000000000a1')) is distinct from 'gpt-cheap' then
+    raise exception 'ai_backup_key: agent in backup without the platform key';
+  end if;
+  -- Still no direct read of the platform settings.
+  if exists (select 1 from public.platform_ai_settings) then
+    raise exception 'platform_ai_settings: workspace reads the backup settings';
+  end if;
+  -- The conversation is marked, and only that column.
+  update public.ai_conversations set key_mode = 'backup' where id = 'a2a00000-0000-4000-8000-0000000001a1';
+  if not found then raise exception 'ai_conversations: key mode not updated'; end if;
+
+  -- Another workspace never gets the key, whatever the agent id.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000032', 'a0000000-0000-4000-8000-000000000021',
+                      'a0000000-0000-4000-8000-000000000020');
+  if exists (select 1 from private.ai_backup_key('a2a00000-0000-4000-8000-0000000000a1'))
+     or exists (select 1 from private.ai_backup_key('a2a00000-0000-4000-8000-0000000000b1')) then
+    raise exception 'ai_backup_key: key for another workspace';
+  end if;
+end
+$$;
+reset role;
+-- After 24 hours the key is no longer handed out.
+update public.ai_agents set backup_started_at = now() - interval '25 hours'
+where id = 'a2a00000-0000-4000-8000-0000000000a1';
+set local role app_runtime;
+do $$
+begin
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if exists (select 1 from private.ai_backup_key('a2a00000-0000-4000-8000-0000000000a1')) then
+    raise exception 'ai_backup_key: key after 24 hours';
+  end if;
+end
+$$;
+reset role;
+rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test 8: notices and pause of the backup (A2c), as the worker
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+insert into public.invitations (organization_id, workspace_id, email, role, token_hash, invited_by_user_id,
+                                status, expires_at, accepted_at, accepted_by_user_id)
+values
+  ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011', 'dono-a@cliente.test', 'owner',
+   repeat('c', 64), 'a0000000-0000-4000-8000-000000000031', 'accepted', now() + interval '7 days', now(),
+   'a0000000-0000-4000-8000-000000000031'),
+  ('a0000000-0000-4000-8000-000000000020', 'a0000000-0000-4000-8000-000000000021', 'dono-b@cliente.test', 'owner',
+   repeat('d', 64), 'a0000000-0000-4000-8000-000000000032', 'accepted', now() + interval '7 days', now(),
+   'a0000000-0000-4000-8000-000000000032');
+set local role app_worker;
+do $$
+begin
+  -- No key problem: the worker sees no agent, member or invitation.
+  if exists (select 1 from public.ai_agents where kind = 'guid')
+     or exists (select 1 from public.workspace_members)
+     or exists (select 1 from public.invitations)
+     or exists (select 1 from public.workspaces) then
+    raise exception 'worker: reads customers without a key problem';
+  end if;
+end
+$$;
+reset role;
+update public.ai_agents set key_state = 'backup', backup_started_at = now() - interval '2 hours'
+where id = 'a2a00000-0000-4000-8000-0000000000a1';
+set local role app_worker;
+do $$
+begin
+  -- Agent A in backup: A's owners and their e-mail, nothing of B.
+  if (select count(*) from public.ai_agents where kind = 'guid') <> 1
+     or (select count(*) from public.workspaces) <> 1
+     or exists (select 1 from public.workspace_members where role not in ('owner', 'admin'))
+     or not exists (select 1 from public.workspace_members where user_id = 'a0000000-0000-4000-8000-000000000031')
+     or (select email from public.invitations) is distinct from 'dono-a@cliente.test' then
+    raise exception 'worker: wrong audience for the notice of A';
+  end if;
+  begin
+    perform config from public.ai_agents;
+    raise exception 'worker: reads the agent configuration';
+  exception when insufficient_privilege then null;
+  end;
+  -- Not paused before 24 hours.
+  update public.ai_agents set status = 'paused', key_state = 'failed'
+  where id = 'a2a00000-0000-4000-8000-0000000000a1';
+  if found then raise exception 'worker: paused before 24 hours'; end if;
+end
+$$;
+reset role;
+update public.ai_agents set backup_started_at = now() - interval '25 hours'
+where id = 'a2a00000-0000-4000-8000-0000000000a1';
+set local role app_worker;
+do $$
+begin
+  -- Only the pause: status paused and key failed.
+  begin
+    update public.ai_agents set status = 'active', key_state = 'failed'
+    where id = 'a2a00000-0000-4000-8000-0000000000a1';
+    raise exception 'worker: changed the agent beyond the pause';
+  exception when insufficient_privilege then null;
+  end;
+  update public.ai_agents set status = 'paused', key_state = 'failed'
+  where id = 'a2a00000-0000-4000-8000-0000000000a1';
+  if not found then raise exception 'worker: could not pause after 24 hours'; end if;
 end
 $$;
 reset role;

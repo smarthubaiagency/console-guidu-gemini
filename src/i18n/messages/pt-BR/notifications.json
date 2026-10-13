@@ -21,5 +21,19 @@
     "subject": "Assinatura suspensa: {organization}",
     "body": "A assinatura de {organization} foi suspensa por falta de pagamento do período que venceu em {periodEnd}.",
     "access": "O cliente mantém o acesso de leitura e exportação, sem novas alterações. Registrar o pagamento reativa a assinatura."
+  },
+  "aiKey": {
+    "unnamedAgent": "seu agente de IA",
+    "action": "Trocar a chave"
+  },
+  "aiKeyBackup": {
+    "subject": "A chave de IA de {workspace} falhou",
+    "body": "A chave de IA usada por {agent} em {workspace} falhou (inválida, revogada, sem crédito ou no limite do provedor). Enquanto isso, a plataforma termina só as conversas que já estavam abertas, com um modelo de cortesia que não conta no seu consumo. Conversas novas não são atendidas.",
+    "nextStep": "Troque ou teste a chave até {date}; sem correção, o agente será pausado."
+  },
+  "aiKeyPaused": {
+    "subject": "Agente de IA pausado em {workspace}",
+    "body": "{agent} em {workspace} foi pausado porque a chave de IA não foi corrigida em 24 horas.",
+    "nextStep": "O backup terminou em {date}. Troque e teste a chave e depois reative o agente."
   }
 }
