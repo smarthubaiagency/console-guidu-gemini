@@ -55,5 +55,15 @@
     "toolError": "The tool failed (code {errorId}). Continue without it or ask a person for help.",
     "toolRestricted": "Tool unavailable: {reason}",
     "toolDenied": "Tool not allowed for this agent."
+  },
+  "guids": {
+    "unnamed": "Unnamed GUIDS",
+    "changedByPartner": "Changed by {partner} on {date}",
+    "updated": "Changed on {date}",
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "paused": "Paused"
+    }
   }
 }

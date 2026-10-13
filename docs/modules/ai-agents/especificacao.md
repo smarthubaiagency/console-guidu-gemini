@@ -122,7 +122,8 @@ Os GUIDS atendem pela camada de canais do núcleo, com o Chatwoot via Agent Bot 
 - A RLS das tabelas de configuração aceita o membro de um parceiro com essa permissão quando o workspace pertence ao parceiro (`organizations.partner_id` da empresa do workspace). Só nas tabelas de configuração; as de conversa, lead e base não mudam.
 - Toda alteração pelo parceiro é auditada, com antes e depois sem segredo, e o cliente vê no GUIDS: "Alterado por <parceiro> em <data>".
 - A casa, como parceiro zero, faz o mesmo para os clientes diretos.
-- Na A1, as indicações (`ai_agent_referrals`) ficam só com o workspace, como os outros dados do cliente. Se o parceiro precisar editá-las pelo `/admin` (seção 5.2), a política entra na A3, junto com a tela.
+- As indicações (`ai_agent_referrals`) são configuração: desde a A3c o parceiro as lê e altera pelo `/admin` (seção 5.2), com a mesma regra da configuração dos GUIDS.
+- A chave de IA de um GUIDS é do cofre do cliente, que o parceiro não lê: no `/admin` o parceiro vê o estado da chave e altera o modelo, nunca a chave (A3c).
 
 ## 7. Motor: execução
 

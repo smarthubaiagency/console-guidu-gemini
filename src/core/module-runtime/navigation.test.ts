@@ -249,10 +249,14 @@ describe("generated navigation", () => {
         .flatMap((i) => i.children.map((c) => c.href));
     expect(hrefs("partner_owner")).toEqual([
       "/admin/ai/assistant",
+      "/admin/ai/guids",
       "/admin/ai/keys",
       "/admin/ai/templates",
     ]);
-    expect(hrefs("partner_support")).toEqual(["/admin/ai/assistant"]);
+    expect(hrefs("partner_support")).toEqual([
+      "/admin/ai/assistant",
+      "/admin/ai/guids",
+    ]);
     expect(
       find(
         buildPartnerNavigation(partnerGrants("partner_owner")),

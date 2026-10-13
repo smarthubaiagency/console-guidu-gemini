@@ -142,7 +142,8 @@ rollback;
 
 -- ----------------------------------------------------------------------------
 -- Test 2: a partner reads and edits only the configuration of its customers'
--- GUIDS and its own Assistant; never referrals or lead activities
+-- GUIDS (referrals included, A3c) and its own Assistant; never lead
+-- activities
 -- ----------------------------------------------------------------------------
 begin;
 select pg_temp.fixture();
@@ -200,9 +201,14 @@ begin
   delete from public.ai_agents where kind = 'assistant';
   if found then raise exception 'ai_agents: partner deleted its Assistant'; end if;
 
-  -- Customer content stays with the customer (support grant, ADR 0012).
-  if exists (select 1 from public.ai_agent_referrals) then
-    raise exception 'ai_agent_referrals: partner reads customer referrals';
+  -- Referrals are configuration (A3c): the partner reads its customer's.
+  if (select count(*) from public.ai_agent_referrals) <> 1
+     or not exists (select 1 from public.ai_agent_referrals where id = 'a1c00000-0000-4000-8000-0000000000c1') then
+    raise exception 'ai_agent_referrals: partner does not read exactly its customer referrals';
+  end if;
+  -- Lead activities stay with the customer (support grant, ADR 0012).
+  if exists (select 1 from public.ai_lead_activities) then
+    raise exception 'ai_lead_activities: partner reads customer leads';
   end if;
 
   -- Support reads, does not edit; finance sees nothing.
@@ -484,6 +490,90 @@ begin
     raise exception 'ai_agent_templates: owner changed';
   exception when check_violation then null;
   end;
+end
+$$;
+reset role;
+rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test 6 (A3c): the partner manages the referrals of its customers only
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+insert into public.ai_agent_referrals (id, organization_id, workspace_id, name, referral_tag, created_by)
+values ('a1c00000-0000-4000-8000-0000000000a1', 'a0000000-0000-4000-8000-000000000010',
+        'a0000000-0000-4000-8000-000000000011', 'Indicação A', 'indicacao-a', 'a0000000-0000-4000-8000-000000000031');
+set local role app_runtime;
+do $$
+begin
+  perform pg_temp.ctx('d0000000-0000-4000-8000-000000000004', null, null, 'b1000000-0000-4000-8000-000000000001');
+  insert into public.ai_agent_referrals (organization_id, workspace_id, name, referral_tag, created_by)
+  values ('c1000000-0000-4000-8000-000000000010', 'c1000000-0000-4000-8000-000000000011',
+          'Nova do parceiro', 'nova-parceiro', 'd0000000-0000-4000-8000-000000000004');
+  update public.ai_agent_referrals set city = 'Curitiba', updated_by = 'd0000000-0000-4000-8000-000000000004'
+  where id = 'a1c00000-0000-4000-8000-0000000000c1';
+  if not found then raise exception 'ai_agent_referrals: partner could not edit its customer referral'; end if;
+  begin
+    update public.ai_agent_referrals set city = 'X', updated_by = null
+    where id = 'a1c00000-0000-4000-8000-0000000000c1';
+    raise exception 'ai_agent_referrals: partner change without its author';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- Another partner's company: invisible, not writable.
+  if exists (select 1 from public.ai_agent_referrals where id = 'a1c00000-0000-4000-8000-0000000000a1') then
+    raise exception 'ai_agent_referrals: partner reads a referral of another partner';
+  end if;
+  update public.ai_agent_referrals set city = 'X', updated_by = 'd0000000-0000-4000-8000-000000000004'
+  where id = 'a1c00000-0000-4000-8000-0000000000a1';
+  if found then raise exception 'ai_agent_referrals: partner edited a referral of another partner'; end if;
+  begin
+    insert into public.ai_agent_referrals (organization_id, workspace_id, name, referral_tag, created_by)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'Invasora', 'invasora', 'd0000000-0000-4000-8000-000000000004');
+    raise exception 'ai_agent_referrals: partner created a referral for another partner';
+  exception when insufficient_privilege then null;
+  end;
+  -- A workspace of its company paired with a company of another partner.
+  begin
+    insert into public.ai_agent_referrals (organization_id, workspace_id, name, referral_tag, created_by)
+    values ('c1000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'Mista', 'mista', 'd0000000-0000-4000-8000-000000000004');
+    raise exception 'ai_agent_referrals: workspace of another company';
+  exception when foreign_key_violation or insufficient_privilege then null;
+  end;
+
+  -- Support reads, does not write; finance sees nothing.
+  perform pg_temp.ctx('d0000000-0000-4000-8000-000000000006', null, null, 'b1000000-0000-4000-8000-000000000001');
+  if (select count(*) from public.ai_agent_referrals) <> 2 then
+    raise exception 'ai_agent_referrals: partner_support does not read the referrals';
+  end if;
+  update public.ai_agent_referrals set city = 'X', updated_by = 'd0000000-0000-4000-8000-000000000006';
+  if found then raise exception 'ai_agent_referrals: partner_support edited a referral'; end if;
+  delete from public.ai_agent_referrals;
+  if found then raise exception 'ai_agent_referrals: partner_support deleted a referral'; end if;
+  begin
+    insert into public.ai_agent_referrals (organization_id, workspace_id, name, referral_tag, created_by)
+    values ('c1000000-0000-4000-8000-000000000010', 'c1000000-0000-4000-8000-000000000011',
+            'Do suporte', 'do-suporte', 'd0000000-0000-4000-8000-000000000006');
+    raise exception 'ai_agent_referrals: partner_support created a referral';
+  exception when insufficient_privilege then null;
+  end;
+  perform pg_temp.ctx('d0000000-0000-4000-8000-000000000005', null, null, 'b1000000-0000-4000-8000-000000000001');
+  if exists (select 1 from public.ai_agent_referrals) then
+    raise exception 'ai_agent_referrals: partner_finance sees referrals';
+  end if;
+
+  -- The owner deletes; the customer still reads its own.
+  perform pg_temp.ctx('d0000000-0000-4000-8000-000000000004', null, null, 'b1000000-0000-4000-8000-000000000001');
+  delete from public.ai_agent_referrals where referral_tag = 'nova-parceiro';
+  if not found then raise exception 'ai_agent_referrals: partner could not delete its customer referral'; end if;
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000032', 'c1000000-0000-4000-8000-000000000011',
+                      'c1000000-0000-4000-8000-000000000010');
+  if (select city from public.ai_agent_referrals where id = 'a1c00000-0000-4000-8000-0000000000c1')
+     is distinct from 'Curitiba' then
+    raise exception 'ai_agent_referrals: customer does not see the partner change';
+  end if;
 end
 $$;
 reset role;

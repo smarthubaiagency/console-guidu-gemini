@@ -55,5 +55,15 @@
     "toolError": "A ferramenta falhou (código {errorId}). Siga sem ela ou peça ajuda a uma pessoa.",
     "toolRestricted": "Ferramenta indisponível: {reason}",
     "toolDenied": "Ferramenta não permitida para este agente."
+  },
+  "guids": {
+    "unnamed": "GUIDS sem nome",
+    "changedByPartner": "Alterado por {partner} em {date}",
+    "updated": "Alterado em {date}",
+    "status": {
+      "draft": "Rascunho",
+      "active": "Ativo",
+      "paused": "Pausado"
+    }
   }
 }

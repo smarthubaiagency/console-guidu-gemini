@@ -39,6 +39,8 @@ export type GuidDto = Readonly<{
   keyState: string;
   /** Set when the partner made the last change ("Alterado por …"). */
   updatedByPartnerId: string | null;
+  /** The partner's name, when it is the workspace's partner (A3c). */
+  updatedByPartnerName: string | null;
   updatedAt: string;
 }>;
 
@@ -70,7 +72,10 @@ function agentName(config: unknown): string | null {
   return typeof name === "string" && name.trim() ? name : null;
 }
 
-function toDto(row: AgentRow): GuidDto {
+function toDto(
+  row: AgentRow,
+  partnerNames: ReadonlyMap<string, string> = new Map(),
+): GuidDto {
   return {
     id: row.id,
     name: agentName(row.config),
@@ -80,6 +85,9 @@ function toDto(row: AgentRow): GuidDto {
     customized: row.customized,
     keyState: row.keyState,
     updatedByPartnerId: row.updatedByPartnerId,
+    updatedByPartnerName: row.updatedByPartnerId
+      ? (partnerNames.get(row.updatedByPartnerId) ?? null)
+      : null,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -136,7 +144,19 @@ export async function listGuids(
     where: { kind: "guid", workspaceId: ctx.workspaceId },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
   });
-  return rows.map(toDto);
+  // "Alterado por <parceiro> em <data>" (§6). RLS shows only the request's
+  // partner, the one that manages this workspace.
+  const partnerIds = [
+    ...new Set(rows.flatMap((row) => row.updatedByPartnerId ?? [])),
+  ];
+  const partners = partnerIds.length
+    ? await tx.partner.findMany({
+        where: { id: { in: partnerIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const names = new Map(partners.map((partner) => [partner.id, partner.name]));
+  return rows.map((row) => toDto(row, names));
 }
 
 /**

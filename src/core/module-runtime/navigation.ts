@@ -594,7 +594,7 @@ export function buildPlatformNavigation(
 
 /**
  * Partner console sidebar (/admin, ADR 0012): driven by partner grants. The
- * AI screens (A3b) also need the module flag, passed by the layout.
+ * AI screens (A3b and A3c) also need the module flag, passed by the layout.
  */
 export function buildPartnerNavigation(
   grants: Grants,
@@ -608,6 +608,12 @@ export function buildPartnerNavigation(
                 id: "partner.ai.assistant",
                 label: "Assistente GUIDU",
                 href: "/admin/ai/assistant",
+                iconKey: "bot",
+              }),
+              item({
+                id: "partner.ai.guids",
+                label: "GUIDS dos clientes",
+                href: "/admin/ai/guids",
                 iconKey: "bot",
               }),
             ]

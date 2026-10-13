@@ -1,15 +1,24 @@
 /**
  * Page of the AI agents module. The prototype left in A2a (D-AG-11); the
  * screens of the GUIDS arrive in A4. Until then the page says the module is
- * unavailable (flag off) or under construction (flag on).
+ * unavailable (flag off) or under construction (flag on); with the flag on
+ * it lists the workspace's GUIDS with the partner's last change, "Alterado
+ * por <parceiro> em <data>" (A3c, especificação §6).
  */
 
 import { Bot, Clock } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getFormatter, getTranslations } from "next-intl/server";
+import { Badge } from "@/components/ui/badge";
 import { requireUserPage } from "@/core/auth/page-guard";
+import { resolveModulePageAccess } from "@/core/module-runtime/page-access";
+import { Permissions } from "@/core/permissions/catalog";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
 import { prisma } from "@/lib/prisma/client";
+import { withContext } from "@/lib/prisma/with-context";
+import { listGuids } from "@/modules/ai-agents/server/services/agents";
+
+const STATUSES = new Set(["draft", "active", "paused"]);
 
 export async function generateMetadata() {
   const t = await getTranslations("aiAgents");
@@ -27,11 +36,28 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
   const identity = await requireUserPage(currentPath);
 
   // Membership is checked even with nothing to show.
-  await resolveRequestWorkspaceContext(prisma, identity.userId, workspaceSlug);
+  const context = await resolveRequestWorkspaceContext(
+    prisma,
+    identity.userId,
+    workspaceSlug,
+  );
 
-  const notice = isModuleTechnicallyAvailable("ai-agents")
-    ? "building"
-    : "unavailable";
+  const available = isModuleTechnicallyAvailable("ai-agents");
+  const notice = available ? "building" : "unavailable";
+  const guids = available
+    ? await withContext(prisma, context, async (tx) => {
+        const access = await resolveModulePageAccess(
+          tx,
+          context,
+          "ai-agents",
+          Permissions.AI_AGENTS_USE,
+        );
+        return access.kind === "ok" ? listGuids(tx, context) : [];
+      })
+    : [];
+  const format = await getFormatter();
+  const date = (iso: string) =>
+    format.dateTime(new Date(iso), { dateStyle: "short" });
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -60,6 +86,40 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
           {t(`${notice}.body`)}
         </p>
       </div>
+
+      {guids.length > 0 ? (
+        <ul
+          className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs"
+          data-testid="workspace-guids"
+        >
+          {guids.map((guid) => (
+            <li
+              key={guid.id}
+              className="flex flex-wrap items-center justify-between gap-2 p-4"
+              data-testid="workspace-guid"
+            >
+              <div className="min-w-0 space-y-1">
+                <p className="text-14 text-text font-medium">
+                  {guid.name ?? t("guids.unnamed")}
+                </p>
+                <p className="text-12 text-text-secondary">
+                  {guid.updatedByPartnerName
+                    ? t("guids.changedByPartner", {
+                        partner: guid.updatedByPartnerName,
+                        date: date(guid.updatedAt),
+                      })
+                    : t("guids.updated", { date: date(guid.updatedAt) })}
+                </p>
+              </div>
+              <Badge variant="secondary">
+                {STATUSES.has(guid.status)
+                  ? t(`guids.status.${guid.status}`)
+                  : guid.status}
+              </Badge>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }
