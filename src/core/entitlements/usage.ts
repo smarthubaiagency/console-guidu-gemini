@@ -5,6 +5,7 @@ import type {
   ContextTransaction,
   RequestContext,
 } from "@/lib/prisma/with-context";
+import { aiAgentsQuotaUsage } from "@/modules/ai-agents/quotas";
 import { crmQuotaUsage } from "@/modules/crm/quotas";
 import { portfolioQuotaUsage } from "@/modules/portfolio/quotas";
 import { helloWorldQuotaUsage } from "@/modules/hello-world/quotas";
@@ -30,6 +31,7 @@ const MODULE_USAGE: Readonly<Record<string, UsageCounter>> = {
   ...crmQuotaUsage,
   ...portfolioQuotaUsage,
   ...helloWorldQuotaUsage,
+  ...aiAgentsQuotaUsage,
 };
 
 export type UsageRow = Readonly<{

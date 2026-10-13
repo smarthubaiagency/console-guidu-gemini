@@ -28,6 +28,10 @@ const domainTables = [
   "agent_configs",
   "agent_sessions",
   "agent_messages",
+  "ai_agent_templates",
+  "ai_agents",
+  "ai_agent_referrals",
+  "ai_lead_activities",
 ] as const;
 
 describeDatabase(

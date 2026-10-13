@@ -1,15 +1,17 @@
 import { defineModuleManifest } from "@/core/module-contracts/manifest";
 
+/** GUIDS per workspace (D-AG-16): 1 to 3 by plan, also with the customer key. */
+export const AI_AGENTS_MAX_QUOTA = "ai-agents.max";
+
 /**
- * Agentes de IA — congelado pela C04 (ver docs/modules/ai-agents/ESTADO.md).
- * As permissões `ai_agents.*` continuam no catálogo do núcleo; a especificação
- * do módulo está em rascunho e não é preenchida aqui.
+ * Agentes de IA (GUIDS), especificação v1.0 em docs/modules/ai-agents. Fica
+ * atrás da flag GUIDU_MODULE_AI_AGENTS_ENABLED até a A4 (ESTADO.md). As
+ * permissões `ai_agents.*` estão no catálogo do núcleo.
  */
 export const aiAgentsManifest = defineModuleManifest({
   moduleKey: "ai-agents",
   displayName: "Agentes de IA",
-  description:
-    "Assistentes contextuais (congelado até a especificação ser aprovada).",
+  description: "GUIDS: agentes de IA que atendem os contatos do workspace.",
   moduleVersion: "0.0.0",
   contractVersion: "1.0.0",
   platformCompatibility: { minPlatformVersion: "0.1.0" },
@@ -29,6 +31,14 @@ export const aiAgentsManifest = defineModuleManifest({
       iconKey: "bot",
       order: 30,
       requiredPermissions: ["ai_agents.use"],
+    },
+  ],
+  entitlements: [
+    {
+      key: AI_AGENTS_MAX_QUOTA,
+      kind: "quota",
+      description: "Agentes de IA (GUIDS) por workspace.",
+      defaultLimit: 1,
     },
   ],
   // Export and purge of its rows (F3e): src/modules/ai-agents/data.ts.

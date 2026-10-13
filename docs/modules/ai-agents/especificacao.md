@@ -78,7 +78,7 @@ O módulo tem duas verticais sobre **um motor único** **[Decidido]**:
 
 ### 5.1 Quantidade, modelos e personalização
 
-- **De 1 a 3 GUIDS por workspace, conforme o plano** **[Decidido]**. O limite vale mesmo com a chave do cliente (BYOK). É o limite `ai_agents.max` do contrato do plano, aplicado no servidor no momento da criação (mesmo padrão das quotas da F3).
+- **De 1 a 3 GUIDS por workspace, conforme o plano** **[Decidido]**. O limite vale mesmo com a chave do cliente (BYOK). É o limite `ai-agents.max` do contrato do plano (padrão 1 no manifesto do módulo), aplicado no servidor no momento da criação (mesmo padrão das quotas da F3).
 - **A escolha do modelo é obrigatória** **[Decidido]**. Os modelos prontos (SDR, agendador, suporte e o que a casa e o parceiro publicarem) carregam a configuração; a opção **Personalizado** começa vazia e exige os **campos mínimos** para o agente funcionar ([campos.md](campos.md), seção 9). Qualquer GUIDS pode ser personalizado depois: num plano de 1, o cliente usa a configuração padrão ou personaliza a sua.
 - **Origem e versão:** o GUIDS guarda o modelo de origem e a versão. **[Proposta]** Uma nova versão do modelo não altera GUIDS existentes; o parceiro ou o cliente aplica a atualização quando quiser, com a diferença mostrada antes.
 - **Os dados iniciais** trazem os dois presets do legado (Anna, SDR, e Assistente de Onboarding) como modelos da casa.
@@ -122,6 +122,7 @@ Os GUIDS atendem pela camada de canais do núcleo, com o Chatwoot via Agent Bot 
 - A RLS das tabelas de configuração aceita o membro de um parceiro com essa permissão quando o workspace pertence ao parceiro (`organizations.partner_id` da empresa do workspace). Só nas tabelas de configuração; as de conversa, lead e base não mudam.
 - Toda alteração pelo parceiro é auditada, com antes e depois sem segredo, e o cliente vê no GUIDS: "Alterado por <parceiro> em <data>".
 - A casa, como parceiro zero, faz o mesmo para os clientes diretos.
+- Na A1, as indicações (`ai_agent_referrals`) ficam só com o workspace, como os outros dados do cliente. Se o parceiro precisar editá-las pelo `/admin` (seção 5.2), a política entra na A3, junto com a tela.
 
 ## 7. Motor: execução
 
@@ -157,7 +158,7 @@ Os GUIDS atendem pela camada de canais do núcleo, com o Chatwoot via Agent Bot 
 | Chave                            | De quem                                                                       | Usada por                                                                        |
 | -------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | **Chave do cliente**             | Workspace (BYOK, cofre que já existe)                                         | Os GUIDS do workspace                                                            |
-| **Chave do admin**               | Parceiro (a casa tem a sua), num cofre de credenciais do parceiro, novo na A1 | O Assistente GUIDU do parceiro, no `/admin` e nas dúvidas dos clientes no `/app` |
+| **Chave do admin**               | Parceiro (a casa tem a sua), num cofre de credenciais do parceiro, novo na A2 | O Assistente GUIDU do parceiro, no `/admin` e nas dúvidas dos clientes no `/app` |
 | **Chave da plataforma (backup)** | Casa, cadastrada no `/platform`                                               | Só como backup dos GUIDS (seção 9.2)                                             |
 
 Provedores do cofre: OpenAI, Anthropic, Gemini e, novo, **OpenRouter** (o legado usava). A lista de modelos é consultada no provedor com a chave escolhida, por capacidade (chat, áudio, embeddings).
@@ -174,7 +175,7 @@ Provedores do cofre: OpenAI, Anthropic, Gemini e, novo, **OpenRouter** (o legado
 ### 9.3 Consumo e limites
 
 - Medido por agente e por dono: tokens de entrada e saída por modelo, embeddings, segundos de áudio transcritos, caracteres sintetizados e mensagens entregues, numa tabela nova `ai_usage_events`, com a chave usada (cliente, admin ou backup). Hoje o consumo da plataforma é a contagem de registros por módulo (F3); o consumo de IA é o primeiro medido por evento.
-- Limite de plano só para clientes: `ai_agents.max` (1 a 3). O parceiro tem um Assistente, sem limite de plano **[Decidido]**.
+- Limite de plano só para clientes: `ai-agents.max` (1 a 3). O parceiro tem um Assistente, sem limite de plano **[Decidido]**.
 - **[Em aberto]** Limites técnicos contra abuso e laço (turnos por conversa e por contato) e o que fazer quando uma quota de consumo do cliente acabar (D-AG-10).
 
 ## 10. Base de conhecimento
@@ -216,7 +217,7 @@ Toda tabela tem RLS forçado ([ADR 0001](../../adr/0001-prisma-como-caminho-unic
 
 - **Configuração em JSON tipado por aba**, com um schema Zod por versão: clonar um modelo copia o documento inteiro, então um campo novo nunca fica para trás (no legado, um clone sem `tools` ou sem score ficava mudo, sem erro). Ficam como colunas só o que é filtrado ou tem restrição.
 - **Unicidade:** um `assistant` por parceiro (índice único parcial).
-- **Tabelas do protótipo** (`agent_configs`, `agent_sessions`, `agent_messages`): não têm dados de produção; a A1 as substitui por migration e a A2 remove o código do protótipo **[Proposta]**.
+- **Tabelas do protótipo** (`agent_configs`, `agent_sessions`, `agent_messages`): não têm dados de produção; ficam até a A2, que as remove junto com o código do protótipo **[Decidido em 13/10/2026]**.
 
 ## 13. Telas
 
@@ -256,7 +257,7 @@ Todas seguem o shadcn (ADR 0014), a gaveta interna (ADR 0015) e o SmartStatusBan
 | D-AG-04                             | Primeiro canal                                                                               | **Decidido:** Chatwoot via Agent Bot    |
 | D-AG-05 a D-AG-09, D-AG-12, D-AG-13 | Regras de canais                                                                             | Como na v0.3, em [canais.md](canais.md) |
 | D-AG-10                             | Quotas de consumo do cliente e comportamento ao esgotar                                      | Em aberto (Comercial)                   |
-| D-AG-11                             | Tabelas do protótipo                                                                         | Proposta: substituir na A1              |
+| D-AG-11                             | Tabelas do protótipo                                                                         | **Decidido:** saem na A2                |
 | D-AG-14                             | Duas verticais sobre um motor único                                                          | **Decidido**                            |
 | D-AG-15                             | Um Assistente por parceiro, pré-configurado e editável                                       | **Decidido**                            |
 | D-AG-16                             | De 1 a 3 GUIDS por plano, mesmo com BYOK; qualquer um pode ser personalizado                 | **Decidido**                            |
@@ -289,7 +290,7 @@ Uma PR por etapa, cada uma com o "pode começar" do Marcelo. A A0 corre em paral
 | Etapa     | Entrega                                                                                                                                                                                  |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **A0**    | Esta especificação, [campos.md](campos.md), [canais.md](canais.md), ADR 0017 e revisão da ADR 0012                                                                                       |
-| **A1**    | Migrations, RLS (com o acesso do parceiro à configuração), limite `ai_agents.max`, dados iniciais (modelo de admin, Anna e Onboarding, um Assistente por parceiro), testes de isolamento |
+| **A1**    | Migrations, RLS (com o acesso do parceiro à configuração), limite `ai-agents.max`, dados iniciais (modelo de admin, Anna e Onboarding, um Assistente por parceiro), testes de isolamento |
 | **CRM-P** | Campos personalizados do contato no CRM, com as flags da IA e os valores ([variaveis.md](variaveis.md))                                                                                  |
 | **A2**    | Motor: runtime com o SDK, renderizador e variáveis, chaves com backup, ferramentas, pontuação, consumo e auditoria; remove o protótipo                                                   |
 | **A3**    | Telas do `/platform` e do `/admin` (modelos, Assistente, GUIDS dos clientes)                                                                                                             |

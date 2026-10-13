@@ -154,6 +154,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_BILLING_MANAGE,
     Permissions.PLATFORM_OPERATIONS_READ,
     Permissions.PLATFORM_LANGUAGES_MANAGE,
+    Permissions.PLATFORM_AI_MANAGE,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -166,6 +167,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_BILLING_READ,
     Permissions.PLATFORM_OPERATIONS_READ,
     Permissions.PLATFORM_LANGUAGES_MANAGE,
+    Permissions.PLATFORM_AI_MANAGE,
   ]),
   billing: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -203,7 +205,9 @@ export const PARTNER_ROLES: readonly PartnerRoleKey[] = [
 /**
  * Partner console permissions (especificação de parceiros §1.2). No partner
  * role reads workspace data; support access comes with a temporary grant
- * (P4b). Billing (P5m) is read by owner, admin and finance and managed by
+ * (P4b). The configuration of the customers' GUIDS is the exception decided
+ * for AI agents (A1, D-AG-17): read by owner, admin and support, edited by
+ * owner and admin; conversations still need the grant. Billing (P5m) is read by owner, admin and finance and managed by
  * owner and finance; partner_support never sees money.
  */
 export const PARTNER_ROLE_PERMISSIONS: Record<
@@ -220,6 +224,8 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_SUPPORT_REQUEST,
     Permissions.PARTNER_BILLING_READ,
     Permissions.PARTNER_BILLING_MANAGE,
+    Permissions.PARTNER_AI_AGENTS_READ,
+    Permissions.PARTNER_AI_AGENTS_MANAGE,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
@@ -229,6 +235,8 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_LEGAL_MANAGE,
     Permissions.PARTNER_SUPPORT_REQUEST,
     Permissions.PARTNER_BILLING_READ,
+    Permissions.PARTNER_AI_AGENTS_READ,
+    Permissions.PARTNER_AI_AGENTS_MANAGE,
   ]),
   partner_finance: new Set([
     Permissions.PARTNER_READ,
@@ -240,6 +248,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_READ,
     Permissions.PARTNER_CUSTOMERS_READ,
     Permissions.PARTNER_SUPPORT_REQUEST,
+    Permissions.PARTNER_AI_AGENTS_READ,
   ]),
 };
 
