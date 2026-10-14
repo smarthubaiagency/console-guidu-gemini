@@ -5,8 +5,9 @@
  *
  * Maintenance Rationale:
  * - Validates Specification Section 11, Section 15 & ADR 0009:
- *   - Sidebar navigation provides separate links for "Assistentes MCP" (/settings/mcp)
- *     and "API e Webhooks" (/settings/api).
+ *   - The settings submenu card (CF1, reached by the sidebar's single
+ *     "Configurações" entry) provides separate links for "Assistentes MCP"
+ *     (/settings/mcp) and "API e Webhooks" (/settings/api).
  *   - Breadcrumbs dynamically reflect the correct hierarchy for each route.
  *   - Route switching between settings sub-pages maintains consistent navigation state.
  * ============================================================================
@@ -19,6 +20,7 @@ import {
   signIn,
   uniqueEmail,
 } from "../../e2e/support/identity";
+import { sidebar } from "../../e2e/support/sidebar";
 
 test.describe("MCP & API Sidebar Navigation and Breadcrumbs", () => {
   test("Tier 1 & 3: Sidebar contains distinct links for Assistentes MCP and API e Webhooks", async ({
@@ -39,21 +41,19 @@ test.describe("MCP & API Sidebar Navigation and Breadcrumbs", () => {
 
     await signIn(page, email);
     await page.goto(`/app/${wsSlug}`);
+    await sidebar(page).getByRole("link", { name: "Configurações" }).click();
+    const settingsNav = page.getByTestId("settings-nav");
 
-    // Verify presence of "Assistentes MCP" in sidebar
-    const mcpSidebarLink = page
-      .getByRole("link", {
-        name: /(Assistentes MCP|Assistentes conectados \(MCP\))/i,
-      })
-      .or(page.locator(`aside a[href*="/settings/mcp"]`).first());
+    // Verify presence of "Assistentes MCP" in the settings submenu
+    const mcpSidebarLink = settingsNav.getByRole("link", {
+      name: /(Assistentes MCP|Assistentes conectados \(MCP\))/i,
+    });
     await expect(mcpSidebarLink).toBeVisible();
 
-    // Verify presence of "API e Webhooks" in sidebar
-    const apiSidebarLink = page
-      .getByRole("link", {
-        name: /(API e Webhooks|Chaves de API)/i,
-      })
-      .or(page.locator(`aside a[href*="/settings/api"]`).first());
+    // Verify presence of "API e Webhooks" in the settings submenu
+    const apiSidebarLink = settingsNav.getByRole("link", {
+      name: /(API e Webhooks|Chaves de API)/i,
+    });
     await expect(apiSidebarLink).toBeVisible();
 
     // Click "Assistentes MCP" and verify landing page & URL
