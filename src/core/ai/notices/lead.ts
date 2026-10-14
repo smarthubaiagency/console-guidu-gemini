@@ -31,11 +31,13 @@ import { format, promptLocale, promptTexts } from "../prompt/texts";
  * - WhatsApp: a signed POST to the partner's webhook; the partner's flow
  *   sends it from the merchant's Assistant number (Marcelo, 14/10/2026).
  * - E-mail and SMS wait for a provider: the notice is kept, skipped.
- * The panel lists every notice with its state.
+ * The panel lists every notice with its state. A referral the GUIDS gives
+ * a contact (A6b) is told the same way, with its own event.
  */
 
 export const LEAD_NOTICE_JOB_KIND = "ai-agents.lead-notice";
 export const LEAD_NOTICE_EVENT = "lead.hot";
+export const REFERRAL_NOTICE_EVENT = "referral.recommended";
 
 type Rules = AgentConfig["rules"];
 
@@ -87,7 +89,62 @@ export async function recordLeadNotice(
   });
   if (created.count === 0) return null;
   const row = await tx.aiLeadNotice.findFirstOrThrow({
-    where: { agentId: notice.agentId, contactId: notice.contactId },
+    where: {
+      kind: "lead",
+      agentId: notice.agentId,
+      contactId: notice.contactId,
+    },
+    select: { id: true },
+  });
+  await enqueueJob(
+    tx,
+    ctx,
+    leadNoticeJob,
+    { noticeId: row.id },
+    { idempotencyKey: `lead-notice:${row.id}` },
+  );
+  return row.id;
+}
+
+/**
+ * A referral given to a contact, told to the merchant (A6b, Marcelo
+ * 14/10/2026: the merchant tells the referral, never GUIDU). Once per
+ * conversation and referral; only when the agent's "avisar a indicação"
+ * (`partner_referral_notify`) is on.
+ */
+export async function recordReferralNotice(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  notice: Readonly<{
+    agentId: string;
+    contactId: string | null;
+    conversationId: string;
+    referralId: string;
+    reasonText: string;
+    rules: Rules;
+  }>,
+): Promise<string | null> {
+  const created = await tx.aiLeadNotice.createMany({
+    data: {
+      kind: "referral",
+      organizationId: ctx.organizationId,
+      workspaceId: ctx.workspaceId,
+      agentId: notice.agentId,
+      contactId: notice.contactId,
+      conversationId: notice.conversationId,
+      referralId: notice.referralId,
+      reasonText: notice.reasonText.slice(0, 500),
+      channel: notice.rules.notify_channel ?? "whatsapp",
+    },
+    skipDuplicates: true,
+  });
+  if (created.count === 0) return null;
+  const row = await tx.aiLeadNotice.findFirstOrThrow({
+    where: {
+      kind: "referral",
+      conversationId: notice.conversationId,
+      referralId: notice.referralId,
+    },
     select: { id: true },
   });
   await enqueueJob(
@@ -148,6 +205,31 @@ export function noticeText(config: AgentConfig, facts: NoticeFacts): string {
   });
 }
 
+export type ReferralFacts = Readonly<{
+  agentName: string;
+  contact: Readonly<{ name: string; phone: string | null }> | null;
+  referral: Readonly<{ name: string; phone: string | null }>;
+  reason: string;
+}>;
+
+/** The merchant's text of a referral, in the agent's language. */
+export function referralNoticeText(
+  config: AgentConfig,
+  facts: ReferralFacts,
+): string {
+  const texts = promptTexts(
+    promptLocale(config.overview.language),
+  ).referralNotice;
+  return format(texts.text, {
+    agent: facts.agentName,
+    referral: facts.referral.name,
+    referralPhone: facts.referral.phone ?? "-",
+    name: facts.contact?.name ?? texts.unknownContact,
+    phone: facts.contact?.phone ?? "-",
+    reason: facts.reason.replace(/[\s.!?]+$/, "") || "-",
+  });
+}
+
 /** `sha256=<hex>` of `<timestamp>.<body>` with the partner's secret. */
 export function signNotice(
   secret: string,
@@ -175,6 +257,7 @@ type Prepared =
   | Readonly<{ kind: "done"; status: string }>
   | Readonly<{
       kind: "send";
+      event: string;
       url: string;
       secret: string;
       body: string;
@@ -219,44 +302,90 @@ async function prepare(
   >`select url, encrypted_secret from private.ai_notice_webhook()`;
   if (!webhook) return skip("no_webhook");
 
-  const [contact, workspace, activity] = await Promise.all([
-    tx.crmContact.findFirst({
-      where: { id: notice.contactId, workspaceId: ctx.workspaceId },
-      select: { name: true, phone: true, email: true },
-    }),
-    tx.workspace.findFirst({
-      where: { id: ctx.workspaceId },
-      select: { name: true },
-    }),
-    tx.aiLeadActivity.findFirst({
-      where: { agentId: notice.agentId, contactId: notice.contactId },
-      orderBy: { createdAt: "desc" },
-      select: { scoreBreakdown: true },
-    }),
-  ]);
-  if (!contact) return skip("no_contact");
+  const workspace = await tx.workspace.findFirst({
+    where: { id: ctx.workspaceId },
+    select: { name: true },
+  });
+  const contact = notice.contactId
+    ? await tx.crmContact.findFirst({
+        where: { id: notice.contactId, workspaceId: ctx.workspaceId },
+        select: { name: true, phone: true, email: true },
+      })
+    : null;
+  const agentName = config.overview.agent_name ?? "GUIDS";
+  const common = {
+    notice_id: notice.id,
+    created_at: notice.createdAt.toISOString(),
+    sent_at: now.toISOString(),
+    to: ownerPhone,
+    language: config.overview.language ?? "pt-BR",
+    agent: { id: notice.agentId, name: agentName },
+    workspace: { id: ctx.workspaceId, name: workspace?.name ?? null },
+    conversation_id: notice.conversationId,
+  };
+  const send = (event: string, body: Record<string, unknown>): Prepared => ({
+    kind: "send",
+    event,
+    url: webhook.url,
+    secret: decryptSecret(webhook.encrypted_secret),
+    body: JSON.stringify({ event, ...common, ...body }),
+  });
+
+  if (notice.kind === "referral") {
+    const referral = notice.referralId
+      ? await tx.aiAgentReferral.findFirst({
+          where: { id: notice.referralId, workspaceId: ctx.workspaceId },
+          select: { name: true, phone: true, specialties: true, city: true },
+        })
+      : null;
+    if (!referral) return skip("no_referral");
+    const reason = notice.reasonText ?? "";
+    return send(REFERRAL_NOTICE_EVENT, {
+      text: referralNoticeText(config, {
+        agentName,
+        contact,
+        referral,
+        reason,
+      }),
+      referral: {
+        id: notice.referralId,
+        name: referral.name,
+        phone: referral.phone,
+        specialties: referral.specialties,
+        city: referral.city,
+      },
+      reason,
+      lead: contact
+        ? {
+            contact_id: notice.contactId,
+            name: contact.name,
+            phone: contact.phone,
+            email: contact.email,
+          }
+        : null,
+    });
+  }
+
+  if (!contact || notice.points === null) return skip("no_contact");
+  const activity = await tx.aiLeadActivity.findFirst({
+    where: { agentId: notice.agentId, contactId: notice.contactId ?? "" },
+    orderBy: { createdAt: "desc" },
+    select: { scoreBreakdown: true },
+  });
   const reasons = Array.isArray(activity?.scoreBreakdown)
     ? (activity.scoreBreakdown as { label?: unknown }[])
         .map((item) => (typeof item.label === "string" ? item.label : ""))
         .filter(Boolean)
     : [];
-  const agentName = config.overview.agent_name ?? "GUIDS";
-  const temperature = notice.temperature as LeadTemperature;
-  const text = noticeText(config, {
-    agentName,
-    contact,
-    points: notice.points,
-    temperature,
-    reasons,
-  });
-  const body = JSON.stringify({
-    event: LEAD_NOTICE_EVENT,
-    notice_id: notice.id,
-    created_at: notice.createdAt.toISOString(),
-    sent_at: now.toISOString(),
-    to: ownerPhone,
-    text,
-    language: config.overview.language ?? "pt-BR",
+  const temperature = (notice.temperature ?? "hot") as LeadTemperature;
+  return send(LEAD_NOTICE_EVENT, {
+    text: noticeText(config, {
+      agentName,
+      contact,
+      points: notice.points,
+      temperature,
+      reasons,
+    }),
     lead: {
       contact_id: notice.contactId,
       name: contact.name,
@@ -266,16 +395,7 @@ async function prepare(
       temperature,
       reasons,
     },
-    agent: { id: notice.agentId, name: agentName },
-    workspace: { id: ctx.workspaceId, name: workspace?.name ?? null },
-    conversation_id: notice.conversationId,
   });
-  return {
-    kind: "send",
-    url: webhook.url,
-    secret: decryptSecret(webhook.encrypted_secret),
-    body,
-  };
 }
 
 function failureReason(error: unknown): string {
@@ -305,7 +425,7 @@ export async function deliverLeadNotice(
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-guidu-event": LEAD_NOTICE_EVENT,
+          "x-guidu-event": prepared.event,
           "x-guidu-timestamp": timestamp,
           "x-guidu-signature": signNotice(
             prepared.secret,
@@ -347,7 +467,7 @@ export function createLeadNoticeJob(deps: LeadNoticeDeps = {}) {
   return defineDetachedJob<LeadNoticePayload>({
     kind: LEAD_NOTICE_JOB_KIND,
     description:
-      "Aviso de lead quente ao responsável pelo webhook do parceiro.",
+      "Aviso ao responsável (lead quente ou indicação) pelo webhook do parceiro.",
     payload: LeadNoticePayload,
     maxAttempts: 3,
     expireInSeconds: 60,

@@ -1,6 +1,6 @@
 -- ============================================================================
 -- SQL lead notices (A6a): the partner's notice webhook and the GUIDS's
--- hot-lead notices.
+-- hot-lead notices; referral notices (A6b).
 --   workspace A a…011 (org a…010, house partner): owner a…031, viewer a…033
 --   workspace B a…021 (org a…020, house partner): owner a…032
 --   partner P b6…001 (created per block): d…004 partner_owner,
@@ -209,6 +209,84 @@ begin
     raise exception 'ai_lead_notices: B wrote a notice of A';
   exception when insufficient_privilege then null;
   end;
+end
+$$;
+rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test 4 (A6b): referral notices, once per conversation and referral, with
+-- the referral of their own workspace and no score
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+insert into public.ai_agent_referrals (id, organization_id, workspace_id, name, referral_tag, created_by) values
+  ('a6e00000-0000-4000-8000-0000000000a1', 'a0000000-0000-4000-8000-000000000010',
+   'a0000000-0000-4000-8000-000000000011', 'Indicação A', 'dermato', 'a0000000-0000-4000-8000-000000000031'),
+  ('a6e00000-0000-4000-8000-0000000000b1', 'a0000000-0000-4000-8000-000000000020',
+   'a0000000-0000-4000-8000-000000000021', 'Indicação B', 'dermato', 'a0000000-0000-4000-8000-000000000032');
+set local role app_runtime;
+do $$
+declare
+  conv uuid := gen_random_uuid();
+begin
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  -- The contact may not be in the CRM yet.
+  insert into public.ai_lead_notices
+    (organization_id, workspace_id, agent_id, kind, referral_id, reason_text, conversation_id, channel)
+  values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+          'a6b00000-0000-4000-8000-0000000000a1', 'referral', 'a6e00000-0000-4000-8000-0000000000a1',
+          'Quer tratar manchas', conv, 'whatsapp');
+  begin
+    insert into public.ai_lead_notices
+      (organization_id, workspace_id, agent_id, kind, referral_id, conversation_id, channel)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'a6b00000-0000-4000-8000-0000000000a1', 'referral', 'a6e00000-0000-4000-8000-0000000000a1',
+            conv, 'whatsapp');
+    raise exception 'ai_lead_notices: same referral twice in one conversation';
+  exception when unique_violation then null;
+  end;
+  begin
+    insert into public.ai_lead_notices
+      (organization_id, workspace_id, agent_id, kind, referral_id, conversation_id, channel)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'a6b00000-0000-4000-8000-0000000000a1', 'referral', 'a6e00000-0000-4000-8000-0000000000b1',
+            gen_random_uuid(), 'whatsapp');
+    raise exception 'ai_lead_notices: referral of another workspace';
+  exception when foreign_key_violation then null;
+  end;
+  begin
+    insert into public.ai_lead_notices
+      (organization_id, workspace_id, agent_id, kind, referral_id, conversation_id, points, temperature, channel)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'a6b00000-0000-4000-8000-0000000000a1', 'referral', 'a6e00000-0000-4000-8000-0000000000a1',
+            gen_random_uuid(), 60, 'hot', 'whatsapp');
+    raise exception 'ai_lead_notices: referral notice with a score';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.ai_lead_notices
+      (organization_id, workspace_id, agent_id, conversation_id, channel)
+    values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+            'a6b00000-0000-4000-8000-0000000000a1', gen_random_uuid(), 'whatsapp');
+    raise exception 'ai_lead_notices: lead notice without contact and score';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.ai_lead_notices set kind = 'lead';
+    raise exception 'ai_lead_notices: kind edited';
+  exception when insufficient_privilege then null;
+  end;
+end
+$$;
+-- Deleting the referral keeps the notice.
+reset role;
+delete from public.ai_agent_referrals where id = 'a6e00000-0000-4000-8000-0000000000a1';
+do $$
+begin
+  if (select count(*) from public.ai_lead_notices where kind = 'referral' and referral_id is null) <> 1 then
+    raise exception 'ai_lead_notices: notice lost with its referral';
+  end if;
 end
 $$;
 rollback;

@@ -83,6 +83,16 @@
         "cold": "frío",
         "suspect": "sospechoso"
       }
+    },
+    "referralNotice": {
+      "text": "{agent} recomendó a {referral} ({referralPhone}) para {name} ({phone}). Motivo: {reason}.",
+      "unknownContact": "un contacto aún sin registro"
+    },
+    "referral": {
+      "message": "Para eso, recomendamos a {referral}. Contacto: {phone}.",
+      "block": "Recomendaciones del negocio: profesionales y empresas que ustedes recomiendan cuando el pedido va más allá de lo que hacen. Cuando el pedido del contacto coincida con una de ellas, usa la herramienta de recomendación con la etiqueta y pasa al contacto el mensaje que devuelva. Nunca inventes una recomendación.",
+      "remote": "atiende a distancia",
+      "note": "Recomendado a {referral}: {reason}"
     }
   },
   "guids": {
@@ -202,7 +212,7 @@
     },
     "notices": {
       "title": "Avisos de lead",
-      "description": "Leads calientes avisados al responsable, una vez por contacto. WhatsApp sale por el webhook del socio; correo y SMS esperan un proveedor.",
+      "description": "Leads calientes (una vez por contacto) y recomendaciones del GUIDS, avisados al responsable. WhatsApp sale por el webhook del socio; correo y SMS esperan un proveedor.",
       "empty": "Aún no hay avisos.",
       "unknownContact": "Contacto eliminado",
       "score": "puntuación {points}",
@@ -224,8 +234,11 @@
         "sms_unavailable": "SMS no disponible",
         "no_contact": "contacto no encontrado",
         "invalid_config": "configuración inválida",
-        "delivery": "falla en la entrega ({code})"
-      }
+        "delivery": "falla en la entrega ({code})",
+        "no_referral": "recomendación eliminada"
+      },
+      "referral": "recomendado a {name}",
+      "unknownReferral": "recomendación eliminada"
     }
   },
   "errors": {

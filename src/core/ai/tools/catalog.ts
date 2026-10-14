@@ -17,7 +17,11 @@ import { AppError } from "@/shared/errors";
 
 import type { AgentConfig } from "../config/schema";
 import { scoreLead } from "../config/scoring";
-import { recordLeadNotice, shouldNotice } from "../notices/lead";
+import {
+  recordLeadNotice,
+  recordReferralNotice,
+  shouldNotice,
+} from "../notices/lead";
 import {
   AGENT_TOOL_IDS,
   type AgentKind,
@@ -123,8 +127,43 @@ type Definition = Readonly<{
   run: (input: Record<string, unknown>, toolCallId: string) => Promise<unknown>;
 }>;
 
+const MESSAGE_TAG = /\{\{\s*([a-z_]+\.[a-z_]+)\s*\}\}/g;
+
+/**
+ * The message to the contact for a referral (A6b): the agent's
+ * `partner_message_template` with `{{referral.*}}`, else the default text.
+ */
+export function referralMessage(
+  env: Pick<ToolEnv, "config" | "locale">,
+  referral: Readonly<{
+    name: string;
+    phone: string | null;
+    specialties: readonly string[];
+    city: string | null;
+  }>,
+): string {
+  const texts = promptTexts(env.locale).referral;
+  const values: Record<string, string> = {
+    "referral.name": referral.name,
+    "referral.phone": referral.phone ?? "-",
+    "referral.specialties": referral.specialties.join(", ") || "-",
+    "referral.city": referral.city ?? "-",
+  };
+  const template = env.config.rules.partner_message_template?.trim();
+  if (template) {
+    return template
+      .replace(MESSAGE_TAG, (match, key: string) => values[key] ?? match)
+      .slice(0, 2000);
+  }
+  return format(texts.message, {
+    referral: referral.name,
+    phone: referral.phone ?? "-",
+  });
+}
+
 function definitions(env: ToolEnv): Record<AgentTool, Definition> {
   const conversationId = env.conversationId;
+  const texts = promptTexts(env.locale);
   return {
     think: {
       description:
@@ -333,6 +372,73 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
           summary: String(input.summary).trim(),
         };
         return { handed_over: true };
+      },
+    },
+
+    refer_contact: {
+      description:
+        "Refer the contact to one of the business's referrals (listed in your instructions), by its tag, when the request is beyond what the business does. " +
+        "Give the reason in a few words. It returns the message to pass to the contact; the business is told.",
+      input: z.object({
+        referral_tag: z.string().min(1).max(80),
+        reason: z.string().min(1).max(500),
+      }),
+      run: async (input) => {
+        const ws = requireWorkspace(env);
+        const tag = String(input.referral_tag).trim();
+        const reason = String(input.reason).trim();
+        const referral = await env.db.transaction((tx) =>
+          tx.aiAgentReferral.findFirst({
+            where: { workspaceId: ws.workspaceId, referralTag: tag },
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              specialties: true,
+              city: true,
+            },
+          }),
+        );
+        if (!referral) {
+          throw restricted("unknown_referral", "Indicação não encontrada.");
+        }
+        const message = referralMessage(env, referral);
+        const result = {
+          referral: { name: referral.name, phone: referral.phone },
+          message_for_contact: message,
+        };
+        if (env.simulate) return { ...result, simulated: true };
+        const contactId =
+          env.state.contactId && env.state.contactId !== SIMULATED_CONTACT_ID
+            ? env.state.contactId
+            : null;
+        const stamp = env.now().toISOString().slice(0, 16).replace("T", " ");
+        await env.db.transaction(async (tx) => {
+          // The contact's history keeps the referral, when there is room.
+          if (contactId) {
+            const contact = await getContact(tx, ws, contactId);
+            const line = `[${stamp}] ${format(texts.referral.note, {
+              referral: referral.name,
+              reason,
+            })}`;
+            const notes = contact.notes ? `${contact.notes}\n${line}` : line;
+            if (notes.length <= MAX_NOTES) {
+              await updateContact(tx, ws, contactId, { notes });
+            }
+          }
+          // The merchant tells the referral, never GUIDU (A6b).
+          if (env.config.rules.partner_referral_notify) {
+            await recordReferralNotice(tx, ws, {
+              agentId: env.agentId,
+              contactId,
+              conversationId,
+              referralId: referral.id,
+              reasonText: reason,
+              rules: env.config.rules,
+            });
+          }
+        });
+        return result;
       },
     },
 

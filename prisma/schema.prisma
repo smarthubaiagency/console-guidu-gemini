@@ -808,16 +808,21 @@ model PartnerNoticeWebhook {
   @@map("partner_notice_webhooks")
 }
 
-/// A hot lead told to the merchant, once per agent and contact (A6a).
+/// A notice to the merchant (A6a, A6b): a hot lead, once per agent and
+/// contact, or a referral given, once per conversation and referral. The
+/// partial unique indexes live in the migrations.
 model AiLeadNotice {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId String    @map("organization_id") @db.Uuid
   workspaceId    String    @map("workspace_id") @db.Uuid
   agentId        String    @map("agent_id") @db.Uuid
-  contactId      String    @map("contact_id") @db.Uuid
+  kind           String    @default("lead")
+  contactId      String?   @map("contact_id") @db.Uuid
   conversationId String    @map("conversation_id") @db.Uuid
-  points         Int
-  temperature    String
+  referralId     String?   @map("referral_id") @db.Uuid
+  reasonText     String?   @map("reason_text")
+  points         Int?
+  temperature    String?
   channel        String
   status         String    @default("pending")
   reason         String?
@@ -825,7 +830,6 @@ model AiLeadNotice {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   sentAt         DateTime? @map("sent_at") @db.Timestamptz()
 
-  @@unique([agentId, contactId])
   @@index([agentId, createdAt(sort: Desc)])
   @@map("ai_lead_notices")
 }

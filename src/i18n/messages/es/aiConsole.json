@@ -249,6 +249,10 @@
       "propose_operation": {
         "label": "Proponer una acción",
         "desc": "Sugiere una acción que la persona confirma."
+      },
+      "refer_contact": {
+        "label": "Recomendar socio",
+        "desc": "Recomienda al contacto una de las recomendaciones registradas y avisa al responsable."
       }
     },
     "model": {

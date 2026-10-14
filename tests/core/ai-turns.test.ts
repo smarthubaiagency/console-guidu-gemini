@@ -745,10 +745,14 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
       status: "pending",
       conversationId: sent.conversationId,
     });
-    const run = await admin.jobRun.findFirstOrThrow({
-      where: { kind: LEAD_NOTICE_JOB_KIND, workspaceId: ids.workspaceA },
+    // The delivery job was queued for this notice.
+    await admin.jobRun.findFirstOrThrow({
+      where: {
+        kind: LEAD_NOTICE_JOB_KIND,
+        workspaceId: ids.workspaceA,
+        payload: { equals: { noticeId: notice.id } },
+      },
     });
-    expect(run.payload).toEqual({ noticeId: notice.id });
 
     const secret = "segredo-do-webhook-a6a";
     const sealed = encryptSecret(secret);
@@ -820,6 +824,189 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
     } finally {
       await admin.partnerNoticeWebhook.deleteMany({
         where: { partnerId: HOUSE },
+      });
+      await admin.aiAgent.update({
+        where: { id: GUID },
+        data: { config: base },
+      });
+    }
+  });
+
+  it("refers a contact and tells the merchant, never the referral (A6b)", async () => {
+    const base = guidConfig(credentialId);
+    const stored = {
+      ...base,
+      rules: {
+        ...base.rules,
+        owner_phone: "+5511988887777",
+        partner_referral_notify: true,
+        partner_message_template:
+          "Indicamos {{referral.name}} ({{referral.specialties}}): {{referral.phone}}.",
+      },
+      integration: { tools: ["think", "create_contact", "refer_contact"] },
+    };
+    await admin.aiAgent.update({
+      where: { id: GUID },
+      data: { config: stored },
+    });
+    await admin.aiAgentReferral.create({
+      data: {
+        organizationId: ids.organizationA,
+        workspaceId: ids.workspaceA,
+        name: "Dr. Paulo",
+        referralTag: "dermato",
+        specialties: ["dermatologia"],
+        phone: "+5511955554444",
+        createdBy: ids.userA,
+      },
+    });
+    const secret = "segredo-do-webhook-a6b";
+    const sealed = encryptSecret(secret);
+    await admin.partnerNoticeWebhook.create({
+      data: {
+        partnerId: HOUSE,
+        url: "https://198.51.100.21/guidu",
+        maskedSecret: sealed.maskedValue,
+        encryptedSecret: sealed.encryptedPayload,
+        updatedBy: ids.userA,
+      },
+    });
+    try {
+      // The test conversation: the GUIDS sees the referrals and the tool
+      // answers simulated, with the message for the contact.
+      const model = new MockLanguageModelV4({
+        doGenerate: [
+          toolStep([
+            {
+              name: "refer_contact",
+              input: {
+                referral_tag: "dermato",
+                reason: "Quer tratar manchas.",
+              },
+            },
+          ]),
+          textStep(JSON.stringify({ messages: ["Indicamos o Dr. Paulo."] })),
+        ],
+      });
+      const tested = await send("Vocês tratam manchas na pele?");
+      await runGuidTurn(session(tested.jobRunId, contextA), contextA, tested, {
+        createModel: () => model,
+      });
+      const prompt = JSON.stringify(model.doGenerateCalls[0]?.prompt);
+      expect(prompt).toContain("- Dr. Paulo (tag: dermato): dermatologia");
+      const simulated = await admin.aiMessage.findFirstOrThrow({
+        where: {
+          conversationId: tested.conversationId,
+          toolName: "refer_contact",
+        },
+      });
+      expect(JSON.parse(simulated.content)).toMatchObject({
+        result: {
+          message_for_contact:
+            "Indicamos Dr. Paulo (dermatologia): +5511955554444.",
+          simulated: true,
+        },
+      });
+      expect(await admin.aiLeadNotice.count({ where: { agentId: GUID } })).toBe(
+        0,
+      );
+
+      // Outside a test: a note on the contact and one notice per referral.
+      const parsed = parseAgentConfig("guid", 1, stored);
+      if (!parsed.success) throw new Error("invalid config");
+      const sent = await send("Quero indicação");
+      const env: ToolEnv = {
+        kind: "guid",
+        executionId: sent.jobRunId,
+        agentId: GUID,
+        conversationId: sent.conversationId,
+        config: parsed.data,
+        locale: promptLocale("pt-BR"),
+        db: session(sent.jobRunId, contextA),
+        workspace: contextA,
+        prisma: null,
+        now: () => new Date(),
+        state: { contactId: null, status: "active", memory: {}, records: [] },
+        simulate: false,
+      };
+      const tools = buildTools(env);
+      const call = (name: string, input: unknown) =>
+        (
+          tools[name]!.execute as unknown as (
+            input: unknown,
+            options: { toolCallId: string; messages: [] },
+          ) => Promise<unknown>
+        )(input, { toolCallId: `call-${name}`, messages: [] });
+      await call("create_contact", {
+        name: "Ana Lima",
+        phone: "+5511966665555",
+      });
+      const refer = { referral_tag: "dermato", reason: "Quer tratar manchas." };
+      await expect(call("refer_contact", refer)).resolves.toMatchObject({
+        ok: true,
+        result: { referral: { name: "Dr. Paulo" } },
+      });
+      await call("refer_contact", refer);
+      await expect(
+        call("refer_contact", { referral_tag: "nao-existe", reason: "x" }),
+      ).resolves.toMatchObject({ ok: false });
+      expect(env.state.records.map((r) => r.decision)).toEqual([
+        "allow",
+        "allow",
+        "allow",
+        "restrict",
+      ]);
+      const contact = await admin.crmContact.findUniqueOrThrow({
+        where: { id: env.state.contactId ?? "" },
+      });
+      expect(contact.notes).toMatch(
+        /Indicado para Dr\. Paulo: Quer tratar manchas\.$/,
+      );
+      const notices = await admin.aiLeadNotice.findMany({
+        where: { agentId: GUID },
+      });
+      expect(notices).toHaveLength(1);
+      expect(notices[0]).toMatchObject({
+        kind: "referral",
+        contactId: contact.id,
+        points: null,
+        reasonText: "Quer tratar manchas.",
+        status: "pending",
+      });
+
+      const posts: { url: string; init: RequestInit }[] = [];
+      const fetch = (async (url: string | URL, init: RequestInit = {}) => {
+        posts.push({ url: String(url), init });
+        return new Response("{}", { status: 200 });
+      }) as typeof globalThis.fetch;
+      await expect(
+        deliverLeadNotice(
+          session(crypto.randomUUID(), contextA),
+          contextA,
+          { noticeId: notices[0]!.id },
+          { fetch },
+        ),
+      ).resolves.toEqual({ status: "sent" });
+      const body = String(posts[0]!.init.body);
+      const headers = new Headers(posts[0]!.init.headers);
+      expect(headers.get("x-guidu-event")).toBe("referral.recommended");
+      expect(headers.get("x-guidu-signature")).toBe(
+        signNotice(secret, headers.get("x-guidu-timestamp") ?? "", body),
+      );
+      // To the merchant's phone; the referral's phone is data, not a target.
+      expect(JSON.parse(body)).toMatchObject({
+        event: "referral.recommended",
+        to: "+5511988887777",
+        text: "O Anna indicou Dr. Paulo (+5511955554444) para Ana Lima (+5511966665555). Motivo: Quer tratar manchas.",
+        referral: { name: "Dr. Paulo", phone: "+5511955554444" },
+        lead: { name: "Ana Lima" },
+      });
+    } finally {
+      await admin.partnerNoticeWebhook.deleteMany({
+        where: { partnerId: HOUSE },
+      });
+      await admin.aiAgentReferral.deleteMany({
+        where: { workspaceId: ids.workspaceA, referralTag: "dermato" },
       });
       await admin.aiAgent.update({
         where: { id: GUID },

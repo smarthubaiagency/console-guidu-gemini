@@ -249,6 +249,10 @@
       "propose_operation": {
         "label": "Propose an action",
         "desc": "Suggests an action the person confirms."
+      },
+      "refer_contact": {
+        "label": "Refer a partner",
+        "desc": "Refers the contact to one of the registered referrals and tells the person in charge."
       }
     },
     "model": {

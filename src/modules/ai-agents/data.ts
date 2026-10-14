@@ -113,8 +113,11 @@ export const aiAgentsDataContract: ModuleDataContract = {
       select: {
         id: true,
         agentId: true,
+        kind: true,
         contactId: true,
         conversationId: true,
+        referralId: true,
+        reasonText: true,
         points: true,
         temperature: true,
         channel: true,

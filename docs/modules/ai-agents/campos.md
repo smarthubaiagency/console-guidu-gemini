@@ -60,8 +60,8 @@ O status (`draft`, `active`, `paused`), o tipo de dono e o modelo de origem não
 | `refuses_pricing`                             | sim/não                         | P, C\*       | Não informa preços                                                                         |
 | `refuses_competitor_comparison`               | sim/não                         | P, C\*       | Não compara com concorrentes                                                               |
 | `refuses_delivery_commitment`                 | sim/não                         | P, C\*       | Não promete prazo                                                                          |
-| `partner_referral_notify`                     | sim/não                         | P, C\*       | Avisa a indicação ao encaminhar                                                            |
-| `partner_message_template`                    | texto com tags                  | P, C\*       | Mensagem de encaminhamento                                                                 |
+| `partner_referral_notify`                     | sim/não                         | P, C\*       | Avisa o comerciante quando o GUIDS indica alguém (A6b); nunca avisamos a indicação        |
+| `partner_message_template`                    | texto com tags                  | P, C\*       | Mensagem ao contato com a indicação (A6b), tags `{{referral.*}}`                          |
 
 **Regra de pontuação** (igual ao legado):
 
@@ -89,6 +89,8 @@ Tabela própria `ai_agent_referrals` (era a aba "Parceiros" do legado), editáve
 | `phone`        | telefone E.164 | Contato                         |
 | `city`         | texto          | Cidade                          |
 | `remote`       | sim/não        | Atende remoto                   |
+
+**[Decidido, A6b]** Encaminhamento: com a ferramenta `refer_contact` (só GUIDS, ligada na lista de ferramentas), o turno recebe a lista de indicações do workspace (até 50: nome, tag, especialidades, cidade, remoto) e o agente chama `refer_contact {referral_tag, reason}` quando a necessidade do contato casa com uma especialidade. A ferramenta devolve ao agente a mensagem para o contato: o `partner_message_template` com as tags `{{referral.name}}`, `{{referral.phone}}`, `{{referral.specialties}}` e `{{referral.city}}`, ou um texto padrão do idioma. Grava uma nota no contato ("Indicado para X: motivo"). Com `partner_referral_notify` ligado, avisa **o comerciante** pelo mesmo webhook do parceiro da A6a, uma vez por conversa e indicação: `event = referral.recommended`, `to` = `owner_phone`, `text`, `referral` (id, nome, telefone, especialidades, cidade), `reason` e `lead` (o contato, ou null se ainda não está no CRM). Avisar a indicação é do comerciante, nunca nosso (Marcelo, 14/10/2026: "nós >> cliente >> indicado"). No teste do agente a ferramenta é simulada e não grava nada.
 
 ## 5. Integração (`integration`)
 
