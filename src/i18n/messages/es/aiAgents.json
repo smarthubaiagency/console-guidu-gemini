@@ -35,7 +35,7 @@
       "auto_reply_only": "Fuera del horario, responde solo con un mensaje automático estándar."
     },
     "outOfScopeAction": {
-      "escalate_team": "Si la pregunta va más allá de lo que puedes responder, explica que la enviarás al equipo responsable.",
+      "escalate_team": "Si la pregunta va más allá de lo que puedes responder, avisa que la derivarás al equipo responsable y transfiere la conversación con la herramienta de transferencia.",
       "say_dont_know": "Si no sabes la respuesta, dilo con honestidad, sin inventar información."
     },
     "contactBlock": "Datos conocidos del contacto",
@@ -68,6 +68,21 @@
     "handoffNote": {
       "title": "Resumen de {agent} para el equipo",
       "reason": "Motivo de la transferencia: {reason}"
+    },
+    "hoursNow": {
+      "now": "Ahora es {weekday}, {date} {time} (zona horaria {timezone}).",
+      "open": "La atención está abierta ahora (horario: {hours}).",
+      "closed": "La atención está cerrada ahora (horario: {hours}).",
+      "autoReply": "¡Hola! En este momento estamos fuera del horario de atención ({hours}). Recibimos tu mensaje y te responderemos en cuanto abramos."
+    },
+    "leadNotice": {
+      "text": "Lead caliente en {agent}: {name} ({phone}), puntuación {score} ({temperature}). Motivos: {reasons}.",
+      "temperature": {
+        "hot": "caliente",
+        "warm": "tibio",
+        "cold": "frío",
+        "suspect": "sospechoso"
+      }
     }
   },
   "guids": {
@@ -183,6 +198,33 @@
         "audio": "audios",
         "image": "imágenes",
         "document": "documentos"
+      }
+    },
+    "notices": {
+      "title": "Avisos de lead",
+      "description": "Leads calientes avisados al responsable, una vez por contacto. WhatsApp sale por el webhook del socio; correo y SMS esperan un proveedor.",
+      "empty": "Aún no hay avisos.",
+      "unknownContact": "Contacto eliminado",
+      "score": "puntuación {points}",
+      "channels": {
+        "whatsapp": "WhatsApp",
+        "email": "correo",
+        "sms": "SMS"
+      },
+      "status": {
+        "pending": "En cola",
+        "sent": "Enviado",
+        "failed": "Falló",
+        "skipped": "No enviado"
+      },
+      "reasons": {
+        "no_webhook": "el socio no tiene webhook de avisos",
+        "no_owner_phone": "sin teléfono del responsable",
+        "email_provider_pending": "esperando proveedor de correo",
+        "sms_unavailable": "SMS no disponible",
+        "no_contact": "contacto no encontrado",
+        "invalid_config": "configuración inválida",
+        "delivery": "falla en la entrega ({code})"
       }
     }
   },

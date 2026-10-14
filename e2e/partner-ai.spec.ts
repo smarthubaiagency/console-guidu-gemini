@@ -128,6 +128,21 @@ test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
     await expect(page.getByTestId("assistant-state")).toContainText("Ativo");
     await expect(page.getByTestId("assistant-missing")).toHaveCount(0);
 
+    // The webhook of the hot-lead notices (A6a): the secret shows masked.
+    const webhook = page.getByTestId("notice-webhook");
+    await webhook
+      .getByLabel("Endereço do webhook")
+      .fill("https://hooks.example.com/guidu");
+    await webhook
+      .getByLabel("Segredo da assinatura")
+      .fill("segredo-de-assinatura-e2e");
+    await page.getByTestId("save-notice-webhook").click();
+    await expect(page.getByText("Webhook salvo.")).toBeVisible();
+    await expect(webhook.getByLabel("Segredo da assinatura")).toHaveValue("");
+    await expect(
+      webhook.getByText("Deixe em branco para manter"),
+    ).toBeVisible();
+
     await sidebar.getByRole("link", { name: "Modelos de agente" }).click();
     await expect(page.getByTestId("partner-ai-templates")).toBeVisible();
     await page.getByRole("link", { name: "Novo modelo" }).click();

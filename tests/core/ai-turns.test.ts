@@ -8,6 +8,11 @@ vi.mock("server-only", () => ({}));
 import { parseAgentConfig } from "@/core/ai/config/schema";
 import { promptLocale } from "@/core/ai/prompt/texts";
 import { buildTools, type ToolEnv } from "@/core/ai/tools/catalog";
+import {
+  deliverLeadNotice,
+  LEAD_NOTICE_JOB_KIND,
+  signNotice,
+} from "@/core/ai/notices/lead";
 import { createGuidTurnJob, runGuidTurn } from "@/core/ai/turn/guid";
 import { startAssistantTurn } from "@/core/ai/turn/assistant";
 import { encryptSecret } from "@/core/credentials/crypto";
@@ -671,10 +676,156 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
         where: { contactId: contact.id },
       }),
     ).toMatchObject({ points: 30, temperature: "warm", agentId: GUID });
+    // Below the hot threshold: nobody is told.
+    expect(await admin.aiLeadNotice.count({ where: { agentId: GUID } })).toBe(
+      0,
+    );
     // A conversation handed over takes no new message.
     await expect(send("Oi?", sent.conversationId)).rejects.toSatisfy(
       (e: unknown) => e instanceof AppError && e.code === "conflict",
     );
+  });
+
+  it("tells the merchant of a hot lead once, by the partner's webhook (A6a)", async () => {
+    const base = guidConfig(credentialId);
+    const stored = {
+      ...base,
+      rules: {
+        ...base.rules,
+        notify_on_score: 30,
+        owner_phone: "+5511988887777",
+      },
+    };
+    // The delivery reads the agent as stored.
+    await admin.aiAgent.update({
+      where: { id: GUID },
+      data: { config: stored },
+    });
+    const parsed = parseAgentConfig("guid", 1, stored);
+    if (!parsed.success) throw new Error("invalid config");
+    const sent = await send("Quero uma proposta");
+    const env: ToolEnv = {
+      kind: "guid",
+      executionId: sent.jobRunId,
+      agentId: GUID,
+      conversationId: sent.conversationId,
+      config: parsed.data,
+      locale: promptLocale("pt-BR"),
+      db: session(sent.jobRunId, contextA),
+      workspace: contextA,
+      prisma: null,
+      now: () => new Date(),
+      state: { contactId: null, status: "active", memory: {}, records: [] },
+      simulate: false,
+    };
+    const tools = buildTools(env);
+    const call = (name: string, input: unknown) =>
+      (
+        tools[name]!.execute as unknown as (
+          input: unknown,
+          options: { toolCallId: string; messages: [] },
+        ) => Promise<unknown>
+      )(input, { toolCallId: `call-${name}`, messages: [] });
+    await call("create_contact", {
+      name: "Maria Souza",
+      phone: "+5511977776666",
+    });
+    await call("score_lead", { rule_ids: ["pede_proposta"] });
+    await call("score_lead", { rule_ids: ["pede_proposta"] });
+
+    const notices = await admin.aiLeadNotice.findMany({
+      where: { agentId: GUID },
+    });
+    expect(notices).toHaveLength(1);
+    const notice = notices[0]!;
+    expect(notice).toMatchObject({
+      points: 30,
+      temperature: "warm",
+      channel: "whatsapp",
+      status: "pending",
+      conversationId: sent.conversationId,
+    });
+    const run = await admin.jobRun.findFirstOrThrow({
+      where: { kind: LEAD_NOTICE_JOB_KIND, workspaceId: ids.workspaceA },
+    });
+    expect(run.payload).toEqual({ noticeId: notice.id });
+
+    const secret = "segredo-do-webhook-a6a";
+    const sealed = encryptSecret(secret);
+    await admin.partnerNoticeWebhook.create({
+      data: {
+        partnerId: HOUSE,
+        url: "https://198.51.100.20/guidu",
+        maskedSecret: sealed.maskedValue,
+        encryptedSecret: sealed.encryptedPayload,
+        updatedBy: ids.userA,
+      },
+    });
+    try {
+      const posts: { url: string; init: RequestInit }[] = [];
+      let answer = new Response("ok", { status: 200 });
+      const fetch = (async (url: string | URL, init: RequestInit = {}) => {
+        posts.push({ url: String(url), init });
+        return answer;
+      }) as typeof globalThis.fetch;
+      const deliver = () =>
+        deliverLeadNotice(
+          session(crypto.randomUUID(), contextA),
+          contextA,
+          { noticeId: notice.id },
+          { fetch, now: () => new Date("2026-10-14T12:00:00Z") },
+        );
+
+      await expect(deliver()).resolves.toEqual({ status: "sent" });
+      expect(posts).toHaveLength(1);
+      const headers = new Headers(posts[0]!.init.headers);
+      const body = String(posts[0]!.init.body);
+      expect(posts[0]!.url).toBe("https://198.51.100.20/guidu");
+      expect(headers.get("x-guidu-event")).toBe("lead.hot");
+      expect(headers.get("x-guidu-signature")).toBe(
+        signNotice(secret, headers.get("x-guidu-timestamp") ?? "", body),
+      );
+      expect(JSON.parse(body)).toMatchObject({
+        event: "lead.hot",
+        to: "+5511988887777",
+        text: "Lead quente no Anna: Maria Souza (+5511977776666), score 30 (morno). Motivos: Pede proposta.",
+        lead: { name: "Maria Souza", score: 30, reasons: ["Pede proposta"] },
+        agent: { id: GUID, name: "Anna" },
+      });
+      // Sent once: running it again sends nothing.
+      await expect(deliver()).resolves.toEqual({ status: "sent" });
+      expect(posts).toHaveLength(1);
+
+      // A failure stays visible and the queue tries again.
+      await admin.aiLeadNotice.update({
+        where: { id: notice.id },
+        data: { status: "pending" },
+      });
+      answer = new Response("erro", { status: 500 });
+      await expect(deliver()).rejects.toThrow(/http_500/);
+      expect(
+        await admin.aiLeadNotice.findUniqueOrThrow({
+          where: { id: notice.id },
+        }),
+      ).toMatchObject({ status: "failed", reason: "http_500", attempts: 2 });
+
+      // Without a webhook the notice is kept, not sent.
+      await admin.partnerNoticeWebhook.delete({ where: { partnerId: HOUSE } });
+      await expect(deliver()).resolves.toEqual({ status: "skipped" });
+      expect(
+        await admin.aiLeadNotice.findUniqueOrThrow({
+          where: { id: notice.id },
+        }),
+      ).toMatchObject({ status: "skipped", reason: "no_webhook" });
+    } finally {
+      await admin.partnerNoticeWebhook.deleteMany({
+        where: { partnerId: HOUSE },
+      });
+      await admin.aiAgent.update({
+        where: { id: GUID },
+        data: { config: base },
+      });
+    }
   });
 
   it("tests a paused agent, and blocks a module turned off", async () => {
@@ -713,6 +864,103 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
         },
       }),
     ).toBe(1);
+  });
+
+  it("follows the business hours on a channel (A6c)", async () => {
+    const base = guidConfig(credentialId);
+    await admin.aiAgent.update({
+      where: { id: GUID },
+      data: {
+        config: {
+          ...base,
+          scope: {
+            timezone: "America/Sao_Paulo",
+            availability_slots: ["mon", "tue", "wed", "thu", "fri"].map(
+              (weekday) => ({ weekday, start: "08:00", end: "18:00" }),
+            ),
+          },
+          rules: {
+            ...base.rules,
+            after_hours_behavior: "auto_reply_only",
+            out_of_scope_action: "escalate_team",
+          },
+          integration: { tools: ["think"] },
+        },
+      },
+    });
+    try {
+      // A conversation from Chatwoot, not a test.
+      const sent = await send("Oi");
+      await admin.$executeRawUnsafe(
+        `update public.ai_conversations
+            set channel = 'chatwoot', channel_conversation_id = gen_random_uuid(), user_id = null
+          where id = '${sent.conversationId}'`,
+      );
+      const turn = async (text: string, local: string) => {
+        const message = await admin.aiMessage.create({
+          data: {
+            conversationId: sent.conversationId,
+            role: "user",
+            content: text,
+          },
+        });
+        const jobRunId = crypto.randomUUID();
+        return runGuidTurn(
+          session(jobRunId, contextA),
+          contextA,
+          { conversationId: sent.conversationId, messageId: message.id },
+          {
+            createModel: () => model,
+            now: () => new Date(`${local}:00-03:00`),
+          },
+        );
+      };
+      const model = new MockLanguageModelV4({
+        doGenerate: [textStep(JSON.stringify({ messages: ["Bom dia!"] }))],
+      });
+
+      // Sunday night: the fixed answer, without the model, once.
+      await expect(turn("Alguém aí?", "2026-10-18T22:00")).resolves.toEqual({
+        status: "after_hours_reply",
+        messages: 1,
+      });
+      await expect(turn("Oi??", "2026-10-18T23:00")).resolves.toEqual({
+        status: "after_hours_silent",
+      });
+      expect(model.doGenerateCalls).toHaveLength(0);
+      const replies = await admin.aiMessage.findMany({
+        where: { conversationId: sent.conversationId, role: "assistant" },
+      });
+      expect(replies).toHaveLength(1);
+      expect(replies[0]!.content).toContain(
+        "fora do horário de atendimento (seg-sex: 08:00 às 18:00)",
+      );
+      expect(replies[0]!.inputTokens).toBeNull();
+      expect(
+        await admin.aiUsageEvent.count({
+          where: { conversationId: sent.conversationId },
+        }),
+      ).toBe(0);
+
+      // Monday morning: the model answers, knowing it is open, and may
+      // hand out-of-scope questions over to the team.
+      await expect(turn("Bom dia", "2026-10-19T09:00")).resolves.toMatchObject({
+        status: "active",
+        messages: 1,
+      });
+      const call = model.doGenerateCalls[0]!;
+      const prompt = JSON.stringify(call.prompt);
+      expect(prompt).toContain("O atendimento está aberto agora");
+      expect(prompt).toContain("2026-10-19 09:00");
+      expect((call.tools ?? []).map((t) => t.name)).toEqual(
+        expect.arrayContaining(["think", "handoff"]),
+      );
+    } finally {
+      await admin.aiAgent.update({
+        where: { id: GUID },
+        data: { config: guidConfig(credentialId) },
+      });
+    }
   });
 
   it("records a provider failure without its details", async () => {

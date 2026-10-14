@@ -394,5 +394,21 @@
       "deleteTitle": "Delete referral",
       "deleteMessage": "The referral {name} stops receiving this customer's leads."
     }
+  },
+  "noticeWebhook": {
+    "title": "Hot lead notices (webhook)",
+    "description": "When a GUIDS of your customers finds a hot lead, GUIDU posts the notice to this address, signed with the secret. Your flow (n8n, Evolution) sends the message from the merchant's Assistant number to the person set in the GUIDS.",
+    "url": "Webhook address",
+    "secret": "Signing secret",
+    "secretHint": "At least 16 characters. The notice carries the X-Guidu-Signature header (HMAC SHA-256 of timestamp.body).",
+    "secretKeep": "Leave blank to keep the current secret.",
+    "enabled": "Send notices",
+    "save": "Save webhook",
+    "saved": "Webhook saved.",
+    "remove": "Remove webhook",
+    "removed": "Webhook removed.",
+    "removeTitle": "Remove the webhook?",
+    "removeMessage": "Lead notices stop going out until you add another one.",
+    "cancel": "Cancel"
   }
 }

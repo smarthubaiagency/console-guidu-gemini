@@ -12,6 +12,12 @@ import {
   revokePartnerCredential,
   saveBackupSettings,
 } from "@/core/ai/keys";
+import {
+  getNoticeWebhook,
+  removeNoticeWebhook,
+  saveNoticeWebhook,
+} from "@/core/ai/notices/webhook";
+import { decryptSecret } from "@/core/credentials/crypto";
 import { PermissionDeniedError } from "@/core/permissions/guard";
 import type { PartnerRoleKey } from "@/core/permissions/matrix";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
@@ -175,6 +181,83 @@ describeDatabase("A2a: engine keys", requiredVars, () => {
         }),
       ),
     ).rejects.toThrow();
+  });
+
+  it("keeps the partner's notice webhook with its secret encrypted (A6a)", async () => {
+    const SIGNING = "segredo-de-assinatura-123";
+    const save = (
+      input: unknown,
+      userId: string = ids.userA,
+      role: PartnerRoleKey = "partner_owner",
+    ) =>
+      asPartner(userId, role, (tx, actor) =>
+        saveNoticeWebhook(tx, actor, PARTNER, input),
+      );
+    const invalid = (e: unknown) =>
+      e instanceof AppError && e.code === "invalid_input";
+    // The first save needs the secret; the address must be https.
+    await expect(
+      save({ url: "https://hooks.a6.test/guidu" }),
+    ).rejects.toSatisfy(invalid);
+    await expect(
+      save({ url: "ftp://hooks.a6.test/guidu", secret: SIGNING }),
+    ).rejects.toSatisfy(invalid);
+    await expect(
+      save({ url: "https://hooks.a6.test/guidu", secret: "curto" }),
+    ).rejects.toSatisfy(invalid);
+
+    const created = await save({
+      url: "https://hooks.a6.test/guidu",
+      secret: SIGNING,
+    });
+    expect(created).toMatchObject({
+      url: "https://hooks.a6.test/guidu",
+      enabled: true,
+    });
+    expect(JSON.stringify(created)).not.toContain(SIGNING);
+    const row = await admin.partnerNoticeWebhook.findUniqueOrThrow({
+      where: { partnerId: PARTNER },
+    });
+    expect(row.encryptedSecret).not.toContain(SIGNING);
+    expect(decryptSecret(row.encryptedSecret)).toBe(SIGNING);
+
+    // A blank secret keeps the one saved.
+    await save({ url: "https://hooks.a6.test/outro", enabled: false });
+    const kept = await admin.partnerNoticeWebhook.findUniqueOrThrow({
+      where: { partnerId: PARTNER },
+    });
+    expect(kept).toMatchObject({
+      url: "https://hooks.a6.test/outro",
+      enabled: false,
+    });
+    expect(decryptSecret(kept.encryptedSecret)).toBe(SIGNING);
+    const audit = await admin.auditEvent.findFirst({
+      where: { action: "partner.ai_notice_webhook.save", resourceId: PARTNER },
+    });
+    expect(JSON.stringify(audit?.metadata)).not.toContain(SIGNING);
+
+    // Support neither reads nor writes it.
+    await expect(
+      asPartner(ids.userB, "partner_support", (tx, actor) =>
+        getNoticeWebhook(tx, actor, PARTNER),
+      ),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    await expect(
+      save(
+        { url: "https://hooks.a6.test/x", secret: SIGNING },
+        ids.userB,
+        "partner_owner",
+      ),
+    ).rejects.toThrow();
+
+    await asPartner(ids.userA, "partner_owner", (tx, actor) =>
+      removeNoticeWebhook(tx, actor, PARTNER),
+    );
+    expect(
+      await asPartner(ids.userA, "partner_owner", (tx, actor) =>
+        getNoticeWebhook(tx, actor, PARTNER),
+      ),
+    ).toBeNull();
   });
 
   it("saves the platform backup key and model, and clears the key", async () => {

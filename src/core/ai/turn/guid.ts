@@ -46,14 +46,25 @@ import {
 import { renderSystemPrompt } from "../prompt/render";
 import { promptLocale, promptTexts } from "../prompt/texts";
 import { buildTools, recordRefusedCall, type ToolEnv } from "../tools/catalog";
-import { contextValues } from "./context";
+import { contextValues, turnTimeZone } from "./context";
+import {
+  afterHoursReply,
+  businessHours,
+  hoursInstruction,
+  localStamp,
+} from "./hours";
 import {
   mediaTexts,
   type PreparedMedia,
   prepareMedia,
   type TurnAttachment,
 } from "./media";
-import { persistKeyFailure, persistTurn, persistTurnError } from "./persist";
+import {
+  persistAutoReply,
+  persistKeyFailure,
+  persistTurn,
+  persistTurnError,
+} from "./persist";
 import { ResponsePlan, turnErrorCode } from "./plan";
 import {
   speakAnswer,
@@ -152,8 +163,21 @@ type Ready = Readonly<{
   /** The key that hears and speaks (A5d); null: none. */
   voice: VoiceKey | null;
   systemPrompt: string;
+  /** The local time and the business hours, after the prompt (A6c). */
+  hoursNote: string;
   history: ModelMessage[];
   state: TurnState;
+}>;
+
+/**
+ * After hours with "auto reply only" (A6c): the fixed answer, once per
+ * closed period; null when this period was already answered.
+ */
+type AfterHours = Readonly<{
+  kind: "after_hours";
+  reply: string | null;
+  conversationId: string;
+  agentId: string;
 }>;
 
 function blocked(
@@ -170,7 +194,7 @@ async function loadTurn(
   payload: GuidTurnPayload,
   executionId: string,
   now: Date,
-): Promise<Ready | Blocked | { kind: "done" }> {
+): Promise<Ready | Blocked | AfterHours | { kind: "done" }> {
   // RLS shows the conversation only to who may read it.
   const conversation = await tx.aiConversation.findFirst({
     where: {
@@ -265,6 +289,39 @@ async function loadTurn(
     );
   }
   const config = parsed.data;
+  const timeZone = turnTimeZone(config);
+  const hours = businessHours(config.scope.availability_slots, now, timeZone);
+  // A test answers with the model at any hour, so it can pass at night.
+  if (
+    !test &&
+    !hours.open &&
+    config.rules.after_hours_behavior === "auto_reply_only"
+  ) {
+    const last = await tx.aiMessage.findFirst({
+      where: {
+        conversationId: conversation.id,
+        role: "assistant",
+        errorCode: null,
+        content: { not: "" },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { createdAt: true },
+    });
+    const answered =
+      last !== null &&
+      hours.closedSince !== null &&
+      localStamp(last.createdAt, timeZone) >= hours.closedSince;
+    return {
+      kind: "after_hours",
+      reply: answered
+        ? null
+        : afterHoursReply(
+            config,
+            promptTexts(promptLocale(config.overview.language)),
+          ),
+      ...ids,
+    };
+  }
   let key: TurnKey;
   if (agent.keyState === "backup") {
     const backup = await loadBackupKey(tx, agent.id);
@@ -420,6 +477,14 @@ async function loadTurn(
     key,
     voice,
     systemPrompt,
+    hoursNote: hoursInstruction(
+      config,
+      hours,
+      now,
+      timeZone,
+      config.overview.language ?? "pt-BR",
+      promptTexts(locale),
+    ),
     history: recent
       .reverse()
       .map((m): ModelMessage =>
@@ -467,6 +532,26 @@ export async function runGuidTurnWithState(
   );
   if (loaded.kind === "done") {
     return { result: { status: "already_answered" }, state: null };
+  }
+  if (loaded.kind === "after_hours") {
+    const { reply } = loaded;
+    if (reply === null) {
+      return { result: { status: "after_hours_silent" }, state: null };
+    }
+    await session.transaction((tx) =>
+      persistAutoReply(tx, {
+        conversationId: loaded.conversationId,
+        agentId: loaded.agentId,
+        executionId,
+        content: reply,
+        at: now(),
+        audit,
+      }),
+    );
+    return {
+      result: { status: "after_hours_reply", messages: 1 },
+      state: null,
+    };
   }
   if (loaded.kind === "blocked") {
     await session.transaction((tx) =>
@@ -572,9 +657,13 @@ export async function runGuidTurnWithState(
 
   // The tools keep their state between the two attempts: a contact
   // created by the first is not created again by the second.
-  const instructions = deps.answerLimits
-    ? `${loaded.systemPrompt}\n\n${limitsInstruction(env.locale, deps.answerLimits)}`
-    : loaded.systemPrompt;
+  const instructions = [
+    loaded.systemPrompt,
+    loaded.hoursNote,
+    ...(deps.answerLimits
+      ? [limitsInstruction(env.locale, deps.answerLimits)]
+      : []),
+  ].join("\n\n");
   const answerOnce = async (key: TurnKey, messages: ModelMessage[]) => {
     const result = await generateText({
       model: (deps.createModel ?? createChatModel)(key),

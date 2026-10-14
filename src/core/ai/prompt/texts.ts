@@ -41,6 +41,18 @@ export type PromptTexts = Readonly<{
   teamMessage: string;
   /** The private note of a handoff to the team (A5c). */
   handoffNote: Readonly<{ title: string; reason: string }>;
+  /** The local time and whether the business is open (A6c). */
+  hoursNow: Readonly<{
+    now: string;
+    open: string;
+    closed: string;
+    autoReply: string;
+  }>;
+  /** The hot-lead notice to the merchant (A6a). */
+  leadNotice: Readonly<{
+    text: string;
+    temperature: Readonly<Record<string, string>>;
+  }>;
 }>;
 
 function promptOf(messages: unknown): PromptTexts | null {

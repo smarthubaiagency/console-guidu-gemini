@@ -394,5 +394,21 @@
       "deleteTitle": "Excluir indicação",
       "deleteMessage": "A indicação {name} deixa de receber leads deste cliente."
     }
+  },
+  "noticeWebhook": {
+    "title": "Avisos de lead quente (webhook)",
+    "description": "Quando um GUIDS dos seus clientes encontra um lead quente, o GUIDU envia o aviso para este endereço, assinado com o segredo. O seu fluxo (n8n, Evolution) manda a mensagem pelo número do Assistente do comerciante, para o responsável cadastrado no GUIDS.",
+    "url": "Endereço do webhook",
+    "secret": "Segredo da assinatura",
+    "secretHint": "Pelo menos 16 caracteres. O aviso traz o cabeçalho X-Guidu-Signature (HMAC SHA-256 de timestamp.corpo).",
+    "secretKeep": "Deixe em branco para manter o segredo atual.",
+    "enabled": "Enviar avisos",
+    "save": "Salvar webhook",
+    "saved": "Webhook salvo.",
+    "remove": "Remover webhook",
+    "removed": "Webhook removido.",
+    "removeTitle": "Remover o webhook?",
+    "removeMessage": "Os avisos de lead deixam de sair até você cadastrar outro.",
+    "cancel": "Cancelar"
   }
 }

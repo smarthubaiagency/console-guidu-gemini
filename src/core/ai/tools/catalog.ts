@@ -17,6 +17,7 @@ import { AppError } from "@/shared/errors";
 
 import type { AgentConfig } from "../config/schema";
 import { scoreLead } from "../config/scoring";
+import { recordLeadNotice, shouldNotice } from "../notices/lead";
 import {
   AGENT_TOOL_IDS,
   type AgentKind,
@@ -194,8 +195,12 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
           unknown_rule_ids: score.unknown,
         };
         if (env.simulate) return { ...result, simulated: true };
-        await env.db.transaction((tx) =>
-          tx.aiLeadActivity.create({
+        const notice = shouldNotice(rules, {
+          points: score.points,
+          ruleIds: score.breakdown.map((item) => item.rule_id),
+        });
+        await env.db.transaction(async (tx) => {
+          await tx.aiLeadActivity.create({
             data: {
               organizationId: ws.organizationId,
               workspaceId: ws.workspaceId,
@@ -207,8 +212,19 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
               scoringRulesVersion: rules.scoring_rules_version ?? null,
             },
             select: { id: true },
-          }),
-        );
+          });
+          // The merchant hears of a hot lead once (A6a).
+          if (notice) {
+            await recordLeadNotice(tx, ws, {
+              agentId: env.agentId,
+              contactId,
+              conversationId,
+              points: score.points,
+              temperature: score.temperature,
+              rules,
+            });
+          }
+        });
         return result;
       },
     },
@@ -483,12 +499,31 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
   };
 }
 
+/**
+ * The agent's allowlist, plus what a rule implies: a GUIDS that sends
+ * out-of-scope questions to the team hands the conversation over (A6c).
+ */
+export function agentAllowlist(
+  kind: AgentKind,
+  config: AgentConfig,
+): readonly string[] {
+  const allowlist = config.integration.tools ?? [];
+  if (
+    kind === "guid" &&
+    config.rules.out_of_scope_action === "escalate_team" &&
+    !allowlist.includes("handoff")
+  ) {
+    return [...allowlist, "handoff"];
+  }
+  return allowlist;
+}
+
 /** The tools offered to the model: the agent's allowlist for its kind. */
 export function offeredTools(
   kind: AgentKind,
   config: AgentConfig,
 ): AgentTool[] {
-  const allowlist = config.integration.tools ?? [];
+  const allowlist = agentAllowlist(kind, config);
   return AGENT_TOOL_IDS.filter(
     (id) => allowlist.includes(id) && toolAllowedFor(id, kind),
   );
@@ -496,7 +531,7 @@ export function offeredTools(
 
 export function buildTools(env: ToolEnv): ToolSet {
   const texts = promptTexts(env.locale);
-  const allowlist = env.config.integration.tools ?? [];
+  const allowlist = agentAllowlist(env.kind, env.config);
   const all = definitions(env);
   const tools: ToolSet = {};
   for (const id of offeredTools(env.kind, env.config)) {
@@ -546,7 +581,7 @@ export function recordRefusedCall(
   const decision = decideTool(
     toolName,
     env.kind,
-    env.config.integration.tools ?? [],
+    agentAllowlist(env.kind, env.config),
   );
   env.state.records.push(
     callRecord(
