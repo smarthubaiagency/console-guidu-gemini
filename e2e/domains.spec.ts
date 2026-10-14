@@ -25,6 +25,7 @@ import {
 } from "./support/identity";
 import { statusBanner } from "./support/status";
 import { totpCode } from "./support/totp";
+import { RIG } from "./support/rig";
 
 const CHECK_SECRET = "e2e-domains-check-secret";
 
@@ -59,7 +60,7 @@ test("a partner manages its dashboard domain and its customers' domains", async 
   });
 
   const context = await browser.newContext({
-    baseURL: `http://${partnerHost}:3000`,
+    baseURL: `http://${partnerHost}:${RIG.appPort}`,
   });
   const admin = await context.newPage();
   await signIn(admin, ownerEmail);
@@ -119,7 +120,7 @@ test("a partner manages its dashboard domain and its customers' domains", async 
   // And the workspace owner, on the partner's host (a partner's customer
   // only opens there), sees the plan note instead of the form.
   const customerContext = await browser.newContext({
-    baseURL: `http://${partnerHost}:3000`,
+    baseURL: `http://${partnerHost}:${RIG.appPort}`,
   });
   const page = await customerContext.newPage();
   await signIn(page, customerEmail);

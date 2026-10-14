@@ -31,6 +31,7 @@ import {
 } from "./support/identity";
 import { expandSidebarGroup } from "./support/sidebar";
 import { totpCode } from "./support/totp";
+import { RIG } from "./support/rig";
 
 const enabled = process.env.GUIDU_MODULE_AI_AGENTS_ENABLED === "true";
 
@@ -55,7 +56,7 @@ async function partnerOwner(
       : {}),
   });
   const context = await browser.newContext({
-    baseURL: `http://${host}:3000`,
+    baseURL: `http://${host}:${RIG.appPort}`,
   });
   const page = await context.newPage();
   await signIn(page, email);
@@ -224,7 +225,7 @@ test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
 
     // The customer, on the partner's host, sees who changed its agent.
     const context = await browser.newContext({
-      baseURL: `http://parceiro-guids-${stamp}.localhost:3000`,
+      baseURL: `http://parceiro-guids-${stamp}.localhost:${RIG.appPort}`,
     });
     const customer = await context.newPage();
     await signIn(customer, customerEmail);
