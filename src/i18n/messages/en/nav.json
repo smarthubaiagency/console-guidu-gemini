@@ -74,6 +74,8 @@
     "partner_settings_domains": "Domains",
     "core_domains": "Domains",
     "platform_settings_email": "E-mail",
-    "partner_settings_email": "E-mail"
+    "partner_settings_email": "E-mail",
+    "platform_settings_email_templates": "Email templates",
+    "partner_settings_email_templates": "Email templates"
   }
 }

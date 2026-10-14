@@ -8,6 +8,7 @@ import { getRequestBrand } from "@/core/brand/resolve";
 import { actionFailure } from "@/core/i18n/errors";
 import { notify } from "@/core/notifications/notify";
 import { withSender } from "@/core/notifications/sender";
+import { emailTemplateFor } from "@/core/notifications/template-store";
 import { getNotificationTransport } from "@/core/notifications/transport";
 import { EmailSendError } from "@/core/notifications/types";
 import type { PartnerActionState } from "@/core/partners/actions";
@@ -50,6 +51,7 @@ async function sendTest(
   }
   const brand = await getRequestBrand();
   const origin = (await getRequestOrigin()) ?? appConfig.url;
+  const locale = await getLocale();
   const result = await notify(
     {
       type: "email.test",
@@ -61,9 +63,19 @@ async function sendTest(
       name: brand.name,
       supportEmail: brand.supportEmail,
       supportUrl: brand.supportUrl,
+      color: brand.primaryColor,
     }),
     getNotificationTransport(),
-    { locale: await getLocale() },
+    {
+      locale,
+      // The level's own template (CF3b), so the manager sees the edit.
+      template: await emailTemplateFor(
+        prisma,
+        senderPartnerId,
+        "email.test",
+        locale,
+      ),
+    },
   ).catch((err: unknown) => {
     if (err instanceof EmailSendError) {
       appLog.warn("email.test_failed", {
