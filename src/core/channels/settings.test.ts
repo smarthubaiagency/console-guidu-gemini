@@ -28,6 +28,21 @@ describe("resolveServiceSettings", () => {
     expect(resolveServiceSettings({}, null)).toEqual(SERVICE_DEFAULTS);
   });
 
+  it("answers audio in audio unless turned off (A5d)", () => {
+    expect(resolveServiceSettings({}, null).voice_reply).toBe("mirror");
+    expect(
+      resolveServiceSettings(
+        {
+          service: {
+            defaults: { voice_reply: "off" },
+            inboxes: { "3": { voice_reply: "mirror" } },
+          },
+        },
+        "3",
+      ).voice_reply,
+    ).toBe("mirror");
+  });
+
   it("ignores a broken service block", () => {
     expect(
       resolveServiceSettings(

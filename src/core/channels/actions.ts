@@ -150,6 +150,7 @@ const SETTING_FIELDS = [
   "max_messages",
   "max_chars",
   "interval_ms",
+  "voice_reply",
 ] as const;
 
 /** Service settings of the integration, for every inbox or for one. */

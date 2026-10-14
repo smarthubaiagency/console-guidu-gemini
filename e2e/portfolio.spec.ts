@@ -85,10 +85,18 @@ test("owner registers a store and a product with variants in the Portfolio", asy
   await edit.getByLabel("Situação").selectOption("active");
   await edit.getByLabel("No local / retirada").check();
   await edit.getByLabel("Loja Centro E2E").check();
+  // A document the agents may send (A5d).
+  await edit
+    .getByLabel("Documentos")
+    .fill("https://example.com/catalogo.pdf | Catálogo");
   await edit.getByRole("button", { name: "Salvar item" }).click();
   await expect(
     statusBanner(edit).filter({ hasText: "Item salvo." }),
   ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByTestId("edit-portfolio-item").getByLabel("Documentos"),
+  ).toHaveValue("https://example.com/catalogo.pdf | Catálogo");
 
   const add = page.getByTestId("add-variant");
   await add.getByLabel("Nome da variante").fill("Preta");

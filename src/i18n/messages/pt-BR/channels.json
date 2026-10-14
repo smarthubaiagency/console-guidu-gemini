@@ -83,13 +83,19 @@
       "grouping_seconds": "Espera para juntar mensagens (segundos)",
       "max_messages": "Mensagens por resposta",
       "max_chars": "Caracteres por mensagem",
-      "interval_ms": "Intervalo entre mensagens (milissegundos)"
+      "interval_ms": "Intervalo entre mensagens (milissegundos)",
+      "voice_reply": "Resposta em áudio"
     },
     "hints": {
       "grouping_seconds": "Mensagens seguidas do contato viram uma só resposta. De 0 a 30.",
       "max_messages": "Respostas maiores são juntadas na última mensagem. De 1 a 5.",
       "max_chars": "Orientação ao agente para textos curtos. De 100 a 1.000.",
-      "interval_ms": "Pausa entre uma mensagem e outra da mesma resposta. Até 5.000."
+      "interval_ms": "Pausa entre uma mensagem e outra da mesma resposta. Até 5.000.",
+      "voice_reply": "Quando o contato manda áudio, o agente responde em áudio, se a chave de voz do agente permitir."
+    },
+    "voiceReply": {
+      "mirror": "Responder em áudio a quem mandou áudio",
+      "off": "Sempre em texto"
     },
     "backToBot": "Depois de uma transferência, a conversa volta para o agente quando a equipe a devolve para \"pendente\" no Chatwoot.",
     "save": "Salvar atendimento",

@@ -4,7 +4,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogle } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { LanguageModel, TranscriptionModel } from "ai";
+import type { LanguageModel, SpeechModel, TranscriptionModel } from "ai";
 
 import type { AIProvider } from "@/core/credentials/vault";
 
@@ -60,6 +60,24 @@ export const createTranscriptionModel: TranscriptionFactory = ({
       return createGoogle({ apiKey: secret }).transcription(
         TRANSCRIPTION_MODELS.gemini!,
       );
+    default:
+      return null;
+  }
+};
+
+export type SpeechFactory = (key: ChatModelKey) => SpeechModel | null;
+
+/** The provider's voice (A5d, `./media.ts`), or null when it has none. */
+export const createSpeechModel: SpeechFactory = ({
+  provider,
+  secret,
+  model,
+}) => {
+  switch (provider) {
+    case "openai":
+      return createOpenAI({ apiKey: secret }).speech(model);
+    case "gemini":
+      return createGoogle({ apiKey: secret }).speech(model);
     default:
       return null;
   }

@@ -7,6 +7,7 @@ import {
   createAgentBot,
   isTrigger,
   normalizeChatwoot,
+  sendChatwootAttachment,
 } from "./chatwoot";
 import { InboundEvent } from "./contract";
 
@@ -200,6 +201,40 @@ describe("Chatwoot account API", () => {
     expect(JSON.parse(String(init?.body))).toMatchObject({
       outgoing_url: "https://app.test/api/channels/x/y",
     });
+  });
+
+  it("uploads a file as multipart, as the bot (A5d)", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json({ id: 901 }),
+    );
+    await expect(
+      sendChatwootAttachment(
+        account,
+        "bot-token-123",
+        "55",
+        {
+          data: new Uint8Array([0x4f, 0x67, 0x67]),
+          mediaType: "audio/ogg",
+          filename: 'resposta "x".ogg',
+        },
+        "Catálogo",
+        { fetch },
+      ),
+    ).resolves.toEqual({ id: "901" });
+    const [url, init] = fetch.mock.calls[0]!;
+    expect(String(url)).toBe(
+      "https://203.0.113.10/api/v1/accounts/1/conversations/55/messages",
+    );
+    const headers = init?.headers as Record<string, string>;
+    expect(headers.api_access_token).toBe("bot-token-123");
+    const boundary = /boundary=(\S+)$/.exec(headers["content-type"]!)?.[1];
+    expect(boundary).toBeTruthy();
+    const body = Buffer.from(init?.body as Uint8Array).toString("utf8");
+    expect(body).toContain(
+      `name="attachments[]"; filename="resposta_x_.ogg"\r\nContent-Type: audio/ogg\r\n\r\nOgg\r\n--${boundary}--`,
+    );
+    expect(body).toContain('name="content"\r\n\r\nCatálogo\r\n');
+    expect(body).toContain('name="message_type"\r\n\r\noutgoing\r\n');
   });
 
   it("reports why a check failed", async () => {

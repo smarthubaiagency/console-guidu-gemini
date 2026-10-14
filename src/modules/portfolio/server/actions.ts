@@ -22,6 +22,7 @@ import { detailsFromForm } from "../verticals";
 import {
   addVariant,
   createItem,
+  getItem,
   removeVariant,
   updateItem,
   updateVariant,
@@ -81,6 +82,9 @@ function list(formData: FormData, name: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean);
 }
+
+/** Links of an item the agents send as documents (A5d). */
+const DOCUMENT_LINK = "document";
 
 /** Lines "a | b" -> pairs. */
 function pairs(
@@ -202,8 +206,20 @@ export async function updatePortfolioItemAction(
   try {
     const { workspaceSlug, ctx } = await context(formData);
     const itemId = uuid(formData, "itemId");
-    await withContext(prisma, ctx, (tx) =>
+    await withContext(prisma, ctx, async (tx) =>
       updateItem(tx, ctx, itemId, {
+        // Documents the agent may send (A5d): links of type "document";
+        // the item's other links are kept.
+        links: [
+          ...(await getItem(tx, ctx, itemId)).links.filter(
+            (link) => link.type !== DOCUMENT_LINK,
+          ),
+          ...pairs(formData, "documents").map(([url, title]) => ({
+            type: DOCUMENT_LINK,
+            url,
+            ...(title ? { title } : {}),
+          })),
+        ],
         title: str(formData, "title") ?? "",
         handle: str(formData, "handle") ?? "",
         description: {

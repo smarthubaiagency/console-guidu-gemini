@@ -14,7 +14,7 @@ import { format, type PromptTexts } from "../prompt/texts";
 
 /**
  * Files a contact sent with a message (A5c, `../media.ts`). With the
- * customer's key, audio becomes its transcript and images and PDFs go to
+ * customer's keys, audio becomes its transcript (by the voice key, A5d) and images and PDFs go to
  * the model with the message; plain text files are read as text. What the
  * key cannot read becomes a note that makes the agent ask the contact to
  * write. The notes and transcripts are kept on the message (the history);
@@ -74,6 +74,11 @@ export async function prepareMedia(
     provider: AIProvider;
     secret: string;
     source: "customer" | "backup";
+    /**
+     * The key that hears audio (A5d, the voice key); none: the text key,
+     * when its provider hears, and null: nobody hears.
+     */
+    voice?: Readonly<{ provider: AIProvider; secret: string }> | null;
   }>,
   texts: MediaTexts,
   deps: Readonly<{ createTranscription?: TranscriptionFactory }> = {},
@@ -83,6 +88,14 @@ export async function prepareMedia(
     key.source === "customer"
       ? mediaCapabilities(key.provider)
       : { audio: false, image: false, document: false };
+  const hearer =
+    key.source !== "customer"
+      ? null
+      : key.voice !== undefined
+        ? key.voice
+        : caps.audio
+          ? key
+          : null;
   const notes: string[] = [];
   const parts: Array<ImagePart | FilePart> = [];
   for (const [index, attachment] of attachments.entries()) {
@@ -96,8 +109,11 @@ export async function prepareMedia(
           notes.push(texts.video);
           break;
         case "audio": {
-          const model = caps.audio
-            ? (deps.createTranscription ?? createTranscriptionModel)(key)
+          const model = hearer
+            ? (deps.createTranscription ?? createTranscriptionModel)({
+                provider: hearer.provider,
+                secret: hearer.secret,
+              })
             : null;
           if (!model) {
             notes.push(texts.audioUnsupported);

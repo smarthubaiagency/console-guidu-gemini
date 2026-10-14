@@ -150,11 +150,11 @@ export default async function AiAgentsPage({
         }
       }
     }
-    // The key picker: active keys of the vault that chat.
+    // The key pickers: active keys of the vault (text, voice, embeddings).
     const credentials =
       canManage && access.can(Permissions.CREDENTIALS_READ)
         ? (await listWorkspaceCredentials(tx, context)).filter(
-            (key) => key.status === "active" && key.purpose !== "embeddings",
+            (key) => key.status === "active",
           )
         : [];
     return {
@@ -252,6 +252,7 @@ export default async function AiAgentsPage({
         credentials={view.credentials.map((key) => ({
           id: key.id,
           provider: key.provider,
+          purpose: key.purpose,
           label: `${key.label} · ${tConsole(`providers.${key.provider}`)} · ${key.maskedValue}`,
         }))}
         summary={

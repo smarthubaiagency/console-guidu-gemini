@@ -509,6 +509,66 @@ export async function sendChatwootMessage(
   return { id: String(parsed.data.id) };
 }
 
+export type ChatwootFile = Readonly<{
+  data: Uint8Array;
+  mediaType: string;
+  filename: string;
+}>;
+
+/** A file name safe for a multipart header. */
+function safeFilename(name: string): string {
+  const clean = name.replace(/[^\w.\-]+/g, "_").slice(0, 100);
+  return clean || "arquivo";
+}
+
+/**
+ * Sends one file to a conversation, as the account's bot (A5d): the
+ * agent's voice answer or a file of the Portfolio, with an optional
+ * caption. Chatwoot takes it as multipart (`attachments[]`).
+ */
+export async function sendChatwootAttachment(
+  account: ChatwootAccount,
+  botToken: string,
+  conversationId: string,
+  file: ChatwootFile,
+  caption: string | null,
+  deps: Deps = {},
+): Promise<Readonly<{ id: string }>> {
+  const boundary = `guidu-${crypto.randomUUID()}`;
+  const field = (name: string, value: string) =>
+    `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`;
+  const head =
+    (caption ? field("content", caption) : "") +
+    field("message_type", "outgoing") +
+    field("private", "false") +
+    `--${boundary}\r\nContent-Disposition: form-data; name="attachments[]"; filename="${safeFilename(file.filename)}"\r\n` +
+    `Content-Type: ${file.mediaType.replace(/[^\w.+\-/]/g, "")}\r\n\r\n`;
+  const body = Buffer.concat([
+    Buffer.from(head, "utf8"),
+    Buffer.from(file.data),
+    Buffer.from(`\r\n--${boundary}--\r\n`, "utf8"),
+  ]);
+  const raw = await providerJson(
+    accountUrl(
+      account,
+      `/conversations/${encodeURIComponent(conversationId)}/messages`,
+    ),
+    {
+      method: "POST",
+      headers: {
+        api_access_token: botToken,
+        "content-type": `multipart/form-data; boundary=${boundary}`,
+        accept: "application/json",
+      },
+      body,
+    },
+    { ...deps, timeoutMs: 60_000 },
+  );
+  const parsed = MessageResponse.safeParse(raw);
+  if (!parsed.success) throw new ChannelHttpError("invalid_response");
+  return { id: String(parsed.data.id) };
+}
+
 /**
  * Hands the conversation to the team: Chatwoot's status goes from
  * "pending" (the bot's) to "open", where the agents see it.

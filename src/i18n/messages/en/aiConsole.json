@@ -118,10 +118,12 @@
       "credential_id": "Key",
       "model_provider": "Suggested provider",
       "model_name": "Model",
-      "audio_enabled": "Audio",
+      "audio_enabled": "Answer in audio",
+      "audio_credential_id": "Voice key",
       "audio_model": "Audio model",
       "audio_voice": "Voice",
       "rag_enabled": "Knowledge base search",
+      "embedding_credential_id": "Embeddings key",
       "embedding_model": "Embedding model"
     },
     "hints": {
@@ -236,6 +238,10 @@
         "label": "Search the base",
         "desc": "Searches the linked knowledge bases."
       },
+      "send_portfolio_media": {
+        "label": "Send from the Portfolio",
+        "desc": "Sends images and documents of the Portfolio's items."
+      },
       "workspace_read": {
         "label": "Read the workspace",
         "desc": "Reads dashboard data with the permissions of who asks."
@@ -244,6 +250,25 @@
         "label": "Propose an action",
         "desc": "Suggests an action the person confirms."
       }
+    },
+    "model": {
+      "text": {
+        "title": "Text",
+        "note": "Talks with the contact and reads images and documents."
+      },
+      "voice": {
+        "title": "Voice",
+        "note": "Hears the contact's audio and answers in audio when the contact sent audio."
+      },
+      "embeddings": {
+        "title": "Embeddings",
+        "note": "Used by the agent's knowledge bases."
+      },
+      "useTextKey": "Use the text key",
+      "noVoice": "The text key has no voice. Choose an OpenAI or Gemini key for the agent to hear and answer audio; without it, the agent asks the contact to write.",
+      "voiceKeyNoVoice": "This key has no voice. Choose an OpenAI or Gemini key.",
+      "defaultVoice": "Default ({voice})",
+      "defaultModel": "Default: {model}"
     }
   },
   "assistant": {

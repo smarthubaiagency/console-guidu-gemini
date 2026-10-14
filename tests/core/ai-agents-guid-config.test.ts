@@ -291,6 +291,71 @@ describeDatabase("A4a: GUIDS of the workspace in /app", requiredVars, () => {
     expect(error).toBeInstanceOf(ConfigValidationError);
   });
 
+  it("takes a voice key that speaks, a voice of its list and an embeddings key (A5d)", async () => {
+    const { guid, key } = await newGuid();
+    const voiceKey = await run(contextA, (tx) =>
+      registerCredential(tx, contextA, {
+        provider: "openai",
+        label: LABEL,
+        secret: "sk-proj-0123456789abcdef0123456789",
+        purpose: "chat",
+      }),
+    );
+    const before = await run(contextA, (tx) => getGuid(tx, contextA, guid.id));
+    const save = (model: Record<string, unknown>) =>
+      run(contextA, (tx) =>
+        updateGuid(tx, contextA, guid.id, {
+          status: "paused",
+          config: {
+            ...before.config,
+            model: {
+              credential_id: key.id,
+              model_name: "openai/gpt-4o-mini",
+              ...model,
+            },
+          },
+        }),
+      ).catch((err: unknown) => err);
+
+    // An OpenRouter key has no voice.
+    const silent = await save({ audio_credential_id: key.id });
+    expect(
+      (silent as ConfigValidationError).fieldErrors[
+        "model.audio_credential_id"
+      ],
+    ).toBe("Escolha uma chave OpenAI ou Gemini para a voz.");
+    const wrongVoice = await save({
+      audio_credential_id: voiceKey.id,
+      audio_voice: "Kore",
+    });
+    expect(
+      (wrongVoice as ConfigValidationError).fieldErrors["model.audio_voice"],
+    ).toBe("Escolha uma voz da lista.");
+    // A key only for chat does not embed.
+    const noEmbeddings = await save({ embedding_credential_id: voiceKey.id });
+    expect(
+      (noEmbeddings as ConfigValidationError).fieldErrors[
+        "model.embedding_credential_id"
+      ],
+    ).toBe("A chave escolhida não está ativa no cofre.");
+
+    const saved = await save({
+      audio_credential_id: voiceKey.id,
+      audio_voice: "nova",
+      embedding_credential_id: key.id,
+    });
+    expect(saved).toMatchObject({
+      config: {
+        model: {
+          audio_credential_id: voiceKey.id,
+          audio_voice: "nova",
+          embedding_credential_id: key.id,
+          model_provider: "openrouter",
+        },
+      },
+    });
+  });
+
   it("keeps a failing key off until it is tested or changed", async () => {
     const { guid, key } = await newGuid();
     const before = await run(contextA, (tx) => getGuid(tx, contextA, guid.id));

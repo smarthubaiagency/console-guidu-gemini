@@ -223,6 +223,7 @@ const ResponsePlan = z.object({
 
 - `messages` já vem dividido pelo modelo em mensagens curtas. A divisão por saída estruturada é mais confiável que separadores no texto. O renderizador ainda corta pelo `maxLength` do canal, se precisar.
 - `data` só existe em vínculos com saída JSON e é validado contra o schema do vínculo.
+- **A5d:** além do texto, o GUIDS manda a resposta como uma mensagem de voz (ver 6.2) e, depois dela, até 3 arquivos do Portfólio (imagens do item e links do tipo `document`), pela ferramenta "Enviar do Portfólio". O núcleo baixa cada arquivo pela guarda e, se não consegue, manda o link.
 - **[Em aberto]** Vocabulário de partes além de texto (botões de resposta, lista de opções, imagem, áudio, cartão de dados). Referência: `@copilotkit/channels-ui`, em [`docs/spikes/copilotkit.md`](../../spikes/copilotkit.md) §5.2.
 
 ### 6.2 Política de saída do vínculo
@@ -235,5 +236,7 @@ const ResponsePlan = z.object({
 | `jsonSchema`     | Schema do dado estruturado                                                        | Só em canais com `output.json` (chat interno, Matrix com evento customizado, um futuro canal de API/webhook). Formato e versionamento do schema: D-AG-07   |
 | `pacing`         | Intervalo entre mensagens e indicador de digitação                                | Valores: [Em aberto]                                                                                                                                       |
 | `groupingWindow` | Janela de agrupamento de mensagens do contato                                     | Valor: [Em aberto]; obrigatório no vínculo                                                                                                                 |
+
+**A5d (13/10/2026):** o `audioMode` existe como `voice_reply` no Atendimento da integração (Configurações › Canais), com `espelhar` (padrão) e `nunca`; `sempre` e `audioWithText` não entraram. A voz é a chave de voz do GUIDS (ou a de texto, quando fala), e a resposta vai em Ogg Opus.
 
 Regra de compatibilidade: se a política pede uma saída que o canal não tem, o vínculo é recusado na configuração e não falha em silêncio durante a conversa. O `configurationSchema` do manifesto valida isso ([ADR 0006](../../adr/0006-manifesto-de-modulos.md)).

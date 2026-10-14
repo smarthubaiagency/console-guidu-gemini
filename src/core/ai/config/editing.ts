@@ -94,9 +94,11 @@ export const CONFIG_FIELDS = {
     "model_provider",
     "model_name",
     "audio_enabled",
+    "audio_credential_id",
     "audio_model",
     "audio_voice",
     "rag_enabled",
+    "embedding_credential_id",
     "embedding_model",
   ],
 } as const satisfies Record<ConfigTab, readonly string[]>;
@@ -111,6 +113,12 @@ const ASSISTANT_MODEL = new Set([
   "model.model_name",
   "model.rag_enabled",
   "model.embedding_model",
+]);
+/** Keys of the workspace vault: only the customer picks them. */
+const KEY_FIELDS = new Set([
+  "model.credential_id",
+  "model.audio_credential_id",
+  "model.embedding_credential_id",
 ]);
 /** The customer's business, theirs even while following a template. */
 const CUSTOMER_BUSINESS = new Set([
@@ -132,11 +140,9 @@ export function editableFields(editor: ConfigEditor): ReadonlySet<string> {
       const tab = path.slice(0, path.indexOf("."));
       switch (editor) {
         case "template":
-          return path !== "model.credential_id";
+          return !KEY_FIELDS.has(path);
         case "partner":
-          return (
-            path !== "model.model_provider" && path !== "model.credential_id"
-          );
+          return path !== "model.model_provider" && !KEY_FIELDS.has(path);
         case "assistant":
           return tab === "overview" || ASSISTANT_MODEL.has(path);
         case "customer":

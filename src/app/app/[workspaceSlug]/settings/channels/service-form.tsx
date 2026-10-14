@@ -19,10 +19,11 @@ import type { ChannelConnectionDto } from "@/core/channels/connections";
 import {
   resolveServiceSettings,
   type ServiceSettings,
+  VOICE_REPLIES,
 } from "@/core/channels/settings";
 
 const FIELDS: readonly {
-  name: keyof ServiceSettings;
+  name: Exclude<keyof ServiceSettings, "voice_reply">;
   min: number;
   max: number;
   step: number;
@@ -120,6 +121,27 @@ export function ServiceSettingsForm({
             </div>
           );
         })}
+      </div>
+      <div className="space-y-1">
+        <Label
+          htmlFor={`service-${connection.id}-voice_reply`}
+          className="text-12"
+        >
+          {t("fields.voice_reply")}
+        </Label>
+        <NativeSelect
+          id={`service-${connection.id}-voice_reply`}
+          name="voice_reply"
+          defaultValue={values.voice_reply}
+          className="w-full"
+        >
+          {VOICE_REPLIES.map((option) => (
+            <NativeSelectOption key={option} value={option}>
+              {t(`voiceReply.${option}`)}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+        <p className="text-11 text-text-secondary">{t("hints.voice_reply")}</p>
       </div>
       <p className="text-11 text-text-secondary">{t("backToBot")}</p>
       <div className="flex flex-wrap gap-2">

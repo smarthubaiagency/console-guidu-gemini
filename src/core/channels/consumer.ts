@@ -45,6 +45,19 @@ export type ChannelTurnInput = Readonly<{
   ): Promise<Readonly<{ data: Uint8Array; mediaType: string | null }>>;
   /** Shape of the answer, from the integration's settings. */
   limits: Readonly<{ maxMessages: number; maxChars: number }>;
+  /**
+   * The contact sent audio and the integration answers it in audio (A5d,
+   * `voice_reply`): the consumer may return its answer as `voice`.
+   */
+  voiceReply: boolean;
+}>;
+
+/** A public file the consumer sends after its answer (A5d). */
+export type ChannelOutboundFile = Readonly<{
+  kind: "image" | "document";
+  /** Public https address; the core downloads it through its guard. */
+  url: string;
+  caption: string | null;
 }>;
 
 export type ChannelTurnOutput = Readonly<{
@@ -54,6 +67,17 @@ export type ChannelTurnOutput = Readonly<{
   handoff: boolean;
   /** A note only the team sees, posted before the handoff (A5c). */
   handoffNote?: string | null;
+  /**
+   * The answer as one voice message (A5d); `messages` is its text, sent
+   * instead when the voice cannot be delivered.
+   */
+  voice?: Readonly<{
+    data: Uint8Array;
+    mediaType: string;
+    filename: string;
+  }> | null;
+  /** Files sent after the answer, in order (A5d). */
+  files?: readonly ChannelOutboundFile[];
 }>;
 
 export type ChannelConsumer = Readonly<{

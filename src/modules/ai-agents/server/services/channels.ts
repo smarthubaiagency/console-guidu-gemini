@@ -3,7 +3,7 @@ import "server-only";
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
-import { type MediaKind, missingMedia } from "@/core/ai/media";
+import { type MediaKind, missingMedia, voiceOptions } from "@/core/ai/media";
 import {
   type ChannelDeps,
   closeChannelRoutes,
@@ -80,14 +80,31 @@ export async function listGuidChannels(
     where: { id: agentId, workspaceId: ctx.workspaceId, kind: "guid" },
     select: { config: true },
   });
-  const credentialId = (
-    agent?.config as { model?: { credential_id?: string | null } } | null
-  )?.model?.credential_id;
-  const credential = credentialId
-    ? await tx.credential.findFirst({
-        where: { id: credentialId, workspaceId: ctx.workspaceId },
-        select: { provider: true },
-      })
+  // The text key reads; the voice key, when chosen, hears (A5d).
+  const model = (
+    agent?.config as {
+      model?: {
+        credential_id?: string | null;
+        audio_credential_id?: string | null;
+      };
+    } | null
+  )?.model;
+  const providerOf = async (id: string | null | undefined) =>
+    id
+      ? ((
+          await tx.credential.findFirst({
+            where: { id, workspaceId: ctx.workspaceId },
+            select: { provider: true },
+          })
+        )?.provider ?? null)
+      : null;
+  const textProvider = await providerOf(model?.credential_id);
+  const voiceProvider = await providerOf(model?.audio_credential_id);
+  const missing = textProvider
+    ? missingMedia(textProvider).filter(
+        (kind) =>
+          !(kind === "audio" && voiceProvider && voiceOptions(voiceProvider)),
+      )
     : null;
   const others = inboxes
     .map((inbox) => inbox.route)
@@ -110,7 +127,7 @@ export async function listGuidChannels(
     ]),
   );
   return {
-    missingMedia: credential ? missingMedia(credential.provider) : null,
+    missingMedia: missing,
     canManage:
       hasWorkspaceRolePermission(role, Permissions.AI_AGENTS_MANAGE) &&
       hasWorkspaceRolePermission(role, Permissions.CHANNELS_MANAGE),

@@ -12,6 +12,7 @@ import { createAssistantProposal } from "@/core/proposals/service";
 import type { RequestContext } from "@/lib/prisma/with-context";
 import { appLog } from "@/lib/telemetry/log";
 import { createContact, getContact, updateContact } from "@/modules/crm/server";
+import { agentItemFiles } from "@/modules/portfolio/server/services/catalog";
 import { AppError } from "@/shared/errors";
 
 import type { AgentConfig } from "../config/schema";
@@ -25,6 +26,7 @@ import {
 import { format, promptTexts, type PromptLocale } from "../prompt/texts";
 import {
   MAX_CONVERSATION_VARIABLES,
+  MAX_OUTBOX,
   type TurnDb,
   type TurnState,
 } from "../turn/types";
@@ -315,6 +317,59 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
           summary: String(input.summary).trim(),
         };
         return { handed_over: true };
+      },
+    },
+
+    send_portfolio_media: {
+      description:
+        "Send the contact an image or a document (a PDF, a sheet) of an item of the Portfolio, after your answer. " +
+        `Give the item's name or id and what to send. Only the Portfolio's files are sent, at most ${MAX_OUTBOX} per answer; ` +
+        "call it again for the next file of the same item.",
+      input: z.object({
+        item: z.string().min(1).max(200),
+        media: z.enum(["image", "document"]),
+      }),
+      run: async (input) => {
+        const ws = requireWorkspace(env);
+        const outbox = (env.state.outbox ??= []);
+        if (outbox.length >= MAX_OUTBOX) {
+          throw restricted(
+            "outbox_full",
+            `Esta resposta já tem ${MAX_OUTBOX} arquivos.`,
+          );
+        }
+        const files = await env.db.transaction((tx) =>
+          agentItemFiles(tx, ws, String(input.item)),
+        );
+        if (!files) {
+          throw restricted("not_found", "Item não encontrado no Portfólio.");
+        }
+        const image = input.media === "image";
+        const candidates = image
+          ? files.images.map((f) => ({ url: f.url, caption: f.alt }))
+          : files.documents.map((f) => ({ url: f.url, caption: f.title }));
+        const next = candidates.find(
+          (c) => !outbox.some((queued) => queued.url === c.url),
+        );
+        if (!next) {
+          throw restricted(
+            "no_file",
+            image
+              ? "O item não tem outra imagem no Portfólio."
+              : "O item não tem outro documento no Portfólio.",
+          );
+        }
+        outbox.push({
+          kind: input.media === "image" ? "image" : "document",
+          url: next.url,
+          caption: next.caption ?? files.title,
+        });
+        return {
+          queued: true,
+          item: files.title,
+          media: input.media,
+          ...(env.simulate ? { simulated: true } : {}),
+        };
       },
     },
 
