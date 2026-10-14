@@ -48,6 +48,11 @@ export type PromptTexts = Readonly<{
     closed: string;
     autoReply: string;
   }>;
+  /** The hot-lead notice to the merchant (A6a). */
+  leadNotice: Readonly<{
+    text: string;
+    temperature: Readonly<Record<string, string>>;
+  }>;
 }>;
 
 function promptOf(messages: unknown): PromptTexts | null {

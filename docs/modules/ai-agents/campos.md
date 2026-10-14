@@ -52,7 +52,7 @@ O status (`draft`, `active`, `paused`), o tipo de dono e o modelo de origem não
 | `lead_scoring_rules`                          | lista de regras (abaixo)        | P, C\*       | Repetidor de regras de pontuação                                                           |
 | `scoring_rules_version`                       | inteiro                         | Sistema      | Sobe a cada alteração das regras                                                           |
 | `owner_phone`                                 | telefone E.164                  | P, C\*       | Responsável que recebe os avisos                                                           |
-| `notify_channel`                              | enum `whatsapp`, `email`, `sms` | P, C\*       | **[Em aberto]** SMS depende de provedor; e-mail depende do provedor transacional (D-PA-08) |
+| `notify_channel`                              | enum `whatsapp`, `email`, `sms` | P, C\*       | WhatsApp: webhook do parceiro (A6a). SMS depende de provedor; e-mail, do provedor transacional (D-PA-08) |
 | `notify_template`                             | texto com tags                  | P, C\*       | Modelo do aviso                                                                            |
 | `handoff_mode`                                | enum (seção 7)                  | P, C\*       | Quando transferir para humano                                                              |
 | `after_hours_behavior`                        | enum (seção 7)                  | P, C\*       | Fora do horário                                                                            |
@@ -74,6 +74,8 @@ O status (`draft`, `active`, `paused`), o tipo de dono e o modelo de origem não
 | `points`             | inteiro de −100 a 100 | Pontos                                                |
 | `capture_field`      | texto, opcional       | Campo do contato a preencher                          |
 | `notify_immediately` | sim/não, opcional     | Avisa o responsável na hora                           |
+
+**[Decidido, A6a]** Aviso de lead quente: quando `score_lead` dá ao contato um score igual ou maior que `notify_on_score` (sem ele, `hot_score_threshold`), ou usa uma regra com `notify_immediately`, o GUIDS grava um aviso em `ai_lead_notices`, **uma vez por agente e contato**. Com `notify_channel = whatsapp` (padrão), um job manda um POST JSON assinado para o **webhook do parceiro** (`/admin › Assistente GUIDU`, tabela `partner_notice_webhooks`): `event = lead.hot`, `to` = `owner_phone`, `text` (o `notify_template` com as tags `{{contact.name}}`, `{{contact.phone}}`, `{{contact.email}}`, `{{lead.score}}`, `{{lead.temperature}}`, `{{lead.reasons}}`, `{{agent.name}}`, ou o texto padrão do idioma do agente), `lead`, `agent`, `workspace` e `conversation_id`. Cabeçalhos `X-Guidu-Event`, `X-Guidu-Timestamp` e `X-Guidu-Signature` (`sha256=` HMAC SHA-256 de `timestamp.corpo` com o segredo). O fluxo do parceiro (n8n, Evolution) envia pelo número do Assistente do comerciante, nunca pelo número Meta do GUIDS (Marcelo, 14/10/2026). Sem webhook ou sem `owner_phone`, o aviso fica como "não enviado" com o motivo; e-mail e SMS ficam assim até haver provedor. A gaveta do GUIDS lista os últimos avisos.
 
 ## 4. Indicações
 

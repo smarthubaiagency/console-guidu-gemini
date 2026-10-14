@@ -7,6 +7,7 @@ import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { getPartnerAssistant } from "@/core/ai/assistant-config";
 import { listPartnerCredentials } from "@/core/ai/keys";
+import { getNoticeWebhook } from "@/core/ai/notices/webhook";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
@@ -14,6 +15,7 @@ import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
 import { AssistantForm } from "./assistant-form";
+import { NoticeWebhookForm } from "./notice-webhook-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("aiConsole");
@@ -40,7 +42,7 @@ export default async function PartnerAiAssistantPage() {
     partnerId: partner.partnerId,
     partnerRole: membership.role,
   };
-  const { assistant, keys } = await withIdentityContext(
+  const { assistant, keys, webhook } = await withIdentityContext(
     prisma,
     identity.userId,
     async (tx) => ({
@@ -48,6 +50,9 @@ export default async function PartnerAiAssistantPage() {
       keys: canManage
         ? await listPartnerCredentials(tx, actor, partner.partnerId)
         : [],
+      webhook: canManage
+        ? await getNoticeWebhook(tx, actor, partner.partnerId)
+        : null,
     }),
     { partnerId: partner.partnerId },
   );
@@ -102,6 +107,19 @@ export default async function PartnerAiAssistantPage() {
       {canManage ? (
         <section className="border-card-border bg-surface-card rounded-xl border p-6 shadow-xs">
           <AssistantForm assistant={assistant} credentials={credentials} />
+        </section>
+      ) : null}
+      {canManage ? (
+        <section className="border-card-border bg-surface-card space-y-3 rounded-xl border p-6 shadow-xs">
+          <div className="space-y-1">
+            <h2 className="text-14 text-text font-semibold">
+              {t("noticeWebhook.title")}
+            </h2>
+            <p className="text-12 text-text-secondary">
+              {t("noticeWebhook.description")}
+            </p>
+          </div>
+          <NoticeWebhookForm webhook={webhook} />
         </section>
       ) : (
         <p className="text-12 text-text-secondary">{t("assistant.readOnly")}</p>

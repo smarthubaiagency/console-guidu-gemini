@@ -83,7 +83,7 @@ export const PartnerCredentialInput = z.strictObject({
   purpose: z.enum(["chat", "embeddings", "all"]).default("all"),
 });
 
-function requirePartnerKeys(actor: PartnerKeyActor): void {
+export function requirePartnerKeys(actor: PartnerKeyActor): void {
   if (
     !actor.partnerRole ||
     !hasPartnerRolePermission(

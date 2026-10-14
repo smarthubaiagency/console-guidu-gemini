@@ -74,6 +74,15 @@
       "open": "The business is open now (hours: {hours}).",
       "closed": "The business is closed now (hours: {hours}).",
       "autoReply": "Hello! We are outside business hours right now ({hours}). We got your message and will get back to you as soon as we open."
+    },
+    "leadNotice": {
+      "text": "Hot lead on {agent}: {name} ({phone}), score {score} ({temperature}). Reasons: {reasons}.",
+      "temperature": {
+        "hot": "hot",
+        "warm": "warm",
+        "cold": "cold",
+        "suspect": "suspect"
+      }
     }
   },
   "guids": {
@@ -189,6 +198,33 @@
         "audio": "audio",
         "image": "images",
         "document": "documents"
+      }
+    },
+    "notices": {
+      "title": "Lead notices",
+      "description": "Hot leads told to the person in charge, once per contact. WhatsApp goes through the partner's webhook; e-mail and SMS wait for a provider.",
+      "empty": "No notices yet.",
+      "unknownContact": "Contact removed",
+      "score": "score {points}",
+      "channels": {
+        "whatsapp": "WhatsApp",
+        "email": "e-mail",
+        "sms": "SMS"
+      },
+      "status": {
+        "pending": "Queued",
+        "sent": "Sent",
+        "failed": "Failed",
+        "skipped": "Not sent"
+      },
+      "reasons": {
+        "no_webhook": "the partner has no notice webhook",
+        "no_owner_phone": "no phone for the person in charge",
+        "email_provider_pending": "waiting for an e-mail provider",
+        "sms_unavailable": "SMS unavailable",
+        "no_contact": "contact not found",
+        "invalid_config": "invalid configuration",
+        "delivery": "delivery failed ({code})"
       }
     }
   },

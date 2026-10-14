@@ -101,6 +101,10 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       await expect(panel.getByTestId("guid-tested")).toContainText(
         "ainda não foi testada",
       );
+      // Lead notices (A6a): none yet.
+      await expect(panel.getByTestId("guid-notices")).toContainText(
+        "Nenhum aviso ainda.",
+      );
       // Three keys (A5d): text, voice and embeddings, each with its use.
       await page
         .getByTestId("guid-form")

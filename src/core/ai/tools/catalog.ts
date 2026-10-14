@@ -17,6 +17,7 @@ import { AppError } from "@/shared/errors";
 
 import type { AgentConfig } from "../config/schema";
 import { scoreLead } from "../config/scoring";
+import { recordLeadNotice, shouldNotice } from "../notices/lead";
 import {
   AGENT_TOOL_IDS,
   type AgentKind,
@@ -194,8 +195,12 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
           unknown_rule_ids: score.unknown,
         };
         if (env.simulate) return { ...result, simulated: true };
-        await env.db.transaction((tx) =>
-          tx.aiLeadActivity.create({
+        const notice = shouldNotice(rules, {
+          points: score.points,
+          ruleIds: score.breakdown.map((item) => item.rule_id),
+        });
+        await env.db.transaction(async (tx) => {
+          await tx.aiLeadActivity.create({
             data: {
               organizationId: ws.organizationId,
               workspaceId: ws.workspaceId,
@@ -207,8 +212,19 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
               scoringRulesVersion: rules.scoring_rules_version ?? null,
             },
             select: { id: true },
-          }),
-        );
+          });
+          // The merchant hears of a hot lead once (A6a).
+          if (notice) {
+            await recordLeadNotice(tx, ws, {
+              agentId: env.agentId,
+              contactId,
+              conversationId,
+              points: score.points,
+              temperature: score.temperature,
+              rules,
+            });
+          }
+        });
         return result;
       },
     },

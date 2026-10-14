@@ -107,10 +107,28 @@ export const aiAgentsDataContract: ModuleDataContract = {
         createdAt: true,
       },
     });
+    const leadNotices = await tx.aiLeadNotice.findMany({
+      where: { workspaceId: ctx.workspaceId },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        agentId: true,
+        contactId: true,
+        conversationId: true,
+        points: true,
+        temperature: true,
+        channel: true,
+        status: true,
+        reason: true,
+        createdAt: true,
+        sentAt: true,
+      },
+    });
     return {
       guids,
       referrals,
       leadActivities,
+      leadNotices,
       conversations,
       messages,
       usage,
@@ -122,12 +140,14 @@ export const aiAgentsDataContract: ModuleDataContract = {
     // and contacts: they go first. Messages leave with their conversations.
     const usage = await tx.aiUsageEvent.deleteMany({ where });
     const leadActivities = await tx.aiLeadActivity.deleteMany({ where });
+    const leadNotices = await tx.aiLeadNotice.deleteMany({ where });
     const conversations = await tx.aiConversation.deleteMany({ where });
     const referrals = await tx.aiAgentReferral.deleteMany({ where });
     const guids = await tx.aiAgent.deleteMany({ where });
     return {
       ai_usage_events: usage.count,
       ai_lead_activities: leadActivities.count,
+      ai_lead_notices: leadNotices.count,
       ai_conversations: conversations.count,
       ai_agent_referrals: referrals.count,
       ai_agents: guids.count,

@@ -27,6 +27,7 @@ import {
   revokePartnerCredential,
   saveBackupSettings,
 } from "./keys";
+import { removeNoticeWebhook, saveNoticeWebhook } from "./notices/webhook";
 import {
   ConfigValidationError,
   createTemplate,
@@ -279,6 +280,42 @@ export async function revokePartnerKeyAction(
     revalidatePath(PARTNER_KEYS_PATH);
     const t = await getTranslations("aiConsole");
     return { success: true, message: t("keys.revoked") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** The partner's webhook for the hot-lead notices (A6a). */
+export async function saveNoticeWebhookAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    await inPartner(actor, (tx) =>
+      saveNoticeWebhook(tx, actor, actor.partnerId, {
+        url: text(formData, "url"),
+        secret: text(formData, "secret"),
+        enabled: formData.get("enabled") === "on",
+      }),
+    );
+    revalidatePath(PARTNER_ASSISTANT_PATH);
+    const t = await getTranslations("aiConsole");
+    return { success: true, message: t("noticeWebhook.saved") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function removeNoticeWebhookAction(): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    await inPartner(actor, (tx) =>
+      removeNoticeWebhook(tx, actor, actor.partnerId),
+    );
+    revalidatePath(PARTNER_ASSISTANT_PATH);
+    const t = await getTranslations("aiConsole");
+    return { success: true, message: t("noticeWebhook.removed") };
   } catch (err) {
     return failure(err);
   }

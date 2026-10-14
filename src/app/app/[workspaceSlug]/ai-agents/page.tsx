@@ -46,9 +46,14 @@ import {
   type GuidDetailDto,
   getGuid,
 } from "@/modules/ai-agents/server/services/guid-config";
+import {
+  type LeadNoticeDto,
+  listLeadNotices,
+} from "@/modules/ai-agents/server/services/notices";
 import { AppError } from "@/shared/errors";
 
 import { GuidChannels } from "./guid-channels";
+import { GuidNotices } from "./guid-notices";
 import { CreateGuidForm, GuidPanel } from "./guid-forms";
 import { GuidTestPanel } from "./guid-test";
 
@@ -136,6 +141,7 @@ export default async function AiAgentsPage({
     let opened: GuidDetailDto | null = null;
     let test: GuidTestConversationDto | null = null;
     let channels: GuidChannelsDto | null = null;
+    let notices: LeadNoticeDto[] | null = null;
     if (editKey && editKey !== "new") {
       try {
         opened = await getGuid(tx, context, editKey);
@@ -143,6 +149,7 @@ export default async function AiAgentsPage({
           test = await getGuidTestConversation(tx, context, editKey);
         } else {
           channels = await listGuidChannels(tx, context, editKey);
+          notices = await listLeadNotices(tx, context, editKey);
         }
       } catch (error) {
         if (!(error instanceof AppError && error.code === "not_found")) {
@@ -166,6 +173,7 @@ export default async function AiAgentsPage({
       opened,
       test,
       channels,
+      notices,
       credentials,
     };
   });
@@ -248,6 +256,11 @@ export default async function AiAgentsPage({
             ready={opened.status === "active" && opened.testedCurrent}
             settingsHref={`/app/${workspaceSlug}/settings/channels`}
           />
+        }
+        notices={
+          view.notices ? (
+            <GuidNotices key="notices" notices={view.notices} />
+          ) : null
         }
         credentials={view.credentials.map((key) => ({
           id: key.id,

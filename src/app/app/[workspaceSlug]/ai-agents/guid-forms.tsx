@@ -114,6 +114,7 @@ export function GuidPanel({
   credentials,
   summary,
   channels,
+  notices,
 }: Readonly<{
   workspaceSlug: string;
   guid: GuidDetailDto;
@@ -125,6 +126,8 @@ export function GuidPanel({
   summary: React.ReactNode;
   /** The inboxes this GUIDS answers (A5b). */
   channels?: React.ReactNode;
+  /** The hot leads told to the merchant (A6a). */
+  notices?: React.ReactNode;
 }>) {
   const t = useTranslations("aiAgents.guids");
   const [state, action, pending] = useActionState(saveGuidAction, INITIAL);
@@ -168,6 +171,7 @@ export function GuidPanel({
       <div className="space-y-6" data-testid="guid-panel">
         {summary}
         {channels}
+        {notices}
         {canManage ? (
           <>
             {guid.customized ? null : (

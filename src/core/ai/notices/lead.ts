@@ -1,0 +1,359 @@
+import "server-only";
+
+import { createHmac } from "node:crypto";
+
+import { z } from "zod";
+
+import {
+  ChannelHttpError,
+  type ChannelFetch,
+  providerJson,
+} from "@/core/channels/http";
+import { decryptSecret } from "@/core/credentials/crypto";
+import { enqueueJob } from "@/core/jobs/service";
+import { defineDetachedJob, type JobSession } from "@/core/jobs/definition";
+import { SkipJobError } from "@/core/jobs/errors";
+import type {
+  ContextTransaction,
+  RequestContext,
+} from "@/lib/prisma/with-context";
+
+import { type AgentConfig, parseAgentConfig } from "../config/schema";
+import type { LeadTemperature } from "../config/scoring";
+import { format, promptLocale, promptTexts } from "../prompt/texts";
+
+/**
+ * The hot-lead notice of a GUIDS (A6a, plano-a6.md): when `score_lead`
+ * scores a contact at or above the agent's notice score (`notify_on_score`,
+ * else the hot threshold), or with a rule marked "avisar na hora", the
+ * merchant hears about it once per agent and contact.
+ *
+ * - WhatsApp: a signed POST to the partner's webhook; the partner's flow
+ *   sends it from the merchant's Assistant number (Marcelo, 14/10/2026).
+ * - E-mail and SMS wait for a provider: the notice is kept, skipped.
+ * The panel lists every notice with its state.
+ */
+
+export const LEAD_NOTICE_JOB_KIND = "ai-agents.lead-notice";
+export const LEAD_NOTICE_EVENT = "lead.hot";
+
+type Rules = AgentConfig["rules"];
+
+/** The score at which the merchant is told; null: only "avisar na hora". */
+export function noticeScore(rules: Rules): number | null {
+  return rules.notify_on_score ?? rules.hot_score_threshold ?? null;
+}
+
+export function shouldNotice(
+  rules: Rules,
+  score: Readonly<{ points: number; ruleIds: readonly string[] }>,
+): boolean {
+  const immediate = (rules.lead_scoring_rules ?? []).some(
+    (rule) => rule.notify_immediately && score.ruleIds.includes(rule.rule_id),
+  );
+  if (immediate) return true;
+  const threshold = noticeScore(rules);
+  return threshold !== null && score.points >= threshold;
+}
+
+/**
+ * Records the notice, once per agent and contact, and asks its delivery.
+ * Runs in the transaction of the scoring, as whom runs the turn.
+ */
+export async function recordLeadNotice(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  notice: Readonly<{
+    agentId: string;
+    contactId: string;
+    conversationId: string;
+    points: number;
+    temperature: LeadTemperature;
+    rules: Rules;
+  }>,
+): Promise<string | null> {
+  const created = await tx.aiLeadNotice.createMany({
+    data: {
+      organizationId: ctx.organizationId,
+      workspaceId: ctx.workspaceId,
+      agentId: notice.agentId,
+      contactId: notice.contactId,
+      conversationId: notice.conversationId,
+      points: notice.points,
+      temperature: notice.temperature,
+      channel: notice.rules.notify_channel ?? "whatsapp",
+    },
+    skipDuplicates: true,
+  });
+  if (created.count === 0) return null;
+  const row = await tx.aiLeadNotice.findFirstOrThrow({
+    where: { agentId: notice.agentId, contactId: notice.contactId },
+    select: { id: true },
+  });
+  await enqueueJob(
+    tx,
+    ctx,
+    leadNoticeJob,
+    { noticeId: row.id },
+    { idempotencyKey: `lead-notice:${row.id}` },
+  );
+  return row.id;
+}
+
+// ----------------------------------------------------------------------------
+// The text
+// ----------------------------------------------------------------------------
+
+export type NoticeFacts = Readonly<{
+  agentName: string;
+  contact: Readonly<{
+    name: string;
+    phone: string | null;
+    email: string | null;
+  }>;
+  points: number;
+  temperature: LeadTemperature;
+  reasons: readonly string[];
+}>;
+
+const TAG = /\{\{\s*([a-z_]+\.[a-z_]+)\s*\}\}/g;
+
+/** The agent's `notify_template`, else the default text of its language. */
+export function noticeText(config: AgentConfig, facts: NoticeFacts): string {
+  const texts = promptTexts(promptLocale(config.overview.language)).leadNotice;
+  const temperature = texts.temperature[facts.temperature] ?? facts.temperature;
+  const reasons = facts.reasons.length > 0 ? facts.reasons.join(", ") : "-";
+  const values: Record<string, string> = {
+    "agent.name": facts.agentName,
+    "contact.name": facts.contact.name,
+    "contact.phone": facts.contact.phone ?? "-",
+    "contact.email": facts.contact.email ?? "-",
+    "lead.score": String(facts.points),
+    "lead.temperature": temperature,
+    "lead.reasons": reasons,
+  };
+  const template = config.rules.notify_template?.trim();
+  if (template) {
+    return template
+      .replace(TAG, (match, key: string) => values[key] ?? match)
+      .slice(0, 2000);
+  }
+  return format(texts.text, {
+    agent: facts.agentName,
+    name: facts.contact.name,
+    phone: facts.contact.phone ?? "-",
+    score: String(facts.points),
+    temperature,
+    reasons,
+  });
+}
+
+/** `sha256=<hex>` of `<timestamp>.<body>` with the partner's secret. */
+export function signNotice(
+  secret: string,
+  timestamp: string,
+  body: string,
+): string {
+  return `sha256=${createHmac("sha256", secret)
+    .update(`${timestamp}.${body}`)
+    .digest("hex")}`;
+}
+
+// ----------------------------------------------------------------------------
+// The delivery
+// ----------------------------------------------------------------------------
+
+export const LeadNoticePayload = z.strictObject({ noticeId: z.uuid() });
+export type LeadNoticePayload = z.infer<typeof LeadNoticePayload>;
+
+export type LeadNoticeDeps = Readonly<{
+  fetch?: ChannelFetch;
+  now?: () => Date;
+}>;
+
+type Prepared =
+  | Readonly<{ kind: "done"; status: string }>
+  | Readonly<{
+      kind: "send";
+      url: string;
+      secret: string;
+      body: string;
+    }>;
+
+async function prepare(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  noticeId: string,
+  now: Date,
+): Promise<Prepared> {
+  const notice = await tx.aiLeadNotice.findFirst({
+    where: { id: noticeId, workspaceId: ctx.workspaceId },
+  });
+  if (!notice) throw new SkipJobError("Aviso não encontrado.");
+  if (notice.status === "sent" || notice.status === "skipped") {
+    return { kind: "done", status: notice.status };
+  }
+  const skip = async (reason: string): Promise<Prepared> => {
+    await tx.aiLeadNotice.update({
+      where: { id: notice.id },
+      data: { status: "skipped", reason },
+    });
+    return { kind: "done", status: "skipped" };
+  };
+  if (notice.channel === "email") return skip("email_provider_pending");
+  if (notice.channel === "sms") return skip("sms_unavailable");
+
+  const agent = await tx.aiAgent.findFirst({
+    where: { id: notice.agentId, workspaceId: ctx.workspaceId },
+    select: { config: true, configVersion: true },
+  });
+  const parsed = agent
+    ? parseAgentConfig("guid", agent.configVersion, agent.config)
+    : null;
+  if (!parsed?.success) return skip("invalid_config");
+  const config = parsed.data;
+  const ownerPhone = config.rules.owner_phone;
+  if (!ownerPhone) return skip("no_owner_phone");
+  const [webhook] = await tx.$queryRaw<
+    { url: string; encrypted_secret: string }[]
+  >`select url, encrypted_secret from private.ai_notice_webhook()`;
+  if (!webhook) return skip("no_webhook");
+
+  const [contact, workspace, activity] = await Promise.all([
+    tx.crmContact.findFirst({
+      where: { id: notice.contactId, workspaceId: ctx.workspaceId },
+      select: { name: true, phone: true, email: true },
+    }),
+    tx.workspace.findFirst({
+      where: { id: ctx.workspaceId },
+      select: { name: true },
+    }),
+    tx.aiLeadActivity.findFirst({
+      where: { agentId: notice.agentId, contactId: notice.contactId },
+      orderBy: { createdAt: "desc" },
+      select: { scoreBreakdown: true },
+    }),
+  ]);
+  if (!contact) return skip("no_contact");
+  const reasons = Array.isArray(activity?.scoreBreakdown)
+    ? (activity.scoreBreakdown as { label?: unknown }[])
+        .map((item) => (typeof item.label === "string" ? item.label : ""))
+        .filter(Boolean)
+    : [];
+  const agentName = config.overview.agent_name ?? "GUIDS";
+  const temperature = notice.temperature as LeadTemperature;
+  const text = noticeText(config, {
+    agentName,
+    contact,
+    points: notice.points,
+    temperature,
+    reasons,
+  });
+  const body = JSON.stringify({
+    event: LEAD_NOTICE_EVENT,
+    notice_id: notice.id,
+    created_at: notice.createdAt.toISOString(),
+    sent_at: now.toISOString(),
+    to: ownerPhone,
+    text,
+    language: config.overview.language ?? "pt-BR",
+    lead: {
+      contact_id: notice.contactId,
+      name: contact.name,
+      phone: contact.phone,
+      email: contact.email,
+      score: notice.points,
+      temperature,
+      reasons,
+    },
+    agent: { id: notice.agentId, name: agentName },
+    workspace: { id: ctx.workspaceId, name: workspace?.name ?? null },
+    conversation_id: notice.conversationId,
+  });
+  return {
+    kind: "send",
+    url: webhook.url,
+    secret: decryptSecret(webhook.encrypted_secret),
+    body,
+  };
+}
+
+function failureReason(error: unknown): string {
+  if (error instanceof ChannelHttpError) {
+    return error.status ? `http_${error.status}` : error.code;
+  }
+  return "network";
+}
+
+export async function deliverLeadNotice(
+  session: JobSession,
+  ctx: RequestContext,
+  payload: LeadNoticePayload,
+  deps: LeadNoticeDeps = {},
+): Promise<Record<string, string | number>> {
+  const now = deps.now ?? (() => new Date());
+  const prepared = await session.transaction((tx) =>
+    prepare(tx, ctx, payload.noticeId, now()),
+  );
+  if (prepared.kind === "done") return { status: prepared.status };
+  const timestamp = String(Math.floor(now().getTime() / 1000));
+  let failure: string | null = null;
+  try {
+    await providerJson(
+      prepared.url,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-guidu-event": LEAD_NOTICE_EVENT,
+          "x-guidu-timestamp": timestamp,
+          "x-guidu-signature": signNotice(
+            prepared.secret,
+            timestamp,
+            prepared.body,
+          ),
+        },
+        body: prepared.body,
+      },
+      deps.fetch ? { fetch: deps.fetch } : {},
+    );
+  } catch (error) {
+    // A 2xx answer that is not JSON is still a delivery.
+    if (!(
+      error instanceof ChannelHttpError && error.code === "invalid_response"
+    )) {
+      failure = failureReason(error);
+    }
+  }
+  await session.transaction((tx) =>
+    tx.aiLeadNotice.update({
+      where: { id: payload.noticeId },
+      data: failure
+        ? { status: "failed", reason: failure, attempts: { increment: 1 } }
+        : {
+            status: "sent",
+            reason: null,
+            sentAt: now(),
+            attempts: { increment: 1 },
+          },
+    }),
+  );
+  // The queue tries again; the panel shows the failure meanwhile.
+  if (failure) throw new Error(`lead notice not delivered: ${failure}`);
+  return { status: "sent" };
+}
+
+export function createLeadNoticeJob(deps: LeadNoticeDeps = {}) {
+  return defineDetachedJob<LeadNoticePayload>({
+    kind: LEAD_NOTICE_JOB_KIND,
+    description:
+      "Aviso de lead quente ao responsável pelo webhook do parceiro.",
+    payload: LeadNoticePayload,
+    maxAttempts: 3,
+    expireInSeconds: 60,
+    run: (session, ctx, payload) =>
+      deliverLeadNotice(session, ctx, payload, deps),
+  });
+}
+
+export const leadNoticeJob = createLeadNoticeJob();

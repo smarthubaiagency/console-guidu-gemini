@@ -793,6 +793,43 @@ model AiAgentReferral {
   @@map("ai_agent_referrals")
 }
 
+/// The partner's webhook for the notices of its customers' GUIDS (A6a).
+/// The secret is encrypted; only the server decrypts it.
+model PartnerNoticeWebhook {
+  partnerId       String   @id @map("partner_id") @db.Uuid
+  url             String
+  maskedSecret    String   @map("masked_secret")
+  encryptedSecret String   @map("encrypted_secret")
+  enabled         Boolean  @default(true)
+  updatedBy       String   @map("updated_by") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("partner_notice_webhooks")
+}
+
+/// A hot lead told to the merchant, once per agent and contact (A6a).
+model AiLeadNotice {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  agentId        String    @map("agent_id") @db.Uuid
+  contactId      String    @map("contact_id") @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  points         Int
+  temperature    String
+  channel        String
+  status         String    @default("pending")
+  reason         String?
+  attempts       Int       @default(0)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz()
+
+  @@unique([agentId, contactId])
+  @@index([agentId, createdAt(sort: Desc)])
+  @@map("ai_lead_notices")
+}
+
 /// Lead scoring log per CRM contact (A1), insert only; written by the engine.
 model AiLeadActivity {
   id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
