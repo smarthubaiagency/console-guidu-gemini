@@ -35,7 +35,8 @@
     },
     "since": "desde {date}",
     "empty": "Aún no hay clientes.",
-    "created": "Cliente registrado. Envía la invitación al responsable."
+    "created": "Cliente registrado. Envía la invitación al responsable.",
+    "createdEmailed": "Cliente creado. Invitación enviada por correo a {email}."
   },
   "members": {
     "metaTitle": "Miembros (Socio)",

@@ -1,0 +1,48 @@
+{
+  "metaTitle": "E-mail",
+  "title": "E-mail",
+  "description": {
+    "platform": "Provedor de envio e remetente padrão dos e-mails da plataforma, herdados pelos parceiros.",
+    "partner": "Remetente dos e-mails que você e os seus clientes recebem."
+  },
+  "provider": {
+    "title": "Envio",
+    "description": {
+      "platform": "Os e-mails saem pelo Resend, de um endereço com domínio verificado da plataforma.",
+      "partner": "Os e-mails saem pelo Resend, do endereço da plataforma, com o nome e o responder para deste nível."
+    },
+    "state": "Situação",
+    "on": "Ligado (Resend)",
+    "off": "Desligado",
+    "from": "Remetente",
+    "replyTo": "Responder para",
+    "offHint": "O envio está desligado: defina RESEND_API_KEY e EMAIL_FROM_ADDRESS no servidor. Até lá, os avisos ficam registrados, mas não saem."
+  },
+  "sender": {
+    "title": "Remetente",
+    "description": {
+      "platform": "Nome e endereço de resposta padrão. Vazio usa a marca. Travar impede os parceiros de mudar.",
+      "partner": "Nome e endereço de resposta dos e-mails dos seus clientes. Vazio herda da plataforma ou usa a sua marca."
+    },
+    "fromName": "Nome do remetente",
+    "replyTo": "Responder para",
+    "none": "sem endereço de resposta",
+    "lock": "Travar para os níveis abaixo",
+    "lockedBy": {
+      "platform": "Travado pela plataforma.",
+      "partner": "Travado pelo parceiro."
+    },
+    "hint": "O endereço de envio é sempre o da plataforma; um endereço do seu domínio entra quando o domínio de envio for verificado.",
+    "save": "Salvar remetente",
+    "readOnly": "Só o dono e os administradores alteram o remetente."
+  },
+  "test": {
+    "send": "Enviar e-mail de teste",
+    "sent": "E-mail de teste enviado para {email}."
+  },
+  "errors": {
+    "notConfigured": "O envio de e-mail não está configurado no servidor.",
+    "provider": "O provedor de e-mail recusou a mensagem. Confira a chave e o endereço de envio.",
+    "noAddress": "Sua conta não tem e-mail para receber o teste."
+  }
+}

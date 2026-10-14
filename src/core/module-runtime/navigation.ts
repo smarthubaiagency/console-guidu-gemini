@@ -51,6 +51,7 @@ export type NavIconKey =
   | "palette"
   | "languages"
   | "globe"
+  | "mail"
   | "users";
 
 export type NavItem = Readonly<{
@@ -680,6 +681,16 @@ export function buildPlatformSettingsNavigation(
               }),
             ]
           : []),
+        ...(input.grants("platform.settings.manage")
+          ? [
+              item({
+                id: "platform.settings.email",
+                label: "E-mail",
+                href: "/platform/settings/email",
+                iconKey: "mail",
+              }),
+            ]
+          : []),
         ...(input.grants("platform.languages.manage")
           ? [
               item({
@@ -878,6 +889,16 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "Domínios",
                 href: "/admin/settings/domains",
                 iconKey: "globe",
+              }),
+            ]
+          : []),
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.settings.email",
+                label: "E-mail",
+                href: "/admin/settings/email",
+                iconKey: "mail",
               }),
             ]
           : []),

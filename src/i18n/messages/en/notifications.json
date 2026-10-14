@@ -35,5 +35,10 @@
     "subject": "AI agent paused in {workspace}",
     "body": "{agent} in {workspace} was paused because the AI key was not fixed within 24 hours.",
     "nextStep": "The backup ended on {date}. Replace and test the key, then turn the agent back on."
+  },
+  "emailTest": {
+    "subject": "Test e-mail from {brand}",
+    "body": "This is a test e-mail sent from the e-mail settings of {brand}. If you got it, sending works.",
+    "action": "Open e-mail settings"
   }
 }

@@ -11,6 +11,7 @@
  */
 
 import { defineConfig, devices } from "@playwright/test";
+import { FAKE_RESEND_KEY } from "./e2e/support/fake-resend";
 import { AUTH_BASE_URL, DATABASE_URL, RIG } from "./e2e/support/rig";
 
 export default defineConfig({
@@ -55,6 +56,10 @@ export default defineConfig({
       // the ForwardAuth secret; Cloudflare stays off, so DNS alone decides.
       CUSTOM_DOMAIN_CNAME_TARGET: "proxy.guidu.test",
       DOMAINS_CHECK_SECRET: "e2e-domains-check-secret",
+      // E-mail (CF3a) goes to the Resend double of the rig.
+      RESEND_API_KEY: FAKE_RESEND_KEY,
+      RESEND_API_BASE: `http://127.0.0.1:${RIG.resendPort}`,
+      EMAIL_FROM_ADDRESS: "avisos@guidu.test",
       APP_NAME: process.env.APP_NAME || "GUIDU",
       APP_URL: process.env.APP_URL || RIG.appUrl,
     },

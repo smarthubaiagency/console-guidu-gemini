@@ -217,3 +217,65 @@ begin
   end if;
 end $$;
 rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test 5 (CF3a): `private.email_settings(partner)` gives the dashboard and
+-- the worker the `email.*` rows of the platform and of that partner only.
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+insert into public.partners (id, slug, name)
+values ('b7000000-0000-4000-8000-000000000002', 'outra-cf3a', 'Outra CF3a');
+insert into public.settings (scope, key, value, locked, updated_by) values
+  ('platform', 'email.from_name', '"GUIDU"', false, 'd0000000-0000-4000-8000-000000000003'),
+  ('platform', 'region.currency', '"USD"', false, 'd0000000-0000-4000-8000-000000000003');
+insert into public.settings (scope, partner_id, key, value, locked, updated_by) values
+  ('partner', 'b7000000-0000-4000-8000-000000000001', 'email.reply_to', '"ajuda@cf1.test"', false,
+   'd0000000-0000-4000-8000-000000000006'),
+  ('partner', 'b7000000-0000-4000-8000-000000000001', 'region.timezone', '"UTC"', false,
+   'd0000000-0000-4000-8000-000000000006'),
+  ('partner', 'b7000000-0000-4000-8000-000000000002', 'email.from_name', '"Outra"', false,
+   'd0000000-0000-4000-8000-000000000006');
+
+set local role app_runtime;
+do $$
+declare
+  rows text;
+begin
+  -- A request with no context at all (an invitation on the platform host).
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000033', null, null);
+  select string_agg(scope || ':' || key || '=' || (value #>> '{}'), ',' order by scope, key)
+    into rows
+    from private.email_settings('b7000000-0000-4000-8000-000000000001');
+  if rows is distinct from 'partner:email.reply_to=ajuda@cf1.test,platform:email.from_name=GUIDU' then
+    raise exception 'email_settings: partner rows are %', rows;
+  end if;
+  select string_agg(scope || ':' || key, ',' order by scope, key)
+    into rows from private.email_settings(null);
+  if rows is distinct from 'platform:email.from_name' then
+    raise exception 'email_settings: platform rows are %', rows;
+  end if;
+  -- The table itself stays closed.
+  if exists (select 1 from public.settings) then
+    raise exception 'email_settings: customer reads the table';
+  end if;
+end $$;
+reset role;
+
+set local role app_worker;
+do $$
+begin
+  if (select count(*) from private.email_settings('b7000000-0000-4000-8000-000000000002')) <> 2 then
+    raise exception 'email_settings: worker misses the rows';
+  end if;
+end $$;
+reset role;
+
+set local role authenticated;
+do $$
+begin
+  perform private.email_settings(null);
+  raise exception 'email_settings: authenticated called it';
+exception when insufficient_privilege then null;
+end $$;
+rollback;

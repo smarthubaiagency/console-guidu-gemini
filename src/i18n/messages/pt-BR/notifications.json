@@ -35,5 +35,10 @@
     "subject": "Agente de IA pausado em {workspace}",
     "body": "{agent} em {workspace} foi pausado porque a chave de IA não foi corrigida em 24 horas.",
     "nextStep": "O backup terminou em {date}. Troque e teste a chave e depois reative o agente."
+  },
+  "emailTest": {
+    "subject": "E-mail de teste de {brand}",
+    "body": "Este é um e-mail de teste enviado pelas configurações de e-mail de {brand}. Se você recebeu, o envio está funcionando.",
+    "action": "Abrir configurações de e-mail"
   }
 }

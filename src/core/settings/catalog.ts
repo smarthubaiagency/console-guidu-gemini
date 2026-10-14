@@ -67,6 +67,27 @@ export const SETTINGS = {
     default: "America/Sao_Paulo",
     levels: ["platform", "partner", "workspace"],
   }),
+  /**
+   * Sender name of the e-mails (CF3a). Null uses the brand name. The
+   * sending address is the platform's verified one (EMAIL_FROM_ADDRESS).
+   */
+  "email.from_name": define<string | null>({
+    schema: z
+      .string()
+      .trim()
+      .min(1)
+      .max(80)
+      .regex(/^[^"<>\r\n]+$/, "invalid sender name")
+      .nullable(),
+    default: null,
+    levels: ["platform", "partner"],
+  }),
+  /** Reply-to address of the e-mails (CF3a). Null uses the brand's support e-mail. */
+  "email.reply_to": define<string | null>({
+    schema: z.string().trim().toLowerCase().email().max(254).nullable(),
+    default: null,
+    levels: ["platform", "partner"],
+  }),
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS;

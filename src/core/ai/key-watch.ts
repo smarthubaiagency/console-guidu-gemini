@@ -50,6 +50,8 @@ type Agent = Readonly<{
 
 type Audience = Readonly<{
   partnerId: string;
+  /** Partner whose sender settings go with its brand; null for the house. */
+  senderPartnerId: string | null;
   workspaceName: string;
   emails: readonly string[];
   credentialsUrl: string;
@@ -116,6 +118,7 @@ async function audienceOf(
       : partnerHostOrigin(domain.host, process.env);
   return {
     partnerId,
+    senderPartnerId: house ? null : partnerId,
     workspaceName: workspace.name,
     emails: [...new Set(byUser.values())].filter((e) => e.length > 0),
     credentialsUrl: new URL(
@@ -210,6 +213,7 @@ export async function runKeyWatch(
         language: await languageOf(email),
         brand: audience.brand,
         partnerId: audience.partnerId,
+        senderPartnerId: audience.senderPartnerId,
         relatedId: agent.id,
         event: {
           type,

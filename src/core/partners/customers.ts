@@ -289,6 +289,8 @@ export async function createPartnerCustomer(
   workspaceId: string;
   workspaceSlug: string;
   inviteUrl: string;
+  /** For the invitation e-mail (CF3a). */
+  invitation: { email: string; organizationName: string; expiresAt: Date };
 }> {
   requireCustomerManager(actor);
   const parsed = CustomerInputSchema.safeParse({
@@ -397,5 +399,10 @@ export async function createPartnerCustomer(
     workspaceId,
     workspaceSlug: data.workspaceSlug,
     inviteUrl: `${origin}/invite/${rawToken}`,
+    invitation: {
+      email: data.ownerEmail,
+      organizationName: data.organizationName,
+      expiresAt,
+    },
   };
 }

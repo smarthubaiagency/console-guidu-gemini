@@ -204,6 +204,16 @@ export function renderNotification(
         ),
       };
     }
+    case "email.test": {
+      const names = { brand: brand.name };
+      return {
+        subject: t("emailTest.subject", names),
+        ...layout(t, brand, [t("emailTest.body", names)], {
+          label: t("emailTest.action"),
+          url: safeLink(event.data.settingsUrl),
+        }),
+      };
+    }
     case "ai.agent.key_backup":
     case "ai.agent.key_paused": {
       const { data } = event;
