@@ -219,6 +219,11 @@ describe("generated navigation", () => {
       "/platform/settings/email",
     );
     expect(find(none, "platform.settings.email")).toBeUndefined();
+    // Plans and limits (CF4): billing readers, not support.
+    expect(find(owner, "platform.settings.plans")?.href).toBe(
+      "/platform/settings/plans",
+    );
+    expect(find(none, "platform.settings.plans")).toBeUndefined();
     expect(find(owner, "platform.billing")?.href).toBe("/platform/billing");
     expect(find(none, "platform.billing")).toBeUndefined();
     expect(find(none, "hello-world.admin")).toBeUndefined();
@@ -236,6 +241,8 @@ describe("generated navigation", () => {
       grants: platformGrants("billing"),
     });
     expect(find(billing, "platform.operations")).toBeUndefined();
+    expect(find(billing, "platform.settings.plans")).toBeDefined();
+    expect(find(support, "platform.settings.plans")).toBeUndefined();
     // Administrative keys (F4e): every internal role creates their own.
     expect(find(billing, "platform.api-keys")?.href).toBe("/platform/api-keys");
     expect(find(support, "platform.api-keys")).toBeDefined();
@@ -273,6 +280,7 @@ describe("generated navigation", () => {
       "/admin/settings/brand",
       "/admin/settings/domains",
       "/admin/settings/email",
+      "/admin/settings/plans",
     ]);
     expect(hrefs("partner_support")).toEqual([
       "/admin/ai/assistant",
@@ -280,6 +288,7 @@ describe("generated navigation", () => {
       "/admin/settings/general",
       "/admin/settings/domains",
       "/admin/settings/email",
+      "/admin/settings/plans",
     ]);
     expect(
       find(

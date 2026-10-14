@@ -3,6 +3,7 @@ import "server-only";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { isSubscriptionStatus } from "@/core/billing/subscriptions";
 
+import { parseStoredLimits } from "./catalog";
 import { type CompanyContract, LEGACY_CONTRACT } from "./types";
 
 export { type CompanyContract, LEGACY_CONTRACT };
@@ -15,18 +16,6 @@ type ContractRow = {
   limits: unknown;
   provisional: boolean;
 };
-
-function toLimits(value: unknown): Record<string, number> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>).filter(
-      (entry): entry is [string, number] =>
-        typeof entry[1] === "number" &&
-        Number.isInteger(entry[1]) &&
-        entry[1] >= 0,
-    ),
-  );
-}
 
 export async function loadCompanyContract(
   tx: ContextTransaction,
@@ -44,7 +33,7 @@ export async function loadCompanyContract(
     planName: row.plan_name,
     planVersion: row.plan_version,
     moduleKeys: row.module_keys,
-    limits: toLimits(row.limits),
+    limits: parseStoredLimits(row.limits),
     provisional: row.provisional,
   };
 }

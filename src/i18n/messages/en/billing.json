@@ -163,7 +163,6 @@
     "monthly": "Monthly",
     "yearly": "Yearly",
     "modulesLabel": "Included modules",
-    "limitLabel": "Limit {key} (empty = default)",
     "provisionalValues": "Provisional values (awaiting Sales)",
     "keyLabel": "Key (lowercase letters and hyphens)",
     "splitTitle": "Split rules (customer pays mode)",
@@ -178,7 +177,9 @@
     "refund": "Refund",
     "reasonPlaceholder": "Reason",
     "reasonLabel": "Refund reason",
-    "noPayments": "No payments yet."
+    "noPayments": "No payments yet.",
+    "limitsElsewhere": "Plan limits live in",
+    "limitsLink": "Settings › Plans and limits"
   },
   "partner": {
     "metaTitle": "Billing (Partner)",

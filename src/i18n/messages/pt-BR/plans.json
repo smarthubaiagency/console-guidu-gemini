@@ -1,0 +1,98 @@
+{
+  "metaTitle": "Planos e limites",
+  "title": "Planos e limites",
+  "description": {
+    "platform": "Um catálogo com todos os limites: o padrão sem plano, o teto da plataforma e o valor de cada plano à venda.",
+    "partner": "Os limites dos planos que você pode vender aos seus clientes. Quem define é a plataforma."
+  },
+  "quotas": {
+    "core_seats": {
+      "label": "Assentos da empresa",
+      "description": "Membros ativos e convites pendentes da empresa."
+    },
+    "core_public_domains": {
+      "label": "Domínios públicos do workspace",
+      "description": "Domínios próprios do site, perfil digital e quiz. Sem valor no plano, nenhum."
+    },
+    "core_storage_gb": {
+      "label": "Armazenamento da empresa",
+      "description": "Arquivos guardados pela empresa."
+    },
+    "core_upload_mb": {
+      "label": "Tamanho máximo de upload",
+      "description": "Maior arquivo aceito num envio."
+    },
+    "core_api_requests_per_minute": {
+      "label": "Chamadas da API por minuto",
+      "description": "Limite por workspace da API e do MCP; hoje vem do ambiente."
+    },
+    "core_ai_turns_per_month": {
+      "label": "Respostas de IA por mês",
+      "description": "Uso de IA por mês, além do número de agentes."
+    },
+    "core_trial_days": {
+      "label": "Dias de teste",
+      "description": "Período de teste do plano."
+    }
+  },
+  "units": {
+    "count": "{value}",
+    "gigabytes": "{value} GB",
+    "megabytes": "{value} MB",
+    "requests_per_minute": "{value} por minuto",
+    "per_month": "{value} por mês",
+    "days": "{value} dias"
+  },
+  "scope": {
+    "organization": "Empresa",
+    "workspace": "Workspace"
+  },
+  "values": {
+    "unlimited": "Sem limite",
+    "default": "Padrão",
+    "noCeiling": "Sem teto",
+    "companySeats": "Do cadastro da empresa",
+    "none": "Nenhum"
+  },
+  "planned": "ainda não aplicado",
+  "catalog": {
+    "title": "Catálogo de limites",
+    "description": "Cada limite com o padrão para quem não tem plano, o teto da plataforma e o valor da versão atual de cada plano ativo. Vazio no plano usa o padrão.",
+    "quota": "Limite",
+    "default": "Padrão sem plano",
+    "ceiling": "Teto",
+    "planColumn": "{plan} (v{version})",
+    "noPlans": "Nenhum plano ativo com versão publicada."
+  },
+  "ceilings": {
+    "title": "Tetos da plataforma",
+    "description": "Nenhum plano pode passar do teto. Sem teto, o plano pode dizer \"sem limite\". Um teto não fica abaixo de um plano à venda.",
+    "label": "Teto: {quota}",
+    "placeholder": "Sem teto",
+    "save": "Salvar tetos"
+  },
+  "planForm": {
+    "title": "{plan} · versão {version}",
+    "description": "Publicar cria a versão {next} com os mesmos preços e módulos. Assinaturas já abertas continuam na versão delas.",
+    "placeholder": "Padrão",
+    "unlimited": "Sem limite",
+    "ceilingHint": "teto {ceiling}",
+    "submit": "Publicar nova versão"
+  },
+  "readOnly": "Somente leitura: quem altera tetos e limites é quem administra a cobrança da plataforma.",
+  "partner": {
+    "note": "Os valores são da versão atual de cada plano. Vazio usa o padrão da plataforma."
+  },
+  "actions": {
+    "ceilingsSaved": "Tetos salvos ({changed} alterado(s)).",
+    "limitsPublished": "Limites publicados na versão {version} do plano."
+  },
+  "errors": {
+    "invalidValue": "{quota}: use um número inteiro de 0 a 1.000.000.",
+    "aboveCeiling": "{quota}: o valor passa do teto da plataforma ({ceiling}).",
+    "unlimitedNotAccepted": "{quota}: este limite precisa de um número.",
+    "unlimitedUnderCeiling": "{quota}: \"sem limite\" não cabe no teto da plataforma ({ceiling}).",
+    "ceilingBelowPlan": "{quota}: o plano {plan} está à venda acima desse teto. Publique antes uma versão do plano dentro dele.",
+    "noVersion": "O plano ainda não tem versão: publique os valores em Cobrança antes."
+  }
+}

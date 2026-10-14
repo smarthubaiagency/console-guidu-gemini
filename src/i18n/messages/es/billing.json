@@ -163,7 +163,6 @@
     "monthly": "Mensual",
     "yearly": "Anual",
     "modulesLabel": "Módulos incluidos",
-    "limitLabel": "Límite {key} (vacío = predeterminado)",
     "provisionalValues": "Valores provisionales (a la espera del área Comercial)",
     "keyLabel": "Clave (letras minúsculas y guion)",
     "splitTitle": "Reglas de división (modo cliente paga)",
@@ -178,7 +177,9 @@
     "refund": "Reembolsar",
     "reasonPlaceholder": "Motivo",
     "reasonLabel": "Motivo del reembolso",
-    "noPayments": "Aún no hay pagos."
+    "noPayments": "Aún no hay pagos.",
+    "limitsElsewhere": "Los límites del plan están en",
+    "limitsLink": "Configuración › Planes y límites"
   },
   "partner": {
     "metaTitle": "Cobro (Socio)",

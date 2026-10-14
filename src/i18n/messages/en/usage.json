@@ -26,9 +26,5 @@
     "default": "default limit",
     "none": "no limit"
   },
-  "overLimit": "over the limit: nothing was deleted, but new items are blocked",
-  "rows": {
-    "coreSeats": "Company seats (active members)",
-    "corePublicDomains": "Workspace public domains"
-  }
+  "overLimit": "over the limit: nothing was deleted, but new items are blocked"
 }

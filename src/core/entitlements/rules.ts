@@ -34,7 +34,10 @@ export function moduleContractAccess(
   return "full";
 }
 
-/** Limit of a quota: the plan's, else the default, else none (null). */
+/**
+ * Limit of a quota: the plan's (null there is "sem limite", CF4), else the
+ * default, else none (null).
+ */
 export function resolveQuotaLimit(
   contract: CompanyContract,
   key: string,

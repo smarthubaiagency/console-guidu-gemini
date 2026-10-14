@@ -163,7 +163,6 @@
     "monthly": "Mensal",
     "yearly": "Anual",
     "modulesLabel": "Módulos incluídos",
-    "limitLabel": "Limite {key} (vazio = padrão)",
     "provisionalValues": "Valores provisórios (aguardando o Comercial)",
     "keyLabel": "Chave (letras minúsculas e hífen)",
     "splitTitle": "Regras de divisão (modo cliente paga)",
@@ -178,7 +177,9 @@
     "refund": "Estornar",
     "reasonPlaceholder": "Motivo",
     "reasonLabel": "Motivo do estorno",
-    "noPayments": "Nenhum pagamento ainda."
+    "noPayments": "Nenhum pagamento ainda.",
+    "limitsElsewhere": "Os limites do plano ficam em",
+    "limitsLink": "Configurações › Planos e limites"
   },
   "partner": {
     "metaTitle": "Cobrança (Parceiro)",

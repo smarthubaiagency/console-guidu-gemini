@@ -7,6 +7,12 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import {
+  listQuotaEntries,
+  parseQuotaInput,
+  type PlanLimitValue,
+} from "@/core/entitlements/catalog";
+import { quotaFallbackLabel } from "@/core/entitlements/ceilings";
 import { actionFailure } from "@/core/i18n/errors";
 import { partnerActor, platformActor } from "@/core/partners/actors";
 import type { PartnerActionState } from "@/core/partners/actions";
@@ -26,6 +32,7 @@ import {
   setPlanStatus,
 } from "./catalog";
 import { simulateDemoCheckout } from "./customer";
+import { publishPlanLimits, saveQuotaCeilings } from "./limits";
 import { updateBillingTerms } from "./operations";
 import {
   changeSubscriptionStatus,
@@ -86,24 +93,45 @@ function reais(formData: FormData, key: keyof typeof REAIS_FIELDS): number {
   return cents;
 }
 
-/** `limit.<key>` fields of the plan version form; empty means "default". */
-function quotaLimits(formData: FormData): Record<string, number> {
-  const limits: Record<string, number> = {};
-  for (const [name, value] of formData.entries()) {
-    if (!name.startsWith("limit.") || typeof value !== "string") continue;
-    const text = value.trim();
-    if (!text) continue;
-    const number = Number(text);
-    if (!Number.isInteger(number) || number < 0) {
-      throw new AppError({
-        code: "invalid_input",
-        safeMessage: "Limites precisam ser números inteiros.",
-        messageKey: "billing.errors.limitsInteger",
-      });
+/**
+ * `limit.<key>` and `unlimited.<key>` fields of the plan limits form (CF4):
+ * "sem limite" checked is null, an empty field uses the default.
+ */
+function planLimits(formData: FormData): Record<string, PlanLimitValue> {
+  const limits: Record<string, PlanLimitValue> = {};
+  for (const entry of listQuotaEntries()) {
+    if (formData.get(`unlimited.${entry.key}`) === "on") {
+      limits[entry.key] = null;
+      continue;
     }
-    limits[name.slice("limit.".length)] = number;
+    const value = parseQuotaInput(text(formData, `limit.${entry.key}`));
+    if (value === undefined) throw invalidQuotaValue(entry.key);
+    if (value !== null) limits[entry.key] = value;
   }
   return limits;
+}
+
+/** `ceiling.<key>` fields: a number sets the ceiling, empty removes it. */
+function ceilingValues(formData: FormData): Record<string, number | null> {
+  const ceilings: Record<string, number | null> = {};
+  for (const entry of listQuotaEntries()) {
+    const name = `ceiling.${entry.key}`;
+    if (!formData.has(name)) continue;
+    const value = parseQuotaInput(text(formData, name));
+    if (value === undefined) throw invalidQuotaValue(entry.key);
+    ceilings[entry.key] = value;
+  }
+  return ceilings;
+}
+
+function invalidQuotaValue(key: string): AppError {
+  const quota = quotaFallbackLabel(key);
+  return new AppError({
+    code: "invalid_input",
+    safeMessage: `${quota}: use um número inteiro de 0 a 1.000.000.`,
+    messageKey: "plans.errors.invalidValue",
+    messageValues: { quota, quotaKey: key },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -166,12 +194,49 @@ export async function publishPlanVersionAction(
         minPlatformShareCents: reais(formData, "minPlatformShare"),
         partnerBasePriceCents: reais(formData, "partnerBasePrice"),
         provisional: formData.get("provisional") === "on",
-        limits: quotaLimits(formData),
       }),
     );
     revalidatePath("/platform/billing");
     const t = await messages();
     return { success: true, message: t("versionPublished", { version }) };
+  } catch (err) {
+    return actionFailure(err);
+  }
+}
+
+/** Configurações › Planos e limites (CF4): the platform ceilings. */
+export async function saveQuotaCeilingsAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const actor = await platformBillingActor();
+    const { changed } = await inPlatform(actor, (tx) =>
+      saveQuotaCeilings(tx, actor, ceilingValues(formData)),
+    );
+    revalidatePath("/platform/settings/plans");
+    const t = await getTranslations("plans.actions");
+    return { success: true, message: t("ceilingsSaved", { changed }) };
+  } catch (err) {
+    return actionFailure(err);
+  }
+}
+
+/** Configurações › Planos e limites (CF4): a plan's limits, as a new version. */
+export async function publishPlanLimitsAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const actor = await platformBillingActor();
+    const planId = uuid.parse(text(formData, "planId"));
+    const { version } = await inPlatform(actor, (tx) =>
+      publishPlanLimits(tx, actor, planId, planLimits(formData)),
+    );
+    revalidatePath("/platform/settings/plans");
+    revalidatePath("/platform/billing");
+    const t = await getTranslations("plans.actions");
+    return { success: true, message: t("limitsPublished", { version }) };
   } catch (err) {
     return actionFailure(err);
   }

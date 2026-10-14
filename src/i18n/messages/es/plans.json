@@ -1,0 +1,98 @@
+{
+  "metaTitle": "Planes y límites",
+  "title": "Planes y límites",
+  "description": {
+    "platform": "Un catálogo con todos los límites: el predeterminado sin plan, el tope de la plataforma y el valor de cada plan a la venta.",
+    "partner": "Los límites de los planes que puede vender a sus clientes. Los define la plataforma."
+  },
+  "quotas": {
+    "core_seats": {
+      "label": "Puestos de la empresa",
+      "description": "Miembros activos e invitaciones pendientes de la empresa."
+    },
+    "core_public_domains": {
+      "label": "Dominios públicos del workspace",
+      "description": "Dominios propios del sitio, perfil digital y quiz. Sin valor en el plan, ninguno."
+    },
+    "core_storage_gb": {
+      "label": "Almacenamiento de la empresa",
+      "description": "Archivos guardados por la empresa."
+    },
+    "core_upload_mb": {
+      "label": "Tamaño máximo de carga",
+      "description": "Mayor archivo aceptado en una carga."
+    },
+    "core_api_requests_per_minute": {
+      "label": "Llamadas a la API por minuto",
+      "description": "Límite por workspace de la API y del MCP; hoy viene del entorno."
+    },
+    "core_ai_turns_per_month": {
+      "label": "Respuestas de IA por mes",
+      "description": "Uso mensual de IA, además del número de agentes."
+    },
+    "core_trial_days": {
+      "label": "Días de prueba",
+      "description": "Período de prueba del plan."
+    }
+  },
+  "units": {
+    "count": "{value}",
+    "gigabytes": "{value} GB",
+    "megabytes": "{value} MB",
+    "requests_per_minute": "{value} por minuto",
+    "per_month": "{value} por mes",
+    "days": "{value} días"
+  },
+  "scope": {
+    "organization": "Empresa",
+    "workspace": "Workspace"
+  },
+  "values": {
+    "unlimited": "Sin límite",
+    "default": "Predeterminado",
+    "noCeiling": "Sin tope",
+    "companySeats": "Del registro de la empresa",
+    "none": "Ninguno"
+  },
+  "planned": "aún no aplicado",
+  "catalog": {
+    "title": "Catálogo de límites",
+    "description": "Cada límite con el predeterminado para quien no tiene plan, el tope de la plataforma y el valor de la versión actual de cada plan activo. Vacío en el plan usa el predeterminado.",
+    "quota": "Límite",
+    "default": "Predeterminado sin plan",
+    "ceiling": "Tope",
+    "planColumn": "{plan} (v{version})",
+    "noPlans": "Ningún plan activo con versión publicada."
+  },
+  "ceilings": {
+    "title": "Topes de la plataforma",
+    "description": "Ningún plan puede superar el tope. Sin tope, el plan puede decir \"sin límite\". Un tope nunca queda por debajo de un plan a la venta.",
+    "label": "Tope: {quota}",
+    "placeholder": "Sin tope",
+    "save": "Guardar topes"
+  },
+  "planForm": {
+    "title": "{plan} · versión {version}",
+    "description": "Publicar crea la versión {next} con los mismos precios y módulos. Las suscripciones ya abiertas siguen en su versión.",
+    "placeholder": "Predeterminado",
+    "unlimited": "Sin límite",
+    "ceilingHint": "tope {ceiling}",
+    "submit": "Publicar nueva versión"
+  },
+  "readOnly": "Solo lectura: los topes y límites los cambia quien administra la facturación de la plataforma.",
+  "partner": {
+    "note": "Valores de la versión actual de cada plan. Vacío usa el predeterminado de la plataforma."
+  },
+  "actions": {
+    "ceilingsSaved": "Topes guardados ({changed} cambiado(s)).",
+    "limitsPublished": "Límites publicados en la versión {version} del plan."
+  },
+  "errors": {
+    "invalidValue": "{quota}: use un número entero de 0 a 1.000.000.",
+    "aboveCeiling": "{quota}: el valor supera el tope de la plataforma ({ceiling}).",
+    "unlimitedNotAccepted": "{quota}: este límite necesita un número.",
+    "unlimitedUnderCeiling": "{quota}: \"sin límite\" no cabe en el tope de la plataforma ({ceiling}).",
+    "ceilingBelowPlan": "{quota}: el plan {plan} está a la venta por encima de este tope. Publique antes una versión del plan dentro de él.",
+    "noVersion": "El plan aún no tiene versión: publique sus valores en Facturación primero."
+  }
+}

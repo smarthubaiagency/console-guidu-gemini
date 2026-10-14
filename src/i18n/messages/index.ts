@@ -33,6 +33,7 @@ import ptBR_operations from "./pt-BR/operations.json";
 import ptBR_overview from "./pt-BR/overview.json";
 import ptBR_partnerConsole from "./pt-BR/partnerConsole.json";
 import ptBR_partners from "./pt-BR/partners.json";
+import ptBR_plans from "./pt-BR/plans.json";
 import ptBR_platform from "./pt-BR/platform.json";
 import ptBR_platformKeys from "./pt-BR/platformKeys.json";
 import ptBR_portfolio from "./pt-BR/portfolio.json";
@@ -79,6 +80,7 @@ import en_operations from "./en/operations.json";
 import en_overview from "./en/overview.json";
 import en_partnerConsole from "./en/partnerConsole.json";
 import en_partners from "./en/partners.json";
+import en_plans from "./en/plans.json";
 import en_platform from "./en/platform.json";
 import en_platformKeys from "./en/platformKeys.json";
 import en_portfolio from "./en/portfolio.json";
@@ -125,6 +127,7 @@ import es_operations from "./es/operations.json";
 import es_overview from "./es/overview.json";
 import es_partnerConsole from "./es/partnerConsole.json";
 import es_partners from "./es/partners.json";
+import es_plans from "./es/plans.json";
 import es_platform from "./es/platform.json";
 import es_platformKeys from "./es/platformKeys.json";
 import es_portfolio from "./es/portfolio.json";
@@ -175,6 +178,7 @@ export const MESSAGE_FILES = {
     overview: ptBR_overview,
     partnerConsole: ptBR_partnerConsole,
     partners: ptBR_partners,
+    plans: ptBR_plans,
     platform: ptBR_platform,
     platformKeys: ptBR_platformKeys,
     portfolio: ptBR_portfolio,
@@ -223,6 +227,7 @@ export const MESSAGE_FILES = {
     overview: en_overview,
     partnerConsole: en_partnerConsole,
     partners: en_partners,
+    plans: en_plans,
     platform: en_platform,
     platformKeys: en_platformKeys,
     portfolio: en_portfolio,
@@ -271,6 +276,7 @@ export const MESSAGE_FILES = {
     overview: es_overview,
     partnerConsole: es_partnerConsole,
     partners: es_partners,
+    plans: es_plans,
     platform: es_platform,
     platformKeys: es_platformKeys,
     portfolio: es_portfolio,
@@ -321,6 +327,7 @@ export const NAMESPACES = [
   "overview",
   "partnerConsole",
   "partners",
+  "plans",
   "platform",
   "platformKeys",
   "portfolio",

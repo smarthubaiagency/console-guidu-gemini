@@ -636,7 +636,7 @@ export function buildPlatformNavigation(
 /**
  * Settings submenu of the platform (/platform/settings, CF1): the general
  * and regional defaults, the brand (CF2), the languages of the dashboard
- * (I1) and the global settings of each module.
+ * (I1), plans and limits (CF4) and the global settings of each module.
  */
 export function buildPlatformSettingsNavigation(
   input: PlatformNavigationInput,
@@ -698,6 +698,17 @@ export function buildPlatformSettingsNavigation(
                 label: "Idiomas",
                 href: "/platform/settings/languages",
                 iconKey: "languages",
+              }),
+            ]
+          : []),
+        // Quota catalog, ceilings and plan values (CF4): billing readers.
+        ...(input.grants("platform.billing.read")
+          ? [
+              item({
+                id: "platform.settings.plans",
+                label: "Planos e limites",
+                href: "/platform/settings/plans",
+                iconKey: "gauge",
               }),
             ]
           : []),
@@ -899,6 +910,17 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "E-mail",
                 href: "/admin/settings/email",
                 iconKey: "mail",
+              }),
+            ]
+          : []),
+        // Limits of the plans the partner sells, read only (CF4).
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.settings.plans",
+                label: "Planos e limites",
+                href: "/admin/settings/plans",
+                iconKey: "gauge",
               }),
             ]
           : []),

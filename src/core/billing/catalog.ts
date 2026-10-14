@@ -5,7 +5,12 @@ import { adminAuditContext } from "@/core/module-runtime/settings";
 import { Permissions } from "@/core/permissions/catalog";
 import { hasPlatformRolePermission } from "@/core/permissions/matrix";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
-import { CORE_QUOTAS } from "@/core/entitlements/quotas";
+import {
+  listQuotaEntries,
+  MAX_QUOTA_VALUE,
+  parseStoredLimits,
+  type PlanLimitValue,
+} from "@/core/entitlements/catalog";
 import { listRegisteredModules } from "@/modules/registry";
 import { AppError } from "@/shared/errors";
 
@@ -18,6 +23,7 @@ import {
   requireAllowed,
 } from "./access";
 import { ingestProviderEvent } from "./events";
+import { assertPlanLimits } from "@/core/entitlements/ceilings";
 import { manualProvider } from "./providers/manual";
 
 /**
@@ -36,8 +42,8 @@ export type PlanVersionView = Readonly<{
   minPlatformShareCents: number;
   partnerBasePriceCents: number;
   provisional: boolean;
-  /** Quota limits of the version (F3b). */
-  limits: Record<string, number>;
+  /** Quota limits of the version (F3b); null is "sem limite" (CF4). */
+  limits: Record<string, PlanLimitValue>;
   createdAt: Date;
 }>;
 
@@ -62,14 +68,7 @@ function toVersionView(row: {
   limits: unknown;
   createdAt: Date;
 }): PlanVersionView {
-  const limits =
-    row.limits && typeof row.limits === "object" && !Array.isArray(row.limits)
-      ? Object.fromEntries(
-          Object.entries(row.limits as Record<string, unknown>).filter(
-            (entry): entry is [string, number] => typeof entry[1] === "number",
-          ),
-        )
-      : {};
+  const limits = parseStoredLimits(row.limits);
   return {
     id: row.id,
     version: row.version,
@@ -84,16 +83,12 @@ function toVersionView(row: {
   };
 }
 
-/** Quota keys a plan version may limit: core quotas and module quotas. */
+/** Quota keys a plan version may limit: the catalog of CF4. */
 export function listQuotaKeys(): Array<{ key: string; description: string }> {
-  return [
-    ...CORE_QUOTAS.map((q) => ({ key: q.key, description: q.description })),
-    ...listRegisteredModules().flatMap((mod) =>
-      mod.manifest.entitlements
-        .filter((e) => e.kind === "quota")
-        .map((e) => ({ key: e.key, description: e.description })),
-    ),
-  ];
+  return listQuotaEntries().map((q) => ({
+    key: q.key,
+    description: q.description,
+  }));
 }
 
 /** Plans readable by any signed-in context (the catalog is not secret). */
@@ -214,9 +209,17 @@ const VersionSchema = z
     minPlatformShareCents: CentsSchema,
     partnerBasePriceCents: CentsSchema,
     provisional: z.boolean(),
+    /**
+     * Quota limits (null is "sem limite"). Left out, the version keeps the
+     * limits of the current one: limits are set in Configurações › Planos
+     * e limites (CF4), not in the billing form.
+     */
     limits: z
-      .record(z.string(), z.number().int().min(0).max(1_000_000))
-      .default({}),
+      .record(
+        z.string(),
+        z.number().int().min(0).max(MAX_QUOTA_VALUE).nullable(),
+      )
+      .optional(),
   })
   .refine((v) => v.minPlatformShareCents <= v.minPriceCents, {
     message: "O repasse mínimo não pode passar do piso.",
@@ -248,10 +251,6 @@ export async function publishPlanVersion(
   if (moduleKeys.some((key) => !known.has(key))) {
     throw invalidBillingInput("Módulo desconhecido no plano.");
   }
-  const quotaKeys = new Set(listQuotaKeys().map((q) => q.key));
-  if (Object.keys(parsed.data.limits).some((key) => !quotaKeys.has(key))) {
-    throw invalidBillingInput("Limite de cota desconhecida no plano.");
-  }
   const plan = await tx.plan.findUnique({
     where: { id: planId },
     select: { id: true },
@@ -262,14 +261,25 @@ export async function publishPlanVersion(
   const latest = await tx.planVersion.findFirst({
     where: { planId },
     orderBy: { version: "desc" },
-    select: { version: true },
+    select: { version: true, limits: true },
   });
+  // Carried over limits drop keys no module declares any more.
+  const knownQuotas = new Set(listQuotaKeys().map((q) => q.key));
+  const limits =
+    parsed.data.limits ??
+    Object.fromEntries(
+      Object.entries(parseStoredLimits(latest?.limits)).filter(([key]) =>
+        knownQuotas.has(key),
+      ),
+    );
+  await assertPlanLimits(tx, limits);
   const version = (latest?.version ?? 0) + 1;
   const created = await tx.planVersion.create({
     data: {
       planId,
       version,
       ...parsed.data,
+      limits,
       moduleKeys,
       createdBy: actor.userId,
     },
