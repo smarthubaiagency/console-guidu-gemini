@@ -16,12 +16,14 @@ const REASONS = new Set([
   "email_provider_pending",
   "sms_unavailable",
   "no_contact",
+  "no_referral",
   "invalid_config",
 ]);
 
 /**
- * Avisos de lead of a GUIDS (A6a): the hot leads told to the merchant,
- * newest first, with the channel and whether the notice got out.
+ * Avisos of a GUIDS: the hot leads (A6a) and the referrals given (A6b)
+ * told to the merchant, newest first, with the channel and whether the
+ * notice got out.
  */
 export async function GuidNotices({
   notices,
@@ -57,7 +59,11 @@ export async function GuidNotices({
                   {notice.contactName ?? t("unknownContact")}
                 </span>
                 {" · "}
-                {t("score", { points: notice.points })}
+                {notice.kind === "referral"
+                  ? t("referral", {
+                      name: notice.referralName ?? t("unknownReferral"),
+                    })
+                  : t("score", { points: notice.points ?? 0 })}
                 {" · "}
                 {t(`channels.${notice.channel}`)}
                 {" · "}

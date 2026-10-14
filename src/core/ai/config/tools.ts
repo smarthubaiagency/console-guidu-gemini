@@ -20,6 +20,8 @@ export const AGENT_TOOLS = {
   search_knowledge: ["guid", "assistant"],
   // Images and documents of the Portfolio, with the answer (A5d).
   send_portfolio_media: ["guid"],
+  // A referral of the business to the contact (A6b).
+  refer_contact: ["guid"],
   // Reading of the workspace with the permissions of who asks (MCP tools).
   workspace_read: ["assistant"],
   propose_operation: ["assistant"],

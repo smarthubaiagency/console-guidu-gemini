@@ -45,7 +45,12 @@ import {
 } from "../providers";
 import { renderSystemPrompt } from "../prompt/render";
 import { promptLocale, promptTexts } from "../prompt/texts";
-import { buildTools, recordRefusedCall, type ToolEnv } from "../tools/catalog";
+import {
+  buildTools,
+  offeredTools,
+  recordRefusedCall,
+  type ToolEnv,
+} from "../tools/catalog";
 import { contextValues, turnTimeZone } from "./context";
 import {
   afterHoursReply,
@@ -65,6 +70,7 @@ import {
   persistTurn,
   persistTurnError,
 } from "./persist";
+import { MAX_REFERRALS_IN_PROMPT, referralsInstruction } from "./referrals";
 import { ResponsePlan, turnErrorCode } from "./plan";
 import {
   speakAnswer,
@@ -165,6 +171,8 @@ type Ready = Readonly<{
   systemPrompt: string;
   /** The local time and the business hours, after the prompt (A6c). */
   hoursNote: string;
+  /** The business's referrals, when the agent may refer (A6b). */
+  referralsNote: string | null;
   history: ModelMessage[];
   state: TurnState;
 }>;
@@ -460,6 +468,20 @@ async function loadTurn(
   if (!systemPrompt) {
     return blocked("no_prompt", "O agente não tem prompt.", ids);
   }
+  const referrals = offeredTools("guid", config).includes("refer_contact")
+    ? await tx.aiAgentReferral.findMany({
+        where: { workspaceId: ctx.workspaceId },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+        take: MAX_REFERRALS_IN_PROMPT,
+        select: {
+          name: true,
+          referralTag: true,
+          specialties: true,
+          city: true,
+          remote: true,
+        },
+      })
+    : [];
   const hash = test
     ? await tx.$queryRaw<{ hash: string }[]>`
         select md5(config::text) as hash from public.ai_agents
@@ -485,6 +507,7 @@ async function loadTurn(
       config.overview.language ?? "pt-BR",
       promptTexts(locale),
     ),
+    referralsNote: referralsInstruction(referrals, promptTexts(locale)),
     history: recent
       .reverse()
       .map((m): ModelMessage =>
@@ -660,6 +683,7 @@ export async function runGuidTurnWithState(
   const instructions = [
     loaded.systemPrompt,
     loaded.hoursNote,
+    ...(loaded.referralsNote ? [loaded.referralsNote] : []),
     ...(deps.answerLimits
       ? [limitsInstruction(env.locale, deps.answerLimits)]
       : []),

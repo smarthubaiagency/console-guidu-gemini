@@ -53,6 +53,17 @@ export type PromptTexts = Readonly<{
     text: string;
     temperature: Readonly<Record<string, string>>;
   }>;
+  /** A referral given to a contact (A6b): to the merchant and the contact. */
+  referralNotice: Readonly<{ text: string; unknownContact: string }>;
+  referral: Readonly<{
+    /** The default message to the contact. */
+    message: string;
+    /** The block of the referrals in the instructions. */
+    block: string;
+    remote: string;
+    /** The line in the contact's notes. */
+    note: string;
+  }>;
 }>;
 
 function promptOf(messages: unknown): PromptTexts | null {

@@ -249,6 +249,10 @@
       "propose_operation": {
         "label": "Propor uma ação",
         "desc": "Sugere uma ação, que a pessoa confirma."
+      },
+      "refer_contact": {
+        "label": "Indicar parceiro",
+        "desc": "Indica ao contato uma das indicações cadastradas e avisa o responsável."
       }
     },
     "model": {

@@ -83,6 +83,16 @@
         "cold": "cold",
         "suspect": "suspect"
       }
+    },
+    "referralNotice": {
+      "text": "{agent} referred {referral} ({referralPhone}) to {name} ({phone}). Reason: {reason}.",
+      "unknownContact": "a contact not yet registered"
+    },
+    "referral": {
+      "message": "For that, we recommend {referral}. Contact: {phone}.",
+      "block": "The business's referrals: professionals and companies you recommend when a request is beyond what you do. When the contact's request matches one of them, use the referral tool with its tag and give the contact the message it returns. Never make up a referral.",
+      "remote": "works remotely",
+      "note": "Referred to {referral}: {reason}"
     }
   },
   "guids": {
@@ -202,7 +212,7 @@
     },
     "notices": {
       "title": "Lead notices",
-      "description": "Hot leads told to the person in charge, once per contact. WhatsApp goes through the partner's webhook; e-mail and SMS wait for a provider.",
+      "description": "Hot leads (once per contact) and referrals the GUIDS gave, told to the person in charge. WhatsApp goes through the partner's webhook; e-mail and SMS wait for a provider.",
       "empty": "No notices yet.",
       "unknownContact": "Contact removed",
       "score": "score {points}",
@@ -224,8 +234,11 @@
         "sms_unavailable": "SMS unavailable",
         "no_contact": "contact not found",
         "invalid_config": "invalid configuration",
-        "delivery": "delivery failed ({code})"
-      }
+        "delivery": "delivery failed ({code})",
+        "no_referral": "referral removed"
+      },
+      "referral": "referred to {name}",
+      "unknownReferral": "referral removed"
     }
   },
   "errors": {
