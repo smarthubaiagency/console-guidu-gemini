@@ -44,5 +44,110 @@
     "notConfigured": "E-mail sending is not configured on the server.",
     "provider": "The e-mail provider refused the message. Check the key and the sending address.",
     "noAddress": "Your account has no e-mail to receive the test."
+  },
+  "templates": {
+    "title": "Email templates",
+    "description": {
+      "platform": "Subject and body of each email, per language. This is the base partners inherit.",
+      "partner": "Subject and body of the emails your customers receive, per language, over the platform's base."
+    },
+    "eventsTitle": "Events",
+    "groups": {
+      "account": "Account",
+      "billing": "Billing",
+      "ai": "AI"
+    },
+    "events": {
+      "invitation": {
+        "name": "Invitation",
+        "description": "Sent when someone is invited to an organization."
+      },
+      "emailTest": {
+        "name": "Test email",
+        "description": "Sent by the test button in Settings › Email."
+      },
+      "pastDue": {
+        "name": "Payment overdue",
+        "description": "Tells the partner a customer's subscription is overdue."
+      },
+      "suspended": {
+        "name": "Subscription suspended",
+        "description": "Tells the partner a customer's subscription was suspended."
+      },
+      "aiKeyBackup": {
+        "name": "AI backup key",
+        "description": "Tells the customer the AI key failed and the backup is in use."
+      },
+      "aiKeyPaused": {
+        "name": "Agent paused",
+        "description": "Tells the customer the agent was paused because the key was not fixed."
+      }
+    },
+    "essential": "Essential email: it cannot be turned off.",
+    "localeNames": {
+      "pt-BR": "Portuguese",
+      "en": "English",
+      "es": "Spanish"
+    },
+    "source": {
+      "code": "Using the system's default text.",
+      "platform": "Using the platform's base."
+    },
+    "custom": "Customized",
+    "subject": "Subject",
+    "body": "Body",
+    "variables": "Available variables",
+    "variablesHint": "Click to insert where the cursor is. Only this event's variables work, and every value is escaped.",
+    "variableNames": {
+      "organizacao": "Customer organization name",
+      "data": "Deadline date and time (invitation expiry or end of backup)",
+      "link": "Address of the action button (use it as a link)",
+      "marca": "Brand name",
+      "parceiro": "Partner name",
+      "vencimento": "Date the paid period ended",
+      "proximo_passo": "Sentence with the next step and the suspension date",
+      "workspace": "Workspace name",
+      "agente": "AI agent name"
+    },
+    "preview": "Preview",
+    "previewSubject": "Subject:",
+    "save": "Save",
+    "restore": "Restore default",
+    "restoreTitle": "Restore this template?",
+    "restoreMessage": {
+      "platform": "The subject and body of this language go back to the system's default text.",
+      "partner": "The subject and body of this language go back to the platform's base."
+    },
+    "cancel": "Cancel",
+    "formatHint": "Simple format: **bold**, *italic*, [text](https://...), lists with - or 1. and headings with ##. HTML is not accepted.",
+    "layoutHint": "Header and footer come from the brand (name, color and support contacts). Passwords are never sent by email.",
+    "readOnly": "Only the owner and admins change templates.",
+    "toolbar": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "link": "Link",
+      "bullets": "List",
+      "numbered": "Numbered list",
+      "heading": "Heading"
+    },
+    "linkText": "link text",
+    "sample": {
+      "organization": "Sample Customer",
+      "partner": "Sample Agency",
+      "workspace": "Sample Store",
+      "agent": "Assistant"
+    },
+    "saved": "Template saved.",
+    "restored": "Template restored to default.",
+    "errors": {
+      "required": "Fill in this field.",
+      "too_long": "Text too long.",
+      "newline": "The subject must be a single line.",
+      "unknown_tag": "Unknown variable for this event: {tag}.",
+      "bad_link": "Links only with an http(s) address or the link variable.",
+      "tag_not_link": "The variable {tag} is not an address and cannot be a link.",
+      "unknownEvent": "Event without a template.",
+      "unknownLocale": "Language without a template."
+    }
   }
 }

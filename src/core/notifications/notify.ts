@@ -1,5 +1,6 @@
 import type { Messages } from "@/core/i18n/locales";
 
+import type { EmailTemplateContent } from "./template-catalog";
 import { renderNotification } from "./templates";
 import { getNotificationTransport } from "./transport";
 import type {
@@ -9,10 +10,14 @@ import type {
   SendResult,
 } from "./types";
 
-/** Language of a message: its code and, optionally, the edited texts (I5). */
+/**
+ * Language of a message: its code and, optionally, the edited texts (I5)
+ * and the edited template of the event in that language (CF3b).
+ */
 export type NotificationLanguage = Readonly<{
   locale: string;
   messages?: Messages;
+  template?: EmailTemplateContent | null;
 }>;
 
 /** Single entry point for user notifications (ADR 0012, P3). */
@@ -27,6 +32,7 @@ export async function notify(
     brand,
     language?.locale,
     language?.messages,
+    language?.template,
   );
   return transport.send({
     ...rendered,

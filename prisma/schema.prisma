@@ -1315,6 +1315,22 @@ model Setting {
   @@map("settings")
 }
 
+/// Edited e-mail templates (CF3b): platform base and partner overrides.
+model EmailTemplate {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scope     String
+  partnerId String?  @map("partner_id") @db.Uuid
+  eventType String   @map("event_type")
+  locale    String
+  subject   String
+  body      String
+  updatedBy String?  @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("email_templates")
+}
+
 model PlatformLanguage {
   code      String   @id
   name      String

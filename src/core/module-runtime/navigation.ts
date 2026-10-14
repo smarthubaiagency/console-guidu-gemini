@@ -689,6 +689,13 @@ export function buildPlatformSettingsNavigation(
                 href: "/platform/settings/email",
                 iconKey: "mail",
               }),
+              // Subject and body of each event (CF3b).
+              item({
+                id: "platform.settings.email.templates",
+                label: "Modelos de e-mail",
+                href: "/platform/settings/email/templates",
+                iconKey: "file-text",
+              }),
             ]
           : []),
         ...(input.grants("platform.languages.manage")
@@ -899,6 +906,17 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "E-mail",
                 href: "/admin/settings/email",
                 iconKey: "mail",
+              }),
+            ]
+          : []),
+        // Templates for the partner's customers (CF3b): owner and admin.
+        ...(grants("partner.settings.manage")
+          ? [
+              item({
+                id: "partner.settings.email.templates",
+                label: "Modelos de e-mail",
+                href: "/admin/settings/email/templates",
+                iconKey: "file-text",
               }),
             ]
           : []),

@@ -71,6 +71,8 @@ export type NotificationBrand = Readonly<{
   name: string;
   supportEmail: string | null;
   supportUrl: string | null;
+  /** Brand color (`#rrggbb`) of the header and links, when known (CF3b). */
+  color?: string | null;
   /** Sender settings of the brand's partner (CF3a); null uses the brand. */
   sender?: EmailSender;
 }>;

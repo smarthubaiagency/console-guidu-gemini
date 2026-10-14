@@ -44,5 +44,110 @@
     "notConfigured": "El envío de correo no está configurado en el servidor.",
     "provider": "El proveedor de correo rechazó el mensaje. Revisa la clave y la dirección de envío.",
     "noAddress": "Tu cuenta no tiene correo para recibir la prueba."
+  },
+  "templates": {
+    "title": "Plantillas de correo",
+    "description": {
+      "platform": "Asunto y cuerpo de cada correo, por idioma. Es la base que heredan los socios.",
+      "partner": "Asunto y cuerpo de los correos que reciben sus clientes, por idioma, sobre la base de la plataforma."
+    },
+    "eventsTitle": "Eventos",
+    "groups": {
+      "account": "Cuenta",
+      "billing": "Cobro",
+      "ai": "IA"
+    },
+    "events": {
+      "invitation": {
+        "name": "Invitación",
+        "description": "Se envía cuando alguien es invitado a una organización."
+      },
+      "emailTest": {
+        "name": "Correo de prueba",
+        "description": "Se envía con el botón de prueba de Configuración › Correo."
+      },
+      "pastDue": {
+        "name": "Cobro atrasado",
+        "description": "Avisa al socio que la suscripción de un cliente está atrasada."
+      },
+      "suspended": {
+        "name": "Suscripción suspendida",
+        "description": "Avisa al socio que la suscripción de un cliente fue suspendida."
+      },
+      "aiKeyBackup": {
+        "name": "Clave de respaldo de IA",
+        "description": "Avisa al cliente que la clave de IA falló y el respaldo está en uso."
+      },
+      "aiKeyPaused": {
+        "name": "Agente pausado",
+        "description": "Avisa al cliente que el agente fue pausado porque la clave no se corrigió."
+      }
+    },
+    "essential": "Correo esencial: no se puede desactivar.",
+    "localeNames": {
+      "pt-BR": "Portugués",
+      "en": "Inglés",
+      "es": "Español"
+    },
+    "source": {
+      "code": "Usando el texto predeterminado del sistema.",
+      "platform": "Usando la base de la plataforma."
+    },
+    "custom": "Personalizado",
+    "subject": "Asunto",
+    "body": "Cuerpo",
+    "variables": "Variables disponibles",
+    "variablesHint": "Haga clic para insertar donde está el cursor. Solo valen las variables de este evento y todo valor se escapa.",
+    "variableNames": {
+      "organizacao": "Nombre de la organización del cliente",
+      "data": "Fecha y hora del plazo (validez de la invitación o fin del respaldo)",
+      "link": "Dirección del botón de acción (úsela como enlace)",
+      "marca": "Nombre de la marca",
+      "parceiro": "Nombre del socio",
+      "vencimento": "Fecha en que venció el período pagado",
+      "proximo_passo": "Frase con el próximo paso y la fecha de suspensión",
+      "workspace": "Nombre del workspace",
+      "agente": "Nombre del agente de IA"
+    },
+    "preview": "Vista previa",
+    "previewSubject": "Asunto:",
+    "save": "Guardar",
+    "restore": "Restaurar predeterminado",
+    "restoreTitle": "¿Restaurar esta plantilla?",
+    "restoreMessage": {
+      "platform": "El asunto y el cuerpo de este idioma vuelven al texto predeterminado del sistema.",
+      "partner": "El asunto y el cuerpo de este idioma vuelven a la base de la plataforma."
+    },
+    "cancel": "Cancelar",
+    "formatHint": "Formato simple: **negrita**, *cursiva*, [texto](https://...), listas con - o 1. y títulos con ##. No se acepta HTML.",
+    "layoutHint": "El encabezado y el pie vienen de la marca (nombre, color y contactos de soporte). Las contraseñas nunca se envían por correo.",
+    "readOnly": "Solo el propietario y los administradores cambian las plantillas.",
+    "toolbar": {
+      "bold": "Negrita",
+      "italic": "Cursiva",
+      "link": "Enlace",
+      "bullets": "Lista",
+      "numbered": "Lista numerada",
+      "heading": "Título"
+    },
+    "linkText": "texto del enlace",
+    "sample": {
+      "organization": "Cliente Ejemplo",
+      "partner": "Agencia Ejemplo",
+      "workspace": "Tienda Ejemplo",
+      "agent": "Asistente"
+    },
+    "saved": "Plantilla guardada.",
+    "restored": "Plantilla restaurada al valor predeterminado.",
+    "errors": {
+      "required": "Complete este campo.",
+      "too_long": "Texto demasiado largo.",
+      "newline": "El asunto debe tener una sola línea.",
+      "unknown_tag": "Variable desconocida para este evento: {tag}.",
+      "bad_link": "Enlaces solo con dirección http(s) o con la variable link.",
+      "tag_not_link": "La variable {tag} no es una dirección y no puede ser enlace.",
+      "unknownEvent": "Evento sin plantilla.",
+      "unknownLocale": "Idioma sin plantilla."
+    }
   }
 }
