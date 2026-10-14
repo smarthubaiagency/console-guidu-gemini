@@ -37,6 +37,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
           href="/platform"
           brandName={brand.name}
           logoUrl={brand.logoUrl}
+          logoDarkUrl={brand.logoDarkUrl}
           title={ts("platformTitle", { app: brand.name })}
           subtitle={ts("mfaSession")}
         />

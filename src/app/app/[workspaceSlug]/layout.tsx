@@ -65,6 +65,7 @@ export default async function WorkspaceLayout({
           workspaces={workspaces}
           appName={brand.name}
           logoUrl={brand.logoUrl}
+          logoDarkUrl={brand.logoDarkUrl}
         />
       }
       user={{ email: identity.email }}

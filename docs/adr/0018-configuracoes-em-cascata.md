@@ -22,4 +22,5 @@ Marcelo pediu para definir as configurações de cima para baixo (plataforma, pa
 
 - CF1 entrega a base, a tela de dois cards nos 3 níveis e a página **Geral e região** (moedas oferecidas, moeda e fuso). Moeda e fuso já valem para os preços do Portfólio, o fuso padrão das Lojas e o fuso dos agentes sem fuso próprio.
 - As próximas etapas (CF2 a CF7) acrescentam chaves ao catálogo, sem nova tabela.
+- Exceção da CF2 (Marca): a marca continua na tabela versionada `partner_brands` (ADR 0012), que ganhou logo do tema escuro, favicon, imagem de compartilhamento, frase, rodapé em texto simples e WhatsApp de vendas. As imagens ficam no próprio registro, como o logo, até a escolha do serviço de arquivos. A tela saiu de `/platform/brand` e `/admin/brand` (que agora redirecionam) para `/platform/settings/brand` e `/admin/settings/brand`.
 - Os dados do workspace entram na exportação e na exclusão (F3e).

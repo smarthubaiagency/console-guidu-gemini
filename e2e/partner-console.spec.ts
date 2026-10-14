@@ -112,7 +112,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
   );
 
   // Partner brand, served only on the partner domain.
-  await owner.goto("/admin/brand");
+  await owner.goto("/admin/settings/brand");
   await owner.getByLabel("Nome exibido").fill("Marca Agência E2E");
   await owner.getByLabel("Cor primária (#rrggbb, opcional)").fill("#6a1b9a");
   await owner.getByRole("button", { name: "Salvar nova versão" }).click();
@@ -129,7 +129,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
 
   // The platform host keeps the platform brand, and /platform does not exist
   // on the partner domain.
-  await page.goto("/platform/brand");
+  await page.goto("/platform/settings/brand");
   await expect(page.getByTestId("brand-current-name")).not.toHaveText(
     "Marca Agência E2E",
   );

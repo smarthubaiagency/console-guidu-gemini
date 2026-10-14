@@ -150,3 +150,77 @@ exception when insufficient_privilege then
 end
 $$;
 rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test 5 (CF2): limits of the new brand fields, as administrator
+-- ----------------------------------------------------------------------------
+begin;
+do $$
+declare
+  house constant uuid := '00000000-0000-4000-8000-000000000000';
+begin
+  -- A complete row with every new field is accepted.
+  insert into public.partner_brands (
+    partner_id, version, display_name, tagline, footer_text,
+    whatsapp_number, whatsapp_label, whatsapp_message,
+    logo_dark, logo_dark_mime, favicon, favicon_mime, share_image, share_image_mime
+  ) values (
+    house, 101, 'X', 'Frase', 'Rodapé https://guidu.com.br',
+    '5511999999999', 'Vendas', 'Olá',
+    decode('89504e47', 'hex'), 'image/png',
+    decode('00000100', 'hex'), 'image/x-icon',
+    decode('ffd8ff', 'hex'), 'image/jpeg'
+  );
+
+  begin
+    insert into public.partner_brands (partner_id, version, display_name, favicon, favicon_mime)
+    values (house, 102, 'X', decode('3c737667', 'hex'), 'image/svg+xml');
+    raise exception 'brands: accepted an SVG favicon';
+  exception when check_violation then
+    null;
+  end;
+  begin
+    insert into public.partner_brands (partner_id, version, display_name, favicon, favicon_mime)
+    values (house, 103, 'X', decode(repeat('00', 65537), 'hex'), 'image/png');
+    raise exception 'brands: accepted a favicon over 64 KiB';
+  exception when check_violation then
+    null;
+  end;
+  begin
+    insert into public.partner_brands (partner_id, version, display_name, share_image, share_image_mime)
+    values (house, 104, 'X', decode(repeat('00', 524289), 'hex'), 'image/png');
+    raise exception 'brands: accepted a share image over 512 KiB';
+  exception when check_violation then
+    null;
+  end;
+  begin
+    insert into public.partner_brands (partner_id, version, display_name, logo_dark)
+    values (house, 105, 'X', decode('89504e47', 'hex'));
+    raise exception 'brands: accepted a dark logo without its type';
+  exception when check_violation then
+    null;
+  end;
+  begin
+    insert into public.partner_brands (partner_id, version, display_name, whatsapp_number)
+    values (house, 106, 'X', '+55 11 99999-9999');
+    raise exception 'brands: accepted a WhatsApp number that is not digits only';
+  exception when check_violation then
+    null;
+  end;
+  begin
+    insert into public.partner_brands (partner_id, version, display_name, whatsapp_label)
+    values (house, 107, 'X', 'Vendas');
+    raise exception 'brands: accepted a WhatsApp label without a number';
+  exception when check_violation then
+    null;
+  end;
+  begin
+    insert into public.partner_brands (partner_id, version, display_name, footer_text)
+    values (house, 108, 'X', repeat('a', 501));
+    raise exception 'brands: accepted a footer over 500 characters';
+  exception when check_violation then
+    null;
+  end;
+end
+$$;
+rollback;

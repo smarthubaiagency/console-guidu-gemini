@@ -22,12 +22,7 @@ export default async function ResetPasswordPage() {
   const t = await getTranslations("auth.resetPassword");
 
   return (
-    <AuthShell
-      title={t("title")}
-      description={t("description")}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
-    >
+    <AuthShell title={t("title")} description={t("description")} brand={brand}>
       <ResetPasswordForm />
     </AuthShell>
   );

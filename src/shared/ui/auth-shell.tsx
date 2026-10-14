@@ -1,35 +1,58 @@
 import type { ReactNode } from "react";
+import { getTranslations } from "next-intl/server";
 
 import { PageStatus } from "@/components/feedback/page-status";
+import type { Brand } from "@/core/brand/types";
 
+import { BrandFooterText, BrandWhatsappLink } from "./brand-contact";
 import { BrandMark } from "./brand-mark";
 
 /**
  * Common frame for the identity pages: login, recovery, MFA and the states.
  * Form results go to the SmartStatusBanner (ADR 0016), fixed at the top.
+ * With the host brand it shows the logo, the tagline and the brand footer;
+ * `salesContact` adds the WhatsApp sales button (CF2, login only).
  */
-export function AuthShell({
+export async function AuthShell({
   title,
   description,
   children,
   footer,
-  appName,
-  logoUrl,
+  brand,
+  salesContact = false,
 }: Readonly<{
   title: string;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  appName?: string;
-  logoUrl?: string | null | undefined;
+  brand?: Brand;
+  salesContact?: boolean;
 }>) {
+  const whatsapp = salesContact ? brand?.whatsapp : null;
+  const t = whatsapp ? await getTranslations("brand.form") : null;
   return (
     <PageStatus>
       <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-12">
-        {appName ? (
-          <div className="flex items-center gap-2">
-            <BrandMark name={appName} logoUrl={logoUrl} />
-            <p className="text-text-secondary text-14 font-medium">{appName}</p>
+        {brand ? (
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <BrandMark
+                name={brand.name}
+                logoUrl={brand.logoUrl}
+                logoDarkUrl={brand.logoDarkUrl}
+              />
+              <p className="text-text-secondary text-14 font-medium">
+                {brand.name}
+              </p>
+            </div>
+            {brand.tagline ? (
+              <p
+                className="text-text-tertiary text-12"
+                data-testid="brand-tagline"
+              >
+                {brand.tagline}
+              </p>
+            ) : null}
           </div>
         ) : null}
         <h1 className="text-30 mt-2 font-semibold tracking-tight">{title}</h1>
@@ -38,6 +61,19 @@ export function AuthShell({
         ) : null}
         <div className="mt-8">{children}</div>
         {footer ? <div className="text-14 mt-8">{footer}</div> : null}
+        {whatsapp && t ? (
+          <div className="mt-8">
+            <BrandWhatsappLink
+              whatsapp={whatsapp}
+              fallbackLabel={t("whatsappDefaultLabel")}
+            />
+          </div>
+        ) : null}
+        {brand?.footerText ? (
+          <footer className="border-card-border mt-10 border-t pt-4">
+            <BrandFooterText text={brand.footerText} />
+          </footer>
+        ) : null}
       </main>
     </PageStatus>
   );

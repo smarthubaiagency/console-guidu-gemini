@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma/client";
 import { appLog } from "@/lib/telemetry/log";
 import { withPartnerContext } from "@/lib/prisma/with-partner-context";
 
+import type { BrandImageKind } from "./logo";
 import { deriveBrandPalette, normalizeHexColor } from "./tokens";
 import type { Brand } from "./types";
 
@@ -25,11 +26,36 @@ export function environmentBrand(partnerId: string | null): Brand {
     supportEmail: null,
     supportUrl: null,
     logoUrl: null,
+    logoDarkUrl: null,
+    faviconUrl: null,
+    shareImageUrl: null,
+    tagline: null,
+    footerText: null,
+    whatsapp: null,
   };
 }
 
+/** Path segment of each brand image, served by `/brand/[asset]/[version]`. */
+export const BRAND_ASSET_SEGMENTS = {
+  logo: "logo",
+  logoDark: "logo-dark",
+  favicon: "favicon",
+  shareImage: "share",
+} as const satisfies Record<BrandImageKind, string>;
+
+export function brandAssetKind(segment: string): BrandImageKind | null {
+  const entry = Object.entries(BRAND_ASSET_SEGMENTS).find(
+    ([, value]) => value === segment,
+  );
+  return entry ? (entry[0] as BrandImageKind) : null;
+}
+
+export function brandAssetPath(kind: BrandImageKind, version: number): string {
+  return `/brand/${BRAND_ASSET_SEGMENTS[kind]}/${version}`;
+}
+
 export function logoPath(version: number): string {
-  return `/brand/logo/${version}`;
+  return brandAssetPath("logo", version);
 }
 
 /** Active (highest) brand version of a partner, or the environment brand. */
@@ -48,6 +74,14 @@ export async function loadActiveBrand(
         supportEmail: true,
         supportUrl: true,
         logoMime: true,
+        logoDarkMime: true,
+        faviconMime: true,
+        shareImageMime: true,
+        tagline: true,
+        footerText: true,
+        whatsappNumber: true,
+        whatsappLabel: true,
+        whatsappMessage: true,
       },
     }),
   );
@@ -64,24 +98,64 @@ export async function loadActiveBrand(
     supportEmail: row.supportEmail,
     supportUrl: row.supportUrl,
     logoUrl: row.logoMime ? logoPath(row.version) : null,
+    logoDarkUrl: row.logoDarkMime
+      ? brandAssetPath("logoDark", row.version)
+      : null,
+    faviconUrl: row.faviconMime ? brandAssetPath("favicon", row.version) : null,
+    shareImageUrl: row.shareImageMime
+      ? brandAssetPath("shareImage", row.version)
+      : null,
+    tagline: row.tagline,
+    footerText: row.footerText,
+    whatsapp: row.whatsappNumber
+      ? {
+          number: row.whatsappNumber,
+          label: row.whatsappLabel,
+          message: row.whatsappMessage,
+        }
+      : null,
   };
 }
 
-/** Logo bytes of one brand version of a partner. */
-export async function loadBrandLogo(
+/** Bytes of one image of one brand version of a partner. */
+export async function loadBrandImage(
   client: PrismaClient,
   partnerId: string,
   version: number,
+  kind: BrandImageKind,
 ): Promise<{ bytes: Uint8Array; mime: string } | null> {
   const row = await withPartnerContext(client, partnerId, (tx) =>
     tx.partnerBrand.findUnique({
       where: { partnerId_version: { partnerId, version } },
-      select: { logo: true, logoMime: true },
+      select: {
+        logo: kind === "logo",
+        logoMime: kind === "logo",
+        logoDark: kind === "logoDark",
+        logoDarkMime: kind === "logoDark",
+        favicon: kind === "favicon",
+        faviconMime: kind === "favicon",
+        shareImage: kind === "shareImage",
+        shareImageMime: kind === "shareImage",
+      },
     }),
   );
-  return row?.logo && row.logoMime
-    ? { bytes: new Uint8Array(row.logo), mime: row.logoMime }
-    : null;
+  if (!row) return null;
+  const [bytes, mime] = {
+    logo: [row.logo, row.logoMime] as const,
+    logoDark: [row.logoDark, row.logoDarkMime] as const,
+    favicon: [row.favicon, row.faviconMime] as const,
+    shareImage: [row.shareImage, row.shareImageMime] as const,
+  }[kind];
+  return bytes && mime ? { bytes: new Uint8Array(bytes), mime } : null;
+}
+
+/** Logo bytes of one brand version of a partner. */
+export function loadBrandLogo(
+  client: PrismaClient,
+  partnerId: string,
+  version: number,
+): Promise<{ bytes: Uint8Array; mime: string } | null> {
+  return loadBrandImage(client, partnerId, version, "logo");
 }
 
 /**

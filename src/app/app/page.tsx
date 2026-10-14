@@ -56,7 +56,12 @@ export default async function AppPage() {
       <div className="bg-surface-raised flex min-h-screen flex-col justify-between">
         <header className="border-border bg-surface-card flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-3">
-            <BrandMark name={brand.name} logoUrl={brand.logoUrl} size="md" />
+            <BrandMark
+              name={brand.name}
+              logoUrl={brand.logoUrl}
+              logoDarkUrl={brand.logoDarkUrl}
+              size="md"
+            />
             <span className="text-text font-bold tracking-tight">
               {brand.name}
             </span>

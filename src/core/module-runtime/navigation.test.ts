@@ -211,7 +211,9 @@ describe("generated navigation", () => {
       grants: platformGrants(null),
     });
     expect(find(none, "platform.modules")).toBeUndefined();
-    expect(find(owner, "platform.brand")?.href).toBe("/platform/brand");
+    expect(find(owner, "platform.brand")?.href).toBe(
+      "/platform/settings/brand",
+    );
     expect(find(none, "platform.brand")).toBeUndefined();
     expect(find(owner, "platform.billing")?.href).toBe("/platform/billing");
     expect(find(none, "platform.billing")).toBeUndefined();
@@ -264,6 +266,7 @@ describe("generated navigation", () => {
       "/admin/ai/keys",
       "/admin/ai/templates",
       "/admin/settings/general",
+      "/admin/settings/brand",
     ]);
     expect(hrefs("partner_support")).toEqual([
       "/admin/ai/assistant",
@@ -289,7 +292,6 @@ describe("generated navigation", () => {
       "/admin/support",
       "/admin/legal",
       "/admin/members",
-      "/admin/brand",
       "/admin/settings",
     ]);
 

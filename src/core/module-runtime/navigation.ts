@@ -460,7 +460,6 @@ export function buildPlatformNavigation(
   input: PlatformNavigationInput,
 ): NavSection[] {
   const canReadModules = input.grants("platform.modules.read");
-  const canManageBrand = input.grants("platform.brand.manage");
   const canReadPartners = input.grants("platform.partners.read");
   const canManageLegal = input.grants("platform.legal.manage");
   const canReadBilling = input.grants("platform.billing.read");
@@ -584,16 +583,6 @@ export function buildPlatformNavigation(
               }),
             ]
           : []),
-        ...(canManageBrand
-          ? [
-              item({
-                id: "platform.brand",
-                label: "Marca",
-                href: "/platform/brand",
-                iconKey: "palette",
-              }),
-            ]
-          : []),
         // Interface patterns (U2a and ADR 0016): every internal role.
         ...(canReadModules
           ? [
@@ -637,8 +626,8 @@ export function buildPlatformNavigation(
 
 /**
  * Settings submenu of the platform (/platform/settings, CF1): the general
- * and regional defaults, the languages of the dashboard (I1) and the global
- * settings of each module.
+ * and regional defaults, the brand (CF2), the languages of the dashboard
+ * (I1) and the global settings of each module.
  */
 export function buildPlatformSettingsNavigation(
   input: PlatformNavigationInput,
@@ -673,6 +662,16 @@ export function buildPlatformSettingsNavigation(
           href: "/platform/settings/general",
           iconKey: "settings",
         }),
+        ...(input.grants("platform.brand.manage")
+          ? [
+              item({
+                id: "platform.brand",
+                label: "Marca",
+                href: "/platform/settings/brand",
+                iconKey: "palette",
+              }),
+            ]
+          : []),
         ...(input.grants("platform.languages.manage")
           ? [
               item({
@@ -823,16 +822,6 @@ export function buildPartnerNavigation(
               }),
             ]
           : []),
-        ...(grants("partner.brand.manage")
-          ? [
-              item({
-                id: "partner.brand",
-                label: "Marca",
-                href: "/admin/brand",
-                iconKey: "palette",
-              }),
-            ]
-          : []),
         ...settingsEntry(
           "partner.settings",
           "/admin/settings",
@@ -845,23 +834,35 @@ export function buildPartnerNavigation(
 
 /**
  * Settings submenu of the partner (/admin/settings, CF1): what the partner
- * sets for its customers. Every partner role reads; owner and admin edit.
+ * sets for its customers and its brand (CF2). Every partner role reads; owner and admin edit.
  */
 export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
   const sections: NavSection[] = [
     {
       id: "settings.partner",
       label: "Parceiro",
-      items: grants("partner.read")
-        ? [
-            item({
-              id: "partner.settings.general",
-              label: "Geral e região",
-              href: "/admin/settings/general",
-              iconKey: "settings",
-            }),
-          ]
-        : [],
+      items: [
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.settings.general",
+                label: "Geral e região",
+                href: "/admin/settings/general",
+                iconKey: "settings",
+              }),
+            ]
+          : []),
+        ...(grants("partner.brand.manage")
+          ? [
+              item({
+                id: "partner.brand",
+                label: "Marca",
+                href: "/admin/settings/brand",
+                iconKey: "palette",
+              }),
+            ]
+          : []),
+      ],
     },
   ];
   return sections.filter((section) => section.items.length > 0);

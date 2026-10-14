@@ -21,8 +21,7 @@ export default async function SuspendedPage() {
     <AuthShell
       title={t("title")}
       description={t("description")}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
+      brand={brand}
       footer={<SignOutForm />}
     >
       <ErrorNotice testId="suspended-state">{t("notice")}</ErrorNotice>

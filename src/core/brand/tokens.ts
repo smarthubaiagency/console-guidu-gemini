@@ -127,9 +127,14 @@ export function deriveBrandPalette(primaryColor: string): BrandPalette {
 /**
  * CSS that overrides the primary tokens of globals.css. `html:root` and
  * `html[data-theme="dark"]` outrank the `:root` and `[data-theme="dark"]`
- * blocks of the stylesheet regardless of load order.
+ * blocks of the stylesheet regardless of load order. With `scope`, the
+ * tokens apply only inside elements with that data attribute (the brand
+ * preview of CF2).
  */
-export function brandCss(palette: BrandPalette): string {
+export function brandCss(
+  palette: BrandPalette,
+  scope?: "data-brand-preview",
+): string {
   const values = [
     palette.primary,
     palette.onPrimary,
@@ -144,13 +149,17 @@ export function brandCss(palette: BrandPalette): string {
     throw new Error("Paleta de marca inválida.");
   }
 
+  const light = scope ? `html [${scope}]` : "html:root";
+  const dark = scope
+    ? `html[data-theme="dark"] [${scope}]`
+    : `html[data-theme="dark"]`;
   return (
-    `html:root{--color-primary:${palette.primary};` +
+    `${light}{--color-primary:${palette.primary};` +
     `--color-on-primary:${palette.onPrimary};` +
     `--color-primary-hover:${palette.primaryHover};` +
     `--color-primary-text:${palette.primaryText};` +
     `--color-primary-subtle:${palette.primarySubtle};}` +
-    `html[data-theme="dark"]{--color-primary-hover:${palette.dark.primaryHover};` +
+    `${dark}{--color-primary-hover:${palette.dark.primaryHover};` +
     `--color-primary-text:${palette.dark.primaryText};` +
     `--color-primary-subtle:${palette.dark.primarySubtle};}`
   );

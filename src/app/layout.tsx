@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { ThemeProvider } from "@/shared/ui/theme-provider";
 import { BrandTokens } from "@/shared/ui/brand-tokens";
 import { getRequestBrand } from "@/core/brand/resolve";
+import { getRequestOrigin } from "@/core/partners/resolve";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { headers } from "next/headers";
@@ -18,12 +19,27 @@ const outfit = localFont({
   variable: "--font-outfit",
 });
 
-/** Title follows the brand of the request host (ADR 0012, P3). */
+/**
+ * Title, favicon and share card follow the brand of the request host
+ * (ADR 0012, P3; CF2). Image URLs are absolute on the host's own origin.
+ */
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getRequestBrand();
+  const origin = await getRequestOrigin().catch(() => null);
+  const description = brand.tagline ?? "Plataforma SaaS modular";
   return {
+    ...(origin ? { metadataBase: new URL(origin) } : {}),
     title: brand.name,
-    description: "Plataforma SaaS modular",
+    description,
+    ...(brand.faviconUrl ? { icons: { icon: brand.faviconUrl } } : {}),
+    openGraph: {
+      siteName: brand.name,
+      title: brand.name,
+      description,
+      ...(brand.shareImageUrl && origin
+        ? { images: [{ url: brand.shareImageUrl, width: 1200, height: 630 }] }
+        : {}),
+    },
   };
 }
 export const runtime = "nodejs";
