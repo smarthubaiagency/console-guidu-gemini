@@ -35,7 +35,7 @@
       "auto_reply_only": "Outside business hours, answer only with a standard automatic message."
     },
     "outOfScopeAction": {
-      "escalate_team": "If the question is beyond what you can answer, explain that you will forward it to the responsible team.",
+      "escalate_team": "If the question is beyond what you can answer, say you will forward it to the responsible team and hand the conversation over with the handoff tool.",
       "say_dont_know": "If you do not know the answer, say so honestly, without making anything up."
     },
     "contactBlock": "Known contact data",
@@ -68,6 +68,12 @@
     "handoffNote": {
       "title": "Summary from {agent} for the team",
       "reason": "Reason for the handoff: {reason}"
+    },
+    "hoursNow": {
+      "now": "It is now {weekday}, {date} {time} (time zone {timezone}).",
+      "open": "The business is open now (hours: {hours}).",
+      "closed": "The business is closed now (hours: {hours}).",
+      "autoReply": "Hello! We are outside business hours right now ({hours}). We got your message and will get back to you as soon as we open."
     }
   },
   "guids": {

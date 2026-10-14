@@ -292,3 +292,48 @@ export async function persistKeyFailure(
     },
   });
 }
+
+/**
+ * The automatic answer after hours (A6c): one assistant message of the
+ * turn, written without a model, so no usage; the audit says why.
+ */
+export async function persistAutoReply(
+  tx: ContextTransaction,
+  args: Readonly<{
+    conversationId: string;
+    agentId: string;
+    executionId: string;
+    content: string;
+    /** The turn's time: the next turn compares it with the hours. */
+    at: Date;
+    audit: Readonly<{ ctx: RequestContext; origin: AuditOrigin }>;
+  }>,
+): Promise<void> {
+  const now = args.at;
+  await tx.aiMessage.create({
+    data: {
+      conversationId: args.conversationId,
+      executionId: args.executionId,
+      role: "assistant",
+      content: args.content,
+      createdAt: now,
+    },
+    select: { id: true },
+  });
+  await tx.aiConversation.updateMany({
+    where: { id: args.conversationId },
+    data: { lastMessageAt: now },
+  });
+  await recordAudit(tx, args.audit.ctx, {
+    action: "ai.turn",
+    resourceType: "ai_conversation",
+    resourceId: args.conversationId,
+    result: "success",
+    origin: args.audit.origin,
+    metadata: {
+      executionId: args.executionId,
+      agentId: args.agentId,
+      autoReply: "after_hours",
+    },
+  });
+}

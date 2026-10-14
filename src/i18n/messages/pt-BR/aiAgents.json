@@ -35,7 +35,7 @@
       "auto_reply_only": "Fora do horário, responda apenas com uma mensagem automática padrão."
     },
     "outOfScopeAction": {
-      "escalate_team": "Se a pergunta fugir do que você pode responder, explique que vai encaminhar para o time responsável.",
+      "escalate_team": "Se a pergunta fugir do que você pode responder, avise que vai encaminhar para o time responsável e transfira a conversa com a ferramenta de transferência.",
       "say_dont_know": "Se não souber responder, diga isso com honestidade, sem inventar informação."
     },
     "contactBlock": "Dados conhecidos do contato",
@@ -68,6 +68,12 @@
     "handoffNote": {
       "title": "Resumo de {agent} para a equipe",
       "reason": "Motivo da transferência: {reason}"
+    },
+    "hoursNow": {
+      "now": "Agora é {weekday}, {date} {time} (fuso {timezone}).",
+      "open": "O atendimento está aberto agora (horário: {hours}).",
+      "closed": "O atendimento está fechado agora (horário: {hours}).",
+      "autoReply": "Olá! No momento estamos fora do horário de atendimento ({hours}). Recebemos sua mensagem e retornamos assim que abrirmos."
     }
   },
   "guids": {

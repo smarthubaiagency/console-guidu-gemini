@@ -483,12 +483,31 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
   };
 }
 
+/**
+ * The agent's allowlist, plus what a rule implies: a GUIDS that sends
+ * out-of-scope questions to the team hands the conversation over (A6c).
+ */
+export function agentAllowlist(
+  kind: AgentKind,
+  config: AgentConfig,
+): readonly string[] {
+  const allowlist = config.integration.tools ?? [];
+  if (
+    kind === "guid" &&
+    config.rules.out_of_scope_action === "escalate_team" &&
+    !allowlist.includes("handoff")
+  ) {
+    return [...allowlist, "handoff"];
+  }
+  return allowlist;
+}
+
 /** The tools offered to the model: the agent's allowlist for its kind. */
 export function offeredTools(
   kind: AgentKind,
   config: AgentConfig,
 ): AgentTool[] {
-  const allowlist = config.integration.tools ?? [];
+  const allowlist = agentAllowlist(kind, config);
   return AGENT_TOOL_IDS.filter(
     (id) => allowlist.includes(id) && toolAllowedFor(id, kind),
   );
@@ -496,7 +515,7 @@ export function offeredTools(
 
 export function buildTools(env: ToolEnv): ToolSet {
   const texts = promptTexts(env.locale);
-  const allowlist = env.config.integration.tools ?? [];
+  const allowlist = agentAllowlist(env.kind, env.config);
   const all = definitions(env);
   const tools: ToolSet = {};
   for (const id of offeredTools(env.kind, env.config)) {
@@ -546,7 +565,7 @@ export function recordRefusedCall(
   const decision = decideTool(
     toolName,
     env.kind,
-    env.config.integration.tools ?? [],
+    agentAllowlist(env.kind, env.config),
   );
   env.state.records.push(
     callRecord(
