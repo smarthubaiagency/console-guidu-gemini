@@ -4,6 +4,7 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { listRegisteredModules } from "@/modules/registry";
 import { AppError } from "@/shared/errors";
 
+import { CORE_QUOTA_ENTRIES } from "./catalog";
 import { loadCompanyContract } from "./contract";
 import { resolveQuotaLimit } from "./rules";
 import type { CompanyContract } from "./types";
@@ -25,20 +26,18 @@ export type QuotaDefinition = Readonly<{
   scope: "organization" | "workspace";
 }>;
 
-/** Quotas of the core. `core.seats` defaults to `organizations.max_seats`. */
-export const CORE_QUOTAS: readonly QuotaDefinition[] = [
-  {
-    key: "core.seats",
-    description: "Assentos da empresa (membros ativos e convites pendentes).",
-    scope: "organization",
-  },
-  {
-    key: "core.public_domains",
-    description:
-      "Domínios públicos por workspace (site, perfil digital e quiz). Sem limite no plano, nenhum.",
-    scope: "workspace",
-  },
-];
+/**
+ * Enforced quotas of the core (the catalog, CF4, also lists the planned
+ * ones). `core.seats` defaults to `organizations.max_seats`.
+ */
+export const CORE_QUOTAS: readonly QuotaDefinition[] =
+  CORE_QUOTA_ENTRIES.filter((entry) => entry.status === "enforced").map(
+    (entry) => ({
+      key: entry.key,
+      description: entry.description,
+      scope: entry.scope,
+    }),
+  );
 
 export type QuotaView = Readonly<{
   key: string;

@@ -252,7 +252,8 @@ model PlanVersion {
   minPlatformShareCents Int            @map("min_platform_share_cents")
   partnerBasePriceCents Int            @map("partner_base_price_cents")
   provisional           Boolean        @default(false)
-  /// Quota limits of this version, `{ "<key>": n }` (F3b).
+  /// Quota limits of this version, `{ "<key>": n | null }` (F3b; null is
+  /// "sem limite", CF4).
   limits                Json           @default("{}")
   createdBy             String?        @map("created_by") @db.Uuid
   createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz()
@@ -1329,6 +1330,17 @@ model EmailTemplate {
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz()
 
   @@map("email_templates")
+}
+
+/// Platform ceiling per quota key (CF4); a key without a row has no ceiling.
+model QuotaCeiling {
+  quotaKey  String   @id @map("quota_key")
+  ceiling   Int
+  updatedBy String?  @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("quota_ceilings")
 }
 
 model PlatformLanguage {

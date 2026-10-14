@@ -4,8 +4,8 @@ import { getTranslations } from "next-intl/server";
 import { sectionClass } from "@/components/billing/billing-ui";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { requireUserPage } from "@/core/auth/page-guard";
+import { getQuotaTexts, type QuotaTexts } from "@/core/entitlements/labels";
 import { loadUsage, type UsageRow } from "@/core/entitlements/usage";
-import { getModuleCatalog, type ModuleCatalog } from "@/core/i18n/modules";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
@@ -19,28 +19,19 @@ interface UsagePageProps {
   params: Promise<{ workspaceSlug: string }>;
 }
 
-/** Rows of the platform itself have a translated label (I2). */
-const ROW_LABEL_KEYS: Record<string, string> = {
-  "core.seats": "rows.coreSeats",
-  "core.public_domains": "rows.corePublicDomains",
-};
-
 type Translate = Awaited<ReturnType<typeof getTranslations<"usage">>>;
 
 function UsageMeter({
   row,
   t,
-  catalog,
+  texts,
 }: {
   row: UsageRow;
   t: Translate;
-  catalog: ModuleCatalog;
+  texts: QuotaTexts;
 }) {
-  const labelKey = ROW_LABEL_KEYS[row.key];
-  // Module quotas come from the manifests, translated by the catalog (I4).
-  const label = labelKey
-    ? t(labelKey)
-    : (catalog.findQuota(row.key)?.label ?? row.label);
+  // Labels come from the quota catalog (CF4), like the plans pages.
+  const label = texts.labelOf(row.key, row.label);
   const percent =
     row.used !== null && row.limit
       ? Math.min(100, Math.round((row.used / row.limit) * 100))
@@ -96,7 +87,7 @@ export default async function UsagePage({ params }: UsagePageProps) {
   );
   const contract = usage.contract;
   const t = await getTranslations("usage");
-  const catalog = await getModuleCatalog();
+  const texts = await getQuotaTexts();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="usage-page">
@@ -123,7 +114,7 @@ export default async function UsagePage({ params }: UsagePageProps) {
         <h2 className="text-14 text-text font-semibold">{t("limits")}</h2>
         <ul className="divide-border divide-y">
           {usage.rows.map((row) => (
-            <UsageMeter key={row.key} row={row} t={t} catalog={catalog} />
+            <UsageMeter key={row.key} row={row} t={t} texts={texts} />
           ))}
         </ul>
       </section>

@@ -76,6 +76,8 @@
     "platform_settings_email": "E-mail",
     "partner_settings_email": "E-mail",
     "platform_settings_email_templates": "Modelos de e-mail",
-    "partner_settings_email_templates": "Modelos de e-mail"
+    "partner_settings_email_templates": "Modelos de e-mail",
+    "platform_settings_plans": "Planos e limites",
+    "partner_settings_plans": "Planos e limites"
   }
 }

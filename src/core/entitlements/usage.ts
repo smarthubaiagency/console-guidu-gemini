@@ -9,13 +9,13 @@ import { aiAgentsQuotaUsage } from "@/modules/ai-agents/quotas";
 import { crmQuotaUsage } from "@/modules/crm/quotas";
 import { portfolioQuotaUsage } from "@/modules/portfolio/quotas";
 import { helloWorldQuotaUsage } from "@/modules/hello-world/quotas";
-import { listRegisteredModules } from "@/modules/registry";
 
 import {
   PUBLIC_DOMAINS_DEFAULT_LIMIT,
   PUBLIC_DOMAINS_QUOTA,
 } from "@/core/domains/quota";
 
+import { listQuotaEntries, type QuotaEntry } from "./catalog";
 import { loadCompanyContract } from "./contract";
 import { defaultQuotaLimit, quotaFromContract } from "./quotas";
 import type { CompanyContract } from "./types";
@@ -53,70 +53,81 @@ export type UsageView = Readonly<{
   rows: UsageRow[];
 }>;
 
+/**
+ * Rows follow the quota catalog (CF4): the enforced keys, in its order;
+ * planned keys have no measurement and stay on the plans page.
+ */
 export async function loadUsage(
   tx: ContextTransaction,
   ctx: RequestContext,
 ): Promise<UsageView> {
   const contract = await loadCompanyContract(tx, ctx.organizationId);
-  const organization = await tx.organization.findUnique({
-    where: { id: ctx.organizationId },
-    select: { maxSeats: true },
-  });
-  const activeMembers = await tx.organizationMember.count({
-    where: { organizationId: ctx.organizationId, status: "active" },
-  });
-  const seats = quotaFromContract(
-    contract,
-    "core.seats",
-    organization?.maxSeats ?? null,
-  );
-  const rows: UsageRow[] = [
-    {
-      key: "core.seats",
-      label: "Assentos da empresa (membros ativos)",
-      scope: "organization",
-      used: activeMembers,
-      limit: seats.limit,
-      source: seats.source,
-    },
-  ];
-  // Public domains of the workspace (CF2b); the plan sets the limit.
-  const domains = quotaFromContract(
-    contract,
-    PUBLIC_DOMAINS_QUOTA,
-    PUBLIC_DOMAINS_DEFAULT_LIMIT,
-  );
-  rows.push({
-    key: PUBLIC_DOMAINS_QUOTA,
-    label: "Domínios públicos do workspace",
-    scope: "workspace",
-    used: await tx.workspaceDomain.count({
-      where: { workspaceId: ctx.workspaceId },
-    }),
-    limit: domains.limit,
-    source: domains.source,
-  });
-
-  for (const mod of listRegisteredModules()) {
-    for (const entitlement of mod.manifest.entitlements) {
-      if (entitlement.kind !== "quota") continue;
-      const state = await getModuleAccessState(tx, ctx, mod.manifest.moduleKey);
-      if (state !== "enabled" && state !== "suspended") continue;
-      const counter = MODULE_USAGE[entitlement.key];
-      const quota = quotaFromContract(
-        contract,
-        entitlement.key,
-        await defaultQuotaLimit(tx, entitlement.key),
-      );
-      rows.push({
-        key: entitlement.key,
-        label: `${mod.manifest.displayName}: ${entitlement.description}`,
-        scope: counter?.scope ?? "workspace",
-        used: counter ? await counter.count(tx, ctx) : null,
-        limit: quota.limit,
-        source: quota.source,
-      });
-    }
+  const rows: UsageRow[] = [];
+  for (const entry of listQuotaEntries()) {
+    if (entry.status !== "enforced") continue;
+    const row = await usageRow(tx, ctx, contract, entry);
+    if (row) rows.push(row);
   }
   return { contract, rows };
+}
+
+async function usageRow(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  contract: CompanyContract,
+  entry: QuotaEntry,
+): Promise<UsageRow | null> {
+  const base = { key: entry.key, label: entry.label, scope: entry.scope };
+  if (entry.key === "core.seats") {
+    const organization = await tx.organization.findUnique({
+      where: { id: ctx.organizationId },
+      select: { maxSeats: true },
+    });
+    const seats = quotaFromContract(
+      contract,
+      entry.key,
+      organization?.maxSeats ?? null,
+    );
+    return {
+      ...base,
+      used: await tx.organizationMember.count({
+        where: { organizationId: ctx.organizationId, status: "active" },
+      }),
+      limit: seats.limit,
+      source: seats.source,
+    };
+  }
+  if (entry.key === PUBLIC_DOMAINS_QUOTA) {
+    // Public domains of the workspace (CF2b); the plan sets the limit.
+    const domains = quotaFromContract(
+      contract,
+      entry.key,
+      PUBLIC_DOMAINS_DEFAULT_LIMIT,
+    );
+    return {
+      ...base,
+      used: await tx.workspaceDomain.count({
+        where: { workspaceId: ctx.workspaceId },
+      }),
+      limit: domains.limit,
+      source: domains.source,
+    };
+  }
+  if (entry.owner === "core") return null;
+  // Module quotas: only while the module is on (or suspended) here.
+  const state = await getModuleAccessState(tx, ctx, entry.owner);
+  if (state !== "enabled" && state !== "suspended") return null;
+  const counter = MODULE_USAGE[entry.key];
+  const quota = quotaFromContract(
+    contract,
+    entry.key,
+    await defaultQuotaLimit(tx, entry.key),
+  );
+  return {
+    ...base,
+    scope: counter?.scope ?? entry.scope,
+    used: counter ? await counter.count(tx, ctx) : null,
+    limit: quota.limit,
+    source: quota.source,
+  };
 }

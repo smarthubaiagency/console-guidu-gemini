@@ -31,7 +31,6 @@ import {
 import {
   listPartnerTotals,
   listPlans,
-  listQuotaKeys,
   listRecentPayments,
   listSplitRules,
 } from "@/core/billing/catalog";
@@ -112,10 +111,6 @@ export default async function PlatformBillingPage() {
   const modules = listRegisteredModules().map((m) => ({
     moduleKey: m.manifest.moduleKey,
     displayName: catalog.name(m.manifest.moduleKey, m.manifest.displayName),
-  }));
-  const quotaKeys = listQuotaKeys().map((q) => ({
-    ...q,
-    description: catalog.findQuota(q.key)?.description ?? q.description,
   }));
   const tb = await getTranslations("billing");
   const t = await getTranslations("billing.platform");
@@ -271,7 +266,7 @@ export default async function PlatformBillingPage() {
                         {Object.keys(current.limits).length
                           ? t("limitsList", {
                               limits: Object.entries(current.limits)
-                                .map(([k, v]) => `${k} ${v}`)
+                                .map(([k, v]) => `${k} ${v ?? "∞"}`)
                                 .join(", "),
                             })
                           : ""}
@@ -381,21 +376,15 @@ export default async function PlatformBillingPage() {
                           ))}
                         </div>
                       </fieldset>
-                      {quotaKeys.map((quota) => (
-                        <Label key={quota.key} className="flex-col items-start">
-                          {t("limitLabel", { key: quota.key })}
-                          <Input
-                            name={`limit.${quota.key}`}
-                            inputMode="numeric"
-                            title={quota.description}
-                            defaultValue={
-                              current?.limits[quota.key] !== undefined
-                                ? String(current.limits[quota.key])
-                                : ""
-                            }
-                          />
-                        </Label>
-                      ))}
+                      <p className="text-12 text-text-secondary sm:col-span-3">
+                        {t("limitsElsewhere")}{" "}
+                        <a
+                          href="/platform/settings/plans"
+                          className="text-text-subtle font-medium underline"
+                        >
+                          {t("limitsLink")}
+                        </a>
+                      </p>
                       <Label className="text-12 text-text-subtle flex items-center gap-2 font-medium sm:col-span-3">
                         <Checkbox
                           name="provisional"

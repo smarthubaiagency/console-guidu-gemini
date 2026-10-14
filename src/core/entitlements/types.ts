@@ -14,7 +14,8 @@ export type CompanyContract =
       planName: string;
       planVersion: number;
       moduleKeys: readonly string[];
-      limits: Readonly<Record<string, number>>;
+      /** Plan values per quota key; null is "sem limite" (CF4). */
+      limits: Readonly<Record<string, number | null>>;
       provisional: boolean;
     }>;
 

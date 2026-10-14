@@ -1,0 +1,98 @@
+{
+  "metaTitle": "Plans and limits",
+  "title": "Plans and limits",
+  "description": {
+    "platform": "One catalog of every limit: the default without a plan, the platform ceiling and the value of each plan on sale.",
+    "partner": "The limits of the plans you can sell to your customers. The platform sets them."
+  },
+  "quotas": {
+    "core_seats": {
+      "label": "Company seats",
+      "description": "Active members and pending invitations of the company."
+    },
+    "core_public_domains": {
+      "label": "Public domains of the workspace",
+      "description": "Own domains of the website, digital profile and quiz. Without a plan value, none."
+    },
+    "core_storage_gb": {
+      "label": "Company storage",
+      "description": "Files kept by the company."
+    },
+    "core_upload_mb": {
+      "label": "Maximum upload size",
+      "description": "Largest file accepted in one upload."
+    },
+    "core_api_requests_per_minute": {
+      "label": "API calls per minute",
+      "description": "Per-workspace limit of the API and MCP; today it comes from the environment."
+    },
+    "core_ai_turns_per_month": {
+      "label": "AI replies per month",
+      "description": "Monthly AI usage, beyond the number of agents."
+    },
+    "core_trial_days": {
+      "label": "Trial days",
+      "description": "Trial period of the plan."
+    }
+  },
+  "units": {
+    "count": "{value}",
+    "gigabytes": "{value} GB",
+    "megabytes": "{value} MB",
+    "requests_per_minute": "{value} per minute",
+    "per_month": "{value} per month",
+    "days": "{value} days"
+  },
+  "scope": {
+    "organization": "Company",
+    "workspace": "Workspace"
+  },
+  "values": {
+    "unlimited": "Unlimited",
+    "default": "Default",
+    "noCeiling": "No ceiling",
+    "companySeats": "From the company record",
+    "none": "None"
+  },
+  "planned": "not enforced yet",
+  "catalog": {
+    "title": "Limits catalog",
+    "description": "Each limit with the default for companies without a plan, the platform ceiling and the value of the current version of each active plan. Empty in a plan uses the default.",
+    "quota": "Limit",
+    "default": "Default without a plan",
+    "ceiling": "Ceiling",
+    "planColumn": "{plan} (v{version})",
+    "noPlans": "No active plan with a published version."
+  },
+  "ceilings": {
+    "title": "Platform ceilings",
+    "description": "No plan may go above the ceiling. Without a ceiling, a plan may say \"unlimited\". A ceiling never goes below a plan on sale.",
+    "label": "Ceiling: {quota}",
+    "placeholder": "No ceiling",
+    "save": "Save ceilings"
+  },
+  "planForm": {
+    "title": "{plan} · version {version}",
+    "description": "Publishing creates version {next} with the same prices and modules. Subscriptions already open keep their version.",
+    "placeholder": "Default",
+    "unlimited": "Unlimited",
+    "ceilingHint": "ceiling {ceiling}",
+    "submit": "Publish new version"
+  },
+  "readOnly": "Read only: ceilings and limits are changed by whoever manages the platform billing.",
+  "partner": {
+    "note": "Values of the current version of each plan. Empty uses the platform default."
+  },
+  "actions": {
+    "ceilingsSaved": "Ceilings saved ({changed} changed).",
+    "limitsPublished": "Limits published in version {version} of the plan."
+  },
+  "errors": {
+    "invalidValue": "{quota}: use a whole number from 0 to 1,000,000.",
+    "aboveCeiling": "{quota}: the value is above the platform ceiling ({ceiling}).",
+    "unlimitedNotAccepted": "{quota}: this limit needs a number.",
+    "unlimitedUnderCeiling": "{quota}: \"unlimited\" does not fit the platform ceiling ({ceiling}).",
+    "ceilingBelowPlan": "{quota}: plan {plan} is on sale above this ceiling. Publish a version of the plan within it first.",
+    "noVersion": "The plan has no version yet: publish its values in Billing first."
+  }
+}

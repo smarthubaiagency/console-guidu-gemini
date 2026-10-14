@@ -26,9 +26,5 @@
     "default": "limite padrão",
     "none": "sem limite"
   },
-  "overLimit": "acima do limite: nada foi apagado, mas novos itens ficam bloqueados",
-  "rows": {
-    "coreSeats": "Assentos da empresa (membros ativos)",
-    "corePublicDomains": "Domínios públicos do workspace"
-  }
+  "overLimit": "acima do limite: nada foi apagado, mas novos itens ficam bloqueados"
 }
