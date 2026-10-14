@@ -45,3 +45,56 @@ export function missingMedia(provider: string): MediaKind[] {
   const caps = mediaCapabilities(provider);
   return MEDIA_KINDS.filter((kind) => !caps[kind]);
 }
+
+/**
+ * The voice of a GUIDS (A5d): the provider's speech model and its voices,
+ * for the agent to answer in audio when the contact sent audio. Only the
+ * providers with a speech model here have voice; the customer picks a
+ * voice key of one of them when the text key has none.
+ */
+export type VoiceOptions = Readonly<{
+  model: string;
+  voices: readonly string[];
+  defaultVoice: string;
+}>;
+
+export const VOICE_OPTIONS: Readonly<
+  Partial<Record<AIProvider, VoiceOptions>>
+> = {
+  openai: {
+    model: "gpt-4o-mini-tts",
+    voices: [
+      "coral",
+      "alloy",
+      "ash",
+      "ballad",
+      "echo",
+      "fable",
+      "nova",
+      "onyx",
+      "sage",
+      "shimmer",
+      "verse",
+    ],
+    defaultVoice: "coral",
+  },
+  gemini: {
+    model: "gemini-2.5-flash-preview-tts",
+    voices: [
+      "Kore",
+      "Puck",
+      "Charon",
+      "Aoede",
+      "Fenrir",
+      "Leda",
+      "Orus",
+      "Zephyr",
+    ],
+    defaultVoice: "Kore",
+  },
+};
+
+/** The voice options of a provider, or null when its keys do not speak. */
+export function voiceOptions(provider: string): VoiceOptions | null {
+  return VOICE_OPTIONS[provider as AIProvider] ?? null;
+}

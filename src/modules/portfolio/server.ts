@@ -25,6 +25,8 @@ export {
 } from "./server/services/items";
 export {
   agentGetItem,
+  type AgentItemFiles,
+  agentItemFiles,
   type AgentItem,
   agentSearch,
   getCatalogProduct,

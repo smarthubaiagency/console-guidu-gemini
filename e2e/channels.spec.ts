@@ -161,6 +161,7 @@ test.describe("GUIDS on a Chatwoot inbox (A5b)", () => {
     await service
       .getByLabel("Espera para juntar mensagens (segundos)")
       .fill("8");
+    await expect(service.getByLabel("Resposta em áudio")).toHaveValue("mirror");
     await service.getByRole("button", { name: "Salvar atendimento" }).click();
     await expect(statusBanner(page)).toContainText("Atendimento salvo.");
     await expect(

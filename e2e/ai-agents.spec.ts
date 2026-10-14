@@ -101,6 +101,18 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       await expect(panel.getByTestId("guid-tested")).toContainText(
         "ainda não foi testada",
       );
+      // Three keys (A5d): text, voice and embeddings, each with its use.
+      await page
+        .getByTestId("guid-form")
+        .getByRole("tab", { name: "Conexão de modelo" })
+        .click();
+      await expect(page.getByTestId("model-text")).toBeVisible();
+      await expect(page.getByTestId("model-voice")).toContainText(
+        "Ouve os áudios do contato",
+      );
+      await expect(page.getByTestId("model-embeddings")).toContainText(
+        "bases de conhecimento",
+      );
       await expect(page.getByRole("link", { name: "Novo agente" })).toHaveCount(
         0,
       );

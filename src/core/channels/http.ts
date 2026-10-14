@@ -137,15 +137,19 @@ export const publicLookup: LookupFunction = (hostname, options, callback) => {
 
 /**
  * `fetch` over Node's http(s) with `publicLookup`: TLS still checks the
- * host's certificate, redirects are never followed and only a text body is
- * sent (the provider's JSON).
+ * host's certificate, redirects are never followed and the body is text
+ * (the provider's JSON) or bytes (a file sent as multipart, A5d).
  */
 export const pinnedFetch = ((input: string | URL | Request, init = {}) =>
   new Promise<Response>((resolve, reject) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     const body = init.body ?? null;
-    if (body !== null && typeof body !== "string") {
-      reject(new TypeError("pinnedFetch only sends text bodies"));
+    if (
+      body !== null &&
+      typeof body !== "string" &&
+      !(body instanceof Uint8Array)
+    ) {
+      reject(new TypeError("pinnedFetch only sends text or byte bodies"));
       return;
     }
     const send = url.protocol === "https:" ? httpsRequest : httpRequest;
@@ -293,16 +297,37 @@ const MAX_REDIRECTS = 3;
 export async function providerDownload(
   url: string,
   providerBase: string,
-  deps: Readonly<{
-    fetch?: ChannelFetch;
-    timeoutMs?: number;
-    maxBytes: number;
-  }>,
+  deps: DownloadDeps,
 ): Promise<Readonly<{ data: Buffer; mediaType: string | null }>> {
-  let target = new URL(url);
+  const target = new URL(url);
   if (target.origin !== providerOrigin(providerBase)) {
     throw new ChannelHttpError("invalid_url");
   }
+  return checkedDownload(target, deps);
+}
+
+/**
+ * Downloads a public file the agent sends (A5d, a file of the Portfolio):
+ * https on a public address at every hop, without any header.
+ */
+export async function publicDownload(
+  url: string,
+  deps: DownloadDeps,
+): Promise<Readonly<{ data: Buffer; mediaType: string | null }>> {
+  return checkedDownload(new URL(url), deps);
+}
+
+type DownloadDeps = Readonly<{
+  fetch?: ChannelFetch;
+  timeoutMs?: number;
+  maxBytes: number;
+}>;
+
+async function checkedDownload(
+  first: URL,
+  deps: DownloadDeps,
+): Promise<Readonly<{ data: Buffer; mediaType: string | null }>> {
+  let target = first;
   const signal = AbortSignal.timeout(deps.timeoutMs ?? 30_000);
   for (let hop = 0; ; hop += 1) {
     providerOrigin(target.origin);

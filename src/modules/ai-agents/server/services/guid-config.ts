@@ -15,6 +15,7 @@ import {
   parseAgentConfig,
 } from "@/core/ai/config/schema";
 import { ReferralInput, type ReferralDto } from "@/core/ai/customer-guids";
+import { voiceOptions } from "@/core/ai/media";
 import { ConfigValidationError } from "@/core/ai/templates";
 import { recordAudit } from "@/core/audit/record";
 import { assertModuleOperational } from "@/core/module-runtime/state";
@@ -232,6 +233,7 @@ export async function updateGuid(
     }
     model.model_provider = credential.provider;
   }
+  await checkVoiceAndEmbeddingKeys(tx, ctx, model);
 
   const config = parseAgentConfig("guid", CURRENT_CONFIG_VERSION, edit.config);
   if (!config.success) {
@@ -502,4 +504,63 @@ export async function deleteReferral(
   const referral = await loadReferral(tx, ctx, referralId);
   await tx.aiAgentReferral.delete({ where: { id: referral.id } });
   await auditReferral(tx, ctx, "delete", referral, agent.id);
+}
+
+/**
+ * The voice and the embeddings keys (A5d): active keys of the workspace's
+ * vault, the voice one of a provider that speaks, and a voice from that
+ * provider's list. No voice key means the text key, when it speaks.
+ */
+async function checkVoiceAndEmbeddingKeys(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  model: Record<string, unknown>,
+): Promise<void> {
+  const errors: Record<string, string> = {};
+  let voiceProvider =
+    typeof model.model_provider === "string" ? model.model_provider : null;
+  if (typeof model.audio_credential_id === "string") {
+    const voice = await tx.credential.findFirst({
+      where: {
+        id: model.audio_credential_id,
+        workspaceId: ctx.workspaceId,
+        status: "active",
+        purpose: { in: ["chat", "all"] },
+      },
+      select: { provider: true },
+    });
+    voiceProvider = voice?.provider ?? null;
+    if (!voice) {
+      errors["model.audio_credential_id"] =
+        "A chave escolhida não está ativa no cofre.";
+    } else if (!voiceOptions(voice.provider)) {
+      errors["model.audio_credential_id"] =
+        "Escolha uma chave OpenAI ou Gemini para a voz.";
+    }
+  }
+  const options = voiceProvider ? voiceOptions(voiceProvider) : null;
+  if (
+    typeof model.audio_voice === "string" &&
+    model.audio_voice &&
+    options &&
+    !options.voices.includes(model.audio_voice)
+  ) {
+    errors["model.audio_voice"] = "Escolha uma voz da lista.";
+  }
+  if (typeof model.embedding_credential_id === "string") {
+    const embedding = await tx.credential.findFirst({
+      where: {
+        id: model.embedding_credential_id,
+        workspaceId: ctx.workspaceId,
+        status: "active",
+        purpose: { in: ["embeddings", "all"] },
+      },
+      select: { id: true },
+    });
+    if (!embedding) {
+      errors["model.embedding_credential_id"] =
+        "A chave escolhida não está ativa no cofre.";
+    }
+  }
+  if (Object.keys(errors).length > 0) throw new ConfigValidationError(errors);
 }

@@ -40,6 +40,7 @@ import {
   type ChatModelKey,
   createChatModel,
   type ModelFactory,
+  type SpeechFactory,
   type TranscriptionFactory,
 } from "../providers";
 import { renderSystemPrompt } from "../prompt/render";
@@ -54,6 +55,12 @@ import {
 } from "./media";
 import { persistKeyFailure, persistTurn, persistTurnError } from "./persist";
 import { ResponsePlan, turnErrorCode } from "./plan";
+import {
+  speakAnswer,
+  type SpokenAnswer,
+  type VoiceKey,
+  voiceKeyOf,
+} from "./speech";
 import { TURN_LIMITS, type TurnState } from "./types";
 
 /**
@@ -97,6 +104,10 @@ export type GuidTurnDeps = Readonly<{
   /** Files the contact sent with the message (A5c, channels). */
   media?: readonly TurnAttachment[];
   createTranscription?: TranscriptionFactory;
+  /** Speak the answer (A5d): the contact sent audio on a channel. */
+  speak?: boolean;
+  createSpeech?: SpeechFactory;
+  convertAudio?: (wav: Uint8Array) => Promise<Uint8Array | null>;
 }>;
 
 /** The answer's shape, told to the model in the agent's language. */
@@ -138,6 +149,8 @@ type Ready = Readonly<{
   conversationCreatedAt: Date;
   config: AgentConfig;
   key: TurnKey;
+  /** The key that hears and speaks (A5d); null: none. */
+  voice: VoiceKey | null;
   systemPrompt: string;
   history: ModelMessage[];
   state: TurnState;
@@ -292,6 +305,33 @@ async function loadTurn(
       source: "customer",
     };
   }
+  // The voice key, or the text key when it has a voice; never the backup.
+  let voice: VoiceKey | null = null;
+  if (key.source === "customer") {
+    const voiceId = config.model.audio_credential_id;
+    if (voiceId) {
+      const credential = await tx.credential.findFirst({
+        where: {
+          id: voiceId,
+          workspaceId: ctx.workspaceId,
+          status: "active",
+          purpose: { in: ["chat", "all"] },
+        },
+        select: { provider: true, encryptedPayload: true },
+      });
+      voice = credential
+        ? voiceKeyOf(
+            {
+              provider: credential.provider as AIProvider,
+              secret: decryptSecret(credential.encryptedPayload),
+            },
+            config.model,
+          )
+        : null;
+    } else {
+      voice = voiceKeyOf(key, config.model);
+    }
+  }
 
   const [contact, organization, workspace, role, messagesCount, recent] =
     await Promise.all([
@@ -378,6 +418,7 @@ async function loadTurn(
     conversationCreatedAt: conversation.createdAt,
     config,
     key,
+    voice,
     systemPrompt,
     history: recent
       .reverse()
@@ -414,6 +455,8 @@ export async function runGuidTurnWithState(
   Readonly<{
     result: Record<string, string | number>;
     state: TurnState | null;
+    /** The answer as a voice message, when asked and spoken (A5d). */
+    spoken?: SpokenAnswer | null;
   }>
 > {
   const executionId = session.jobRunId;
@@ -467,11 +510,16 @@ export async function runGuidTurnWithState(
   const history = [...loaded.history];
   const withMedia = async (key: TurnKey): Promise<PreparedMedia> => {
     if (!deps.media?.length) return { notes: [], parts: [] };
-    const prepared = await prepareMedia(deps.media, key, texts, {
-      ...(deps.createTranscription
-        ? { createTranscription: deps.createTranscription }
-        : {}),
-    });
+    const prepared = await prepareMedia(
+      deps.media,
+      { ...key, voice: loaded.voice },
+      texts,
+      {
+        ...(deps.createTranscription
+          ? { createTranscription: deps.createTranscription }
+          : {}),
+      },
+    );
     if (prepared.notes.length > 0) {
       const notes = prepared.notes.join("\n").slice(0, 100_000);
       const message = await session.transaction(async (tx) => {
@@ -673,6 +721,14 @@ export async function runGuidTurnWithState(
     `;
     return rows[0]?.passed === true;
   });
+  // The voice answers only with the customer's keys; text otherwise.
+  const spoken =
+    deps.speak && used.source === "customer" && loaded.voice?.speaks
+      ? await speakAnswer(outcome.answer.messages, loaded.voice, {
+          ...(deps.createSpeech ? { createSpeech: deps.createSpeech } : {}),
+          ...(deps.convertAudio ? { convert: deps.convertAudio } : {}),
+        })
+      : null;
   return {
     result: {
       status: state.status,
@@ -680,8 +736,10 @@ export async function runGuidTurnWithState(
       keySource: used.source,
       messages: outcome.answer.messages.length,
       tools: state.records.length,
+      ...(spoken ? { spoken: 1 } : {}),
     },
     state,
+    spoken,
   };
 }
 

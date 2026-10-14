@@ -210,9 +210,14 @@ const ModelTab = z.strictObject({
   model_provider: z.enum(MODEL_PROVIDERS).optional(),
   model_name: text(120).optional(),
   audio_enabled: z.boolean().optional(),
+  // The key that hears and speaks (A5d); none: the text key, when its
+  // provider has voice (`../media.ts`).
+  audio_credential_id: z.uuid().nullable().optional(),
   audio_model: text(120).optional(),
   audio_voice: text(120).optional(),
   rag_enabled: z.boolean().optional(),
+  // The key of the knowledge bases' embeddings (A5d, used by the RAG).
+  embedding_credential_id: z.uuid().nullable().optional(),
   embedding_model: text(120).optional(),
 });
 

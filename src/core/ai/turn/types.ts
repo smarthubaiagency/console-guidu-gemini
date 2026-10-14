@@ -25,6 +25,18 @@ export const TURN_LIMITS = {
 /** Conversation memory per conversation (variaveis.md §2.5). */
 export const MAX_CONVERSATION_VARIABLES = 30;
 
+/** A Portfolio file the agent sends with its answer (A5d). */
+export type OutboundMedia = Readonly<{
+  kind: "image" | "document";
+  /** Public https address of the file, from the Portfolio. */
+  url: string;
+  /** The item's title, or the file's own. */
+  caption: string | null;
+}>;
+
+/** Portfolio files of one answer. */
+export const MAX_OUTBOX = 3;
+
 /** What the tools change during a turn. */
 export type TurnState = {
   contactId: string | null;
@@ -33,4 +45,6 @@ export type TurnState = {
   records: ToolCallRecord[];
   /** What the agent told the team when it handed over (A5c). */
   handoff?: Readonly<{ reason: string; summary: string }>;
+  /** Portfolio files to send after the answer, in order (A5d). */
+  outbox?: OutboundMedia[];
 };

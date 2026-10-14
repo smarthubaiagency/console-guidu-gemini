@@ -14,16 +14,30 @@ import { appLog } from "@/lib/telemetry/log";
 
 import {
   CHATWOOT_CAPABILITIES,
+  type ChatwootAccount,
   ChatwootConfig,
+  type ChatwootFile,
   ChatwootSecrets,
   handoffChatwootConversation,
   isTrigger,
+  sendChatwootAttachment,
   sendChatwootMessage,
   setChatwootTyping,
 } from "./chatwoot";
-import type { ChannelConsumer } from "./consumer";
+import type { ChannelConsumer, ChannelOutboundFile } from "./consumer";
 import { InboundEvent } from "./contract";
-import { type ChannelFetch, ChannelHttpError, providerDownload } from "./http";
+import {
+  type ChannelFetch,
+  ChannelHttpError,
+  providerDownload,
+  publicDownload,
+} from "./http";
+import {
+  directFileUrl,
+  isWebPage,
+  MAX_OUTBOUND_FILE_BYTES,
+  outboundFilename,
+} from "./outbound";
 import { resolveServiceSettings, shapeAnswer } from "./settings";
 
 /**
@@ -43,7 +57,9 @@ import { resolveServiceSettings, shapeAnswer } from "./settings";
  * 3. The core sends the answer in at most `max_messages` parts, with the
  *    pause of the settings between them, each part recorded once per run
  *    (`channel_deliveries`), and hands the conversation to the team when
- *    the consumer asks, after a private note with its summary (A5c).
+ *    the consumer asks, after a private note with its summary (A5c). A
+ *    voice answer goes as one audio (its text when the audio fails), and
+ *    the consumer's files follow the answer (A5d).
  *
  * One conversation is answered at a time (job group per conversation); two
  * conversations of a workspace are answered side by side.
@@ -215,6 +231,104 @@ async function claim(
   });
 }
 
+/** Portfolio files sent after one answer. */
+const MAX_OUTBOUND_FILES = 3;
+
+type Part =
+  | Readonly<{ kind: "text"; content: string }>
+  | Readonly<{ kind: "voice"; content: string; file: ChatwootFile }>
+  | Readonly<{ kind: "file"; content: string; file: ChannelOutboundFile }>;
+
+type Target = Readonly<{
+  account: ChatwootAccount;
+  botToken: string;
+  conversationId: string;
+  http: Readonly<{ fetch?: ChannelFetch }>;
+}>;
+
+/**
+ * Sends one part. A file of the Portfolio is downloaded through the guard
+ * (public https, `publicDownload`) and uploaded to Chatwoot; when it
+ * cannot be (a private Drive link, a page instead of a file, too large),
+ * its link goes as a message, so the contact still gets it.
+ */
+async function deliverPart(
+  part: Part,
+  target: Target,
+  fetch: ChannelFetch | undefined,
+): Promise<Readonly<{ id: string; fallback: string | null }>> {
+  const { account, botToken, conversationId, http } = target;
+  switch (part.kind) {
+    case "text":
+      return {
+        ...(await sendChatwootMessage(
+          account,
+          botToken,
+          conversationId,
+          part.content,
+          http,
+        )),
+        fallback: null,
+      };
+    case "voice":
+      return {
+        ...(await sendChatwootAttachment(
+          account,
+          botToken,
+          conversationId,
+          part.file,
+          null,
+          http,
+        )),
+        fallback: null,
+      };
+    case "file": {
+      const { file } = part;
+      try {
+        const downloaded = await publicDownload(directFileUrl(file.url), {
+          ...(fetch ? { fetch } : {}),
+          maxBytes: MAX_OUTBOUND_FILE_BYTES,
+        });
+        const mediaType = downloaded.mediaType ?? "application/octet-stream";
+        if (
+          isWebPage(downloaded.mediaType) ||
+          (file.kind === "image" && !mediaType.startsWith("image/"))
+        ) {
+          throw new ChannelHttpError("invalid_response");
+        }
+        return {
+          ...(await sendChatwootAttachment(
+            account,
+            botToken,
+            conversationId,
+            {
+              data: downloaded.data,
+              mediaType,
+              filename: outboundFilename(file.url, file.caption, mediaType),
+            },
+            file.caption,
+            http,
+          )),
+          fallback: null,
+        };
+      } catch (error) {
+        if (!(error instanceof ChannelHttpError)) throw error;
+        const link = [file.caption, file.url].filter(Boolean).join("\n");
+        return {
+          ...(await sendChatwootMessage(
+            account,
+            botToken,
+            conversationId,
+            link,
+            http,
+          )),
+          fallback: `link:${error.code}`,
+        };
+      }
+    }
+  }
+}
+
 export async function runChannelDispatch(
   session: JobSession,
   ctx: RequestContext,
@@ -272,6 +386,11 @@ export async function runChannelDispatch(
         maxMessages: settings.max_messages,
         maxChars: settings.max_chars,
       },
+      voiceReply:
+        settings.voice_reply === "mirror" &&
+        claimed.events.some((event) =>
+          event.message?.attachments.some((a) => a.kind === "audio"),
+        ),
     });
   } catch (error) {
     // The messages stay visible as not answered (health of the connection).
@@ -287,15 +406,38 @@ export async function runChannelDispatch(
     throw error;
   }
 
-  const parts = shapeAnswer(
-    answer.messages,
-    settings,
-    CHATWOOT_CAPABILITIES.output.text?.maxLength ?? 4000,
-  );
+  const maxText = CHATWOOT_CAPABILITIES.output.text?.maxLength ?? 4000;
+  const texts = shapeAnswer(answer.messages, settings, maxText);
+  const textParts = texts.map((content): Part => ({ kind: "text", content }));
+  // The voice says the whole answer; its text goes if it cannot (A5d).
+  const parts: Part[] =
+    answer.voice && texts.length > 0
+      ? [
+          {
+            kind: "voice",
+            content: `[voz] ${texts.join("\n\n")}`.slice(0, maxText),
+            file: answer.voice,
+          },
+        ]
+      : textParts;
+  for (const file of (answer.files ?? []).slice(0, MAX_OUTBOUND_FILES)) {
+    parts.push({
+      kind: "file",
+      content: `[${file.kind}] ${file.url}`.slice(0, maxText),
+      file,
+    });
+  }
   const pause = deps.sleep ?? sleep;
+  const target = {
+    account,
+    botToken: claimed.secrets.botToken,
+    conversationId: claimed.conversation.externalId,
+    http,
+  };
   let sent = 0;
   let failed: string | null = null;
-  for (const [part, content] of parts.entries()) {
+  for (let part = 0; part < parts.length; part += 1) {
+    const current = parts[part]!;
     const delivery = await session.transaction(async (tx) => {
       const existing = await tx.channelDelivery.findUnique({
         where: { executionId_part: { executionId, part } },
@@ -309,7 +451,7 @@ export async function runChannelDispatch(
           conversationId: claimed.conversation.id,
           executionId,
           part,
-          content,
+          content: current.content,
         },
       });
     });
@@ -321,23 +463,22 @@ export async function runChannelDispatch(
       await pause(settings.interval_ms);
     }
     try {
-      const message = await sendChatwootMessage(
-        account,
-        claimed.secrets.botToken,
-        claimed.conversation.externalId,
-        content,
-        http,
-      );
+      const message = await deliverPart(current, target, deps.fetch);
       await session.transaction((tx) =>
         tx.channelDelivery.update({
           where: { id: delivery.id },
-          data: { status: "sent", externalId: message.id, sentAt: new Date() },
+          data: {
+            status: "sent",
+            externalId: message.id,
+            sentAt: new Date(),
+            // A file that went as its link keeps why.
+            error: message.fallback,
+          },
         }),
       );
       sent += 1;
     } catch (error) {
       if (!(error instanceof ChannelHttpError)) throw error;
-      failed = error.code;
       await session.transaction((tx) =>
         tx.channelDelivery.update({
           where: { id: delivery.id },
@@ -347,8 +488,15 @@ export async function runChannelDispatch(
       appLog.warn("channels.delivery.failed", {
         executionId,
         connectionId: claimed.connectionId,
+        kind: current.kind,
         code: error.code,
       });
+      if (current.kind === "voice") {
+        // The answer goes in text instead, right after.
+        parts.splice(part + 1, 0, ...textParts);
+        continue;
+      }
+      failed = error.code;
       // The order matters: the rest of the answer waits for this part.
       break;
     }

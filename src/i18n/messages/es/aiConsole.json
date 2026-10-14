@@ -118,10 +118,12 @@
       "credential_id": "Clave",
       "model_provider": "Proveedor sugerido",
       "model_name": "Modelo",
-      "audio_enabled": "Audio",
+      "audio_enabled": "Responder en audio",
+      "audio_credential_id": "Clave de voz",
       "audio_model": "Modelo de audio",
       "audio_voice": "Voz",
       "rag_enabled": "Búsqueda en las bases de conocimiento",
+      "embedding_credential_id": "Clave de embeddings",
       "embedding_model": "Modelo de embeddings"
     },
     "hints": {
@@ -236,6 +238,10 @@
         "label": "Buscar en la base",
         "desc": "Consulta las bases de conocimiento vinculadas."
       },
+      "send_portfolio_media": {
+        "label": "Enviar del Portafolio",
+        "desc": "Envía imágenes y documentos de los ítems del Portafolio."
+      },
       "workspace_read": {
         "label": "Leer el workspace",
         "desc": "Consulta datos del panel con los permisos de quien pregunta."
@@ -244,6 +250,25 @@
         "label": "Proponer una acción",
         "desc": "Sugiere una acción que la persona confirma."
       }
+    },
+    "model": {
+      "text": {
+        "title": "Texto",
+        "note": "Conversa con el contacto y lee imágenes y documentos."
+      },
+      "voice": {
+        "title": "Voz",
+        "note": "Escucha los audios del contacto y responde en audio cuando el contacto envió audio."
+      },
+      "embeddings": {
+        "title": "Embeddings",
+        "note": "La usan las bases de conocimiento del agente."
+      },
+      "useTextKey": "Usar la clave de texto",
+      "noVoice": "La clave de texto no tiene voz. Elige una clave OpenAI o Gemini para que el agente escuche y responda audios; sin ella, el agente pide al contacto que escriba.",
+      "voiceKeyNoVoice": "Esta clave no tiene voz. Elige una clave OpenAI o Gemini.",
+      "defaultVoice": "Predeterminada ({voice})",
+      "defaultModel": "Predeterminado: {model}"
     }
   },
   "assistant": {

@@ -37,6 +37,7 @@ import {
   type AgentKind,
   toolAllowedFor,
 } from "@/core/ai/config/tools";
+import { voiceOptions } from "@/core/ai/media";
 
 /**
  * Editor of an agent's configuration (A3a, campos.md): the five tabs of the
@@ -52,6 +53,8 @@ export type EditorCredential = Readonly<{
   id: string;
   label: string;
   provider: string;
+  /** What the vault lets the key do; none: everything. */
+  purpose?: "all" | "chat" | "embeddings";
 }>;
 
 /** A new scoring rule keeps this mark until saved: its id follows the label. */
@@ -148,6 +151,33 @@ export function AgentConfigEditor({
 
   const fieldId = (tab: ConfigTab, field: string) => `cfg-${tab}-${field}`;
 
+  // The model tab's keys (A5d): text and voice keys chat, the embeddings
+  // key embeds. The voice is the voice key's, or the text key's when it
+  // speaks.
+  const chatKeys = credentials.filter((key) => key.purpose !== "embeddings");
+  const embeddingKeys = credentials.filter((key) => key.purpose !== "chat");
+  const providerOf = (field: string) =>
+    credentials.find((key) => key.id === get("model", field))?.provider ?? null;
+  const textProvider =
+    providerOf("credential_id") ??
+    ((get("model", "model_provider") as string | undefined) || null);
+  const textSpeaks = textProvider ? voiceOptions(textProvider) !== null : false;
+  const voiceKeyProvider = providerOf("audio_credential_id");
+  const speech = voiceKeyProvider
+    ? voiceOptions(voiceKeyProvider)
+    : textProvider
+      ? voiceOptions(textProvider)
+      : null;
+  const voiceWarning = !can("model", "audio_credential_id")
+    ? null
+    : voiceKeyProvider
+      ? speech
+        ? null
+        : t("model.voiceKeyNoVoice")
+      : textProvider && !textSpeaks
+        ? t("model.noVoice")
+        : null;
+
   function wrap(tab: ConfigTab, field: string, children: React.ReactNode) {
     const error = errorAt(`${tab}.${field}`);
     return (
@@ -234,7 +264,8 @@ export function AgentConfigEditor({
   function boolField({
     tab,
     field,
-  }: Readonly<{ tab: ConfigTab; field: string }>) {
+    defaultOn = false,
+  }: Readonly<{ tab: ConfigTab; field: string; defaultOn?: boolean }>) {
     if (!can(tab, field)) return null;
     return (
       <div
@@ -246,7 +277,9 @@ export function AgentConfigEditor({
         </Label>
         <Switch
           id={fieldId(tab, field)}
-          checked={get(tab, field) === true}
+          checked={
+            defaultOn ? get(tab, field) !== false : get(tab, field) === true
+          }
           onCheckedChange={(checked) => set(tab, field, checked)}
         />
       </div>
@@ -703,12 +736,103 @@ export function AgentConfigEditor({
         }}
       >
         <NativeSelectOption value="">{t("choose")}</NativeSelectOption>
-        {credentials.map((credential) => (
+        {chatKeys.map((credential) => (
           <NativeSelectOption key={credential.id} value={credential.id}>
             {credential.label}
           </NativeSelectOption>
         ))}
       </NativeSelect>,
+    );
+  }
+
+  /** The voice or the embeddings key; empty keeps the text key's. */
+  function extraKey({
+    field,
+    keys,
+    empty,
+  }: Readonly<{
+    field: "audio_credential_id" | "embedding_credential_id";
+    keys: readonly EditorCredential[];
+    empty: string;
+  }>) {
+    if (!can("model", field)) return null;
+    const value = (get("model", field) as string | null) ?? "";
+    return wrap(
+      "model",
+      field,
+      <NativeSelect
+        id={fieldId("model", field)}
+        className="w-full"
+        value={value}
+        onChange={(e) =>
+          set(
+            "model",
+            field,
+            e.target.value === "" ? undefined : e.target.value,
+          )
+        }
+      >
+        <NativeSelectOption value="">{empty}</NativeSelectOption>
+        {keys.map((credential) => (
+          <NativeSelectOption key={credential.id} value={credential.id}>
+            {credential.label}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>,
+    );
+  }
+
+  /** The voices of the voice key's provider; free text when it is unknown. */
+  function voice() {
+    if (!can("model", "audio_voice")) return null;
+    if (!speech) {
+      return textField({ tab: "model", field: "audio_voice", max: 120 });
+    }
+    const value = (get("model", "audio_voice") as string | undefined) ?? "";
+    return wrap(
+      "model",
+      "audio_voice",
+      <NativeSelect
+        id={fieldId("model", "audio_voice")}
+        className="w-full"
+        value={value}
+        onChange={(e) =>
+          set(
+            "model",
+            "audio_voice",
+            e.target.value === "" ? undefined : e.target.value,
+          )
+        }
+      >
+        <NativeSelectOption value="">
+          {t("model.defaultVoice", { voice: speech.defaultVoice })}
+        </NativeSelectOption>
+        {speech.voices.map((option) => (
+          <NativeSelectOption key={option} value={option}>
+            {option}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>,
+    );
+  }
+
+  /** One part of the model tab, with what its key is for. */
+  function modelSection(
+    part: "text" | "voice" | "embeddings",
+    children: readonly React.ReactNode[],
+  ) {
+    if (children.every((child) => child === null)) return null;
+    return (
+      <fieldset
+        className="border-card-border space-y-3 rounded-xl border p-3"
+        data-testid={`model-${part}`}
+      >
+        <legend className="text-12 text-text px-1 font-medium">
+          {t(`model.${part}.title`)}
+        </legend>
+        <p className="text-11 text-text-secondary">{t(`model.${part}.note`)}</p>
+        {children}
+      </fieldset>
     );
   }
 
@@ -878,25 +1002,60 @@ export function AgentConfigEditor({
     ),
     model: (
       <>
-        {credential()}
-        {selectField({
-          tab: "model",
-          field: "model_provider",
-          options: MODEL_PROVIDERS,
-          labels: "model_provider",
-        })}
-        {textField({ tab: "model", field: "model_name", max: 120 })}
-        {boolField({ tab: "model", field: "audio_enabled" })}
-        {get("model", "audio_enabled") === true ? (
-          <>
-            {textField({ tab: "model", field: "audio_model", max: 120 })}
-            {textField({ tab: "model", field: "audio_voice", max: 120 })}
-          </>
-        ) : null}
-        {boolField({ tab: "model", field: "rag_enabled" })}
-        {get("model", "rag_enabled") === true
-          ? textField({ tab: "model", field: "embedding_model", max: 120 })
-          : null}
+        {modelSection("text", [
+          credential(),
+          selectField({
+            tab: "model",
+            field: "model_provider",
+            options: MODEL_PROVIDERS,
+            labels: "model_provider",
+          }),
+          textField({ tab: "model", field: "model_name", max: 120 }),
+        ])}
+        {modelSection("voice", [
+          extraKey({
+            field: "audio_credential_id",
+            keys: chatKeys,
+            empty: textSpeaks ? t("model.useTextKey") : t("choose"),
+          }),
+          voiceWarning ? (
+            <p
+              key="warning"
+              className="text-11 text-warning-text"
+              role="status"
+              data-testid="voice-warning"
+            >
+              {voiceWarning}
+            </p>
+          ) : null,
+          boolField({ tab: "model", field: "audio_enabled", defaultOn: true }),
+          get("model", "audio_enabled") === false ? null : voice(),
+          get("model", "audio_enabled") === false
+            ? null
+            : textField({
+                tab: "model",
+                field: "audio_model",
+                max: 120,
+                ...(speech
+                  ? {
+                      placeholder: t("model.defaultModel", {
+                        model: speech.model,
+                      }),
+                    }
+                  : {}),
+              }),
+        ])}
+        {modelSection("embeddings", [
+          extraKey({
+            field: "embedding_credential_id",
+            keys: embeddingKeys,
+            empty: t("choose"),
+          }),
+          boolField({ tab: "model", field: "rag_enabled" }),
+          get("model", "rag_enabled") === true
+            ? textField({ tab: "model", field: "embedding_model", max: 120 })
+            : null,
+        ])}
       </>
     ),
   };

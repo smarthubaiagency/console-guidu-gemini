@@ -63,6 +63,40 @@ describe("prepareMedia", () => {
     expect(prepared.parts).toEqual([]);
   });
 
+  it("hears with the voice key when the text key does not (A5d)", async () => {
+    const audio = file("audio", "audio/ogg");
+    const keys: string[] = [];
+    const prepared = await prepareMedia(
+      [audio],
+      {
+        provider: "anthropic",
+        secret: "sk",
+        source: "customer",
+        voice: { provider: "openai", secret: "voice" },
+      },
+      texts,
+      {
+        createTranscription: (key) => {
+          keys.push(`${key.provider}:${key.secret}`);
+          return transcriber("Oi") as unknown as TranscriptionModel;
+        },
+      },
+    );
+    expect(keys).toEqual(["openai:voice"]);
+    expect(prepared.notes).toEqual(["[Áudio do contato, transcrito]: Oi"]);
+  });
+
+  it("does not hear when the voice was resolved to none", async () => {
+    const audio = file("audio", "audio/ogg");
+    const prepared = await prepareMedia(
+      [audio],
+      { ...openai, voice: null },
+      texts,
+    );
+    expect(prepared.notes).toEqual([texts.audioUnsupported]);
+    expect(audio.loads).toEqual([]);
+  });
+
   it("asks for text when the key does not hear, without downloading", async () => {
     const audio = file("audio", "audio/ogg");
     const prepared = await prepareMedia(

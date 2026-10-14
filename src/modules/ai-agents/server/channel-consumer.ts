@@ -4,9 +4,11 @@ import { parseAgentConfig } from "@/core/ai/config/schema";
 import { format, promptLocale, promptTexts } from "@/core/ai/prompt/texts";
 import { runGuidTurnWithState, type GuidTurnDeps } from "@/core/ai/turn/guid";
 import type { TurnAttachment } from "@/core/ai/turn/media";
+import type { SpokenAnswer } from "@/core/ai/turn/speech";
 import { TURN_LIMITS } from "@/core/ai/turn/types";
 import type {
   ChannelConsumer,
+  ChannelOutboundFile,
   ChannelTurnInput,
   ConsumerRefInfo,
 } from "@/core/channels/consumer";
@@ -35,6 +37,9 @@ import type {
  * - What the team said to the contact, and what the contact said while the
  *   team had the conversation, enter the history before the new message.
  * - A handoff leaves the agent's summary as a private note for the team.
+ * - A contact who sent audio gets the answer in audio when the integration
+ *   says so and the agent has a voice (A5d); the files the agent picked
+ *   from the Portfolio go after the answer.
  */
 
 export const AI_AGENTS_MODULE = "ai-agents";
@@ -102,12 +107,20 @@ export async function answerOnChannel(
   messages: string[];
   handoff: boolean;
   handoffNote: string | null;
+  voice: SpokenAnswer | null;
+  files: ChannelOutboundFile[];
 }> {
   const agentId = input.consumerRef;
   const text = groupedText(input.events);
   const media = groupedAttachments(input);
   if (!text && media.length === 0) {
-    return { messages: [], handoff: false, handoffNote: null };
+    return {
+      messages: [],
+      handoff: false,
+      handoffNote: null,
+      voice: null,
+      files: [],
+    };
   }
   const prepared = await session.transaction(async (tx) => {
     const agent = await tx.aiAgent.findFirst({
@@ -200,11 +213,11 @@ export async function answerOnChannel(
     };
   });
 
-  const { state } = await runGuidTurnWithState(
+  const { state, spoken } = await runGuidTurnWithState(
     session,
     ctx,
     { conversationId: prepared.conversationId, messageId: prepared.messageId },
-    { ...deps, answerLimits: input.limits, media },
+    { ...deps, answerLimits: input.limits, media, speak: input.voiceReply },
   );
   const answers = await session.transaction((tx) =>
     tx.aiMessage.findMany({
@@ -228,6 +241,8 @@ export async function answerOnChannel(
     handoffNote: state?.handoff
       ? handoffNote(prepared.language, prepared.agentName, state.handoff)
       : null,
+    voice: spoken ?? null,
+    files: (state?.outbox ?? []).map((file) => ({ ...file })),
   };
 }
 

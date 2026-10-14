@@ -18,6 +18,8 @@ export const AGENT_TOOLS = {
   score_lead: ["guid"],
   handoff: ["guid"],
   search_knowledge: ["guid", "assistant"],
+  // Images and documents of the Portfolio, with the answer (A5d).
+  send_portfolio_media: ["guid"],
   // Reading of the workspace with the permissions of who asks (MCP tools).
   workspace_read: ["assistant"],
   propose_operation: ["assistant"],

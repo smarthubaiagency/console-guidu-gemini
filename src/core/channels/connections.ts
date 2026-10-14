@@ -510,7 +510,10 @@ export const ServiceSettingsInput = z.strictObject({
   /** An inbox; absent: the defaults of every inbox. */
   scope: z.string().trim().min(1).max(200).nullable(),
   /** Null with a scope: back to the defaults. */
-  settings: ServiceSettings.nullable(),
+  settings: ServiceSettings.extend({
+    // Callers before the A5d answered audio in audio.
+    voice_reply: ServiceSettings.shape.voice_reply.default("mirror"),
+  }).nullable(),
 });
 
 /**

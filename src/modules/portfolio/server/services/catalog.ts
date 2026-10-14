@@ -634,3 +634,55 @@ export async function agentGetItem(
   if (!view) throw notFound;
   return toAgentItem(view);
 }
+
+/** Most files of one item the agent may send. */
+const MAX_ITEM_FILES = 10;
+
+export type AgentItemFiles = Readonly<{
+  id: string;
+  title: string;
+  images: { url: string; alt: string | null }[];
+  /** Links of type `document` (a PDF, a sheet on Google Drive…). */
+  documents: { url: string; title: string | null }[];
+}>;
+
+/**
+ * The files a GUIDS may send of an item (A5d): its images and its links of
+ * type `document`, by the item's id or by the words of a search; hidden
+ * from AI discovery means not found. The first match wins.
+ */
+export async function agentItemFiles(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  item: string,
+): Promise<AgentItemFiles | null> {
+  await access(tx, ctx);
+  const query = item.trim().slice(0, 200);
+  if (!query) return null;
+  let ids: string[];
+  if (isUuid(query)) {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      select i.id from public.portfolio_items i
+      where i.workspace_id = ${ctx.workspaceId}::uuid and i.id = ${query}::uuid
+        and ${visibleSql("agent")}
+    `;
+    ids = rows.map((r) => r.id);
+  } else {
+    ids = (await searchIds(tx, ctx, "agent", textSql(query, "agent"), 0, 1))
+      .ids;
+  }
+  const [view] = await loadItemViews(tx, ctx, ids.slice(0, 1));
+  if (!view) return null;
+  return {
+    id: view.id,
+    title: view.title,
+    images: view.media
+      .filter((m) => m.type === "image")
+      .slice(0, MAX_ITEM_FILES)
+      .map((m) => ({ url: m.url, alt: m.alt_text ?? m.name ?? null })),
+    documents: view.links
+      .filter((l) => l.type === "document")
+      .slice(0, MAX_ITEM_FILES)
+      .map((l) => ({ url: l.url, title: l.title ?? null })),
+  };
+}

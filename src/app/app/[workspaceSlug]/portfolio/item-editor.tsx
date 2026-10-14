@@ -215,6 +215,21 @@ export async function PortfolioItemEditor({
                   {t("item.mediaHint")}
                 </span>
               </Label>
+              <Label className="flex-col items-start">
+                {t("item.documents")}
+                <Textarea
+                  name="documents"
+                  rows={2}
+                  placeholder={t("item.documentsPlaceholder")}
+                  defaultValue={item.links
+                    .filter((link) => link.type === "document")
+                    .map((l) => `${l.url}${l.title ? ` | ${l.title}` : ""}`)
+                    .join("\n")}
+                />
+                <span className="text-11 text-text-secondary">
+                  {t("item.documentsHint")}
+                </span>
+              </Label>
               <div className="space-y-2">
                 <Label className="flex-col items-start">
                   {t("item.tags")}

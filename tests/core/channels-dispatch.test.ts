@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
-import type { TranscriptionModel } from "ai";
-import { MockLanguageModelV4, MockTranscriptionModelV4 } from "ai/test";
+import type { SpeechModel, TranscriptionModel } from "ai";
+import {
+  MockLanguageModelV4,
+  MockSpeechModelV4,
+  MockTranscriptionModelV4,
+} from "ai/test";
 import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -22,6 +26,7 @@ import {
   withContext,
 } from "@/lib/prisma/with-context";
 import { createAiAgentsChannelConsumer } from "@/modules/ai-agents/server/channel-consumer";
+import { createItem } from "@/modules/portfolio/server";
 import {
   bindGuidInbox,
   listGuidChannels,
@@ -89,6 +94,22 @@ function handoffStep() {
   };
 }
 
+function toolStep(toolName: string, input: unknown, id = "call-1") {
+  return {
+    content: [
+      {
+        type: "tool-call" as const,
+        toolCallId: id,
+        toolName,
+        input: JSON.stringify(input),
+      },
+    ],
+    finishReason: { unified: "tool-calls" as const, raw: undefined },
+    usage,
+    warnings: [],
+  };
+}
+
 type Step = ReturnType<typeof planStep> | ReturnType<typeof handoffStep>;
 
 type Call = Readonly<{
@@ -111,7 +132,18 @@ function fakeChatwoot() {
     const token =
       (init?.headers as Record<string, string> | undefined)?.api_access_token ??
       null;
-    const body = init?.body ? (JSON.parse(String(init.body)) as unknown) : null;
+    const type =
+      (init?.headers as Record<string, string> | undefined)?.["content-type"] ??
+      "";
+    // A file (A5d) comes as multipart: kept as text, to look into.
+    const body = !init?.body
+      ? null
+      : type.startsWith("multipart/")
+        ? {
+            multipart: Buffer.from(init.body as Uint8Array).toString("latin1"),
+            private: false,
+          }
+        : (JSON.parse(String(init.body)) as unknown);
     calls.push({ method, path: url.pathname, token, body });
     const rest = url.pathname.replace("/api/v1/accounts/1", "");
     if (
@@ -134,6 +166,18 @@ function fakeChatwoot() {
     if (url.hostname === "198.51.100.7") {
       return new Response(new Uint8Array([137, 80, 78, 71]), {
         headers: { "content-type": "image/png" },
+      });
+    }
+    // Files of the Portfolio (A5d): a CDN, and a link that opens a page
+    // (a private Google Drive file).
+    if (url.hostname === "198.51.100.8") {
+      return new Response(new Uint8Array([137, 80, 78, 71]), {
+        headers: { "content-type": "image/png" },
+      });
+    }
+    if (url.hostname === "198.51.100.9") {
+      return new Response("<html>login</html>", {
+        headers: { "content-type": "text/html" },
       });
     }
     if (url.pathname === "/rails/active_storage/blobs/voice.ogg") {
@@ -357,6 +401,17 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
 
   function consumer(steps: Step[]) {
     const model = new MockLanguageModelV4({ doGenerate: steps });
+    const spoken: string[] = [];
+    const speaker = new MockSpeechModelV4({
+      doGenerate: async (options) => {
+        spoken.push(options.text);
+        return {
+          audio: new Uint8Array([0x4f, 0x67, 0x67, 0x53]),
+          warnings: [],
+          response: { timestamp: new Date(), modelId: "mock" },
+        };
+      },
+    });
     const transcriber = new MockTranscriptionModelV4({
       doGenerate: async () => ({
         text: "Quero agendar para sexta",
@@ -369,9 +424,11 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
     });
     return {
       model,
+      spoken,
       consumer: createAiAgentsChannelConsumer({
         createModel: () => model,
         createTranscription: () => transcriber as unknown as TranscriptionModel,
+        createSpeech: () => speaker as unknown as SpeechModel,
       }),
     };
   }
@@ -389,7 +446,7 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
       run.payload as { conversationId: string },
       { consumers: [built.consumer], fetch: fake.fetch, sleep },
     );
-    return { result, sleep, model: built.model };
+    return { result, sleep, model: built.model, spoken: built.spoken };
   }
 
   /** Public messages sent to the contact, and the team's private notes. */
@@ -398,6 +455,7 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
       .filter(
         (c) =>
           c.path.endsWith("/messages") &&
+          !(c.body as { multipart?: string }).multipart &&
           (c.body as { private: boolean }).private === team,
       )
       .map((c) => (c.body as { content: string }).content);
@@ -825,5 +883,195 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
       name: "Anna",
       active: false,
     });
+  });
+
+  const audioMessage = (id: number) => ({
+    ...message(id, ""),
+    attachments: [
+      {
+        file_type: "audio",
+        extension: "ogg",
+        data_url: `${BASE_URL}/rails/active_storage/blobs/voice.ogg`,
+      },
+    ],
+  });
+
+  /** Files uploaded to the conversation (multipart), as text. */
+  function uploaded(fake: ReturnType<typeof fakeChatwoot>) {
+    return fake.calls
+      .map((c) => (c.body as { multipart?: string } | null)?.multipart)
+      .filter((body): body is string => typeof body === "string");
+  }
+
+  it("answers audio in audio, in text when the voice fails or is off (A5d)", async () => {
+    const { fake, connectionId, token } = await connectAndBind();
+    await webhook(connectionId, token, audioMessage(1));
+    const [run] = await pendingRuns();
+    const voiced = await dispatch(
+      run!,
+      [planStep(["Sexta às 10h.", "Até lá!"])],
+      fake,
+    );
+    expect(voiced.result).toMatchObject({ status: "answered", sent: 1 });
+    expect(voiced.spoken).toEqual(["Sexta às 10h.\n\nAté lá!"]);
+    const [voice] = uploaded(fake);
+    expect(voice).toContain('filename="resposta.ogg"');
+    expect(voice).toContain("Content-Type: audio/ogg");
+    expect(sentTo(fake)).toEqual([]);
+    const delivered = await admin.channelDelivery.findMany({
+      where: { executionId: run!.id },
+    });
+    expect(delivered.map((d) => [d.status, d.content])).toEqual([
+      ["sent", "[voz] Sexta às 10h.\n\nAté lá!"],
+    ]);
+
+    // Chatwoot refuses the audio: the text goes instead.
+    await admin.jobRun.updateMany({
+      where: { id: run!.id },
+      data: { status: "succeeded" },
+    });
+    await webhook(connectionId, token, audioMessage(2));
+    const second = (await pendingRuns()).find((r) => r.status === "pending")!;
+    const refusing = {
+      ...fake,
+      fetch: vi.fn<typeof globalThis.fetch>(async (input, init) => {
+        const type =
+          (init?.headers as Record<string, string> | undefined)?.[
+            "content-type"
+          ] ?? "";
+        if (type.startsWith("multipart/")) {
+          return new Response("", { status: 422 });
+        }
+        return fake.fetch(input, init);
+      }),
+    };
+    const fallback = await dispatch(
+      second,
+      [planStep(["Combinado."])],
+      refusing,
+    );
+    expect(fallback.result).toMatchObject({ status: "answered", sent: 1 });
+    const parts = await admin.channelDelivery.findMany({
+      where: { executionId: second.id },
+      orderBy: { part: "asc" },
+    });
+    expect(parts.map((d) => [d.status, d.content])).toEqual([
+      ["failed", "[voz] Combinado."],
+      ["sent", "Combinado."],
+    ]);
+
+    // With the integration's voice off, the answer is text.
+    await admin.jobRun.updateMany({
+      where: { id: second.id },
+      data: { status: "succeeded" },
+    });
+    await withContext(prisma, contextA, (tx) =>
+      updateServiceSettings(tx, contextA, {
+        connectionId,
+        scope: null,
+        settings: {
+          grouping_seconds: 5,
+          max_messages: 3,
+          max_chars: 300,
+          interval_ms: 0,
+          voice_reply: "off",
+        },
+      }),
+    );
+    await webhook(connectionId, token, audioMessage(3));
+    const third = (await pendingRuns()).find((r) => r.status === "pending")!;
+    const texted = await dispatch(third, [planStep(["Ok!"])], fake);
+    expect(texted.spoken).toEqual([]);
+    expect(sentTo(fake).at(-1)).toBe("Ok!");
+  });
+
+  it("sends the Portfolio files the agent picked, a link when it cannot (A5d)", async () => {
+    await admin.$executeRawUnsafe(
+      `insert into public.workspace_modules (organization_id, workspace_id, module_key, status, updated_by)
+       values ('${ids.organizationA}', '${ids.workspaceA}', 'portfolio', 'enabled', '${ids.userA}')
+       on conflict (workspace_id, module_key) do update set status = 'enabled'`,
+    );
+    try {
+      await withContext(prisma, contextA, (tx) =>
+        createItem(tx, contextA, {
+          item_type: "product",
+          title: "Mesa A5d",
+          status: "active",
+          media: [
+            {
+              type: "image",
+              url: "https://198.51.100.8/mesa.png",
+              alt_text: "Mesa de jantar",
+            },
+          ],
+          links: [
+            {
+              type: "document",
+              url: "https://198.51.100.9/catalogo",
+              title: "Catálogo",
+            },
+          ],
+          variants: [
+            { title: "Única", price: { amount: 10000, currency: "BRL" } },
+          ],
+        }),
+      );
+      const { fake, connectionId, token } = await connectAndBind();
+      await admin.aiAgent.update({
+        where: { id: GUID },
+        data: {
+          config: {
+            ...guidConfig(credentialId),
+            integration: { tools: ["send_portfolio_media"] },
+          },
+        },
+      });
+      await webhook(connectionId, token, message(1, "Tem foto da mesa?"));
+      const [run] = await pendingRuns();
+      const { result } = await dispatch(
+        run!,
+        [
+          toolStep("send_portfolio_media", {
+            item: "Mesa A5d",
+            media: "image",
+          }),
+          toolStep(
+            "send_portfolio_media",
+            { item: "Mesa A5d", media: "document" },
+            "call-2",
+          ),
+          planStep(["Segue a foto e o catálogo."]),
+        ],
+        fake,
+      );
+      expect(result).toMatchObject({ status: "answered", parts: 3, sent: 3 });
+      const [image] = uploaded(fake);
+      expect(image).toContain('filename="mesa.png"');
+      expect(image).toContain("Mesa de jantar");
+      // The link opens a page, not the file: the link itself goes.
+      expect(sentTo(fake)).toEqual([
+        "Segue a foto e o catálogo.",
+        "Catálogo\nhttps://198.51.100.9/catalogo",
+      ]);
+      const delivered = await admin.channelDelivery.findMany({
+        where: { executionId: run!.id },
+        orderBy: { part: "asc" },
+      });
+      expect(delivered.map((d) => [d.status, d.error])).toEqual([
+        ["sent", null],
+        ["sent", null],
+        ["sent", "link:invalid_response"],
+      ]);
+    } finally {
+      await admin.$executeRawUnsafe(
+        `delete from public.portfolio_variants where workspace_id = '${ids.workspaceA}'`,
+      );
+      await admin.$executeRawUnsafe(
+        `delete from public.portfolio_items where workspace_id = '${ids.workspaceA}'`,
+      );
+      await admin.$executeRawUnsafe(
+        `delete from public.workspace_modules where workspace_id = '${ids.workspaceA}' and module_key = 'portfolio'`,
+      );
+    }
   });
 });
