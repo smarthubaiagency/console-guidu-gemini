@@ -17,6 +17,7 @@ function item(
     badge: null,
     exact: false,
     children,
+    hideChildren: false,
   };
 }
 

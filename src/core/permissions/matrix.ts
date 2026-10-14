@@ -161,6 +161,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_OPERATIONS_READ,
     Permissions.PLATFORM_LANGUAGES_MANAGE,
     Permissions.PLATFORM_AI_MANAGE,
+    Permissions.PLATFORM_SETTINGS_MANAGE,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -174,6 +175,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_OPERATIONS_READ,
     Permissions.PLATFORM_LANGUAGES_MANAGE,
     Permissions.PLATFORM_AI_MANAGE,
+    Permissions.PLATFORM_SETTINGS_MANAGE,
   ]),
   billing: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -232,6 +234,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_BILLING_MANAGE,
     Permissions.PARTNER_AI_AGENTS_READ,
     Permissions.PARTNER_AI_AGENTS_MANAGE,
+    Permissions.PARTNER_SETTINGS_MANAGE,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
@@ -243,6 +246,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_BILLING_READ,
     Permissions.PARTNER_AI_AGENTS_READ,
     Permissions.PARTNER_AI_AGENTS_MANAGE,
+    Permissions.PARTNER_SETTINGS_MANAGE,
   ]),
   partner_finance: new Set([
     Permissions.PARTNER_READ,

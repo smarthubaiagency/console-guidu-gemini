@@ -373,6 +373,13 @@ export async function buildWorkspaceExport(
     }),
   ]);
 
+  // The workspace's own settings (CF1); inherited values are not its data.
+  const settings = await tx.setting.findMany({
+    where: { ...where, scope: "workspace" },
+    orderBy: { key: "asc" },
+    select: { key: true, value: true, updatedAt: true },
+  });
+
   const moduleData: Record<string, Record<string, ExportedRows>> = {};
   for (const contract of listModuleDataContracts()) {
     moduleData[contract.moduleKey] = { ...(await contract.export(tx, ctx)) };
@@ -392,6 +399,7 @@ export async function buildWorkspaceExport(
       jobRuns: jobs,
       proposals,
       locations,
+      settings,
       channels: {
         connections: channelConnections,
         routes: channelRoutes,

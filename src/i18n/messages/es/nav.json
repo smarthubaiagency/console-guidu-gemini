@@ -2,14 +2,19 @@
   "sections": {
     "app": {
       "platform": "Plataforma",
-      "settings": "Configuración"
+      "settings_workspace": "Workspace",
+      "settings_channels": "Canales e integraciones",
+      "settings_plan": "Plan",
+      "settings_system": "Sistema"
     },
     "platform": {
       "platform": "Administración",
-      "platform_settings": "Configuración"
+      "settings_platform": "Plataforma",
+      "settings_modules": "Módulos"
     },
     "partner": {
-      "partner": "Socio"
+      "partner": "Socio",
+      "settings_partner": "Socio"
     }
   },
   "items": {
@@ -60,6 +65,11 @@
     "partner_ai_assistant": "Asistente GUIDU",
     "partner_ai_guids": "GUIDS de los clientes",
     "partner_ai_keys": "Claves de IA",
-    "partner_ai_templates": "Plantillas de agente"
+    "partner_ai_templates": "Plantillas de agente",
+    "core_settings": "Configuración",
+    "platform_settings": "Configuración",
+    "partner_settings": "Configuración",
+    "platform_settings_general": "General y región",
+    "partner_settings_general": "General y región"
   }
 }

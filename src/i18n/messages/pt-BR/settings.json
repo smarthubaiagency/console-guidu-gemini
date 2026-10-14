@@ -1,0 +1,57 @@
+{
+  "navLabel": "Menu de configurações",
+  "saved": "Configurações salvas.",
+  "errors": {
+    "unknown": "Esta configuração não pode ser alterada neste nível.",
+    "locked": "Esta configuração foi travada pelo nível acima.",
+    "invalid": "Valor inválido para a configuração.",
+    "currency": "Moeda não oferecida pela plataforma."
+  },
+  "general": {
+    "title": "Geral e região",
+    "description": {
+      "platform": "Identificação da plataforma e padrões regionais herdados por parceiros e workspaces.",
+      "partner": "Identificação do parceiro e padrões regionais dos seus clientes.",
+      "workspace": "Identificação do workspace, idioma e padrões regionais."
+    },
+    "platform": {
+      "title": "Plataforma",
+      "description": "Definidos no ambiente do servidor (APP_NAME e APP_URL).",
+      "name": "Nome",
+      "url": "Endereço público"
+    },
+    "partner": {
+      "title": "Parceiro",
+      "description": "Nome e domínios são definidos pela plataforma.",
+      "name": "Nome",
+      "slug": "Identificador",
+      "domains": "Domínios"
+    }
+  },
+  "region": {
+    "title": "Região",
+    "description": {
+      "platform": "Moedas oferecidas, moeda e fuso padrão. Travar impede parceiros e workspaces de mudar.",
+      "partner": "Moeda e fuso padrão dos seus clientes. Travar impede os workspaces de mudar.",
+      "workspace": "Moeda dos preços e fuso horário usado em horários e agendas."
+    },
+    "currency": "Moeda",
+    "currencies": "Moedas oferecidas",
+    "currenciesHint": "Códigos ISO 4217 separados por vírgula. Vazio usa o padrão do sistema.",
+    "timezone": "Fuso horário",
+    "lock": "Travar para os níveis abaixo",
+    "lockedBy": {
+      "platform": "Travado pela plataforma.",
+      "partner": "Travado pelo parceiro."
+    },
+    "source": {
+      "default": "padrão do sistema",
+      "platform": "da plataforma",
+      "partner": "do parceiro",
+      "workspace": "do workspace"
+    },
+    "inherit": "Herdar: {value} ({from})",
+    "systemDefault": "Padrão do sistema: {value}",
+    "save": "Salvar região"
+  }
+}

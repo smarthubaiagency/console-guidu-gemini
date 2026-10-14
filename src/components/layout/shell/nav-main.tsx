@@ -20,6 +20,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import type { NavItem, NavSection } from "@/core/module-runtime/navigation";
 
@@ -35,9 +36,16 @@ function NavMainItem({
   activeId,
 }: Readonly<{ item: NavItem; activeId: string | null }>) {
   const t = useTranslations("shell");
-  const subItems = descendants(item);
-  const isActive = item.id === activeId;
-  const holdsActive = subItems.some((sub) => sub.id === activeId);
+  // On a phone the drawer closes once a page is picked.
+  const { isMobile, setOpenMobile } = useSidebar();
+  const closeDrawer = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+  const nested = descendants(item);
+  const holdsActive = nested.some((sub) => sub.id === activeId);
+  // A settings entry stands alone: its pages are in the submenu card (CF1).
+  const subItems = item.hideChildren ? [] : nested;
+  const isActive = item.id === activeId || (item.hideChildren && holdsActive);
   const content = (
     <>
       <NavIcon iconKey={item.iconKey} />
@@ -50,7 +58,11 @@ function NavMainItem({
       <SidebarMenuItem>
         {item.href ? (
           <SidebarMenuButton asChild tooltip={item.label} isActive={isActive}>
-            <Link href={item.href} aria-current={isActive ? "page" : undefined}>
+            <Link
+              href={item.href}
+              aria-current={isActive ? "page" : undefined}
+              onClick={closeDrawer}
+            >
               {content}
             </Link>
           </SidebarMenuButton>
@@ -84,6 +96,7 @@ function NavMainItem({
                           <Link
                             href={sub.href}
                             aria-current={subActive ? "page" : undefined}
+                            onClick={closeDrawer}
                           >
                             <span>{sub.label}</span>
                           </Link>
