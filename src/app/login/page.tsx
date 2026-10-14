@@ -48,8 +48,8 @@ export default async function LoginPage({
     <AuthShell
       title={t("login.title")}
       description={t("login.description", { appName: brand.name })}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
+      brand={brand}
+      salesContact
     >
       {arrivalError ? (
         <div className="mb-4">

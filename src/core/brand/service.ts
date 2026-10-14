@@ -13,7 +13,11 @@ import {
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import { checkLogo } from "./logo";
+import {
+  checkBrandImage,
+  type BrandImageKind,
+  type BrandImageMime,
+} from "./logo";
 import { normalizeHexColor } from "./tokens";
 
 const emptyToNull = (value: unknown) =>
@@ -52,6 +56,27 @@ export const BrandInputSchema = z.object({
       .refine((v) => v.startsWith("https://"), "Use um endereço https://.")
       .nullable(),
   ),
+  tagline: z.preprocess(emptyToNull, z.string().trim().max(120).nullable()),
+  footerText: z.preprocess(emptyToNull, z.string().trim().max(500).nullable()),
+  // Digits only, with the country code; spaces, dashes and "+" are dropped.
+  whatsappNumber: z.preprocess(
+    (value) =>
+      typeof value === "string"
+        ? emptyToNull(value.replace(/[\s()+.-]/g, ""))
+        : emptyToNull(value),
+    z
+      .string()
+      .regex(/^[1-9]\d{7,14}$/, "Use o número com DDI e DDD.")
+      .nullable(),
+  ),
+  whatsappLabel: z.preprocess(
+    emptyToNull,
+    z.string().trim().max(40).nullable(),
+  ),
+  whatsappMessage: z.preprocess(
+    emptyToNull,
+    z.string().trim().max(300).nullable(),
+  ),
 });
 
 /** Raw form values; empty or missing optional fields mean "not set". */
@@ -60,6 +85,11 @@ export type BrandInput = Readonly<{
   primaryColor?: string | null;
   supportEmail?: string | null;
   supportUrl?: string | null;
+  tagline?: string | null;
+  footerText?: string | null;
+  whatsappNumber?: string | null;
+  whatsappLabel?: string | null;
+  whatsappMessage?: string | null;
 }>;
 
 /** keep: reuse the current logo; remove: no logo; bytes: new logo. */
@@ -68,22 +98,96 @@ export type LogoChange =
   | { kind: "remove" }
   | { kind: "replace"; bytes: Uint8Array };
 
-const LOGO_ERRORS = {
-  empty: "O arquivo do logo está vazio.",
-  too_large: "O logo deve ter no máximo 256 KB.",
-  unsupported_type: "Use um logo PNG, JPEG ou WebP.",
-} as const;
+/** Same as LogoChange, for the other images of the brand (CF2). */
+export type ImageChange = LogoChange;
 
-const LOGO_ERROR_KEYS = {
-  empty: "brand.errors.logoEmpty",
-  too_large: "brand.errors.logoTooLarge",
-  unsupported_type: "brand.errors.logoUnsupportedType",
-} as const;
+/** Changes of the dark logo, favicon and share image; missing means keep. */
+export type BrandImageChanges = Partial<
+  Record<Exclude<BrandImageKind, "logo">, ImageChange>
+>;
+
+type ImageError = "empty" | "too_large" | "unsupported_type" | "not_square";
+
+const IMAGE_ERRORS: Readonly<
+  Record<BrandImageKind, Partial<Record<ImageError, readonly [string, string]>>>
+> = {
+  logo: {
+    empty: ["O arquivo do logo está vazio.", "brand.errors.logoEmpty"],
+    too_large: [
+      "O logo deve ter no máximo 256 KB.",
+      "brand.errors.logoTooLarge",
+    ],
+    unsupported_type: [
+      "Use um logo PNG, JPEG ou WebP.",
+      "brand.errors.logoUnsupportedType",
+    ],
+  },
+  logoDark: {
+    empty: ["O arquivo do logo está vazio.", "brand.errors.logoEmpty"],
+    too_large: [
+      "O logo deve ter no máximo 256 KB.",
+      "brand.errors.logoTooLarge",
+    ],
+    unsupported_type: [
+      "Use um logo PNG, JPEG ou WebP.",
+      "brand.errors.logoUnsupportedType",
+    ],
+  },
+  favicon: {
+    empty: ["O arquivo do favicon está vazio.", "brand.errors.faviconEmpty"],
+    too_large: [
+      "O favicon deve ter no máximo 64 KB.",
+      "brand.errors.faviconTooLarge",
+    ],
+    unsupported_type: [
+      "Use um favicon PNG ou ICO.",
+      "brand.errors.faviconUnsupportedType",
+    ],
+    not_square: [
+      "O favicon deve ser quadrado.",
+      "brand.errors.faviconNotSquare",
+    ],
+  },
+  shareImage: {
+    empty: [
+      "O arquivo da imagem de compartilhamento está vazio.",
+      "brand.errors.shareImageEmpty",
+    ],
+    too_large: [
+      "A imagem de compartilhamento deve ter no máximo 512 KB.",
+      "brand.errors.shareImageTooLarge",
+    ],
+    unsupported_type: [
+      "Use uma imagem de compartilhamento PNG, JPEG ou WebP.",
+      "brand.errors.shareImageUnsupportedType",
+    ],
+  },
+};
+
+type StoredImage = { bytes: Uint8Array; mime: BrandImageMime | string };
+
+/** The new image of a change; "keep" is resolved later from the current version. */
+function checkedImage(
+  kind: BrandImageKind,
+  change: ImageChange,
+): StoredImage | null {
+  if (change.kind !== "replace") return null;
+  const check = checkBrandImage(kind, change.bytes);
+  if (!check.ok) {
+    const [safeMessage, messageKey] = IMAGE_ERRORS[kind][check.reason] ?? [
+      "Imagem inválida.",
+      "brand.errors.invalidInput",
+    ];
+    throw new AppError({ code: "invalid_input", safeMessage, messageKey });
+  }
+  return { bytes: change.bytes, mime: check.mime };
+}
 
 /** Message keys of the schema's own messages; zod defaults keep their text. */
 const ISSUE_KEYS: Readonly<Record<string, string>> = {
   "Use uma cor #rrggbb.": "brand.errors.invalidColor",
   "Use um endereço https://.": "brand.errors.httpsRequired",
+  "Use o número com DDI e DDD.": "brand.errors.invalidWhatsapp",
 };
 
 /**
@@ -122,6 +226,7 @@ export async function saveBrandVersion(
   partnerId: string,
   input: BrandInput,
   logoChange: LogoChange,
+  images: BrandImageChanges = {},
 ): Promise<{ version: number }> {
   if (!canManageBrand(actor)) throw new PermissionDeniedError();
 
@@ -138,17 +243,27 @@ export async function saveBrandVersion(
     });
   }
 
-  let logo: { bytes: Uint8Array; mime: string } | null = null;
-  if (logoChange.kind === "replace") {
-    const check = checkLogo(logoChange.bytes);
-    if (!check.ok) {
-      throw new AppError({
-        code: "invalid_input",
-        safeMessage: LOGO_ERRORS[check.reason],
-        messageKey: LOGO_ERROR_KEYS[check.reason],
-      });
-    }
-    logo = { bytes: logoChange.bytes, mime: check.mime };
+  const changes: Record<BrandImageKind, ImageChange> = {
+    logo: logoChange,
+    logoDark: images.logoDark ?? { kind: "keep" },
+    favicon: images.favicon ?? { kind: "keep" },
+    shareImage: images.shareImage ?? { kind: "keep" },
+  };
+  const next: Record<BrandImageKind, StoredImage | null> = {
+    logo: checkedImage("logo", changes.logo),
+    logoDark: checkedImage("logoDark", changes.logoDark),
+    favicon: checkedImage("favicon", changes.favicon),
+    shareImage: checkedImage("shareImage", changes.shareImage),
+  };
+  if (
+    !parsed.data.whatsappNumber &&
+    (parsed.data.whatsappLabel || parsed.data.whatsappMessage)
+  ) {
+    throw new AppError({
+      code: "invalid_input",
+      safeMessage: "Informe o número do WhatsApp.",
+      messageKey: "brand.errors.whatsappRequired",
+    });
   }
 
   // Serializes versions per partner; the unique key backs it.
@@ -158,11 +273,38 @@ export async function saveBrandVersion(
   const current = await tx.partnerBrand.findFirst({
     where: { partnerId },
     orderBy: { version: "desc" },
-    select: { version: true, logo: true, logoMime: true },
+    select: {
+      version: true,
+      logo: true,
+      logoMime: true,
+      logoDark: true,
+      logoDarkMime: true,
+      favicon: true,
+      faviconMime: true,
+      shareImage: true,
+      shareImageMime: true,
+    },
   });
-  if (logoChange.kind === "keep" && current?.logo && current.logoMime) {
-    logo = { bytes: new Uint8Array(current.logo), mime: current.logoMime };
+  // Versions are insert-only: a kept image is copied to the new version.
+  const kept = (
+    bytes: Uint8Array | null | undefined,
+    mime: string | null | undefined,
+  ): StoredImage | null =>
+    bytes && mime ? { bytes: new Uint8Array(bytes), mime } : null;
+  if (changes.logo.kind === "keep") {
+    next.logo = kept(current?.logo, current?.logoMime);
   }
+  if (changes.logoDark.kind === "keep") {
+    next.logoDark = kept(current?.logoDark, current?.logoDarkMime);
+  }
+  if (changes.favicon.kind === "keep") {
+    next.favicon = kept(current?.favicon, current?.faviconMime);
+  }
+  if (changes.shareImage.kind === "keep") {
+    next.shareImage = kept(current?.shareImage, current?.shareImageMime);
+  }
+  const bytes = (image: StoredImage | null) =>
+    image ? Buffer.from(image.bytes) : null;
 
   const version = (current?.version ?? 0) + 1;
   await tx.partnerBrand.create({
@@ -173,8 +315,19 @@ export async function saveBrandVersion(
       primaryColor: parsed.data.primaryColor,
       supportEmail: parsed.data.supportEmail,
       supportUrl: parsed.data.supportUrl,
-      logo: logo ? Buffer.from(logo.bytes) : null,
-      logoMime: logo?.mime ?? null,
+      tagline: parsed.data.tagline,
+      footerText: parsed.data.footerText,
+      whatsappNumber: parsed.data.whatsappNumber,
+      whatsappLabel: parsed.data.whatsappLabel,
+      whatsappMessage: parsed.data.whatsappMessage,
+      logo: bytes(next.logo),
+      logoMime: next.logo?.mime ?? null,
+      logoDark: bytes(next.logoDark),
+      logoDarkMime: next.logoDark?.mime ?? null,
+      favicon: bytes(next.favicon),
+      faviconMime: next.favicon?.mime ?? null,
+      shareImage: bytes(next.shareImage),
+      shareImageMime: next.shareImage?.mime ?? null,
       createdBy: actor.userId,
     },
   });

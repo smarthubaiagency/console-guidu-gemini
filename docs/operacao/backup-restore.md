@@ -12,7 +12,7 @@ Pela Especificação §21: RPO de até 24 horas e RTO de até 8 horas. Os númer
 | ------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
 | Banco (todas as tabelas)  | Postgres do Supabase                                         | Backup diário do Supabase (plano Pro ou superior); PITR quando contratado. |
 | Arquivos de exportação    | Tabela `workspace_exports` (bytea), expiram em 24 h          | Vão junto com o banco. Não precisam ser restaurados: expiram sozinhos.     |
-| Logos dos parceiros       | Tabela `partner_brands` (bytea)                              | Vão junto com o banco.                                                     |
+| Imagens das marcas        | Tabela `partner_brands` (bytea: logos, favicon, compartilh.) | Vão junto com o banco.                                                     |
 | Comprovantes de pagamento | Tabela `payments` (bytea)                                    | Vão junto com o banco.                                                     |
 | Supabase Storage          | Não usado hoje                                               | Quando entrar (F6), o backup do banco não cobre objetos: incluir no plano. |
 | Fila do pg-boss           | Schema `pgboss`                                              | Vai junto com o banco; `job_runs` é a fonte de verdade.                    |

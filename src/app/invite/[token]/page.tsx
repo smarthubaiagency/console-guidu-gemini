@@ -51,8 +51,7 @@ export default async function InviteTokenPage({
       <AuthShell
         title={t("notFound.title")}
         description={t("notFound.description")}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
+        brand={brand}
         footer={
           <Link href="/app" className="text-14 underline">
             {t("goToDashboard")}
@@ -71,8 +70,7 @@ export default async function InviteTokenPage({
       <AuthShell
         title={t("expired.title")}
         description={t("expired.description")}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
+        brand={brand}
         footer={
           <Link href="/app" className="text-14 underline">
             {t("goToDashboard")}
@@ -89,8 +87,7 @@ export default async function InviteTokenPage({
       <AuthShell
         title={t("revoked.title")}
         description={t("revoked.description")}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
+        brand={brand}
         footer={
           <Link href="/app" className="text-14 underline">
             {t("goToDashboard")}
@@ -107,8 +104,7 @@ export default async function InviteTokenPage({
       <AuthShell
         title={t("accepted.title")}
         description={t("accepted.description")}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
+        brand={brand}
         footer={
           <Link href="/app" className="text-14 underline">
             {t("goToDashboard")}
@@ -127,8 +123,7 @@ export default async function InviteTokenPage({
       <AuthShell
         title={t("mismatch.title")}
         description={t("mismatch.description")}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
+        brand={brand}
         footer={
           <div className="text-14 flex items-center gap-4">
             <Link href="/app" className="underline">
@@ -160,8 +155,7 @@ export default async function InviteTokenPage({
       <AuthShell
         title={t("unconfirmed.title")}
         description={t("unconfirmed.description")}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
+        brand={brand}
         footer={
           <div className="text-14 flex items-center gap-4">
             <Link href="/app" className="underline">
@@ -183,8 +177,7 @@ export default async function InviteTokenPage({
     <AuthShell
       title={t("valid.title")}
       description={t("valid.description")}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
+      brand={brand}
       footer={
         <div className="text-12 text-text-tertiary flex items-center justify-between">
           <span>

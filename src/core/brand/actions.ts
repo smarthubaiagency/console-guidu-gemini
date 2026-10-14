@@ -12,8 +12,13 @@ import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { actionFailure } from "@/core/i18n/errors";
 import { AppError, type AppErrorCode } from "@/shared/errors";
 
-import { MAX_LOGO_BYTES } from "./logo";
-import { saveBrandVersion, type LogoChange } from "./service";
+import { BRAND_IMAGE_MAX_BYTES, type BrandImageKind } from "./logo";
+import {
+  saveBrandVersion,
+  type BrandImageChanges,
+  type BrandInput,
+  type ImageChange,
+} from "./service";
 
 export type BrandActionState = {
   success?: boolean;
@@ -28,18 +33,64 @@ function text(formData: FormData, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
-async function logoChangeFrom(formData: FormData): Promise<LogoChange> {
-  if (formData.get("removeLogo") === "on") return { kind: "remove" };
-  const file = formData.get("logo");
+const IMAGE_FIELDS = {
+  logo: ["logo", "removeLogo"],
+  logoDark: ["logoDark", "removeLogoDark"],
+  favicon: ["favicon", "removeFavicon"],
+  shareImage: ["shareImage", "removeShareImage"],
+} as const satisfies Record<BrandImageKind, readonly [string, string]>;
+
+/** Too-large uploads are refused before their bytes are read. */
+const TOO_LARGE: Record<BrandImageKind, readonly [string, string]> = {
+  logo: ["O logo deve ter no máximo 256 KB.", "brand.errors.logoTooLarge"],
+  logoDark: ["O logo deve ter no máximo 256 KB.", "brand.errors.logoTooLarge"],
+  favicon: [
+    "O favicon deve ter no máximo 64 KB.",
+    "brand.errors.faviconTooLarge",
+  ],
+  shareImage: [
+    "A imagem de compartilhamento deve ter no máximo 512 KB.",
+    "brand.errors.shareImageTooLarge",
+  ],
+};
+
+async function imageChangeFrom(
+  formData: FormData,
+  kind: BrandImageKind,
+): Promise<ImageChange> {
+  const [field, remove] = IMAGE_FIELDS[kind];
+  if (formData.get(remove) === "on") return { kind: "remove" };
+  const file = formData.get(field);
   if (!(file instanceof File) || file.size === 0) return { kind: "keep" };
-  if (file.size > MAX_LOGO_BYTES) {
-    throw new AppError({
-      code: "invalid_input",
-      safeMessage: "O logo deve ter no máximo 256 KB.",
-      messageKey: "brand.errors.logoTooLarge",
-    });
+  if (file.size > BRAND_IMAGE_MAX_BYTES[kind]) {
+    const [safeMessage, messageKey] = TOO_LARGE[kind];
+    throw new AppError({ code: "invalid_input", safeMessage, messageKey });
   }
   return { kind: "replace", bytes: new Uint8Array(await file.arrayBuffer()) };
+}
+
+async function imageChangesFrom(
+  formData: FormData,
+): Promise<BrandImageChanges> {
+  return {
+    logoDark: await imageChangeFrom(formData, "logoDark"),
+    favicon: await imageChangeFrom(formData, "favicon"),
+    shareImage: await imageChangeFrom(formData, "shareImage"),
+  };
+}
+
+function brandInputFrom(formData: FormData): BrandInput {
+  return {
+    displayName: text(formData, "displayName"),
+    primaryColor: text(formData, "primaryColor"),
+    supportEmail: text(formData, "supportEmail"),
+    supportUrl: text(formData, "supportUrl"),
+    tagline: text(formData, "tagline"),
+    footerText: text(formData, "footerText"),
+    whatsappNumber: text(formData, "whatsappNumber"),
+    whatsappLabel: text(formData, "whatsappLabel"),
+    whatsappMessage: text(formData, "whatsappMessage"),
+  };
 }
 
 /**
@@ -61,7 +112,8 @@ export async function saveBrandAction(
       });
     }
     const admin = await getPlatformAdminMember(prisma, identity.userId);
-    const logoChange = await logoChangeFrom(formData);
+    const logoChange = await imageChangeFrom(formData, "logo");
+    const images = await imageChangesFrom(formData);
 
     const { version } = await withIdentityContext(
       prisma,
@@ -74,13 +126,9 @@ export async function saveBrandAction(
             platformRole: admin?.status === "active" ? admin.role : null,
           },
           partner.partnerId,
-          {
-            displayName: text(formData, "displayName"),
-            primaryColor: text(formData, "primaryColor"),
-            supportEmail: text(formData, "supportEmail"),
-            supportUrl: text(formData, "supportUrl"),
-          },
+          brandInputFrom(formData),
           logoChange,
+          images,
         ),
       { partnerId: partner.partnerId },
     );
@@ -116,7 +164,8 @@ export async function savePartnerBrandAction(
       identity.userId,
       partner.partnerId,
     );
-    const logoChange = await logoChangeFrom(formData);
+    const logoChange = await imageChangeFrom(formData, "logo");
+    const images = await imageChangesFrom(formData);
 
     const { version } = await withIdentityContext(
       prisma,
@@ -126,13 +175,9 @@ export async function savePartnerBrandAction(
           tx,
           { userId: identity.userId, partnerRole: membership?.role ?? null },
           partner.partnerId,
-          {
-            displayName: text(formData, "displayName"),
-            primaryColor: text(formData, "primaryColor"),
-            supportEmail: text(formData, "supportEmail"),
-            supportUrl: text(formData, "supportUrl"),
-          },
+          brandInputFrom(formData),
           logoChange,
+          images,
         ),
       { partnerId: partner.partnerId },
     );

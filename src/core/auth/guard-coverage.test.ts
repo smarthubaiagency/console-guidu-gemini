@@ -48,7 +48,7 @@ const PUBLIC: Record<string, string> = {
   "api/v1/openapi.json/route.ts": "contrato público da API",
   "api/channels/[connectionId]/[token]/route.ts":
     "webhook de um canal; confere o hash do token da conexão (A5a)",
-  "brand/logo/[version]/route.ts": "logo da marca do host",
+  "brand/[asset]/[version]/route.ts": "imagens da marca do host",
 };
 
 /** Actions of signed-out visitors. */
@@ -67,6 +67,9 @@ const REDIRECT_ONLY = new Set([
   "admin/settings/page.tsx",
   "app/[workspaceSlug]/settings/page.tsx",
   "platform/settings/page.tsx",
+  // Marca moved to Configurações (CF2).
+  "admin/brand/page.tsx",
+  "platform/brand/page.tsx",
 ]);
 
 function files(dir: string, match: (name: string) => boolean): string[] {

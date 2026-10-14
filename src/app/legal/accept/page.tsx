@@ -55,8 +55,7 @@ export default async function AcceptLegalPage({
     <AuthShell
       title={t("accept.title")}
       description={t("accept.description", { appName: brand.name })}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
+      brand={brand}
       footer={<SignOutForm />}
     >
       <div className="space-y-4">

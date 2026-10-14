@@ -61,6 +61,13 @@ describe("brandCss", () => {
     expect(css.replace(/#[0-9a-f]{6}/g, "")).not.toMatch(/[0-9a-f]{6}/);
   });
 
+  it("scopes the tokens to the brand preview (CF2)", () => {
+    const css = brandCss(deriveBrandPalette("#1976d2"), "data-brand-preview");
+    expect(css.startsWith("html [data-brand-preview]{")).toBe(true);
+    expect(css).toContain('html[data-theme="dark"] [data-brand-preview]{');
+    expect(css).not.toContain("html:root");
+  });
+
   it("refuses a palette with a non-hex value", () => {
     const palette = deriveBrandPalette("#1976d2");
     expect(() =>

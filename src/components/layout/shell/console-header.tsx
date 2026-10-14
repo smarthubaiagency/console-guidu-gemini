@@ -12,12 +12,14 @@ export function ConsoleHeader({
   href,
   brandName,
   logoUrl,
+  logoDarkUrl,
   title,
   subtitle,
 }: Readonly<{
   href: string;
   brandName: string;
   logoUrl?: string | null | undefined;
+  logoDarkUrl?: string | null | undefined;
   title: string;
   subtitle: string;
 }>) {
@@ -27,7 +29,12 @@ export function ConsoleHeader({
         <SidebarMenuButton size="lg" asChild>
           <Link href={href}>
             <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg">
-              <BrandMark name={brandName} logoUrl={logoUrl} size="md" />
+              <BrandMark
+                name={brandName}
+                logoUrl={logoUrl}
+                logoDarkUrl={logoDarkUrl}
+                size="md"
+              />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{title}</span>

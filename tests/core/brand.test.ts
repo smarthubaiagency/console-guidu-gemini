@@ -3,7 +3,11 @@ import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { loadActiveBrand, loadBrandLogo } from "@/core/brand/resolve";
+import {
+  loadActiveBrand,
+  loadBrandImage,
+  loadBrandLogo,
+} from "@/core/brand/resolve";
 import { saveBrandVersion } from "@/core/brand/service";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
 import { PermissionDeniedError } from "@/core/permissions/guard";
@@ -36,6 +40,7 @@ describeDatabase("P3: partner brand versions (ADR 0012)", requiredVars, () => {
     role: "owner" | null,
     input: Parameters<typeof saveBrandVersion>[3],
     logo: Parameters<typeof saveBrandVersion>[4] = { kind: "keep" },
+    images: Parameters<typeof saveBrandVersion>[5] = {},
   ) =>
     withIdentityContext(
       prisma,
@@ -47,6 +52,7 @@ describeDatabase("P3: partner brand versions (ADR 0012)", requiredVars, () => {
           HOUSE_PARTNER_ID,
           input,
           logo,
+          images,
         ),
       { partnerId: HOUSE_PARTNER_ID },
     );
@@ -144,6 +150,100 @@ describeDatabase("P3: partner brand versions (ADR 0012)", requiredVars, () => {
     const brand = await loadActiveBrand(prisma, HOUSE_PARTNER_ID);
     expect(brand.logoUrl).toBeNull();
     expect(brand.palette).toBeNull();
+  });
+
+  it("saves the CF2 fields and copies kept images to the next version", async () => {
+    const square = new Uint8Array(33);
+    square.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    new DataView(square.buffer).setUint32(16, 32);
+    new DataView(square.buffer).setUint32(20, 32);
+
+    const { version } = await save(
+      platformOwnerId,
+      "owner",
+      {
+        displayName: "Marca CF2",
+        tagline: "Atendimento que vende",
+        footerText: "GUIDU Ltda. https://guidu.com.br",
+        whatsappNumber: "+55 (11) 99999-9999",
+        whatsappLabel: "Fale com vendas",
+        whatsappMessage: "Olá",
+      },
+      { kind: "keep" },
+      {
+        logoDark: { kind: "replace", bytes: png },
+        favicon: { kind: "replace", bytes: square },
+        shareImage: { kind: "replace", bytes: png },
+      },
+    );
+    const next = await save(platformOwnerId, "owner", {
+      displayName: "Marca CF2",
+    });
+    expect(next.version).toBe(version + 1);
+
+    const brand = await loadActiveBrand(prisma, HOUSE_PARTNER_ID);
+    expect(brand).toMatchObject({
+      logoDarkUrl: `/brand/logo-dark/${next.version}`,
+      faviconUrl: `/brand/favicon/${next.version}`,
+      shareImageUrl: `/brand/share/${next.version}`,
+      // Text fields are what the form sends: cleared ones are cleared.
+      tagline: null,
+      whatsapp: null,
+    });
+    const favicon = await loadBrandImage(
+      prisma,
+      HOUSE_PARTNER_ID,
+      next.version,
+      "favicon",
+    );
+    expect(favicon?.mime).toBe("image/png");
+
+    const saved = await loadActiveBrand(prisma, HOUSE_PARTNER_ID);
+    expect(saved.version).toBe(next.version);
+    const previous = await admin.$queryRawUnsafe<
+      [{ whatsapp_number: string; tagline: string }]
+    >(
+      `select whatsapp_number, tagline from public.partner_brands
+       where partner_id = '${HOUSE_PARTNER_ID}' and version = ${version}`,
+    );
+    expect(previous[0]).toEqual({
+      whatsapp_number: "5511999999999",
+      tagline: "Atendimento que vende",
+    });
+  });
+
+  it("validates the CF2 fields", async () => {
+    const fails = (promise: Promise<unknown>, messageKey: string) =>
+      expect(promise).rejects.toSatisfy(
+        (e) =>
+          e instanceof AppError &&
+          e.code === "invalid_input" &&
+          e.messageKey === messageKey,
+      );
+    await fails(
+      save(platformOwnerId, "owner", {
+        displayName: "X",
+        whatsappNumber: "123",
+      }),
+      "brand.errors.invalidWhatsapp",
+    );
+    await fails(
+      save(platformOwnerId, "owner", {
+        displayName: "X",
+        whatsappLabel: "Vendas",
+      }),
+      "brand.errors.whatsappRequired",
+    );
+    await fails(
+      save(
+        platformOwnerId,
+        "owner",
+        { displayName: "X" },
+        { kind: "keep" },
+        { favicon: { kind: "replace", bytes: png } },
+      ),
+      "brand.errors.faviconUnsupportedType",
+    );
   });
 
   it("does not expose the house brand to another partner context", async () => {

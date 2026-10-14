@@ -17,7 +17,35 @@
     "removeLogo": "Remove the current logo",
     "saving": "Saving...",
     "save": "Save new version",
-    "reference": "(ref. {id})"
+    "reference": "(ref. {id})",
+    "sections": {
+      "identity": "Identity",
+      "identityHint": "Name, tagline and color used in the dashboard, on the login and in emails.",
+      "images": "Logos and icons",
+      "imagesHint": "PNG, JPEG or WebP images only (the favicon takes a square PNG or ICO). SVG is not accepted because it can carry scripts.",
+      "contact": "Contact and footer",
+      "contactHint": "Shown on the login and in the footer of public screens.",
+      "preview": "Preview",
+      "previewHint": "How the login looks with the values above, before saving."
+    },
+    "tagline": "Tagline (optional, up to 120 characters)",
+    "colorPicker": "Pick the primary color",
+    "logoDark": "Dark theme logo (PNG, JPEG or WebP, up to 256 KB)",
+    "logoDarkHint": "Without it, the dark theme uses the main logo.",
+    "removeLogoDark": "Remove the current dark logo",
+    "favicon": "Favicon (square PNG or ICO, up to 64 KB)",
+    "removeFavicon": "Remove the current favicon",
+    "shareImage": "Share image (PNG, JPEG or WebP, up to 512 KB)",
+    "shareImageHint": "Shown when a dashboard link is shared. Recommended size: 1200 x 630.",
+    "removeShareImage": "Remove the current share image",
+    "current": "Current",
+    "footerText": "Footer text (optional, up to 500 characters)",
+    "footerHint": "Plain text. https:// addresses become links.",
+    "whatsappNumber": "Sales WhatsApp (with country and area code, optional)",
+    "whatsappLabel": "Button text (optional)",
+    "whatsappMessage": "Initial message (optional)",
+    "whatsappDefaultLabel": "Talk to sales",
+    "previewButton": "Sign in"
   },
   "saved": "Brand saved (version {version}).",
   "errors": {
@@ -27,6 +55,18 @@
     "httpsRequired": "Use an https:// address.",
     "logoEmpty": "The logo file is empty.",
     "logoTooLarge": "The logo must be at most 256 KB.",
-    "logoUnsupportedType": "Use a PNG, JPEG or WebP logo."
+    "logoUnsupportedType": "Use a PNG, JPEG or WebP logo.",
+    "invalidWhatsapp": "Use the number with country and area code.",
+    "whatsappRequired": "Enter the WhatsApp number.",
+    "faviconEmpty": "The favicon file is empty.",
+    "faviconTooLarge": "The favicon must be at most 64 KB.",
+    "faviconUnsupportedType": "Use a PNG or ICO favicon.",
+    "faviconNotSquare": "The favicon must be square.",
+    "shareImageEmpty": "The share image file is empty.",
+    "shareImageTooLarge": "The share image must be at most 512 KB.",
+    "shareImageUnsupportedType": "Use a PNG, JPEG or WebP share image."
+  },
+  "current": {
+    "title": "Current brand"
   }
 }

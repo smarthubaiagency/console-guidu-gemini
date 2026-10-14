@@ -65,8 +65,7 @@ export default async function LegalDocumentPage({
           year: "numeric",
         }),
       })}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
+      brand={brand}
     >
       {document.translated ? (
         <p

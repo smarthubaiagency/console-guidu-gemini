@@ -37,6 +37,7 @@ export default async function PartnerConsoleLayout({
           href="/admin"
           brandName={brand.name}
           logoUrl={brand.logoUrl}
+          logoDarkUrl={brand.logoDarkUrl}
           title={brand.name}
           subtitle={`${tc("consoleTitle")} · ${membership.partnerName}`}
         />

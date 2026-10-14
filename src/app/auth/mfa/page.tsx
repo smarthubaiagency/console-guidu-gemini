@@ -48,8 +48,7 @@ export default async function MfaPage({
     <AuthShell
       title={t("title")}
       description={t("description")}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
+      brand={brand}
       footer={<SignOutForm label={t("switchAccount")} />}
     >
       <MfaChallengeForm factorId={factor.id} next={next} />

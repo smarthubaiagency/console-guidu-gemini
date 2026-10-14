@@ -15,12 +15,7 @@ export default async function ForgotPasswordPage() {
   const brand = await getRequestBrand();
   const t = await getTranslations("auth.forgotPassword");
   return (
-    <AuthShell
-      title={t("title")}
-      description={t("description")}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
-    >
+    <AuthShell title={t("title")} description={t("description")} brand={brand}>
       <ForgotPasswordForm />
     </AuthShell>
   );

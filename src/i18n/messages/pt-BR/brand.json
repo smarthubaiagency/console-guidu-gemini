@@ -17,7 +17,35 @@
     "removeLogo": "Remover o logo atual",
     "saving": "Salvando...",
     "save": "Salvar nova versão",
-    "reference": "(ref. {id})"
+    "reference": "(ref. {id})",
+    "sections": {
+      "identity": "Identidade",
+      "identityHint": "Nome, frase e cor usados no painel, no login e nos e-mails.",
+      "images": "Logos e ícones",
+      "imagesHint": "Só imagens PNG, JPEG ou WebP (o favicon aceita PNG quadrado ou ICO). SVG não é aceito porque pode conter scripts.",
+      "contact": "Contato e rodapé",
+      "contactHint": "Aparecem no login e no rodapé das telas públicas.",
+      "preview": "Prévia",
+      "previewHint": "Como o login fica com os valores acima, antes de salvar."
+    },
+    "tagline": "Frase de apresentação (opcional, até 120 caracteres)",
+    "colorPicker": "Escolher a cor primária",
+    "logoDark": "Logo do tema escuro (PNG, JPEG ou WebP, até 256 KB)",
+    "logoDarkHint": "Sem ele, o tema escuro usa o logo principal.",
+    "removeLogoDark": "Remover o logo escuro atual",
+    "favicon": "Favicon (PNG quadrado ou ICO, até 64 KB)",
+    "removeFavicon": "Remover o favicon atual",
+    "shareImage": "Imagem de compartilhamento (PNG, JPEG ou WebP, até 512 KB)",
+    "shareImageHint": "Aparece quando um link do painel é compartilhado. Tamanho recomendado: 1200 x 630.",
+    "removeShareImage": "Remover a imagem de compartilhamento atual",
+    "current": "Atual",
+    "footerText": "Texto do rodapé (opcional, até 500 caracteres)",
+    "footerHint": "Texto simples. Endereços https:// viram links.",
+    "whatsappNumber": "WhatsApp de vendas (com DDI e DDD, opcional)",
+    "whatsappLabel": "Texto do botão (opcional)",
+    "whatsappMessage": "Mensagem inicial (opcional)",
+    "whatsappDefaultLabel": "Fale com vendas",
+    "previewButton": "Entrar"
   },
   "saved": "Marca salva (versão {version}).",
   "errors": {
@@ -27,6 +55,18 @@
     "httpsRequired": "Use um endereço https://.",
     "logoEmpty": "O arquivo do logo está vazio.",
     "logoTooLarge": "O logo deve ter no máximo 256 KB.",
-    "logoUnsupportedType": "Use um logo PNG, JPEG ou WebP."
+    "logoUnsupportedType": "Use um logo PNG, JPEG ou WebP.",
+    "invalidWhatsapp": "Use o número com DDI e DDD.",
+    "whatsappRequired": "Informe o número do WhatsApp.",
+    "faviconEmpty": "O arquivo do favicon está vazio.",
+    "faviconTooLarge": "O favicon deve ter no máximo 64 KB.",
+    "faviconUnsupportedType": "Use um favicon PNG ou ICO.",
+    "faviconNotSquare": "O favicon deve ser quadrado.",
+    "shareImageEmpty": "O arquivo da imagem de compartilhamento está vazio.",
+    "shareImageTooLarge": "A imagem de compartilhamento deve ter no máximo 512 KB.",
+    "shareImageUnsupportedType": "Use uma imagem de compartilhamento PNG, JPEG ou WebP."
+  },
+  "current": {
+    "title": "Marca atual"
   }
 }

@@ -49,8 +49,7 @@ export default async function PartnerInvitePage({
     return (
       <AuthShell
         title={t("unavailableTitle")}
-        appName={brand.name}
-        logoUrl={brand.logoUrl}
+        brand={brand}
         footer={<SignOutForm />}
       >
         <ErrorNotice testId="partner-invite-error">
@@ -68,8 +67,7 @@ export default async function PartnerInvitePage({
       description={t("description", {
         role: roleKey ? tAll(roleKey) : view.role,
       })}
-      appName={brand.name}
-      logoUrl={brand.logoUrl}
+      brand={brand}
       footer={<Link href="/app">{t("back")}</Link>}
     >
       <ActionForm
