@@ -267,11 +267,13 @@ describe("generated navigation", () => {
       "/admin/ai/templates",
       "/admin/settings/general",
       "/admin/settings/brand",
+      "/admin/settings/domains",
     ]);
     expect(hrefs("partner_support")).toEqual([
       "/admin/ai/assistant",
       "/admin/ai/guids",
       "/admin/settings/general",
+      "/admin/settings/domains",
     ]);
     expect(
       find(

@@ -1,0 +1,76 @@
+{
+  "metaTitle": "Domains",
+  "title": "Domains",
+  "description": {
+    "partner": "The dashboard address you and your customers use, and your customers' public domains.",
+    "workspace": "Own domains for this workspace's public pages: site, digital profile and quiz."
+  },
+  "dashboard": {
+    "title": "Dashboard domain",
+    "description": "Change the dashboard address, for example from console.guidu.co to console.yourcompany.com. It applies to /admin and to your customers' dashboard.",
+    "empty": "No domain registered."
+  },
+  "customers": {
+    "title": "Customer domains",
+    "description": "Public domains of your customers' workspaces. Each workspace's limit comes from its plan.",
+    "workspace": "Workspace",
+    "empty": "No customer has its own domain.",
+    "noWorkspaces": "No customer workspace yet."
+  },
+  "public": {
+    "title": "Public domains",
+    "description": "Use a subdomain, such as profile.yourcompany.com. The primary domain is the address used in public links.",
+    "empty": "No domain registered.",
+    "quota": "{used} of {limit} domains in the plan.",
+    "quotaUnlimited": "{used} domains (no plan limit).",
+    "quotaNone": "The current plan does not include an own domain. Talk to whoever manages your account.",
+    "readOnly": "Only the workspace owner and admins change the domains."
+  },
+  "form": {
+    "host": "Domain",
+    "hostPlaceholder": "profile.yourcompany.com",
+    "add": "Add domain",
+    "verify": "Verify",
+    "remove": "Remove",
+    "makePrimary": "Make primary",
+    "removeTitle": "Remove the domain {host}?",
+    "removeMessage": "The address stops opening at once and its certificate is deleted.",
+    "cancel": "Cancel"
+  },
+  "instructions": {
+    "title": "How to point it",
+    "cname": "In the domain's DNS, create a CNAME record named {host} pointing to {target}. Then click Verify.",
+    "noTarget": "The CNAME target is not configured on the platform yet. The domain stays pending until then."
+  },
+  "status": {
+    "pending": "Pending",
+    "active": "Active",
+    "disabled": "Disabled",
+    "primary": "Primary",
+    "subdomain": "Platform subdomain"
+  },
+  "ssl": {
+    "pending": "Certificate being issued",
+    "active": "Certificate active",
+    "error": "Certificate failed"
+  },
+  "messages": {
+    "added": "Domain {host} added. Point the CNAME and click Verify.",
+    "removed": "Domain {host} removed.",
+    "primary": "Primary domain updated.",
+    "active": "Domain verified and active.",
+    "not_configured": "Verification is not configured on the platform yet.",
+    "dns_pending": "The CNAME does not point to the target yet. DNS propagation can take a few hours.",
+    "ssl_pending": "DNS is correct. The certificate is being issued; verify again in a few minutes.",
+    "ssl_error": "The certificate was not issued. Check the CNAME and verify again.",
+    "cloudflare_error": "The certificate could not be registered now. Try again."
+  },
+  "errors": {
+    "invalidDomain": "Enter a valid domain, such as profile.yourcompany.com.",
+    "platformDomain": "This domain belongs to the platform.",
+    "taken": "This domain is already registered.",
+    "notFound": "Domain not found.",
+    "primaryNotActive": "Only an active domain can be the primary one.",
+    "workspaceNotFound": "Workspace not found."
+  }
+}

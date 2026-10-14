@@ -218,10 +218,11 @@ begin
   where user_id = 'd0000000-0000-4000-8000-000000000004';
   if found then raise exception 'members: owner changed their own row'; end if;
 
-  -- partner_owner cannot manage partners or domains.
+  -- partner_owner cannot manage partners or platform subdomains (its own
+  -- custom domains are covered by tests/core/domains-rls.sql, CF2b).
   begin
     insert into public.partner_domains (host, partner_id, kind)
-    values ('app.agencia-b.com.br', 'b0000000-0000-4000-8000-000000000001', 'custom');
+    values ('agencia-b.guidu.com.br', 'b0000000-0000-4000-8000-000000000001', 'subdomain');
     raise exception 'domains: partner owner added a domain';
   exception when insufficient_privilege then null;
   end;
