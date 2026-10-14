@@ -3,23 +3,27 @@ import { createTranslator } from "use-intl/core";
 import { SOURCE_LOCALE, type Messages } from "@/core/i18n/locales";
 import { composeMessages } from "@/core/i18n/messages-loader";
 
+import {
+  escapeHtml,
+  escapeMarkup,
+  fillSubject,
+  parseMarkup,
+  renderMarkupHtml,
+  renderMarkupText,
+  safeColor,
+  type TemplateValues,
+} from "./markup";
+import type {
+  EmailTemplateContent,
+  EmailTemplateEvent,
+} from "./template-catalog";
 import type {
   NotificationBrand,
   NotificationEvent,
   RenderedMessage,
 } from "./types";
 
-const HTML_ESCAPES: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-export function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c] ?? c);
-}
+export { escapeHtml };
 
 /** Only absolute http(s) links reach a template. */
 function safeLink(value: string): string {
@@ -101,6 +105,20 @@ function supportLines(
   ].filter((line): line is string => line !== null);
 }
 
+/** Support lines of the brand footer in a language (CF3b preview). */
+export function brandFooter(
+  brand: NotificationBrand,
+  locale: string = SOURCE_LOCALE,
+): string[] {
+  return supportLines(notificationTranslator(locale), brand);
+}
+
+function brandHeader(brand: NotificationBrand): string {
+  const color = safeColor(brand.color);
+  const style = color ? ` style="color:${color}"` : "";
+  return `<p><strong${style}>${escapeHtml(brand.name)}</strong></p>`;
+}
+
 function layout(
   t: NotificationTranslator,
   brand: NotificationBrand,
@@ -118,7 +136,7 @@ function layout(
   ].join("\n");
 
   const html = [
-    `<p><strong>${escapeHtml(brand.name)}</strong></p>`,
+    brandHeader(brand),
     ...paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`),
     `<p><a href="${escapeHtml(action.url)}">${escapeHtml(action.label)}</a></p>`,
     ...support.map((line) => `<p><small>${escapeHtml(line)}</small></p>`),
@@ -129,15 +147,19 @@ function layout(
 
 /**
  * Renders an event with the partner brand in the recipient's language;
- * all values are escaped. `messages` carries the platform edits.
+ * all values are escaped. `messages` carries the platform edits and
+ * `template` the edited subject and body of the event (CF3b), when the
+ * partner or the platform saved one.
  */
 export function renderNotification(
   event: NotificationEvent,
   brand: NotificationBrand,
   locale: string = SOURCE_LOCALE,
   messages?: Messages,
+  template?: EmailTemplateContent | null,
 ): RenderedMessage {
   const t = notificationTranslator(locale, messages);
+  if (template) return renderTemplate(t, event, brand, locale, template);
   switch (event.type) {
     case "invitation.created": {
       const url = safeLink(event.data.inviteUrl);
@@ -237,6 +259,173 @@ export function renderNotification(
           { label: t("aiKey.action"), url: safeLink(data.credentialsUrl) },
         ),
       };
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Editable templates (CF3b)
+// ---------------------------------------------------------------------------
+
+/**
+ * Values of an event's variables (`template-catalog.ts`), already formatted
+ * in the recipient's language. Links are checked as everywhere else; the
+ * renderer escapes every value.
+ */
+export function templateValues(
+  t: NotificationTranslator,
+  event: NotificationEvent,
+  brand: NotificationBrand,
+  locale: string,
+): TemplateValues {
+  const marca = brand.name;
+  switch (event.type) {
+    case "invitation.created":
+      return {
+        organizacao: event.data.organizationName,
+        data: formatDate(locale, event.data.expiresAt),
+        link: safeLink(event.data.inviteUrl),
+        marca,
+      };
+    case "email.test":
+      return { link: safeLink(event.data.settingsUrl), marca };
+    case "billing.subscription.past_due":
+    case "billing.subscription.suspended": {
+      const { data } = event;
+      return {
+        parceiro: data.partnerName,
+        organizacao: data.organizationName,
+        vencimento: formatDay(locale, data.periodEnd),
+        ...(event.type === "billing.subscription.past_due"
+          ? {
+              proximo_passo: data.nextStepOn
+                ? t("pastDue.nextStep", {
+                    date: formatDay(locale, data.nextStepOn),
+                  })
+                : t("pastDue.nextStepUnknown"),
+            }
+          : {}),
+        link: safeLink(data.billingUrl),
+        marca,
+      };
+    }
+    case "ai.agent.key_backup":
+    case "ai.agent.key_paused":
+      return {
+        workspace: event.data.workspaceName,
+        agente: event.data.agentName ?? t("aiKey.unnamedAgent"),
+        data: formatDate(locale, event.data.backupUntil),
+        link: safeLink(event.data.credentialsUrl),
+        marca,
+      };
+  }
+}
+
+function renderTemplate(
+  t: NotificationTranslator,
+  event: NotificationEvent,
+  brand: NotificationBrand,
+  locale: string,
+  template: EmailTemplateContent,
+): RenderedMessage {
+  const values = templateValues(t, event, brand, locale);
+  const blocks = parseMarkup(template.body);
+  const support = supportLines(t, brand);
+  const text = [
+    renderMarkupText(blocks, values),
+    "",
+    ...support,
+    `— ${brand.name}`,
+  ].join("\n");
+  const html = [
+    brandHeader(brand),
+    renderMarkupHtml(blocks, values, { color: brand.color ?? null }),
+    ...support.map((line) => `<p><small>${escapeHtml(line)}</small></p>`),
+  ].join("\n");
+  return { subject: fillSubject(template.subject, values), text, html };
+}
+
+// Private-use markers that stand for a tag while a default text is escaped.
+const MARK_OPEN = "\uE000";
+const MARK_CLOSE = "\uE001";
+
+/**
+ * The code's template of an event in a language, written in the template
+ * format: the same texts the code sends (with the platform edits of
+ * `messages`), each value replaced by its `{{tag}}`. It is what the editor
+ * shows and what "Restaurar para o padrão" goes back to.
+ */
+export function defaultEmailTemplate(
+  type: EmailTemplateEvent,
+  locale: string = SOURCE_LOCALE,
+  messages?: Messages,
+): EmailTemplateContent {
+  const t = notificationTranslator(locale, messages);
+  const tags: string[] = [];
+  const tag = (name: string) => {
+    tags.push(name);
+    return `${MARK_OPEN}${tags.length - 1}${MARK_CLOSE}`;
+  };
+  const restore = (value: string) =>
+    value.replace(
+      new RegExp(`${MARK_OPEN}(\\d+)${MARK_CLOSE}`, "g"),
+      (_, index: string) => `{{${tags[Number(index)]}}}`,
+    );
+  const paragraph = (value: string) => restore(escapeMarkup(value));
+  const action = (label: string) => `[${escapeMarkup(label)}]({{link}})`;
+  const build = (subject: string, paragraphs: readonly string[]) => ({
+    subject: restore(subject),
+    body: paragraphs.join("\n\n"),
+  });
+
+  switch (type) {
+    case "invitation.created": {
+      const names = { organization: tag("organizacao"), brand: tag("marca") };
+      return build(t("invitation.subject", names), [
+        paragraph(t("invitation.body", names)),
+        paragraph(t("invitation.expires", { date: tag("data") })),
+        action(t("invitation.action")),
+      ]);
+    }
+    case "email.test": {
+      const names = { brand: tag("marca") };
+      return build(t("emailTest.subject", names), [
+        paragraph(t("emailTest.body", names)),
+        action(t("emailTest.action")),
+      ]);
+    }
+    case "billing.subscription.past_due": {
+      const organization = tag("organizacao");
+      return build(t("pastDue.subject", { organization }), [
+        paragraph(t("common.greeting", { partner: tag("parceiro") })),
+        paragraph(
+          t("pastDue.body", { organization, periodEnd: tag("vencimento") }),
+        ),
+        "{{proximo_passo}}",
+        action(t("common.viewBilling")),
+      ]);
+    }
+    case "billing.subscription.suspended": {
+      const organization = tag("organizacao");
+      return build(t("suspended.subject", { organization }), [
+        paragraph(t("common.greeting", { partner: tag("parceiro") })),
+        paragraph(
+          t("suspended.body", { organization, periodEnd: tag("vencimento") }),
+        ),
+        paragraph(t("suspended.access")),
+        action(t("common.viewBilling")),
+      ]);
+    }
+    case "ai.agent.key_backup":
+    case "ai.agent.key_paused": {
+      const prefix =
+        type === "ai.agent.key_backup" ? "aiKeyBackup" : "aiKeyPaused";
+      const names = { workspace: tag("workspace"), agent: tag("agente") };
+      return build(t(`${prefix}.subject`, names), [
+        paragraph(t(`${prefix}.body`, names)),
+        paragraph(t(`${prefix}.nextStep`, { date: tag("data") })),
+        action(t("aiKey.action")),
+      ]);
     }
   }
 }

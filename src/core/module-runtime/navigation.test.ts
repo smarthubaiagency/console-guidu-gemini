@@ -219,6 +219,11 @@ describe("generated navigation", () => {
       "/platform/settings/email",
     );
     expect(find(none, "platform.settings.email")).toBeUndefined();
+    // E-mail templates (CF3b): the same managers as E-mail.
+    expect(find(owner, "platform.settings.email.templates")?.href).toBe(
+      "/platform/settings/email/templates",
+    );
+    expect(find(none, "platform.settings.email.templates")).toBeUndefined();
     // Plans and limits (CF4): billing readers, not support.
     expect(find(owner, "platform.settings.plans")?.href).toBe(
       "/platform/settings/plans",
@@ -280,6 +285,7 @@ describe("generated navigation", () => {
       "/admin/settings/brand",
       "/admin/settings/domains",
       "/admin/settings/email",
+      "/admin/settings/email/templates",
       "/admin/settings/plans",
     ]);
     expect(hrefs("partner_support")).toEqual([

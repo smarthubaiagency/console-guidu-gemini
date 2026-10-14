@@ -54,7 +54,7 @@ test("a platform owner sets the sender and sends the test e-mail", async ({
   await page.goto("/platform/settings");
   await page
     .getByTestId("settings-nav")
-    .getByRole("link", { name: "E-mail" })
+    .getByRole("link", { name: "E-mail", exact: true })
     .click();
   await expect(page).toHaveURL(/\/platform\/settings\/email$/);
   await expect(page.getByTestId("email-state")).toContainText(

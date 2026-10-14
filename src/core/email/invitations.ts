@@ -7,6 +7,7 @@ import { getLocale } from "next-intl/server";
 import { getRequestBrand } from "@/core/brand/resolve";
 import { notify } from "@/core/notifications/notify";
 import { withSender } from "@/core/notifications/sender";
+import { emailTemplateFor } from "@/core/notifications/template-store";
 import { getNotificationTransport } from "@/core/notifications/transport";
 import { prisma } from "@/lib/prisma/client";
 import { appLog } from "@/lib/telemetry/log";
@@ -14,7 +15,7 @@ import { appLog } from "@/lib/telemetry/log";
 /**
  * Invitation e-mail (CF3a): sent right after the invitation is saved, with
  * the brand and sender of the host the manager is on, in the manager's
- * language. Never fails the invitation: the link stays on the screen to be
+ * language, with the host partner's template (CF3b). Never fails the invitation: the link stays on the screen to be
  * copied, and the answer says whether the e-mail left.
  */
 export async function emailInvitation(
@@ -27,6 +28,7 @@ export async function emailInvitation(
 ): Promise<boolean> {
   try {
     const brand = await getRequestBrand();
+    const locale = await getLocale();
     const result = await notify(
       {
         type: "invitation.created",
@@ -45,9 +47,19 @@ export async function emailInvitation(
         name: brand.name,
         supportEmail: brand.supportEmail,
         supportUrl: brand.supportUrl,
+        color: brand.primaryColor,
       }),
       getNotificationTransport(),
-      { locale: await getLocale() },
+      {
+        locale,
+        // The partner's template, else the platform's, else the code's (CF3b).
+        template: await emailTemplateFor(
+          prisma,
+          brand.partnerId,
+          "invitation.created",
+          locale,
+        ),
+      },
     );
     return result.status === "sent";
   } catch (error) {

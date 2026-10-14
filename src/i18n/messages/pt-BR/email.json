@@ -44,5 +44,110 @@
     "notConfigured": "O envio de e-mail não está configurado no servidor.",
     "provider": "O provedor de e-mail recusou a mensagem. Confira a chave e o endereço de envio.",
     "noAddress": "Sua conta não tem e-mail para receber o teste."
+  },
+  "templates": {
+    "title": "Modelos de e-mail",
+    "description": {
+      "platform": "Assunto e corpo de cada e-mail, por idioma. É a base que os parceiros herdam.",
+      "partner": "Assunto e corpo dos e-mails que os seus clientes recebem, por idioma, sobre a base da plataforma."
+    },
+    "eventsTitle": "Eventos",
+    "groups": {
+      "account": "Conta",
+      "billing": "Cobrança",
+      "ai": "IA"
+    },
+    "events": {
+      "invitation": {
+        "name": "Convite",
+        "description": "Enviado quando alguém é convidado para uma organização."
+      },
+      "emailTest": {
+        "name": "E-mail de teste",
+        "description": "Enviado pelo botão de teste de Configurações › E-mail."
+      },
+      "pastDue": {
+        "name": "Cobrança em atraso",
+        "description": "Avisa o parceiro que a assinatura de um cliente está em atraso."
+      },
+      "suspended": {
+        "name": "Assinatura suspensa",
+        "description": "Avisa o parceiro que a assinatura de um cliente foi suspensa."
+      },
+      "aiKeyBackup": {
+        "name": "Chave reserva da IA",
+        "description": "Avisa o cliente que a chave de IA falhou e a reserva está em uso."
+      },
+      "aiKeyPaused": {
+        "name": "Agente pausado",
+        "description": "Avisa o cliente que o agente foi pausado porque a chave não foi corrigida."
+      }
+    },
+    "essential": "E-mail essencial: não pode ser desligado.",
+    "localeNames": {
+      "pt-BR": "Português",
+      "en": "Inglês",
+      "es": "Espanhol"
+    },
+    "source": {
+      "code": "Usando o texto padrão do sistema.",
+      "platform": "Usando a base da plataforma."
+    },
+    "custom": "Personalizado",
+    "subject": "Assunto",
+    "body": "Corpo",
+    "variables": "Variáveis disponíveis",
+    "variablesHint": "Clique para inserir no campo onde está o cursor. Só valem as variáveis deste evento, e todo valor é escapado.",
+    "variableNames": {
+      "organizacao": "Nome da organização do cliente",
+      "data": "Data e hora do prazo (validade do convite ou fim da reserva)",
+      "link": "Endereço do botão de ação (use como link)",
+      "marca": "Nome da marca",
+      "parceiro": "Nome do parceiro",
+      "vencimento": "Data em que o período pago venceu",
+      "proximo_passo": "Frase com o próximo passo e a data da suspensão",
+      "workspace": "Nome do workspace",
+      "agente": "Nome do agente de IA"
+    },
+    "preview": "Prévia",
+    "previewSubject": "Assunto:",
+    "save": "Salvar",
+    "restore": "Restaurar para o padrão",
+    "restoreTitle": "Restaurar este modelo?",
+    "restoreMessage": {
+      "platform": "O assunto e o corpo deste idioma voltam ao texto padrão do sistema.",
+      "partner": "O assunto e o corpo deste idioma voltam à base da plataforma."
+    },
+    "cancel": "Cancelar",
+    "formatHint": "Formato simples: **negrito**, *itálico*, [texto](https://...), listas com - ou 1. e títulos com ##. HTML não é aceito.",
+    "layoutHint": "Cabeçalho e rodapé vêm da marca (nome, cor e contatos de suporte). Senhas nunca vão por e-mail.",
+    "readOnly": "Só o dono e os administradores alteram os modelos.",
+    "toolbar": {
+      "bold": "Negrito",
+      "italic": "Itálico",
+      "link": "Link",
+      "bullets": "Lista",
+      "numbered": "Lista numerada",
+      "heading": "Título"
+    },
+    "linkText": "texto do link",
+    "sample": {
+      "organization": "Cliente Exemplo",
+      "partner": "Agência Exemplo",
+      "workspace": "Loja Exemplo",
+      "agent": "Atendente"
+    },
+    "saved": "Modelo salvo.",
+    "restored": "Modelo restaurado para o padrão.",
+    "errors": {
+      "required": "Preencha este campo.",
+      "too_long": "Texto longo demais.",
+      "newline": "O assunto deve ter uma linha só.",
+      "unknown_tag": "Variável desconhecida neste evento: {tag}.",
+      "bad_link": "Links só com endereço http(s) ou com a variável link.",
+      "tag_not_link": "A variável {tag} não é um endereço e não pode ser link.",
+      "unknownEvent": "Evento sem modelo.",
+      "unknownLocale": "Idioma sem modelo."
+    }
   }
 }

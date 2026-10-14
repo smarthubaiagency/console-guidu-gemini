@@ -75,6 +75,8 @@
     "core_domains": "Dominios",
     "platform_settings_email": "Correo",
     "partner_settings_email": "Correo",
+    "platform_settings_email_templates": "Plantillas de correo",
+    "partner_settings_email_templates": "Plantillas de correo",
     "platform_settings_plans": "Planes y límites",
     "partner_settings_plans": "Planes y límites"
   }

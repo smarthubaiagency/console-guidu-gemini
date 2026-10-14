@@ -3,8 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 import { mergeMessages, type Messages } from "@/core/i18n/locales";
 import { MESSAGE_FILES } from "@/i18n/messages";
 
+import { validateTemplate } from "./markup";
 import { notify } from "./notify";
-import { escapeHtml, renderNotification } from "./templates";
+import { EMAIL_TEMPLATE_EVENTS } from "./template-catalog";
+import {
+  defaultEmailTemplate,
+  escapeHtml,
+  notificationTranslator,
+  renderNotification,
+  templateValues,
+} from "./templates";
 import type { NotificationEvent } from "./types";
 
 const brand = {
@@ -272,5 +280,105 @@ describe("languages of the recipient (I5)", () => {
         subject: "Subscription past due: Cliente <X>",
       }),
     );
+  });
+});
+
+describe("editable templates (CF3b)", () => {
+  it("renders an edited template with escaped values and the brand frame", () => {
+    const message = renderNotification(event, brand, "pt-BR", undefined, {
+      subject: "Entre em {{organizacao}}",
+      body: "## Bem-vindo\n\nOlá, **{{organizacao}}**!\n\n[Entrar]({{link}})",
+    });
+    expect(message.subject).toBe('Entre em Cliente "X" & Cia');
+    expect(message.html).toContain("Agência &lt;B&gt;");
+    expect(message.html).toContain(
+      "<strong>Cliente &quot;X&quot; &amp; Cia</strong>",
+    );
+    expect(message.html).toContain(
+      '<a href="https://app.agencia-b.com.br/invite/abc">Entrar</a>',
+    );
+    expect(message.html).toContain("Suporte: suporte@agencia-b.com.br");
+    expect(message.text).toContain(
+      "Entrar: https://app.agencia-b.com.br/invite/abc",
+    );
+    expect(message.text).toContain("— Agência <B>");
+  });
+
+  it("still refuses a non-http link value", () => {
+    expect(() =>
+      renderNotification(
+        { ...event, data: { ...event.data, inviteUrl: "javascript:alert(1)" } },
+        brand,
+        "pt-BR",
+        undefined,
+        { subject: "x", body: "[a]({{link}})" },
+      ),
+    ).toThrow();
+  });
+
+  it("passes the template through notify", async () => {
+    const send = vi
+      .fn()
+      .mockResolvedValue({ status: "sent", providerMessageId: "m1" });
+    await notify(
+      event,
+      brand,
+      { send },
+      { locale: "en", template: { subject: "Hi {{marca}}", body: "Hello" } },
+    );
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: "Hi Agência <B>" }),
+    );
+  });
+
+  it("offers a valid default per event and language that renders like the code", () => {
+    for (const definition of EMAIL_TEMPLATE_EVENTS) {
+      for (const locale of ["pt-BR", "en", "es"]) {
+        const template = defaultEmailTemplate(definition.type, locale);
+        expect(validateTemplate(template, definition.variables)).toEqual([]);
+      }
+    }
+    const template = defaultEmailTemplate("invitation.created", "pt-BR");
+    expect(template.subject).toBe("Convite para {{organizacao}} no {{marca}}");
+    const custom = renderNotification(
+      event,
+      brand,
+      "pt-BR",
+      undefined,
+      template,
+    );
+    const code = renderNotification(event, brand, "pt-BR");
+    expect(custom.subject).toBe(code.subject);
+    expect(custom.text.replace(/\n+/g, "\n")).toBe(
+      code.text.replace(/\n+/g, "\n"),
+    );
+  });
+
+  it("fills every variable of every event", () => {
+    const t = notificationTranslator("pt-BR");
+    const values = templateValues(
+      t,
+      {
+        type: "billing.subscription.past_due",
+        recipientEmail: "x@y.z",
+        idempotencyKey: "k",
+        data: {
+          partnerName: "P",
+          organizationName: "O",
+          periodEnd: new Date("2026-10-01T00:00:00Z"),
+          nextStepOn: null,
+          billingUrl: "https://ex.com/b",
+        },
+      },
+      brand,
+      "pt-BR",
+    );
+    const definition = EMAIL_TEMPLATE_EVENTS.find(
+      (e) => e.type === "billing.subscription.past_due",
+    )!;
+    expect(Object.keys(values).sort()).toEqual(
+      definition.variables.map((v) => v.name).sort(),
+    );
+    expect(values.proximo_passo).toContain("poderá ser suspensa");
   });
 });
