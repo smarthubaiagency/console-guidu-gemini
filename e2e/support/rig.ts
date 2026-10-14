@@ -6,6 +6,7 @@ export const RIG = {
   authPort: 54399,
   databasePort: 54398,
   chatwootPort: 54397,
+  resendPort: 54396,
   // `localhost` matches the host Next.js dev serves from, so its cross-origin
   // guard for dev resources stays quiet.
   appUrl: "http://localhost:3000",

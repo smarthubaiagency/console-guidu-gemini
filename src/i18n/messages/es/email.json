@@ -1,0 +1,48 @@
+{
+  "metaTitle": "Correo",
+  "title": "Correo",
+  "description": {
+    "platform": "Proveedor de envío y remitente predeterminado de los correos de la plataforma, heredados por los socios.",
+    "partner": "Remitente de los correos que tú y tus clientes reciben."
+  },
+  "provider": {
+    "title": "Envío",
+    "description": {
+      "platform": "Los correos salen por Resend, desde una dirección con dominio verificado de la plataforma.",
+      "partner": "Los correos salen por Resend, desde la dirección de la plataforma, con el nombre y el responder a de este nivel."
+    },
+    "state": "Estado",
+    "on": "Activado (Resend)",
+    "off": "Desactivado",
+    "from": "Remitente",
+    "replyTo": "Responder a",
+    "offHint": "El envío está desactivado: define RESEND_API_KEY y EMAIL_FROM_ADDRESS en el servidor. Hasta entonces, los avisos se registran, pero no salen."
+  },
+  "sender": {
+    "title": "Remitente",
+    "description": {
+      "platform": "Nombre y dirección de respuesta predeterminados. Vacío usa la marca. Bloquear impide que los socios lo cambien.",
+      "partner": "Nombre y dirección de respuesta de los correos de tus clientes. Vacío hereda de la plataforma o usa tu marca."
+    },
+    "fromName": "Nombre del remitente",
+    "replyTo": "Responder a",
+    "none": "sin dirección de respuesta",
+    "lock": "Bloquear para los niveles de abajo",
+    "lockedBy": {
+      "platform": "Bloqueado por la plataforma.",
+      "partner": "Bloqueado por el socio."
+    },
+    "hint": "La dirección de envío es siempre la de la plataforma; una dirección de tu dominio llega cuando se verifique el dominio de envío.",
+    "save": "Guardar remitente",
+    "readOnly": "Solo los dueños y administradores cambian el remitente."
+  },
+  "test": {
+    "send": "Enviar correo de prueba",
+    "sent": "Correo de prueba enviado a {email}."
+  },
+  "errors": {
+    "notConfigured": "El envío de correo no está configurado en el servidor.",
+    "provider": "El proveedor de correo rechazó el mensaje. Revisa la clave y la dirección de envío.",
+    "noAddress": "Tu cuenta no tiene correo para recibir la prueba."
+  }
+}

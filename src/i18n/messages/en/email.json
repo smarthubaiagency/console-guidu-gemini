@@ -1,0 +1,48 @@
+{
+  "metaTitle": "E-mail",
+  "title": "E-mail",
+  "description": {
+    "platform": "Sending provider and default sender of the platform's e-mails, inherited by partners.",
+    "partner": "Sender of the e-mails you and your customers receive."
+  },
+  "provider": {
+    "title": "Sending",
+    "description": {
+      "platform": "E-mails leave through Resend, from an address on a verified platform domain.",
+      "partner": "E-mails leave through Resend, from the platform's address, with this level's name and reply-to."
+    },
+    "state": "Status",
+    "on": "On (Resend)",
+    "off": "Off",
+    "from": "Sender",
+    "replyTo": "Reply to",
+    "offHint": "Sending is off: set RESEND_API_KEY and EMAIL_FROM_ADDRESS on the server. Until then, notices are recorded but not sent."
+  },
+  "sender": {
+    "title": "Sender",
+    "description": {
+      "platform": "Default name and reply-to address. Empty uses the brand. Locking stops partners from changing it.",
+      "partner": "Name and reply-to address of your customers' e-mails. Empty inherits from the platform or uses your brand."
+    },
+    "fromName": "Sender name",
+    "replyTo": "Reply to",
+    "none": "no reply-to address",
+    "lock": "Lock for the levels below",
+    "lockedBy": {
+      "platform": "Locked by the platform.",
+      "partner": "Locked by the partner."
+    },
+    "hint": "The sending address is always the platform's; an address on your domain comes once the sending domain is verified.",
+    "save": "Save sender",
+    "readOnly": "Only owners and admins change the sender."
+  },
+  "test": {
+    "send": "Send test e-mail",
+    "sent": "Test e-mail sent to {email}."
+  },
+  "errors": {
+    "notConfigured": "E-mail sending is not configured on the server.",
+    "provider": "The e-mail provider refused the message. Check the key and the sending address.",
+    "noAddress": "Your account has no e-mail to receive the test."
+  }
+}

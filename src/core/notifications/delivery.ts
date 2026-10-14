@@ -1,18 +1,22 @@
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { notify, type NotificationLanguage } from "./notify";
+import { withSender } from "./sender";
 import { renderNotification } from "./templates";
-import type {
-  NotificationBrand,
-  NotificationEvent,
-  NotificationTransport,
+import {
+  EmailSendError,
+  type NotificationBrand,
+  type NotificationEvent,
+  type NotificationTransport,
 } from "./types";
 
 /**
  * Records the delivery once per key, then hands it to the transport and
  * keeps the outcome. Returns 1 for a new delivery, 0 for a repeated key.
  * The message is rendered in the recipient's language (I5); the subject
- * kept is the one sent. Runs in platform jobs (app_worker).
+ * kept is the one sent. The sender is the one of `senderPartnerId` (the
+ * partner whose brand the e-mail carries; null for the platform's brand).
+ * Runs in platform jobs (app_worker).
  */
 export async function deliverNotification(
   tx: ContextTransaction,
@@ -23,9 +27,11 @@ export async function deliverNotification(
     brand: NotificationBrand;
     partnerId: string;
     relatedId: string;
+    senderPartnerId?: string | null;
   }>,
 ): Promise<number> {
-  const { event, brand, language } = args;
+  const { event, language } = args;
+  const brand = await withSender(tx, args.senderPartnerId ?? null, args.brand);
   const subject = renderNotification(
     event,
     brand,
@@ -46,9 +52,12 @@ export async function deliverNotification(
     const result = await notify(event, brand, args.transport, language);
     status = result.status;
     reason = result.status === "skipped" ? result.reason : null;
-  } catch {
+  } catch (err) {
     status = "failed";
-    reason = "transport_error";
+    reason =
+      err instanceof EmailSendError
+        ? `provider:${err.status ?? "network"}:${err.code}`
+        : "transport_error";
   }
   await tx.notificationDelivery.updateMany({
     where: { idempotencyKey: event.idempotencyKey, status: "pending" },

@@ -61,5 +61,6 @@
     "invalidInvitationId": "Invalid invitation identifier.",
     "invalidRoleInput": "Invalid data for the role change.",
     "invalidMemberId": "Invalid member identifier."
-  }
+  },
+  "invitationEmailed": "Invitation e-mailed to {email}."
 }

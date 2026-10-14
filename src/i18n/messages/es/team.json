@@ -61,5 +61,6 @@
     "invalidInvitationId": "Identificador de invitación no válido.",
     "invalidRoleInput": "Datos no válidos para el cambio de rol.",
     "invalidMemberId": "Identificador de miembro no válido."
-  }
+  },
+  "invitationEmailed": "Invitación enviada por correo a {email}."
 }

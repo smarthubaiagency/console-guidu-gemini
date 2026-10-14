@@ -215,6 +215,10 @@ describe("generated navigation", () => {
       "/platform/settings/brand",
     );
     expect(find(none, "platform.brand")).toBeUndefined();
+    expect(find(owner, "platform.settings.email")?.href).toBe(
+      "/platform/settings/email",
+    );
+    expect(find(none, "platform.settings.email")).toBeUndefined();
     expect(find(owner, "platform.billing")?.href).toBe("/platform/billing");
     expect(find(none, "platform.billing")).toBeUndefined();
     expect(find(none, "hello-world.admin")).toBeUndefined();
@@ -268,12 +272,14 @@ describe("generated navigation", () => {
       "/admin/settings/general",
       "/admin/settings/brand",
       "/admin/settings/domains",
+      "/admin/settings/email",
     ]);
     expect(hrefs("partner_support")).toEqual([
       "/admin/ai/assistant",
       "/admin/ai/guids",
       "/admin/settings/general",
       "/admin/settings/domains",
+      "/admin/settings/email",
     ]);
     expect(
       find(

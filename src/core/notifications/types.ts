@@ -1,8 +1,8 @@
 /**
  * Notification port (ADR 0012, P3): one entry point for every message sent
  * to users, always rendered with the brand of the partner that owns the
- * recipient's host. Delivery runs in jobs with idempotency once the worker
- * (F3) and the e-mail provider (D-PA-08) exist; until then the transport is
+ * recipient's host. E-mails leave through Resend (D-PA-08, CF3a) when
+ * RESEND_API_KEY and EMAIL_FROM_ADDRESS are set; otherwise the transport is
  * disabled and nothing leaves the platform.
  */
 
@@ -59,6 +59,11 @@ export type NotificationEvent = EventBase &
         type: "ai.agent.key_paused";
         data: AgentKeyNoticeData;
       }>
+    | Readonly<{
+        /** Test e-mail of Configurações › E-mail (CF3a). */
+        type: "email.test";
+        data: Readonly<{ settingsUrl: string }>;
+      }>
   );
 
 /** Brand fields a template may use. */
@@ -66,6 +71,14 @@ export type NotificationBrand = Readonly<{
   name: string;
   supportEmail: string | null;
   supportUrl: string | null;
+  /** Sender settings of the brand's partner (CF3a); null uses the brand. */
+  sender?: EmailSender;
+}>;
+
+/** `email.from_name` and `email.reply_to` of the cascade (CF3a). */
+export type EmailSender = Readonly<{
+  fromName: string | null;
+  replyTo: string | null;
 }>;
 
 export type RenderedMessage = Readonly<{
@@ -77,6 +90,9 @@ export type RenderedMessage = Readonly<{
 export type OutboundMessage = RenderedMessage &
   Readonly<{
     to: string;
+    /** Display name of the sender; the address is the platform's. */
+    fromName: string;
+    replyTo: string | null;
     idempotencyKey: string;
     eventType: NotificationEvent["type"];
   }>;
@@ -84,6 +100,17 @@ export type OutboundMessage = RenderedMessage &
 export type SendResult =
   | Readonly<{ status: "sent"; providerMessageId: string }>
   | Readonly<{ status: "skipped"; reason: "no_provider" }>;
+
+/** The provider refused the message or could not be reached. */
+export class EmailSendError extends Error {
+  constructor(
+    readonly status: number | null,
+    readonly code: string,
+  ) {
+    super(`E-mail não enviado (${status ?? "rede"}: ${code}).`);
+    this.name = "EmailSendError";
+  }
+}
 
 export interface NotificationTransport {
   send(message: OutboundMessage): Promise<SendResult>;

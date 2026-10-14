@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { emailInvitation } from "@/core/email/invitations";
 import { actionFailure } from "@/core/i18n/errors";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
@@ -365,9 +366,16 @@ export async function createPartnerCustomerAction(
       { partnerId: actor.partnerId },
     );
     revalidatePath("/admin/customers");
+    const emailed = await emailInvitation({
+      ...result.invitation,
+      inviteUrl: result.inviteUrl,
+    });
     return {
       success: true,
-      message: (await consoleT())("customers.created"),
+      message: (await consoleT())(
+        emailed ? "customers.createdEmailed" : "customers.created",
+        { email: result.invitation.email },
+      ),
       inviteUrl: result.inviteUrl,
     };
   } catch (err) {

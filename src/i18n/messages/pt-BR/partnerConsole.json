@@ -35,7 +35,8 @@
     },
     "since": "desde {date}",
     "empty": "Nenhum cliente ainda.",
-    "created": "Cliente cadastrado. Envie o convite ao responsável."
+    "created": "Cliente cadastrado. Envie o convite ao responsável.",
+    "createdEmailed": "Cliente criado. Convite enviado por e-mail para {email}."
   },
   "members": {
     "metaTitle": "Membros (Parceiro)",

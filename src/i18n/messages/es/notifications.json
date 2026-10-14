@@ -35,5 +35,10 @@
     "subject": "Agente de IA pausado en {workspace}",
     "body": "{agent} en {workspace} se pausó porque la clave de IA no se corrigió en 24 horas.",
     "nextStep": "El respaldo terminó el {date}. Cambie y pruebe la clave y luego reactive el agente."
+  },
+  "emailTest": {
+    "subject": "Correo de prueba de {brand}",
+    "body": "Este es un correo de prueba enviado desde la configuración de correo de {brand}. Si lo recibiste, el envío funciona.",
+    "action": "Abrir configuración de correo"
   }
 }

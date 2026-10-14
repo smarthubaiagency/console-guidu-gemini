@@ -31,6 +31,8 @@ export async function notify(
   return transport.send({
     ...rendered,
     to: event.recipientEmail,
+    fromName: brand.sender?.fromName ?? brand.name,
+    replyTo: brand.sender?.replyTo ?? brand.supportEmail,
     idempotencyKey: event.idempotencyKey,
     eventType: event.type,
   });

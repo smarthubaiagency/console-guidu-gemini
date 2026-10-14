@@ -61,5 +61,6 @@
     "invalidInvitationId": "Identificador de convite inválido.",
     "invalidRoleInput": "Dados inválidos para alteração de papel.",
     "invalidMemberId": "Identificador de membro inválido."
-  }
+  },
+  "invitationEmailed": "Convite enviado por e-mail para {email}."
 }

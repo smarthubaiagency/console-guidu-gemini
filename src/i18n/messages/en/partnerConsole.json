@@ -35,7 +35,8 @@
     },
     "since": "since {date}",
     "empty": "No customers yet.",
-    "created": "Customer registered. Send the invitation to the owner."
+    "created": "Customer registered. Send the invitation to the owner.",
+    "createdEmailed": "Customer created. Invitation e-mailed to {email}."
   },
   "members": {
     "metaTitle": "Members (Partner)",

@@ -18,6 +18,7 @@ import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { requireUser } from "@/core/auth/identity";
+import { emailInvitation } from "@/core/email/invitations";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { getRequestOrigin } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
@@ -81,22 +82,42 @@ export async function createInvitationAction(
     );
 
     const origin = (await getRequestOrigin()) ?? undefined;
-    const result = await withContext(prisma, context, async (tx) => {
-      return createInvitation(tx, {
-        organizationId: context.organizationId,
-        actorId: identity.userId,
-        email,
-        role: role as OrganizationRole,
-        workspaceId: context.workspaceId,
-        ...(origin ? { origin } : {}),
-      });
-    });
+    const { result, organizationName } = await withContext(
+      prisma,
+      context,
+      async (tx) => ({
+        organizationName:
+          (
+            await tx.organization.findUnique({
+              where: { id: context.organizationId },
+              select: { name: true },
+            })
+          )?.name ?? "",
+        result: await createInvitation(tx, {
+          organizationId: context.organizationId,
+          actorId: identity.userId,
+          email,
+          role: role as OrganizationRole,
+          workspaceId: context.workspaceId,
+          ...(origin ? { origin } : {}),
+        }),
+      }),
+    );
 
     revalidatePath(`/app/${workspaceSlug}/settings/team`);
+    const emailed = await emailInvitation({
+      email: result.invitation.email,
+      organizationName,
+      expiresAt: result.invitation.expiresAt,
+      inviteUrl: result.inviteUrl,
+    });
 
     return {
       success: true,
-      message: (await getTranslations("team"))("invitationCreated", { email }),
+      message: (await getTranslations("team"))(
+        emailed ? "invitationEmailed" : "invitationCreated",
+        { email },
+      ),
       rawToken: result.rawToken,
       inviteUrl: result.inviteUrl,
     };
