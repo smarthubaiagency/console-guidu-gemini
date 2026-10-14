@@ -10,8 +10,12 @@ import { actionFailure } from "@/core/i18n/errors";
 import { savePlatformModuleConfig } from "@/core/module-runtime/settings";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
+import { effectiveSettings } from "@/core/settings/read";
 import { prisma } from "@/lib/prisma/client";
-import { withContext } from "@/lib/prisma/with-context";
+import {
+  type ContextTransaction,
+  withContext,
+} from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError } from "@/shared/errors";
 
@@ -101,12 +105,17 @@ function pairs(
     });
 }
 
-function price(formData: FormData, name: string) {
+function price(formData: FormData, name: string, currency: string) {
   const amount = cents(formData, name);
-  return amount === null ? null : { amount, currency: "BRL" };
+  return amount === null ? null : { amount, currency };
 }
 
-function variantFromForm(formData: FormData) {
+/** Prices are in the workspace's currency (CF1, Configurações › Geral). */
+async function workspaceCurrency(tx: ContextTransaction): Promise<string> {
+  return (await effectiveSettings(tx)).values["region.currency"];
+}
+
+function variantFromForm(formData: FormData, currency: string) {
   const unit = SALE_UNITS.find((u) => u.unit === str(formData, "unit"));
   // Lodging (F5c): the nightly price of an accommodation type and a plan.
   const lodging =
@@ -125,8 +134,8 @@ function variantFromForm(formData: FormData) {
         ? { type: type.toUpperCase(), value }
         : { type: "GTIN", value: type },
     ),
-    price: price(formData, "price"),
-    list_price: price(formData, "list_price"),
+    price: price(formData, "price", currency),
+    list_price: price(formData, "list_price", currency),
     quantity_unit: lodging
       ? { ...NIGHT_UNIT }
       : unit && unit.unit !== "C62"
@@ -176,7 +185,7 @@ export async function createPortfolioItemAction(
     const [itemType, vertical] = (
       str(formData, "kind") ?? "product:general"
     ).split(":");
-    const item = await withContext(prisma, ctx, (tx) =>
+    const item = await withContext(prisma, ctx, async (tx) =>
       createItem(tx, ctx, {
         item_type: itemType,
         vertical: vertical ?? "general",
@@ -184,7 +193,7 @@ export async function createPortfolioItemAction(
         description: { plain: str(formData, "description_plain") },
         price_display: priceDisplay,
         status: str(formData, "status") ?? "draft",
-        variants: [variantFromForm(formData)],
+        variants: [variantFromForm(formData, await workspaceCurrency(tx))],
       }),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio`);
@@ -276,8 +285,13 @@ export async function addPortfolioVariantAction(
   try {
     const { workspaceSlug, ctx } = await context(formData);
     const itemId = uuid(formData, "itemId");
-    await withContext(prisma, ctx, (tx) =>
-      addVariant(tx, ctx, itemId, variantFromForm(formData)),
+    await withContext(prisma, ctx, async (tx) =>
+      addVariant(
+        tx,
+        ctx,
+        itemId,
+        variantFromForm(formData, await workspaceCurrency(tx)),
+      ),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio`);
     const t = await getTranslations("portfolio");
@@ -295,10 +309,16 @@ export async function updatePortfolioVariantAction(
     const { workspaceSlug, ctx } = await context(formData);
     const itemId = uuid(formData, "itemId");
     const variantId = uuid(formData, "variantId");
-    await withContext(prisma, ctx, (tx) =>
+    await withContext(prisma, ctx, async (tx) =>
       formData.get("remove") === "1"
         ? removeVariant(tx, ctx, itemId, variantId)
-        : updateVariant(tx, ctx, itemId, variantId, variantFromForm(formData)),
+        : updateVariant(
+            tx,
+            ctx,
+            itemId,
+            variantId,
+            variantFromForm(formData, await workspaceCurrency(tx)),
+          ),
     );
     revalidatePath(`/app/${workspaceSlug}/portfolio`);
     const t = await getTranslations("portfolio");

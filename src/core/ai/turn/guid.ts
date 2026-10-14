@@ -52,6 +52,7 @@ import {
   type ToolEnv,
 } from "../tools/catalog";
 import { contextValues, turnTimeZone } from "./context";
+import { withRegionTimeZone } from "./region";
 import {
   afterHoursReply,
   businessHours,
@@ -296,7 +297,7 @@ async function loadTurn(
       ids,
     );
   }
-  const config = parsed.data;
+  const config = await withRegionTimeZone(tx, parsed.data);
   const timeZone = turnTimeZone(config);
   const hours = businessHours(config.scope.availability_slots, now, timeZone);
   // A test answers with the model at any hour, so it can pass at night.

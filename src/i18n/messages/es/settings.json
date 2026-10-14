@@ -1,0 +1,57 @@
+{
+  "navLabel": "Menú de configuración",
+  "saved": "Configuración guardada.",
+  "errors": {
+    "unknown": "Esta configuración no se puede cambiar en este nivel.",
+    "locked": "Esta configuración fue bloqueada por el nivel superior.",
+    "invalid": "Valor no válido para la configuración.",
+    "currency": "Moneda no ofrecida por la plataforma."
+  },
+  "general": {
+    "title": "General y región",
+    "description": {
+      "platform": "Identificación de la plataforma y valores regionales heredados por socios y workspaces.",
+      "partner": "Identificación del socio y valores regionales de sus clientes.",
+      "workspace": "Identificación del workspace, idioma y valores regionales."
+    },
+    "platform": {
+      "title": "Plataforma",
+      "description": "Definidos en el entorno del servidor (APP_NAME y APP_URL).",
+      "name": "Nombre",
+      "url": "Dirección pública"
+    },
+    "partner": {
+      "title": "Socio",
+      "description": "El nombre y los dominios los define la plataforma.",
+      "name": "Nombre",
+      "slug": "Identificador",
+      "domains": "Dominios"
+    }
+  },
+  "region": {
+    "title": "Región",
+    "description": {
+      "platform": "Monedas ofrecidas, moneda y zona horaria por defecto. Bloquear impide que socios y workspaces la cambien.",
+      "partner": "Moneda y zona horaria por defecto de sus clientes. Bloquear impide que los workspaces la cambien.",
+      "workspace": "Moneda de los precios y zona horaria usada en horarios y agendas."
+    },
+    "currency": "Moneda",
+    "currencies": "Monedas ofrecidas",
+    "currenciesHint": "Códigos ISO 4217 separados por comas. Vacío usa el valor del sistema.",
+    "timezone": "Zona horaria",
+    "lock": "Bloquear para los niveles inferiores",
+    "lockedBy": {
+      "platform": "Bloqueado por la plataforma.",
+      "partner": "Bloqueado por el socio."
+    },
+    "source": {
+      "default": "valor del sistema",
+      "platform": "de la plataforma",
+      "partner": "del socio",
+      "workspace": "del workspace"
+    },
+    "inherit": "Heredar: {value} ({from})",
+    "systemDefault": "Valor del sistema: {value}",
+    "save": "Guardar región"
+  }
+}

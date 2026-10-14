@@ -7,8 +7,12 @@ import { z } from "zod";
 import { requireUser } from "@/core/auth/identity";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
+import { effectiveSettings } from "@/core/settings/read";
 import { prisma } from "@/lib/prisma/client";
-import { withContext } from "@/lib/prisma/with-context";
+import {
+  type ContextTransaction,
+  withContext,
+} from "@/lib/prisma/with-context";
 import { actionFailure } from "@/core/i18n/errors";
 
 import { KNOWN_AMENITIES } from "./amenities";
@@ -31,8 +35,13 @@ function num(formData: FormData, name: string): number | undefined {
   return value === undefined ? undefined : Number(value.replace(",", "."));
 }
 
+/** Time zone of a store left empty: the workspace's (CF1). */
+async function workspaceTimezone(tx: ContextTransaction): Promise<string> {
+  return (await effectiveSettings(tx)).values["region.timezone"];
+}
+
 /** Location fields from the form, in the UCP shape the service validates. */
-function locationFromForm(formData: FormData) {
+function locationFromForm(formData: FormData, defaultTimezone: string) {
   const latitude = num(formData, "latitude");
   const longitude = num(formData, "longitude");
   const hours = DAYS.flatMap((day) => {
@@ -66,7 +75,7 @@ function locationFromForm(formData: FormData) {
       latitude !== undefined && longitude !== undefined
         ? { latitude, longitude }
         : null,
-    timezone: str(formData, "timezone") ?? "America/Sao_Paulo",
+    timezone: str(formData, "timezone") ?? defaultTimezone,
     hours,
     amenities,
   };
@@ -93,8 +102,12 @@ export async function createLocationAction(
 ): Promise<State> {
   try {
     const { workspaceSlug, ctx } = await context(formData);
-    const location = await withContext(prisma, ctx, (tx) =>
-      createLocation(tx, ctx, locationFromForm(formData)),
+    const location = await withContext(prisma, ctx, async (tx) =>
+      createLocation(
+        tx,
+        ctx,
+        locationFromForm(formData, await workspaceTimezone(tx)),
+      ),
     );
     revalidatePath(`/app/${workspaceSlug}/settings/locations`);
     return {
@@ -115,14 +128,17 @@ export async function updateLocationAction(
     const { workspaceSlug, ctx } = await context(formData);
     const locationId = z.string().uuid().parse(formData.get("locationId"));
     const status = str(formData, "status");
-    await withContext(prisma, ctx, (tx) =>
+    await withContext(prisma, ctx, async (tx) =>
       updateLocation(
         tx,
         ctx,
         locationId,
         status
           ? { status }
-          : { ...locationFromForm(formData), exception_hours: undefined },
+          : {
+              ...locationFromForm(formData, await workspaceTimezone(tx)),
+              exception_hours: undefined,
+            },
       ),
     );
     revalidatePath(`/app/${workspaceSlug}/settings/locations`);

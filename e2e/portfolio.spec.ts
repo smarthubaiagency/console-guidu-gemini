@@ -55,7 +55,11 @@ test("owner registers a store and a product with variants in the Portfolio", asy
 
   // Store in the workspace settings.
   await page.goto(`/app/${wsSlug}`);
-  await sidebar(page).getByRole("link", { name: "Lojas" }).click();
+  await sidebar(page).getByRole("link", { name: "Configurações" }).click();
+  await page
+    .getByTestId("settings-nav")
+    .getByRole("link", { name: "Lojas" })
+    .click();
   const store = page.getByTestId("create-location");
   await store.getByLabel("Nome da loja").fill("Loja Centro E2E");
   await store.getByLabel("Cidade").fill("São Paulo");

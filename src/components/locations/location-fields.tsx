@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
  */
 export function LocationFields({
   location,
-}: Readonly<{ location?: LocationView }>) {
+  defaultTimezone,
+}: Readonly<{ location?: LocationView; defaultTimezone?: string }>) {
   const t = useTranslations("locations");
   const a = location?.address ?? {};
   const hour = (day: string) => location?.hours.find((h) => h.day === day);
@@ -84,7 +85,7 @@ export function LocationFields({
         <Input
           name="timezone"
           maxLength={64}
-          defaultValue={location?.timezone ?? "America/Sao_Paulo"}
+          defaultValue={location?.timezone ?? defaultTimezone}
         />
       </Label>
       <Label className="flex-col items-start">

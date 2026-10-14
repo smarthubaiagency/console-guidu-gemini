@@ -173,7 +173,18 @@ describe("generated navigation", () => {
       "hello-world",
       "core.executions",
       "core.proposals",
+      "core.settings",
     ]);
+  });
+
+  it("keeps one settings entry whose pages go to the submenu card (CF1)", () => {
+    const settings = find(app("owner"), "core.settings");
+    expect(settings).toMatchObject({
+      href: "/app/acme/settings",
+      hideChildren: true,
+    });
+    // Breadcrumb and search still find the pages under it.
+    expect(settings?.children.map((c) => c.id)).toContain("core.team");
   });
 
   it("shows the proposals to owner and admin only (F4d)", () => {
@@ -252,10 +263,12 @@ describe("generated navigation", () => {
       "/admin/ai/guids",
       "/admin/ai/keys",
       "/admin/ai/templates",
+      "/admin/settings/general",
     ]);
     expect(hrefs("partner_support")).toEqual([
       "/admin/ai/assistant",
       "/admin/ai/guids",
+      "/admin/settings/general",
     ]);
     expect(
       find(
@@ -277,6 +290,7 @@ describe("generated navigation", () => {
       "/admin/legal",
       "/admin/members",
       "/admin/brand",
+      "/admin/settings",
     ]);
 
     const finance = buildPartnerNavigation(partnerGrants("partner_finance"));

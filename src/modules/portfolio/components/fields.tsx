@@ -47,7 +47,7 @@ export function moneyInput(amount: number | null): string {
   return amount === null ? "" : (amount / 100).toFixed(2).replace(".", ",");
 }
 
-/** Price in the request language, in the item's currency (BRL). */
+/** Price in the request language, in the variant's currency. */
 export async function formatMoney(
   amount: number | null,
   currency = "BRL",

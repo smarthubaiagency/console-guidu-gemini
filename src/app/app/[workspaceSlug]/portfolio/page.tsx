@@ -121,12 +121,20 @@ export default async function PortfolioPage({
     view.kind === "ok"
       ? await Promise.all(
           view.items.map(async (item) => {
-            const amounts = item.variants
-              .map((v) => v.priceAmount)
-              .filter((p): p is number => p !== null);
-            const min = amounts.length ? Math.min(...amounts) : null;
+            const priced = item.variants.filter(
+              (v): v is typeof v & { priceAmount: number } =>
+                v.priceAmount !== null,
+            );
+            const amounts = priced.map((v) => v.priceAmount);
+            const cheapest = priced.reduce<(typeof priced)[number] | null>(
+              (low, v) => (!low || v.priceAmount < low.priceAmount ? v : low),
+              null,
+            );
             if (item.priceDisplay === "quote") return t("money.quote");
-            const price = await formatMoney(min);
+            const price = await formatMoney(
+              cheapest?.priceAmount ?? null,
+              cheapest?.currency,
+            );
             return item.priceDisplay === "from" || amounts.length > 1
               ? t("list.fromPrice", { price })
               : price;

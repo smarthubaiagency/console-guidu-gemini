@@ -7,5 +7,6 @@
   "name": "Workspace Name",
   "slug": "Routing Slug",
   "organization": "Contracting Organization",
-  "uuid": "UUID Identifier"
+  "uuid": "UUID Identifier",
+  "identity": "Identity"
 }

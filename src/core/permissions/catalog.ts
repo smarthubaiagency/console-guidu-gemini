@@ -84,6 +84,9 @@ export const Permissions = {
   // House agent templates, the admin template of the partner Assistants,
   // the GUIDU knowledge base and the backup key and model (A1, §11).
   PLATFORM_AI_MANAGE: "platform.ai.manage",
+  // Platform defaults of the settings catalog (CF1, Plataforma ›
+  // Configurações › Geral).
+  PLATFORM_SETTINGS_MANAGE: "platform.settings.manage",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
@@ -103,6 +106,9 @@ export const Permissions = {
   // its customers' GUIDS, never their conversations (A1, D-AG-17).
   PARTNER_AI_AGENTS_READ: "partner.ai_agents.read",
   PARTNER_AI_AGENTS_MANAGE: "partner.ai_agents.manage",
+  // The partner's defaults of the settings catalog for its customers (CF1,
+  // /admin › Configurações).
+  PARTNER_SETTINGS_MANAGE: "partner.settings.manage",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

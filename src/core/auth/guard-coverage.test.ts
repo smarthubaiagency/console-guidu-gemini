@@ -63,6 +63,10 @@ const REDIRECT_ONLY = new Set([
   "app/[workspaceSlug]/crm/contacts/[contactId]/page.tsx",
   "app/[workspaceSlug]/hello-world/records/[recordId]/page.tsx",
   "app/[workspaceSlug]/portfolio/[itemId]/page.tsx",
+  // Settings indexes (CF1): open the guarded General page of their level.
+  "admin/settings/page.tsx",
+  "app/[workspaceSlug]/settings/page.tsx",
+  "platform/settings/page.tsx",
 ]);
 
 function files(dir: string, match: (name: string) => boolean): string[] {

@@ -2,14 +2,19 @@
   "sections": {
     "app": {
       "platform": "Platform",
-      "settings": "Settings"
+      "settings_workspace": "Workspace",
+      "settings_channels": "Channels and integrations",
+      "settings_plan": "Plan",
+      "settings_system": "System"
     },
     "platform": {
       "platform": "Administration",
-      "platform_settings": "Settings"
+      "settings_platform": "Platform",
+      "settings_modules": "Modules"
     },
     "partner": {
-      "partner": "Partner"
+      "partner": "Partner",
+      "settings_partner": "Partner"
     }
   },
   "items": {
@@ -60,6 +65,11 @@
     "partner_ai_assistant": "GUIDU Assistant",
     "partner_ai_guids": "Customer GUIDS",
     "partner_ai_keys": "AI keys",
-    "partner_ai_templates": "Agent templates"
+    "partner_ai_templates": "Agent templates",
+    "core_settings": "Settings",
+    "platform_settings": "Settings",
+    "partner_settings": "Settings",
+    "platform_settings_general": "General and region",
+    "partner_settings_general": "General and region"
   }
 }

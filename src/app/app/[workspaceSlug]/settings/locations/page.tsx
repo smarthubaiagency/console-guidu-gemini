@@ -10,6 +10,7 @@ import { requireUserPage } from "@/core/auth/page-guard";
 import { createLocationAction } from "@/core/locations/actions";
 import { listLocations } from "@/core/locations/service";
 import { workspaceGrants } from "@/core/module-runtime/loaders";
+import { effectiveSettings } from "@/core/settings/read";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { prisma } from "@/lib/prisma/client";
@@ -39,11 +40,12 @@ export default async function LocationsPage({ params }: PageProps) {
     identity.userId,
     workspaceSlug,
   );
-  const { locations, canManage } = await withContext(
+  const { locations, canManage, timezone } = await withContext(
     prisma,
     context,
     async (tx) => ({
       locations: await listLocations(tx, context, { includeInactive: true }),
+      timezone: (await effectiveSettings(tx)).values["region.timezone"],
       canManage: workspaceGrants(await getEffectiveWorkspaceRole(tx, context))(
         "workspace.locations.manage",
       ),
@@ -100,7 +102,7 @@ export default async function LocationsPage({ params }: PageProps) {
             testId="create-location"
           >
             <input type="hidden" name="workspaceSlug" value={workspaceSlug} />
-            <LocationFields />
+            <LocationFields defaultTimezone={timezone} />
           </ActionForm>
         </section>
       ) : null}

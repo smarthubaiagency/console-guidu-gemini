@@ -53,11 +53,20 @@ test("the customer shell navigates, collapses, switches and signs out", async ({
   await signIn(page, email);
   await page.goto(`/app/${first}/settings/team`);
 
-  // Active entry and breadcrumb come from the generated navigation.
+  // Active entry and breadcrumb come from the generated navigation; the
+  // settings pages live in the submenu card, not in the sidebar (CF1).
   const menu = sidebar(page);
   await expect(menu).toHaveAttribute("data-state", "expanded");
   await expect(
+    menu.getByRole("link", { name: "Configurações" }),
+  ).toHaveAttribute("aria-current", "page");
+  await expect(
     menu.getByRole("link", { name: "Equipe & Membros" }),
+  ).toHaveCount(0);
+  await expect(
+    page
+      .getByTestId("settings-nav")
+      .getByRole("link", { name: "Equipe & Membros" }),
   ).toHaveAttribute("aria-current", "page");
   const trail = page.getByRole("navigation", { name: "Caminho da página" });
   await expect(trail).toContainText("Configurações");
@@ -128,6 +137,13 @@ test("on a phone the sidebar opens as a drawer", async ({ page, request }) => {
   await page.getByTestId("sidebar-trigger").click();
   const drawer = sidebar(page);
   await expect(drawer).toHaveAttribute("data-mobile", "true");
-  await drawer.getByRole("link", { name: "Equipe & Membros" }).click();
+  await drawer.getByRole("link", { name: "Configurações" }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/${first}/settings/general$`));
+  await expect(sidebar(page)).toHaveCount(0);
+  // On a phone the submenu card comes before the content.
+  await page
+    .getByTestId("settings-nav")
+    .getByRole("link", { name: "Equipe & Membros" })
+    .click();
   await expect(page).toHaveURL(new RegExp(`/app/${first}/settings/team$`));
 });

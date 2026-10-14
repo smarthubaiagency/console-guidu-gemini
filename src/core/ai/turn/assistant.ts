@@ -30,6 +30,7 @@ import { renderSystemPrompt } from "../prompt/render";
 import { promptLocale } from "../prompt/texts";
 import { buildTools, recordRefusedCall, type ToolEnv } from "../tools/catalog";
 import { contextValues } from "./context";
+import { withRegionTimeZone } from "./region";
 import { persistTurn, persistTurnError } from "./persist";
 import { turnErrorCode } from "./plan";
 import { TURN_LIMITS, type TurnDb, type TurnState } from "./types";
@@ -130,7 +131,7 @@ async function loadTurn(
   if (!parsed.success) {
     throw unavailable("A configuração do Assistente é inválida.");
   }
-  const config = parsed.data;
+  const config = await withRegionTimeZone(tx, parsed.data);
   const modelName = config.model.model_name;
   const [credential] = modelName
     ? await tx.$queryRaw<{ provider: string; encrypted_payload: string }[]>`

@@ -62,6 +62,12 @@ export type NavItem = Readonly<{
   /** Active only on an exact path match (dashboards). */
   exact: boolean;
   children: readonly NavItem[];
+  /**
+   * The sidebar shows the entry alone: its children are the settings
+   * submenu, drawn inside the page (CF1). Breadcrumb and search still list
+   * them.
+   */
+  hideChildren: boolean;
 }>;
 
 export type NavSection = Readonly<{
@@ -95,7 +101,36 @@ function item(
   partial: Pick<NavItem, "id" | "label" | "href" | "iconKey"> &
     Partial<NavItem>,
 ): NavItem {
-  return { badge: null, exact: false, children: [], ...partial };
+  return {
+    badge: null,
+    exact: false,
+    children: [],
+    hideChildren: false,
+    ...partial,
+  };
+}
+
+/**
+ * Sidebar entry of a settings area (CF1): one link to the area, whose
+ * groups are drawn as the submenu card of the settings pages.
+ */
+function settingsEntry(
+  id: string,
+  href: string,
+  sections: readonly NavSection[],
+): NavItem[] {
+  const children = sections.flatMap((section) => section.items);
+  if (children.length === 0) return [];
+  return [
+    item({
+      id,
+      label: "Configurações",
+      href,
+      iconKey: "settings",
+      children,
+      hideChildren: true,
+    }),
+  ];
 }
 
 export type AppNavigationInput = Readonly<{
@@ -272,85 +307,120 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
               }),
             ]
           : []),
+        ...settingsEntry(
+          "core.settings",
+          `${base}/settings`,
+          buildAppSettingsNavigation(input),
+        ),
       ],
     },
+  ];
+}
+
+/**
+ * Settings submenu of the workspace (/app/[slug]/settings, CF1): groups of
+ * the proposal in menus-admin-app.md, each entry behind its grant.
+ */
+export function buildAppSettingsNavigation(
+  input: AppNavigationInput,
+): NavSection[] {
+  const base = `/app/${input.workspaceSlug}/settings`;
+  const sections: NavSection[] = [
     {
-      id: "settings",
-      label: "Configurações",
+      id: "settings.workspace",
+      label: "Workspace",
       items: [
-        item({
-          id: "core.team",
-          label: "Equipe & Membros",
-          href: `${base}/settings/team`,
-          iconKey: "users",
-        }),
         item({
           id: "core.general",
           label: "Geral",
-          href: `${base}/settings/general`,
+          href: `${base}/general`,
           iconKey: "settings",
         }),
         // Stores of the business (F5a, UCP Location): every member sees.
         item({
           id: "core.locations",
           label: "Lojas",
-          href: `${base}/settings/locations`,
+          href: `${base}/locations`,
           iconKey: "map-pin",
         }),
         item({
-          id: "core.modules",
-          label: "Módulos",
-          href: `${base}/settings/modules`,
-          iconKey: "puzzle",
-          exact: true,
-          children: buildAppModuleSettingsItems(input),
+          id: "core.team",
+          label: "Equipe & Membros",
+          href: `${base}/team`,
+          iconKey: "users",
         }),
-        item({
-          id: "core.credentials",
-          label: "Credenciais BYOK",
-          href: `${base}/settings/credentials`,
-          iconKey: "key",
-        }),
+      ],
+    },
+    {
+      id: "settings.channels",
+      label: "Canais e integrações",
+      items: [
         // Messaging channels (A5a, ADR 0011): owner, admin and editor.
         ...(input.grants("channels.read")
           ? [
               item({
                 id: "core.channels",
                 label: "Canais",
-                href: `${base}/settings/channels`,
+                href: `${base}/channels`,
                 iconKey: "inbox",
               }),
             ]
           : []),
         item({
+          id: "core.credentials",
+          label: "Credenciais BYOK",
+          href: `${base}/credentials`,
+          iconKey: "key",
+        }),
+        item({
           id: "core.mcp",
           label: "Assistentes MCP",
-          href: `${base}/settings/mcp`,
+          href: `${base}/mcp`,
           iconKey: "bot",
         }),
         item({
           id: "core.api",
           label: "API e Webhooks",
-          href: `${base}/settings/api`,
+          href: `${base}/api`,
           iconKey: "code",
         }),
-        item({
-          id: "core.usage",
-          label: "Consumo & Limites",
-          href: `${base}/settings/usage`,
-          iconKey: "gauge",
-        }),
+      ],
+    },
+    {
+      id: "settings.plan",
+      label: "Plano",
+      items: [
         // Plan and billing state of the company (P5m): owner/admin.
         ...(input.grants("workspace.settings.update")
           ? [
               item({
                 id: "core.billing",
                 label: "Plano e cobrança",
-                href: `${base}/settings/billing`,
+                href: `${base}/billing`,
                 iconKey: "credit-card",
               }),
             ]
           : []),
+        item({
+          id: "core.usage",
+          label: "Consumo & Limites",
+          href: `${base}/usage`,
+          iconKey: "gauge",
+        }),
+        item({
+          id: "core.modules",
+          label: "Módulos",
+          href: `${base}/modules`,
+          iconKey: "puzzle",
+          exact: true,
+          children: buildAppModuleSettingsItems(input),
+        }),
+      ],
+    },
+    {
+      id: "settings.system",
+      label: "Sistema",
+      items: [
         // Export and deletion of the workspace (F3e): owner/admin.
         ...(input.grants("workspace.data.export") ||
         input.grants("workspace.delete")
@@ -358,7 +428,7 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
               item({
                 id: "core.data",
                 label: "Dados e privacidade",
-                href: `${base}/settings/data`,
+                href: `${base}/data`,
                 iconKey: "file-text",
               }),
             ]
@@ -369,7 +439,7 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
               item({
                 id: "core.support",
                 label: "Acesso de suporte",
-                href: `${base}/settings/support`,
+                href: `${base}/support`,
                 iconKey: "hand",
               }),
             ]
@@ -377,6 +447,7 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
       ],
     },
   ];
+  return sections.filter((section) => section.items.length > 0);
 }
 
 export type PlatformNavigationInput = Readonly<{
@@ -388,33 +459,12 @@ export type PlatformNavigationInput = Readonly<{
 export function buildPlatformNavigation(
   input: PlatformNavigationInput,
 ): NavSection[] {
-  const settingsItems = input.modules
-    .filter((mod) => mod.technicalGate())
-    .flatMap((mod) =>
-      mod.manifest.settings
-        .filter((entry) => entry.destination === "admin")
-        .filter((entry) => allGranted(entry.readPermissions, input.grants))
-        .map((entry) => ({
-          order: entry.order,
-          id: entry.id,
-          value: item({
-            id: entry.id,
-            label: entry.label,
-            href: `/platform/settings/modules/${mod.manifest.moduleKey}`,
-            iconKey: null,
-          }),
-        })),
-    )
-    .sort(byOrder)
-    .map((entry) => entry.value);
-
   const canReadModules = input.grants("platform.modules.read");
   const canManageBrand = input.grants("platform.brand.manage");
   const canReadPartners = input.grants("platform.partners.read");
   const canManageLegal = input.grants("platform.legal.manage");
   const canReadBilling = input.grants("platform.billing.read");
   const canReadOperations = input.grants("platform.operations.read");
-  const canManageLanguages = input.grants("platform.languages.manage");
   // AI of the house (A3a): templates and backup key, behind the module flag.
   const canManageAi =
     input.grants("platform.ai.manage") &&
@@ -544,63 +594,100 @@ export function buildPlatformNavigation(
               }),
             ]
           : []),
+        // Interface patterns (U2a and ADR 0016): every internal role.
+        ...(canReadModules
+          ? [
+              item({
+                id: "platform.design",
+                label: "Padrões de interface",
+                href: null,
+                iconKey: "layers",
+                children: [
+                  item({
+                    id: "platform.design.workbench",
+                    label: "Janela de edição",
+                    href: "/platform/design/workbench",
+                    iconKey: "layers",
+                  }),
+                  item({
+                    id: "platform.design.status",
+                    label: "Avisos",
+                    href: "/platform/design/status",
+                    iconKey: "layers",
+                  }),
+                  item({
+                    id: "platform.design.components",
+                    label: "Componentes",
+                    href: "/platform/design/components",
+                    iconKey: "layers",
+                  }),
+                ],
+              }),
+            ]
+          : []),
+        ...settingsEntry(
+          "platform.settings",
+          "/platform/settings",
+          buildPlatformSettingsNavigation(input),
+        ),
       ],
     },
-    // Configurações: languages of the dashboard (I1), the interface
-    // patterns (U2a and ADR 0016, every internal role) and the global settings of each
-    // module.
-    ...(canManageLanguages || canReadModules || settingsItems.length > 0
-      ? [
-          {
-            id: "platform.settings",
-            label: "Configurações",
-            items: [
-              ...(canManageLanguages
-                ? [
-                    item({
-                      id: "platform.languages",
-                      label: "Idiomas",
-                      href: "/platform/settings/languages",
-                      iconKey: "languages" as const,
-                    }),
-                  ]
-                : []),
-              ...(canReadModules
-                ? [
-                    item({
-                      id: "platform.design",
-                      label: "Padrões de interface",
-                      href: null,
-                      iconKey: "layers" as const,
-                      children: [
-                        item({
-                          id: "platform.design.workbench",
-                          label: "Janela de edição",
-                          href: "/platform/design/workbench",
-                          iconKey: "layers" as const,
-                        }),
-                        item({
-                          id: "platform.design.status",
-                          label: "Avisos",
-                          href: "/platform/design/status",
-                          iconKey: "layers" as const,
-                        }),
-                        item({
-                          id: "platform.design.components",
-                          label: "Componentes",
-                          href: "/platform/design/components",
-                          iconKey: "layers" as const,
-                        }),
-                      ],
-                    }),
-                  ]
-                : []),
-              ...settingsItems,
-            ],
-          },
-        ]
-      : []),
   ];
+}
+
+/**
+ * Settings submenu of the platform (/platform/settings, CF1): the general
+ * and regional defaults, the languages of the dashboard (I1) and the global
+ * settings of each module.
+ */
+export function buildPlatformSettingsNavigation(
+  input: PlatformNavigationInput,
+): NavSection[] {
+  const moduleItems = input.modules
+    .filter((mod) => mod.technicalGate())
+    .flatMap((mod) =>
+      mod.manifest.settings
+        .filter((entry) => entry.destination === "admin")
+        .filter((entry) => allGranted(entry.readPermissions, input.grants))
+        .map((entry) => ({
+          order: entry.order,
+          id: entry.id,
+          value: item({
+            id: entry.id,
+            label: entry.label,
+            href: `/platform/settings/modules/${mod.manifest.moduleKey}`,
+            iconKey: null,
+          }),
+        })),
+    )
+    .sort(byOrder)
+    .map((entry) => entry.value);
+  const sections: NavSection[] = [
+    {
+      id: "settings.platform",
+      label: "Plataforma",
+      items: [
+        item({
+          id: "platform.settings.general",
+          label: "Geral e região",
+          href: "/platform/settings/general",
+          iconKey: "settings",
+        }),
+        ...(input.grants("platform.languages.manage")
+          ? [
+              item({
+                id: "platform.languages",
+                label: "Idiomas",
+                href: "/platform/settings/languages",
+                iconKey: "languages",
+              }),
+            ]
+          : []),
+      ],
+    },
+    { id: "settings.modules", label: "Módulos", items: moduleItems },
+  ];
+  return sections.filter((section) => section.items.length > 0);
 }
 
 /**
@@ -746,7 +833,36 @@ export function buildPartnerNavigation(
               }),
             ]
           : []),
+        ...settingsEntry(
+          "partner.settings",
+          "/admin/settings",
+          buildPartnerSettingsNavigation(grants),
+        ),
       ],
     },
   ];
+}
+
+/**
+ * Settings submenu of the partner (/admin/settings, CF1): what the partner
+ * sets for its customers. Every partner role reads; owner and admin edit.
+ */
+export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
+  const sections: NavSection[] = [
+    {
+      id: "settings.partner",
+      label: "Parceiro",
+      items: grants("partner.read")
+        ? [
+            item({
+              id: "partner.settings.general",
+              label: "Geral e região",
+              href: "/admin/settings/general",
+              iconKey: "settings",
+            }),
+          ]
+        : [],
+    },
+  ];
+  return sections.filter((section) => section.items.length > 0);
 }

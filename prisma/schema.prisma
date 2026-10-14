@@ -1258,6 +1258,25 @@ model PortfolioRatePlan {
 }
 
 /// Languages of the dashboard (I1), managed in Plataforma › Configurações › Idiomas.
+/// A value of the settings catalog at one level (CF1): platform default,
+/// partner override for its customers or workspace override. Keys and
+/// defaults live in `src/core/settings/catalog.ts`; never a secret.
+model Setting {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scope          String
+  partnerId      String?  @map("partner_id") @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  workspaceId    String?  @map("workspace_id") @db.Uuid
+  key            String
+  value          Json
+  locked         Boolean  @default(false)
+  updatedBy      String   @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("settings")
+}
+
 model PlatformLanguage {
   code      String   @id
   name      String

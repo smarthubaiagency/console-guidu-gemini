@@ -35,8 +35,10 @@ import {
 } from "@/modules/registry";
 
 import {
-  buildPlatformNavigation,
   buildAppNavigation,
+  buildAppSettingsNavigation,
+  buildPlatformNavigation,
+  buildPlatformSettingsNavigation,
   type NavSection,
 } from "./navigation";
 import {
@@ -64,11 +66,11 @@ export function partnerGrants(role: PartnerRoleKey | null) {
     role !== null && hasPartnerRolePermission(role, permission as Permission);
 }
 
-export async function loadAppNavigation(
+async function loadAppInput(
   prisma: PrismaClient,
   context: RequestContext,
   workspaceSlug: string,
-): Promise<NavSection[]> {
+) {
   return withContext(prisma, context, async (tx) => {
     const [role, platformStates, workspaceStates, contract] = await Promise.all(
       [
@@ -78,21 +80,50 @@ export async function loadAppNavigation(
         loadCompanyContract(tx, context.organizationId),
       ],
     );
-    return buildAppNavigation({
+    return {
       workspaceSlug,
       modules: listRegisteredModules(),
       platformStates,
       workspaceStates,
       grants: workspaceGrants(role),
       contract,
-    });
+    };
   });
+}
+
+export async function loadAppNavigation(
+  prisma: PrismaClient,
+  context: RequestContext,
+  workspaceSlug: string,
+): Promise<NavSection[]> {
+  return buildAppNavigation(await loadAppInput(prisma, context, workspaceSlug));
+}
+
+/** Settings submenu of the workspace (CF1). */
+export async function loadAppSettingsNavigation(
+  prisma: PrismaClient,
+  context: RequestContext,
+  workspaceSlug: string,
+): Promise<NavSection[]> {
+  return buildAppSettingsNavigation(
+    await loadAppInput(prisma, context, workspaceSlug),
+  );
 }
 
 export function loadPlatformNavigation(
   role: PlatformAdminRoleKey | null,
 ): NavSection[] {
   return buildPlatformNavigation({
+    modules: listRegisteredModules(),
+    grants: platformGrants(role),
+  });
+}
+
+/** Settings submenu of the platform (CF1). */
+export function loadPlatformSettingsNavigation(
+  role: PlatformAdminRoleKey | null,
+): NavSection[] {
+  return buildPlatformSettingsNavigation({
     modules: listRegisteredModules(),
     grants: platformGrants(role),
   });

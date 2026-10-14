@@ -10,6 +10,12 @@ import { activeLanguages } from "@/core/i18n/store";
 import { workspaceRoleGrants } from "@/core/permissions/guard";
 import type { WorkspaceRole } from "@/core/permissions/roles";
 import { Label } from "@/components/ui/label";
+import { ModulePageHeader } from "@/components/modules/module-page-header";
+import { InfoList } from "@/components/settings/info-list";
+import { RegionSettings } from "@/components/settings/region-settings";
+import { SettingsCard } from "@/components/settings/settings-shell";
+import { saveWorkspaceSettingsAction } from "@/core/settings/actions";
+import { settingsView } from "@/core/settings/service";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -37,7 +43,7 @@ export default async function GeneralSettingsPage({
     workspaceSlug,
   );
 
-  const { workspace, organization, role } = await withContext(
+  const { workspace, organization, role, view } = await withContext(
     prisma,
     context,
     async (tx) => {
@@ -56,7 +62,12 @@ export default async function GeneralSettingsPage({
         },
         select: { role: true },
       });
-      return { workspace: ws, organization: org, role: member?.role };
+      const view = await settingsView(tx, {
+        level: "workspace",
+        userId: identity.userId,
+        ctx: context,
+      });
+      return { workspace: ws, organization: org, role: member?.role, view };
     },
   );
   const t = await getTranslations("preferences");
@@ -67,66 +78,30 @@ export default async function GeneralSettingsPage({
     : false;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div className="border-border border-b pb-5">
-        <div className="flex items-center gap-3">
-          <div className="bg-surface-hover text-text-subtle rounded-lg p-2">
-            <Settings className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-20 text-text font-bold tracking-tight">
-              {tw("title")}
-            </h1>
-            <p className="text-12 text-text-secondary">{tw("description")}</p>
-          </div>
-        </div>
-      </div>
+    <>
+      <ModulePageHeader
+        title={tw("title")}
+        description={tw("description")}
+        icon={<Settings className="h-5 w-5" />}
+      />
 
-      <div className="border-card-border bg-surface-card space-y-4 rounded-xl border p-6 shadow-xs">
-        <div>
-          <p className="text-12 text-text-secondary font-medium">
-            {tw("name")}
-          </p>
-          <div className="text-14 text-text mt-1 font-semibold">
-            {workspace?.name}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-12 text-text-secondary font-medium">
-            {tw("slug")}
-          </p>
-          <div className="text-12 text-text-subtle bg-surface-raised mt-1 inline-block rounded-sm px-2 py-1 font-mono">
-            {workspace?.slug}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-12 text-text-secondary font-medium">
-            {tw("organization")}
-          </p>
-          <div className="text-14 text-text mt-1 font-medium">
-            {organization?.name}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-12 text-text-secondary font-medium">
-            {tw("uuid")}
-          </p>
-          <div className="text-12 text-text-secondary mt-1 font-mono">
-            {workspace?.id}
-          </div>
-        </div>
-      </div>
+      <SettingsCard title={tw("identity")} testId="workspace-info">
+        <InfoList
+          items={[
+            { label: tw("name"), value: workspace?.name },
+            { label: tw("slug"), value: workspace?.slug, mono: true },
+            { label: tw("organization"), value: organization?.name },
+            { label: tw("uuid"), value: workspace?.id, mono: true },
+          ]}
+        />
+      </SettingsCard>
 
       {/* Default language of the dashboard (I1). */}
-      <div
-        className="border-card-border bg-surface-card space-y-3 rounded-xl border p-6 shadow-xs"
-        data-testid="workspace-language"
+      <SettingsCard
+        title={t("workspace")}
+        description={t("workspaceHint")}
+        testId="workspace-language"
       >
-        <h2 className="text-14 text-text font-semibold">{t("workspace")}</h2>
-        <p className="text-12 text-text-secondary">{t("workspaceHint")}</p>
         {canEdit ? (
           <ActionForm
             action={saveWorkspaceLanguageAction}
@@ -157,7 +132,13 @@ export default async function GeneralSettingsPage({
               t("followPlatform")}
           </p>
         )}
-      </div>
-    </div>
+      </SettingsCard>
+
+      <RegionSettings
+        view={view}
+        action={saveWorkspaceSettingsAction}
+        hidden={{ workspaceSlug }}
+      />
+    </>
   );
 }

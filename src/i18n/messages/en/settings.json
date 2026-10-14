@@ -1,0 +1,57 @@
+{
+  "navLabel": "Settings menu",
+  "saved": "Settings saved.",
+  "errors": {
+    "unknown": "This setting can't be changed at this level.",
+    "locked": "This setting was locked by the level above.",
+    "invalid": "Invalid value for this setting.",
+    "currency": "Currency not offered by the platform."
+  },
+  "general": {
+    "title": "General and region",
+    "description": {
+      "platform": "Platform identity and regional defaults inherited by partners and workspaces.",
+      "partner": "Partner identity and regional defaults for your customers.",
+      "workspace": "Workspace identity, language and regional defaults."
+    },
+    "platform": {
+      "title": "Platform",
+      "description": "Set in the server environment (APP_NAME and APP_URL).",
+      "name": "Name",
+      "url": "Public address"
+    },
+    "partner": {
+      "title": "Partner",
+      "description": "Name and domains are set by the platform.",
+      "name": "Name",
+      "slug": "Identifier",
+      "domains": "Domains"
+    }
+  },
+  "region": {
+    "title": "Region",
+    "description": {
+      "platform": "Offered currencies, default currency and time zone. Locking stops partners and workspaces from changing it.",
+      "partner": "Default currency and time zone for your customers. Locking stops workspaces from changing it.",
+      "workspace": "Currency of prices and time zone used for hours and schedules."
+    },
+    "currency": "Currency",
+    "currencies": "Offered currencies",
+    "currenciesHint": "ISO 4217 codes separated by commas. Empty uses the system default.",
+    "timezone": "Time zone",
+    "lock": "Lock for the levels below",
+    "lockedBy": {
+      "platform": "Locked by the platform.",
+      "partner": "Locked by the partner."
+    },
+    "source": {
+      "default": "system default",
+      "platform": "from the platform",
+      "partner": "from the partner",
+      "workspace": "from the workspace"
+    },
+    "inherit": "Inherit: {value} ({from})",
+    "systemDefault": "System default: {value}",
+    "save": "Save region"
+  }
+}
