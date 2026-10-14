@@ -566,16 +566,43 @@ model PartnerBrand {
 /// Partner hosts (subdomain or custom). Platform hosts come from the
 /// environment and always resolve to the house partner.
 model PartnerDomain {
-  host      String   @id
-  partnerId String   @map("partner_id") @db.Uuid
-  kind      String
-  status    String   @default("pending")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
-  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  host                 String    @id
+  partnerId            String    @map("partner_id") @db.Uuid
+  kind                 String
+  status               String    @default("pending")
+  cloudflareHostnameId String?   @map("cloudflare_hostname_id")
+  sslStatus            String    @default("none") @map("ssl_status")
+  checkedAt            DateTime? @map("checked_at") @db.Timestamptz()
+  verifiedAt           DateTime? @map("verified_at") @db.Timestamptz()
+  lastError            String?   @map("last_error")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  partner              Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
   @@index([partnerId])
   @@map("partner_domains")
+}
+
+/// Public domains of a workspace (CF2b): site, digital profile, quiz.
+model WorkspaceDomain {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  host                 String    @unique
+  organizationId       String    @map("organization_id") @db.Uuid
+  workspaceId          String    @map("workspace_id") @db.Uuid
+  status               String    @default("pending")
+  isPrimary            Boolean   @default(false) @map("is_primary")
+  cloudflareHostnameId String?   @map("cloudflare_hostname_id")
+  sslStatus            String    @default("none") @map("ssl_status")
+  checkedAt            DateTime? @map("checked_at") @db.Timestamptz()
+  verifiedAt           DateTime? @map("verified_at") @db.Timestamptz()
+  lastError            String?   @map("last_error")
+  createdBy            String?   @map("created_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([workspaceId])
+  @@index([organizationId])
+  @@map("workspace_domains")
 }
 
 model Organization {

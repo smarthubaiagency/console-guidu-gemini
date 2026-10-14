@@ -11,6 +11,11 @@ import { portfolioQuotaUsage } from "@/modules/portfolio/quotas";
 import { helloWorldQuotaUsage } from "@/modules/hello-world/quotas";
 import { listRegisteredModules } from "@/modules/registry";
 
+import {
+  PUBLIC_DOMAINS_DEFAULT_LIMIT,
+  PUBLIC_DOMAINS_QUOTA,
+} from "@/core/domains/quota";
+
 import { loadCompanyContract } from "./contract";
 import { defaultQuotaLimit, quotaFromContract } from "./quotas";
 import type { CompanyContract } from "./types";
@@ -75,6 +80,22 @@ export async function loadUsage(
       source: seats.source,
     },
   ];
+  // Public domains of the workspace (CF2b); the plan sets the limit.
+  const domains = quotaFromContract(
+    contract,
+    PUBLIC_DOMAINS_QUOTA,
+    PUBLIC_DOMAINS_DEFAULT_LIMIT,
+  );
+  rows.push({
+    key: PUBLIC_DOMAINS_QUOTA,
+    label: "Domínios públicos do workspace",
+    scope: "workspace",
+    used: await tx.workspaceDomain.count({
+      where: { workspaceId: ctx.workspaceId },
+    }),
+    limit: domains.limit,
+    source: domains.source,
+  });
 
   for (const mod of listRegisteredModules()) {
     for (const entitlement of mod.manifest.entitlements) {

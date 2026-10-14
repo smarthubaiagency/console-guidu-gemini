@@ -70,6 +70,8 @@
     "platform_settings": "Settings",
     "partner_settings": "Settings",
     "platform_settings_general": "General and region",
-    "partner_settings_general": "General and region"
+    "partner_settings_general": "General and region",
+    "partner_settings_domains": "Domains",
+    "core_domains": "Domains"
   }
 }

@@ -50,6 +50,7 @@ export type NavIconKey =
   | "handshake"
   | "palette"
   | "languages"
+  | "globe"
   | "users";
 
 export type NavItem = Readonly<{
@@ -335,6 +336,13 @@ export function buildAppSettingsNavigation(
           label: "Geral",
           href: `${base}/general`,
           iconKey: "settings",
+        }),
+        // Public domains of the workspace (CF2b): every member reads.
+        item({
+          id: "core.domains",
+          label: "Domínios",
+          href: `${base}/domains`,
+          iconKey: "globe",
         }),
         // Stores of the business (F5a, UCP Location): every member sees.
         item({
@@ -859,6 +867,17 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "Marca",
                 href: "/admin/settings/brand",
                 iconKey: "palette",
+              }),
+            ]
+          : []),
+        // Dashboard domain and customers' public domains (CF2b).
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.settings.domains",
+                label: "Domínios",
+                href: "/admin/settings/domains",
+                iconKey: "globe",
               }),
             ]
           : []),

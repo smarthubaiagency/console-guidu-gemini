@@ -32,6 +32,12 @@ export const CORE_QUOTAS: readonly QuotaDefinition[] = [
     description: "Assentos da empresa (membros ativos e convites pendentes).",
     scope: "organization",
   },
+  {
+    key: "core.public_domains",
+    description:
+      "Domínios públicos por workspace (site, perfil digital e quiz). Sem limite no plano, nenhum.",
+    scope: "workspace",
+  },
 ];
 
 export type QuotaView = Readonly<{

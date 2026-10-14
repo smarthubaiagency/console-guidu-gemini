@@ -22,6 +22,7 @@ interface UsagePageProps {
 /** Rows of the platform itself have a translated label (I2). */
 const ROW_LABEL_KEYS: Record<string, string> = {
   "core.seats": "rows.coreSeats",
+  "core.public_domains": "rows.corePublicDomains",
 };
 
 type Translate = Awaited<ReturnType<typeof getTranslations<"usage">>>;

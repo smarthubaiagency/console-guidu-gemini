@@ -13,6 +13,7 @@ import ptBR_common from "./pt-BR/common.json";
 import ptBR_credentials from "./pt-BR/credentials.json";
 import ptBR_crm from "./pt-BR/crm.json";
 import ptBR_designLab from "./pt-BR/designLab.json";
+import ptBR_domains from "./pt-BR/domains.json";
 import ptBR_errors from "./pt-BR/errors.json";
 import ptBR_executions from "./pt-BR/executions.json";
 import ptBR_googleBusiness from "./pt-BR/googleBusiness.json";
@@ -57,6 +58,7 @@ import en_common from "./en/common.json";
 import en_credentials from "./en/credentials.json";
 import en_crm from "./en/crm.json";
 import en_designLab from "./en/designLab.json";
+import en_domains from "./en/domains.json";
 import en_errors from "./en/errors.json";
 import en_executions from "./en/executions.json";
 import en_googleBusiness from "./en/googleBusiness.json";
@@ -101,6 +103,7 @@ import es_common from "./es/common.json";
 import es_credentials from "./es/credentials.json";
 import es_crm from "./es/crm.json";
 import es_designLab from "./es/designLab.json";
+import es_domains from "./es/domains.json";
 import es_errors from "./es/errors.json";
 import es_executions from "./es/executions.json";
 import es_googleBusiness from "./es/googleBusiness.json";
@@ -149,6 +152,7 @@ export const MESSAGE_FILES = {
     credentials: ptBR_credentials,
     crm: ptBR_crm,
     designLab: ptBR_designLab,
+    domains: ptBR_domains,
     errors: ptBR_errors,
     executions: ptBR_executions,
     googleBusiness: ptBR_googleBusiness,
@@ -195,6 +199,7 @@ export const MESSAGE_FILES = {
     credentials: en_credentials,
     crm: en_crm,
     designLab: en_designLab,
+    domains: en_domains,
     errors: en_errors,
     executions: en_executions,
     googleBusiness: en_googleBusiness,
@@ -241,6 +246,7 @@ export const MESSAGE_FILES = {
     credentials: es_credentials,
     crm: es_crm,
     designLab: es_designLab,
+    domains: es_domains,
     errors: es_errors,
     executions: es_executions,
     googleBusiness: es_googleBusiness,
@@ -289,6 +295,7 @@ export const NAMESPACES = [
   "credentials",
   "crm",
   "designLab",
+  "domains",
   "errors",
   "executions",
   "googleBusiness",

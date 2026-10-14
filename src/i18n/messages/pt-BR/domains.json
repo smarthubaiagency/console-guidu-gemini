@@ -1,0 +1,76 @@
+{
+  "metaTitle": "Domínios",
+  "title": "Domínios",
+  "description": {
+    "partner": "O endereço do painel que você e os seus clientes usam, e os domínios públicos dos seus clientes.",
+    "workspace": "Domínios próprios para as páginas públicas deste workspace: site, perfil digital e quiz."
+  },
+  "dashboard": {
+    "title": "Domínio do painel",
+    "description": "Troque o endereço do painel, por exemplo de console.guidu.co para console.suaempresa.com.br. Vale para o /admin e para o painel dos seus clientes.",
+    "empty": "Nenhum domínio cadastrado."
+  },
+  "customers": {
+    "title": "Domínios dos clientes",
+    "description": "Domínios públicos dos workspaces dos seus clientes. O limite de cada workspace vem do plano contratado.",
+    "workspace": "Workspace",
+    "empty": "Nenhum cliente com domínio próprio.",
+    "noWorkspaces": "Nenhum workspace de cliente ainda."
+  },
+  "public": {
+    "title": "Domínios públicos",
+    "description": "Use um subdomínio, como perfil.suaempresa.com.br. O domínio principal é o endereço usado nos links públicos.",
+    "empty": "Nenhum domínio cadastrado.",
+    "quota": "{used} de {limit} domínios do plano.",
+    "quotaUnlimited": "{used} domínios (sem limite no plano).",
+    "quotaNone": "O plano atual não inclui domínio próprio. Fale com quem administra a sua conta.",
+    "readOnly": "Só o dono e os administradores do workspace alteram os domínios."
+  },
+  "form": {
+    "host": "Domínio",
+    "hostPlaceholder": "perfil.suaempresa.com.br",
+    "add": "Adicionar domínio",
+    "verify": "Verificar",
+    "remove": "Remover",
+    "makePrimary": "Tornar principal",
+    "removeTitle": "Remover o domínio {host}?",
+    "removeMessage": "O endereço deixa de abrir na hora e o certificado é apagado.",
+    "cancel": "Cancelar"
+  },
+  "instructions": {
+    "title": "Como apontar",
+    "cname": "No DNS do domínio, crie um registro CNAME com o nome {host} apontando para {target}. Depois clique em Verificar.",
+    "noTarget": "O destino do CNAME ainda não foi configurado na plataforma. O domínio fica pendente até lá."
+  },
+  "status": {
+    "pending": "Pendente",
+    "active": "Ativo",
+    "disabled": "Desativado",
+    "primary": "Principal",
+    "subdomain": "Subdomínio da plataforma"
+  },
+  "ssl": {
+    "pending": "Certificado em emissão",
+    "active": "Certificado ativo",
+    "error": "Falha no certificado"
+  },
+  "messages": {
+    "added": "Domínio {host} adicionado. Aponte o CNAME e clique em Verificar.",
+    "removed": "Domínio {host} removido.",
+    "primary": "Domínio principal atualizado.",
+    "active": "Domínio verificado e ativo.",
+    "not_configured": "A verificação ainda não está configurada na plataforma.",
+    "dns_pending": "O CNAME ainda não aponta para o destino. A propagação do DNS pode levar algumas horas.",
+    "ssl_pending": "DNS correto. O certificado está sendo emitido; verifique de novo em alguns minutos.",
+    "ssl_error": "O certificado não foi emitido. Confira o CNAME e verifique de novo.",
+    "cloudflare_error": "Não foi possível registrar o certificado agora. Tente de novo."
+  },
+  "errors": {
+    "invalidDomain": "Informe um domínio válido, como perfil.suaempresa.com.br.",
+    "platformDomain": "Esse domínio pertence à plataforma.",
+    "taken": "Esse domínio já está cadastrado.",
+    "notFound": "Domínio não encontrado.",
+    "primaryNotActive": "Só um domínio ativo pode ser o principal.",
+    "workspaceNotFound": "Workspace não encontrado."
+  }
+}

@@ -49,6 +49,8 @@ const PUBLIC: Record<string, string> = {
   "api/channels/[connectionId]/[token]/route.ts":
     "webhook de um canal; confere o hash do token da conexão (A5a)",
   "brand/[asset]/[version]/route.ts": "imagens da marca do host",
+  "api/domains/check/route.ts":
+    "ForwardAuth do Traefik; confere o segredo compartilhado (CF2b)",
 };
 
 /** Actions of signed-out visitors. */

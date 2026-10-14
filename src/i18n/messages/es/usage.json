@@ -28,6 +28,7 @@
   },
   "overLimit": "por encima del límite: no se borró nada, pero los nuevos elementos quedan bloqueados",
   "rows": {
-    "coreSeats": "Asientos de la empresa (miembros activos)"
+    "coreSeats": "Asientos de la empresa (miembros activos)",
+    "corePublicDomains": "Dominios públicos del workspace"
   }
 }

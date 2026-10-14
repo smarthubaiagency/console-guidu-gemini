@@ -51,6 +51,10 @@ export default defineConfig({
       TRANSLATION_PROVIDER: "fake",
       // The Chatwoot double of the rig listens on 127.0.0.1 over http (A5a).
       GUIDU_CHANNELS_ALLOW_PRIVATE: "true",
+      // Custom domains (CF2b): the CNAME target shown in the instructions and
+      // the ForwardAuth secret; Cloudflare stays off, so DNS alone decides.
+      CUSTOM_DOMAIN_CNAME_TARGET: "proxy.guidu.test",
+      DOMAINS_CHECK_SECRET: "e2e-domains-check-secret",
       APP_NAME: process.env.APP_NAME || "GUIDU",
       APP_URL: process.env.APP_URL || RIG.appUrl,
     },
