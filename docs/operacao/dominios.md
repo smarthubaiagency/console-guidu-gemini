@@ -40,5 +40,5 @@ O endpoint responde 200 para um domínio ativo de um parceiro ativo ou de um wor
 ## Pendências
 
 - A limpeza de um workspace excluído apaga as linhas de `workspace_domains` (desde a CF2c) e as escolhas das ferramentas, mas não os Custom Hostnames no Cloudflare.
-- As rotas públicas (site, perfil digital, quiz) ainda não existem. `resolvePublicHost` (CF2c) já devolve o workspace e o tipo de um host.
+- As rotas públicas (site, perfil digital, quiz) ainda não existem. `resolvePublicHost` (CF2c) já devolve o workspace e o tipo de um host. O caminho depois do host (slug, histórico e carência) está planejado na [CF2e](plano-cf2e-enderecos-publicos.md).
 - O Cloudflare como integração da plataforma (vários serviços) fica para uma etapa própria.
