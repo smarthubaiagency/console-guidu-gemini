@@ -47,6 +47,12 @@ type Definition<T> = Readonly<{
    * below as if locked, and nobody locks it by hand.
    */
   tightenOnly?: boolean;
+  /**
+   * A switch the first level turns on and the levels below may only turn
+   * off (CF5b): while it is `false` above (the default included), the
+   * levels below are stopped as if locked.
+   */
+  turnOffOnly?: boolean;
 }>;
 
 function define<T>(definition: Definition<T>): Definition<T> {
@@ -104,6 +110,28 @@ export const SETTINGS = {
     levels: ["platform", "partner", "workspace"],
     tightenOnly: true,
   }),
+  /**
+   * "Entrar com Google" on the login page (CF5b): the platform offers it,
+   * the partner may hide it on its hosts. The button only shows when the
+   * provider is also on in Supabase Auth (`AUTH_GOOGLE_ENABLED`).
+   */
+  "auth.google": define<boolean>({
+    schema: z.boolean(),
+    default: false,
+    levels: ["platform", "partner"],
+    turnOffOnly: true,
+  }),
+  /**
+   * Sign-in link by e-mail on the login page (CF5b), off by default: the
+   * platform offers it, the partner may hide it on its hosts. Shown only
+   * when `AUTH_MAGIC_LINK_ENABLED` is also on.
+   */
+  "auth.magic_link": define<boolean>({
+    schema: z.boolean(),
+    default: false,
+    levels: ["platform", "partner"],
+    turnOffOnly: true,
+  }),
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS;
@@ -122,6 +150,11 @@ export function isSettingKey(key: string): key is SettingKey {
 /** True for keys that only tighten (a `true` above locks the levels below). */
 export function isTightenOnly(key: SettingKey): boolean {
   return (SETTINGS[key] as Definition<unknown>).tightenOnly === true;
+}
+
+/** True for switches the levels below may only turn off (CF5b). */
+export function isTurnOffOnly(key: SettingKey): boolean {
+  return (SETTINGS[key] as Definition<unknown>).turnOffOnly === true;
 }
 
 /** Keys a level may set. */

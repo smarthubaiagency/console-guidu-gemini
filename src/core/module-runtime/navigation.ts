@@ -766,6 +766,13 @@ export function buildPlatformSettingsNavigation(
                 href: "/platform/settings/security/events",
                 iconKey: "activity",
               }),
+              // Sign-up, e-mail verification, Google and link (CF5b).
+              item({
+                id: "platform.settings.authentication",
+                label: "Autenticação",
+                href: "/platform/settings/authentication",
+                iconKey: "key",
+              }),
             ]
           : []),
       ],
@@ -1011,6 +1018,13 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "Eventos de segurança",
                 href: "/admin/settings/security/events",
                 iconKey: "activity",
+              }),
+              // Google and link on the partner's hosts (CF5b).
+              item({
+                id: "partner.settings.authentication",
+                label: "Autenticação",
+                href: "/admin/settings/authentication",
+                iconKey: "key",
               }),
             ]
           : []),

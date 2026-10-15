@@ -87,6 +87,8 @@
     "platform_settings_security": "Seguridad",
     "platform_settings_security_events": "Eventos de seguridad",
     "partner_settings_security": "Seguridad",
-    "partner_settings_security_events": "Eventos de seguridad"
+    "partner_settings_security_events": "Eventos de seguridad",
+    "platform_settings_authentication": "Autenticación",
+    "partner_settings_authentication": "Autenticación"
   }
 }

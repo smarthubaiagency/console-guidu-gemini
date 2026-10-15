@@ -111,4 +111,51 @@ describe("resolveSettings (CF1)", () => {
     );
     expect(inherited.detail["security.mfa.app"].lockedBy).toBe("platform");
   });
+
+  it("lets the partner only turn a login method off (CF5b)", () => {
+    // Off by default: the partner cannot turn it on by itself.
+    const none = resolveSettings([row("partner", "auth.google", true)]);
+    expect(none.detail["auth.google"]).toEqual({
+      value: false,
+      source: "default",
+      lockedBy: "platform",
+    });
+
+    // The platform offers it: on for every partner that keeps it.
+    const offered = resolveSettings([row("platform", "auth.google", true)]);
+    expect(offered.detail["auth.google"]).toEqual({
+      value: true,
+      source: "platform",
+      lockedBy: null,
+    });
+
+    // A partner hides it on its hosts.
+    const hidden = resolveSettings([
+      row("platform", "auth.magic_link", true),
+      row("partner", "auth.magic_link", false),
+    ]);
+    expect(hidden.detail["auth.magic_link"]).toEqual({
+      value: false,
+      source: "partner",
+      lockedBy: null,
+    });
+
+    // The platform turns it off again: the partner's choice no longer counts.
+    const withdrawn = resolveSettings([
+      row("platform", "auth.magic_link", false),
+      row("partner", "auth.magic_link", true),
+    ]);
+    expect(withdrawn.detail["auth.magic_link"]).toEqual({
+      value: false,
+      source: "platform",
+      lockedBy: "platform",
+    });
+
+    // Seen from the partner page.
+    const inherited = resolveSettings([], { above: "partner" });
+    expect(inherited.detail["auth.google"].lockedBy).toBe("platform");
+    // The platform itself is never stopped by the default.
+    const own = resolveSettings([], { above: "platform" });
+    expect(own.detail["auth.google"].lockedBy).toBeNull();
+  });
 });

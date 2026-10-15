@@ -58,6 +58,10 @@ const PUBLIC: Record<string, string> = {
 /** Actions of signed-out visitors. */
 const PUBLIC_ACTIONS: Record<string, string> = {
   "app/login/actions.ts: signInWithPassword": "login",
+  "app/login/actions.ts: signInWithGoogle":
+    "login com Google; confere o provedor e a cascata do host (CF5b)",
+  "app/login/actions.ts: requestMagicLink":
+    "link mágico; confere o provedor e a cascata do host, resposta igual para qualquer e-mail (CF5b)",
   "app/forgot-password/actions.ts: requestPasswordRecovery":
     "pedido de recuperação; resposta igual para qualquer e-mail",
 };

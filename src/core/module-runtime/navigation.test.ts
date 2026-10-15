@@ -263,6 +263,11 @@ describe("generated navigation", () => {
       "/platform/settings/security/events",
     );
     expect(find(billing, "platform.settings.security")).toBeUndefined();
+    // Authentication (CF5b): same readers as Security.
+    expect(find(support, "platform.settings.authentication")?.href).toBe(
+      "/platform/settings/authentication",
+    );
+    expect(find(billing, "platform.settings.authentication")).toBeUndefined();
     expect(find(none, "platform.settings.security.events")).toBeUndefined();
   });
 
@@ -302,6 +307,7 @@ describe("generated navigation", () => {
       "/admin/settings/plans",
       "/admin/settings/security",
       "/admin/settings/security/events",
+      "/admin/settings/authentication",
     ]);
     expect(hrefs("partner_support")).toEqual([
       "/admin/ai/assistant",

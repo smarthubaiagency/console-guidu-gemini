@@ -4,6 +4,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { provisionIdentity } from "@/core/auth/identity";
 import { appOrigin } from "@/core/auth/origin";
 import { safeInternalPath } from "@/core/auth/redirects";
+import { getRequestOrigin } from "@/core/partners/resolve";
 import { recordAuthEvent } from "@/core/security/auth-events";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -29,10 +30,15 @@ function isEmailOtpType(value: string | null): value is EmailOtpType {
  *
  * The token never reaches a redirect target or a log line — it is consumed
  * here and the browser leaves with a clean URL.
+ *
+ * The browser stays on the host it came back to (CF5b): APP_URL on platform
+ * hosts, the partner domain once it matched an active domain, APP_URL for
+ * any other host. A session that needs the second factor goes through
+ * /auth/mfa first, as after the password.
  */
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
-  const origin = appOrigin();
+  const origin = (await getRequestOrigin()) ?? appOrigin();
   const code = url.searchParams.get("code");
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type");
@@ -76,6 +82,17 @@ export async function GET(request: NextRequest) {
 
   // Segurança › Eventos (CF5a): sign-in by e-mail link or provider.
   await recordAuthEvent(decision.userId, "auth.sign_in", "success", "callback");
+
+  const { data: assurance } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (
+    assurance?.nextLevel === "aal2" &&
+    assurance.currentLevel !== assurance.nextLevel
+  ) {
+    return NextResponse.redirect(
+      `${origin}/auth/mfa?next=${encodeURIComponent(next)}`,
+    );
+  }
 
   return NextResponse.redirect(`${origin}${next}`);
 }

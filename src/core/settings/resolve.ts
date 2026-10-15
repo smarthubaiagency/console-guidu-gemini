@@ -2,6 +2,7 @@ import {
   type EffectiveSettings,
   isSettingKey,
   isTightenOnly,
+  isTurnOffOnly,
   SETTING_KEYS,
   SETTING_LEVELS,
   type SettingKey,
@@ -17,7 +18,9 @@ import {
  * A row that does not pass the catalog schema is ignored (an old value of a
  * changed key never breaks a page). A locked platform or partner row stops
  * the levels below, so a value written under a lock has no effect. A key
- * that only tightens (CF5a) locks itself wherever it is `true`.
+ * that only tightens (CF5a) locks itself wherever it is `true`; a switch
+ * the levels below may only turn off (CF5b) stops them while it is `false`
+ * above, the default counting as the first level's choice.
  */
 
 export type SettingRow = Readonly<{
@@ -46,6 +49,7 @@ const levelIndex = (level: SettingLevel) => SETTING_LEVELS.indexOf(level);
 function resolveKey(
   key: SettingKey,
   rows: readonly SettingRow[],
+  above?: SettingLevel,
 ): ResolvedSetting & { candidates: unknown[] } {
   const definition = SETTINGS[key];
   let resolved: ResolvedSetting = {
@@ -54,7 +58,17 @@ function resolveKey(
     lockedBy: null,
   };
   const candidates: unknown[] = [definition.default];
+  const first: SettingLevel = definition.levels[0] ?? "platform";
   for (const level of definition.levels) {
+    if (isTurnOffOnly(key) && level !== first && resolved.value === false) {
+      resolved = {
+        ...resolved,
+        lockedBy: resolved.source === "default" ? first : resolved.source,
+      };
+      break;
+    }
+    // Seen from `above`: only the levels over it count.
+    if (above && levelIndex(level) >= levelIndex(above)) break;
     const row = rows.find((r) => r.scope === level && r.key === key);
     if (!row) continue;
     const parsed = definition.schema.safeParse(row.value);
@@ -83,7 +97,11 @@ export function resolveSettings(
   const detail = {} as Record<SettingKey, ResolvedSetting>;
   const candidates = {} as Record<SettingKey, unknown[]>;
   for (const key of SETTING_KEYS) {
-    const { candidates: list, ...resolved } = resolveKey(key, usable);
+    const { candidates: list, ...resolved } = resolveKey(
+      key,
+      usable,
+      options.above,
+    );
     detail[key] = resolved;
     candidates[key] = list;
   }
