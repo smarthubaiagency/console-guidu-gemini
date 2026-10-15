@@ -99,6 +99,10 @@
     "core_integrations": "Integraciones",
     "platform_settings_api": "API y MCP",
     "platform_settings_integrations_google": "Google",
-    "partner_settings_integrations": "Google"
+    "partner_settings_integrations": "Google",
+    "platform_billing_overview": "Resumen",
+    "platform_billing_gateway": "Pasarela",
+    "platform_settings_analytics": "Analytics",
+    "partner_settings_analytics": "Analytics"
   }
 }

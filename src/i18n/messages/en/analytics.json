@@ -1,0 +1,90 @@
+{
+  "metaTitle": {
+    "platform": "Analytics (Platform)",
+    "partner": "Analytics (Admin)"
+  },
+  "title": "Analytics",
+  "description": {
+    "platform": "Dashboard usage by area and route, without personal data. Off by default until the LGPD review (D-PA-06).",
+    "partner": "Your brand's own identifier, optional, for the login and /app of your customers."
+  },
+  "save": "Save",
+  "readOnly": "Read only: the managers of this level edit it.",
+  "lgpd": "Depends on the legal LGPD review (D-PA-06). Keep it off until it is approved.",
+  "status": {
+    "label": "Status",
+    "on": "On",
+    "off": "Off"
+  },
+  "csp": {
+    "label": "Domain allowed in the CSP",
+    "none": "None (off)"
+  },
+  "platform": {
+    "title": "Product analytics",
+    "description": "The platform picks the provider and the site identifier. The CSP allows only the chosen provider's domain, and only while analytics is on.",
+    "toggle": "Turn on product analytics"
+  },
+  "provider": {
+    "label": "Provider",
+    "plausible": "Plausible (default, no cookie)",
+    "posthog": "PostHog (keeps an identifier, asks for consent)"
+  },
+  "region": {
+    "label": "PostHog region",
+    "us": "United States",
+    "eu": "European Union"
+  },
+  "site": {
+    "label": "Site identifier",
+    "hint": "Plausible: the site domain registered there (e.g. panel.example.com). PostHog: the project's public key (phc_...)."
+  },
+  "rules": {
+    "title": "What is sent",
+    "description": "Fixed rules, the same for the platform and the partners.",
+    "data": "Only the area of the screen (platform, admin, app, login) and the route with its variable parts replaced by :id.",
+    "never": "Never: e-mail, ids of people or records, workspace name, tokens, query string, title or content of the screen.",
+    "consentPosthog": "PostHog keeps an anonymous identifier in the browser: nothing is sent before the person consents.",
+    "consentPlausible": "Plausible uses no cookie and keeps no identifier: no consent notice is needed. With PostHog, nothing is sent without consent.",
+    "debug": "Outside production, each event also shows in the browser console.",
+    "events": "Planned product events (name only, no properties)"
+  },
+  "events": {
+    "login": "Login",
+    "agent_created": "Created an agent",
+    "channel_connected": "Connected a channel",
+    "guids_activated": "Activated GUIDS"
+  },
+  "partner": {
+    "title": "Your brand's analytics",
+    "description": "Uses the platform's provider. Measures the login and /app of your customers, with the same consent and data rules.",
+    "platformStatus": "Platform analytics",
+    "platformOn": "On ({provider})",
+    "sending": "Your identifier",
+    "sendingYes": "Sending",
+    "sendingNo": "Not sending",
+    "platformOffHint": "The platform has analytics off: nothing is sent, not even to your identifier.",
+    "toggle": "Turn on my identifier",
+    "siteLabel": "Identifier at {provider}"
+  },
+  "consent": {
+    "title": "Usage measurement",
+    "description": "May we measure which screens are used to improve the dashboard?",
+    "noPersonalData": "Only the area and route of the screen, no personal data. You may decline.",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "messages": {
+    "saved": "Analytics saved."
+  },
+  "errors": {
+    "provider": "Choose the provider.",
+    "plausibleSite": "Enter the site domain at Plausible.",
+    "posthogKey": "Enter the PostHog project key (phc_).",
+    "siteRequired": "Enter the identifier before turning it on."
+  },
+  "providerName": {
+    "plausible": "Plausible",
+    "posthog": "PostHog"
+  }
+}

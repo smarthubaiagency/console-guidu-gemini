@@ -1,0 +1,90 @@
+{
+  "metaTitle": {
+    "platform": "Analytics (Plataforma)",
+    "partner": "Analytics (Admin)"
+  },
+  "title": "Analytics",
+  "description": {
+    "platform": "Uso del panel por área y ruta, sin datos personales. Apagado por defecto hasta la revisión de LGPD (D-PA-06).",
+    "partner": "Identificador propio de su marca, opcional, para el login y el /app de sus clientes."
+  },
+  "save": "Guardar",
+  "readOnly": "Solo lectura: lo editan los gestores de este nivel.",
+  "lgpd": "Depende de la revisión jurídica de LGPD (D-PA-06). Manténgalo apagado hasta la aprobación.",
+  "status": {
+    "label": "Estado",
+    "on": "Activado",
+    "off": "Desactivado"
+  },
+  "csp": {
+    "label": "Dominio permitido en la CSP",
+    "none": "Ninguno (apagado)"
+  },
+  "platform": {
+    "title": "Analytics de producto",
+    "description": "La plataforma elige el proveedor y el identificador del sitio. La CSP permite solo el dominio del proveedor elegido, y solo con el analytics activado.",
+    "toggle": "Activar el analytics de producto"
+  },
+  "provider": {
+    "label": "Proveedor",
+    "plausible": "Plausible (predeterminado, sin cookie)",
+    "posthog": "PostHog (guarda un identificador, pide consentimiento)"
+  },
+  "region": {
+    "label": "Región de PostHog",
+    "us": "Estados Unidos",
+    "eu": "Unión Europea"
+  },
+  "site": {
+    "label": "Identificador del sitio",
+    "hint": "Plausible: el dominio del sitio registrado allí (ej.: panel.ejemplo.com). PostHog: la clave pública del proyecto (phc_...)."
+  },
+  "rules": {
+    "title": "Qué se envía",
+    "description": "Reglas fijas, iguales para la plataforma y para los socios.",
+    "data": "Solo el área de la pantalla (plataforma, admin, app, login) y la ruta con las partes variables reemplazadas por :id.",
+    "never": "Nunca: correo, ids de personas o registros, nombre del workspace, tokens, query string, título o contenido de la pantalla.",
+    "consentPosthog": "PostHog guarda un identificador anónimo en el navegador: no se envía nada antes del consentimiento de la persona.",
+    "consentPlausible": "Plausible no usa cookie ni guarda identificador: no necesita aviso de consentimiento. Con PostHog, no se envía nada sin consentimiento.",
+    "debug": "Fuera de producción, cada evento también aparece en la consola del navegador.",
+    "events": "Eventos de producto previstos (solo el nombre, sin propiedades)"
+  },
+  "events": {
+    "login": "Login",
+    "agent_created": "Creó un agente",
+    "channel_connected": "Conectó un canal",
+    "guids_activated": "Activó GUIDS"
+  },
+  "partner": {
+    "title": "Analytics de su marca",
+    "description": "Usa el mismo proveedor de la plataforma. Mide el login y el /app de sus clientes, con las mismas reglas de consentimiento y de datos.",
+    "platformStatus": "Analytics de la plataforma",
+    "platformOn": "Activado ({provider})",
+    "sending": "Su identificador",
+    "sendingYes": "Enviando",
+    "sendingNo": "Sin enviar",
+    "platformOffHint": "La plataforma tiene el analytics apagado: no se envía nada, ni siquiera a su identificador.",
+    "toggle": "Activar mi identificador",
+    "siteLabel": "Identificador en {provider}"
+  },
+  "consent": {
+    "title": "Medición de uso",
+    "description": "¿Podemos medir qué pantallas se usan para mejorar el panel?",
+    "noPersonalData": "Solo el área y la ruta de la pantalla, sin datos personales. Puede rechazar.",
+    "accept": "Aceptar",
+    "decline": "Rechazar"
+  },
+  "messages": {
+    "saved": "Analytics guardado."
+  },
+  "errors": {
+    "provider": "Elija el proveedor.",
+    "plausibleSite": "Ingrese el dominio del sitio en Plausible.",
+    "posthogKey": "Ingrese la clave del proyecto en PostHog (phc_).",
+    "siteRequired": "Ingrese el identificador antes de activar."
+  },
+  "providerName": {
+    "plausible": "Plausible",
+    "posthog": "PostHog"
+  }
+}

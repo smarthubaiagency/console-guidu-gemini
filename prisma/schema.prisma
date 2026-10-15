@@ -366,6 +366,47 @@ model PaymentProviderEvent {
   @@map("payment_provider_events")
 }
 
+/// Payment gateway of the platform (CF7): only Stripe Connect for now. The
+/// credentials are encrypted by the application and shown masked only; real
+/// charging stays off until P6 (D-PA-14).
+model PaymentGateway {
+  provider               String   @id
+  enabled                Boolean  @default(false)
+  isDefault              Boolean  @default(false) @map("is_default")
+  mode                   String   @default("test")
+  secretKeyMasked        String?  @map("secret_key_masked")
+  secretKeyEncrypted     String?  @map("secret_key_encrypted")
+  webhookSecretMasked    String?  @map("webhook_secret_masked")
+  webhookSecretEncrypted String?  @map("webhook_secret_encrypted")
+  updatedBy              String   @map("updated_by") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("payment_gateways")
+}
+
+/// A verified webhook call of a gateway (CF7), with its raw body, unique per
+/// provider and event id. Processing only records it in this step.
+model PaymentWebhookEvent {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider     String
+  eventId      String    @map("event_id")
+  eventType    String    @map("event_type")
+  livemode     Boolean
+  isTest       Boolean   @default(false) @map("is_test")
+  rawBody      String    @map("raw_body")
+  status       String    @default("received")
+  attempts     Int       @default(0)
+  lastError    String?   @map("last_error")
+  receivedAt   DateTime  @default(now()) @map("received_at") @db.Timestamptz()
+  processedAt  DateTime? @map("processed_at") @db.Timestamptz()
+  processingMs Int?      @map("processing_ms")
+
+  @@unique([provider, eventId], map: "payment_webhook_events_unique")
+  @@index([provider, receivedAt(sort: Desc)], map: "payment_webhook_events_received_idx")
+  @@map("payment_webhook_events")
+}
+
 /// Insert-only payment or refund, with the computed shares (P5m).
 model Payment {
   id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

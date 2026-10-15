@@ -321,6 +321,7 @@ describe("generated navigation", () => {
       "/admin/settings/security",
       "/admin/settings/security/events",
       "/admin/settings/authentication",
+      "/admin/settings/analytics",
     ]);
     expect(hrefs("partner_support")).toEqual([
       "/admin/ai",
@@ -332,6 +333,7 @@ describe("generated navigation", () => {
       "/admin/settings/email",
       "/admin/settings/plans",
       "/admin/settings/integrations",
+      "/admin/settings/analytics",
     ]);
     expect(
       find(

@@ -1,0 +1,111 @@
+{
+  "metaTitle": "Payment gateway",
+  "description": "Gateway that splits the charge between the platform and the partner. Only Stripe Connect in this step; real charging stays off until P6.",
+  "tabs": {
+    "label": "Billing sections",
+    "overview": "Overview",
+    "gateway": "Gateway"
+  },
+  "save": "Save",
+  "stripe": {
+    "title": "Stripe Connect",
+    "description": "Turns on the webhook, sets the default gateway and the mode (test or live).",
+    "status": "Status",
+    "on": "On",
+    "off": "Off",
+    "charging": "Real charging",
+    "chargingOff": "Off until P6 (no charge is made)",
+    "enable": "Turn on Stripe Connect",
+    "default": "Use as the default gateway"
+  },
+  "mode": {
+    "label": "Mode",
+    "test": "Test (sandbox)",
+    "live": "Live"
+  },
+  "capabilities": {
+    "split": "Split",
+    "recurring": "Recurring",
+    "hostedCheckout": "Hosted checkout",
+    "recipientOnboarding": "Recipient onboarding"
+  },
+  "methods": {
+    "card": "Card",
+    "pix": "Pix",
+    "boleto": "Boleto"
+  },
+  "credentials": {
+    "title": "Credentials",
+    "description": "Stored encrypted in the database. Shown masked only and never sent back to the screen.",
+    "secretKey": "Secret key",
+    "webhookSecret": "Webhook signing secret",
+    "notSet": "Not set",
+    "secretKeyInput": "New secret key (sk_ or rk_)",
+    "webhookSecretInput": "New webhook secret (whsec_)",
+    "hint": "Leave blank to keep the saved credential. The key must match the mode chosen above."
+  },
+  "webhook": {
+    "title": "Webhook",
+    "description": "Register this address in the Stripe dashboard. Each event is checked by its signature, stored as received and processed only once.",
+    "url": "Webhook address",
+    "noAppUrl": "APP_URL not set",
+    "received": "Received ({days, plural, one {# day} other {# days}})",
+    "failed": "Failed",
+    "last": "Last received",
+    "never": "None",
+    "latency": "Processing latency",
+    "latencyValue": "average {average} ms, maximum {max} ms",
+    "sendTest": "Send test webhook",
+    "reprocess": "Reprocess failures",
+    "offHint": "Turn on Stripe Connect and set the webhook secret to receive events and send the test."
+  },
+  "events": {
+    "received": "Received at",
+    "type": "Type",
+    "status": "Status",
+    "attempts": "Attempts",
+    "test": "test",
+    "none": "No event received yet.",
+    "statuses": {
+      "received": "Received",
+      "processed": "Processed",
+      "failed": "Failed"
+    }
+  },
+  "history": {
+    "title": "Change history",
+    "description": "From the audit trail: who changed what and when, without credential values.",
+    "none": "No change recorded.",
+    "actions": {
+      "settings": "Settings changed",
+      "credentials": "Credentials replaced",
+      "test_webhook": "Test webhook sent",
+      "reprocess": "Failures reprocessed",
+      "other": "Change"
+    },
+    "fields": {
+      "enabled": "on/off",
+      "isDefault": "default",
+      "mode": "mode",
+      "secretKey": "secret key",
+      "webhookSecret": "webhook secret"
+    }
+  },
+  "messages": {
+    "settingsSaved": "Gateway saved.",
+    "credentialsSaved": "Credentials saved.",
+    "testSent": "Test webhook received and processed.",
+    "testFailed": "The test webhook did not reach the route. Check APP_URL and the webhook secret.",
+    "reprocessed": "Reprocessing done: {processed} processed, {failed} still failing."
+  },
+  "errors": {
+    "secretKeyFormat": "Enter a Stripe secret key (sk_ or rk_).",
+    "secretKeyMode": "The secret key belongs to the other mode (test or live).",
+    "webhookSecretFormat": "Enter the webhook signing secret (whsec_).",
+    "credentialsRequired": "Set the secret key and the webhook secret before turning it on.",
+    "defaultNeedsEnabled": "Only a gateway that is on can be the default.",
+    "nothingToSave": "Enter at least one credential.",
+    "notEnabled": "Turn on Stripe and set the webhook secret before the test.",
+    "mode": "Choose the mode."
+  }
+}

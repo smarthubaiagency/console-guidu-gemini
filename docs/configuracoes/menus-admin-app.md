@@ -44,7 +44,7 @@ Regra de herança em todos os campos: a plataforma define padrão e teto; o parc
   - Segurança: MFA obrigatória no /admin e para os clientes, IPs do /admin, eventos de segurança dos seus
   - Credenciais: chaves e segredos do parceiro (tabela `partner_credentials` existe)
   - API: chaves de API do parceiro (futuro) e limites por plano
-  - Analytics: identificador próprio (opcional)
+  - Analytics: identificador próprio (opcional, CF7)
   - Jurídico: termos e privacidade da marca dele (existe)
 
 ## /app (cliente)
@@ -91,5 +91,5 @@ Estado em 15/10/2026 (detalhe no [handoff](../handoff/2026-10-15-handoff.md#4-es
 - **CF5. Segurança, autenticação, manutenção** (CF5a #85, CF5b #87, CF5c #88, [plano-cf5.md](plano-cf5.md)). Feita.
 - **CF6a. IA: provedores e modelos** (PR #90, [plano-cf6a.md](plano-cf6a.md)). Feita.
 - **CF6b. API e Integrações** ([plano-cf6b.md](plano-cf6b.md)): liga/desliga da API e do MCP, limites e escopos por plano, uso por chave; app OAuth do Google (plataforma e parceiro) e conexão da conta Google do workspace. As ferramentas da G1 ficam para depois. Chaves de API do próprio parceiro ficaram fora. Feita (PR a abrir).
-- **CF7. Gateway e analytics.** Próxima.
+- **CF7. Gateway e analytics** ([plano-cf7.md](plano-cf7.md), [guia](../operacao/gateway-stripe.md)): aba Gateway em Cobrança só com o Stripe Connect (cobrança real desligada até a P6), analytics de produto desligado por padrão (D-PA-06) e Analytics no /admin. Feita (PR #92).
 - Em cada etapa as páginas já existentes migram para a nova estrutura.
