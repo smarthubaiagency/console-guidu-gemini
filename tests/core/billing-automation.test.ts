@@ -72,6 +72,9 @@ describeDatabase("F3c: billing in jobs", requiredVars, () => {
       `delete from public.job_runs where kind like 'billing.%'`,
     );
     await admin.$executeRawUnsafe(
+      `delete from public.user_notifications where idempotency_key like 'subscription:f3c00000-%'`,
+    );
+    await admin.$executeRawUnsafe(
       `update public.organizations set partner_id = '${HOUSE_PARTNER_ID}'
        where partner_id in ('${partnerP}', '${partnerQ}')`,
     );
@@ -212,6 +215,23 @@ describeDatabase("F3c: billing in jobs", requiredVars, () => {
       ],
     ]);
     expect(deliveries[0]?.subject).toBe("Assinatura em atraso: Organization B");
+
+    // CF3c: the bell of each partner's active owners, whatever the e-mail.
+    const bell = await admin.userNotification.findMany({
+      where: { idempotencyKey: { startsWith: "subscription:f3c00000-" } },
+      orderBy: { eventType: "asc" },
+    });
+    expect(bell.map((n) => [n.userId, n.eventType, n.readAt])).toEqual([
+      [partnerOwner, "billing.subscription.past_due", null],
+      [partnerOwnerQ, "billing.subscription.suspended", null],
+    ]);
+    expect(bell[0]?.data).toMatchObject({
+      organization: "Organization B",
+      periodEnd: "2026-10-01",
+    });
+    expect(bell[0]?.linkUrl).toMatch(
+      /^https?:\/\/cobranca\.agencia-p\.test.*\/admin\/billing$/,
+    );
 
     const audits = await admin.$queryRawUnsafe<
       {

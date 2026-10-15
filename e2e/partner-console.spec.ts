@@ -28,6 +28,7 @@ import {
 } from "./support/identity";
 import { totpCode } from "./support/totp";
 import { statusBanner } from "./support/status";
+import { RIG } from "./support/rig";
 
 async function enrolMfa(page: Page): Promise<void> {
   await page.goto("/app/account/security");
@@ -79,12 +80,12 @@ test("platform creates a partner whose owner runs the console on the partner dom
     await invite.getByTestId("partner-invite-url").textContent()
   )?.trim();
   expect(inviteUrl).toMatch(
-    new RegExp(`^http://${host}:3000/partner-invite/[0-9a-f]{64}$`),
+    new RegExp(`^http://${host}:${RIG.appPort}/partner-invite/[0-9a-f]{64}$`),
   );
 
   // Partner owner, on the partner domain.
   const partnerContext = await browser.newContext({
-    baseURL: `http://${host}:3000`,
+    baseURL: `http://${host}:${RIG.appPort}`,
   });
   const owner = await partnerContext.newPage();
   await createIdentity(request, ownerEmail);
@@ -172,7 +173,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
     await customer.getByTestId("partner-invite-url").textContent()
   )?.trim();
   expect(customerInvite).toMatch(
-    new RegExp(`^http://${host}:3000/invite/[0-9a-f]{64}$`),
+    new RegExp(`^http://${host}:${RIG.appPort}/invite/[0-9a-f]{64}$`),
   );
   await owner.reload();
   await expect(owner.getByTestId("partner-customers")).toContainText(
@@ -182,7 +183,7 @@ test("platform creates a partner whose owner runs the console on the partner dom
   // The customer owner accepts on the partner domain and lands in the
   // workspace with the template's module and the partner brand.
   const customerContext = await browser.newContext({
-    baseURL: `http://${host}:3000`,
+    baseURL: `http://${host}:${RIG.appPort}`,
   });
   const customerPage = await customerContext.newPage();
   await createIdentity(request, customerEmail);

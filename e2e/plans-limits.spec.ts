@@ -27,6 +27,7 @@ import {
 } from "./support/identity";
 import { statusBanner } from "./support/status";
 import { totpCode } from "./support/totp";
+import { RIG } from "./support/rig";
 
 const DOMAINS = "Domínios públicos do workspace";
 
@@ -140,7 +141,7 @@ test("platform owner sets a plan's public domains and the workspace usage reflec
   });
 
   const partnerContext = await browser.newContext({
-    baseURL: `http://${partnerHost}:3000`,
+    baseURL: `http://${partnerHost}:${RIG.appPort}`,
   });
   const partner = await partnerContext.newPage();
   await signIn(partner, partnerEmail);
@@ -175,7 +176,7 @@ test("platform owner sets a plan's public domains and the workspace usage reflec
 
   // The customer, on the partner's host, sees the plan's limit.
   const customerContext = await browser.newContext({
-    baseURL: `http://${partnerHost}:3000`,
+    baseURL: `http://${partnerHost}:${RIG.appPort}`,
   });
   const customer = await customerContext.newPage();
   await signIn(customer, customerEmail);

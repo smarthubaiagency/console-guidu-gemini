@@ -25,6 +25,7 @@ import {
 } from "./support/identity";
 import { signOutFromShell } from "./support/sidebar";
 import { totpCode } from "./support/totp";
+import { RIG } from "./support/rig";
 
 async function enrolMfa(page: Page): Promise<void> {
   await page.goto("/app/account/security");
@@ -111,7 +112,7 @@ test("pages of /app, /admin and /platform run under the CSP", async ({
     role: "partner_owner",
   });
   const partnerContext = await browser.newContext({
-    baseURL: `http://${host}:3000`,
+    baseURL: `http://${host}:${RIG.appPort}`,
   });
   const owner = await partnerContext.newPage();
   const partnerViolations = watchCsp(owner);
@@ -122,7 +123,7 @@ test("pages of /app, /admin and /platform run under the CSP", async ({
   // Signing out works on the partner domain and stays on it.
   await signOutFromShell(owner);
   await expect(owner).toHaveURL(
-    new RegExp(`^http://${host}:3000/login\\?notice=signed-out$`),
+    new RegExp(`^http://${host}:${RIG.appPort}/login\\?notice=signed-out$`),
   );
   await partnerContext.close();
 });

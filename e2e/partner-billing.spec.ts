@@ -28,6 +28,7 @@ import {
 } from "./support/identity";
 import { totpCode } from "./support/totp";
 import { statusBanner } from "./support/status";
+import { RIG } from "./support/rig";
 
 async function enrolMfa(page: Page): Promise<void> {
   await page.goto("/app/account/security");
@@ -99,7 +100,7 @@ test("partner activates a customer with a manual payment; the checkout stays a d
   });
 
   const partnerContext = await browser.newContext({
-    baseURL: `http://${host}:3000`,
+    baseURL: `http://${host}:${RIG.appPort}`,
   });
   const owner = await partnerContext.newPage();
   await signIn(owner, ownerEmail);
@@ -164,7 +165,7 @@ test("partner activates a customer with a manual payment; the checkout stays a d
 
   // The customer sees the plan and the partner contact, never a checkout.
   const customerContext = await browser.newContext({
-    baseURL: `http://${host}:3000`,
+    baseURL: `http://${host}:${RIG.appPort}`,
   });
   const customer = await customerContext.newPage();
   await signIn(customer, customerEmail);

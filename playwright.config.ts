@@ -35,6 +35,7 @@ export default defineConfig({
     url: RIG.appUrl,
     reuseExistingServer: false,
     env: {
+      PORT: String(RIG.appPort),
       NEXT_PUBLIC_SUPABASE_URL: AUTH_BASE_URL,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: RIG.publishableKey,
       SUPABASE_URL: AUTH_BASE_URL,
