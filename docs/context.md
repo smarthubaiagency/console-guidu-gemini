@@ -34,4 +34,4 @@ Estas invariantes vêm da seção 25 da especificação e não podem ser relaxad
 4. [Pendências abertas](pendencias.md), que não autorizam preenchimento por inferência.
 5. Migrations versionadas em `supabase/migrations`, fonte de verdade do schema aplicado.
 6. [Matriz de permissões](architecture/permissoes.md), que define o catálogo de permissões, a matriz papel × permissão e os guards de servidor (§4, §7 e §25).
-7. [Handoff mais recente](handoff/2026-10-12-handoff.md), com o estado de todas as fases, o histórico de PRs e migrations, as armadilhas conhecidas, como validar localmente e as pendências para continuar a partir da F6a.
+7. [Handoff mais recente](handoff/2026-10-15-handoff.md) (estado das configurações, trabalho em paralelo, decisões e próximos passos), junto com o [handoff de 12/10/2026](handoff/2026-10-12-handoff.md) (regras, histórico de fases, armadilhas e como validar localmente). Planos de trabalho em `docs/configuracoes/`, `docs/modules/*/` e `docs/architecture/planos-ui/`.
