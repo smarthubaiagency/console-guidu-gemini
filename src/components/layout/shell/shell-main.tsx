@@ -24,8 +24,10 @@ import { SmartStatusBanner } from "@/components/feedback/smart-status-banner";
 import { StatusProvider } from "@/components/feedback/status-context";
 import type { ConsoleAccess } from "@/core/auth/console-access";
 import type { NavSection } from "@/core/module-runtime/navigation";
+import type { NotificationBellData } from "@/core/notifications/bell";
 import { cn } from "@/lib/utils";
 
+import { NotificationBell } from "./notification-bell";
 import { ShellBreadcrumb } from "./shell-breadcrumb";
 import { ShellSearch } from "./shell-search";
 
@@ -62,17 +64,19 @@ function HeaderAction({
 
 /**
  * Content side of the shell (ADR 0014): the 60px header (trigger and
- * breadcrumb | search | colour mode, assistant and consoles) and the
+ * breadcrumb | search | bell, colour mode, assistant and consoles) and the
  * scrolling content, with the assistant in the internal drawer (ADR 0015)
  * and the SmartStatusBanner under the header (ADR 0016).
  */
 export function ShellMain({
   sections,
   access,
+  bell,
   children,
 }: Readonly<{
   sections: readonly NavSection[];
   access: ConsoleAccess;
+  bell: NotificationBellData;
   children: React.ReactNode;
 }>) {
   const t = useTranslations("shell");
@@ -121,6 +125,7 @@ export function ShellMain({
             <ShellSearch sections={sections} />
           </div>
           <div className="flex items-center justify-end gap-1 md:flex-1">
+            <NotificationBell data={bell} />
             <HeaderAction
               label={isDark ? tu("themeLight") : tu("themeDark")}
               testId="theme-toggle"

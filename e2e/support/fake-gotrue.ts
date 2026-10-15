@@ -7,7 +7,11 @@ import {
 import { randomUUID } from "node:crypto";
 
 import { signAccessToken } from "./jwt";
-import type { SeedGuidParams, SeedPartnerParams } from "./test-database";
+import type {
+  SeedGuidParams,
+  SeedNotificationParams,
+  SeedPartnerParams,
+} from "./test-database";
 import { generateBase32Secret, totpMatches } from "./totp";
 
 /**
@@ -92,6 +96,8 @@ export type FakeGoTrueOptions = Readonly<{
   onSeedGuid?: (params: SeedGuidParams) => Promise<{ agentId: string | null }>;
   /** Runs the job worker until no job is waiting (F3a). */
   onRunJobs?: () => Promise<{ remaining: number }>;
+  /** Seeds a notice in a user's bell (CF3c). */
+  onSeedNotification?: (params: SeedNotificationParams) => Promise<{ id: string }>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -336,6 +342,26 @@ export async function startFakeGoTrue(
         memberEmail,
         role,
         organizationId: asString(body.organizationId) ?? undefined,
+      });
+      return json(response, 200, seeded);
+    }
+
+    if (path === "/__control/seed-notification" && method === "POST") {
+      const body = await readBody(request);
+      const email = asString(body.email);
+      const eventType = asString(body.eventType);
+      const data =
+        body.data && typeof body.data === "object"
+          ? (body.data as Record<string, string>)
+          : {};
+      if (!email || !eventType || !options.onSeedNotification) {
+        return json(response, 400, { msg: "invalid parameters" });
+      }
+      const seeded = await options.onSeedNotification({
+        email,
+        eventType,
+        data,
+        linkUrl: asString(body.linkUrl) ?? undefined,
       });
       return json(response, 200, seeded);
     }

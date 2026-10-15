@@ -5,6 +5,8 @@ import { appConfig } from "@/core/config/app";
 import { definePlatformJob, type JobSchedule } from "@/core/jobs/definition";
 import { notificationLanguages } from "@/core/notifications/language";
 import { deliverNotification } from "@/core/notifications/delivery";
+import { postPartnerNotice } from "@/core/notifications/inbox";
+import { inboxNotice } from "@/core/notifications/inbox-content";
 import type { NotificationLanguage } from "@/core/notifications/notify";
 import { getNotificationTransport } from "@/core/notifications/transport";
 import type {
@@ -255,30 +257,43 @@ export async function runDailyTransitions(
     }
     const periodEnd = toDateOnly(subscription.currentPeriodEnd);
     const { suspendOn } = overdueSchedule(periodEnd, terms);
+    const content = {
+      type:
+        to === "past_due"
+          ? "billing.subscription.past_due"
+          : "billing.subscription.suspended",
+      data: {
+        partnerName: recipient.partnerName,
+        organizationName:
+          organizationNames.get(subscription.organizationId) ?? "Cliente",
+        periodEnd,
+        nextStepOn: to === "past_due" ? suspendOn : null,
+        billingUrl: recipient.billingUrl,
+      },
+    } as const;
+    const key = `subscription:${subscription.id}:${to}:${isoDate(periodEnd)}`;
     for (const email of recipient.emails) {
       notices += await deliver(
         tx,
         transport,
         await languageOf(email),
         {
-          type:
-            to === "past_due"
-              ? "billing.subscription.past_due"
-              : "billing.subscription.suspended",
+          ...content,
           recipientEmail: email,
-          idempotencyKey: `subscription:${subscription.id}:${to}:${isoDate(periodEnd)}:${email}`,
-          data: {
-            partnerName: recipient.partnerName,
-            organizationName:
-              organizationNames.get(subscription.organizationId) ?? "Cliente",
-            periodEnd,
-            nextStepOn: to === "past_due" ? suspendOn : null,
-            billingUrl: recipient.billingUrl,
-          },
+          idempotencyKey: `${key}:${email}`,
         },
         subscription.partnerId,
         subscription.id,
       );
+    }
+    // The bell of the partner's active owners (CF3c), once per transition.
+    const notice = inboxNotice(content);
+    if (notice) {
+      await postPartnerNotice(tx, {
+        partnerId: subscription.partnerId,
+        notice,
+        idempotencyKey: key,
+      });
     }
   }
   return { date, pastDue, suspended, notices };

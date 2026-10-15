@@ -4,6 +4,7 @@
   "mfaSession": "MFA AAL2 session active",
   "backToApp": "Back to the customer app",
   "language": "Language",
+  "notifications": "Notifications",
   "workspaces": "Your workspaces",
   "toggleSidebar": "Open or collapse the side menu",
   "toggleItem": "Open or close {item}",

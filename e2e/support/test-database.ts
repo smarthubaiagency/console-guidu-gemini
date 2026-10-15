@@ -85,8 +85,18 @@ export type TestDatabase = Readonly<{
   seedGuid: (params: SeedGuidParams) => Promise<{ agentId: string | null }>;
   /** Runs the real worker (`pnpm worker`) until no job is waiting. */
   runJobs: () => Promise<{ remaining: number }>;
+  /** A notice in the bell of the user with that e-mail (CF3c). */
+  seedNotification: (params: SeedNotificationParams) => Promise<{ id: string }>;
   close: () => Promise<void>;
 }>;
+
+/** A notice of the bell, as the worker would write it (CF3c). */
+export type SeedNotificationParams = {
+  email: string;
+  eventType: string;
+  data: Record<string, string>;
+  linkUrl?: string | undefined;
+};
 
 /** A partner with an active domain, a member and, optionally, a customer. */
 export type SeedPartnerParams = {
@@ -321,6 +331,27 @@ export async function startTestDatabase(
         );
       }
       return { partnerId };
+    },
+    seedNotification: async (params) => {
+      const userRes = await pool.query<{ id: string }>(
+        `select id from auth.users where lower(email) = lower($1)`,
+        [params.email],
+      );
+      const userId = userRes.rows[0]?.id;
+      if (!userId) throw new Error(`User not found: ${params.email}`);
+      const res = await pool.query<{ id: string }>(
+        `insert into public.user_notifications (user_id, event_type, data, link_url, idempotency_key)
+         values ($1, $2, $3::jsonb, $4, $5)
+         returning id`,
+        [
+          userId,
+          params.eventType,
+          JSON.stringify(params.data),
+          params.linkUrl ?? null,
+          `e2e:${crypto.randomUUID()}`,
+        ],
+      );
+      return { id: res.rows[0]!.id };
     },
     seedGuid: async (params) => {
       await pool.query(

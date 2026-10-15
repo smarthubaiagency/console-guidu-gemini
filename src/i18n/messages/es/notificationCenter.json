@@ -1,0 +1,60 @@
+{
+  "bell": {
+    "label": "Avisos",
+    "labelUnread": "Avisos: {count} sin leer",
+    "title": "Avisos",
+    "empty": "No hay avisos por aquí.",
+    "markRead": "Marcar como leído",
+    "markAllRead": "Marcar todos como leídos",
+    "preferences": "Preferencias de avisos",
+    "marked": "Aviso marcado como leído.",
+    "markedAll": "Todos los avisos se marcaron como leídos.",
+    "nothingToMark": "No hay avisos para marcar.",
+    "more": "Se muestran los {count} avisos más recientes."
+  },
+  "events": {
+    "pastDue": {
+      "title": "Suscripción atrasada: {organization}",
+      "body": "El período pagado venció el {periodEnd} y no se registró ningún pago nuevo.",
+      "nextStep": "Sin pago, la suscripción se suspenderá el {nextStepOn}."
+    },
+    "suspended": {
+      "title": "Suscripción suspendida: {organization}",
+      "body": "La suscripción se suspendió por falta de pago del período que venció el {periodEnd}."
+    },
+    "aiKeyBackup": {
+      "title": "La clave de IA de {workspace} falló",
+      "body": "{agent} está usando la clave de reserva. Cambie o pruebe la clave hasta el {date}; sin corrección, el agente se pausará."
+    },
+    "aiKeyPaused": {
+      "title": "Agente de IA pausado en {workspace}",
+      "body": "{agent} se pausó porque la clave de IA no se corrigió en 24 horas. Cambie y pruebe la clave y luego reactive el agente."
+    },
+    "aiAgent": "Su agente de IA",
+    "unknown": {
+      "title": "Aviso",
+      "body": "Tiene un aviso nuevo."
+    }
+  },
+  "preferences": {
+    "metadataTitle": "Notificaciones",
+    "title": "Notificaciones",
+    "description": "Elija por dónde recibir cada aviso: por correo electrónico o en la campana del panel.",
+    "event": "Aviso",
+    "channels": {
+      "email": "Correo electrónico",
+      "app": "En la app"
+    },
+    "locked": "Obligatorio",
+    "lockedHint": "Los avisos de seguridad y cobro son obligatorios y no se pueden desactivar.",
+    "unavailable": "No se aplica a este aviso",
+    "toggle": "{event} por {channel}",
+    "saved": "Preferencia guardada.",
+    "errors": {
+      "locked": "Este aviso es obligatorio y no se puede desactivar."
+    }
+  },
+  "errors": {
+    "notFound": "Aviso no encontrado."
+  }
+}

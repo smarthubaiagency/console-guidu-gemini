@@ -4,6 +4,7 @@ import { recordAudit } from "@/core/audit/record";
 import { appConfig } from "@/core/config/app";
 import { definePlatformJob, type JobSchedule } from "@/core/jobs/definition";
 import { deliverNotification } from "@/core/notifications/delivery";
+import { postToBell } from "@/core/notifications/inbox";
 import { notificationLanguages } from "@/core/notifications/language";
 import { getNotificationTransport } from "@/core/notifications/transport";
 import type {
@@ -28,8 +29,9 @@ import { BACKUP_WINDOW_MS } from "./backup";
  * e-mail of their accepted invitation (the only e-mail of a member the
  * application keeps), with the partner's brand and the link to the
  * workspace's keys; each delivery is recorded once per key, as "não
- * enviada" while there is no e-mail provider (D-PA-08). The panel shows the
- * agent's `key_state` (A3 and A4). Safe to run again.
+ * enviada" while there is no e-mail provider (D-PA-08). Each person also
+ * gets the notice in the bell (CF3c), even without a known e-mail. The
+ * panel shows the agent's `key_state` (A3 and A4). Safe to run again.
  */
 
 export const KEY_WATCH_JOB_KIND = "ai-agents.key-watch";
@@ -53,10 +55,25 @@ type Audience = Readonly<{
   /** Partner whose sender settings go with its brand; null for the house. */
   senderPartnerId: string | null;
   workspaceName: string;
-  emails: readonly string[];
+  /** Each person with the e-mail of their accepted invitation, if any. */
+  recipients: readonly Readonly<{ userId: string; email: string | null }>[];
   credentialsUrl: string;
   brand: NotificationBrand;
 }>;
+
+/** One recipient per person; an e-mail goes to one person only. */
+function recipientsOf(
+  userIds: readonly string[],
+  emails: ReadonlyMap<string, string>,
+): Audience["recipients"] {
+  const seen = new Set<string>();
+  return [...new Set(userIds)].map((userId) => {
+    const email = emails.get(userId) ?? "";
+    if (!email || seen.has(email)) return { userId, email: null };
+    seen.add(email);
+    return { userId, email };
+  });
+}
 
 async function audienceOf(
   tx: ContextTransaction,
@@ -120,7 +137,7 @@ async function audienceOf(
     partnerId,
     senderPartnerId: house ? null : partnerId,
     workspaceName: workspace.name,
-    emails: [...new Set(byUser.values())].filter((e) => e.length > 0),
+    recipients: recipientsOf(userIds, byUser),
     credentialsUrl: new URL(
       `/app/${workspace.slug}/settings/credentials`,
       origin,
@@ -207,24 +224,40 @@ export async function runKeyWatch(
 
     const audience = await audienceOf(tx, agent);
     if (!audience) continue;
-    for (const email of audience.emails) {
+    const content = {
+      type,
+      data: {
+        workspaceName: audience.workspaceName,
+        agentName: null,
+        backupUntil,
+        credentialsUrl: audience.credentialsUrl,
+      },
+    } as const;
+    const keyOf = (who: string) =>
+      `ai-key:${agent.id}:${agent.backupStartedAt.toISOString()}:${type}:${who}`;
+    for (const recipient of audience.recipients) {
+      if (!recipient.email) {
+        // No e-mail known (no accepted invitation): the bell only (CF3c).
+        await postToBell(
+          tx,
+          recipient.userId,
+          content,
+          keyOf(`user:${recipient.userId}`),
+        );
+        continue;
+      }
       notices += await deliverNotification(tx, {
         transport,
-        language: await languageOf(email),
+        language: await languageOf(recipient.email),
         brand: audience.brand,
         partnerId: audience.partnerId,
         senderPartnerId: audience.senderPartnerId,
         relatedId: agent.id,
+        recipientUserId: recipient.userId,
         event: {
-          type,
-          recipientEmail: email,
-          idempotencyKey: `ai-key:${agent.id}:${agent.backupStartedAt.toISOString()}:${type}:${email}`,
-          data: {
-            workspaceName: audience.workspaceName,
-            agentName: null,
-            backupUntil,
-            credentialsUrl: audience.credentialsUrl,
-          },
+          ...content,
+          recipientEmail: recipient.email,
+          idempotencyKey: keyOf(recipient.email),
         },
       });
     }

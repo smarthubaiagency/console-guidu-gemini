@@ -163,6 +163,13 @@ export async function runPrivacyMaintenance(
           where: { status: { not: "pending" }, createdAt: { lt: cutoff } },
         })
       ).count;
+    } else if (policy.category === "user_notifications") {
+      // Read notices of the bell (CF3c); unread ones wait for their reader.
+      retentionDeleted += (
+        await tx.userNotification.deleteMany({
+          where: { readAt: { not: null }, createdAt: { lt: cutoff } },
+        })
+      ).count;
     }
   }
 
