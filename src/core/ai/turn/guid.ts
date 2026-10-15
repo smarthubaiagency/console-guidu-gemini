@@ -35,6 +35,7 @@ import {
   loadBackupKey,
   startKeyBackup,
 } from "../backup";
+import { withBaseUrl } from "../catalog";
 import { type AgentConfig, parseAgentConfig } from "../config/schema";
 import {
   type ChatModelKey,
@@ -70,6 +71,7 @@ import {
   persistKeyFailure,
   persistTurn,
   persistTurnError,
+  type UsageOwner,
 } from "./persist";
 import { MAX_REFERRALS_IN_PROMPT, referralsInstruction } from "./referrals";
 import { ResponsePlan, turnErrorCode } from "./plan";
@@ -371,6 +373,8 @@ async function loadTurn(
       source: "customer",
     };
   }
+  // The platform's gateway of the key's provider, when one is set (CF6a).
+  key = await withBaseUrl(tx, key);
   // The voice key, or the text key when it has a voice; never the backup.
   let voice: VoiceKey | null = null;
   if (key.source === "customer") {
@@ -742,7 +746,19 @@ export async function runGuidTurnWithState(
     }
   };
 
-  const fail = async (key: TurnKey, error: unknown): Promise<never> => {
+  // Whose key answered, for the usage; the backup is a courtesy (§9.2).
+  const usageOwner = (source: TurnKey["source"]): UsageOwner => ({
+    keySource: source,
+    partnerId: null,
+    organizationId: ctx.organizationId,
+    workspaceId: ctx.workspaceId,
+  });
+  /** `counted`: the failed call is already in the usage (key failure). */
+  const fail = async (
+    key: TurnKey,
+    error: unknown,
+    counted = false,
+  ): Promise<never> => {
     const errorCode = turnErrorCode(error);
     appLog.warn("ai.turn.failed", {
       executionId,
@@ -756,6 +772,7 @@ export async function runGuidTurnWithState(
         errorCode,
         provider: key.provider,
         model: key.model,
+        ...(counted ? {} : { owner: usageOwner(key.source) }),
         records: state.records,
       }),
     );
@@ -781,6 +798,11 @@ export async function runGuidTurnWithState(
         ...turn,
         errorCode,
         started: started?.started ?? false,
+        failed: {
+          provider: key.provider,
+          model: key.model,
+          owner: usageOwner("customer"),
+        },
         records: state.records,
       });
       if (
@@ -789,11 +811,12 @@ export async function runGuidTurnWithState(
       ) {
         return null;
       }
-      return loadBackupKey(tx, loaded.agentId);
+      const backupKey = await loadBackupKey(tx, loaded.agentId);
+      return backupKey ? withBaseUrl(tx, backupKey) : null;
     });
     // Already in the audit with the failure.
     state.records.length = 0;
-    if (!backup) return fail(key, error);
+    if (!backup) return fail(key, error, true);
     key = { ...backup, source: "backup" };
     try {
       outcome = await answerWith(key);
@@ -812,13 +835,7 @@ export async function runGuidTurnWithState(
       answer: outcome.answer.messages,
       usage: outcome.usage,
       records: state.records,
-      owner: {
-        // The backup is a courtesy of the platform (§9.2).
-        keySource: used.source,
-        partnerId: null,
-        organizationId: ctx.organizationId,
-        workspaceId: ctx.workspaceId,
-      },
+      owner: usageOwner(used.source),
     });
     if (used.source === "backup") {
       await tx.aiConversation.updateMany({

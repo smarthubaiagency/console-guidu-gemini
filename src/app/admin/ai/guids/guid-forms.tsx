@@ -17,6 +17,7 @@ import {
   saveCustomerReferralAction,
 } from "@/core/ai/console-actions";
 import type { CustomerGuidDetailDto } from "@/core/ai/customer-guids";
+import type { AiPolicy } from "@/core/ai/models";
 
 /**
  * Drawer of a customer's GUIDS in `/admin` (A3c): status and configuration
@@ -35,9 +36,12 @@ export function GuidEditorPanel({
   guid,
   canManage,
   summary,
+  policy,
 }: Readonly<{
   guid: CustomerGuidDetailDto;
   canManage: boolean;
+  /** Providers and models the partner offers (CF6a). */
+  policy: AiPolicy;
   /** Status, key, model and missing fields, rendered by the page. */
   summary: React.ReactNode;
 }>) {
@@ -96,6 +100,7 @@ export function GuidEditorPanel({
               editor="partner"
               agentKind="guid"
               fieldErrors={state.fieldErrors}
+              policy={policy}
             />
           </form>
         ) : (

@@ -7,7 +7,8 @@
   },
   "errors": {
     "invalidConfig": "Revisa los campos destacados.",
-    "adminTemplateDelete": "La plantilla del Asistente no se puede eliminar."
+    "adminTemplateDelete": "La plantilla del Asistente no se puede eliminar.",
+    "providerOff": "Este proveedor de IA no está habilitado."
   },
   "templates": {
     "metaTitle": "Plantillas de agente",
@@ -42,8 +43,8 @@
     }
   },
   "backup": {
-    "metaTitle": "Respaldo de IA",
-    "title": "Respaldo de IA",
+    "metaTitle": "Clave de reserva",
+    "title": "Clave de reserva",
     "description": "Clave de la plataforma y modelo económico usados solo para terminar, por hasta 24 horas, las conversaciones abiertas de un GUIDS cuya clave del cliente falló. No cuenta en el consumo del cliente.",
     "current": "Configuración actual",
     "keySet": "Clave {provider} {masked}",
@@ -53,7 +54,7 @@
     "updated": "modificado el {date}",
     "off": "Sin clave y modelo, el respaldo queda apagado: el GUIDS deja de responder en cuanto falla la clave del cliente.",
     "edit": "Cambiar",
-    "saved": "Respaldo de IA guardado.",
+    "saved": "Clave de reserva guardada.",
     "form": {
       "provider": "Proveedor",
       "model": "Modelo económico",
@@ -272,7 +273,11 @@
       "noVoice": "La clave de texto no tiene voz. Elige una clave OpenAI o Gemini para que el agente escuche y responda audios; sin ella, el agente pide al contacto que escriba.",
       "voiceKeyNoVoice": "Esta clave no tiene voz. Elige una clave OpenAI o Gemini.",
       "defaultVoice": "Predeterminada ({voice})",
-      "defaultModel": "Predeterminado: {model}"
+      "defaultModel": "Predeterminado: {model}",
+      "outside": "{model} (fuera del catálogo)",
+      "outsideWarning": "Este modelo no está en el catálogo. El agente sigue respondiendo; elige un modelo de la lista cuando puedas.",
+      "providerOffWarning": "El proveedor de esta clave fue desactivado. El agente sigue respondiendo; cámbiala por una clave de un proveedor habilitado cuando puedas.",
+      "keyProviderOff": "{label} (proveedor desactivado)"
     }
   },
   "assistant": {
@@ -414,5 +419,91 @@
     "removeTitle": "¿Quitar el webhook?",
     "removeMessage": "Los avisos de lead dejan de salir hasta que registres otro.",
     "cancel": "Cancelar"
+  },
+  "tabs": {
+    "label": "Secciones de IA",
+    "dashboard": "Panel",
+    "providers": "Proveedores y modelos",
+    "templates": "Plantillas de agente",
+    "backup": "Clave de reserva"
+  },
+  "dashboard": {
+    "metaTitle": "Panel de IA",
+    "title": "IA",
+    "description": "Uso y errores de los proveedores de IA en todos los socios, a partir del consumo registrado en cada llamada al modelo.",
+    "partnerTitle": "Panel de IA",
+    "partnerDescription": "Uso y errores de IA de tus clientes y de tu Asistente, a partir del consumo registrado en cada llamada al modelo.",
+    "period": "Período",
+    "days7": "Últimos 7 días",
+    "days30": "Últimos 30 días",
+    "cards": {
+      "providers": "Proveedores activos",
+      "providersValue": "{enabled} de {total}",
+      "requests": "Solicitudes",
+      "tokens": "Tokens",
+      "errors": "Errores",
+      "notices": "Avisos"
+    },
+    "byProvider": "Por proveedor",
+    "byPartner": "Por socio",
+    "byCustomer": "Por cliente",
+    "columns": {
+      "provider": "Proveedor",
+      "status": "Estado",
+      "requests": "Solicitudes",
+      "errors": "Errores",
+      "errorRate": "Tasa de error",
+      "tokens": "Tokens",
+      "topError": "Error más común",
+      "partner": "Socio",
+      "customer": "Cliente"
+    },
+    "on": "Activo",
+    "off": "Inactivo",
+    "none": "—",
+    "noPartner": "Sin socio",
+    "ownAssistant": "Tu Asistente (clave del socio)",
+    "unknown": "Eliminado",
+    "empty": "Sin uso en el período.",
+    "noticesTitle": "Avisos",
+    "noNotices": "Nada requiere atención.",
+    "notices": {
+      "backup_missing": "La clave de reserva no está configurada: un GUIDS deja de responder en cuanto falla la clave del cliente.",
+      "agents_backup": "{count, plural, one {# GUIDS respondiendo} other {# GUIDS respondiendo}} con la clave de reserva porque falló la clave del cliente.",
+      "agents_failed": "{count, plural, one {# GUIDS pausado} other {# GUIDS pausados}} porque la clave falló por más de 24 horas.",
+      "provider_errors": "{provider} con {count, plural, one {# error} other {# errores}} en el período.",
+      "provider_off": "Agentes con un proveedor desactivado, que siguen respondiendo: {count}.",
+      "model_off": "Agentes con un modelo fuera del catálogo, que siguen respondiendo: {count}.",
+      "agents_no_model": "{count, plural, one {# GUIDS activo} other {# GUIDS activos}} sin clave o modelo.",
+      "assistant_no_key": "Asistente activo sin clave de IA."
+    }
+  },
+  "providersPage": {
+    "metaTitle": "Proveedores y modelos",
+    "title": "Proveedores y modelos",
+    "description": "Qué proveedores de IA pueden elegir socios y clientes y los modelos permitidos en cada uno. El primer modelo de cada lista es el predeterminado.",
+    "partnerDescription": "Restringe los proveedores y modelos que tus clientes pueden elegir, dentro de lo que la plataforma habilita. El primer modelo de cada lista es el predeterminado.",
+    "providersTitle": "Proveedores",
+    "providersHint": "Desactivar un proveedor no detiene a los agentes que ya lo usan: siguen respondiendo y aparecen en los avisos del panel.",
+    "offByPlatform": "Desactivado por la plataforma",
+    "modelsTitle": "Modelos permitidos",
+    "modelsHint": "Un modelo por línea, como lo escribe el proveedor (ej.: gpt-5-mini). Una lista vacía deja el modelo libre para el proveedor.",
+    "partnerModelsHint": "Marca los modelos que tus clientes pueden elegir.",
+    "modelsLabel": "Modelos de {provider}",
+    "freeModel": "La plataforma dejó el modelo libre para este proveedor. Escribe aquí los modelos de tus clientes, uno por línea, o déjalo vacío.",
+    "syncNote": "Los modelos se editan a mano: las claves son de cada dueño y no hay clave global para consultar a los proveedores.",
+    "baseUrlTitle": "Gateway (base URL)",
+    "baseUrlHint": "Opcional. Dirección https de un gateway compatible con la API del proveedor (por ejemplo un gateway propio). Las conversaciones y la prueba de la clave pasan por él, con la dirección verificada en cada conexión; la transcripción y la voz van directo al proveedor.",
+    "baseUrlLabel": "Base URL de {provider}",
+    "save": "Guardar",
+    "saved": "Proveedores y modelos guardados.",
+    "readOnly": "Solo lectura: owner y admin lo cambian.",
+    "errors": {
+      "invalid": "Datos inválidos.",
+      "noProvider": "Activa al menos un proveedor.",
+      "notOffered": "Elige solo lo que la plataforma habilita.",
+      "noModel": "Deja al menos un modelo en cada proveedor.",
+      "baseUrl": "Usa una dirección https:// sin usuario ni parámetros."
+    }
   }
 }

@@ -586,12 +586,29 @@ export function buildPlatformNavigation(
         }),
         ...(canManageAi
           ? [
+              // IA (CF6a): Painel, Provedores e modelos, Modelos de agente
+              // and Chave reserva, drawn as tabs of the page; the children
+              // feed the breadcrumb and search.
               item({
                 id: "platform.ai",
-                label: "Agentes de IA",
-                href: null,
+                label: "IA",
+                href: "/platform/ai",
                 iconKey: "bot",
+                hideChildren: true,
                 children: [
+                  item({
+                    id: "platform.ai.dashboard",
+                    label: "Painel",
+                    href: "/platform/ai",
+                    iconKey: "bot",
+                    exact: true,
+                  }),
+                  item({
+                    id: "platform.ai.providers",
+                    label: "Provedores e modelos",
+                    href: "/platform/ai/providers",
+                    iconKey: "bot",
+                  }),
                   item({
                     id: "platform.ai.templates",
                     label: "Modelos de agente",
@@ -600,7 +617,7 @@ export function buildPlatformNavigation(
                   }),
                   item({
                     id: "platform.ai.backup",
-                    label: "Backup de IA",
+                    label: "Chave reserva",
                     href: "/platform/ai/backup",
                     iconKey: "bot",
                   }),
@@ -794,6 +811,14 @@ export function buildPartnerNavigation(
     ? [
         ...(grants("partner.ai_agents.read")
           ? [
+              // Usage and errors of the customers (CF6a).
+              item({
+                id: "partner.ai.dashboard",
+                label: "Painel de IA",
+                href: "/admin/ai",
+                iconKey: "bot",
+                exact: true,
+              }),
               item({
                 id: "partner.ai.assistant",
                 label: "Assistente GUIDU",
@@ -804,6 +829,14 @@ export function buildPartnerNavigation(
                 id: "partner.ai.guids",
                 label: "GUIDS dos clientes",
                 href: "/admin/ai/guids",
+                iconKey: "bot",
+              }),
+              // Providers and models offered to the customers (CF6a);
+              // read-only without partner.ai_agents.manage.
+              item({
+                id: "partner.ai.providers",
+                label: "Provedores e modelos",
+                href: "/admin/ai/providers",
                 iconKey: "bot",
               }),
             ]

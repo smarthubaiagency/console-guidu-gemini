@@ -88,6 +88,7 @@ export const aiAgentsDataContract: ModuleDataContract = {
             usageKind: true,
             inputTokens: true,
             outputTokens: true,
+            errorCode: true,
             createdAt: true,
           },
         }),

@@ -28,6 +28,7 @@ import {
   saveBackupSettings,
 } from "./keys";
 import { removeNoticeWebhook, saveNoticeWebhook } from "./notices/webhook";
+import { saveAiProviders } from "./provider-settings";
 import {
   ConfigValidationError,
   createTemplate,
@@ -55,6 +56,7 @@ export type AiConsoleActionState = {
 
 const TEMPLATES_PATH = "/platform/ai/templates";
 const BACKUP_PATH = "/platform/ai/backup";
+const PARTNER_PROVIDERS_PATH = "/admin/ai/providers";
 const PARTNER_TEMPLATES_PATH = "/admin/ai/templates";
 const PARTNER_ASSISTANT_PATH = "/admin/ai/assistant";
 const PARTNER_KEYS_PATH = "/admin/ai/keys";
@@ -191,6 +193,32 @@ export async function saveBackupAction(
     revalidatePath(BACKUP_PATH);
     const t = await getTranslations("aiConsole");
     return { success: true, message: t("backup.saved") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** IA › Provedores e modelos of the platform (CF6a): one JSON document. */
+export async function savePlatformAiProvidersAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await houseActor();
+    await withIdentityContext(prisma, actor.userId, (tx) =>
+      saveAiProviders(
+        tx,
+        {
+          level: "platform",
+          userId: actor.userId,
+          platformRole: actor.platformRole ?? null,
+        },
+        parseJson(text(formData, "policy")),
+      ),
+    );
+    revalidatePath("/", "layout");
+    const t = await getTranslations("aiConsole");
+    return { success: true, message: t("providersPage.saved") };
   } catch (err) {
     return failure(err);
   }
@@ -472,6 +500,34 @@ export async function deleteCustomerReferralAction(
     revalidatePath(PARTNER_GUIDS_PATH);
     const t = await getTranslations("aiConsole");
     return { success: true, message: t("guids.referrals.deleted") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** The providers and models the partner offers its customers (CF6a). */
+export async function savePartnerAiProvidersAction(
+  _prev: AiConsoleActionState,
+  formData: FormData,
+): Promise<AiConsoleActionState> {
+  try {
+    const actor = await partnerAiActor();
+    await inPartner(actor, (tx) =>
+      saveAiProviders(
+        tx,
+        {
+          level: "partner",
+          userId: actor.userId,
+          partnerId: actor.partnerId,
+          partnerRole: actor.partnerRole,
+        },
+        parseJson(text(formData, "policy")),
+      ),
+    );
+    revalidatePath(PARTNER_PROVIDERS_PATH);
+    revalidatePath("/", "layout");
+    const t = await getTranslations("aiConsole");
+    return { success: true, message: t("providersPage.saved") };
   } catch (err) {
     return failure(err);
   }

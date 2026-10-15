@@ -6,8 +6,9 @@
  * Maintenance Rationale:
  * - With the module flag off (default), the screens answer 404.
  * - With GUIDU_MODULE_AI_AGENTS_ENABLED, a partner owner adds an admin key,
- *   gives its GUIDU Assistant a model with that key and turns it on, and
- *   creates and publishes a GUIDS template of its own.
+ *   gives its GUIDU Assistant a model with that key and turns it on, sees
+ *   its AI dashboard and the providers it offers (CF6a), and creates and
+ *   publishes a GUIDS template of its own.
  * - A3c: the partner finds a customer's GUIDS, changes it and adds a
  *   referral; the customer sees "Alterado por <parceiro> em <data>".
  * ============================================================================
@@ -122,7 +123,10 @@ test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
     await form.getByLabel("Nome do agente").fill("Ajudante");
     await form.getByRole("tab", { name: "Conexão de modelo" }).click();
     await form.getByLabel("Chave", { exact: true }).selectOption({ index: 1 });
-    await form.getByLabel("Modelo", { exact: true }).fill("openai/gpt-4o-mini");
+    // CF6a: the model comes from the platform's catalog of the key's provider.
+    await form
+      .getByLabel("Modelo", { exact: true })
+      .selectOption("openai/gpt-4o-mini");
     await form.getByLabel("Assistente ativo").click();
     await page.getByTestId("save-assistant").click();
     await expect(page.getByText("Assistente salvo e ativo.")).toBeVisible();
@@ -143,6 +147,21 @@ test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
     await expect(
       webhook.getByText("Deixe em branco para manter"),
     ).toBeVisible();
+
+    // CF6a: the dashboard of its customers and the providers it offers.
+    await sidebar.getByRole("link", { name: "Painel de IA" }).click();
+    await expect(page.getByTestId("partner-ai")).toBeVisible();
+    await expect(page.getByTestId("ai-by-provider")).toContainText(
+      "OpenRouter",
+    );
+    await sidebar.getByRole("link", { name: "Provedores e modelos" }).click();
+    const offered = page.getByTestId("ai-providers-form");
+    await expect(
+      offered.getByTestId("provider-switch-openrouter"),
+    ).toBeChecked();
+    await expect(
+      offered.getByTestId("model-openrouter-openai/gpt-4o-mini"),
+    ).toBeChecked();
 
     await sidebar.getByRole("link", { name: "Modelos de agente" }).click();
     await expect(page.getByTestId("partner-ai-templates")).toBeVisible();

@@ -3,6 +3,7 @@ import {
   isSettingKey,
   isTightenOnly,
   isTurnOffOnly,
+  narrowOf,
   SETTING_KEYS,
   SETTING_LEVELS,
   type SettingKey,
@@ -20,7 +21,8 @@ import {
  * the levels below, so a value written under a lock has no effect. A key
  * that only tightens (CF5a) locks itself wherever it is `true`; a switch
  * the levels below may only turn off (CF5b) stops them while it is `false`
- * above, the default counting as the first level's choice.
+ * above, the default counting as the first level's choice. A key the levels
+ * below may only narrow (CF6a) combines each level's value with the one above.
  */
 
 export type SettingRow = Readonly<{
@@ -73,8 +75,15 @@ function resolveKey(
     if (!row) continue;
     const parsed = definition.schema.safeParse(row.value);
     if (!parsed.success) continue;
-    resolved = { value: parsed.data, source: level, lockedBy: null };
-    candidates.push(parsed.data);
+    // A key the levels below only narrow (CF6a) keeps what the level above
+    // allows; the first level sets the value as it is.
+    const narrow = narrowOf(key);
+    const value =
+      narrow && level !== first
+        ? narrow(resolved.value, parsed.data)
+        : parsed.data;
+    resolved = { value, source: level, lockedBy: null };
+    candidates.push(value);
     const locks = row.locked || (isTightenOnly(key) && parsed.data === true);
     if (locks && level !== "workspace") {
       resolved = { ...resolved, lockedBy: level };

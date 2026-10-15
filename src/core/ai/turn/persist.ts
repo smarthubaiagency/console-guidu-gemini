@@ -215,6 +215,40 @@ export async function persistTurn(
 }
 
 /**
+ * A failed model call in the usage (CF6a): zero tokens and the error code,
+ * so the AI dashboard counts errors by provider and by partner. Without
+ * RETURNING, like the usage of a turn.
+ */
+async function recordFailedCall(
+  tx: ContextTransaction,
+  args: Readonly<{
+    executionId: string;
+    agentId: string;
+    conversationId: string;
+    errorCode: string;
+    provider: AIProvider;
+    model: string;
+    owner: UsageOwner;
+  }>,
+): Promise<void> {
+  await tx.aiUsageEvent.createMany({
+    data: {
+      executionId: args.executionId,
+      partnerId: args.owner.partnerId,
+      organizationId: args.owner.organizationId,
+      workspaceId: args.owner.workspaceId,
+      agentId: args.agentId,
+      conversationId: args.conversationId,
+      keySource: args.owner.keySource,
+      provider: args.provider,
+      model: args.model.slice(0, 200),
+      usageKind: "chat",
+      errorCode: args.errorCode.slice(0, 80),
+    },
+  });
+}
+
+/**
  * A turn that did not reach an answer: one assistant row with the error
  * code (empty content; the screens show a message of their own) and the
  * audit. Tool calls already made are kept with their records.
@@ -228,10 +262,20 @@ export async function persistTurnError(
     errorCode: string;
     provider?: AIProvider | null;
     model?: string | null;
+    /** Whose key failed: with provider and model, the call goes to the usage. */
+    owner?: UsageOwner;
     records?: readonly ToolCallRecord[];
     audit: Readonly<{ ctx: RequestContext; origin: AuditOrigin }>;
   }>,
 ): Promise<void> {
+  if (args.owner && args.provider && args.model) {
+    await recordFailedCall(tx, {
+      ...args,
+      provider: args.provider,
+      model: args.model,
+      owner: args.owner,
+    });
+  }
   await tx.aiMessage.create({
     data: {
       conversationId: args.conversationId,
@@ -273,10 +317,17 @@ export async function persistKeyFailure(
     errorCode: string;
     /** Whether this failure started the backup. */
     started: boolean;
+    /** The customer's key that failed, for the usage (CF6a). */
+    failed?: Readonly<{
+      provider: AIProvider;
+      model: string;
+      owner: UsageOwner;
+    }>;
     records: readonly ToolCallRecord[];
     audit: Readonly<{ ctx: RequestContext; origin: AuditOrigin }>;
   }>,
 ): Promise<void> {
+  if (args.failed) await recordFailedCall(tx, { ...args, ...args.failed });
   await auditCalls(tx, args, args.records);
   await recordAudit(tx, args.audit.ctx, {
     action: "ai.agent.key_failure",

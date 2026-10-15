@@ -13,6 +13,7 @@ import {
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
+import { modelChoiceFieldErrors } from "./catalog";
 import {
   applyConfigEdit,
   configFieldErrors,
@@ -376,6 +377,18 @@ export async function updateCustomerGuid(
   if (!config.success) {
     throw new ConfigValidationError(configFieldErrors(config.error));
   }
+  // The partner changes the model, never the key (CF6a): the model must be
+  // one the partner offers for the provider of the customer's key.
+  const before = parsedConfig(row).config.model;
+  const choice = await modelChoiceFieldErrors(
+    tx,
+    { provider: before.model_provider, model: before.model_name },
+    {
+      provider: config.data.model.model_provider,
+      model: config.data.model.model_name,
+    },
+  );
+  if (Object.keys(choice).length > 0) throw new ConfigValidationError(choice);
   const status =
     parsed.data.status === "paused" && row.status === "draft"
       ? "draft"

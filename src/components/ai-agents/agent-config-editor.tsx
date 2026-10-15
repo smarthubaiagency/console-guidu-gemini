@@ -38,6 +38,12 @@ import {
   toolAllowedFor,
 } from "@/core/ai/config/tools";
 import { voiceOptions } from "@/core/ai/media";
+import {
+  type AiPolicy,
+  modelsOf,
+  modelWarning,
+  providerAllowed,
+} from "@/core/ai/models";
 
 /**
  * Editor of an agent's configuration (A3a, campos.md): the five tabs of the
@@ -116,6 +122,7 @@ export function AgentConfigEditor({
   agentKind,
   fieldErrors,
   credentials = [],
+  policy,
   name = "config",
 }: Readonly<{
   initial: unknown;
@@ -124,6 +131,11 @@ export function AgentConfigEditor({
   fieldErrors?: Readonly<Record<string, string>> | undefined;
   /** Keys the agent may use, for the model tab (not in templates). */
   credentials?: readonly EditorCredential[];
+  /**
+   * Providers and models of the context (CF6a): the model becomes a list
+   * of the key's provider; none keeps the free text.
+   */
+  policy?: AiPolicy | undefined;
   name?: string;
 }>) {
   const t = useTranslations("aiConsole.editor");
@@ -247,9 +259,18 @@ export function AgentConfigEditor({
         id={fieldId(tab, field)}
         className="w-full"
         value={value}
-        onChange={(e) =>
-          set(tab, field, e.target.value === "" ? undefined : e.target.value)
-        }
+        onChange={(e) => {
+          const next = e.target.value === "" ? undefined : e.target.value;
+          set(tab, field, next);
+          // A template's provider (CF6a): the model follows its default.
+          const list =
+            policy && tab === "model" && field === "model_provider"
+              ? modelsOf(policy, next)
+              : null;
+          if (list && !list.includes(get("model", "model_name") as string)) {
+            set("model", "model_name", list[0]);
+          }
+        }}
       >
         <NativeSelectOption value="">{t("choose")}</NativeSelectOption>
         {options.map((option) => (
@@ -727,6 +748,12 @@ export function AgentConfigEditor({
             if (chosen) {
               model.credential_id = chosen.id;
               model.model_provider = chosen.provider;
+              // The default of the new provider when the model is not one
+              // of its list (CF6a: the first model is the default).
+              const list = policy ? modelsOf(policy, chosen.provider) : null;
+              if (list && !list.includes(model.model_name as string)) {
+                model.model_name = list[0];
+              }
             } else {
               delete model.credential_id;
               delete model.model_provider;
@@ -736,9 +763,70 @@ export function AgentConfigEditor({
         }}
       >
         <NativeSelectOption value="">{t("choose")}</NativeSelectOption>
-        {chatKeys.map((credential) => (
-          <NativeSelectOption key={credential.id} value={credential.id}>
-            {credential.label}
+        {chatKeys
+          .filter(
+            (credential) =>
+              !policy ||
+              providerAllowed(policy, credential.provider) ||
+              credential.id === value,
+          )
+          .map((credential) => (
+            <NativeSelectOption key={credential.id} value={credential.id}>
+              {policy && !providerAllowed(policy, credential.provider)
+                ? t("model.keyProviderOff", { label: credential.label })
+                : credential.label}
+            </NativeSelectOption>
+          ))}
+      </NativeSelect>,
+    );
+  }
+
+  /** What is wrong with the saved model connection, kept working (CF6a). */
+  const savedWarning =
+    policy && can("model", "model_name")
+      ? modelWarning(
+          policy,
+          textProvider,
+          (get("model", "model_name") as string | undefined) ?? null,
+        )
+      : null;
+
+  /**
+   * The model: a list of the provider's catalog (CF6a), with a saved model
+   * outside it kept as an option; free text when the provider has no list.
+   */
+  function modelName() {
+    if (!can("model", "model_name")) return null;
+    const list = policy ? modelsOf(policy, textProvider) : null;
+    if (!list)
+      return textField({ tab: "model", field: "model_name", max: 120 });
+    const value = (get("model", "model_name") as string | undefined) ?? "";
+    const outside = value !== "" && !list.includes(value);
+    return wrap(
+      "model",
+      "model_name",
+      <NativeSelect
+        id={fieldId("model", "model_name")}
+        className="w-full"
+        value={value}
+        aria-invalid={Boolean(errorAt("model.model_name")) || undefined}
+        onChange={(e) =>
+          set(
+            "model",
+            "model_name",
+            e.target.value === "" ? undefined : e.target.value,
+          )
+        }
+      >
+        <NativeSelectOption value="">{t("choose")}</NativeSelectOption>
+        {outside ? (
+          <NativeSelectOption value={value}>
+            {t("model.outside", { model: value })}
+          </NativeSelectOption>
+        ) : null}
+        {list.map((option) => (
+          <NativeSelectOption key={option} value={option}>
+            {option}
           </NativeSelectOption>
         ))}
       </NativeSelect>,
@@ -1007,10 +1095,28 @@ export function AgentConfigEditor({
           selectField({
             tab: "model",
             field: "model_provider",
-            options: MODEL_PROVIDERS,
+            // The providers on (CF6a), and the saved one even when off.
+            options: MODEL_PROVIDERS.filter(
+              (provider) =>
+                !policy ||
+                providerAllowed(policy, provider) ||
+                provider === get("model", "model_provider"),
+            ),
             labels: "model_provider",
           }),
-          textField({ tab: "model", field: "model_name", max: 120 }),
+          modelName(),
+          savedWarning ? (
+            <p
+              key="model-warning"
+              className="text-11 text-warning-text"
+              role="status"
+              data-testid="model-warning"
+            >
+              {savedWarning === "provider_off"
+                ? t("model.providerOffWarning")
+                : t("model.outsideWarning")}
+            </p>
+          ) : null,
         ])}
         {modelSection("voice", [
           extraKey({

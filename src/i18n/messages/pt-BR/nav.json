@@ -62,9 +62,9 @@
     "platform_design_workbench": "Janela de edição",
     "platform_design_status": "Avisos",
     "platform_design_components": "Componentes",
-    "platform_ai": "Agentes de IA",
+    "platform_ai": "IA",
     "platform_ai_templates": "Modelos de agente",
-    "platform_ai_backup": "Backup de IA",
+    "platform_ai_backup": "Chave reserva",
     "partner_ai": "Agentes de IA",
     "partner_ai_assistant": "Assistente GUIDU",
     "partner_ai_guids": "GUIDS dos clientes",
@@ -89,6 +89,10 @@
     "partner_settings_security": "Segurança",
     "partner_settings_security_events": "Eventos de segurança",
     "platform_settings_authentication": "Autenticação",
-    "partner_settings_authentication": "Autenticação"
+    "partner_settings_authentication": "Autenticação",
+    "platform_ai_dashboard": "Painel",
+    "platform_ai_providers": "Provedores e modelos",
+    "partner_ai_dashboard": "Painel de IA",
+    "partner_ai_providers": "Provedores e modelos"
   }
 }

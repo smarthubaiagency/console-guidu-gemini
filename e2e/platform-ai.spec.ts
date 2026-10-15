@@ -5,10 +5,11 @@
  *
  * Maintenance Rationale:
  * - With the module flag off (default), the screens answer 404 and the
- *   sidebar has no "Agentes de IA".
- * - With GUIDU_MODULE_AI_AGENTS_ENABLED, a platform owner creates a GUIDS
- *   template, fills the five tabs in the drawer, sees an invalid field
- *   next to it, saves and publishes it; and saves the backup model.
+ *   sidebar has no "IA".
+ * - With GUIDU_MODULE_AI_AGENTS_ENABLED, a platform owner opens IA (CF6a):
+ *   the dashboard, the providers and models (saved as they are), creates a
+ *   GUIDS template, fills the five tabs in the drawer, sees an invalid
+ *   field next to it, saves and publishes it; and saves the backup model.
  * ============================================================================
  */
 
@@ -20,7 +21,6 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/identity";
-import { expandSidebarGroup } from "./support/sidebar";
 import { totpCode } from "./support/totp";
 
 async function platformOwnerWithMfa(
@@ -51,10 +51,13 @@ test("the AI screens of /platform stay hidden while the module is off", async ({
   await platformOwnerWithMfa(page, request, "platform-ai-off");
   await page.goto("/platform");
   await expect(
-    page.locator('[data-slot="sidebar"]').getByText("Agentes de IA"),
+    page
+      .locator('[data-slot="sidebar"]')
+      .getByRole("link", { name: "IA", exact: true }),
   ).toHaveCount(0);
   const response = await page.goto("/platform/ai/templates");
   expect(response?.status()).toBe(404);
+  expect((await page.goto("/platform/ai"))?.status()).toBe(404);
 });
 
 test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
@@ -69,8 +72,26 @@ test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
 
     await page.goto("/platform");
     const sidebar = page.locator('[data-slot="sidebar"]');
-    await expandSidebarGroup(page, "Agentes de IA");
-    await sidebar.getByRole("link", { name: "Modelos de agente" }).click();
+    await sidebar.getByRole("link", { name: "IA", exact: true }).click();
+    await expect(page.getByTestId("platform-ai")).toBeVisible();
+    await expect(page.getByTestId("ai-by-provider")).toContainText("OpenAI");
+    await expect(page.getByTestId("ai-card-providers")).toBeVisible();
+    const tabs = page.getByTestId("ai-tabs");
+    await page.getByRole("link", { name: "Últimos 7 dias" }).click();
+    await expect(page).toHaveURL(/days=7/);
+
+    // Providers and models (CF6a): saved as they are, so nothing changes
+    // for the other tests.
+    await tabs.getByRole("link", { name: "Provedores e modelos" }).click();
+    const providers = page.getByTestId("ai-providers-form");
+    await expect(providers.getByTestId("provider-switch-openai")).toBeChecked();
+    await expect(providers.getByLabel("Modelos de OpenRouter")).toHaveValue(
+      /openai\/gpt-4o-mini/,
+    );
+    await page.getByTestId("ai-providers-save").click();
+    await expect(page.getByText("Provedores e modelos salvos.")).toBeVisible();
+
+    await tabs.getByRole("link", { name: "Modelos de agente" }).click();
     await expect(page.getByTestId("platform-ai-templates")).toBeVisible();
     // The seeds: the Assistant's template and Anna.
     const list = page.getByTestId("template-list");
@@ -134,11 +155,17 @@ test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
     await expect(row.getByText("Versão 2")).toBeVisible();
 
     // Backup of the platform: the model, without a key yet.
-    await sidebar.getByRole("link", { name: "Backup de IA" }).click();
+    // The drawer covers the tabs: back to IA through the sidebar.
+    await sidebar.getByRole("link", { name: "IA", exact: true }).click();
+    await expect(page.getByTestId("platform-ai")).toBeVisible();
+    await page
+      .getByTestId("ai-tabs")
+      .getByRole("link", { name: "Chave reserva" })
+      .click();
     const backup = page.getByTestId("backup-form");
     await backup.getByLabel("Modelo barato").fill("gpt-4o-mini");
     await backup.getByRole("button", { name: "Salvar" }).click();
-    await expect(page.getByText("Backup de IA salvo.")).toBeVisible();
+    await expect(page.getByText("Chave reserva salva.")).toBeVisible();
     await expect(page.getByTestId("backup-current")).toContainText(
       "modelo gpt-4o-mini",
     );

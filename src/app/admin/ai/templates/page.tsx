@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { TemplatesWorkbench } from "@/components/ai-agents/templates-workbench";
 import { ModuleNotice } from "@/components/modules/module-notice";
+import { aiPolicy } from "@/core/ai/catalog";
 import {
   createPartnerTemplateAction,
   deletePartnerTemplateAction,
@@ -43,10 +44,13 @@ export default async function PartnerAiTemplatesPage({
     partnerId: partner.partnerId,
     partnerRole: membership.role,
   };
-  const view = await withIdentityContext(
+  const { view, policy } = await withIdentityContext(
     prisma,
     identity.userId,
-    (tx) => loadTemplatesView(tx, actor, editKey),
+    async (tx) => ({
+      view: await loadTemplatesView(tx, actor, editKey),
+      policy: await aiPolicy(tx),
+    }),
     { partnerId: partner.partnerId },
   );
   const t = await getTranslations("aiConsole");
@@ -66,6 +70,7 @@ export default async function PartnerAiTemplatesPage({
         delete: deletePartnerTemplateAction,
       }}
       testId="partner-ai-templates"
+      policy={policy}
     />
   );
 }
