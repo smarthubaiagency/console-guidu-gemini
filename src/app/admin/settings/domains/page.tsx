@@ -3,6 +3,7 @@ import { Globe } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { DomainList } from "@/components/domains/domain-list";
+import { PartnerPublicDomains } from "@/components/domains/partner-public-domains";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
 import { SettingsCard } from "@/components/settings/settings-shell";
@@ -18,12 +19,15 @@ import {
   addWorkspaceDomainAction,
 } from "@/core/domains/actions";
 import { domainsConfig } from "@/core/domains/config";
+import { platformPublicBases } from "@/core/domains/public-hosts";
+import { listPartnerPublicDomains } from "@/core/domains/public-service";
 import {
   listPartnerCustomerWorkspaces,
   listPartnerDomains,
   listWorkspaceDomains,
 } from "@/core/domains/service";
 import { partnerGrants } from "@/core/module-runtime/loaders";
+import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
@@ -34,7 +38,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Admin › Configurações › Domínios (CF2b): the domain of the partner's
- * dashboard and the public domains of its customers' workspaces.
+ * dashboard and the public domains of its customers' workspaces. CF2c adds
+ * the partner's own default domain of each public route type.
  */
 export default async function PartnerDomainsPage() {
   const { identity, partner, membership } = await requirePartnerConsolePage(
@@ -44,22 +49,24 @@ export default async function PartnerDomainsPage() {
   const canManageDashboard = grants("partner.settings.manage");
   const canManageCustomers = grants("partner.customers.manage");
 
-  const { dashboard, workspaces, customerDomains } = await withIdentityContext(
-    prisma,
-    identity.userId,
-    async (tx) => {
-      const workspaces = await listPartnerCustomerWorkspaces(tx);
-      return {
-        dashboard: await listPartnerDomains(tx, partner.partnerId),
-        workspaces,
-        customerDomains: await listWorkspaceDomains(
-          tx,
-          workspaces.map((w) => w.workspaceId),
-        ),
-      };
-    },
-    { partnerId: partner.partnerId },
-  );
+  const { dashboard, bases, workspaces, customerDomains } =
+    await withIdentityContext(
+      prisma,
+      identity.userId,
+      async (tx) => {
+        const workspaces = await listPartnerCustomerWorkspaces(tx);
+        return {
+          dashboard: await listPartnerDomains(tx, partner.partnerId),
+          bases: await listPartnerPublicDomains(tx, partner.partnerId),
+          workspaces,
+          customerDomains: await listWorkspaceDomains(
+            tx,
+            workspaces.map((w) => w.workspaceId),
+          ),
+        };
+      },
+      { partnerId: partner.partnerId },
+    );
   const { cnameTarget } = domainsConfig();
   const t = await getTranslations("domains");
 
@@ -103,6 +110,20 @@ export default async function PartnerDomainsPage() {
             </Label>
           </ActionForm>
         ) : null}
+      </SettingsCard>
+
+      <SettingsCard
+        title={t("bases.title")}
+        description={t("bases.description")}
+        testId="partner-public-domains"
+      >
+        <PartnerPublicDomains
+          domains={bases}
+          platformBases={platformPublicBases()}
+          canManage={canManageDashboard}
+          isHouse={partner.partnerId === HOUSE_PARTNER_ID}
+          cnameTarget={cnameTarget}
+        />
       </SettingsCard>
 
       <SettingsCard

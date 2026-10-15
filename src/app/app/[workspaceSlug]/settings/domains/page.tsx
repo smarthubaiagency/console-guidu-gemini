@@ -3,6 +3,7 @@ import { Globe } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { DomainList } from "@/components/domains/domain-list";
+import { PublicAddresses } from "@/components/domains/public-addresses";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
 import { SettingsCard } from "@/components/settings/settings-shell";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { addWorkspaceDomainAction } from "@/core/domains/actions";
 import { domainsConfig } from "@/core/domains/config";
+import { workspacePublicAddresses } from "@/core/domains/public-service";
 import {
   canManageWorkspaceDomains,
   listWorkspaceDomains,
@@ -28,7 +30,8 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * Workspace › Configurações › Domínios (CF2b): public domains of the
  * workspace (site, digital profile, quiz). The dashboard domain is the
- * partner's and never changes here.
+ * partner's and never changes here. CF2c adds the default address of each
+ * public route type (`{slug}.{default domain}`), outside the quota.
  */
 export default async function WorkspaceDomainsPage({
   params,
@@ -42,10 +45,11 @@ export default async function WorkspaceDomainsPage({
     identity.userId,
     workspaceSlug,
   );
-  const { domains, quota, canManage } = await withContext(
+  const { addresses, domains, quota, canManage } = await withContext(
     prisma,
     ctx,
     async (tx) => ({
+      addresses: await workspacePublicAddresses(tx, workspaceSlug),
       domains: await listWorkspaceDomains(tx, [ctx.workspaceId]),
       quota: await workspaceDomainQuota(tx, ctx),
       canManage: await canManageWorkspaceDomains(tx, {
@@ -66,6 +70,13 @@ export default async function WorkspaceDomainsPage({
         description={t("description.workspace")}
         icon={<Globe className="h-5 w-5" />}
       />
+      <SettingsCard
+        title={t("addresses.title")}
+        description={t("addresses.description")}
+        testId="workspace-public-addresses"
+      >
+        <PublicAddresses addresses={addresses} />
+      </SettingsCard>
       <SettingsCard
         title={t("public.title")}
         description={t("public.description")}

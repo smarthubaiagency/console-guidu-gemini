@@ -63,7 +63,11 @@
     "dns_pending": "O CNAME ainda não aponta para o destino. A propagação do DNS pode levar algumas horas.",
     "ssl_pending": "DNS correto. O certificado está sendo emitido; verifique de novo em alguns minutos.",
     "ssl_error": "O certificado não foi emitido. Confira o CNAME e verifique de novo.",
-    "cloudflare_error": "Não foi possível registrar o certificado agora. Tente de novo."
+    "cloudflare_error": "Não foi possível registrar o certificado agora. Tente de novo.",
+    "baseAdded": "Domínio {host} adicionado. Crie os registros CNAME e clique em Verificar.",
+    "baseActive": "Domínio padrão verificado e ativo.",
+    "wildcard_pending": "O domínio aponta para o destino, mas o curinga (*.) ainda não. A propagação do DNS pode levar algumas horas.",
+    "choiceSaved": "Domínio da ferramenta atualizado."
   },
   "errors": {
     "invalidDomain": "Informe um domínio válido, como perfil.suaempresa.com.br.",
@@ -71,6 +75,47 @@
     "taken": "Esse domínio já está cadastrado.",
     "notFound": "Domínio não encontrado.",
     "primaryNotActive": "Só um domínio ativo pode ser o principal.",
-    "workspaceNotFound": "Workspace não encontrado."
+    "workspaceNotFound": "Workspace não encontrado.",
+    "invalidBaseDomain": "Informe um domínio válido, como cartao.suaempresa.com.br.",
+    "housePartner": "O domínio padrão da plataforma é definido pela operação.",
+    "baseExists": "Já existe um domínio padrão para esse tipo. Remova-o antes.",
+    "invalidRouteType": "Tipo de rota pública inválido.",
+    "invalidTool": "Ferramenta inválida.",
+    "choiceNotActive": "Só um domínio ativo pode ser escolhido."
+  },
+  "routeTypes": {
+    "profile": "Perfil digital",
+    "quiz": "Quiz",
+    "page": "Páginas e sites"
+  },
+  "addresses": {
+    "title": "Endereços padrão",
+    "description": "Cada tipo de página pública já tem um endereço com o nome do workspace. Ele não conta no limite de domínios do plano.",
+    "unavailable": "Indisponível para o nome deste workspace. Use um domínio próprio.",
+    "off": "Este tipo ainda não tem domínio padrão.",
+    "partner": "Domínio do parceiro",
+    "platform": "Domínio da plataforma"
+  },
+  "bases": {
+    "title": "Domínios padrão dos clientes",
+    "description": "Cada cliente ganha um subdomínio com o nome do workspace no domínio padrão de cada tipo. Cadastre um domínio seu para substituir o da plataforma nos seus clientes.",
+    "platformDefault": "Padrão da plataforma: {host}",
+    "platformOff": "Sem domínio da plataforma para este tipo.",
+    "example": "Exemplo: {host}",
+    "routeType": "Tipo",
+    "hostPlaceholder": "cartao.suaempresa.com.br",
+    "instructions": "No DNS, crie dois registros CNAME apontando para {target}: um com o nome {host} e outro com o nome *.{host}. Depois clique em Verificar.",
+    "certificate": "O certificado curinga deste domínio é configurado pela operação da plataforma.",
+    "removeMessage": "Os endereços dos seus clientes neste domínio deixam de abrir e voltam para o domínio da plataforma.",
+    "house": "Os domínios padrão da plataforma valem para os clientes da casa e são definidos pela operação.",
+    "readOnly": "Só o dono e os administradores do parceiro alteram os domínios padrão."
+  },
+  "picker": {
+    "label": "Domínio",
+    "default": "Padrão: {host}",
+    "defaultNone": "Padrão (indisponível)",
+    "save": "Salvar domínio",
+    "address": "Endereço: {url}",
+    "none": "Sem endereço público. Cadastre um domínio próprio."
   }
 }

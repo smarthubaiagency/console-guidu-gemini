@@ -23,6 +23,7 @@ import type {
 import { AppError } from "@/shared/errors";
 
 import { domainsConfig } from "./config";
+import { isUnder, platformPublicBases } from "./public-hosts";
 import { PUBLIC_DOMAINS_DEFAULT_LIMIT, PUBLIC_DOMAINS_QUOTA } from "./quota";
 import type { DomainCheckResult } from "./verify";
 
@@ -90,7 +91,9 @@ function notFound(): AppError {
 /**
  * Host typed by a manager: protocol, path and port are dropped. Refused when
  * it is not a domain with a dot, belongs to the platform, sits under the
- * partner subdomain base or is the CNAME target itself.
+ * partner subdomain base, is the CNAME target itself or sits under a
+ * platform default public domain (CF2c; workspace subdomains live there).
+ * Hosts under a partner's default domain are refused by the database.
  */
 export function parseCustomHost(input: string): string {
   const raw = input
@@ -110,7 +113,11 @@ export function parseCustomHost(input: string): string {
     platformHosts(process.env).has(host) ||
     (base && (host === base || host.endsWith(`.${base}`))) ||
     (config.cnameTarget &&
-      (host === config.cnameTarget || host.endsWith(`.${config.cnameTarget}`)))
+      (host === config.cnameTarget ||
+        host.endsWith(`.${config.cnameTarget}`))) ||
+    Object.values(platformPublicBases()).some(
+      (publicBase) => publicBase !== null && isUnder(host, publicBase),
+    )
   ) {
     throw invalid("Esse domínio pertence à plataforma.", "platformDomain");
   }

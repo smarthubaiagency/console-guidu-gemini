@@ -8,8 +8,16 @@ import { useStatus } from "@/components/feedback/status-context";
 import { Button } from "@/components/ui/button";
 import {
   removePartnerDomainAction,
+  removePartnerPublicDomainAction,
   removeWorkspaceDomainAction,
 } from "@/core/domains/actions";
+
+const ACTIONS = {
+  partner: removePartnerDomainAction,
+  workspace: removeWorkspaceDomainAction,
+  // Default domain of the partner's customers (CF2c).
+  base: removePartnerPublicDomainAction,
+} as const;
 
 export type RemoveDomainLabels = Readonly<{
   remove: string;
@@ -29,7 +37,7 @@ export function RemoveDomainButton({
   fields,
   labels,
 }: Readonly<{
-  kind: "partner" | "workspace";
+  kind: keyof typeof ACTIONS;
   /** Form fields the action reads (host or domainId, workspace slug). */
   fields: Readonly<Record<string, string>>;
   labels: RemoveDomainLabels;
@@ -52,11 +60,7 @@ export function RemoveDomainButton({
       for (const [name, value] of Object.entries(fields)) {
         formData.append(name, value);
       }
-      const action =
-        kind === "partner"
-          ? removePartnerDomainAction
-          : removeWorkspaceDomainAction;
-      const result = await action({}, formData);
+      const result = await ACTIONS[kind]({}, formData);
       if (result.error) {
         showStatus({
           type: "down",

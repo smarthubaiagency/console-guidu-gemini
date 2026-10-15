@@ -1,6 +1,6 @@
 # Domínios personalizados
 
-Etapa CF2b. Cobre o domínio do painel do parceiro e os domínios públicos dos workspaces, com a mesma infraestrutura do linkko: EasyPanel, Traefik e Cloudflare for SaaS.
+Etapa CF2b. Cobre o domínio do painel do parceiro e os domínios públicos dos workspaces, com a mesma infraestrutura do linkko: EasyPanel, Traefik e Cloudflare for SaaS. Os endereços padrão de cada tipo de rota pública (`rodobens.mobio.pro`) e o domínio padrão do parceiro são da CF2c: [dominios-publicos.md](dominios-publicos.md).
 
 ## Quem gerencia o quê
 
@@ -39,6 +39,6 @@ O endpoint responde 200 para um domínio ativo de um parceiro ativo ou de um wor
 
 ## Pendências
 
-- A limpeza de um workspace excluído apaga as linhas de `workspace_domains`, mas não os Custom Hostnames no Cloudflare.
-- As rotas públicas (site, perfil digital, quiz) ainda não existem. `resolvePublicDomain` já devolve o workspace de um host ativo.
+- A limpeza de um workspace excluído apaga as linhas de `workspace_domains` (desde a CF2c) e as escolhas das ferramentas, mas não os Custom Hostnames no Cloudflare.
+- As rotas públicas (site, perfil digital, quiz) ainda não existem. `resolvePublicHost` (CF2c) já devolve o workspace e o tipo de um host.
 - O Cloudflare como integração da plataforma (vários serviços) fica para uma etapa própria.

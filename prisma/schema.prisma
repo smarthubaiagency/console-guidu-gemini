@@ -606,6 +606,40 @@ model WorkspaceDomain {
   @@map("workspace_domains")
 }
 
+/// Default public domain of a partner for one route type (CF2c).
+model PartnerPublicDomain {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId  String    @map("partner_id") @db.Uuid
+  routeType  String    @map("route_type")
+  host       String    @unique
+  status     String    @default("pending")
+  checkedAt  DateTime? @map("checked_at") @db.Timestamptz()
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz()
+  lastError  String?   @map("last_error")
+  createdBy  String?   @map("created_by") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([partnerId, routeType])
+  @@map("partner_public_domains")
+}
+
+/// Own domain chosen by a tool with a public route (CF2c); none = default.
+model WorkspacePublicRoute {
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  toolKey        String   @map("tool_key")
+  routeType      String   @map("route_type")
+  domainId       String   @map("domain_id") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@id([workspaceId, toolKey])
+  @@index([domainId])
+  @@map("workspace_public_routes")
+}
+
 model Organization {
   id          String               @id @db.Uuid
   name        String

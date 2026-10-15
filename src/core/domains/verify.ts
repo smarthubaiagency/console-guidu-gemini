@@ -91,3 +91,42 @@ export async function checkDomain(
     return pending("cloudflare_error", "error");
   }
 }
+
+/** Short codes of a default domain check (CF2c), stored in `last_error`. */
+export type BaseDomainCheckError =
+  "not_configured" | "dns_pending" | "wildcard_pending";
+
+export type BaseDomainCheckResult = Readonly<{
+  status: "pending" | "active";
+  lastError: BaseDomainCheckError | null;
+}>;
+
+/**
+ * Verification of a partner's default domain (CF2c): the domain and any
+ * name under it (the wildcard) must point to the proxy target. The wildcard
+ * is probed with a random label, which only resolves through `*.domain`.
+ * The wildcard certificate is an operation step (docs/operacao), so DNS
+ * alone activates.
+ */
+export async function checkBaseDomain(
+  host: string,
+  deps: Readonly<{
+    cnameTarget: string | null;
+    resolveCname: (host: string) => Promise<readonly string[]>;
+    probeLabel: string;
+  }>,
+): Promise<BaseDomainCheckResult> {
+  if (!deps.cnameTarget)
+    return { status: "pending", lastError: "not_configured" };
+  const target = deps.cnameTarget;
+  const points = async (name: string) =>
+    (await deps.resolveCname(name).catch(() => [])).some((value) =>
+      sameHost(value, target),
+    );
+  if (!(await points(host)))
+    return { status: "pending", lastError: "dns_pending" };
+  if (!(await points(`${deps.probeLabel}.${host}`))) {
+    return { status: "pending", lastError: "wildcard_pending" };
+  }
+  return { status: "active", lastError: null };
+}
