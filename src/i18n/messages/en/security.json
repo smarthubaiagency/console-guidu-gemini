@@ -1,0 +1,146 @@
+{
+  "title": "Security",
+  "description": {
+    "platform": "Two-step verification by area, the /platform IP list, password and session.",
+    "partner": "Two-step verification of your customers, the IP list of your /admin, password and session.",
+    "workspace": "Two-step verification required of this workspace's team."
+  },
+  "mfa": {
+    "title": "Two-step verification (MFA)",
+    "description": {
+      "platform": "/platform and /admin always require the second factor. In the workspaces, the platform may require it of everyone.",
+      "partner": "Your /admin always requires the second factor. In your customers' workspaces, you may require it.",
+      "workspace": "When required, every member confirms the second factor to enter this workspace."
+    },
+    "areas": {
+      "platform": "Platform (/platform)",
+      "admin": "Partner console (/admin)",
+      "app": "Workspaces (/app)",
+      "team": "This workspace's team"
+    },
+    "always": "Always required",
+    "required": "Required",
+    "optional": "Optional",
+    "requiredBy": {
+      "platform": "Required by the platform",
+      "partner": "Required by the partner"
+    },
+    "toggle": {
+      "platform": "Require MFA in every workspace",
+      "partner": "Require MFA in your customers' workspaces",
+      "workspace": "Require MFA of every member of this workspace"
+    },
+    "lockedBy": {
+      "platform": "The platform already requires MFA in every workspace.",
+      "partner": "The partner already requires MFA in its customers' workspaces."
+    },
+    "saverMissing": "You have not confirmed MFA in this session yet. Enable it in My account › Security before requiring it of the team.",
+    "hint": "Whoever has no second factor yet is taken to enable it on entering; nobody loses access to enable it.",
+    "save": "Save MFA",
+    "readOnly": "Only managers change this setting."
+  },
+  "ip": {
+    "title": {
+      "platform": "Platform IP list",
+      "partner": "/admin IP list"
+    },
+    "description": {
+      "platform": "Optional. With a list, only these addresses enter /platform. API keys are not affected.",
+      "partner": "Optional. With a list, only these addresses enter your /admin. Your customers are not affected."
+    },
+    "state": "Status",
+    "on": "On ({count, plural, one {# address} other {# addresses}})",
+    "off": "Off: any address enters",
+    "current": "Your address now",
+    "unknown": "not identified",
+    "label": "Allowed addresses (one per line; IPv4 or IPv6, with or without a mask)",
+    "placeholder": "203.0.113.10\n198.51.100.0/24",
+    "hint": "The list must include your current address, so you are not left out. Leave it empty and save to turn it off.",
+    "save": "Save list",
+    "readOnly": "Only this area's managers see and change the IP list."
+  },
+  "password": {
+    "title": "Password and session",
+    "description": "These rules live in the project's Supabase Auth configuration, not in this dashboard.",
+    "inAuth": "Supabase Auth",
+    "rules": "Password length and rules",
+    "leaked": "Leaked password check",
+    "session": "Session and inactivity time",
+    "attempts": "Attempts and lockout",
+    "https": "HTTPS and HSTS",
+    "httpsValue": "Always on",
+    "emailCheck": "E-mail verification",
+    "emailCheckValue": "Always on",
+    "note": "This page only informs. Changing these values touches Auth and is done by the platform's operations, with approval."
+  },
+  "events": {
+    "title": "Security events",
+    "description": {
+      "platform": "Sign-ins, MFA, keys, roles, invitations, support and security changes across the platform.",
+      "partner": "Sign-ins on your domain, events of your team and of your customers."
+    },
+    "columns": {
+      "when": "When",
+      "event": "Event",
+      "who": "Who",
+      "result": "Result"
+    },
+    "result": {
+      "success": "Success",
+      "denied": "Denied",
+      "error": "Error"
+    },
+    "empty": "No security events yet.",
+    "older": "Older",
+    "newest": "Newest",
+    "you": "you",
+    "system": "System",
+    "user": "User {id}",
+    "actions": {
+      "auth_sign_in": "Sign-in",
+      "auth_mfa_verified": "Second factor confirmed",
+      "auth_mfa_failed": "Second factor refused",
+      "auth_mfa_enrolled": "MFA enabled",
+      "auth_mfa_unenrolled": "MFA removed",
+      "api_keys_created": "API key created",
+      "api_keys_revoked": "API key revoked",
+      "platform_api_keys_create": "Platform API key created",
+      "platform_api_keys_revoke": "Platform API key revoked",
+      "credentials_created": "Credential created",
+      "credentials_revoked": "Credential revoked",
+      "partner_ai_credentials_create": "Partner AI key created",
+      "partner_ai_credentials_revoke": "Partner AI key revoked",
+      "organization_members_role_changed": "Company role changed",
+      "organization_members_removed": "Member removed from company",
+      "workspace_members_role_changed": "Workspace role changed",
+      "workspace_members_removed": "Member removed from workspace",
+      "partner_member_join": "Member joined the partner",
+      "partner_member_update": "Partner member changed",
+      "invitations_created": "Invitation created",
+      "invitations_accepted": "Invitation accepted",
+      "invitations_revoked": "Invitation revoked",
+      "partner_invitation_create": "Partner invitation created",
+      "partner_invitation_revoke": "Partner invitation revoked",
+      "partner_support_request": "Support access requested",
+      "partner_support_end": "Support access ended",
+      "partner_support_revoke": "Support access revoked",
+      "platform_settings_save": "Platform security changed",
+      "partner_settings_save": "Partner security changed",
+      "workspace_settings_save": "Workspace security changed",
+      "platform_security_ip_allowlist_save": "Platform IP list changed",
+      "partner_security_ip_allowlist_save": "Partner IP list changed"
+    }
+  },
+  "messages": {
+    "saved": "Security settings saved.",
+    "allowlistSaved": "IP list saved."
+  },
+  "errors": {
+    "ipBlocked": "Your network address is not allowed in this area.",
+    "invalidEntries": "Invalid address in the list: {entries}.",
+    "tooMany": "The list takes up to 50 addresses.",
+    "selfExcluded": "The list must include your current address ({ip}).",
+    "ipUnknown": "Your network address could not be read; the list was not saved.",
+    "enrolFirst": "Enable and confirm two-step verification on your account before requiring it of the team."
+  }
+}

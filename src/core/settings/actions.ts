@@ -37,6 +37,12 @@ function readInput(formData: FormData, level: SettingLevel): SettingsInput {
   const locks: Record<string, boolean> = {};
   for (const key of keys) {
     if (!isSettingKey(key)) continue;
+    // A switch (CF5a): checked turns it on, unchecked inherits.
+    if (typeof SETTINGS[key].default === "boolean") {
+      const entry = formData.get(`value:${key}`);
+      values[key] = entry === "on" || entry === "true" ? true : null;
+      continue;
+    }
     const isList = Array.isArray(SETTINGS[key].default);
     // A list may come as several entries or as one comma-separated text.
     const entries = formData

@@ -96,6 +96,8 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "agentBotId",
   "botRemoved",
   "inboxes",
+  // Security settings (CF5a): size of an IP allow list, never its addresses.
+  "count",
 ]);
 
 /**

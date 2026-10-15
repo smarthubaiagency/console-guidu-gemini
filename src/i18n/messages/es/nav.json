@@ -10,11 +10,13 @@
     "platform": {
       "platform": "Administración",
       "settings_platform": "Plataforma",
-      "settings_modules": "Módulos"
+      "settings_modules": "Módulos",
+      "settings_system": "Sistema"
     },
     "partner": {
       "partner": "Socio",
-      "settings_partner": "Socio"
+      "settings_partner": "Socio",
+      "settings_system": "Sistema"
     }
   },
   "items": {
@@ -78,6 +80,11 @@
     "platform_settings_email_templates": "Plantillas de correo",
     "partner_settings_email_templates": "Plantillas de correo",
     "platform_settings_plans": "Planes y límites",
-    "partner_settings_plans": "Planes y límites"
+    "partner_settings_plans": "Planes y límites",
+    "core_security": "Seguridad",
+    "platform_settings_security": "Seguridad",
+    "platform_settings_security_events": "Eventos de seguridad",
+    "partner_settings_security": "Seguridad",
+    "partner_settings_security_events": "Eventos de seguridad"
   }
 }

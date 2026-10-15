@@ -8,7 +8,9 @@ const {
   mfaVerify,
   createSupabaseServerClient,
   redirect,
+  recordAuthEvent,
 } = vi.hoisted(() => ({
+  recordAuthEvent: vi.fn(),
   requireUser: vi.fn(),
   mfaChallenge: vi.fn(),
   mfaVerify: vi.fn(),
@@ -21,6 +23,7 @@ const {
 vi.mock("@/core/auth/identity", () => ({ requireUser }));
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient }));
 vi.mock("next/navigation", () => ({ redirect }));
+vi.mock("@/core/security/auth-events", () => ({ recordAuthEvent }));
 
 createSupabaseServerClient.mockResolvedValue({
   auth: { mfa: { challenge: mfaChallenge, verify: mfaVerify } },
@@ -91,5 +94,37 @@ describe("verifyMfaChallenge", () => {
       code: "123456",
     });
     expect(redirect).toHaveBeenCalledWith("/app");
+    // Segurança › Eventos (CF5a).
+    expect(recordAuthEvent).toHaveBeenCalledWith(
+      "user-1",
+      "auth.mfa_verified",
+      "success",
+    );
+  });
+
+  it("records a wrong code as a denied second factor", async () => {
+    requireUser.mockResolvedValueOnce({
+      userId: "user-2",
+      email: "b@example.test",
+      mfaSatisfied: false,
+      profile: { status: "active" },
+    });
+    mfaChallenge.mockResolvedValueOnce({
+      data: { id: "challenge-2" },
+      error: null,
+    });
+    mfaVerify.mockResolvedValueOnce({ error: { message: "invalid" } });
+
+    const state = await verifyMfaChallenge(
+      {},
+      formData({ factorId: "factor-1", code: "654321" }),
+    );
+
+    expect(state.error).toBeTruthy();
+    expect(recordAuthEvent).toHaveBeenCalledWith(
+      "user-2",
+      "auth.mfa_failed",
+      "denied",
+    );
   });
 });

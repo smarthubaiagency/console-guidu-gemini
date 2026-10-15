@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inbox } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { requireUserPage } from "@/core/auth/page-guard";
@@ -50,7 +50,8 @@ export default async function ChannelsSettingsPage({
       identity.userId,
       workspaceSlug,
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     notFound();
   }
 

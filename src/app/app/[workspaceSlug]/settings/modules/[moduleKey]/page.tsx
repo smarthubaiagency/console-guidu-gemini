@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { Puzzle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
@@ -58,7 +58,8 @@ export default async function WorkspaceModuleSettingsPage({
       identity.userId,
       workspaceSlug,
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     notFound();
   }
 

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { isAreaIpAllowed } from "@/core/security/ip-gate";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
 /**
@@ -55,14 +56,30 @@ export class PlatformAdminAccessDeniedError extends Error {
 }
 
 /**
- * Checks whether the specified user holds an active PlatformAdminMember role.
+ * Active platform role of the user in this request: null without one, and
+ * null when the /platform IP allow list (CF5a) leaves the request's address
+ * out. Every page and action of the platform console reads the role here.
+ */
+export async function getPlatformAdminMember(
+  prisma: PrismaClient,
+  userId: string,
+): Promise<PlatformAdminInfo | null> {
+  const member = await readPlatformAdminMember(prisma, userId);
+  if (!member) return null;
+  return (await isAreaIpAllowed(prisma, "platform", null)) ? member : null;
+}
+
+/**
+ * Checks whether the specified user holds an active PlatformAdminMember role,
+ * regardless of the request's address (platform API keys, the guards that
+ * tell an address refusal apart).
  *
  * Maintenance Rationale:
  * - Queries `platform_admin_members` within `withIdentityContext`.
  * - Guarded by `platform_admin_members_select` policy so only the caller's own
  *   active record is visible.
  */
-export async function getPlatformAdminMember(
+export async function readPlatformAdminMember(
   prisma: PrismaClient,
   userId: string,
 ): Promise<PlatformAdminInfo | null> {

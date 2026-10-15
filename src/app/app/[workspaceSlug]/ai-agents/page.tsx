@@ -10,7 +10,7 @@
  */
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { Bot, Clock, Plus } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 
@@ -90,7 +90,8 @@ export default async function AiAgentsPage({
       identity.userId,
       workspaceSlug,
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     notFound();
   }
 

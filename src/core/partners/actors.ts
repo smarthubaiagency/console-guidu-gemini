@@ -1,11 +1,12 @@
 import "server-only";
 
-import { getPlatformAdminMember } from "@/core/admin/platform";
+import { readPlatformAdminMember } from "@/core/admin/platform";
 import { requireMfa } from "@/core/auth/identity";
+import { isAreaIpAllowed } from "@/core/security/ip-gate";
 import { prisma } from "@/lib/prisma/client";
 import { AppError } from "@/shared/errors";
 
-import { getPartnerMembership } from "./members";
+import { readPartnerMembership } from "./members";
 import { getRequestPartner } from "./resolve";
 
 /**
@@ -21,12 +22,27 @@ function notFound(): AppError {
   });
 }
 
-/** Platform console actor: AAL2, platform host and active internal role. */
+/** Refusal of the IP allow list of the console (CF5a). */
+function ipBlocked(): AppError {
+  return new AppError({
+    code: "forbidden",
+    safeMessage: "Seu endereço de rede não está liberado para esta área.",
+    messageKey: "security.errors.ipBlocked",
+  });
+}
+
+/**
+ * Platform console actor: AAL2, platform host, active internal role and an
+ * address the /platform IP allow list accepts.
+ */
 export async function platformActor() {
   const identity = await requireMfa();
   const partner = await getRequestPartner();
   if (!partner?.isPlatformHost) throw notFound();
-  const admin = await getPlatformAdminMember(prisma, identity.userId);
+  const admin = await readPlatformAdminMember(prisma, identity.userId);
+  if (admin && !(await isAreaIpAllowed(prisma, "platform", null))) {
+    throw ipBlocked();
+  }
   return {
     userId: identity.userId,
     partnerId: partner.partnerId,
@@ -34,16 +50,25 @@ export async function platformActor() {
   };
 }
 
-/** Partner console actor: AAL2 and an active role in the host's partner. */
+/**
+ * Partner console actor: AAL2, an active role in the host's partner and an
+ * address the partner's /admin IP allow list accepts.
+ */
 export async function partnerActor() {
   const identity = await requireMfa();
   const partner = await getRequestPartner();
   if (!partner) throw notFound();
-  const membership = await getPartnerMembership(
+  const membership = await readPartnerMembership(
     prisma,
     identity.userId,
     partner.partnerId,
   );
+  if (
+    membership &&
+    !(await isAreaIpAllowed(prisma, "admin", partner.partnerId))
+  ) {
+    throw ipBlocked();
+  }
   return {
     userId: identity.userId,
     partnerId: partner.partnerId,

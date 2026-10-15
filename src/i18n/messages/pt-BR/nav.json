@@ -10,11 +10,13 @@
     "platform": {
       "platform": "Administração",
       "settings_platform": "Plataforma",
-      "settings_modules": "Módulos"
+      "settings_modules": "Módulos",
+      "settings_system": "Sistema"
     },
     "partner": {
       "partner": "Parceiro",
-      "settings_partner": "Parceiro"
+      "settings_partner": "Parceiro",
+      "settings_system": "Sistema"
     }
   },
   "items": {
@@ -78,6 +80,11 @@
     "platform_settings_email_templates": "Modelos de e-mail",
     "partner_settings_email_templates": "Modelos de e-mail",
     "platform_settings_plans": "Planos e limites",
-    "partner_settings_plans": "Planos e limites"
+    "partner_settings_plans": "Planos e limites",
+    "core_security": "Segurança",
+    "platform_settings_security": "Segurança",
+    "platform_settings_security_events": "Eventos de segurança",
+    "partner_settings_security": "Segurança",
+    "partner_settings_security_events": "Eventos de segurança"
   }
 }

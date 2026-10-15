@@ -146,6 +146,10 @@ describe("generated navigation", () => {
     );
     expect(find(app("admin"), "core.billing")).toBeDefined();
     expect(find(app("viewer"), "core.billing")).toBeUndefined();
+    // Security (CF5a): every member reads the team's MFA requirement.
+    expect(find(app("viewer"), "core.security")?.href).toBe(
+      "/app/acme/settings/security",
+    );
     // Data and privacy (F3e): owner and admin only.
     expect(find(app("owner"), "core.data")?.href).toContain("/settings/data");
     expect(find(app("admin"), "core.data")).toBeDefined();
@@ -251,6 +255,15 @@ describe("generated navigation", () => {
     // Administrative keys (F4e): every internal role creates their own.
     expect(find(billing, "platform.api-keys")?.href).toBe("/platform/api-keys");
     expect(find(support, "platform.api-keys")).toBeDefined();
+    // Security and its events (CF5a): owner, operations and support.
+    expect(find(owner, "platform.settings.security")?.href).toBe(
+      "/platform/settings/security",
+    );
+    expect(find(support, "platform.settings.security.events")?.href).toBe(
+      "/platform/settings/security/events",
+    );
+    expect(find(billing, "platform.settings.security")).toBeUndefined();
+    expect(find(none, "platform.settings.security.events")).toBeUndefined();
   });
 
   it("shows the AI screens of /platform only with the module flag and platform.ai.manage", () => {
@@ -287,6 +300,8 @@ describe("generated navigation", () => {
       "/admin/settings/email",
       "/admin/settings/email/templates",
       "/admin/settings/plans",
+      "/admin/settings/security",
+      "/admin/settings/security/events",
     ]);
     expect(hrefs("partner_support")).toEqual([
       "/admin/ai/assistant",

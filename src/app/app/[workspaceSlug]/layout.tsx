@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { requireLegalAcceptance } from "@/core/legal/gate";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
@@ -36,7 +36,8 @@ export default async function WorkspaceLayout({
       identity.userId,
       workspaceSlug,
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     // If the workspace does not exist or user is not a member, uniform 404
     notFound();
   }

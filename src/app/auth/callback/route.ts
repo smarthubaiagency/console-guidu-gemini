@@ -4,6 +4,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { provisionIdentity } from "@/core/auth/identity";
 import { appOrigin } from "@/core/auth/origin";
 import { safeInternalPath } from "@/core/auth/redirects";
+import { recordAuthEvent } from "@/core/security/auth-events";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const EMAIL_OTP_TYPES: readonly EmailOtpType[] = [
@@ -72,6 +73,9 @@ export async function GET(request: NextRequest) {
   if (!decision.allowed) {
     return NextResponse.redirect(`${origin}/login?error=unavailable`);
   }
+
+  // Segurança › Eventos (CF5a): sign-in by e-mail link or provider.
+  await recordAuthEvent(decision.userId, "auth.sign_in", "success", "callback");
 
   return NextResponse.redirect(`${origin}${next}`);
 }
