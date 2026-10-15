@@ -1,0 +1,61 @@
+{
+  "metaTitle": "API and MCP",
+  "title": "API and MCP",
+  "description": "Turns the API and the MCP on and off, the limits per minute, the scopes of each plan and the usage of each key.",
+  "save": "Save",
+  "switches": {
+    "title": "On and off",
+    "description": "Emergency switch. Off, every call answers 503 (in English); the keys remain and work again once it is back on.",
+    "api": "Workspace REST API on",
+    "mcp": "Workspace MCP on",
+    "hint": "The platform API and MCP (administrative keys) are not affected.",
+    "apiOn": "API on",
+    "apiOff": "API off",
+    "mcpOn": "MCP on",
+    "mcpOff": "MCP off"
+  },
+  "limits": {
+    "title": "Limits per minute",
+    "description": "They apply to the API and the MCP. The plan's value applies to the customer; without a plan value, the environment default applies. Never above the ceiling.",
+    "bucket": "Limit",
+    "env": "Default (environment)",
+    "ceiling": "Ceiling",
+    "noCeiling": "No ceiling",
+    "default": "Default",
+    "buckets": {
+      "key": "Per key",
+      "user": "Per person",
+      "workspace": "Per workspace"
+    },
+    "edit": "Ceilings and plan values are edited in <link>Plans and limits</link>."
+  },
+  "scopes": {
+    "title": "Scopes per plan",
+    "description": "Which scopes the keys of each plan's customers may have. A key with a scope the plan no longer allows stops using it.",
+    "custom": "(own list)",
+    "all": "(all)",
+    "noPlans": "No active plan with a published version.",
+    "hint": "With everything checked, the plan has no list of its own and also gets new scopes."
+  },
+  "usage": {
+    "title": "Usage per key",
+    "description": {
+      "platform": "Calls and errors of the keys of every workspace in the last {days} days."
+    },
+    "empty": "No call with a key in the last {days} days.",
+    "key": "Key",
+    "where": "Company › workspace",
+    "calls": "Calls",
+    "mcpCalls": "Through MCP",
+    "errors": "Errors",
+    "day": "Day",
+    "revoked": "revoked"
+  },
+  "messages": {
+    "saved": "API settings saved."
+  },
+  "errors": {
+    "invalid": "Unknown scope.",
+    "unknownPlan": "Unknown plan."
+  }
+}

@@ -6,6 +6,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listApiKeys } from "@/core/credentials/api-keys";
+import { loadAllowedScopes } from "@/core/api/policy";
 import { Permissions } from "@/core/permissions/catalog";
 import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
 import type { WorkspaceRole } from "@/core/permissions/roles";
@@ -34,7 +35,7 @@ export default async function McpSettingsPage({
     workspaceSlug,
   );
 
-  const { apiKeys, capabilities, userRole } = await withContext(
+  const { apiKeys, capabilities, userRole, allowedScopes } = await withContext(
     prisma,
     context,
     async (tx) => {
@@ -61,6 +62,8 @@ export default async function McpSettingsPage({
         : false;
 
       const keys = wsRole ? await listApiKeys(tx, context) : [];
+      // Scopes of the company's plan (CF6b).
+      const allowed = await loadAllowedScopes(tx, context);
 
       return {
         apiKeys: keys,
@@ -72,6 +75,7 @@ export default async function McpSettingsPage({
           isViewer: wsRole === "viewer",
         } satisfies McpKeysCapabilities,
         userRole: wsRole,
+        allowedScopes: allowed,
       };
     },
   );
@@ -132,6 +136,7 @@ export default async function McpSettingsPage({
         capabilities={capabilities}
         currentUserId={context.userId}
         userRole={userRole}
+        allowedScopes={allowedScopes}
       />
     </div>
   );

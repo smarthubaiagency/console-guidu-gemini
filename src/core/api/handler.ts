@@ -15,16 +15,20 @@ import type { WorkspaceScopeType } from "@/core/mcp/scopes";
 import { requestHost } from "@/core/partners/hosts";
 import { resolvePartnerForHost } from "@/core/partners/resolve";
 import { listUserWorkspaces } from "@/core/workspaces/navigation";
-import type { RequestContext } from "@/lib/prisma/with-context";
+import { type RequestContext, withContext } from "@/lib/prisma/with-context";
 import { AppError, apiErrorResponse } from "@/shared/errors";
 
 import type { ApiRoute } from "./contracts";
+import { configuredRateLimits, type RateLimits, usableScopes } from "./limits";
+import { loadApiPolicy } from "./policy";
 import {
   hitRateLimit,
   type RateDecision,
   RateLimitedError,
   rateLimitHeaders,
 } from "./rate-limit";
+import { apiDisabledResponse, type ApiSwitches } from "./switch";
+import { recordApiKeyUsage } from "./usage";
 
 /**
  * Single entry of the REST API (F4a, Especificação §15). Every route goes
@@ -45,7 +49,12 @@ import {
  *
  * Before all of it, a maintenance window (CF5c) answers 503 with
  * Retry-After: every call in full maintenance, the writes (POST and PATCH
- * outside a `:read` scope) in read-only.
+ * outside a `:read` scope) in read-only; and the platform's emergency
+ * switch (CF6b) answers 503 while the API is off.
+ *
+ * Plan of the company (CF6b): a key uses only the scopes its plan still
+ * allows, and the limits per minute come from the plan (the environment
+ * is the default). Every call of a key counts in its usage per day.
  */
 
 export type ApiPrincipal =
@@ -56,7 +65,10 @@ export type ApiPrincipal =
       apiKeyId: string;
       workspaceId: string;
       organizationId: string;
+      /** The key's scopes the company's plan still allows (CF6b). */
       scopes: readonly WorkspaceScopeType[];
+      /** Limits per minute of the company's plan (CF6b). */
+      limits: RateLimits;
     }>;
 
 export type ApiCall = Readonly<{
@@ -84,6 +96,11 @@ export type ApiDeps = Readonly<{
    * The public API and the workspace MCP answer 503 while it closes them.
    */
   maintenance?: () => Promise<MaintenanceStatus>;
+  /**
+   * Emergency switches of the API and the MCP (CF6b); absent in tests that
+   * do not exercise them (both on).
+   */
+  apiSwitches?: () => Promise<ApiSwitches>;
 }>;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -114,7 +131,7 @@ async function resolvePrincipal(
   }
   const match = /^Bearer\s+(\S+)$/.exec(authorization.trim());
   if (!match?.[1]) throw new InvalidApiKeyError(requestId);
-  const { apiKey } = await authenticateApiKey(deps.prisma, match[1], {
+  const { apiKey, context } = await authenticateApiKey(deps.prisma, match[1], {
     requestId,
     origin,
   });
@@ -127,13 +144,18 @@ async function resolvePrincipal(
   if (!reachable.some((w) => w.workspaceId === apiKey.workspaceId)) {
     throw new InvalidApiKeyError(requestId);
   }
+  const keyContext: RequestContext = { ...context, partnerId };
+  const policy = await withContext(deps.prisma, keyContext, (tx) =>
+    loadApiPolicy(tx, keyContext),
+  );
   return {
     kind: "api_key",
     userId: apiKey.userId,
     apiKeyId: apiKey.id,
     workspaceId: apiKey.workspaceId,
     organizationId: apiKey.organizationId,
-    scopes: apiKey.scopes,
+    scopes: usableScopes(apiKey.scopes, policy.allowedScopes),
+    limits: policy.limits,
   };
 }
 
@@ -209,6 +231,7 @@ export async function handleApiRoute(
 ): Promise<NextResponse> {
   const requestId = randomUUID();
   let decision: RateDecision | null = null;
+  let keyPrincipal: Extract<ApiPrincipal, { kind: "api_key" }> | null = null;
   const headers = (): Record<string, string> => ({
     "x-request-id": requestId,
     "cache-control": "no-store",
@@ -226,12 +249,21 @@ export async function handleApiRoute(
       );
       if (closed) return closed;
     }
+    if (deps.apiSwitches) {
+      const off = apiDisabledResponse(
+        await deps.apiSwitches(),
+        "api",
+        requestId,
+      );
+      if (off) return off;
+    }
     const { partner, principal } = await authenticateRequest(
       request,
       deps,
       requestId,
       { allowSession: true },
     );
+    if (principal.kind === "api_key") keyPrincipal = principal;
     if (
       principal.kind === "api_key" &&
       !principal.scopes.includes(route.scope)
@@ -248,8 +280,20 @@ export async function handleApiRoute(
       ? await resolveContext(deps, principal, partner.partnerId, params.id)
       : null;
 
+    // Limits of the plan (CF6b): the key's, or the workspace's for a
+    // session; the environment's outside a workspace.
+    const limits =
+      principal.kind === "api_key"
+        ? principal.limits
+        : context
+          ? (
+              await withContext(deps.prisma, context, (tx) =>
+                loadApiPolicy(tx, context),
+              )
+            ).limits
+          : configuredRateLimits();
     decision = await hitRateLimit(
-      { redis: deps.redis, prisma: deps.prisma },
+      { redis: deps.redis, prisma: deps.prisma, limits },
       {
         apiKeyId: principal.kind === "api_key" ? principal.apiKeyId : null,
         userId: principal.userId,
@@ -328,14 +372,21 @@ export async function handleApiRoute(
       body,
       params,
     });
-    return NextResponse.json(route.response.parse(data), {
+    const response = NextResponse.json(route.response.parse(data), {
       status: route.successStatus ?? 200,
       headers: headers(),
     });
+    if (keyPrincipal) {
+      await recordApiKeyUsage(deps.prisma, keyPrincipal, "api", false);
+    }
+    return response;
   } catch (error) {
     const response = apiErrorResponse(error, requestId);
     for (const [name, value] of Object.entries(headers())) {
       response.headers.set(name, value);
+    }
+    if (keyPrincipal) {
+      await recordApiKeyUsage(deps.prisma, keyPrincipal, "api", true);
     }
     return response;
   }

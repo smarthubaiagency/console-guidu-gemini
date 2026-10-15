@@ -7,7 +7,7 @@
   "baseUrl": "Base URL: <code>{base}</code>",
   "workspaceId": "This workspace's id:",
   "auth": "Authentication: <code>Authorization: Bearer gdu_live_…</code> header with a key created in <link>Settings › MCP</link>. The key only works for this workspace, for the scopes selected on it, and only at this address.",
-  "limits": "Provisional limits per minute: {key} per key, {user} per person and {workspace} per workspace. Above that the response is 429 with <code>Retry-After</code>.",
+  "limits": "Limits per minute of your plan: {key} per key, {user} per person and {workspace} per workspace. Above that the response is 429 with <code>Retry-After</code>.",
   "errors": "Errors include <code>code</code>, <code>message</code> and <code>requestId</code>; give the requestId to support.",
   "contract": "Full contract:",
   "routesTitle": "Available routes",
@@ -34,5 +34,7 @@
     "createPortfolioItem": "Creates an item with its variants (UCP fields; respects the quotas and the vertical's rules).",
     "updatePortfolioItem": "Changes the fields sent for an item.",
     "updatePortfolioVariant": "Changes the fields sent for a variant (price, availability, stock…)."
-  }
+  },
+  "usageTitle": "Usage per key",
+  "usageDescription": "Calls and errors of the keys you can see, in the last {days} days."
 }

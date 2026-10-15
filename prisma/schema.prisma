@@ -828,6 +828,60 @@ model ApiKey {
   @@map("api_keys")
 }
 
+/// Calls and errors per workspace API key, day and surface (CF6b). Written
+/// only by `private.record_api_key_usage`; read with the key's RLS.
+model ApiKeyUsageDaily {
+  apiKeyId       String   @map("api_key_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  day            DateTime @db.Date
+  surface        String
+  calls          Int      @default(0)
+  errors         Int      @default(0)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@id([apiKeyId, day, surface])
+  @@map("api_key_usage_daily")
+}
+
+/// Google OAuth app of the platform (`partnerId` null) or of a partner
+/// (CF6b). The secret ciphertext is never selected by app_runtime: always
+/// read with an explicit `select`.
+model GoogleOauthApp {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId             String?  @map("partner_id") @db.Uuid
+  clientId              String   @map("client_id")
+  clientSecretMasked    String   @map("client_secret_masked")
+  clientSecretEncrypted String   @map("client_secret_encrypted")
+  verificationStatus    String   @default("testing") @map("verification_status")
+  updatedBy             String   @map("updated_by") @db.Uuid
+  createdAt             DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
+
+  @@map("google_oauth_apps")
+}
+
+/// Google account connected by a workspace (CF6b). The tokens are never
+/// selected by app_runtime: always read with an explicit `select`.
+model WorkspaceGoogleConnection {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId        String    @map("organization_id") @db.Uuid
+  workspaceId           String    @unique @map("workspace_id") @db.Uuid
+  appSource             String    @map("app_source")
+  appId                 String?   @map("app_id") @db.Uuid
+  accountEmail          String    @map("account_email")
+  accountSubject        String?   @map("account_subject")
+  scopes                String[]  @default([])
+  accessTokenEncrypted  String    @map("access_token_encrypted")
+  refreshTokenEncrypted String?   @map("refresh_token_encrypted")
+  accessExpiresAt       DateTime? @map("access_expires_at") @db.Timestamptz()
+  connectedBy           String    @map("connected_by") @db.Uuid
+  createdAt             DateTime  @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime  @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
+
+  @@map("workspace_google_connections")
+}
+
 /// Agent template (A1, the legacy preset). `partnerId` null is the house;
 /// `kind = "admin"` is the single template of every partner Assistant.
 /// `defaults` is the configuration document of `configVersion`

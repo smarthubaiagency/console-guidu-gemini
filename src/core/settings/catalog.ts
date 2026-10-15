@@ -19,6 +19,27 @@ import {
   type PosthogRegion,
   SiteIdSchema,
 } from "@/core/analytics/config";
+import {
+  GOOGLE_SCOPES,
+  type GoogleScope,
+  GoogleScopesSchema,
+  narrowGoogleScopes,
+} from "@/core/integrations/google/scopes";
+import {
+  WorkspaceScopeSchema,
+  type WorkspaceScopeType,
+} from "@/core/mcp/scopes";
+
+/** Scopes each plan allows its API keys (CF6b), by plan key. */
+const PlanScopesSchema = z
+  .record(
+    z
+      .string()
+      .max(48)
+      .regex(/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/),
+    z.array(WorkspaceScopeSchema).max(20),
+  )
+  .refine((value) => Object.keys(value).length <= 50, "too many plans");
 
 /**
  * Settings catalog (CF1, levantamento.md): what each key means, where it may
@@ -188,6 +209,40 @@ export const SETTINGS = {
     schema: BaseUrlsSchema,
     default: {},
     levels: ["platform"],
+  }),
+  /**
+   * Emergency switch of the REST API of the workspaces (CF6b), platform
+   * only: off, every call answers 503 in English; keys stay as they are.
+   */
+  "api.rest_enabled": define<boolean>({
+    schema: z.boolean(),
+    default: true,
+    levels: ["platform"],
+  }),
+  /** Emergency switch of the workspace MCP (CF6b), platform only. */
+  "api.mcp_enabled": define<boolean>({
+    schema: z.boolean(),
+    default: true,
+    levels: ["platform"],
+  }),
+  /**
+   * Scopes each plan allows the keys of its customers (CF6b), by plan key;
+   * a plan without an entry allows every scope.
+   */
+  "api.plan_scopes": define<Record<string, WorkspaceScopeType[]>>({
+    schema: PlanScopesSchema,
+    default: {},
+    levels: ["platform"],
+  }),
+  /**
+   * Google scopes offered to the workspaces (CF6b): the platform turns them
+   * on, the partner may only narrow them for its customers.
+   */
+  "integrations.google.scopes": define<GoogleScope[]>({
+    schema: GoogleScopesSchema,
+    default: [...GOOGLE_SCOPES],
+    levels: ["platform", "partner"],
+    narrow: narrowGoogleScopes,
   }),
   /**
    * Product analytics (CF7), off by default until the LGPD review

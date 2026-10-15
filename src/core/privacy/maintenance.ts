@@ -65,6 +65,11 @@ export async function purgeWorkspace(
     ],
     ["channel_routes", () => tx.channelRoute.deleteMany({ where })],
     ["channel_connections", () => tx.channelConnection.deleteMany({ where })],
+    // The Google account (CF6b); the usage per key goes with its key.
+    [
+      "workspace_google_connections",
+      () => tx.workspaceGoogleConnection.deleteMany({ where }),
+    ],
     ["api_keys", () => tx.apiKey.deleteMany({ where })],
     ["credentials", () => tx.credential.deleteMany({ where })],
     ["invitations", () => tx.invitation.deleteMany({ where })],

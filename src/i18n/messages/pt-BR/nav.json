@@ -11,12 +11,14 @@
       "platform": "Administração",
       "settings_platform": "Plataforma",
       "settings_modules": "Módulos",
-      "settings_system": "Sistema"
+      "settings_system": "Sistema",
+      "settings_integrations": "API e integrações"
     },
     "partner": {
       "partner": "Parceiro",
       "settings_partner": "Parceiro",
-      "settings_system": "Sistema"
+      "settings_system": "Sistema",
+      "settings_integrations": "Integrações"
     }
   },
   "items": {
@@ -94,6 +96,10 @@
     "platform_ai_providers": "Provedores e modelos",
     "partner_ai_dashboard": "Painel de IA",
     "partner_ai_providers": "Provedores e modelos",
+    "core_integrations": "Integrações",
+    "platform_settings_api": "API e MCP",
+    "platform_settings_integrations_google": "Google",
+    "partner_settings_integrations": "Google",
     "platform_billing_overview": "Visão geral",
     "platform_billing_gateway": "Gateway",
     "platform_settings_analytics": "Analytics",

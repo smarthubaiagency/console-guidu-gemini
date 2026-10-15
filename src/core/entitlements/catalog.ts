@@ -1,5 +1,6 @@
 import { listRegisteredModules } from "@/modules/registry";
 
+import { DEFAULT_RATE_LIMITS } from "@/core/api/limits";
 import { PUBLIC_DOMAINS_DEFAULT_LIMIT } from "@/core/domains/quota";
 
 /**
@@ -34,9 +35,12 @@ export type QuotaStatus = "enforced" | "planned";
  * - `fixed`: the value below, from the code;
  * - `company`: the company's own record (`organizations.max_seats`);
  * - `module`: the platform settings of the module, else its manifest;
+ * - `environment`: the environment of the deployment (the API limits per
+ *   minute, CF6b), shown with its current value;
  * - `none`: nothing applies yet (planned keys).
  */
-export type QuotaDefaultSource = "fixed" | "company" | "module" | "none";
+export type QuotaDefaultSource =
+  "fixed" | "company" | "module" | "environment" | "none";
 
 export type QuotaEntry = Readonly<{
   key: string;
@@ -112,18 +116,45 @@ export const CORE_QUOTA_ENTRIES: readonly QuotaEntry[] = [
     defaultLimit: null,
     unlimitedAllowed: true,
   },
+  // API and MCP limits per minute (CF6b): the plan's value, else the
+  // environment's default, never above the ceiling (src/core/api/limits.ts).
   {
     key: "core.api_requests_per_minute",
     owner: "core",
-    label: "Chamadas da API por minuto",
+    label: "Chamadas da API por minuto (workspace)",
     description:
-      "Limite por workspace da API e do MCP; hoje vem do ambiente (levantamento, item 12).",
+      "Chamadas da API e do MCP por minuto, somando todas as chaves e pessoas do workspace.",
     unit: "requests_per_minute",
     scope: "workspace",
-    status: "planned",
-    defaultSource: "none",
-    defaultLimit: null,
-    unlimitedAllowed: true,
+    status: "enforced",
+    defaultSource: "environment",
+    defaultLimit: DEFAULT_RATE_LIMITS.workspace,
+    unlimitedAllowed: false,
+  },
+  {
+    key: "core.api_key_requests_per_minute",
+    owner: "core",
+    label: "Chamadas da API por minuto (chave)",
+    description: "Chamadas da API e do MCP por minuto de cada chave.",
+    unit: "requests_per_minute",
+    scope: "workspace",
+    status: "enforced",
+    defaultSource: "environment",
+    defaultLimit: DEFAULT_RATE_LIMITS.key,
+    unlimitedAllowed: false,
+  },
+  {
+    key: "core.api_user_requests_per_minute",
+    owner: "core",
+    label: "Chamadas da API por minuto (pessoa)",
+    description:
+      "Chamadas da API e do MCP por minuto de cada pessoa, somando as chaves dela.",
+    unit: "requests_per_minute",
+    scope: "workspace",
+    status: "enforced",
+    defaultSource: "environment",
+    defaultLimit: DEFAULT_RATE_LIMITS.user,
+    unlimitedAllowed: false,
   },
   {
     key: "core.ai_turns_per_month",

@@ -257,12 +257,20 @@ describeDatabase("F3a: jobs and worker (ADR 0002)", requiredVars, () => {
       lastError: "Não foi possível concluir a operação.",
     });
 
-    const dead = await admin.$queryRawUnsafe<{ n: bigint }[]>(
-      `select count(*) as n from pgboss.job where name = $1 and data->>'jobRunId' = $2`,
-      DEAD_LETTER_QUEUE,
-      id,
+    // pg-boss writes the dead letter right after the run is marked failed.
+    const dead = await waitFor(
+      async () => {
+        const rows = await admin.$queryRawUnsafe<{ n: bigint }[]>(
+          `select count(*) as n from pgboss.job where name = $1 and data->>'jobRunId' = $2`,
+          DEAD_LETTER_QUEUE,
+          id,
+        );
+        return Number(rows[0]?.n);
+      },
+      (n) => n > 0,
+      10_000,
     );
-    expect(Number(dead[0]?.n)).toBe(1);
+    expect(dead).toBe(1);
 
     await withContext(prisma, contextA, (tx) => retryJobRun(tx, contextA, id));
     const again = await waitFor(

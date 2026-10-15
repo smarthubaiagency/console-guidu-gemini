@@ -4,34 +4,18 @@ import type Redis from "ioredis";
 import { appLog } from "@/lib/telemetry/log";
 import { AppError } from "@/shared/errors";
 
+import { configuredRateLimits, type RateLimits } from "./limits";
+
 /**
  * Rate limit of the API and MCP (F4a; Especificação §15 e §17.5; plano F4
  * decisão 1). Fixed one-minute windows per API key, user and workspace,
  * counted in Redis; when Redis is missing or failing, counted in Postgres
  * (`private.hit_rate_limit`), so the API is never left without a limit.
- * The limits are provisional and come from configuration.
+ * The limits come from the plan of the company (CF6b, `./limits.ts`); the
+ * environment is only their default.
  */
 
-export type RateLimits = Readonly<{
-  key: number;
-  user: number;
-  workspace: number;
-}>;
-
-function positive(value: string | undefined, fallback: number): number {
-  const n = Number(value);
-  return Number.isInteger(n) && n > 0 ? n : fallback;
-}
-
-export function configuredRateLimits(
-  env: Readonly<Record<string, string | undefined>> = process.env,
-): RateLimits {
-  return {
-    key: positive(env.API_RATE_LIMIT_PER_KEY, 60),
-    user: positive(env.API_RATE_LIMIT_PER_USER, 120),
-    workspace: positive(env.API_RATE_LIMIT_PER_WORKSPACE, 300),
-  };
-}
+export { configuredRateLimits, type RateLimits } from "./limits";
 
 export type RateSubject = Readonly<{
   apiKeyId: string | null;

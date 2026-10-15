@@ -35,11 +35,13 @@ describe("environment check (F6a)", () => {
       DATABASE_URL: undefined,
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: undefined,
       TRANSLATION_PROVIDER: "fake",
+      GOOGLE_OAUTH_PROVIDER: "fake",
     });
     expect(problems.map((p) => p.split(":")[0]).sort()).toEqual([
       "APP_URL",
       "DATABASE_URL",
       "ENCRYPTION_KEY",
+      "GOOGLE_OAUTH_PROVIDER",
       "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
       "TRANSLATION_PROVIDER",
     ]);

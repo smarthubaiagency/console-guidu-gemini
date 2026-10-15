@@ -52,6 +52,13 @@ const notFakeTranslation = z
     error: "o tradutor de teste não roda em produção",
   });
 
+const notFakeGoogle = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "o Google de teste não roda em produção",
+  });
+
 const WEB = z.object({
   DATABASE_URL: postgresUrl,
   APP_URL: httpsOrigin,
@@ -59,6 +66,7 @@ const WEB = z.object({
   ENCRYPTION_KEY: encryptionKey,
   PARTNER_SUBDOMAIN_BASE: required,
   TRANSLATION_PROVIDER: notFakeTranslation,
+  GOOGLE_OAUTH_PROVIDER: notFakeGoogle,
 });
 
 /** Supabase accepts either the public or the server-only names. */

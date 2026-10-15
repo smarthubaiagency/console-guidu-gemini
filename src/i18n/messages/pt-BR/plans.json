@@ -23,8 +23,8 @@
       "description": "Maior arquivo aceito num envio."
     },
     "core_api_requests_per_minute": {
-      "label": "Chamadas da API por minuto",
-      "description": "Limite por workspace da API e do MCP; hoje vem do ambiente."
+      "label": "Chamadas da API por minuto (workspace)",
+      "description": "Chamadas da API e do MCP por minuto, somando todas as chaves e pessoas do workspace."
     },
     "core_ai_turns_per_month": {
       "label": "Respostas de IA por mês",
@@ -33,6 +33,14 @@
     "core_trial_days": {
       "label": "Dias de teste",
       "description": "Período de teste do plano."
+    },
+    "core_api_key_requests_per_minute": {
+      "label": "Chamadas da API por minuto (chave)",
+      "description": "Chamadas da API e do MCP por minuto de cada chave."
+    },
+    "core_api_user_requests_per_minute": {
+      "label": "Chamadas da API por minuto (pessoa)",
+      "description": "Chamadas da API e do MCP por minuto de cada pessoa, somando as chaves dela."
     }
   },
   "units": {

@@ -1,0 +1,121 @@
+{
+  "readOnly": "Solo lectura: los responsables de la configuración hacen los cambios.",
+  "google": {
+    "metaTitle": "Integraciones: Google",
+    "title": "Google",
+    "description": {
+      "platform": "La app OAuth de GUIDU, usada por todos los clientes (una sola verificación en Google), y los alcances ofrecidos a los workspaces.",
+      "partner": "Tu propia app OAuth, opcional, para que el consentimiento muestre tu marca, y los alcances que tus clientes pueden usar."
+    },
+    "app": {
+      "title": {
+        "platform": "App OAuth de GUIDU",
+        "partner": "App OAuth propia (opcional)"
+      },
+      "description": {
+        "platform": "Crea la app en Google Cloud, registra la URL de retorno de abajo e ingresa el Client ID y el Client Secret. El secreto se cifra y nunca vuelve a la pantalla.",
+        "partner": "Sin app propia, tus clientes se conectan con la app de GUIDU. Con ella, el consentimiento de Google muestra tu marca; la app necesita la misma URL de retorno y la verificación de Google."
+      },
+      "redirectUri": "URL de retorno (regístrala en Google)",
+      "noRedirect": "APP_URL no configurada",
+      "state": "Estado",
+      "configured": "Configurada el {date}",
+      "notConfigured": "No configurada",
+      "usingPlatform": "Usando la app de GUIDU",
+      "secret": "Client Secret",
+      "verification": "Verificación de Google",
+      "clientId": "Client ID",
+      "clientSecret": "Client Secret",
+      "secretKeep": "Déjalo en blanco para mantener {masked}",
+      "secretHint": "Nunca volvemos a mostrar el secreto; para cambiarlo, escribe el nuevo.",
+      "verificationHint": "Hojas de cálculo y Calendario son alcances sensibles: sin la verificación, solo las cuentas de prueba de la app pueden conectarse.",
+      "save": "Guardar app",
+      "remove": "Quitar app propia",
+      "removeHint": "Tus clientes vuelven a usar la app de GUIDU y deben conectar su cuenta de Google de nuevo."
+    },
+    "verification": {
+      "testing": "En prueba",
+      "unverified": "En producción, sin verificar",
+      "in_review": "Verificación en revisión",
+      "verified": "Verificada"
+    },
+    "scopes": {
+      "title": "Alcances ofrecidos",
+      "description": {
+        "platform": "Lo que los workspaces pueden autorizar. Los socios pueden desactivar alcances para sus clientes.",
+        "partner": "Lo que tus clientes pueden autorizar, dentro de lo que la plataforma ofrece."
+      },
+      "save": "Guardar alcances",
+      "notOffered": "No ofrecido por la plataforma."
+    },
+    "scope": {
+      "drive_file": {
+        "label": "Google Drive",
+        "description": "Solo los archivos que el cliente elija para el agente."
+      },
+      "spreadsheets": {
+        "label": "Hojas de cálculo",
+        "description": "Leer y escribir hojas de cálculo, como la de contactos y leads."
+      },
+      "calendar_events": {
+        "label": "Calendario",
+        "description": "Consultar y agendar eventos en el calendario."
+      }
+    },
+    "errors": {
+      "invalid": "Revisa el Client ID y el estado de la verificación.",
+      "secretRequired": "Ingresa el Client Secret de la app.",
+      "secretShort": "Client Secret demasiado corto.",
+      "notOffered": "Alcance no ofrecido por la plataforma.",
+      "noApp": "La integración con Google aún no está configurada.",
+      "noScopes": "Ningún alcance de Google está ofrecido.",
+      "noRedirect": "Dirección de retorno no configurada (APP_URL).",
+      "appChanged": "La app de Google cambió durante la conexión. Inténtalo de nuevo.",
+      "exchange": "Google no completó la conexión. Inténtalo de nuevo."
+    }
+  },
+  "workspace": {
+    "metaTitle": "Integraciones",
+    "title": "Integraciones",
+    "description": "Cuentas externas que el workspace conecta para que los agentes las usen.",
+    "google": {
+      "title": "Cuenta de Google",
+      "description": "Conecta la cuenta de Google del negocio. Los agentes podrán usar Hojas de cálculo, Calendario y Drive cuando lleguen esas herramientas.",
+      "account": "Cuenta conectada",
+      "none": "Ninguna",
+      "app": "App usada",
+      "appSource": {
+        "platform": "App de GUIDU",
+        "partner": "App del socio"
+      },
+      "noApp": "Ninguna app configurada",
+      "connectedAt": "Conectada el",
+      "grantedScopes": "Alcances autorizados",
+      "offeredScopes": "Alcances que se pedirán",
+      "noScopes": "Ninguno",
+      "blocked": {
+        "no_app": "La plataforma aún no configuró la integración con Google.",
+        "no_scopes": "Ningún alcance de Google está ofrecido a este workspace.",
+        "no_redirect": "La dirección de retorno de la plataforma no está configurada."
+      },
+      "unverified": "La app aún no tiene la verificación de Google: Google puede mostrar un aviso en el consentimiento.",
+      "connect": "Conectar cuenta de Google",
+      "reconnect": "Conectar de nuevo",
+      "redirecting": "Abriendo Google…",
+      "disconnect": "Desconectar"
+    },
+    "result": {
+      "connected": "Cuenta de Google conectada.",
+      "denied": "La conexión se canceló en Google.",
+      "invalid": "La conexión expiró o no la iniciaste tú. Inténtalo de nuevo.",
+      "failed": "No se pudo completar la conexión con Google. Inténtalo de nuevo."
+    }
+  },
+  "messages": {
+    "appSaved": "App de Google guardada.",
+    "appRemoved": "App propia quitada.",
+    "scopesSaved": "Alcances guardados.",
+    "redirecting": "Abriendo Google…",
+    "disconnected": "Cuenta de Google desconectada."
+  }
+}
