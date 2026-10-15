@@ -5,6 +5,8 @@ import type Redis from "ioredis";
 import { NextResponse } from "next/server";
 
 import { resolveWorkspaceContext } from "@/core/auth/context";
+import { maintenanceApiResponse } from "@/core/maintenance/api";
+import type { MaintenanceStatus } from "@/core/maintenance/state";
 import {
   authenticateApiKey,
   InvalidApiKeyError,
@@ -40,6 +42,10 @@ import {
  * 5. Rate limit per key, user and workspace (429 with Retry-After).
  * 6. Query validation (422), then the service, whose output is parsed by
  *    the route's schema: fields outside the contract never leave (AC07).
+ *
+ * Before all of it, a maintenance window (CF5c) answers 503 with
+ * Retry-After: every call in full maintenance, the writes (POST and PATCH
+ * outside a `:read` scope) in read-only.
  */
 
 export type ApiPrincipal =
@@ -73,6 +79,11 @@ export type ApiDeps = Readonly<{
   redis: Redis | null;
   /** Browser session; throws AccessDeniedError when there is none. */
   session: () => Promise<{ userId: string; mfaSatisfied: boolean }>;
+  /**
+   * Maintenance window (CF5c); absent in tests that do not exercise it.
+   * The public API and the workspace MCP answer 503 while it closes them.
+   */
+  maintenance?: () => Promise<MaintenanceStatus>;
 }>;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -205,6 +216,16 @@ export async function handleApiRoute(
   });
 
   try {
+    if (deps.maintenance) {
+      // A POST that only searches (`portfolio:read`) is a read.
+      const writes = route.method !== "GET" && !route.scope.endsWith(":read");
+      const closed = maintenanceApiResponse(
+        await deps.maintenance(),
+        writes ? route.method : "GET",
+        requestId,
+      );
+      if (closed) return closed;
+    }
     const { partner, principal } = await authenticateRequest(
       request,
       deps,

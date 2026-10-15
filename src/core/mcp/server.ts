@@ -19,6 +19,8 @@ import {
   loadWorkspaceModuleViews,
   workspaceGrants,
 } from "@/core/module-runtime/loaders";
+import { maintenanceApiResponse } from "@/core/maintenance/api";
+import { activeMode } from "@/core/maintenance/state";
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { withContext, type RequestContext } from "@/lib/prisma/with-context";
 import { appLog } from "@/lib/telemetry/log";
@@ -205,6 +207,16 @@ export async function handleMcpWorkspaceRequest(
     return jsonError(403, "forbidden", "Origin not allowed.", requestId);
   }
 
+  // Maintenance window (CF5c): full maintenance closes the MCP (503 with
+  // Retry-After); read-only leaves only the tools that change nothing.
+  const maintenance = deps.maintenance ? await deps.maintenance() : null;
+  if (maintenance) {
+    const closed = maintenanceApiResponse(maintenance, "GET", requestId);
+    if (closed) return closed;
+  }
+  const readOnly =
+    maintenance !== null && activeMode(maintenance) === "read_only";
+
   let decision: RateDecision | null = null;
   try {
     const { partner, principal } = await authenticateRequest(
@@ -253,7 +265,11 @@ export async function handleMcpWorkspaceRequest(
         .filter((m) => m.state === "enabled" || m.state === "suspended")
         .map((m) => m.moduleKey),
     );
-    const tools = allowedTools(principal.scopes, workspaceGrants(role), usable);
+    const tools = allowedTools(
+      principal.scopes,
+      workspaceGrants(role),
+      usable,
+    ).filter((tool) => !readOnly || tool.risk === "read");
     const call: ApiCall = {
       requestId,
       partnerId: partner.partnerId,

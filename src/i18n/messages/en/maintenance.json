@@ -1,0 +1,97 @@
+{
+  "metaTitle": "Maintenance",
+  "description": "Maintenance or read-only window of the whole platform, with a scheduled start and end and the notice to the users.",
+  "tabs": {
+    "label": "Operations sections",
+    "health": "Health and queues",
+    "maintenance": "Maintenance"
+  },
+  "state": {
+    "title": "Current state",
+    "description": "What applies right now. A change reaches every server within 5 seconds.",
+    "label": "State",
+    "off": "Off: the platform is open",
+    "scheduled": "Scheduled for {start}",
+    "active": "In progress, with no end time",
+    "activeUntil": "In progress until {end}",
+    "mode": "Mode",
+    "none": "None",
+    "updatedAt": "Last change",
+    "never": "Never changed"
+  },
+  "modes": {
+    "maintenance": "Full maintenance",
+    "read_only": "Read-only"
+  },
+  "form": {
+    "title": "Maintenance window",
+    "description": "Turn it on now or schedule the start and end. Times are in Brasília time.",
+    "enabled": "Turn the window on (now or at the scheduled start)",
+    "mode": "Mode",
+    "startsAt": "Start",
+    "startsAtHint": "Empty: starts when saved.",
+    "endsAt": "End",
+    "endsAtHint": "Empty: lasts until someone ends it.",
+    "messages": "Message to the users",
+    "messagePtBr": "Portuguese (Brazil)",
+    "messageEn": "English",
+    "messageEs": "Spanish",
+    "messagesHint": "Optional, up to 500 characters per language. Without text in a language, the Portuguese one is used; without any, only the default notice.",
+    "save": "Save maintenance",
+    "end": "End now",
+    "readOnly": "Only platform owner and operations change the maintenance."
+  },
+  "effects": {
+    "title": "What each mode does",
+    "maintenance": "Full maintenance: /app and /admin show the maintenance page, and the workspace API and MCP answer 503 with Retry-After.",
+    "readOnly": "Read-only: screens open, but every write in /app and /admin is refused with a notice, and the API refuses writes with 503.",
+    "jobs": "In both modes jobs wait in the queue and run when the window ends; incoming webhooks keep being stored.",
+    "agents": "AI agents: the channels receive and store the messages, and the GUIDS answer when the window ends.",
+    "notice": "Up to 24 hours before the start, a strip warns every user.",
+    "open": "Still open:"
+  },
+  "messages": {
+    "saved": "Maintenance saved.",
+    "ended": "Maintenance ended."
+  },
+  "errors": {
+    "closed": "The system is under maintenance. Try again later.",
+    "readOnly": "The system is read-only during maintenance. No change was saved.",
+    "invalidMode": "Invalid maintenance mode.",
+    "invalidDate": "Invalid date or time.",
+    "endBeforeStart": "The end must come after the start.",
+    "endInPast": "The end must be in the future.",
+    "messageTooLong": "Each message takes up to 500 characters."
+  },
+  "strip": {
+    "today": "today at {time}",
+    "tomorrow": "tomorrow at {time}",
+    "scheduled": {
+      "maintenance": "Maintenance scheduled for {start}.",
+      "read_only": "Read-only maintenance scheduled for {start}."
+    },
+    "scheduledWithEnd": {
+      "maintenance": "Maintenance scheduled from {start} to {end}.",
+      "read_only": "Read-only maintenance scheduled from {start} to {end}."
+    },
+    "readOnly": "Read-only: changes are suspended during maintenance.",
+    "readOnlyUntil": "Read-only until {end}: changes are suspended during maintenance.",
+    "maintenance": "Maintenance in progress: workspaces and the partner console are closed.",
+    "maintenanceUntil": "Maintenance in progress until {end}: workspaces and the partner console are closed."
+  },
+  "page": {
+    "metaTitle": "Under maintenance",
+    "title": "We are under maintenance",
+    "description": "The dashboard will be back soon. No data was lost, and the messages received will be answered when it is back.",
+    "until": "Expected back: {end}.",
+    "noEnd": "No return time yet.",
+    "back": "Back to the dashboard",
+    "overTitle": "Maintenance over",
+    "overDescription": "The platform is open.",
+    "over": "There is no maintenance in progress."
+  },
+  "api": {
+    "closed": "GUIDU is under maintenance. Try again later.",
+    "readOnly": "GUIDU is read-only during maintenance. Reads work; writes are refused."
+  }
+}

@@ -37,6 +37,8 @@ const PUBLIC: Record<string, string> = {
   "reset-password/page.tsx": "troca de senha; a ação confere a sessão",
   "legal/[kind]/page.tsx": "termos públicos",
   "auth/denied/page.tsx": "aviso de acesso negado",
+  "maintenance/page.tsx":
+    "aviso da manutenção (CF5c); só diz que a plataforma está fechada",
   "auth/suspended/page.tsx": "aviso de conta suspensa",
   "auth/mfa/page.tsx": "desafio de MFA; confere a sessão",
   "invite/[token]/page.tsx": "convite; a ação de aceite exige login",

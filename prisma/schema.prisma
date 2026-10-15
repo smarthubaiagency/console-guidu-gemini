@@ -1515,3 +1515,20 @@ model IpAllowlist {
 
   @@map("ip_allowlists")
 }
+
+/// Maintenance or read-only window of the whole platform (CF5c): one row.
+model PlatformMaintenance {
+  id          Boolean   @id @default(true)
+  enabled     Boolean   @default(false)
+  mode        String    @default("maintenance")
+  startsAt    DateTime? @map("starts_at") @db.Timestamptz()
+  endsAt      DateTime? @map("ends_at") @db.Timestamptz()
+  messagePtBr String?   @map("message_pt_br")
+  messageEn   String?   @map("message_en")
+  messageEs   String?   @map("message_es")
+  updatedBy   String?   @map("updated_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("platform_maintenance")
+}

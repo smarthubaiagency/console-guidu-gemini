@@ -12,6 +12,8 @@ import { BrandMark } from "./brand-mark";
  * Form results go to the SmartStatusBanner (ADR 0016), fixed at the top.
  * With the host brand it shows the logo, the tagline and the brand footer;
  * `salesContact` adds the WhatsApp sales button (CF2, login only).
+ * `notice` tops the page: the login passes the maintenance strip (CF5c).
+ * This file stays free of server-only imports: client forms use its notices.
  */
 export async function AuthShell({
   title,
@@ -20,6 +22,7 @@ export async function AuthShell({
   footer,
   brand,
   salesContact = false,
+  notice,
 }: Readonly<{
   title: string;
   description?: string;
@@ -27,11 +30,13 @@ export async function AuthShell({
   footer?: ReactNode;
   brand?: Brand;
   salesContact?: boolean;
+  notice?: ReactNode;
 }>) {
   const whatsapp = salesContact ? brand?.whatsapp : null;
   const t = whatsapp ? await getTranslations("brand.form") : null;
   return (
     <PageStatus>
+      {notice}
       <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-12">
         {brand ? (
           <div className="space-y-1">

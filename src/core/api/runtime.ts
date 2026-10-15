@@ -1,6 +1,7 @@
 import "server-only";
 
 import { requireUser } from "@/core/auth/identity";
+import { maintenanceStatus } from "@/core/maintenance/runtime";
 import { prisma } from "@/lib/prisma/client";
 import { getRedis } from "@/lib/redis/client";
 
@@ -15,5 +16,6 @@ export function apiDeps(): ApiDeps {
       const identity = await requireUser();
       return { userId: identity.userId, mfaSatisfied: identity.mfaSatisfied };
     },
+    maintenance: maintenanceStatus,
   };
 }

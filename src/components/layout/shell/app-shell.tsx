@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { MaintenanceStrip } from "@/components/maintenance/maintenance-strip";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { ConsoleAccess } from "@/core/auth/console-access";
 import type { NotificationBellData } from "@/core/notifications/bell";
@@ -18,7 +19,8 @@ const SIDEBAR_COOKIE = "sidebar_state";
  * The inset has the viewport height and the content scrolls inside it, so
  * the header stays in place and drawers (ADR 0015) open beside the content.
  * The open state of the sidebar is read from the cookie on the server, so
- * the first paint already has the right width.
+ * the first paint already has the right width. The maintenance strip
+ * (CF5c) sits under the header when a window is near or in force.
  */
 export async function AppShell({
   children,
@@ -38,7 +40,12 @@ export async function AppShell({
     <SidebarProvider defaultOpen={defaultOpen}>
       <ShellSidebar {...sidebar} />
       <SidebarInset className="h-svh overflow-hidden md:h-[calc(100svh-1rem)]">
-        <ShellMain sections={sidebar.sections} access={access} bell={bell}>
+        <ShellMain
+          sections={sidebar.sections}
+          access={access}
+          bell={bell}
+          notice={<MaintenanceStrip />}
+        >
           {children}
         </ShellMain>
       </SidebarInset>

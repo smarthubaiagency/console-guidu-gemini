@@ -550,11 +550,29 @@ export function buildPlatformNavigation(
           : []),
         ...(canReadOperations
           ? [
+              // Saúde e filas (F3d) and Manutenção (CF5c), drawn as tabs
+              // of the page; the children feed the breadcrumb and search.
               item({
                 id: "platform.operations",
                 label: "Operações",
                 href: "/platform/operations",
                 iconKey: "activity",
+                hideChildren: true,
+                children: [
+                  item({
+                    id: "platform.operations.health",
+                    label: "Saúde e filas",
+                    href: "/platform/operations",
+                    iconKey: "activity",
+                    exact: true,
+                  }),
+                  item({
+                    id: "platform.operations.maintenance",
+                    label: "Manutenção",
+                    href: "/platform/operations/maintenance",
+                    iconKey: "activity",
+                  }),
+                ],
               }),
             ]
           : []),

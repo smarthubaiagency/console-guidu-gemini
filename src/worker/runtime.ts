@@ -13,6 +13,11 @@ import {
 } from "@/core/jobs/definition";
 import { classifyJobFailure, SkipJobError } from "@/core/jobs/errors";
 import { listJobDefinitions, listJobSchedules } from "@/core/jobs/registry";
+import {
+  createMaintenanceReader,
+  queryMaintenanceWindow,
+} from "@/core/maintenance/read";
+import { activeMode } from "@/core/maintenance/state";
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import type {
   ContextTransaction,
@@ -49,6 +54,13 @@ import { createLogger, type LogLevel } from "@/lib/telemetry/log";
  * inserts their runs with a key per period (`on conflict do nothing`), so
  * repeated ticks and several workers start each period once.
  *
+ * Maintenance window (CF5c): while a window is in force (full maintenance
+ * or read-only) the dispatcher sends nothing, so new runs wait as `pending`,
+ * and a run already queued goes back to `pending` instead of running. When
+ * the window ends they run in their order; nothing is lost. The webhooks of
+ * the channels keep storing the messages meanwhile, and their
+ * `channels.dispatch` runs answer the contacts when the window ends.
+ *
  * Observability (F3d): a heartbeat per instance and queue metrics per job
  * kind go to tables only the platform reads (/platform/operations); `health`
  * answers the worker's live/ready probes; logs are structured JSON lines
@@ -71,6 +83,8 @@ export type WorkerOptions = Readonly<{
   instanceName?: string;
   heartbeatIntervalMs?: number;
   metricsIntervalMs?: number;
+  /** Cache of the maintenance window read (CF5c); tests use 0. */
+  maintenanceCacheMs?: number;
   log?: (event: Record<string, unknown>) => void;
 }>;
 
@@ -209,9 +223,34 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
   let metricsTimer: NodeJS.Timeout | null = null;
   let dispatching: Promise<number> | null = null;
   let stopped = false;
+  const maintenance = createMaintenanceReader({
+    load: () => queryMaintenanceWindow(prisma),
+    ttlMs: options.maintenanceCacheMs ?? 5_000,
+    onError: (error) =>
+      log({
+        level: "warn",
+        event: "maintenance.read_failed",
+        message: error instanceof Error ? error.message : String(error),
+      }),
+  });
+  let heldMode: string | null = null;
+
+  /** Whether a maintenance window holds the jobs now (logs each change). */
+  async function held(): Promise<boolean> {
+    const mode = activeMode(await maintenance.status());
+    if (mode !== heldMode) {
+      log({
+        event: mode ? "jobs.held" : "jobs.released",
+        ...(mode ? { mode } : {}),
+      });
+      heldMode = mode;
+    }
+    return mode !== null;
+  }
 
   async function dispatchOnce(): Promise<number> {
     if (dispatching) return dispatching;
+    if (await held()) return 0;
     dispatching = prisma
       .$transaction(async (tx) => {
         const rows = await tx.$queryRaw<
@@ -462,6 +501,17 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
   async function execute(job: Job<{ jobRunId: string }>): Promise<void> {
     const jobRunId = job.data?.jobRunId;
     if (!jobRunId) return;
+    if (await held()) {
+      // Sent before the window began: back to the queue of the database,
+      // to be dispatched again when the window ends.
+      await prisma.$executeRaw`
+        update public.job_runs
+        set status = 'pending', dispatched_at = null
+        where id = ${jobRunId}::uuid and status = 'queued'
+      `;
+      log({ event: "job.held", jobId: jobRunId });
+      return;
+    }
     let run: RunRow | null = null;
     // A detached job leaves the first transaction with what it needs.
     let detached: DetachedRun | null = null;
