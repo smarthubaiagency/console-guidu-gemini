@@ -6,11 +6,15 @@ import { getTranslations } from "next-intl/server";
 import { sectionClass } from "@/components/billing/billing-ui";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { API_ROUTES, type ApiRoute } from "@/core/api/contracts";
-import { configuredRateLimits } from "@/core/api/rate-limit";
+import { KeyUsageTables } from "@/components/api/key-usage-table";
+import { SettingsCard } from "@/components/settings/settings-shell";
+import { loadApiPolicy } from "@/core/api/policy";
+import { workspaceKeyUsage } from "@/core/api/settings";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { getRequestOrigin } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
+import { withContext } from "@/lib/prisma/with-context";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("api");
@@ -25,7 +29,8 @@ interface ApiSettingsPageProps {
  * Developer page of the workspace (F4a): base URL, authentication, the
  * read routes of the API v1 with the scope each one needs, the limits and
  * the OpenAPI contract. Keys are created in Configurações › MCP; webhooks
- * come later (plano F4, decisão 4).
+ * come later (plano F4, decisão 4). CF6b: the limits come from the plan and
+ * the usage of each key (calls and errors per day) shows here.
  */
 export default async function ApiSettingsPage({
   params,
@@ -39,7 +44,12 @@ export default async function ApiSettingsPage({
   );
   const origin = (await getRequestOrigin()) ?? "";
   const base = `${origin}/api/v1`;
-  const limits = configuredRateLimits();
+  // Limits of the company's plan and usage of the keys (CF6b).
+  const { policy, usage } = await withContext(prisma, context, async (tx) => ({
+    policy: await loadApiPolicy(tx, context),
+    usage: await workspaceKeyUsage(tx, context),
+  }));
+  const limits = policy.limits;
   const routes = Object.values(API_ROUTES) as ApiRoute[];
   const t = await getTranslations("api");
   const code = (chunks: React.ReactNode) => <code>{chunks}</code>;
@@ -98,6 +108,14 @@ export default async function ApiSettingsPage({
           </li>
         </ul>
       </section>
+
+      <SettingsCard
+        title={t("usageTitle")}
+        description={t("usageDescription", { days: usage.days })}
+        testId="api-key-usage"
+      >
+        <KeyUsageTables usage={usage} showWhere={false} />
+      </SettingsCard>
 
       <section className={sectionClass}>
         <h2 className="text-14 text-text font-semibold">{t("routesTitle")}</h2>

@@ -2,6 +2,8 @@
 
 Etapa prevista em 13/10/2026, a pedido do Marcelo ("não precisa tudo agora mas deixar previsto"), para depois da A5d. Começa só com o "pode começar" dele.
 
+> **Atualização (CF6b, 15/10/2026):** a conexão já existe. O app OAuth da GUIDU fica em Plataforma › Configurações › Google, o parceiro pode cadastrar o dele e desligar escopos em Admin › Configurações › Google, e owner e admin do workspace conectam a conta em Configurações › Integrações (tokens cifrados, `workspace_google_connections`). Detalhes no [plano da CF6b](../configuracoes/plano-cf6b.md) e no [guia](integracao-google.md). Falta a G1 propriamente dita: as ferramentas do GUIDS, a escolha da planilha, da pasta e da agenda, e a renovação do token de acesso com o refresh token.
+
 ## Por quê
 
 O pequeno comerciante usa Google Drive, planilhas e agenda no dia a dia. A integração deixa o GUIDS trabalhar com o que o cliente já tem:
@@ -19,7 +21,7 @@ O pequeno comerciante usa Google Drive, planilhas e agenda no dia a dia. A integ
 
 ## Decisões em aberto (Marcelo)
 
-1. Projeto e app OAuth no Google Cloud: de quem é a conta e quem pede a verificação do Google. Os escopos de planilha e agenda são sensíveis e exigem a verificação do app antes de clientes de fora usarem.
+1. ~~Projeto e app OAuth no Google Cloud~~: decidido em 14/10/2026, app da GUIDU por padrão e do parceiro opcional (feito na CF6b). Falta a conta do Google Cloud e o pedido de verificação (escopos sensíveis), no [guia](integracao-google.md).
 2. Ordem: planilha primeiro (o pedido mais forte), depois agenda, depois Drive.
 3. Colunas da planilha de contatos e se a planilha é criada pela GUIDU ou escolhida pelo cliente.
 4. Agenda: duração padrão, antecedência mínima e se o agente marca sozinho ou só propõe horários.

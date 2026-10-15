@@ -48,7 +48,8 @@
   "revoked": "API key revoked.",
   "errors": {
     "invalidCreate": "Invalid data for issuing the API key.",
-    "invalidKeyId": "Invalid key identifier."
+    "invalidKeyId": "Invalid key identifier.",
+    "scopeNotInPlan": "The company's plan does not allow the {scope} scope."
   },
   "scopes": {
     "workspace_read": {
@@ -95,5 +96,6 @@
       "label": "Write to the Portfolio (portfolio:write)",
       "desc": "Create and edit items and variants through the REST API. In MCP, writes go through a proposal."
     }
-  }
+  },
+  "notInPlan": "not in the plan"
 }

@@ -44,6 +44,7 @@ export type NavIconKey =
   | "key"
   | "layers"
   | "play-circle"
+  | "plug"
   | "inbox"
   | "map-pin"
   | "building"
@@ -373,6 +374,17 @@ export function buildAppSettingsNavigation(
                 label: "Canais",
                 href: `${base}/channels`,
                 iconKey: "inbox",
+              }),
+            ]
+          : []),
+        // The workspace's Google account (CF6b): owner and admin.
+        ...(input.grants("workspace.settings.update")
+          ? [
+              item({
+                id: "core.integrations",
+                label: "Integrações",
+                href: `${base}/integrations`,
+                iconKey: "plug",
               }),
             ]
           : []),
@@ -794,6 +806,29 @@ export function buildPlatformSettingsNavigation(
           : []),
       ],
     },
+    // API and integrations (CF6b): the settings managers.
+    {
+      id: "settings.integrations",
+      label: "API e integrações",
+      items: [
+        ...(input.grants("platform.settings.manage")
+          ? [
+              item({
+                id: "platform.settings.api",
+                label: "API e MCP",
+                href: "/platform/settings/api",
+                iconKey: "code",
+              }),
+              item({
+                id: "platform.settings.integrations.google",
+                label: "Google",
+                href: "/platform/settings/integrations/google",
+                iconKey: "plug",
+              }),
+            ]
+          : []),
+      ],
+    },
     { id: "settings.modules", label: "Módulos", items: moduleItems },
   ];
   return sections.filter((section) => section.items.length > 0);
@@ -1028,6 +1063,23 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "Planos e limites",
                 href: "/admin/settings/plans",
                 iconKey: "gauge",
+              }),
+            ]
+          : []),
+      ],
+    },
+    // Google app of the partner and scopes for its customers (CF6b).
+    {
+      id: "settings.integrations",
+      label: "Integrações",
+      items: [
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.settings.integrations",
+                label: "Google",
+                href: "/admin/settings/integrations",
+                iconKey: "plug",
               }),
             ]
           : []),

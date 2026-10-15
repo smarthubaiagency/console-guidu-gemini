@@ -49,6 +49,10 @@ describe("quota catalog (CF4)", () => {
     expect(CORE_QUOTAS.map((q) => q.key)).toEqual([
       "core.seats",
       "core.public_domains",
+      // API and MCP limits per minute (CF6b), enforced by the rate limit.
+      "core.api_requests_per_minute",
+      "core.api_key_requests_per_minute",
+      "core.api_user_requests_per_minute",
     ]);
   });
 

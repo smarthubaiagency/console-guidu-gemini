@@ -380,6 +380,18 @@ export async function buildWorkspaceExport(
     select: { key: true, value: true, updatedAt: true },
   });
 
+  // The Google account (CF6b): the account and its scopes, never a token.
+  const googleConnection = await tx.workspaceGoogleConnection.findMany({
+    where,
+    select: {
+      accountEmail: true,
+      scopes: true,
+      appSource: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
   const moduleData: Record<string, Record<string, ExportedRows>> = {};
   for (const contract of listModuleDataContracts()) {
     moduleData[contract.moduleKey] = { ...(await contract.export(tx, ctx)) };
@@ -400,6 +412,7 @@ export async function buildWorkspaceExport(
       proposals,
       locations,
       settings,
+      googleConnection,
       channels: {
         connections: channelConnections,
         routes: channelRoutes,

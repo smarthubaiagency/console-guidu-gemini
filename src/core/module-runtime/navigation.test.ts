@@ -317,6 +317,7 @@ describe("generated navigation", () => {
       "/admin/settings/email",
       "/admin/settings/email/templates",
       "/admin/settings/plans",
+      "/admin/settings/integrations",
       "/admin/settings/security",
       "/admin/settings/security/events",
       "/admin/settings/authentication",
@@ -330,6 +331,7 @@ describe("generated navigation", () => {
       "/admin/settings/domains",
       "/admin/settings/email",
       "/admin/settings/plans",
+      "/admin/settings/integrations",
     ]);
     expect(
       find(

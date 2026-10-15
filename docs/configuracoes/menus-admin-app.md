@@ -90,6 +90,6 @@ Estado em 15/10/2026 (detalhe no [handoff](../handoff/2026-10-15-handoff.md#4-es
 - **CF4. Planos e limites** (PR #82). Feita.
 - **CF5. Segurança, autenticação, manutenção** (CF5a #85, CF5b #87, CF5c #88, [plano-cf5.md](plano-cf5.md)). Feita.
 - **CF6a. IA: provedores e modelos** (PR #90, [plano-cf6a.md](plano-cf6a.md)). Feita.
-- **CF6b. API e Integrações (com a G1).** Próxima.
+- **CF6b. API e Integrações** ([plano-cf6b.md](plano-cf6b.md)): liga/desliga da API e do MCP, limites e escopos por plano, uso por chave; app OAuth do Google (plataforma e parceiro) e conexão da conta Google do workspace. As ferramentas da G1 ficam para depois. Chaves de API do próprio parceiro ficaram fora. Feita (PR a abrir).
 - **CF7. Gateway e analytics.** Próxima.
 - Em cada etapa as páginas já existentes migram para a nova estrutura.

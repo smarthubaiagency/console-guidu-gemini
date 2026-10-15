@@ -1,0 +1,61 @@
+{
+  "metaTitle": "API e MCP",
+  "title": "API e MCP",
+  "description": "Liga e desliga a API e o MCP, os limites por minuto, os escopos de cada plano e o uso de cada chave.",
+  "save": "Salvar",
+  "switches": {
+    "title": "Liga e desliga",
+    "description": "Interruptor de emergência. Desligado, toda chamada responde 503 (em inglês); as chaves continuam existindo e voltam a funcionar ao religar.",
+    "api": "API REST dos workspaces ligada",
+    "mcp": "MCP dos workspaces ligado",
+    "hint": "A API e o MCP da plataforma (chaves administrativas) não são afetados.",
+    "apiOn": "API ligada",
+    "apiOff": "API desligada",
+    "mcpOn": "MCP ligado",
+    "mcpOff": "MCP desligado"
+  },
+  "limits": {
+    "title": "Limites por minuto",
+    "description": "Valem para a API e para o MCP. O valor do plano vale para o cliente; sem valor no plano, vale o padrão do ambiente. Nunca passa do teto.",
+    "bucket": "Limite",
+    "env": "Padrão (ambiente)",
+    "ceiling": "Teto",
+    "noCeiling": "Sem teto",
+    "default": "Padrão",
+    "buckets": {
+      "key": "Por chave",
+      "user": "Por pessoa",
+      "workspace": "Por workspace"
+    },
+    "edit": "Tetos e valores por plano são editados em <link>Planos e limites</link>."
+  },
+  "scopes": {
+    "title": "Escopos por plano",
+    "description": "Quais escopos as chaves dos clientes de cada plano podem ter. Uma chave com escopo que saiu do plano deixa de usar esse escopo.",
+    "custom": "(lista própria)",
+    "all": "(todos)",
+    "noPlans": "Nenhum plano ativo com versão publicada.",
+    "hint": "Com todos marcados, o plano fica sem lista própria e recebe também os escopos novos."
+  },
+  "usage": {
+    "title": "Uso por chave",
+    "description": {
+      "platform": "Chamadas e erros das chaves de todos os workspaces nos últimos {days} dias."
+    },
+    "empty": "Nenhuma chamada com chave nos últimos {days} dias.",
+    "key": "Chave",
+    "where": "Empresa › workspace",
+    "calls": "Chamadas",
+    "mcpCalls": "Pelo MCP",
+    "errors": "Erros",
+    "day": "Dia",
+    "revoked": "revogada"
+  },
+  "messages": {
+    "saved": "Configurações da API salvas."
+  },
+  "errors": {
+    "invalid": "Escopo desconhecido.",
+    "unknownPlan": "Plano desconhecido."
+  }
+}

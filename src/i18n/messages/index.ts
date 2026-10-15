@@ -5,6 +5,7 @@ import ptBR_aiAgents from "./pt-BR/aiAgents.json";
 import ptBR_aiConsole from "./pt-BR/aiConsole.json";
 import ptBR_api from "./pt-BR/api.json";
 import ptBR_apiErrors from "./pt-BR/apiErrors.json";
+import ptBR_apiSettings from "./pt-BR/apiSettings.json";
 import ptBR_auth from "./pt-BR/auth.json";
 import ptBR_authSettings from "./pt-BR/authSettings.json";
 import ptBR_billing from "./pt-BR/billing.json";
@@ -21,6 +22,7 @@ import ptBR_executions from "./pt-BR/executions.json";
 import ptBR_googleBusiness from "./pt-BR/googleBusiness.json";
 import ptBR_helloWorld from "./pt-BR/helloWorld.json";
 import ptBR_home from "./pt-BR/home.json";
+import ptBR_integrations from "./pt-BR/integrations.json";
 import ptBR_invite from "./pt-BR/invite.json";
 import ptBR_languages from "./pt-BR/languages.json";
 import ptBR_legal from "./pt-BR/legal.json";
@@ -56,6 +58,7 @@ import en_aiAgents from "./en/aiAgents.json";
 import en_aiConsole from "./en/aiConsole.json";
 import en_api from "./en/api.json";
 import en_apiErrors from "./en/apiErrors.json";
+import en_apiSettings from "./en/apiSettings.json";
 import en_auth from "./en/auth.json";
 import en_authSettings from "./en/authSettings.json";
 import en_billing from "./en/billing.json";
@@ -72,6 +75,7 @@ import en_executions from "./en/executions.json";
 import en_googleBusiness from "./en/googleBusiness.json";
 import en_helloWorld from "./en/helloWorld.json";
 import en_home from "./en/home.json";
+import en_integrations from "./en/integrations.json";
 import en_invite from "./en/invite.json";
 import en_languages from "./en/languages.json";
 import en_legal from "./en/legal.json";
@@ -107,6 +111,7 @@ import es_aiAgents from "./es/aiAgents.json";
 import es_aiConsole from "./es/aiConsole.json";
 import es_api from "./es/api.json";
 import es_apiErrors from "./es/apiErrors.json";
+import es_apiSettings from "./es/apiSettings.json";
 import es_auth from "./es/auth.json";
 import es_authSettings from "./es/authSettings.json";
 import es_billing from "./es/billing.json";
@@ -123,6 +128,7 @@ import es_executions from "./es/executions.json";
 import es_googleBusiness from "./es/googleBusiness.json";
 import es_helloWorld from "./es/helloWorld.json";
 import es_home from "./es/home.json";
+import es_integrations from "./es/integrations.json";
 import es_invite from "./es/invite.json";
 import es_languages from "./es/languages.json";
 import es_legal from "./es/legal.json";
@@ -162,6 +168,7 @@ export const MESSAGE_FILES = {
     aiConsole: ptBR_aiConsole,
     api: ptBR_api,
     apiErrors: ptBR_apiErrors,
+    apiSettings: ptBR_apiSettings,
     auth: ptBR_auth,
     authSettings: ptBR_authSettings,
     billing: ptBR_billing,
@@ -178,6 +185,7 @@ export const MESSAGE_FILES = {
     googleBusiness: ptBR_googleBusiness,
     helloWorld: ptBR_helloWorld,
     home: ptBR_home,
+    integrations: ptBR_integrations,
     invite: ptBR_invite,
     languages: ptBR_languages,
     legal: ptBR_legal,
@@ -215,6 +223,7 @@ export const MESSAGE_FILES = {
     aiConsole: en_aiConsole,
     api: en_api,
     apiErrors: en_apiErrors,
+    apiSettings: en_apiSettings,
     auth: en_auth,
     authSettings: en_authSettings,
     billing: en_billing,
@@ -231,6 +240,7 @@ export const MESSAGE_FILES = {
     googleBusiness: en_googleBusiness,
     helloWorld: en_helloWorld,
     home: en_home,
+    integrations: en_integrations,
     invite: en_invite,
     languages: en_languages,
     legal: en_legal,
@@ -268,6 +278,7 @@ export const MESSAGE_FILES = {
     aiConsole: es_aiConsole,
     api: es_api,
     apiErrors: es_apiErrors,
+    apiSettings: es_apiSettings,
     auth: es_auth,
     authSettings: es_authSettings,
     billing: es_billing,
@@ -284,6 +295,7 @@ export const MESSAGE_FILES = {
     googleBusiness: es_googleBusiness,
     helloWorld: es_helloWorld,
     home: es_home,
+    integrations: es_integrations,
     invite: es_invite,
     languages: es_languages,
     legal: es_legal,
@@ -323,6 +335,7 @@ export const NAMESPACES = [
   "aiConsole",
   "api",
   "apiErrors",
+  "apiSettings",
   "auth",
   "authSettings",
   "billing",
@@ -339,6 +352,7 @@ export const NAMESPACES = [
   "googleBusiness",
   "helloWorld",
   "home",
+  "integrations",
   "invite",
   "languages",
   "legal",

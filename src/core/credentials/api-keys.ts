@@ -37,6 +37,8 @@ import {
   WorkspaceScopeSchema,
   DEFAULT_WORKSPACE_SCOPES,
 } from "@/core/mcp/scopes";
+import { loadAllowedScopes } from "@/core/api/policy";
+import { AppError } from "@/shared/errors";
 
 export const API_KEY_PREFIX = "gdu_live_";
 
@@ -130,6 +132,18 @@ export async function createApiKey(
       scopes.includes("portfolio:write"))
   ) {
     throw new PermissionDeniedError();
+  }
+
+  // Only the scopes the company's plan allows (CF6b).
+  const allowed: readonly string[] = await loadAllowedScopes(tx, ctx);
+  const outside = scopes.find((scope) => !allowed.includes(scope));
+  if (outside) {
+    throw new AppError({
+      code: "forbidden",
+      safeMessage: `O plano da empresa não permite o escopo ${outside}.`,
+      messageKey: "mcp.errors.scopeNotInPlan",
+      messageValues: { scope: outside },
+    });
   }
 
   const { rawKey, keyHash, prefix } = generateApiKey();

@@ -11,12 +11,14 @@
       "platform": "Administración",
       "settings_platform": "Plataforma",
       "settings_modules": "Módulos",
-      "settings_system": "Sistema"
+      "settings_system": "Sistema",
+      "settings_integrations": "API e integraciones"
     },
     "partner": {
       "partner": "Socio",
       "settings_partner": "Socio",
-      "settings_system": "Sistema"
+      "settings_system": "Sistema",
+      "settings_integrations": "Integraciones"
     }
   },
   "items": {
@@ -93,6 +95,10 @@
     "platform_ai_dashboard": "Panel",
     "platform_ai_providers": "Proveedores y modelos",
     "partner_ai_dashboard": "Panel de IA",
-    "partner_ai_providers": "Proveedores y modelos"
+    "partner_ai_providers": "Proveedores y modelos",
+    "core_integrations": "Integraciones",
+    "platform_settings_api": "API y MCP",
+    "platform_settings_integrations_google": "Google",
+    "partner_settings_integrations": "Google"
   }
 }

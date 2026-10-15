@@ -53,6 +53,10 @@ const PUBLIC: Record<string, string> = {
   "brand/[asset]/[version]/route.ts": "imagens da marca do host",
   "api/domains/check/route.ts":
     "ForwardAuth do Traefik; confere o segredo compartilhado (CF2b)",
+  "api/integrations/google/callback/route.ts":
+    "retorno do Google; confere o state assinado e só devolve ao host de origem, onde a sessão conclui (CF6b)",
+  "api/integrations/google/fake-consent/route.ts":
+    "consentimento do Google falso dos testes; 404 fora de GOOGLE_OAUTH_PROVIDER=fake (CF6b)",
 };
 
 /** Actions of signed-out visitors. */

@@ -11,5 +11,6 @@ Planos e levantamentos da reconstrução das configurações da plataforma (`/pl
 | [plano-cf3.md](plano-cf3.md)             | CF3, e-mail e notificações                                                              |
 | [plano-cf5.md](plano-cf5.md)             | CF5, segurança, autenticação e manutenção                                               |
 | [plano-cf6a.md](plano-cf6a.md)           | CF6a, IA: provedores e modelos                                                          |
+| [plano-cf6b.md](plano-cf6b.md)           | CF6b, API e Integrações (Google)                                                        |
 
 Estes arquivos vieram da pasta de trabalho do projeto em 15/10/2026; daqui em diante a cópia do repositório é a fonte.

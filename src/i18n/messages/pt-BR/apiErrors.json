@@ -21,5 +21,7 @@
   "moduleSuspended": "A assinatura está suspensa: o módulo está disponível só para consulta.",
   "moduleUnavailableNamed": "O módulo ''{module}'' está temporariamente indisponível nesta etapa da plataforma.",
   "variantNotFound": "Variante não encontrada.",
-  "idempotencyKeyFormat": "Use letras, números, ponto, dois-pontos ou hífen."
+  "idempotencyKeyFormat": "Use letras, números, ponto, dois-pontos ou hífen.",
+  "apiDisabled": "A API da GUIDU está desligada. Tente mais tarde.",
+  "mcpDisabled": "O MCP da GUIDU está desligado. Tente mais tarde."
 }

@@ -15,6 +15,8 @@ import {
   type RateDecision,
   rateLimitHeaders,
 } from "@/core/api/rate-limit";
+import { apiDisabledResponse } from "@/core/api/switch";
+import { recordApiKeyUsage } from "@/core/api/usage";
 import {
   loadWorkspaceModuleViews,
   workspaceGrants,
@@ -42,6 +44,11 @@ import { MCP_WORKSPACE_TOOLS, type McpToolDefinition } from "./tools";
  * `tools/call` runs the REST services, which check the permission again,
  * and is audited with the request id. Requests from a browser Origin other
  * than the host are refused (DNS rebinding).
+ *
+ * CF6b: the platform's emergency switch closes the MCP (503); the key's
+ * scopes and limits follow the company's plan, as in the REST API, and
+ * every request counts in the key's usage (an HTTP error or a tool error
+ * counts as an error).
  */
 
 const SERVER_INFO = { name: "guidu-workspace", version: "1.0.0" } as const;
@@ -124,6 +131,7 @@ function register(
   deps: ApiDeps,
   call: ApiCall,
   ctx: RequestContext,
+  onFailure: () => void = () => undefined,
 ): void {
   server.registerTool(
     tool.name,
@@ -151,6 +159,7 @@ function register(
           structuredContent: output as Record<string, unknown>,
         };
       } catch (error) {
+        onFailure();
         const safe = toSafeError(error, call.requestId);
         await auditCall(
           deps,
@@ -207,6 +216,11 @@ export async function handleMcpWorkspaceRequest(
     return jsonError(403, "forbidden", "Origin not allowed.", requestId);
   }
 
+  if (deps.apiSwitches) {
+    const off = apiDisabledResponse(await deps.apiSwitches(), "mcp", requestId);
+    if (off) return off;
+  }
+
   // Maintenance window (CF5c): full maintenance closes the MCP (503 with
   // Retry-After); read-only leaves only the tools that change nothing.
   const maintenance = deps.maintenance ? await deps.maintenance() : null;
@@ -218,6 +232,7 @@ export async function handleMcpWorkspaceRequest(
     maintenance !== null && activeMode(maintenance) === "read_only";
 
   let decision: RateDecision | null = null;
+  let usageKey: Parameters<typeof recordApiKeyUsage>[1] | null = null;
   try {
     const { partner, principal } = await authenticateRequest(
       request,
@@ -228,6 +243,7 @@ export async function handleMcpWorkspaceRequest(
     if (principal.kind !== "api_key") {
       return jsonError(401, "unauthenticated", "API key required.", requestId);
     }
+    usageKey = principal;
     const ctx: RequestContext = {
       userId: principal.userId,
       workspaceId: principal.workspaceId,
@@ -238,7 +254,7 @@ export async function handleMcpWorkspaceRequest(
     };
 
     decision = await hitRateLimit(
-      { redis: deps.redis, prisma: deps.prisma },
+      { redis: deps.redis, prisma: deps.prisma, limits: principal.limits },
       {
         apiKeyId: principal.apiKeyId,
         userId: principal.userId,
@@ -246,6 +262,7 @@ export async function handleMcpWorkspaceRequest(
       },
     );
     if (!decision.allowed) {
+      await recordApiKeyUsage(deps.prisma, principal, "mcp", true);
       return jsonError(
         429,
         "rate_limited",
@@ -285,7 +302,12 @@ export async function handleMcpWorkspaceRequest(
       capabilities: { tools: {} },
       instructions: INSTRUCTIONS,
     });
-    for (const tool of tools) register(server, tool, deps, call, ctx);
+    // A tool that fails marks this request's usage as an error.
+    const outcome = { failed: false };
+    for (const tool of tools)
+      register(server, tool, deps, call, ctx, () => {
+        outcome.failed = true;
+      });
     // The SDK only answers `tools/list` once a tool is registered; a key
     // left with no usable tool gets an empty list, not "Method not found".
     if (tools.length === 0) {
@@ -307,7 +329,16 @@ export async function handleMcpWorkspaceRequest(
       for (const [name, value] of Object.entries(rateLimitHeaders(decision))) {
         headers.set(name, value);
       }
-      return new Response(response.body, {
+      // The JSON body is read here so a tool's failure is known before
+      // the usage is counted.
+      const body = await response.text();
+      await recordApiKeyUsage(
+        deps.prisma,
+        principal,
+        "mcp",
+        outcome.failed || response.status >= 400 || /"error"\s*:/.test(body),
+      );
+      return new Response(body, {
         status: response.status,
         headers,
       });
@@ -316,6 +347,7 @@ export async function handleMcpWorkspaceRequest(
     }
   } catch (error) {
     const safe = toSafeError(error, requestId);
+    if (usageKey) await recordApiKeyUsage(deps.prisma, usageKey, "mcp", true);
     const status =
       safe.code === "unauthenticated"
         ? 401

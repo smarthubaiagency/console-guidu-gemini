@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma/client";
 import { getRedis } from "@/lib/redis/client";
 
 import type { ApiDeps } from "./handler";
+import { apiSwitches } from "./switch-runtime";
 
 /** Dependencies of the API in the running app (F4a). */
 export function apiDeps(): ApiDeps {
@@ -17,5 +18,6 @@ export function apiDeps(): ApiDeps {
       return { userId: identity.userId, mfaSatisfied: identity.mfaSatisfied };
     },
     maintenance: maintenanceStatus,
+    apiSwitches,
   };
 }
