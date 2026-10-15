@@ -1,0 +1,121 @@
+{
+  "readOnly": "Read only: the settings managers make changes.",
+  "google": {
+    "metaTitle": "Integrations: Google",
+    "title": "Google",
+    "description": {
+      "platform": "The GUIDU OAuth app, used by every customer (a single Google verification), and the scopes offered to the workspaces.",
+      "partner": "Your own OAuth app, optional, so the consent shows your brand, and the scopes your customers may use."
+    },
+    "app": {
+      "title": {
+        "platform": "GUIDU OAuth app",
+        "partner": "Own OAuth app (optional)"
+      },
+      "description": {
+        "platform": "Create the app in Google Cloud, register the redirect URL below and enter the Client ID and Client Secret. The secret is encrypted and never shown again.",
+        "partner": "Without your own app, your customers connect through the GUIDU app. With it, Google's consent shows your brand; the app needs the same redirect URL and Google's verification."
+      },
+      "redirectUri": "Redirect URL (register it at Google)",
+      "noRedirect": "APP_URL not configured",
+      "state": "Status",
+      "configured": "Configured on {date}",
+      "notConfigured": "Not configured",
+      "usingPlatform": "Using the GUIDU app",
+      "secret": "Client Secret",
+      "verification": "Google verification",
+      "clientId": "Client ID",
+      "clientSecret": "Client Secret",
+      "secretKeep": "Leave blank to keep {masked}",
+      "secretHint": "The secret is never shown again; to change it, type the new one.",
+      "verificationHint": "Sheets and Calendar are sensitive scopes: without verification, only the app's test accounts can connect.",
+      "save": "Save app",
+      "remove": "Remove own app",
+      "removeHint": "Your customers go back to the GUIDU app and must connect their Google account again."
+    },
+    "verification": {
+      "testing": "Testing",
+      "unverified": "In production, unverified",
+      "in_review": "Verification in review",
+      "verified": "Verified"
+    },
+    "scopes": {
+      "title": "Scopes offered",
+      "description": {
+        "platform": "What the workspaces may authorize. Partners may turn scopes off for their customers.",
+        "partner": "What your customers may authorize, within what the platform offers."
+      },
+      "save": "Save scopes",
+      "notOffered": "Not offered by the platform."
+    },
+    "scope": {
+      "drive_file": {
+        "label": "Google Drive",
+        "description": "Only the files the customer picks for the agent."
+      },
+      "spreadsheets": {
+        "label": "Sheets",
+        "description": "Read and write spreadsheets, such as the contacts and leads one."
+      },
+      "calendar_events": {
+        "label": "Calendar",
+        "description": "Check and book events in the calendar."
+      }
+    },
+    "errors": {
+      "invalid": "Check the Client ID and the verification status.",
+      "secretRequired": "Enter the app's Client Secret.",
+      "secretShort": "Client Secret too short.",
+      "notOffered": "Scope not offered by the platform.",
+      "noApp": "The Google integration has not been set up yet.",
+      "noScopes": "No Google scope is offered.",
+      "noRedirect": "Redirect address not configured (APP_URL).",
+      "appChanged": "The Google app changed during the connection. Try again.",
+      "exchange": "Google did not complete the connection. Try again."
+    }
+  },
+  "workspace": {
+    "metaTitle": "Integrations",
+    "title": "Integrations",
+    "description": "External accounts the workspace connects for the agents to use.",
+    "google": {
+      "title": "Google account",
+      "description": "Connect the business's Google account. The agents will use Sheets, Calendar and Drive when those tools arrive.",
+      "account": "Connected account",
+      "none": "None",
+      "app": "App used",
+      "appSource": {
+        "platform": "GUIDU app",
+        "partner": "Partner's app"
+      },
+      "noApp": "No app configured",
+      "connectedAt": "Connected on",
+      "grantedScopes": "Authorized scopes",
+      "offeredScopes": "Scopes that will be requested",
+      "noScopes": "None",
+      "blocked": {
+        "no_app": "The platform has not set up the Google integration yet.",
+        "no_scopes": "No Google scope is offered to this workspace.",
+        "no_redirect": "The platform's redirect address is not configured."
+      },
+      "unverified": "The app has no Google verification yet: Google may show a warning on the consent screen.",
+      "connect": "Connect Google account",
+      "reconnect": "Connect again",
+      "redirecting": "Opening Google…",
+      "disconnect": "Disconnect"
+    },
+    "result": {
+      "connected": "Google account connected.",
+      "denied": "The connection was canceled at Google.",
+      "invalid": "The connection expired or was not started by you. Try again.",
+      "failed": "The connection with Google could not be completed. Try again."
+    }
+  },
+  "messages": {
+    "appSaved": "Google app saved.",
+    "appRemoved": "Own app removed.",
+    "scopesSaved": "Scopes saved.",
+    "redirecting": "Opening Google…",
+    "disconnected": "Google account disconnected."
+  }
+}

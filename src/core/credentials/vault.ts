@@ -17,10 +17,14 @@
 
 import "server-only";
 
-import type { ContextTransaction, RequestContext } from "@/lib/prisma/with-context";
+import type {
+  ContextTransaction,
+  RequestContext,
+} from "@/lib/prisma/with-context";
 import { Permissions } from "@/core/permissions/catalog";
 import { requireWorkspacePermission } from "@/core/permissions/guard";
 import { recordAudit } from "@/core/audit/record";
+import { assertProviderOffered } from "@/core/ai/catalog";
 import { encryptSecret, decryptSecret } from "./crypto";
 
 export type AIProvider = "openai" | "anthropic" | "gemini" | "openrouter";
@@ -41,14 +45,18 @@ export type CredentialItem = {
 
 export class CredentialNotFoundError extends Error {
   constructor(provider: string, workspaceId: string) {
-    super(`Active credential for provider '${provider}' not found in workspace '${workspaceId}'`);
+    super(
+      `Active credential for provider '${provider}' not found in workspace '${workspaceId}'`,
+    );
     this.name = "CredentialNotFoundError";
   }
 }
 
 export class InvalidProviderError extends Error {
   constructor(provider: string) {
-    super(`Unsupported AI provider: ${provider}. Supported providers are: openai, anthropic, gemini, openrouter.`);
+    super(
+      `Unsupported AI provider: ${provider}. Supported providers are: openai, anthropic, gemini, openrouter.`,
+    );
     this.name = "InvalidProviderError";
   }
 }
@@ -82,6 +90,8 @@ export async function registerCredential(
   if (!SUPPORTED_PROVIDERS.has(provider)) {
     throw new InvalidProviderError(provider);
   }
+  // Only the providers the platform and the partner offer (CF6a).
+  await assertProviderOffered(tx, provider);
 
   if (!label || label.trim().length === 0) {
     throw new Error("Label is required for credential registration");

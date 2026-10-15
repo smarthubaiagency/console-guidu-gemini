@@ -1,0 +1,111 @@
+{
+  "metaTitle": "Pasarela de pago",
+  "description": "Pasarela que divide el cobro entre la plataforma y el socio. En esta etapa solo Stripe Connect; el cobro real sigue apagado hasta la P6.",
+  "tabs": {
+    "label": "Secciones de cobro",
+    "overview": "Resumen",
+    "gateway": "Pasarela"
+  },
+  "save": "Guardar",
+  "stripe": {
+    "title": "Stripe Connect",
+    "description": "Activa la recepción del webhook, define la pasarela predeterminada y el modo (prueba o producción).",
+    "status": "Estado",
+    "on": "Activado",
+    "off": "Desactivado",
+    "charging": "Cobro real",
+    "chargingOff": "Apagado hasta la P6 (no se hace ningún cobro)",
+    "enable": "Activar Stripe Connect",
+    "default": "Usar como pasarela predeterminada"
+  },
+  "mode": {
+    "label": "Modo",
+    "test": "Prueba (sandbox)",
+    "live": "Producción"
+  },
+  "capabilities": {
+    "split": "División (split)",
+    "recurring": "Recurrencia",
+    "hostedCheckout": "Checkout alojado",
+    "recipientOnboarding": "Registro del receptor"
+  },
+  "methods": {
+    "card": "Tarjeta",
+    "pix": "Pix",
+    "boleto": "Boleto"
+  },
+  "credentials": {
+    "title": "Credenciales",
+    "description": "Guardadas cifradas en la base. Solo se muestran enmascaradas y nunca vuelven a la pantalla.",
+    "secretKey": "Clave secreta",
+    "webhookSecret": "Secreto de firma del webhook",
+    "notSet": "No registrada",
+    "secretKeyInput": "Nueva clave secreta (sk_ o rk_)",
+    "webhookSecretInput": "Nuevo secreto del webhook (whsec_)",
+    "hint": "Déjelo en blanco para mantener la credencial guardada. La clave debe ser del mismo modo elegido arriba."
+  },
+  "webhook": {
+    "title": "Webhook",
+    "description": "Registre esta dirección en el panel de Stripe. Cada evento se verifica por la firma, se guarda tal como llegó y se procesa una sola vez.",
+    "url": "Dirección del webhook",
+    "noAppUrl": "APP_URL no configurado",
+    "received": "Recibidos ({days, plural, one {# día} other {# días}})",
+    "failed": "Con fallo",
+    "last": "Último recibido",
+    "never": "Ninguno",
+    "latency": "Latencia de procesamiento",
+    "latencyValue": "media {average} ms, máxima {max} ms",
+    "sendTest": "Enviar webhook de prueba",
+    "reprocess": "Reprocesar fallos",
+    "offHint": "Active Stripe Connect y registre el secreto del webhook para recibir eventos y enviar la prueba."
+  },
+  "events": {
+    "received": "Recibido el",
+    "type": "Tipo",
+    "status": "Estado",
+    "attempts": "Intentos",
+    "test": "prueba",
+    "none": "Aún no se recibió ningún evento.",
+    "statuses": {
+      "received": "Recibido",
+      "processed": "Procesado",
+      "failed": "Con fallo"
+    }
+  },
+  "history": {
+    "title": "Historial de cambios",
+    "description": "Viene de la auditoría: quién cambió qué y cuándo, sin valores de credenciales.",
+    "none": "Ningún cambio registrado.",
+    "actions": {
+      "settings": "Configuración cambiada",
+      "credentials": "Credenciales reemplazadas",
+      "test_webhook": "Webhook de prueba enviado",
+      "reprocess": "Fallos reprocesados",
+      "other": "Cambio"
+    },
+    "fields": {
+      "enabled": "activar/desactivar",
+      "isDefault": "predeterminada",
+      "mode": "modo",
+      "secretKey": "clave secreta",
+      "webhookSecret": "secreto del webhook"
+    }
+  },
+  "messages": {
+    "settingsSaved": "Pasarela guardada.",
+    "credentialsSaved": "Credenciales guardadas.",
+    "testSent": "Webhook de prueba recibido y procesado.",
+    "testFailed": "El webhook de prueba no llegó a la ruta. Verifique APP_URL y el secreto del webhook.",
+    "reprocessed": "Reprocesamiento terminado: {processed} procesados, {failed} aún con fallo."
+  },
+  "errors": {
+    "secretKeyFormat": "Ingrese una clave secreta de Stripe (sk_ o rk_).",
+    "secretKeyMode": "La clave secreta es del otro modo (prueba o producción).",
+    "webhookSecretFormat": "Ingrese el secreto de firma del webhook (whsec_).",
+    "credentialsRequired": "Registre la clave secreta y el secreto del webhook antes de activar.",
+    "defaultNeedsEnabled": "Solo una pasarela activada puede ser la predeterminada.",
+    "nothingToSave": "Ingrese al menos una credencial.",
+    "notEnabled": "Active Stripe y registre el secreto del webhook antes de la prueba.",
+    "mode": "Elija el modo."
+  }
+}

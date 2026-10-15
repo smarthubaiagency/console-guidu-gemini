@@ -1,6 +1,6 @@
 # Perfil digital: planejamento do módulo
 
-- **Versão:** 0.3, 15/10/2026.
+- **Versão:** 0.4, 15/10/2026.
 
 Início do planejamento em 14/10/2026, a partir da [comparação dos relatórios](comparativo-relatorios.md). Base técnica: [relatório do Opus](analise-opus-legado.md), com os complementos indicados na comparação. Nada aqui foi implementado.
 
@@ -27,12 +27,11 @@ Fica de fora do começo: cartão físico NFC, Google e Apple Wallet, PWA, chat C
    - O perfil só é publicado se a unidade tiver template publicado.
    - Unidade desativada: os perfis saem do ar e os endereços públicos continuam reservados. A exclusão é o caso extremo e só é aceita quando nada aponta para a unidade (itens do Portfólio, perfis, template).
    - O endereço fiscal não é da unidade nem do módulo: fica no cadastro da empresa (CF2d), para cobrança e notas fiscais.
-4. **Endereço público.** As regras de domínio são da plataforma ([plano da CF2c](../../operacao/plano-cf2c-dominios-publicos.md)). O que vale para o módulo:
-   - O perfil publica em `{host}/{slug}`. O host vem da cascata do núcleo: domínio próprio do workspace → padrão do parceiro → padrão da plataforma (ex.: `mobio.pro/{slug}`).
-   - O slug é único por host. O módulo não guarda slug nem histórico em tabela própria: usa o serviço de endereços públicos do núcleo.
+4. **Endereço público.** O host é da plataforma ([CF2c](../../configuracoes/plano-cf2c.md), já construída) e o caminho também ([plano da CF2e](../../operacao/plano-cf2e-enderecos-publicos.md)). O que vale para o módulo:
+   - O perfil publica em `{host}/{slug}`. Por padrão, o host é o subdomínio do workspace no domínio padrão do perfil (ex.: `rodobens.mobio.pro/joao-silva`), ou o do parceiro quando ele tiver. O workspace pode escolher um domínio próprio pelo seletor da CF2c.
+   - O slug é único dentro do workspace. O módulo não guarda slug nem histórico em tabela própria: usa o serviço de endereços públicos do núcleo (CF2e).
    - Troca de slug com o perfil ativo: o endereço antigo responde 308 para o novo enquanto o perfil existir.
-   - Perfil excluído: o endereço fica reservado por 30 dias e depois fica livre para qualquer workspace. Até alguém ocupá-lo, quem acessa vai para o perfil master da unidade por 307 (nunca 308, que o navegador guardaria). Os endereços antigos do perfil entram na mesma carência.
-   - Subdomínio por workspace (`rodobens.mobio.pro`) fica fora do MVP.
+   - Perfil excluído: o endereço fica reservado por 30 dias e depois fica livre para outro perfil do mesmo workspace. Até alguém ocupá-lo, quem acessa vai para o perfil master da unidade por 307 (nunca 308, que o navegador guardaria). Os endereços antigos do perfil entram na mesma carência.
 5. **Campos pessoais.**
    - A pessoa edita só: foto, nome, cargo, telefone, e-mail e LinkedIn pessoal. Nenhuma outra rede pessoal.
    - O e-mail é livre, sem vínculo com o e-mail da conta.
@@ -44,7 +43,7 @@ Fica de fora do começo: cartão físico NFC, Google e Apple Wallet, PWA, chat C
 7. **Perfil master.**
    - Um por unidade, obrigatório. Criar o template da unidade cria o master na mesma operação.
    - Mostra só dados da empresa e da unidade, nenhum dado de funcionário. Só o admin edita.
-   - O slug parte dos dados da unidade (ex.: `mobio.pro/rodobens-sp`).
+   - O slug parte dos dados da unidade (ex.: `rodobens.mobio.pro/sao-paulo`).
    - O formulário de contato do master cria o lead sem dono no CRM, como um formulário de site.
    - Enquanto a unidade existir, o master não é excluído nem despublicado.
    - A marcação fica no perfil (`kind` ou `is_master`), não no template.
@@ -108,17 +107,17 @@ O renderizador dos blocos é um só para a prévia do editor e para a página p�
 
 Cada etapa só começa com o seu "pode começar". Uma etapa pode virar mais de um PR.
 
-| Ordem | Etapa         | Entrega                                                                                                                                                                                             | Migration |
-| ----- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| 1     | DP0           | `MODULE_SPEC.md` com as decisões acima, formato do JSON e motor; ADR da rota pública; registro do reaproveitamento do legado (ADR 0007)                                                             | Não       |
-| 2     | CF2c-1 mínima | Plataforma: tabela e serviço de endereços públicos, domínio padrão da plataforma, resolução e ForwardAuth ([plano da CF2c](../../operacao/plano-cf2c-dominios-publicos.md))                         | Sim       |
-| 3     | CF2d          | Plataforma: finalidades em `workspace_locations`, tela "Unidades", endereço fiscal da empresa ([plano da CF2d](../../operacao/plano-cf2d-enderecos.md))                                             | Sim       |
-| 4     | DP1 Motor     | Formato do JSON, catálogo de regras e paletas, escala e contraste, renderizador dos blocos e prévia com dados de exemplo. Atrás de trava técnica, sem gravar                                        | Não       |
-| 5     | DP2 Fluxo     | Manifesto, permissões e cotas; modelos base; template por unidade; perfil master; perfis com os campos pessoais; editor das 3 cores no modo smart; página pública com vCard, QR e evento de visita  | Sim       |
-| 6     | DP3           | Editor completo do parceiro (modo gerenciado) e modelos base do parceiro no `/admin`                                                                                                                | Sim       |
-| 7     | DP4           | Troca de contato e formulário, no CRM, com consentimento, limite de taxa e aviso por e-mail                                                                                                         | Sim       |
-| 8     | DP5           | Cliques por bloco e por link, agregação diária no worker, tela de métricas                                                                                                                          | Sim       |
-| 9     | Depois        | Domínio padrão do parceiro e domínio próprio do cliente (resto da CF2c); `/platform`; mover unidade; onboarding; formulários personalizados, anexos, pixels, webhooks, PWA, Wallet, NFC; importação | Sim       |
+| Ordem | Etapa     | Entrega                                                                                                                                                                                            | Migration |
+| ----- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 1     | DP0       | `MODULE_SPEC.md` com as decisões acima, formato do JSON e motor; ADR da rota pública; registro do reaproveitamento do legado (ADR 0007)                                                            | Não       |
+| 2     | CF2e-1    | Plataforma: tabela e serviço de endereços públicos (slug, histórico, reservados e carência) sobre os hosts da CF2c ([plano da CF2e](../../operacao/plano-cf2e-enderecos-publicos.md))              | Sim       |
+| 3     | CF2d      | Plataforma: finalidades em `workspace_locations`, tela "Unidades", endereço fiscal da empresa ([plano da CF2d](../../operacao/plano-cf2d-enderecos.md))                                            | Sim       |
+| 4     | DP1 Motor | Formato do JSON, catálogo de regras e paletas, escala e contraste, renderizador dos blocos e prévia com dados de exemplo. Atrás de trava técnica, sem gravar                                       | Não       |
+| 5     | DP2 Fluxo | Manifesto, permissões e cotas; modelos base; template por unidade; perfil master; perfis com os campos pessoais; editor das 3 cores no modo smart; página pública com vCard, QR e evento de visita | Sim       |
+| 6     | DP3       | Editor completo do parceiro (modo gerenciado) e modelos base do parceiro no `/admin`                                                                                                               | Sim       |
+| 7     | DP4       | Troca de contato e formulário, no CRM, com consentimento, limite de taxa e aviso por e-mail                                                                                                        | Sim       |
+| 8     | DP5       | Cliques por bloco e por link, agregação diária no worker, tela de métricas                                                                                                                         | Sim       |
+| 9     | Depois    | Redirecionamentos de troca de host (CF2e-2); `/platform`; mover unidade; onboarding; formulários personalizados, anexos, pixels, webhooks, PWA, Wallet, NFC; importação                            | Sim       |
 
 ## 5. O que não trazer do legado
 
@@ -135,3 +134,4 @@ A DP0, só documentação, com o "pode começar" do Marcelo: `MODULE_SPEC.md` do
 | 0.1    | 14/10/2026 | Primeira versão, a partir da comparação dos relatórios                                                                                                                                                                                                                                 |
 | 0.2    | 15/10/2026 | Decisão 4 refeita: endereço `{host}/{slug}` com cascata de domínios; subdomínio por workspace fora do MVP; regras de domínio movidas para o plano da CF2c (plataforma)                                                                                                                 |
 | 0.3    | 15/10/2026 | Unidade com finalidade em `workspace_locations`; campos pessoais; carência de 30 dias e 307 para o master; perfil master; modelos base; modos smart e gerenciado pelo plano; motor recuperado do legado; reaproveitamento autorizado; etapas reordenadas para o fluxo de ponta a ponta |
+| 0.4    | 15/10/2026 | Decisão 4 alinhada à CF2c construída (PR #89): host com subdomínio por workspace (`rodobens.mobio.pro`), slug único por workspace e carência dentro do workspace; o serviço de endereços passa a ser a CF2e; etapa 2 vira CF2e-1                                                       |

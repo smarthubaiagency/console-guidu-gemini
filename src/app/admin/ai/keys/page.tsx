@@ -6,7 +6,8 @@ import { getTranslations } from "next-intl/server";
 import { calendarDateFormatter } from "@/components/billing/billing-ui";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
-import { AI_PROVIDER_IDS, listPartnerCredentials } from "@/core/ai/keys";
+import { aiPolicy } from "@/core/ai/catalog";
+import { listPartnerCredentials } from "@/core/ai/keys";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
@@ -32,15 +33,18 @@ export default async function PartnerAiKeysPage() {
   if (!partnerGrants(membership.role)("partner.ai_agents.manage")) {
     return <ModuleNotice variant="denied" />;
   }
-  const keys = await withIdentityContext(
+  const { keys, providers } = await withIdentityContext(
     prisma,
     identity.userId,
-    (tx) =>
-      listPartnerCredentials(
+    async (tx) => ({
+      keys: await listPartnerCredentials(
         tx,
         { userId: identity.userId, partnerRole: membership.role },
         partner.partnerId,
       ),
+      // CF6a: only the providers the platform and the partner offer.
+      providers: (await aiPolicy(tx)).providers,
+    }),
     { partnerId: partner.partnerId },
   );
   const t = await getTranslations("aiConsole");
@@ -55,7 +59,7 @@ export default async function PartnerAiKeysPage() {
       />
       <section className="border-card-border bg-surface-card space-y-3 rounded-xl border p-6 shadow-xs">
         <h2 className="text-14 text-text font-semibold">{t("keys.new")}</h2>
-        <RegisterKeyForm providers={AI_PROVIDER_IDS} />
+        <RegisterKeyForm providers={providers} />
       </section>
       <section className="border-card-border bg-surface-card space-y-3 rounded-xl border p-6 shadow-xs">
         <h2 className="text-14 text-text font-semibold">

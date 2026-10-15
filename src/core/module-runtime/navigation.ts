@@ -44,6 +44,7 @@ export type NavIconKey =
   | "key"
   | "layers"
   | "play-circle"
+  | "plug"
   | "inbox"
   | "map-pin"
   | "building"
@@ -376,6 +377,17 @@ export function buildAppSettingsNavigation(
               }),
             ]
           : []),
+        // The workspace's Google account (CF6b): owner and admin.
+        ...(input.grants("workspace.settings.update")
+          ? [
+              item({
+                id: "core.integrations",
+                label: "Integrações",
+                href: `${base}/integrations`,
+                iconKey: "plug",
+              }),
+            ]
+          : []),
         item({
           id: "core.credentials",
           label: "Credenciais BYOK",
@@ -540,21 +552,61 @@ export function buildPlatformNavigation(
           : []),
         ...(canReadBilling
           ? [
+              // Visão geral and Gateway (CF7), drawn as tabs of the page;
+              // the children feed the breadcrumb and search.
               item({
                 id: "platform.billing",
                 label: "Cobrança",
                 href: "/platform/billing",
                 iconKey: "credit-card",
+                hideChildren: true,
+                children: [
+                  item({
+                    id: "platform.billing.overview",
+                    label: "Visão geral",
+                    href: "/platform/billing",
+                    iconKey: "credit-card",
+                    exact: true,
+                  }),
+                  ...(input.grants("platform.billing.manage")
+                    ? [
+                        item({
+                          id: "platform.billing.gateway",
+                          label: "Gateway",
+                          href: "/platform/billing/gateway",
+                          iconKey: "credit-card",
+                        }),
+                      ]
+                    : []),
+                ],
               }),
             ]
           : []),
         ...(canReadOperations
           ? [
+              // Saúde e filas (F3d) and Manutenção (CF5c), drawn as tabs
+              // of the page; the children feed the breadcrumb and search.
               item({
                 id: "platform.operations",
                 label: "Operações",
                 href: "/platform/operations",
                 iconKey: "activity",
+                hideChildren: true,
+                children: [
+                  item({
+                    id: "platform.operations.health",
+                    label: "Saúde e filas",
+                    href: "/platform/operations",
+                    iconKey: "activity",
+                    exact: true,
+                  }),
+                  item({
+                    id: "platform.operations.maintenance",
+                    label: "Manutenção",
+                    href: "/platform/operations/maintenance",
+                    iconKey: "activity",
+                  }),
+                ],
               }),
             ]
           : []),
@@ -568,12 +620,29 @@ export function buildPlatformNavigation(
         }),
         ...(canManageAi
           ? [
+              // IA (CF6a): Painel, Provedores e modelos, Modelos de agente
+              // and Chave reserva, drawn as tabs of the page; the children
+              // feed the breadcrumb and search.
               item({
                 id: "platform.ai",
-                label: "Agentes de IA",
-                href: null,
+                label: "IA",
+                href: "/platform/ai",
                 iconKey: "bot",
+                hideChildren: true,
                 children: [
+                  item({
+                    id: "platform.ai.dashboard",
+                    label: "Painel",
+                    href: "/platform/ai",
+                    iconKey: "bot",
+                    exact: true,
+                  }),
+                  item({
+                    id: "platform.ai.providers",
+                    label: "Provedores e modelos",
+                    href: "/platform/ai/providers",
+                    iconKey: "bot",
+                  }),
                   item({
                     id: "platform.ai.templates",
                     label: "Modelos de agente",
@@ -582,7 +651,7 @@ export function buildPlatformNavigation(
                   }),
                   item({
                     id: "platform.ai.backup",
-                    label: "Backup de IA",
+                    label: "Chave reserva",
                     href: "/platform/ai/backup",
                     iconKey: "bot",
                   }),
@@ -748,6 +817,47 @@ export function buildPlatformSettingsNavigation(
                 href: "/platform/settings/security/events",
                 iconKey: "activity",
               }),
+              // Sign-up, e-mail verification, Google and link (CF5b).
+              item({
+                id: "platform.settings.authentication",
+                label: "Autenticação",
+                href: "/platform/settings/authentication",
+                iconKey: "key",
+              }),
+            ]
+          : []),
+        // Product analytics, off by default (CF7, D-PA-06).
+        ...(input.grants("platform.settings.manage")
+          ? [
+              item({
+                id: "platform.settings.analytics",
+                label: "Analytics",
+                href: "/platform/settings/analytics",
+                iconKey: "activity",
+              }),
+            ]
+          : []),
+      ],
+    },
+    // API and integrations (CF6b): the settings managers.
+    {
+      id: "settings.integrations",
+      label: "API e integrações",
+      items: [
+        ...(input.grants("platform.settings.manage")
+          ? [
+              item({
+                id: "platform.settings.api",
+                label: "API e MCP",
+                href: "/platform/settings/api",
+                iconKey: "code",
+              }),
+              item({
+                id: "platform.settings.integrations.google",
+                label: "Google",
+                href: "/platform/settings/integrations/google",
+                iconKey: "plug",
+              }),
             ]
           : []),
       ],
@@ -769,6 +879,14 @@ export function buildPartnerNavigation(
     ? [
         ...(grants("partner.ai_agents.read")
           ? [
+              // Usage and errors of the customers (CF6a).
+              item({
+                id: "partner.ai.dashboard",
+                label: "Painel de IA",
+                href: "/admin/ai",
+                iconKey: "bot",
+                exact: true,
+              }),
               item({
                 id: "partner.ai.assistant",
                 label: "Assistente GUIDU",
@@ -779,6 +897,14 @@ export function buildPartnerNavigation(
                 id: "partner.ai.guids",
                 label: "GUIDS dos clientes",
                 href: "/admin/ai/guids",
+                iconKey: "bot",
+              }),
+              // Providers and models offered to the customers (CF6a);
+              // read-only without partner.ai_agents.manage.
+              item({
+                id: "partner.ai.providers",
+                label: "Provedores e modelos",
+                href: "/admin/ai/providers",
                 iconKey: "bot",
               }),
             ]
@@ -975,6 +1101,23 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
           : []),
       ],
     },
+    // Google app of the partner and scopes for its customers (CF6b).
+    {
+      id: "settings.integrations",
+      label: "Integrações",
+      items: [
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.settings.integrations",
+                label: "Google",
+                href: "/admin/settings/integrations",
+                iconKey: "plug",
+              }),
+            ]
+          : []),
+      ],
+    },
     {
       id: "settings.system",
       label: "Sistema",
@@ -992,6 +1135,24 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 id: "partner.settings.security.events",
                 label: "Eventos de segurança",
                 href: "/admin/settings/security/events",
+                iconKey: "activity",
+              }),
+              // Google and link on the partner's hosts (CF5b).
+              item({
+                id: "partner.settings.authentication",
+                label: "Autenticação",
+                href: "/admin/settings/authentication",
+                iconKey: "key",
+              }),
+            ]
+          : []),
+        // The partner's own analytics identifier, optional (CF7).
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.settings.analytics",
+                label: "Analytics",
+                href: "/admin/settings/analytics",
                 iconKey: "activity",
               }),
             ]

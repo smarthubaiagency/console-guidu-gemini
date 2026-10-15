@@ -37,6 +37,8 @@ const PUBLIC: Record<string, string> = {
   "reset-password/page.tsx": "troca de senha; a ação confere a sessão",
   "legal/[kind]/page.tsx": "termos públicos",
   "auth/denied/page.tsx": "aviso de acesso negado",
+  "maintenance/page.tsx":
+    "aviso da manutenção (CF5c); só diz que a plataforma está fechada",
   "auth/suspended/page.tsx": "aviso de conta suspensa",
   "auth/mfa/page.tsx": "desafio de MFA; confere a sessão",
   "invite/[token]/page.tsx": "convite; a ação de aceite exige login",
@@ -51,11 +53,21 @@ const PUBLIC: Record<string, string> = {
   "brand/[asset]/[version]/route.ts": "imagens da marca do host",
   "api/domains/check/route.ts":
     "ForwardAuth do Traefik; confere o segredo compartilhado (CF2b)",
+  "api/integrations/google/callback/route.ts":
+    "retorno do Google; confere o state assinado e só devolve ao host de origem, onde a sessão conclui (CF6b)",
+  "api/integrations/google/fake-consent/route.ts":
+    "consentimento do Google falso dos testes; 404 fora de GOOGLE_OAUTH_PROVIDER=fake (CF6b)",
+  "api/billing/stripe/webhook/route.ts":
+    "webhook do Stripe; confere a assinatura com o segredo cifrado (CF7)",
 };
 
 /** Actions of signed-out visitors. */
 const PUBLIC_ACTIONS: Record<string, string> = {
   "app/login/actions.ts: signInWithPassword": "login",
+  "app/login/actions.ts: signInWithGoogle":
+    "login com Google; confere o provedor e a cascata do host (CF5b)",
+  "app/login/actions.ts: requestMagicLink":
+    "link mágico; confere o provedor e a cascata do host, resposta igual para qualquer e-mail (CF5b)",
   "app/forgot-password/actions.ts: requestPasswordRecovery":
     "pedido de recuperação; resposta igual para qualquer e-mail",
 };

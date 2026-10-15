@@ -63,7 +63,11 @@
     "dns_pending": "The CNAME does not point to the target yet. DNS propagation can take a few hours.",
     "ssl_pending": "DNS is correct. The certificate is being issued; verify again in a few minutes.",
     "ssl_error": "The certificate was not issued. Check the CNAME and verify again.",
-    "cloudflare_error": "The certificate could not be registered now. Try again."
+    "cloudflare_error": "The certificate could not be registered now. Try again.",
+    "baseAdded": "Domain {host} added. Create the CNAME records and click Verify.",
+    "baseActive": "Default domain verified and active.",
+    "wildcard_pending": "The domain points to the target, but the wildcard (*.) does not yet. DNS propagation can take a few hours.",
+    "choiceSaved": "Tool domain updated."
   },
   "errors": {
     "invalidDomain": "Enter a valid domain, such as profile.yourcompany.com.",
@@ -71,6 +75,47 @@
     "taken": "This domain is already registered.",
     "notFound": "Domain not found.",
     "primaryNotActive": "Only an active domain can be the primary one.",
-    "workspaceNotFound": "Workspace not found."
+    "workspaceNotFound": "Workspace not found.",
+    "invalidBaseDomain": "Enter a valid domain, such as card.yourcompany.com.",
+    "housePartner": "The platform's default domain is set by operations.",
+    "baseExists": "There is already a default domain for this type. Remove it first.",
+    "invalidRouteType": "Invalid public route type.",
+    "invalidTool": "Invalid tool.",
+    "choiceNotActive": "Only an active domain can be chosen."
+  },
+  "routeTypes": {
+    "profile": "Digital profile",
+    "quiz": "Quiz",
+    "page": "Pages and sites"
+  },
+  "addresses": {
+    "title": "Default addresses",
+    "description": "Each type of public page already has an address with the workspace name. It does not count toward the plan's domain limit.",
+    "unavailable": "Unavailable for this workspace's name. Use your own domain.",
+    "off": "This type has no default domain yet.",
+    "partner": "Partner domain",
+    "platform": "Platform domain"
+  },
+  "bases": {
+    "title": "Customers' default domains",
+    "description": "Each customer gets a subdomain with the workspace name on the default domain of each type. Add a domain of yours to replace the platform's for your customers.",
+    "platformDefault": "Platform default: {host}",
+    "platformOff": "No platform domain for this type.",
+    "example": "Example: {host}",
+    "routeType": "Type",
+    "hostPlaceholder": "card.yourcompany.com",
+    "instructions": "In DNS, create two CNAME records pointing to {target}: one named {host} and another named *.{host}. Then click Verify.",
+    "certificate": "The wildcard certificate of this domain is set up by the platform's operations team.",
+    "removeMessage": "Your customers' addresses on this domain stop opening and go back to the platform domain.",
+    "house": "The platform's default domains apply to the house customers and are set by operations.",
+    "readOnly": "Only the partner's owner and admins change the default domains."
+  },
+  "picker": {
+    "label": "Domain",
+    "default": "Default: {host}",
+    "defaultNone": "Default (unavailable)",
+    "save": "Save domain",
+    "address": "Address: {url}",
+    "none": "No public address. Add your own domain."
   }
 }

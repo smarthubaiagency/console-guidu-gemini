@@ -1,0 +1,72 @@
+{
+  "title": "Autenticación",
+  "description": {
+    "platform": "Cómo entran las personas: registro, verificación de correo y las formas de entrar ofrecidas a los socios.",
+    "partner": "Cómo entran las personas en sus dominios: registro, verificación de correo y las formas de entrar que ofrece la plataforma."
+  },
+  "signup": {
+    "title": "Registro y verificación",
+    "description": "Reglas fijas de la plataforma, solo lectura.",
+    "signupLabel": "Registro",
+    "signupValue": "Solo por invitación",
+    "verificationLabel": "Verificación de correo",
+    "verificationValue": "Siempre activa (la invitación confirma el correo)",
+    "mfaLabel": "Verificación en dos pasos",
+    "mfaValue": "Configurada en Seguridad",
+    "laterLabel": "Registro público y SAML",
+    "laterValue": "Aún no disponibles",
+    "note": "Nadie crea una cuenta por su cuenta: entra quien fue invitado por la plataforma, el socio o el equipo del workspace."
+  },
+  "google": {
+    "title": "Inicio de sesión con Google",
+    "description": {
+      "platform": "Botón \"Entrar con Google\" en la pantalla de inicio de sesión. Los socios pueden ocultarlo en sus dominios.",
+      "partner": "Botón \"Entrar con Google\" en la pantalla de inicio de sesión de sus dominios, cuando la plataforma lo ofrece."
+    },
+    "toggle": {
+      "platform": "Ofrecer inicio de sesión con Google",
+      "partner": "Mostrar inicio de sesión con Google en mis dominios"
+    },
+    "ownerLabel": "App OAuth de Google",
+    "owner": "De GUIDU"
+  },
+  "magicLink": {
+    "title": "Enlace mágico",
+    "description": {
+      "platform": "Botón para recibir por correo un enlace que entra sin contraseña. Desactivado por defecto; los socios pueden ocultarlo en sus dominios.",
+      "partner": "Botón para recibir por correo un enlace que entra sin contraseña, en la pantalla de inicio de sesión de sus dominios, cuando la plataforma lo ofrece."
+    },
+    "toggle": {
+      "platform": "Ofrecer enlace mágico",
+      "partner": "Mostrar enlace mágico en mis dominios"
+    }
+  },
+  "provider": {
+    "label": "Proveedor en Supabase Auth",
+    "on": "Activado por operaciones",
+    "off": "Desactivado"
+  },
+  "offered": {
+    "label": "Ofrecido por la plataforma",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "visible": {
+    "label": {
+      "platform": "En la pantalla de inicio de sesión",
+      "partner": "En la pantalla de inicio de sesión de sus dominios"
+    },
+    "yes": "Visible",
+    "no": "Oculto"
+  },
+  "notOffered": "La plataforma aún no ofrece esta forma de entrar.",
+  "providerHint": {
+    "platform": "El botón solo aparece después de que operaciones active el proveedor en Supabase Auth y avise al panel (docs/operacao/autenticacao.md). Hasta entonces, la elección queda guardada.",
+    "partner": "El botón solo aparece después de que la plataforma active el proveedor. Hasta entonces, su elección queda guardada."
+  },
+  "save": "Guardar",
+  "readOnly": "Solo los gestores cambian esta configuración.",
+  "messages": {
+    "saved": "Autenticación guardada."
+  }
+}

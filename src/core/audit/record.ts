@@ -98,6 +98,10 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "inboxes",
   // Security settings (CF5a): size of an IP allow list, never its addresses.
   "count",
+  // Maintenance window (CF5c): its mode and schedule, never the messages.
+  "mode",
+  "startsAt",
+  "endsAt",
 ]);
 
 /**

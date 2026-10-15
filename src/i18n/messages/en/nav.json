@@ -11,12 +11,14 @@
       "platform": "Administration",
       "settings_platform": "Platform",
       "settings_modules": "Modules",
-      "settings_system": "System"
+      "settings_system": "System",
+      "settings_integrations": "API and integrations"
     },
     "partner": {
       "partner": "Partner",
       "settings_partner": "Partner",
-      "settings_system": "System"
+      "settings_system": "System",
+      "settings_integrations": "Integrations"
     }
   },
   "items": {
@@ -43,6 +45,8 @@
     "platform_partners": "Partners",
     "platform_billing": "Billing",
     "platform_operations": "Operations",
+    "platform_operations_health": "Health and queues",
+    "platform_operations_maintenance": "Maintenance",
     "platform_api-keys": "API keys",
     "platform_legal": "Terms and privacy",
     "platform_brand": "Brand",
@@ -60,9 +64,9 @@
     "platform_design_workbench": "Edit window",
     "platform_design_status": "Notices",
     "platform_design_components": "Components",
-    "platform_ai": "AI agents",
+    "platform_ai": "AI",
     "platform_ai_templates": "Agent templates",
-    "platform_ai_backup": "AI backup",
+    "platform_ai_backup": "Backup key",
     "partner_ai": "AI agents",
     "partner_ai_assistant": "GUIDU Assistant",
     "partner_ai_guids": "Customer GUIDS",
@@ -85,6 +89,20 @@
     "platform_settings_security": "Security",
     "platform_settings_security_events": "Security events",
     "partner_settings_security": "Security",
-    "partner_settings_security_events": "Security events"
+    "partner_settings_security_events": "Security events",
+    "platform_settings_authentication": "Authentication",
+    "partner_settings_authentication": "Authentication",
+    "platform_ai_dashboard": "Dashboard",
+    "platform_ai_providers": "Providers and models",
+    "partner_ai_dashboard": "AI dashboard",
+    "partner_ai_providers": "Providers and models",
+    "core_integrations": "Integrations",
+    "platform_settings_api": "API and MCP",
+    "platform_settings_integrations_google": "Google",
+    "partner_settings_integrations": "Google",
+    "platform_billing_overview": "Overview",
+    "platform_billing_gateway": "Gateway",
+    "platform_settings_analytics": "Analytics",
+    "partner_settings_analytics": "Analytics"
   }
 }

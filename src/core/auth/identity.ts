@@ -1,5 +1,6 @@
 import "server-only";
 
+import { enforceMaintenance } from "@/core/maintenance/gate";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { decideAccess, type AccessDecision } from "./access";
@@ -116,6 +117,10 @@ async function guard(requireMfaFactor: boolean): Promise<Identity> {
     throw new AccessDeniedError("unauthenticated", 401);
   }
 
+  // Maintenance window (CF5c): closes the pages and actions of /app and
+  // /admin, or only their actions in read-only. /platform passes.
+  await enforceMaintenance();
+
   const supabase = await createSupabaseServerClient();
   const emailConfirmedAt = await resolveEmailConfirmedAt(supabase, claims);
 
@@ -131,7 +136,8 @@ async function guard(requireMfaFactor: boolean): Promise<Identity> {
 /**
  * Requires an authenticated, non-blocked identity. Every protected page,
  * Route Handler and service calls this on the server, regardless of what the
- * middleware already allowed through.
+ * middleware already allowed through. It also applies the maintenance
+ * window (CF5c) to /app and /admin.
  */
 export function requireUser(): Promise<Identity> {
   return guard(false);

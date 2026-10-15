@@ -63,6 +63,8 @@ interface McpKeysClientProps {
   capabilities: McpKeysCapabilities;
   currentUserId: string;
   userRole: WorkspaceRole | null;
+  /** Scopes the company's plan allows (CF6b); the others are disabled. */
+  allowedScopes: readonly string[];
 }
 
 export function McpKeysClient({
@@ -71,6 +73,7 @@ export function McpKeysClient({
   capabilities,
   currentUserId,
   userRole,
+  allowedScopes,
 }: McpKeysClientProps) {
   const t = useTranslations("mcp");
   const format = useFormatter();
@@ -85,7 +88,10 @@ export function McpKeysClient({
 
   // Form State
   const [name, setName] = useState("");
-  const [scopes, setScopes] = useState<string[]>([...DEFAULT_WORKSPACE_SCOPES]);
+  const defaultScopes = DEFAULT_WORKSPACE_SCOPES.filter((scope) =>
+    allowedScopes.includes(scope),
+  );
+  const [scopes, setScopes] = useState<string[]>([...defaultScopes]);
   const [expiresInDays, setExpiresInDays] = useState(90);
 
   const isViewer = capabilities.isViewer || userRole === "viewer";
@@ -100,6 +106,7 @@ export function McpKeysClient({
     if (isViewer && scopeId === "proposals:write") {
       return;
     }
+    if (!allowedScopes.includes(scopeId)) return;
     setScopes((prev) =>
       prev.includes(scopeId)
         ? prev.filter((s) => s !== scopeId)
@@ -122,7 +129,7 @@ export function McpKeysClient({
       setFeedback(res);
       if (res.success) {
         setName("");
-        setScopes([...DEFAULT_WORKSPACE_SCOPES]);
+        setScopes([...defaultScopes]);
         setIsModalOpen(false);
       }
     });
@@ -255,7 +262,8 @@ export function McpKeysClient({
                   {SCOPE_DEFINITIONS.map((sc) => {
                     const isChecked = scopes.includes(sc.id);
                     const isWrite = sc.isWrite;
-                    const isDisabled = isWrite && isViewer;
+                    const inPlan = allowedScopes.includes(sc.id);
+                    const isDisabled = (isWrite && isViewer) || !inPlan;
                     const id = `mcp-scope-${sc.id}`;
 
                     return (
@@ -292,6 +300,14 @@ export function McpKeysClient({
                                 className="bg-warning-bg text-warning-text border-warning-border"
                               >
                                 {t("write")}
+                              </Badge>
+                            )}
+                            {!inPlan && (
+                              <Badge
+                                variant="outline"
+                                data-testid={`mcp-scope-not-in-plan-${sc.id}`}
+                              >
+                                {t("notInPlan")}
                               </Badge>
                             )}
                           </div>
@@ -411,10 +427,17 @@ export function McpKeysClient({
                         {item.scopes.map((sc) => (
                           <span
                             key={sc}
+                            title={
+                              allowedScopes.includes(sc)
+                                ? undefined
+                                : t("notInPlan")
+                            }
                             className={`text-10 rounded-xs px-1.5 py-0.5 font-mono ${
-                              sc === "proposals:write"
-                                ? "bg-warning-bg text-warning-text border-warning-border border font-medium"
-                                : "bg-surface-hover text-text-subtle"
+                              !allowedScopes.includes(sc)
+                                ? "bg-surface-hover text-text-tertiary line-through"
+                                : sc === "proposals:write"
+                                  ? "bg-warning-bg text-warning-text border-warning-border border font-medium"
+                                  : "bg-surface-hover text-text-subtle"
                             }`}
                           >
                             {sc}

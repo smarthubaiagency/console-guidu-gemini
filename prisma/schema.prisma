@@ -366,6 +366,47 @@ model PaymentProviderEvent {
   @@map("payment_provider_events")
 }
 
+/// Payment gateway of the platform (CF7): only Stripe Connect for now. The
+/// credentials are encrypted by the application and shown masked only; real
+/// charging stays off until P6 (D-PA-14).
+model PaymentGateway {
+  provider               String   @id
+  enabled                Boolean  @default(false)
+  isDefault              Boolean  @default(false) @map("is_default")
+  mode                   String   @default("test")
+  secretKeyMasked        String?  @map("secret_key_masked")
+  secretKeyEncrypted     String?  @map("secret_key_encrypted")
+  webhookSecretMasked    String?  @map("webhook_secret_masked")
+  webhookSecretEncrypted String?  @map("webhook_secret_encrypted")
+  updatedBy              String   @map("updated_by") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("payment_gateways")
+}
+
+/// A verified webhook call of a gateway (CF7), with its raw body, unique per
+/// provider and event id. Processing only records it in this step.
+model PaymentWebhookEvent {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider     String
+  eventId      String    @map("event_id")
+  eventType    String    @map("event_type")
+  livemode     Boolean
+  isTest       Boolean   @default(false) @map("is_test")
+  rawBody      String    @map("raw_body")
+  status       String    @default("received")
+  attempts     Int       @default(0)
+  lastError    String?   @map("last_error")
+  receivedAt   DateTime  @default(now()) @map("received_at") @db.Timestamptz()
+  processedAt  DateTime? @map("processed_at") @db.Timestamptz()
+  processingMs Int?      @map("processing_ms")
+
+  @@unique([provider, eventId], map: "payment_webhook_events_unique")
+  @@index([provider, receivedAt(sort: Desc)], map: "payment_webhook_events_received_idx")
+  @@map("payment_webhook_events")
+}
+
 /// Insert-only payment or refund, with the computed shares (P5m).
 model Payment {
   id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -606,6 +647,40 @@ model WorkspaceDomain {
   @@map("workspace_domains")
 }
 
+/// Default public domain of a partner for one route type (CF2c).
+model PartnerPublicDomain {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId  String    @map("partner_id") @db.Uuid
+  routeType  String    @map("route_type")
+  host       String    @unique
+  status     String    @default("pending")
+  checkedAt  DateTime? @map("checked_at") @db.Timestamptz()
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz()
+  lastError  String?   @map("last_error")
+  createdBy  String?   @map("created_by") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([partnerId, routeType])
+  @@map("partner_public_domains")
+}
+
+/// Own domain chosen by a tool with a public route (CF2c); none = default.
+model WorkspacePublicRoute {
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  toolKey        String   @map("tool_key")
+  routeType      String   @map("route_type")
+  domainId       String   @map("domain_id") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@id([workspaceId, toolKey])
+  @@index([domainId])
+  @@map("workspace_public_routes")
+}
+
 model Organization {
   id          String               @id @db.Uuid
   name        String
@@ -751,6 +826,60 @@ model ApiKey {
   user           Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("api_keys")
+}
+
+/// Calls and errors per workspace API key, day and surface (CF6b). Written
+/// only by `private.record_api_key_usage`; read with the key's RLS.
+model ApiKeyUsageDaily {
+  apiKeyId       String   @map("api_key_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  day            DateTime @db.Date
+  surface        String
+  calls          Int      @default(0)
+  errors         Int      @default(0)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@id([apiKeyId, day, surface])
+  @@map("api_key_usage_daily")
+}
+
+/// Google OAuth app of the platform (`partnerId` null) or of a partner
+/// (CF6b). The secret ciphertext is never selected by app_runtime: always
+/// read with an explicit `select`.
+model GoogleOauthApp {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId             String?  @map("partner_id") @db.Uuid
+  clientId              String   @map("client_id")
+  clientSecretMasked    String   @map("client_secret_masked")
+  clientSecretEncrypted String   @map("client_secret_encrypted")
+  verificationStatus    String   @default("testing") @map("verification_status")
+  updatedBy             String   @map("updated_by") @db.Uuid
+  createdAt             DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
+
+  @@map("google_oauth_apps")
+}
+
+/// Google account connected by a workspace (CF6b). The tokens are never
+/// selected by app_runtime: always read with an explicit `select`.
+model WorkspaceGoogleConnection {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId        String    @map("organization_id") @db.Uuid
+  workspaceId           String    @unique @map("workspace_id") @db.Uuid
+  appSource             String    @map("app_source")
+  appId                 String?   @map("app_id") @db.Uuid
+  accountEmail          String    @map("account_email")
+  accountSubject        String?   @map("account_subject")
+  scopes                String[]  @default([])
+  accessTokenEncrypted  String    @map("access_token_encrypted")
+  refreshTokenEncrypted String?   @map("refresh_token_encrypted")
+  accessExpiresAt       DateTime? @map("access_expires_at") @db.Timestamptz()
+  connectedBy           String    @map("connected_by") @db.Uuid
+  createdAt             DateTime  @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime  @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
+
+  @@map("workspace_google_connections")
 }
 
 /// Agent template (A1, the legacy preset). `partnerId` null is the house;
@@ -955,6 +1084,8 @@ model AiUsageEvent {
   usageKind      String   @default("chat") @map("usage_kind")
   inputTokens    Int      @default(0) @map("input_tokens")
   outputTokens   Int      @default(0) @map("output_tokens")
+  /// A failed call (CF6a): zero tokens and the error code.
+  errorCode      String?  @map("error_code")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   @@map("ai_usage_events")
@@ -1514,4 +1645,21 @@ model IpAllowlist {
   updatedAt DateTime              @default(now()) @map("updated_at") @db.Timestamptz()
 
   @@map("ip_allowlists")
+}
+
+/// Maintenance or read-only window of the whole platform (CF5c): one row.
+model PlatformMaintenance {
+  id          Boolean   @id @default(true)
+  enabled     Boolean   @default(false)
+  mode        String    @default("maintenance")
+  startsAt    DateTime? @map("starts_at") @db.Timestamptz()
+  endsAt      DateTime? @map("ends_at") @db.Timestamptz()
+  messagePtBr String?   @map("message_pt_br")
+  messageEn   String?   @map("message_en")
+  messageEs   String?   @map("message_es")
+  updatedBy   String?   @map("updated_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("platform_maintenance")
 }

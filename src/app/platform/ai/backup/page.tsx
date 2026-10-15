@@ -6,6 +6,7 @@ import {
   calendarDateFormatter,
   sectionClass,
 } from "@/components/billing/billing-ui";
+import { AiTabs } from "@/components/ai-agents/ai-tabs";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { AI_PROVIDER_IDS, getBackupSettings } from "@/core/ai/keys";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
@@ -45,6 +46,7 @@ export default async function PlatformAiBackupPage() {
         description={t("backup.description")}
         icon={<LifeBuoy className="h-5 w-5" />}
       />
+      <AiTabs active="backup" />
       <section className={sectionClass}>
         <h2 className="text-14 text-text font-semibold">
           {t("backup.current")}

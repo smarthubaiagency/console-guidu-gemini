@@ -5,6 +5,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { sectionClass } from "@/components/billing/billing-ui";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
+import { OperationsTabs } from "@/components/operations/operations-tabs";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { platformGrants } from "@/core/module-runtime/loaders";
@@ -95,6 +96,7 @@ export default async function PlatformOperationsPage() {
         description={t("description")}
         icon={<Activity className="h-5 w-5" />}
       />
+      <OperationsTabs active="health" />
 
       {/* Health */}
       <section className={sectionClass} data-testid="operations-health">

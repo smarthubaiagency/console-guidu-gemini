@@ -1,0 +1,97 @@
+{
+  "metaTitle": "Manutenção",
+  "description": "Janela de manutenção ou de somente leitura de toda a plataforma, com início e fim agendados e o aviso aos usuários.",
+  "tabs": {
+    "label": "Seções de Operações",
+    "health": "Saúde e filas",
+    "maintenance": "Manutenção"
+  },
+  "state": {
+    "title": "Situação agora",
+    "description": "O que vale neste momento. Uma mudança chega a todos os servidores em até 5 segundos.",
+    "label": "Estado",
+    "off": "Desligada: a plataforma está aberta",
+    "scheduled": "Agendada para {start}",
+    "active": "Em andamento, sem horário de fim",
+    "activeUntil": "Em andamento até {end}",
+    "mode": "Modo",
+    "none": "Nenhum",
+    "updatedAt": "Última alteração",
+    "never": "Nunca alterada"
+  },
+  "modes": {
+    "maintenance": "Manutenção total",
+    "read_only": "Somente leitura"
+  },
+  "form": {
+    "title": "Janela de manutenção",
+    "description": "Ligue agora ou agende início e fim. Os horários são de Brasília.",
+    "enabled": "Ligar a janela (agora ou no início agendado)",
+    "mode": "Modo",
+    "startsAt": "Início",
+    "startsAtHint": "Vazio: começa ao salvar.",
+    "endsAt": "Fim",
+    "endsAtHint": "Vazio: dura até alguém encerrar.",
+    "messages": "Mensagem aos usuários",
+    "messagePtBr": "Português (Brasil)",
+    "messageEn": "Inglês",
+    "messageEs": "Espanhol",
+    "messagesHint": "Opcional, até 500 caracteres por idioma. Sem texto num idioma, vale o português; sem nenhum, só o aviso padrão.",
+    "save": "Salvar manutenção",
+    "end": "Encerrar agora",
+    "readOnly": "Só owner e operations da plataforma alteram a manutenção."
+  },
+  "effects": {
+    "title": "O que cada modo faz",
+    "maintenance": "Manutenção total: /app e /admin mostram a página de manutenção, e a API e o MCP dos workspaces respondem 503 com Retry-After.",
+    "readOnly": "Somente leitura: as telas abrem, mas toda gravação de /app e /admin é recusada com aviso, e a API recusa as escritas com 503.",
+    "jobs": "Nos dois modos os jobs ficam na fila e rodam quando a janela acaba; os webhooks de entrada continuam sendo guardados.",
+    "agents": "Agentes de IA: os canais recebem e guardam as mensagens, e os GUIDS respondem quando a janela acaba.",
+    "notice": "Até 24 horas antes do início, uma faixa avisa todos os usuários.",
+    "open": "Seguem abertos:"
+  },
+  "messages": {
+    "saved": "Manutenção salva.",
+    "ended": "Manutenção encerrada."
+  },
+  "errors": {
+    "closed": "O sistema está em manutenção. Tente novamente mais tarde.",
+    "readOnly": "O sistema está em modo somente leitura durante a manutenção. Nenhuma alteração foi salva.",
+    "invalidMode": "Modo de manutenção inválido.",
+    "invalidDate": "Data ou hora inválida.",
+    "endBeforeStart": "O fim precisa ser depois do início.",
+    "endInPast": "O fim precisa estar no futuro.",
+    "messageTooLong": "Cada mensagem aceita até 500 caracteres."
+  },
+  "strip": {
+    "today": "hoje às {time}",
+    "tomorrow": "amanhã às {time}",
+    "scheduled": {
+      "maintenance": "Manutenção programada para {start}.",
+      "read_only": "Manutenção em somente leitura programada para {start}."
+    },
+    "scheduledWithEnd": {
+      "maintenance": "Manutenção programada de {start} a {end}.",
+      "read_only": "Manutenção em somente leitura programada de {start} a {end}."
+    },
+    "readOnly": "Somente leitura: as alterações estão suspensas durante a manutenção.",
+    "readOnlyUntil": "Somente leitura até {end}: as alterações estão suspensas durante a manutenção.",
+    "maintenance": "Manutenção em andamento: os workspaces e o console dos parceiros estão fechados.",
+    "maintenanceUntil": "Manutenção em andamento até {end}: os workspaces e o console dos parceiros estão fechados."
+  },
+  "page": {
+    "metaTitle": "Em manutenção",
+    "title": "Estamos em manutenção",
+    "description": "O painel volta em breve. Nenhum dado foi perdido e as mensagens recebidas serão respondidas na volta.",
+    "until": "Previsão de retorno: {end}.",
+    "noEnd": "Ainda sem horário de retorno.",
+    "back": "Voltar ao painel",
+    "overTitle": "Manutenção encerrada",
+    "overDescription": "A plataforma está aberta.",
+    "over": "Não há manutenção em andamento."
+  },
+  "api": {
+    "closed": "GUIDU is under maintenance. Try again later.",
+    "readOnly": "GUIDU is read-only during maintenance. Reads work; writes are refused."
+  }
+}

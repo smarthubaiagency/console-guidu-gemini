@@ -21,5 +21,7 @@
   "moduleSuspended": "The subscription is suspended: the module is available for reading only.",
   "moduleUnavailableNamed": "The module ''{module}'' is temporarily unavailable at this stage of the platform.",
   "variantNotFound": "Variant not found.",
-  "idempotencyKeyFormat": "Use letters, numbers, dot, colon or hyphen."
+  "idempotencyKeyFormat": "Use letters, numbers, dot, colon or hyphen.",
+  "apiDisabled": "The GUIDU API is turned off. Try again later.",
+  "mcpDisabled": "The GUIDU MCP server is turned off. Try again later."
 }

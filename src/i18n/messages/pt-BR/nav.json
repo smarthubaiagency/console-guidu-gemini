@@ -11,12 +11,14 @@
       "platform": "Administração",
       "settings_platform": "Plataforma",
       "settings_modules": "Módulos",
-      "settings_system": "Sistema"
+      "settings_system": "Sistema",
+      "settings_integrations": "API e integrações"
     },
     "partner": {
       "partner": "Parceiro",
       "settings_partner": "Parceiro",
-      "settings_system": "Sistema"
+      "settings_system": "Sistema",
+      "settings_integrations": "Integrações"
     }
   },
   "items": {
@@ -43,6 +45,8 @@
     "platform_partners": "Parceiros",
     "platform_billing": "Cobrança",
     "platform_operations": "Operações",
+    "platform_operations_health": "Saúde e filas",
+    "platform_operations_maintenance": "Manutenção",
     "platform_api-keys": "Chaves de API",
     "platform_legal": "Termos e privacidade",
     "platform_brand": "Marca",
@@ -60,9 +64,9 @@
     "platform_design_workbench": "Janela de edição",
     "platform_design_status": "Avisos",
     "platform_design_components": "Componentes",
-    "platform_ai": "Agentes de IA",
+    "platform_ai": "IA",
     "platform_ai_templates": "Modelos de agente",
-    "platform_ai_backup": "Backup de IA",
+    "platform_ai_backup": "Chave reserva",
     "partner_ai": "Agentes de IA",
     "partner_ai_assistant": "Assistente GUIDU",
     "partner_ai_guids": "GUIDS dos clientes",
@@ -85,6 +89,20 @@
     "platform_settings_security": "Segurança",
     "platform_settings_security_events": "Eventos de segurança",
     "partner_settings_security": "Segurança",
-    "partner_settings_security_events": "Eventos de segurança"
+    "partner_settings_security_events": "Eventos de segurança",
+    "platform_settings_authentication": "Autenticação",
+    "partner_settings_authentication": "Autenticação",
+    "platform_ai_dashboard": "Painel",
+    "platform_ai_providers": "Provedores e modelos",
+    "partner_ai_dashboard": "Painel de IA",
+    "partner_ai_providers": "Provedores e modelos",
+    "core_integrations": "Integrações",
+    "platform_settings_api": "API e MCP",
+    "platform_settings_integrations_google": "Google",
+    "partner_settings_integrations": "Google",
+    "platform_billing_overview": "Visão geral",
+    "platform_billing_gateway": "Gateway",
+    "platform_settings_analytics": "Analytics",
+    "partner_settings_analytics": "Analytics"
   }
 }

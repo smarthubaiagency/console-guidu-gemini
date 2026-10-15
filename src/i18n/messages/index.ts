@@ -3,9 +3,12 @@
 import ptBR_account from "./pt-BR/account.json";
 import ptBR_aiAgents from "./pt-BR/aiAgents.json";
 import ptBR_aiConsole from "./pt-BR/aiConsole.json";
+import ptBR_analytics from "./pt-BR/analytics.json";
 import ptBR_api from "./pt-BR/api.json";
 import ptBR_apiErrors from "./pt-BR/apiErrors.json";
+import ptBR_apiSettings from "./pt-BR/apiSettings.json";
 import ptBR_auth from "./pt-BR/auth.json";
+import ptBR_authSettings from "./pt-BR/authSettings.json";
 import ptBR_billing from "./pt-BR/billing.json";
 import ptBR_brand from "./pt-BR/brand.json";
 import ptBR_channels from "./pt-BR/channels.json";
@@ -17,13 +20,16 @@ import ptBR_domains from "./pt-BR/domains.json";
 import ptBR_email from "./pt-BR/email.json";
 import ptBR_errors from "./pt-BR/errors.json";
 import ptBR_executions from "./pt-BR/executions.json";
+import ptBR_gateway from "./pt-BR/gateway.json";
 import ptBR_googleBusiness from "./pt-BR/googleBusiness.json";
 import ptBR_helloWorld from "./pt-BR/helloWorld.json";
 import ptBR_home from "./pt-BR/home.json";
+import ptBR_integrations from "./pt-BR/integrations.json";
 import ptBR_invite from "./pt-BR/invite.json";
 import ptBR_languages from "./pt-BR/languages.json";
 import ptBR_legal from "./pt-BR/legal.json";
 import ptBR_locations from "./pt-BR/locations.json";
+import ptBR_maintenance from "./pt-BR/maintenance.json";
 import ptBR_mcp from "./pt-BR/mcp.json";
 import ptBR_moduleCatalog from "./pt-BR/moduleCatalog.json";
 import ptBR_modules from "./pt-BR/modules.json";
@@ -52,9 +58,12 @@ import ptBR_workspace from "./pt-BR/workspace.json";
 import en_account from "./en/account.json";
 import en_aiAgents from "./en/aiAgents.json";
 import en_aiConsole from "./en/aiConsole.json";
+import en_analytics from "./en/analytics.json";
 import en_api from "./en/api.json";
 import en_apiErrors from "./en/apiErrors.json";
+import en_apiSettings from "./en/apiSettings.json";
 import en_auth from "./en/auth.json";
+import en_authSettings from "./en/authSettings.json";
 import en_billing from "./en/billing.json";
 import en_brand from "./en/brand.json";
 import en_channels from "./en/channels.json";
@@ -66,13 +75,16 @@ import en_domains from "./en/domains.json";
 import en_email from "./en/email.json";
 import en_errors from "./en/errors.json";
 import en_executions from "./en/executions.json";
+import en_gateway from "./en/gateway.json";
 import en_googleBusiness from "./en/googleBusiness.json";
 import en_helloWorld from "./en/helloWorld.json";
 import en_home from "./en/home.json";
+import en_integrations from "./en/integrations.json";
 import en_invite from "./en/invite.json";
 import en_languages from "./en/languages.json";
 import en_legal from "./en/legal.json";
 import en_locations from "./en/locations.json";
+import en_maintenance from "./en/maintenance.json";
 import en_mcp from "./en/mcp.json";
 import en_moduleCatalog from "./en/moduleCatalog.json";
 import en_modules from "./en/modules.json";
@@ -101,9 +113,12 @@ import en_workspace from "./en/workspace.json";
 import es_account from "./es/account.json";
 import es_aiAgents from "./es/aiAgents.json";
 import es_aiConsole from "./es/aiConsole.json";
+import es_analytics from "./es/analytics.json";
 import es_api from "./es/api.json";
 import es_apiErrors from "./es/apiErrors.json";
+import es_apiSettings from "./es/apiSettings.json";
 import es_auth from "./es/auth.json";
+import es_authSettings from "./es/authSettings.json";
 import es_billing from "./es/billing.json";
 import es_brand from "./es/brand.json";
 import es_channels from "./es/channels.json";
@@ -115,13 +130,16 @@ import es_domains from "./es/domains.json";
 import es_email from "./es/email.json";
 import es_errors from "./es/errors.json";
 import es_executions from "./es/executions.json";
+import es_gateway from "./es/gateway.json";
 import es_googleBusiness from "./es/googleBusiness.json";
 import es_helloWorld from "./es/helloWorld.json";
 import es_home from "./es/home.json";
+import es_integrations from "./es/integrations.json";
 import es_invite from "./es/invite.json";
 import es_languages from "./es/languages.json";
 import es_legal from "./es/legal.json";
 import es_locations from "./es/locations.json";
+import es_maintenance from "./es/maintenance.json";
 import es_mcp from "./es/mcp.json";
 import es_moduleCatalog from "./es/moduleCatalog.json";
 import es_modules from "./es/modules.json";
@@ -154,9 +172,12 @@ export const MESSAGE_FILES = {
     account: ptBR_account,
     aiAgents: ptBR_aiAgents,
     aiConsole: ptBR_aiConsole,
+    analytics: ptBR_analytics,
     api: ptBR_api,
     apiErrors: ptBR_apiErrors,
+    apiSettings: ptBR_apiSettings,
     auth: ptBR_auth,
+    authSettings: ptBR_authSettings,
     billing: ptBR_billing,
     brand: ptBR_brand,
     channels: ptBR_channels,
@@ -168,13 +189,16 @@ export const MESSAGE_FILES = {
     email: ptBR_email,
     errors: ptBR_errors,
     executions: ptBR_executions,
+    gateway: ptBR_gateway,
     googleBusiness: ptBR_googleBusiness,
     helloWorld: ptBR_helloWorld,
     home: ptBR_home,
+    integrations: ptBR_integrations,
     invite: ptBR_invite,
     languages: ptBR_languages,
     legal: ptBR_legal,
     locations: ptBR_locations,
+    maintenance: ptBR_maintenance,
     mcp: ptBR_mcp,
     moduleCatalog: ptBR_moduleCatalog,
     modules: ptBR_modules,
@@ -205,9 +229,12 @@ export const MESSAGE_FILES = {
     account: en_account,
     aiAgents: en_aiAgents,
     aiConsole: en_aiConsole,
+    analytics: en_analytics,
     api: en_api,
     apiErrors: en_apiErrors,
+    apiSettings: en_apiSettings,
     auth: en_auth,
+    authSettings: en_authSettings,
     billing: en_billing,
     brand: en_brand,
     channels: en_channels,
@@ -219,13 +246,16 @@ export const MESSAGE_FILES = {
     email: en_email,
     errors: en_errors,
     executions: en_executions,
+    gateway: en_gateway,
     googleBusiness: en_googleBusiness,
     helloWorld: en_helloWorld,
     home: en_home,
+    integrations: en_integrations,
     invite: en_invite,
     languages: en_languages,
     legal: en_legal,
     locations: en_locations,
+    maintenance: en_maintenance,
     mcp: en_mcp,
     moduleCatalog: en_moduleCatalog,
     modules: en_modules,
@@ -256,9 +286,12 @@ export const MESSAGE_FILES = {
     account: es_account,
     aiAgents: es_aiAgents,
     aiConsole: es_aiConsole,
+    analytics: es_analytics,
     api: es_api,
     apiErrors: es_apiErrors,
+    apiSettings: es_apiSettings,
     auth: es_auth,
+    authSettings: es_authSettings,
     billing: es_billing,
     brand: es_brand,
     channels: es_channels,
@@ -270,13 +303,16 @@ export const MESSAGE_FILES = {
     email: es_email,
     errors: es_errors,
     executions: es_executions,
+    gateway: es_gateway,
     googleBusiness: es_googleBusiness,
     helloWorld: es_helloWorld,
     home: es_home,
+    integrations: es_integrations,
     invite: es_invite,
     languages: es_languages,
     legal: es_legal,
     locations: es_locations,
+    maintenance: es_maintenance,
     mcp: es_mcp,
     moduleCatalog: es_moduleCatalog,
     modules: es_modules,
@@ -309,9 +345,12 @@ export const NAMESPACES = [
   "account",
   "aiAgents",
   "aiConsole",
+  "analytics",
   "api",
   "apiErrors",
+  "apiSettings",
   "auth",
+  "authSettings",
   "billing",
   "brand",
   "channels",
@@ -323,13 +362,16 @@ export const NAMESPACES = [
   "email",
   "errors",
   "executions",
+  "gateway",
   "googleBusiness",
   "helloWorld",
   "home",
+  "integrations",
   "invite",
   "languages",
   "legal",
   "locations",
+  "maintenance",
   "mcp",
   "moduleCatalog",
   "modules",

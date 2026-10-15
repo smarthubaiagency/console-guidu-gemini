@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { agentKindOfTemplate } from "@/core/ai/config/schema";
 import type { AiConsoleActionState } from "@/core/ai/console-actions";
+import type { AiPolicy } from "@/core/ai/models";
 import type { TemplateDetailDto } from "@/core/ai/templates";
 
 /**
@@ -122,12 +123,15 @@ export function TemplateEditorPanel({
   saveAction,
   deleteAction,
   publishedLabel,
+  policy,
 }: Readonly<{
   template: TemplateDetailDto;
   saveAction: FormAction;
   deleteAction: FormAction;
   /** Who sees a published template, in the console's words. */
   publishedLabel: string;
+  /** Providers and models of the console's level (CF6a). */
+  policy?: AiPolicy | undefined;
 }>) {
   const t = useTranslations("aiConsole.templates");
   const [state, action, pending] = useActionState(saveAction, INITIAL);
@@ -194,6 +198,7 @@ export function TemplateEditorPanel({
           editor="template"
           agentKind={agentKindOfTemplate(template.kind)}
           fieldErrors={errors}
+          policy={policy}
         />
       </form>
     </WorkbenchPanel>

@@ -50,12 +50,15 @@ interface CredentialsClientProps {
   workspaceSlug: string;
   credentials: CredentialItem[];
   capabilities: CredentialsCapabilities;
+  /** Providers the platform and the partner offer (CF6a). */
+  providers?: readonly AIProvider[];
 }
 
 export function CredentialsClient({
   workspaceSlug,
   credentials,
   capabilities,
+  providers = Object.keys(AI_PROVIDERS) as AIProvider[],
 }: CredentialsClientProps) {
   const t = useTranslations("credentials");
   const [isPending, startTransition] = useTransition();
@@ -66,7 +69,9 @@ export function CredentialsClient({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form State
-  const [provider, setProvider] = useState<AIProvider>("openai");
+  const [provider, setProvider] = useState<AIProvider>(
+    providers[0] ?? "openai",
+  );
   const [label, setLabel] = useState("");
   const [secret, setSecret] = useState("");
   const [purpose, setPurpose] = useState<CredentialPurpose>("all");
@@ -162,7 +167,7 @@ export function CredentialsClient({
                   {t("providerLabel")}
                 </legend>
                 <div className="grid grid-cols-3 gap-2">
-                  {(Object.keys(AI_PROVIDERS) as AIProvider[]).map((pKey) => {
+                  {providers.map((pKey) => {
                     const pMeta = AI_PROVIDERS[pKey];
                     const isSelected = provider === pKey;
                     return (

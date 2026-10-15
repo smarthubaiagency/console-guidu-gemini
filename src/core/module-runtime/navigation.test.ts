@@ -263,6 +263,11 @@ describe("generated navigation", () => {
       "/platform/settings/security/events",
     );
     expect(find(billing, "platform.settings.security")).toBeUndefined();
+    // Authentication (CF5b): same readers as Security.
+    expect(find(support, "platform.settings.authentication")?.href).toBe(
+      "/platform/settings/authentication",
+    );
+    expect(find(billing, "platform.settings.authentication")).toBeUndefined();
     expect(find(none, "platform.settings.security.events")).toBeUndefined();
   });
 
@@ -282,6 +287,16 @@ describe("generated navigation", () => {
       "/platform/ai/backup",
     );
     expect(find(nav("support"), "platform.ai.templates")).toBeUndefined();
+    // CF6a: one "IA" entry; the tabs are its hidden children.
+    const ai = find(nav("owner"), "platform.ai");
+    expect(ai?.href).toBe("/platform/ai");
+    expect(ai?.children.map((c) => c.href)).toEqual([
+      "/platform/ai",
+      "/platform/ai/providers",
+      "/platform/ai/templates",
+      "/platform/ai/backup",
+    ]);
+    expect(find(nav("support"), "platform.ai")).toBeUndefined();
   });
 
   it("shows the partner's AI screens only with the module flag, by role", () => {
@@ -290,8 +305,10 @@ describe("generated navigation", () => {
         .flatMap((s) => s.items)
         .flatMap((i) => i.children.map((c) => c.href));
     expect(hrefs("partner_owner")).toEqual([
+      "/admin/ai",
       "/admin/ai/assistant",
       "/admin/ai/guids",
+      "/admin/ai/providers",
       "/admin/ai/keys",
       "/admin/ai/templates",
       "/admin/settings/general",
@@ -300,16 +317,23 @@ describe("generated navigation", () => {
       "/admin/settings/email",
       "/admin/settings/email/templates",
       "/admin/settings/plans",
+      "/admin/settings/integrations",
       "/admin/settings/security",
       "/admin/settings/security/events",
+      "/admin/settings/authentication",
+      "/admin/settings/analytics",
     ]);
     expect(hrefs("partner_support")).toEqual([
+      "/admin/ai",
       "/admin/ai/assistant",
       "/admin/ai/guids",
+      "/admin/ai/providers",
       "/admin/settings/general",
       "/admin/settings/domains",
       "/admin/settings/email",
       "/admin/settings/plans",
+      "/admin/settings/integrations",
+      "/admin/settings/analytics",
     ]);
     expect(
       find(

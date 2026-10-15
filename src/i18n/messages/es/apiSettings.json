@@ -1,0 +1,61 @@
+{
+  "metaTitle": "API y MCP",
+  "title": "API y MCP",
+  "description": "Activa y desactiva la API y el MCP, los límites por minuto, los alcances de cada plan y el uso de cada clave.",
+  "save": "Guardar",
+  "switches": {
+    "title": "Activar y desactivar",
+    "description": "Interruptor de emergencia. Desactivado, toda llamada responde 503 (en inglés); las claves siguen existiendo y vuelven a funcionar al reactivarlo.",
+    "api": "API REST de los workspaces activa",
+    "mcp": "MCP de los workspaces activo",
+    "hint": "La API y el MCP de la plataforma (claves administrativas) no se ven afectados.",
+    "apiOn": "API activa",
+    "apiOff": "API desactivada",
+    "mcpOn": "MCP activo",
+    "mcpOff": "MCP desactivado"
+  },
+  "limits": {
+    "title": "Límites por minuto",
+    "description": "Valen para la API y el MCP. El valor del plan vale para el cliente; sin valor en el plan, vale el predeterminado del entorno. Nunca supera el tope.",
+    "bucket": "Límite",
+    "env": "Predeterminado (entorno)",
+    "ceiling": "Tope",
+    "noCeiling": "Sin tope",
+    "default": "Predeterminado",
+    "buckets": {
+      "key": "Por clave",
+      "user": "Por persona",
+      "workspace": "Por workspace"
+    },
+    "edit": "Los topes y los valores por plan se editan en <link>Planes y límites</link>."
+  },
+  "scopes": {
+    "title": "Alcances por plan",
+    "description": "Qué alcances pueden tener las claves de los clientes de cada plan. Una clave con un alcance que salió del plan deja de usarlo.",
+    "custom": "(lista propia)",
+    "all": "(todos)",
+    "noPlans": "Ningún plan activo con versión publicada.",
+    "hint": "Con todos marcados, el plan queda sin lista propia y recibe también los alcances nuevos."
+  },
+  "usage": {
+    "title": "Uso por clave",
+    "description": {
+      "platform": "Llamadas y errores de las claves de todos los workspaces en los últimos {days} días."
+    },
+    "empty": "Ninguna llamada con clave en los últimos {days} días.",
+    "key": "Clave",
+    "where": "Empresa › workspace",
+    "calls": "Llamadas",
+    "mcpCalls": "Por el MCP",
+    "errors": "Errores",
+    "day": "Día",
+    "revoked": "revocada"
+  },
+  "messages": {
+    "saved": "Configuración de la API guardada."
+  },
+  "errors": {
+    "invalid": "Alcance desconocido.",
+    "unknownPlan": "Plan desconocido."
+  }
+}

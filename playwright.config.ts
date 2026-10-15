@@ -51,6 +51,8 @@ export default defineConfig({
       GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
       // Deterministic machine translation (I6); never the real provider.
       TRANSLATION_PROVIDER: "fake",
+      // Google OAuth (CF6b): the consent answers at once, nothing leaves.
+      GOOGLE_OAUTH_PROVIDER: "fake",
       // The Chatwoot double of the rig listens on 127.0.0.1 over http (A5a).
       GUIDU_CHANNELS_ALLOW_PRIVATE: "true",
       // Custom domains (CF2b): the CNAME target shown in the instructions and
@@ -61,6 +63,10 @@ export default defineConfig({
       RESEND_API_KEY: FAKE_RESEND_KEY,
       RESEND_API_BASE: `http://127.0.0.1:${RIG.resendPort}`,
       EMAIL_FROM_ADDRESS: "avisos@guidu.test",
+      // Login methods (CF5b): Google's provider counts as on and the link's
+      // as off, so e2e/auth-settings.spec.ts covers both halves of the rule.
+      // Neither button shows until the platform offers it.
+      AUTH_GOOGLE_ENABLED: "true",
       APP_NAME: process.env.APP_NAME || "GUIDU",
       APP_URL: process.env.APP_URL || RIG.appUrl,
     },

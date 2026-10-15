@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { AssistantDto } from "@/core/ai/assistant-config";
+import type { AiPolicy } from "@/core/ai/models";
 import {
   type AiConsoleActionState,
   savePartnerAssistantAction,
@@ -23,9 +24,11 @@ const INITIAL: AiConsoleActionState = {};
 export function AssistantForm({
   assistant,
   credentials,
+  policy,
 }: Readonly<{
   assistant: AssistantDto;
   credentials: readonly EditorCredential[];
+  policy: AiPolicy;
 }>) {
   const t = useTranslations("aiConsole.assistant");
   const [state, action, pending] = useActionState(
@@ -56,6 +59,7 @@ export function AssistantForm({
         agentKind="assistant"
         fieldErrors={state.fieldErrors}
         credentials={credentials}
+        policy={policy}
       />
       <Button type="submit" disabled={pending} data-testid="save-assistant">
         {t("save")}

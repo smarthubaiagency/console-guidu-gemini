@@ -12,6 +12,7 @@ import {
   createNonce,
   NONCE_HEADER,
 } from "@/core/security/headers";
+import { analyticsCspOrigin } from "@/core/analytics/values";
 import { refreshSupabaseSession } from "@/lib/supabase/session";
 
 /**
@@ -64,8 +65,10 @@ export default async function proxy(request: NextRequest) {
   // CSP with a fresh nonce (F6a). Next.js reads it from the request header to
   // stamp its own scripts; the root layout hands it to next-themes.
   const nonce = createNonce();
+  // Product analytics (CF7) opens its provider's origin only while on.
   const csp = contentSecurityPolicy(nonce, {
     production: process.env.NODE_ENV === "production",
+    analyticsOrigin: await analyticsCspOrigin(),
   });
   forwarded.set(NONCE_HEADER, nonce);
   forwarded.set("content-security-policy", csp);

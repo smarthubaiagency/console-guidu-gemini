@@ -1,5 +1,6 @@
 import "server-only";
 
+import { environmentRateDefault } from "@/core/api/limits";
 import { recordAudit } from "@/core/audit/record";
 import {
   ceilingConflicts,
@@ -64,7 +65,9 @@ export async function loadPlansLimits(
         ? await defaultQuotaLimit(tx, entry.key)
         : entry.defaultSource === "fixed"
           ? entry.defaultLimit
-          : null;
+          : entry.defaultSource === "environment"
+            ? environmentRateDefault(entry.key)
+            : null;
     rows.push({
       entry,
       defaultLimit,

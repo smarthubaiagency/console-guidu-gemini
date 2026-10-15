@@ -8,7 +8,11 @@ import { describe, expect, it } from "vitest";
  * src/lib/telemetry/log.ts, so every line is structured and redacted.
  */
 const ROOT = join(process.cwd(), "src");
-const ALLOWED = new Set(["lib/telemetry/log.ts"]);
+const ALLOWED = new Set([
+  "lib/telemetry/log.ts",
+  // Browser debugging of product analytics, only outside production (CF7).
+  "components/analytics/product-analytics.tsx",
+]);
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

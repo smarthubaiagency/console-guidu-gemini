@@ -87,6 +87,8 @@ export type TestDatabase = Readonly<{
   runJobs: () => Promise<{ remaining: number }>;
   /** A notice in the bell of the user with that e-mail (CF3c). */
   seedNotification: (params: SeedNotificationParams) => Promise<{ id: string }>;
+  /** Turns the maintenance window off (CF5c), keeping its fields. */
+  maintenanceOff: () => Promise<void>;
   close: () => Promise<void>;
 }>;
 
@@ -331,6 +333,9 @@ export async function startTestDatabase(
         );
       }
       return { partnerId };
+    },
+    maintenanceOff: async () => {
+      await pool.query(`update public.platform_maintenance set enabled = false`);
     },
     seedNotification: async (params) => {
       const userRes = await pool.query<{ id: string }>(

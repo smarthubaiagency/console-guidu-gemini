@@ -12,7 +12,7 @@ Fontes, nesta ordem:
 
 1. `AGENTS.md`, `CLAUDE.md`, `docs/context.md`, `docs/pendencias.md` e o handoff de 12/10/2026 (combinados e regras que não mudam).
 2. `docs/modules/perfil-digital/plano-perfil-digital.md` (v0.2): plano do módulo.
-3. `docs/operacao/plano-cf2c-dominios-publicos.md` (v0.1): ajuste de plataforma.
+3. `docs/configuracoes/plano-cf2c.md` (CF2c construída, PR #89) e `docs/operacao/plano-cf2e-enderecos-publicos.md`: ajustes de plataforma. Veja a seção 9.
 4. `docs/modules/perfil-digital/comparativo-relatorios.md` e o relatório que ele indica como base (`analise-opus-legado.md`), para detalhes do legado com `arquivo:linha`.
 5. `docs/modules/README.md` (contrato de módulos) e `docs/operacao/dominios.md` (CF2b).
 
@@ -72,7 +72,7 @@ Apresentados ao Marcelo, sem decisão. Levar para a DP0 como perguntas ou defaul
 
 ## 8. Atualização — sessão do Claude Code de 15/10/2026
 
-Continuação deste handoff. As seções 4 e 5 acima ficam como registro; o que vale agora está no [plano do perfil digital v0.3](../modules/perfil-digital/plano-perfil-digital.md), no [plano da CF2c v0.2](../operacao/plano-cf2c-dominios-publicos.md) e no novo [plano da CF2d v0.1](../operacao/plano-cf2d-enderecos.md).
+Continuação deste handoff. As seções 4 e 5 acima ficam como registro; o que vale agora está no [plano do perfil digital v0.3](../modules/perfil-digital/plano-perfil-digital.md), no [plano da CF2e](../operacao/plano-cf2e-enderecos-publicos.md) (antes chamado de plano da CF2c; ver a seção 9) e no novo [plano da CF2d v0.1](../operacao/plano-cf2d-enderecos.md).
 
 Decidido pelo Marcelo nesta sessão:
 
@@ -80,7 +80,7 @@ Decidido pelo Marcelo nesta sessão:
 - Rota pública no manifesto: sim, com ADR nova.
 - Unidade: linha de `workspace_locations` com finalidade "perfil digital"; template ligado à unidade, um por unidade. A tela "Lojas" vira "Unidades". O endereço fiscal vai para o cadastro da empresa (CF2d).
 - Unidade desativada mantém os endereços reservados; excluir só sem nada ligado.
-- Perfil excluído: endereço reservado por 30 dias, depois livre para qualquer workspace; até ser ocupado, 307 para o perfil master da unidade. Troca de slug com o perfil ativo: 308.
+- Perfil excluído: endereço reservado por 30 dias, depois livre (na seção 9, passou a ser livre só dentro do mesmo workspace); até ser ocupado, 307 para o perfil master da unidade. Troca de slug com o perfil ativo: 308.
 - Perfil master: um por unidade, obrigatório, criado com o template; só dados da empresa e da unidade; formulário sem dono no CRM.
 - Modelos base (o "template mestre" do legado): criados pela plataforma ou pelo parceiro; visibilidade geral ou restrita a uma empresa; o template nasce como cópia.
 - Modo de design pelo plano: smart (individual, 3 cores) ou gerenciado (corporativo, sem controle de cor no workspace).
@@ -94,3 +94,14 @@ Achados desta sessão:
 - A ADR 0018 (configurações em cascata) está como "Proposto" e só tem os níveis plataforma, parceiro e workspace.
 
 Próximo passo: DP0 (só documentação) com o "pode começar" do Marcelo. Propostas ainda abertas estão nos itens 12 a 18 do plano v0.3.
+
+## 9. Alinhamento com a CF2c construída — 15/10/2026
+
+Enquanto este planejamento corria, a CF2c foi construída e mesclada (PR #89, [plano](../configuracoes/plano-cf2c.md), [guia](../operacao/dominios-publicos.md)) com **subdomínio por workspace**: `rodobens.mobio.pro/{slug}`, quiz em `rodobens.quiz.mobio.pro/{slug}`, domínio padrão do parceiro e seletor de domínio próprio por ferramenta. Isso contradizia a decisão 4 da seção 3 ("subdomínio fora do MVP") e o plano da CF2c deste PR.
+
+Decisão do Marcelo em 15/10/2026: **fica a CF2c construída.** Consequências:
+
+- O plano que este PR chamava de CF2c virou o [plano da CF2e](../operacao/plano-cf2e-enderecos-publicos.md) (v0.3), só com o caminho depois do host: slug, histórico, reservados, 308 e carência.
+- O host identifica o workspace, então o slug é único dentro do workspace. Depois da carência de 30 dias, o slug só pode ser reocupado no mesmo workspace: um QR antigo nunca abre o perfil de outra empresa.
+- O [plano do perfil digital](../modules/perfil-digital/plano-perfil-digital.md) foi para a v0.4: decisão 4 alinhada e etapa 2 trocada de "CF2c-1 mínima" para CF2e-1.
+- A seção 6 acima descreve o código antes da CF2c; vários achados (domínios padrão no ForwardAuth, finalidade dos domínios, subdomínio) foram resolvidos no PR #89.

@@ -48,7 +48,8 @@
   "revoked": "Clave de API revocada.",
   "errors": {
     "invalidCreate": "Datos inválidos para emitir la clave de API.",
-    "invalidKeyId": "Identificador de clave inválido."
+    "invalidKeyId": "Identificador de clave inválido.",
+    "scopeNotInPlan": "El plan de la empresa no permite el alcance {scope}."
   },
   "scopes": {
     "workspace_read": {
@@ -95,5 +96,6 @@
       "label": "Escritura en el Portafolio (portfolio:write)",
       "desc": "Crear y editar ítems y variantes mediante la API REST. En MCP, la escritura pasa por una propuesta."
     }
-  }
+  },
+  "notInPlan": "fuera del plan"
 }

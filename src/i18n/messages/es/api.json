@@ -7,7 +7,7 @@
   "baseUrl": "Dirección base: <code>{base}</code>",
   "workspaceId": "Id de este workspace:",
   "auth": "Autenticación: encabezado <code>Authorization: Bearer gdu_live_…</code> con una clave creada en <link>Configuración › MCP</link>. La clave sirve solo para este workspace, para los alcances marcados en ella y solo en esta dirección.",
-  "limits": "Límites provisionales por minuto: {key} por clave, {user} por persona y {workspace} por workspace. Por encima de eso la respuesta es 429 con <code>Retry-After</code>.",
+  "limits": "Límites por minuto de tu plan: {key} por clave, {user} por persona y {workspace} por workspace. Por encima de eso la respuesta es 429 con <code>Retry-After</code>.",
   "errors": "Los errores incluyen <code>code</code>, <code>message</code> y <code>requestId</code>; informa el requestId al soporte.",
   "contract": "Contrato completo:",
   "routesTitle": "Rutas disponibles",
@@ -34,5 +34,7 @@
     "createPortfolioItem": "Crea un ítem con sus variantes (campos de UCP; respeta las cuotas y las reglas de la vertical).",
     "updatePortfolioItem": "Modifica los campos enviados de un ítem.",
     "updatePortfolioVariant": "Modifica los campos enviados de una variante (precio, disponibilidad, stock…)."
-  }
+  },
+  "usageTitle": "Uso por clave",
+  "usageDescription": "Llamadas y errores de las claves que ves, en los últimos {days} días."
 }

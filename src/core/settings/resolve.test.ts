@@ -111,4 +111,85 @@ describe("resolveSettings (CF1)", () => {
     );
     expect(inherited.detail["security.mfa.app"].lockedBy).toBe("platform");
   });
+
+  it("lets the partner only turn a login method off (CF5b)", () => {
+    // Off by default: the partner cannot turn it on by itself.
+    const none = resolveSettings([row("partner", "auth.google", true)]);
+    expect(none.detail["auth.google"]).toEqual({
+      value: false,
+      source: "default",
+      lockedBy: "platform",
+    });
+
+    // The platform offers it: on for every partner that keeps it.
+    const offered = resolveSettings([row("platform", "auth.google", true)]);
+    expect(offered.detail["auth.google"]).toEqual({
+      value: true,
+      source: "platform",
+      lockedBy: null,
+    });
+
+    // A partner hides it on its hosts.
+    const hidden = resolveSettings([
+      row("platform", "auth.magic_link", true),
+      row("partner", "auth.magic_link", false),
+    ]);
+    expect(hidden.detail["auth.magic_link"]).toEqual({
+      value: false,
+      source: "partner",
+      lockedBy: null,
+    });
+
+    // The platform turns it off again: the partner's choice no longer counts.
+    const withdrawn = resolveSettings([
+      row("platform", "auth.magic_link", false),
+      row("partner", "auth.magic_link", true),
+    ]);
+    expect(withdrawn.detail["auth.magic_link"]).toEqual({
+      value: false,
+      source: "platform",
+      lockedBy: "platform",
+    });
+
+    // Seen from the partner page.
+    const inherited = resolveSettings([], { above: "partner" });
+    expect(inherited.detail["auth.google"].lockedBy).toBe("platform");
+    // The platform itself is never stopped by the default.
+    const own = resolveSettings([], { above: "platform" });
+    expect(own.detail["auth.google"].lockedBy).toBeNull();
+  });
+
+  it("narrows the AI providers and models down the cascade (CF6a)", () => {
+    const { values, detail } = resolveSettings([
+      row("platform", "ai.providers", ["openai", "anthropic", "openrouter"]),
+      row("platform", "ai.models", {
+        openai: ["gpt-5-mini", "gpt-5"],
+        anthropic: [],
+      }),
+      // The partner cannot add Gemini, only narrow.
+      row("partner", "ai.providers", ["openai", "gemini"]),
+      row("partner", "ai.models", {
+        openai: ["gpt-5", "gpt-4o"],
+        anthropic: ["claude-haiku-5-5"],
+      }),
+    ]);
+    expect(values["ai.providers"]).toEqual(["openai"]);
+    expect(values["ai.models"]).toEqual({
+      openai: ["gpt-5"],
+      anthropic: ["claude-haiku-5-5"],
+    });
+    expect(detail["ai.providers"].source).toBe("partner");
+    // A partner's value alone narrows the default.
+    expect(
+      resolveSettings([row("partner", "ai.providers", ["gemini"])]).values[
+        "ai.providers"
+      ],
+    ).toEqual(["gemini"]);
+    // The base URLs are the platform's only.
+    expect(
+      resolveSettings([
+        row("partner", "ai.base_urls", { openai: "https://x.example" }),
+      ]).values["ai.base_urls"],
+    ).toEqual({});
+  });
 });
