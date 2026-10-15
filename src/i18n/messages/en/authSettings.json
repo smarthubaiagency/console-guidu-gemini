@@ -1,0 +1,72 @@
+{
+  "title": "Authentication",
+  "description": {
+    "platform": "How people sign in: sign-up, email verification and the sign-in methods offered to partners.",
+    "partner": "How people sign in on your domains: sign-up, email verification and the sign-in methods the platform offers."
+  },
+  "signup": {
+    "title": "Sign-up and verification",
+    "description": "Fixed platform rules, read only.",
+    "signupLabel": "Sign-up",
+    "signupValue": "By invitation only",
+    "verificationLabel": "Email verification",
+    "verificationValue": "Always on (the invitation confirms the email)",
+    "mfaLabel": "Two-step verification",
+    "mfaValue": "Set in Security",
+    "laterLabel": "Public sign-up and SAML",
+    "laterValue": "Not available yet",
+    "note": "Nobody creates an account on their own: whoever was invited by the platform, the partner or the workspace team gets in."
+  },
+  "google": {
+    "title": "Sign in with Google",
+    "description": {
+      "platform": "\"Sign in with Google\" button on the login page. Partners may hide it on their domains.",
+      "partner": "\"Sign in with Google\" button on the login page of your domains, when the platform offers it."
+    },
+    "toggle": {
+      "platform": "Offer sign-in with Google",
+      "partner": "Show sign-in with Google on my domains"
+    },
+    "ownerLabel": "Google OAuth app",
+    "owner": "Owned by GUIDU"
+  },
+  "magicLink": {
+    "title": "Magic link",
+    "description": {
+      "platform": "Button to receive by email a link that signs in without a password. Off by default; partners may hide it on their domains.",
+      "partner": "Button to receive by email a link that signs in without a password, on the login page of your domains, when the platform offers it."
+    },
+    "toggle": {
+      "platform": "Offer magic link",
+      "partner": "Show magic link on my domains"
+    }
+  },
+  "provider": {
+    "label": "Provider in Supabase Auth",
+    "on": "Turned on by operations",
+    "off": "Off"
+  },
+  "offered": {
+    "label": "Offered by the platform",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "visible": {
+    "label": {
+      "platform": "On the login page",
+      "partner": "On the login page of your domains"
+    },
+    "yes": "Shown",
+    "no": "Hidden"
+  },
+  "notOffered": "The platform does not offer this sign-in method yet.",
+  "providerHint": {
+    "platform": "The button only shows once operations turns the provider on in Supabase Auth and tells the dashboard (docs/operacao/autenticacao.md). Until then, the choice is kept.",
+    "partner": "The button only shows once the platform turns the provider on. Until then, your choice is kept."
+  },
+  "save": "Save",
+  "readOnly": "Only managers change this setting.",
+  "messages": {
+    "saved": "Authentication saved."
+  }
+}

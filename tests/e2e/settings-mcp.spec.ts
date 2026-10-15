@@ -145,7 +145,9 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await expect(page.getByText(/gdu_live_[a-f0-9]{64}/)).toBeVisible();
 
     // Verify key appears in active list
-    await expect(page.getByText(keyName)).toBeVisible();
+    await expect(
+      page.getByRole("cell", { name: keyName, exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("Ativa")).toBeVisible();
   });
 
@@ -192,7 +194,9 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await expect(page.getByText(/gdu_live_[a-f0-9]{64}/)).toBeVisible();
 
     // Verify key is listed with proposals:write scope badge
-    await expect(page.getByText(keyName)).toBeVisible();
+    await expect(
+      page.getByRole("cell", { name: keyName, exact: true }),
+    ).toBeVisible();
     await expect(page.getByText(/proposals:write/i).first()).toBeVisible();
   });
 
@@ -287,7 +291,9 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
     await page.getByPlaceholder(/Conector Cursor|Nome da Chave/i).fill(keyName);
     await page.getByRole("button", { name: /Emitir Chave/i }).click();
 
-    await expect(page.getByText(keyName)).toBeVisible();
+    await expect(
+      page.getByRole("cell", { name: keyName, exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("Ativa").first()).toBeVisible();
 
     // The confirmation is the status banner (ADR 0016): the action stays
@@ -361,6 +367,8 @@ test.describe("MCP Connected Assistants Settings (/settings/mcp)", () => {
         /(Chave de API emitida com sucesso|Chave emitida com sucesso)/i,
       ),
     ).toBeVisible();
-    await expect(page.getByText(viewerKeyName)).toBeVisible();
+    await expect(
+      page.getByRole("cell", { name: viewerKeyName, exact: true }),
+    ).toBeVisible();
   });
 });

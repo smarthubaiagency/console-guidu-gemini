@@ -1,0 +1,72 @@
+{
+  "title": "Autenticação",
+  "description": {
+    "platform": "Como as pessoas entram: cadastro, verificação de e-mail e as formas de entrar oferecidas aos parceiros.",
+    "partner": "Como as pessoas entram nos seus domínios: cadastro, verificação de e-mail e as formas de entrar oferecidas pela plataforma."
+  },
+  "signup": {
+    "title": "Cadastro e verificação",
+    "description": "Regras fixas da plataforma, só para leitura.",
+    "signupLabel": "Cadastro",
+    "signupValue": "Só por convite",
+    "verificationLabel": "Verificação de e-mail",
+    "verificationValue": "Sempre ligada (o convite confirma o e-mail)",
+    "mfaLabel": "Verificação em duas etapas",
+    "mfaValue": "Configurada em Segurança",
+    "laterLabel": "Cadastro público e SAML",
+    "laterValue": "Ainda não disponíveis",
+    "note": "Ninguém cria conta sozinho: entra quem foi convidado pela plataforma, pelo parceiro ou pela equipe do workspace."
+  },
+  "google": {
+    "title": "Login com Google",
+    "description": {
+      "platform": "Botão \"Entrar com Google\" na tela de login. Os parceiros podem escondê-lo nos domínios deles.",
+      "partner": "Botão \"Entrar com Google\" na tela de login dos seus domínios, quando a plataforma oferece."
+    },
+    "toggle": {
+      "platform": "Oferecer login com Google",
+      "partner": "Mostrar login com Google nos meus domínios"
+    },
+    "ownerLabel": "App OAuth do Google",
+    "owner": "Da GUIDU"
+  },
+  "magicLink": {
+    "title": "Link mágico",
+    "description": {
+      "platform": "Botão para receber por e-mail um link que entra sem senha. Desligado por padrão; os parceiros podem escondê-lo nos domínios deles.",
+      "partner": "Botão para receber por e-mail um link que entra sem senha, na tela de login dos seus domínios, quando a plataforma oferece."
+    },
+    "toggle": {
+      "platform": "Oferecer link mágico",
+      "partner": "Mostrar link mágico nos meus domínios"
+    }
+  },
+  "provider": {
+    "label": "Provedor no Supabase Auth",
+    "on": "Ligado pela operação",
+    "off": "Desligado"
+  },
+  "offered": {
+    "label": "Oferecido pela plataforma",
+    "yes": "Sim",
+    "no": "Não"
+  },
+  "visible": {
+    "label": {
+      "platform": "Na tela de login",
+      "partner": "Na tela de login dos seus domínios"
+    },
+    "yes": "Aparece",
+    "no": "Escondido"
+  },
+  "notOffered": "A plataforma ainda não oferece esta forma de entrar.",
+  "providerHint": {
+    "platform": "O botão só aparece depois que a operação ligar o provedor no Supabase Auth e avisar o painel (docs/operacao/autenticacao.md). Até lá, a escolha fica guardada.",
+    "partner": "O botão só aparece depois que a plataforma ligar o provedor. Até lá, a sua escolha fica guardada."
+  },
+  "save": "Salvar",
+  "readOnly": "Só os gestores mudam esta configuração.",
+  "messages": {
+    "saved": "Autenticação salva."
+  }
+}

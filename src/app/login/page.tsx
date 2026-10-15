@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
+import { requestLoginMethods } from "@/core/auth/login-methods";
 import { safeInternalPath } from "@/core/auth/redirects";
 import { AuthShell, ErrorNotice, SuccessNotice } from "@/shared/ui/auth-shell";
 import { getRequestBrand } from "@/core/brand/resolve";
@@ -43,6 +44,8 @@ export default async function LoginPage({
   const noticeCode = typeof params.notice === "string" ? params.notice : null;
   const noticeKey = noticeCode ? ARRIVAL_NOTICES[noticeCode] : undefined;
   const arrivalNotice = noticeKey ? t(noticeKey) : undefined;
+  // Google and the link by e-mail (CF5b): provider on and offered here.
+  const methods = await requestLoginMethods();
 
   return (
     <AuthShell
@@ -61,7 +64,7 @@ export default async function LoginPage({
           <SuccessNotice testId="arrival-notice">{arrivalNotice}</SuccessNotice>
         </div>
       ) : null}
-      <LoginForm next={safeInternalPath(nextParam)} />
+      <LoginForm next={safeInternalPath(nextParam)} methods={methods} />
     </AuthShell>
   );
 }

@@ -6,6 +6,7 @@ import ptBR_aiConsole from "./pt-BR/aiConsole.json";
 import ptBR_api from "./pt-BR/api.json";
 import ptBR_apiErrors from "./pt-BR/apiErrors.json";
 import ptBR_auth from "./pt-BR/auth.json";
+import ptBR_authSettings from "./pt-BR/authSettings.json";
 import ptBR_billing from "./pt-BR/billing.json";
 import ptBR_brand from "./pt-BR/brand.json";
 import ptBR_channels from "./pt-BR/channels.json";
@@ -55,6 +56,7 @@ import en_aiConsole from "./en/aiConsole.json";
 import en_api from "./en/api.json";
 import en_apiErrors from "./en/apiErrors.json";
 import en_auth from "./en/auth.json";
+import en_authSettings from "./en/authSettings.json";
 import en_billing from "./en/billing.json";
 import en_brand from "./en/brand.json";
 import en_channels from "./en/channels.json";
@@ -104,6 +106,7 @@ import es_aiConsole from "./es/aiConsole.json";
 import es_api from "./es/api.json";
 import es_apiErrors from "./es/apiErrors.json";
 import es_auth from "./es/auth.json";
+import es_authSettings from "./es/authSettings.json";
 import es_billing from "./es/billing.json";
 import es_brand from "./es/brand.json";
 import es_channels from "./es/channels.json";
@@ -157,6 +160,7 @@ export const MESSAGE_FILES = {
     api: ptBR_api,
     apiErrors: ptBR_apiErrors,
     auth: ptBR_auth,
+    authSettings: ptBR_authSettings,
     billing: ptBR_billing,
     brand: ptBR_brand,
     channels: ptBR_channels,
@@ -208,6 +212,7 @@ export const MESSAGE_FILES = {
     api: en_api,
     apiErrors: en_apiErrors,
     auth: en_auth,
+    authSettings: en_authSettings,
     billing: en_billing,
     brand: en_brand,
     channels: en_channels,
@@ -259,6 +264,7 @@ export const MESSAGE_FILES = {
     api: es_api,
     apiErrors: es_apiErrors,
     auth: es_auth,
+    authSettings: es_authSettings,
     billing: es_billing,
     brand: es_brand,
     channels: es_channels,
@@ -312,6 +318,7 @@ export const NAMESPACES = [
   "api",
   "apiErrors",
   "auth",
+  "authSettings",
   "billing",
   "brand",
   "channels",

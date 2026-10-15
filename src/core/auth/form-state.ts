@@ -26,4 +26,7 @@ export const AUTH_MESSAGES = {
   invalidMfaCode: "Código inválido ou expirado.",
   weakPassword: "Use uma senha com pelo menos 12 caracteres.",
   passwordMismatch: "As senhas não coincidem.",
+  magicLinkSent:
+    "Se existir uma conta com esse e-mail, enviamos um link de acesso.",
+  methodUnavailable: "Esta forma de entrar não está disponível aqui.",
 } as const;
