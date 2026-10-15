@@ -24,6 +24,7 @@ import ptBR_invite from "./pt-BR/invite.json";
 import ptBR_languages from "./pt-BR/languages.json";
 import ptBR_legal from "./pt-BR/legal.json";
 import ptBR_locations from "./pt-BR/locations.json";
+import ptBR_maintenance from "./pt-BR/maintenance.json";
 import ptBR_mcp from "./pt-BR/mcp.json";
 import ptBR_moduleCatalog from "./pt-BR/moduleCatalog.json";
 import ptBR_modules from "./pt-BR/modules.json";
@@ -73,6 +74,7 @@ import en_invite from "./en/invite.json";
 import en_languages from "./en/languages.json";
 import en_legal from "./en/legal.json";
 import en_locations from "./en/locations.json";
+import en_maintenance from "./en/maintenance.json";
 import en_mcp from "./en/mcp.json";
 import en_moduleCatalog from "./en/moduleCatalog.json";
 import en_modules from "./en/modules.json";
@@ -122,6 +124,7 @@ import es_invite from "./es/invite.json";
 import es_languages from "./es/languages.json";
 import es_legal from "./es/legal.json";
 import es_locations from "./es/locations.json";
+import es_maintenance from "./es/maintenance.json";
 import es_mcp from "./es/mcp.json";
 import es_moduleCatalog from "./es/moduleCatalog.json";
 import es_modules from "./es/modules.json";
@@ -175,6 +178,7 @@ export const MESSAGE_FILES = {
     languages: ptBR_languages,
     legal: ptBR_legal,
     locations: ptBR_locations,
+    maintenance: ptBR_maintenance,
     mcp: ptBR_mcp,
     moduleCatalog: ptBR_moduleCatalog,
     modules: ptBR_modules,
@@ -226,6 +230,7 @@ export const MESSAGE_FILES = {
     languages: en_languages,
     legal: en_legal,
     locations: en_locations,
+    maintenance: en_maintenance,
     mcp: en_mcp,
     moduleCatalog: en_moduleCatalog,
     modules: en_modules,
@@ -277,6 +282,7 @@ export const MESSAGE_FILES = {
     languages: es_languages,
     legal: es_legal,
     locations: es_locations,
+    maintenance: es_maintenance,
     mcp: es_mcp,
     moduleCatalog: es_moduleCatalog,
     modules: es_modules,
@@ -330,6 +336,7 @@ export const NAMESPACES = [
   "languages",
   "legal",
   "locations",
+  "maintenance",
   "mcp",
   "moduleCatalog",
   "modules",

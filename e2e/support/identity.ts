@@ -62,6 +62,12 @@ export async function blockIdentity(
   expect(response.status()).toBe(200);
 }
 
+/** Turns the maintenance window off (CF5c), straight in the database. */
+export async function maintenanceOff(request: APIRequestContext): Promise<void> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/maintenance-off`);
+  expect(response.status()).toBe(200);
+}
+
 /** Seeds the user as an active platform administrator in the database. */
 export async function makePlatformAdmin(
   request: APIRequestContext,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 import { safeInternalPath } from "@/core/auth/redirects";
+import { MaintenanceStrip } from "@/components/maintenance/maintenance-strip";
 import { AuthShell, ErrorNotice, SuccessNotice } from "@/shared/ui/auth-shell";
 import { getRequestBrand } from "@/core/brand/resolve";
 
@@ -50,6 +51,7 @@ export default async function LoginPage({
       description={t("login.description", { appName: brand.name })}
       brand={brand}
       salesContact
+      notice={<MaintenanceStrip />}
     >
       {arrivalError ? (
         <div className="mb-4">

@@ -98,6 +98,8 @@ export type FakeGoTrueOptions = Readonly<{
   onRunJobs?: () => Promise<{ remaining: number }>;
   /** Seeds a notice in a user's bell (CF3c). */
   onSeedNotification?: (params: SeedNotificationParams) => Promise<{ id: string }>;
+  /** Turns the maintenance window off (CF5c): specs share the database. */
+  onMaintenanceOff?: () => Promise<void>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -323,6 +325,12 @@ export async function startFakeGoTrue(
     if (path === "/__control/run-jobs" && method === "POST") {
       if (!options.onRunJobs) return json(response, 400, { msg: "unsupported" });
       return json(response, 200, await options.onRunJobs());
+    }
+
+    if (path === "/__control/maintenance-off" && method === "POST") {
+      if (!options.onMaintenanceOff) return json(response, 400, { msg: "unsupported" });
+      await options.onMaintenanceOff();
+      return json(response, 200, { maintenance: "off" });
     }
 
     if (path === "/__control/seed-partner" && method === "POST") {

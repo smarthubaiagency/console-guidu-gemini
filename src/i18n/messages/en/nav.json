@@ -43,6 +43,8 @@
     "platform_partners": "Partners",
     "platform_billing": "Billing",
     "platform_operations": "Operations",
+    "platform_operations_health": "Health and queues",
+    "platform_operations_maintenance": "Maintenance",
     "platform_api-keys": "API keys",
     "platform_legal": "Terms and privacy",
     "platform_brand": "Brand",

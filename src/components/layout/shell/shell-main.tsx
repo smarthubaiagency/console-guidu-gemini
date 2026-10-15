@@ -72,11 +72,14 @@ export function ShellMain({
   sections,
   access,
   bell,
+  notice,
   children,
 }: Readonly<{
   sections: readonly NavSection[];
   access: ConsoleAccess;
   bell: NotificationBellData;
+  /** Strip under the header, rendered on the server (maintenance, CF5c). */
+  notice?: React.ReactNode;
   children: React.ReactNode;
 }>) {
   const t = useTranslations("shell");
@@ -161,6 +164,7 @@ export function ShellMain({
             ) : null}
           </div>
         </header>
+        {notice}
         <div className="relative min-h-0 flex-1">
           <div
             data-slot="shell-content"
