@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
+import { AiTabs } from "@/components/ai-agents/ai-tabs";
 import { TemplatesWorkbench } from "@/components/ai-agents/templates-workbench";
+import { aiPolicy } from "@/core/ai/catalog";
 import {
   createHouseTemplateAction,
   deleteHouseTemplateAction,
@@ -38,8 +40,13 @@ export default async function PlatformAiTemplatesPage({
     partnerId: null,
     platformRole: role,
   };
-  const view = await withIdentityContext(prisma, identity.userId, (tx) =>
-    loadTemplatesView(tx, actor, editKey),
+  const { view, policy } = await withIdentityContext(
+    prisma,
+    identity.userId,
+    async (tx) => ({
+      view: await loadTemplatesView(tx, actor, editKey),
+      policy: await aiPolicy(tx),
+    }),
   );
   const t = await getTranslations("aiConsole");
 
@@ -58,6 +65,8 @@ export default async function PlatformAiTemplatesPage({
         delete: deleteHouseTemplateAction,
       }}
       testId="platform-ai-templates"
+      tabs={<AiTabs active="templates" />}
+      policy={policy}
     />
   );
 }

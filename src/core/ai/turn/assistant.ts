@@ -25,6 +25,7 @@ import { appLog } from "@/lib/telemetry/log";
 import { AppError } from "@/shared/errors";
 
 import { type AgentConfig, parseAgentConfig } from "../config/schema";
+import { withBaseUrl } from "../catalog";
 import { createChatModel, type ModelFactory } from "../providers";
 import { renderSystemPrompt } from "../prompt/render";
 import { promptLocale } from "../prompt/texts";
@@ -104,7 +105,12 @@ type Loaded = Readonly<{
   partnerId: string;
   conversationId: string;
   config: AgentConfig;
-  key: Readonly<{ provider: AIProvider; secret: string; model: string }>;
+  key: Readonly<{
+    provider: AIProvider;
+    secret: string;
+    model: string;
+    baseURL?: string;
+  }>;
   systemPrompt: string;
   history: ModelMessage[];
   state: TurnState;
@@ -256,11 +262,12 @@ async function loadTurn(
     partnerId: runtime.partner_id,
     conversationId: conversation.id,
     config,
-    key: {
+    // The platform's gateway of the key's provider, when one is set (CF6a).
+    key: await withBaseUrl(tx, {
       provider: credential.provider as AIProvider,
       secret: decryptSecret(credential.encrypted_payload),
       model: modelName,
-    },
+    }),
     systemPrompt,
     history: recent
       .reverse()
@@ -390,6 +397,12 @@ export async function startAssistantTurn(
             errorCode,
             provider: key.provider,
             model: key.model,
+            owner: {
+              keySource: "admin",
+              partnerId: loaded.partnerId,
+              organizationId: workspace?.organizationId ?? null,
+              workspaceId: workspace?.workspaceId ?? null,
+            },
             records: state.records,
           }),
         );

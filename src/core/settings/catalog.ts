@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+import {
+  AI_PROVIDERS,
+  type AiProviderId,
+  type BaseUrls,
+  BaseUrlsSchema,
+  DEFAULT_MODEL_CATALOG,
+  type ModelCatalog,
+  ModelCatalogSchema,
+  narrowCatalog,
+  narrowProviders,
+  ProvidersSchema,
+} from "@/core/ai/models";
+
 /**
  * Settings catalog (CF1, levantamento.md): what each key means, where it may
  * be set and its default. The `settings` table only holds overrides; a key
@@ -53,6 +66,12 @@ type Definition<T> = Readonly<{
    * levels below are stopped as if locked.
    */
   turnOffOnly?: boolean;
+  /**
+   * A choice the levels below may only narrow (CF6a): the value of a level
+   * below the first is combined with the one above by this function, so it
+   * never offers what the level above took away.
+   */
+  narrow?: (above: T, below: T) => T;
 }>;
 
 function define<T>(definition: Definition<T>): Definition<T> {
@@ -132,6 +151,37 @@ export const SETTINGS = {
     levels: ["platform", "partner"],
     turnOffOnly: true,
   }),
+  /**
+   * AI providers partners and customers may choose (CF6a): the platform
+   * turns them on, the partner may only narrow them for its customers.
+   */
+  "ai.providers": define<AiProviderId[]>({
+    schema: ProvidersSchema,
+    default: [...AI_PROVIDERS],
+    levels: ["platform", "partner"],
+    narrow: narrowProviders,
+  }),
+  /**
+   * Models allowed per provider (CF6a), the first one the default. The
+   * partner may only narrow the platform's lists; an empty list on the
+   * platform leaves the model free for that provider.
+   */
+  "ai.models": define<ModelCatalog>({
+    schema: ModelCatalogSchema,
+    default: DEFAULT_MODEL_CATALOG,
+    levels: ["platform", "partner"],
+    narrow: narrowCatalog,
+  }),
+  /**
+   * Base URL of an OpenAI-compatible gateway per provider (CF6a), platform
+   * only: https, called through the pinned fetch of the channels. Applies
+   * to the text calls (conversation and key test).
+   */
+  "ai.base_urls": define<BaseUrls>({
+    schema: BaseUrlsSchema,
+    default: {},
+    levels: ["platform"],
+  }),
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS;
@@ -155,6 +205,13 @@ export function isTightenOnly(key: SettingKey): boolean {
 /** True for switches the levels below may only turn off (CF5b). */
 export function isTurnOffOnly(key: SettingKey): boolean {
   return (SETTINGS[key] as Definition<unknown>).turnOffOnly === true;
+}
+
+/** The narrowing function of a key the levels below may only narrow (CF6a). */
+export function narrowOf(
+  key: SettingKey,
+): ((above: unknown, below: unknown) => unknown) | undefined {
+  return (SETTINGS[key] as Definition<unknown>).narrow;
 }
 
 /** Keys a level may set. */

@@ -13,6 +13,7 @@ import { type RequestContext, withContext } from "@/lib/prisma/with-context";
 import { appLog } from "@/lib/telemetry/log";
 import { AppError } from "@/shared/errors";
 
+import { withBaseUrl } from "./catalog";
 import { parseAgentConfig } from "./config/schema";
 import {
   type ChatModelKey,
@@ -86,11 +87,12 @@ export async function testGuidKey(
         safeMessage: "A chave escolhida não está ativa no cofre.",
       });
     }
-    return {
+    // The platform's gateway of the key's provider, when one is set (CF6a).
+    return withBaseUrl(tx, {
       provider: credential.provider as AIProvider,
       secret: decryptSecret(credential.encryptedPayload),
       model,
-    } satisfies ChatModelKey;
+    } satisfies ChatModelKey);
   });
 
   let errorCode: string | null = null;

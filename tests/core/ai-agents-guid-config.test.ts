@@ -249,13 +249,27 @@ describeDatabase("A4a: GUIDS of the workspace in /app", requiredVars, () => {
       to: { status: "active" },
     });
 
+    // CF6a: a model outside the catalog of the provider is refused.
+    const outside = await run(contextA, (tx) =>
+      updateGuid(tx, contextA, guid.id, {
+        status: "active",
+        config: {
+          ...saved.config,
+          model: { ...saved.config.model, model_name: "openai/gpt-4.1" },
+        },
+      }),
+    ).catch((err: unknown) => err);
+    expect(
+      (outside as { fieldErrors?: Record<string, string> }).fieldErrors,
+    ).toEqual({ "model.model_name": "Escolha um modelo da lista." });
+
     // A change keeps it on, and asks for a new test.
     const changed = await run(contextA, (tx) =>
       updateGuid(tx, contextA, guid.id, {
         status: "active",
         config: {
           ...saved.config,
-          model: { ...saved.config.model, model_name: "openai/gpt-4.1" },
+          model: { ...saved.config.model, model_name: "openai/gpt-5-mini" },
         },
       }),
     );

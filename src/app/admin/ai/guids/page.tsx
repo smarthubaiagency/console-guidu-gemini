@@ -21,6 +21,7 @@ import {
   GUID_STATUSES,
   loadCustomerGuidsView,
 } from "@/core/ai/customer-guids";
+import { aiPolicy } from "@/core/ai/catalog";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
@@ -74,10 +75,13 @@ export default async function PartnerAiGuidsPage({
     partnerId: partner.partnerId,
     partnerRole: membership.role,
   };
-  const view = await withIdentityContext(
+  const { view, policy } = await withIdentityContext(
     prisma,
     identity.userId,
-    (tx) => loadCustomerGuidsView(tx, actor, filters, editKey),
+    async (tx) => ({
+      view: await loadCustomerGuidsView(tx, actor, filters, editKey),
+      policy: await aiPolicy(tx),
+    }),
     { partnerId: partner.partnerId },
   );
   const t = await getTranslations("aiConsole");
@@ -122,6 +126,7 @@ export default async function PartnerAiGuidsPage({
       key={opened.id}
       guid={opened}
       canManage={canManage}
+      policy={policy}
       summary={
         <div className="space-y-1">
           <p className="text-12 text-text-secondary" data-testid="guid-state">

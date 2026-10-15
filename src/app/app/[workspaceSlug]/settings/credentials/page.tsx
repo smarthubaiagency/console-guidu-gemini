@@ -6,6 +6,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listWorkspaceCredentials } from "@/core/credentials/vault";
+import { aiPolicy } from "@/core/ai/catalog";
 import { Permissions } from "@/core/permissions/catalog";
 import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
 import type { WorkspaceRole } from "@/core/permissions/roles";
@@ -37,7 +38,7 @@ export default async function CredentialsSettingsPage({
     workspaceSlug,
   );
 
-  const { credentials, capabilities } = await withContext(
+  const { credentials, capabilities, providers } = await withContext(
     prisma,
     context,
     async (tx) => {
@@ -64,6 +65,7 @@ export default async function CredentialsSettingsPage({
 
       return {
         credentials: creds,
+        providers: (await aiPolicy(tx)).providers,
         capabilities: {
           canManage,
           canRead,
@@ -92,6 +94,7 @@ export default async function CredentialsSettingsPage({
         workspaceSlug={workspaceSlug}
         credentials={credentials}
         capabilities={capabilities}
+        providers={providers}
       />
     </div>
   );

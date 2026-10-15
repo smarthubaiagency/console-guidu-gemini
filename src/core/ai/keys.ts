@@ -20,6 +20,8 @@ import {
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
+import { assertProviderOffered } from "./catalog";
+
 /**
  * The two keys of the engine that are not the workspace's (especificação
  * §9.1 and §9.2, A2a):
@@ -138,6 +140,8 @@ export async function registerPartnerCredential(
   const parsed = PartnerCredentialInput.safeParse(input);
   if (!parsed.success) throw invalidKey("Dados da chave inválidos.");
   const { provider, label, secret, purpose } = parsed.data;
+  // Only the providers the platform offers (CF6a).
+  await assertProviderOffered(tx, provider);
   const { encryptedPayload, maskedValue } = sealKey(provider, secret);
 
   const row = await tx.partnerCredential.create({

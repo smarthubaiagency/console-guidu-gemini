@@ -13,6 +13,7 @@ import {
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
+import { modelChoiceFieldErrors } from "./catalog";
 import {
   applyConfigEdit,
   configFieldErrors,
@@ -174,6 +175,19 @@ export async function updatePartnerAssistant(
     }
     model.model_provider = credential.provider;
   }
+  // Providers and models of the cascade (CF6a): only a change is checked.
+  const choice = await modelChoiceFieldErrors(
+    tx,
+    {
+      provider: current.model.model_provider,
+      model: current.model.model_name,
+    },
+    {
+      provider: model.model_provider as string | undefined,
+      model: model.model_name as string | undefined,
+    },
+  );
+  if (Object.keys(choice).length > 0) throw new ConfigValidationError(choice);
 
   const config = parseAgentConfig(
     "assistant",

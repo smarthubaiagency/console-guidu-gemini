@@ -1178,6 +1178,18 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
       where: { conversationId: sent.conversationId, role: "assistant" },
     });
     expect(failed.errorCode).toBe("provider_auth");
+    // CF6a: the failed call counts in the usage, with no tokens.
+    const usage = await admin.aiUsageEvent.findMany({
+      where: { conversationId: sent.conversationId },
+    });
+    expect(usage).toHaveLength(1);
+    expect(usage[0]).toMatchObject({
+      errorCode: "provider_auth",
+      keySource: "customer",
+      inputTokens: 0,
+      outputTokens: 0,
+      workspaceId: ids.workspaceA,
+    });
     const audit = await admin.auditEvent.findFirstOrThrow({
       where: { action: "ai.turn", resourceId: sent.conversationId },
     });

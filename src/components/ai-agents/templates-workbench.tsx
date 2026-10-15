@@ -8,6 +8,7 @@ import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AiConsoleActionState } from "@/core/ai/console-actions";
+import type { AiPolicy } from "@/core/ai/models";
 import type {
   TemplateDetailDto,
   TemplateSummaryDto,
@@ -35,6 +36,8 @@ export async function TemplatesWorkbench({
   editKey,
   actions,
   testId,
+  tabs,
+  policy,
 }: Readonly<{
   base: string;
   title: string;
@@ -49,6 +52,10 @@ export async function TemplatesWorkbench({
     delete: FormAction;
   }>;
   testId: string;
+  /** The console's tabs above the list (IA in /platform, CF6a). */
+  tabs?: React.ReactNode;
+  /** Providers and models of the console's level, for the editor (CF6a). */
+  policy?: AiPolicy | undefined;
 }>) {
   const t = await getTranslations("aiConsole");
   const formatDate = await calendarDateFormatter();
@@ -68,6 +75,7 @@ export async function TemplatesWorkbench({
         saveAction={actions.save}
         deleteAction={actions.delete}
         publishedLabel={publishedLabel}
+        policy={policy}
       />
     );
   }
@@ -87,6 +95,7 @@ export async function TemplatesWorkbench({
           </Button>
         }
       />
+      {tabs}
       <ul
         className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs"
         data-testid="template-list"

@@ -955,6 +955,8 @@ model AiUsageEvent {
   usageKind      String   @default("chat") @map("usage_kind")
   inputTokens    Int      @default(0) @map("input_tokens")
   outputTokens   Int      @default(0) @map("output_tokens")
+  /// A failed call (CF6a): zero tokens and the error code.
+  errorCode      String?  @map("error_code")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   @@map("ai_usage_events")

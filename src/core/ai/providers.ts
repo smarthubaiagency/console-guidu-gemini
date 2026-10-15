@@ -6,6 +6,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel, SpeechModel, TranscriptionModel } from "ai";
 
+import { pinnedFetch } from "@/core/channels/http";
 import type { AIProvider } from "@/core/credentials/vault";
 
 /**
@@ -18,21 +19,37 @@ export type ChatModelKey = Readonly<{
   provider: AIProvider;
   secret: string;
   model: string;
+  /**
+   * The platform's gateway for this provider (CF6a, `ai.base_urls`): the
+   * call goes there through the pinned fetch of the channels (https,
+   * public address fixed on the socket, no redirects).
+   */
+  baseURL?: string;
 }>;
 
 /** Builds the model of a call; tests pass a mock from `ai/test` instead. */
 export type ModelFactory = (key: ChatModelKey) => LanguageModel;
 
-export const createChatModel: ModelFactory = ({ provider, secret, model }) => {
-  switch (provider) {
+/** Options of a provider: the key, and the gateway when the platform set one. */
+export function providerOptions(
+  key: Pick<ChatModelKey, "secret" | "baseURL">,
+): { apiKey: string; baseURL?: string; fetch?: typeof fetch } {
+  return key.baseURL
+    ? { apiKey: key.secret, baseURL: key.baseURL, fetch: pinnedFetch }
+    : { apiKey: key.secret };
+}
+
+export const createChatModel: ModelFactory = (key) => {
+  const options = providerOptions(key);
+  switch (key.provider) {
     case "openai":
-      return createOpenAI({ apiKey: secret })(model);
+      return createOpenAI(options)(key.model);
     case "anthropic":
-      return createAnthropic({ apiKey: secret })(model);
+      return createAnthropic(options)(key.model);
     case "gemini":
-      return createGoogle({ apiKey: secret })(model);
+      return createGoogle(options)(key.model);
     case "openrouter":
-      return createOpenRouter({ apiKey: secret }).chat(model);
+      return createOpenRouter(options).chat(key.model);
   }
 };
 

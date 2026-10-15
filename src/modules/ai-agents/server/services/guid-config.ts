@@ -14,6 +14,7 @@ import {
   CURRENT_CONFIG_VERSION,
   parseAgentConfig,
 } from "@/core/ai/config/schema";
+import { modelChoiceFieldErrors } from "@/core/ai/catalog";
 import { ReferralInput, type ReferralDto } from "@/core/ai/customer-guids";
 import { voiceOptions } from "@/core/ai/media";
 import { ConfigValidationError } from "@/core/ai/templates";
@@ -196,6 +197,7 @@ export async function updateGuid(
   }
   const row = await loadAgent(tx, ctx, agentId);
   const editor = editorOf(row.customized);
+  const before = parsedConfig(row).config.model;
   const edit = applyConfigEdit(
     parsedConfig(row).config,
     parsed.data.config,
@@ -234,6 +236,16 @@ export async function updateGuid(
     model.model_provider = credential.provider;
   }
   await checkVoiceAndEmbeddingKeys(tx, ctx, model);
+  // Providers and models of the cascade (CF6a): only a change is checked.
+  const choice = await modelChoiceFieldErrors(
+    tx,
+    { provider: before.model_provider, model: before.model_name },
+    {
+      provider: model.model_provider as string | undefined,
+      model: model.model_name as string | undefined,
+    },
+  );
+  if (Object.keys(choice).length > 0) throw new ConfigValidationError(choice);
 
   const config = parseAgentConfig("guid", CURRENT_CONFIG_VERSION, edit.config);
   if (!config.success) {

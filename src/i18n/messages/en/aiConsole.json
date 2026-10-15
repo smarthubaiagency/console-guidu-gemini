@@ -7,7 +7,8 @@
   },
   "errors": {
     "invalidConfig": "Check the highlighted fields.",
-    "adminTemplateDelete": "The Assistant's template cannot be deleted."
+    "adminTemplateDelete": "The Assistant's template cannot be deleted.",
+    "providerOff": "This AI provider is not available."
   },
   "templates": {
     "metaTitle": "Agent templates",
@@ -42,8 +43,8 @@
     }
   },
   "backup": {
-    "metaTitle": "AI backup",
-    "title": "AI backup",
+    "metaTitle": "Backup key",
+    "title": "Backup key",
     "description": "Platform key and cheap model used only to finish, for up to 24 hours, the open conversations of a GUIDS whose customer key failed. It does not count toward the customer's usage.",
     "current": "Current setup",
     "keySet": "{provider} key {masked}",
@@ -53,7 +54,7 @@
     "updated": "changed on {date}",
     "off": "Without a key and model the backup is off: a GUIDS stops answering as soon as the customer's key fails.",
     "edit": "Change",
-    "saved": "AI backup saved.",
+    "saved": "Backup key saved.",
     "form": {
       "provider": "Provider",
       "model": "Cheap model",
@@ -272,7 +273,11 @@
       "noVoice": "The text key has no voice. Choose an OpenAI or Gemini key for the agent to hear and answer audio; without it, the agent asks the contact to write.",
       "voiceKeyNoVoice": "This key has no voice. Choose an OpenAI or Gemini key.",
       "defaultVoice": "Default ({voice})",
-      "defaultModel": "Default: {model}"
+      "defaultModel": "Default: {model}",
+      "outside": "{model} (outside the catalog)",
+      "outsideWarning": "This model is not in the catalog. The agent keeps answering; choose a model from the list when you can.",
+      "providerOffWarning": "The provider of this key was turned off. The agent keeps answering; switch to a key of an allowed provider when you can.",
+      "keyProviderOff": "{label} (provider off)"
     }
   },
   "assistant": {
@@ -414,5 +419,91 @@
     "removeTitle": "Remove the webhook?",
     "removeMessage": "Lead notices stop going out until you add another one.",
     "cancel": "Cancel"
+  },
+  "tabs": {
+    "label": "AI sections",
+    "dashboard": "Dashboard",
+    "providers": "Providers and models",
+    "templates": "Agent templates",
+    "backup": "Backup key"
+  },
+  "dashboard": {
+    "metaTitle": "AI dashboard",
+    "title": "AI",
+    "description": "Usage and errors of the AI providers across every partner, from the consumption recorded on each model call.",
+    "partnerTitle": "AI dashboard",
+    "partnerDescription": "AI usage and errors of your customers and of your Assistant, from the consumption recorded on each model call.",
+    "period": "Period",
+    "days7": "Last 7 days",
+    "days30": "Last 30 days",
+    "cards": {
+      "providers": "Providers on",
+      "providersValue": "{enabled} of {total}",
+      "requests": "Requests",
+      "tokens": "Tokens",
+      "errors": "Errors",
+      "notices": "Notices"
+    },
+    "byProvider": "By provider",
+    "byPartner": "By partner",
+    "byCustomer": "By customer",
+    "columns": {
+      "provider": "Provider",
+      "status": "Status",
+      "requests": "Requests",
+      "errors": "Errors",
+      "errorRate": "Error rate",
+      "tokens": "Tokens",
+      "topError": "Most common error",
+      "partner": "Partner",
+      "customer": "Customer"
+    },
+    "on": "On",
+    "off": "Off",
+    "none": "—",
+    "noPartner": "No partner",
+    "ownAssistant": "Your Assistant (partner key)",
+    "unknown": "Removed",
+    "empty": "No usage in the period.",
+    "noticesTitle": "Notices",
+    "noNotices": "Nothing needs attention.",
+    "notices": {
+      "backup_missing": "The backup key is not set: a GUIDS stops answering as soon as the customer's key fails.",
+      "agents_backup": "{count, plural, one {# GUIDS answering} other {# GUIDS answering}} with the backup key because the customer's key failed.",
+      "agents_failed": "{count, plural, one {# GUIDS paused} other {# GUIDS paused}} because the key failed for more than 24 hours.",
+      "provider_errors": "{provider} with {count, plural, one {# error} other {# errors}} in the period.",
+      "provider_off": "Agents on a provider turned off, still answering: {count}.",
+      "model_off": "Agents on a model outside the catalog, still answering: {count}.",
+      "agents_no_model": "{count, plural, one {# active GUIDS} other {# active GUIDS}} without a key or model.",
+      "assistant_no_key": "Active Assistant without an AI key."
+    }
+  },
+  "providersPage": {
+    "metaTitle": "Providers and models",
+    "title": "Providers and models",
+    "description": "Which AI providers partners and customers may choose and the models allowed in each one. The first model of each list is the default.",
+    "partnerDescription": "Narrow the providers and models your customers may choose, within what the platform allows. The first model of each list is the default.",
+    "providersTitle": "Providers",
+    "providersHint": "Turning a provider off does not stop the agents that already use it: they keep answering and show up in the dashboard notices.",
+    "offByPlatform": "Off by the platform",
+    "modelsTitle": "Allowed models",
+    "modelsHint": "One model per line, as the provider writes it (e.g. gpt-5-mini). An empty list leaves the model free for the provider.",
+    "partnerModelsHint": "Check the models your customers may choose.",
+    "modelsLabel": "{provider} models",
+    "freeModel": "The platform left the model free for this provider. List your customers' models here, one per line, or leave it empty.",
+    "syncNote": "Models are edited by hand: keys belong to each owner and there is no global key to query the providers.",
+    "baseUrlTitle": "Gateway (base URL)",
+    "baseUrlHint": "Optional. An https address of a gateway compatible with the provider's API (for instance your own gateway). Conversations and the key test go through it, with the address checked on every connection; transcription and voice go straight to the provider.",
+    "baseUrlLabel": "{provider} base URL",
+    "save": "Save",
+    "saved": "Providers and models saved.",
+    "readOnly": "Read only: owner and admin change it.",
+    "errors": {
+      "invalid": "Invalid data.",
+      "noProvider": "Turn on at least one provider.",
+      "notOffered": "Choose only what the platform allows.",
+      "noModel": "Leave at least one model in each provider.",
+      "baseUrl": "Use an https:// address without user or parameters."
+    }
   }
 }

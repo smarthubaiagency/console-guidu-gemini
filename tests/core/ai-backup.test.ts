@@ -345,12 +345,25 @@ describeDatabase("A2c: backup of the customer's key", requiredVars, () => {
     });
 
     // A courtesy of the platform: never the customer's usage.
+    // The failed call of the customer's key counts as an error (CF6a).
     const courtesy = await admin.$queryRawUnsafe<{ courtesy: boolean }[]>(
-      `select courtesy from public.ai_usage_events where agent_id = '${GUID}'`,
+      `select courtesy from public.ai_usage_events
+       where agent_id = '${GUID}' and error_code is null`,
     );
     expect(courtesy).toEqual([{ courtesy: true }]);
+    const failedCalls = await admin.aiUsageEvent.findMany({
+      where: { agentId: GUID, errorCode: { not: null } },
+    });
+    expect(failedCalls).toEqual([
+      expect.objectContaining({
+        keySource: "customer",
+        errorCode: "provider_auth",
+        inputTokens: 0,
+        outputTokens: 0,
+      }),
+    ]);
     const usageRows = await admin.aiUsageEvent.findMany({
-      where: { agentId: GUID },
+      where: { agentId: GUID, errorCode: null },
     });
     expect(usageRows).toEqual([
       expect.objectContaining({

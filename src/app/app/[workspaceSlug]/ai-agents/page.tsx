@@ -20,6 +20,7 @@ import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { requireUserPage } from "@/core/auth/page-guard";
+import { aiPolicy } from "@/core/ai/catalog";
 import { listWorkspaceCredentials } from "@/core/credentials/vault";
 import { resolveQuota } from "@/core/entitlements/quotas";
 import { resolveModulePageAccess } from "@/core/module-runtime/page-access";
@@ -168,6 +169,7 @@ export default async function AiAgentsPage({
     return {
       kind: "ok" as const,
       canManage,
+      policy: await aiPolicy(tx),
       guids,
       templates,
       limit: quota.limit,
@@ -263,6 +265,7 @@ export default async function AiAgentsPage({
             <GuidNotices key="notices" notices={view.notices} />
           ) : null
         }
+        policy={view.policy}
         credentials={view.credentials.map((key) => ({
           id: key.id,
           provider: key.provider,

@@ -158,4 +158,38 @@ describe("resolveSettings (CF1)", () => {
     const own = resolveSettings([], { above: "platform" });
     expect(own.detail["auth.google"].lockedBy).toBeNull();
   });
+
+  it("narrows the AI providers and models down the cascade (CF6a)", () => {
+    const { values, detail } = resolveSettings([
+      row("platform", "ai.providers", ["openai", "anthropic", "openrouter"]),
+      row("platform", "ai.models", {
+        openai: ["gpt-5-mini", "gpt-5"],
+        anthropic: [],
+      }),
+      // The partner cannot add Gemini, only narrow.
+      row("partner", "ai.providers", ["openai", "gemini"]),
+      row("partner", "ai.models", {
+        openai: ["gpt-5", "gpt-4o"],
+        anthropic: ["claude-haiku-5-5"],
+      }),
+    ]);
+    expect(values["ai.providers"]).toEqual(["openai"]);
+    expect(values["ai.models"]).toEqual({
+      openai: ["gpt-5"],
+      anthropic: ["claude-haiku-5-5"],
+    });
+    expect(detail["ai.providers"].source).toBe("partner");
+    // A partner's value alone narrows the default.
+    expect(
+      resolveSettings([row("partner", "ai.providers", ["gemini"])]).values[
+        "ai.providers"
+      ],
+    ).toEqual(["gemini"]);
+    // The base URLs are the platform's only.
+    expect(
+      resolveSettings([
+        row("partner", "ai.base_urls", { openai: "https://x.example" }),
+      ]).values["ai.base_urls"],
+    ).toEqual({});
+  });
 });

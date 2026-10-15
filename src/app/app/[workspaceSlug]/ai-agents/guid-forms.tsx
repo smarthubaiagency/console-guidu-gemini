@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import type { AiPolicy } from "@/core/ai/models";
 import {
   createGuidAction,
   customizeGuidAction,
@@ -112,6 +113,7 @@ export function GuidPanel({
   canManage,
   testHref,
   credentials,
+  policy,
   summary,
   channels,
   notices,
@@ -122,6 +124,8 @@ export function GuidPanel({
   /** The drawer of "Testar agente". */
   testHref: string;
   credentials: readonly EditorCredential[];
+  /** Providers and models offered to the workspace (CF6a). */
+  policy: AiPolicy;
   /** Status, origin, key and missing fields, rendered by the page. */
   summary: React.ReactNode;
   /** The inboxes this GUIDS answers (A5b). */
@@ -222,6 +226,7 @@ export function GuidPanel({
                 agentKind="guid"
                 fieldErrors={state.fieldErrors}
                 credentials={credentials}
+                policy={policy}
               />
             </form>
             {guid.customized ? (

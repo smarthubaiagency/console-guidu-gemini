@@ -17,6 +17,7 @@ import {
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
+import { modelChoiceFieldErrors } from "./catalog";
 import {
   applyConfigEdit,
   configFieldErrors,
@@ -297,6 +298,20 @@ export async function updateTemplate(
   if (!config.success) {
     throw new ConfigValidationError(configFieldErrors(config.error));
   }
+  // Providers and models of the cascade (CF6a): only a change is checked.
+  const choice = await modelChoiceFieldErrors(
+    tx,
+    {
+      provider: current.model.model_provider,
+      model: current.model.model_name,
+    },
+    {
+      provider: config.data.model.model_provider,
+      model: config.data.model.model_name,
+    },
+    "model.model_provider",
+  );
+  if (Object.keys(choice).length > 0) throw new ConfigValidationError(choice);
   const prompt = config.data.overview.system_prompt ?? "";
   const contentChanged =
     edit.changed.length > 0 ||
