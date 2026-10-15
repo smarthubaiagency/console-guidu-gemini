@@ -1,0 +1,111 @@
+{
+  "metaTitle": "Gateway de pagamento",
+  "description": "Gateway que divide a cobrança entre a plataforma e o parceiro. Nesta etapa só o Stripe Connect; a cobrança real continua desligada até a P6.",
+  "tabs": {
+    "label": "Seções da cobrança",
+    "overview": "Visão geral",
+    "gateway": "Gateway"
+  },
+  "save": "Salvar",
+  "stripe": {
+    "title": "Stripe Connect",
+    "description": "Liga o recebimento do webhook, define o gateway padrão e o modo (teste ou produção).",
+    "status": "Situação",
+    "on": "Ligado",
+    "off": "Desligado",
+    "charging": "Cobrança real",
+    "chargingOff": "Desligada até a P6 (nenhuma cobrança é feita)",
+    "enable": "Ligar o Stripe Connect",
+    "default": "Usar como gateway padrão"
+  },
+  "mode": {
+    "label": "Modo",
+    "test": "Teste (sandbox)",
+    "live": "Produção"
+  },
+  "capabilities": {
+    "split": "Divisão (split)",
+    "recurring": "Recorrência",
+    "hostedCheckout": "Checkout hospedado",
+    "recipientOnboarding": "Cadastro do recebedor"
+  },
+  "methods": {
+    "card": "Cartão",
+    "pix": "Pix",
+    "boleto": "Boleto"
+  },
+  "credentials": {
+    "title": "Credenciais",
+    "description": "Guardadas cifradas no banco. Só aparecem mascaradas e nunca voltam para a tela.",
+    "secretKey": "Chave secreta",
+    "webhookSecret": "Segredo de assinatura do webhook",
+    "notSet": "Não cadastrada",
+    "secretKeyInput": "Nova chave secreta (sk_ ou rk_)",
+    "webhookSecretInput": "Novo segredo do webhook (whsec_)",
+    "hint": "Deixe em branco para manter a credencial salva. A chave precisa ser do mesmo modo escolhido acima."
+  },
+  "webhook": {
+    "title": "Webhook",
+    "description": "Cadastre este endereço no painel do Stripe. Cada evento é conferido pela assinatura, guardado como chegou e processado uma vez só.",
+    "url": "Endereço do webhook",
+    "noAppUrl": "APP_URL não configurado",
+    "received": "Recebidos ({days, plural, one {# dia} other {# dias}})",
+    "failed": "Com falha",
+    "last": "Último recebido",
+    "never": "Nenhum",
+    "latency": "Latência de processamento",
+    "latencyValue": "média {average} ms, máxima {max} ms",
+    "sendTest": "Enviar webhook de teste",
+    "reprocess": "Reprocessar falhas",
+    "offHint": "Ligue o Stripe Connect e cadastre o segredo do webhook para receber eventos e enviar o teste."
+  },
+  "events": {
+    "received": "Recebido em",
+    "type": "Tipo",
+    "status": "Situação",
+    "attempts": "Tentativas",
+    "test": "teste",
+    "none": "Nenhum evento recebido ainda.",
+    "statuses": {
+      "received": "Recebido",
+      "processed": "Processado",
+      "failed": "Com falha"
+    }
+  },
+  "history": {
+    "title": "Histórico de mudanças",
+    "description": "Vem da auditoria: quem mudou o quê e quando, sem valores de credenciais.",
+    "none": "Nenhuma mudança registrada.",
+    "actions": {
+      "settings": "Configuração alterada",
+      "credentials": "Credenciais trocadas",
+      "test_webhook": "Webhook de teste enviado",
+      "reprocess": "Falhas reprocessadas",
+      "other": "Mudança"
+    },
+    "fields": {
+      "enabled": "liga/desliga",
+      "isDefault": "padrão",
+      "mode": "modo",
+      "secretKey": "chave secreta",
+      "webhookSecret": "segredo do webhook"
+    }
+  },
+  "messages": {
+    "settingsSaved": "Gateway salvo.",
+    "credentialsSaved": "Credenciais salvas.",
+    "testSent": "Webhook de teste recebido e processado.",
+    "testFailed": "O webhook de teste não chegou à rota. Confira o APP_URL e o segredo do webhook.",
+    "reprocessed": "Reprocessamento concluído: {processed} processados, {failed} ainda com falha."
+  },
+  "errors": {
+    "secretKeyFormat": "Informe uma chave secreta do Stripe (sk_ ou rk_).",
+    "secretKeyMode": "A chave secreta é de outro modo (teste ou produção).",
+    "webhookSecretFormat": "Informe o segredo de assinatura do webhook (whsec_).",
+    "credentialsRequired": "Cadastre a chave secreta e o segredo do webhook antes de ligar.",
+    "defaultNeedsEnabled": "Só um gateway ligado pode ser o padrão.",
+    "nothingToSave": "Informe ao menos uma credencial.",
+    "notEnabled": "Ligue o Stripe e cadastre o segredo do webhook antes do teste.",
+    "mode": "Escolha o modo."
+  }
+}

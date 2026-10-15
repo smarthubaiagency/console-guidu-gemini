@@ -540,11 +540,33 @@ export function buildPlatformNavigation(
           : []),
         ...(canReadBilling
           ? [
+              // Visão geral and Gateway (CF7), drawn as tabs of the page;
+              // the children feed the breadcrumb and search.
               item({
                 id: "platform.billing",
                 label: "Cobrança",
                 href: "/platform/billing",
                 iconKey: "credit-card",
+                hideChildren: true,
+                children: [
+                  item({
+                    id: "platform.billing.overview",
+                    label: "Visão geral",
+                    href: "/platform/billing",
+                    iconKey: "credit-card",
+                    exact: true,
+                  }),
+                  ...(input.grants("platform.billing.manage")
+                    ? [
+                        item({
+                          id: "platform.billing.gateway",
+                          label: "Gateway",
+                          href: "/platform/billing/gateway",
+                          iconKey: "credit-card",
+                        }),
+                      ]
+                    : []),
+                ],
               }),
             ]
           : []),
@@ -789,6 +811,17 @@ export function buildPlatformSettingsNavigation(
                 label: "Autenticação",
                 href: "/platform/settings/authentication",
                 iconKey: "key",
+              }),
+            ]
+          : []),
+        // Product analytics, off by default (CF7, D-PA-06).
+        ...(input.grants("platform.settings.manage")
+          ? [
+              item({
+                id: "platform.settings.analytics",
+                label: "Analytics",
+                href: "/platform/settings/analytics",
+                iconKey: "activity",
               }),
             ]
           : []),
@@ -1058,6 +1091,17 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "Autenticação",
                 href: "/admin/settings/authentication",
                 iconKey: "key",
+              }),
+            ]
+          : []),
+        // The partner's own analytics identifier, optional (CF7).
+        ...(grants("partner.read")
+          ? [
+              item({
+                id: "partner.settings.analytics",
+                label: "Analytics",
+                href: "/admin/settings/analytics",
+                iconKey: "activity",
               }),
             ]
           : []),

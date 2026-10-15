@@ -9,6 +9,8 @@ import { getLocale, getMessages } from "next-intl/server";
 import { headers } from "next/headers";
 import { NONCE_HEADER } from "@/core/security/headers";
 import { clientMessages } from "@/core/i18n/client-messages";
+import { requestAnalytics } from "@/core/analytics/read";
+import { ProductAnalytics } from "@/components/analytics/product-analytics";
 import "./globals.css";
 
 const outfit = localFont({
@@ -52,6 +54,8 @@ export default async function RootLayout({
   const messages = await getMessages();
   // Set by src/proxy.ts for the CSP; the theme script needs it to run.
   const nonce = (await headers()).get(NONCE_HEADER) ?? undefined;
+  // Product analytics of the host (CF7): null while off (the default).
+  const analytics = await requestAnalytics();
   return (
     <html lang={locale} className={outfit.variable} suppressHydrationWarning>
       <head>
@@ -65,6 +69,7 @@ export default async function RootLayout({
           timeZone="America/Sao_Paulo"
         >
           <ThemeProvider nonce={nonce}>{children}</ThemeProvider>
+          {analytics ? <ProductAnalytics config={analytics} /> : null}
         </NextIntlClientProvider>
       </body>
     </html>

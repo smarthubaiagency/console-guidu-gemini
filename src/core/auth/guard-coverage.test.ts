@@ -53,6 +53,8 @@ const PUBLIC: Record<string, string> = {
   "brand/[asset]/[version]/route.ts": "imagens da marca do host",
   "api/domains/check/route.ts":
     "ForwardAuth do Traefik; confere o segredo compartilhado (CF2b)",
+  "api/billing/stripe/webhook/route.ts":
+    "webhook do Stripe; confere a assinatura com o segredo cifrado (CF7)",
 };
 
 /** Actions of signed-out visitors. */

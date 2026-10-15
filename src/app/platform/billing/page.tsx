@@ -14,6 +14,7 @@ import {
   NoticesSection,
   PayoutReportsSection,
 } from "@/components/billing/automation-panels";
+import { BillingTabs } from "@/components/billing/billing-tabs";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
 import { ActionForm } from "@/components/partners/action-form";
@@ -126,6 +127,7 @@ export default async function PlatformBillingPage() {
         description={t("description")}
         icon={<CreditCard className="h-5 w-5" />}
       />
+      <BillingTabs active="overview" showGateway={canManage} />
 
       {/* Totals per partner */}
       <section className={sectionClass}>

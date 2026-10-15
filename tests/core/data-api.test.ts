@@ -34,6 +34,8 @@ const domainTables = [
   "ai_usage_events",
   "partner_credentials",
   "platform_ai_settings",
+  "payment_gateways",
+  "payment_webhook_events",
 ] as const;
 
 describeDatabase(
