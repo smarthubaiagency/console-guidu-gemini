@@ -17,7 +17,19 @@ import {
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError } from "@/shared/errors";
 
-import { invalidateDomainCheck, releaseHost, verifyHost } from "./runtime";
+import {
+  addPartnerPublicDomain,
+  choosePublicDomain,
+  getPartnerPublicDomain,
+  recordPartnerPublicDomainCheck,
+  removePartnerPublicDomain,
+} from "./public-service";
+import {
+  invalidateDomainCheck,
+  releaseHost,
+  verifyBaseHost,
+  verifyHost,
+} from "./runtime";
 import {
   addPartnerCustomDomain,
   addWorkspaceDomain,
@@ -30,6 +42,7 @@ import {
   removeWorkspaceDomain,
   setPrimaryWorkspaceDomain,
   type WorkspaceDomainActor,
+  type WorkspaceRef,
 } from "./service";
 import type { DomainCheckResult } from "./verify";
 
@@ -159,6 +172,25 @@ async function asWorkspaceActor<T>(
   );
 }
 
+/** From /admin: the workspace must be one of the partner's customers. */
+async function customerTarget(
+  tx: ContextTransaction,
+  formData: FormData,
+): Promise<WorkspaceRef> {
+  const workspaceId = field(formData, "workspaceId");
+  const target = (await listPartnerCustomerWorkspaces(tx)).find(
+    (row) => row.workspaceId === workspaceId,
+  );
+  if (!target) {
+    throw new AppError({
+      code: "not_found",
+      safeMessage: "Workspace não encontrado.",
+      messageKey: "domains.errors.workspaceNotFound",
+    });
+  }
+  return target;
+}
+
 export async function addWorkspaceDomainAction(
   _prev: State,
   formData: FormData,
@@ -169,19 +201,12 @@ export async function addWorkspaceDomainAction(
       if (actor.kind === "workspace") {
         return addWorkspaceDomain(tx, actor, actor.ctx, host);
       }
-      // From /admin: the workspace must be one of the partner's customers.
-      const workspaceId = field(formData, "workspaceId");
-      const target = (await listPartnerCustomerWorkspaces(tx)).find(
-        (row) => row.workspaceId === workspaceId,
+      return addWorkspaceDomain(
+        tx,
+        actor,
+        await customerTarget(tx, formData),
+        host,
       );
-      if (!target) {
-        throw new AppError({
-          code: "not_found",
-          safeMessage: "Workspace não encontrado.",
-          messageKey: "domains.errors.workspaceNotFound",
-        });
-      }
-      return addWorkspaceDomain(tx, actor, target, host);
     });
     return done("messages.added", { host: added.host });
   } catch (err) {
@@ -235,6 +260,102 @@ export async function removeWorkspaceDomainAction(
     );
     await releaseHost(removed.host, removed.cloudflareHostnameId);
     return done("messages.removed", { host: removed.host });
+  } catch (err) {
+    return actionFailure(err);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Default public domains of the partner's customers (CF2c)
+// ----------------------------------------------------------------------------
+
+export async function addPartnerPublicDomainAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const actor = await partnerActor();
+    const added = await inPartner(actor, (tx) =>
+      addPartnerPublicDomain(tx, actor, {
+        routeType: formData.get("routeType"),
+        host: field(formData, "host"),
+      }),
+    );
+    return done("messages.baseAdded", { host: added.host });
+  } catch (err) {
+    return actionFailure(err);
+  }
+}
+
+export async function verifyPartnerPublicDomainAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const actor = await partnerActor();
+    const id = field(formData, "domainId");
+    const current = await inPartner(actor, (tx) =>
+      getPartnerPublicDomain(tx, actor, id),
+    );
+    const result = await verifyBaseHost(current.host);
+    await inPartner(actor, (tx) =>
+      recordPartnerPublicDomainCheck(tx, actor, id, result),
+    );
+    await invalidateDomainCheck(current.host);
+    return done(
+      result.status === "active"
+        ? "messages.baseActive"
+        : `messages.${result.lastError ?? "dns_pending"}`,
+    );
+  } catch (err) {
+    return actionFailure(err);
+  }
+}
+
+export async function removePartnerPublicDomainAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const actor = await partnerActor();
+    const removed = await inPartner(actor, (tx) =>
+      removePartnerPublicDomain(tx, actor, field(formData, "domainId")),
+    );
+    // Cached answers of its subdomains expire within 5 minutes.
+    await invalidateDomainCheck(removed.host);
+    return done("messages.removed", { host: removed.host });
+  } catch (err) {
+    return actionFailure(err);
+  }
+}
+
+/**
+ * Selector of a tool's public domain (CF2c): `domainId` empty goes back to
+ * the default subdomain of the route type.
+ */
+export async function choosePublicDomainAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const raw = formData.get("domainId");
+    const domainId =
+      typeof raw === "string" && raw.trim().length > 0 ? raw.trim() : null;
+    await asWorkspaceActor(formData, async (tx, actor) =>
+      choosePublicDomain(
+        tx,
+        actor,
+        actor.kind === "workspace"
+          ? actor.ctx
+          : await customerTarget(tx, formData),
+        {
+          toolKey: formData.get("toolKey"),
+          routeType: formData.get("routeType"),
+          domainId,
+        },
+      ),
+    );
+    return done("messages.choiceSaved");
   } catch (err) {
     return actionFailure(err);
   }

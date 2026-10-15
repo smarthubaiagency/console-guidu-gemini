@@ -43,6 +43,13 @@ export async function purgeWorkspace(
     ["workspace_exports", () => tx.workspaceExport.deleteMany({ where })],
     ["workspace_locations", () => tx.workspaceLocation.deleteMany({ where })],
     ["settings", () => tx.setting.deleteMany({ where })],
+    // Public domains (CF2b, CF2c): the tools' choices before the domains.
+    // The Cloudflare hostnames stay (pending in docs/operacao/dominios.md).
+    [
+      "workspace_public_routes",
+      () => tx.workspacePublicRoute.deleteMany({ where }),
+    ],
+    ["workspace_domains", () => tx.workspaceDomain.deleteMany({ where })],
     ["execution_proposals", () => tx.executionProposal.deleteMany({ where })],
     ["job_runs", () => tx.jobRun.deleteMany({ where })],
     // Channels (A5a, A5b): deliveries, events and conversations before

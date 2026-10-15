@@ -63,7 +63,11 @@
     "dns_pending": "El CNAME aún no apunta al destino. La propagación del DNS puede tardar unas horas.",
     "ssl_pending": "DNS correcto. El certificado se está emitiendo; verifica de nuevo en unos minutos.",
     "ssl_error": "El certificado no se emitió. Revisa el CNAME y verifica de nuevo.",
-    "cloudflare_error": "No fue posible registrar el certificado ahora. Inténtalo de nuevo."
+    "cloudflare_error": "No fue posible registrar el certificado ahora. Inténtalo de nuevo.",
+    "baseAdded": "Dominio {host} agregado. Crea los registros CNAME y haz clic en Verificar.",
+    "baseActive": "Dominio predeterminado verificado y activo.",
+    "wildcard_pending": "El dominio apunta al destino, pero el comodín (*.) todavía no. La propagación del DNS puede tardar algunas horas.",
+    "choiceSaved": "Dominio de la herramienta actualizado."
   },
   "errors": {
     "invalidDomain": "Ingresa un dominio válido, como perfil.tuempresa.com.",
@@ -71,6 +75,47 @@
     "taken": "Este dominio ya está registrado.",
     "notFound": "Dominio no encontrado.",
     "primaryNotActive": "Solo un dominio activo puede ser el principal.",
-    "workspaceNotFound": "Workspace no encontrado."
+    "workspaceNotFound": "Workspace no encontrado.",
+    "invalidBaseDomain": "Indica un dominio válido, como tarjeta.tuempresa.com.",
+    "housePartner": "El dominio predeterminado de la plataforma lo define operaciones.",
+    "baseExists": "Ya existe un dominio predeterminado para este tipo. Elimínalo antes.",
+    "invalidRouteType": "Tipo de ruta pública no válido.",
+    "invalidTool": "Herramienta no válida.",
+    "choiceNotActive": "Solo se puede elegir un dominio activo."
+  },
+  "routeTypes": {
+    "profile": "Perfil digital",
+    "quiz": "Quiz",
+    "page": "Páginas y sitios"
+  },
+  "addresses": {
+    "title": "Direcciones predeterminadas",
+    "description": "Cada tipo de página pública ya tiene una dirección con el nombre del workspace. No cuenta en el límite de dominios del plan.",
+    "unavailable": "No disponible para el nombre de este workspace. Usa un dominio propio.",
+    "off": "Este tipo aún no tiene dominio predeterminado.",
+    "partner": "Dominio del socio",
+    "platform": "Dominio de la plataforma"
+  },
+  "bases": {
+    "title": "Dominios predeterminados de los clientes",
+    "description": "Cada cliente recibe un subdominio con el nombre del workspace en el dominio predeterminado de cada tipo. Registra un dominio tuyo para reemplazar el de la plataforma en tus clientes.",
+    "platformDefault": "Predeterminado de la plataforma: {host}",
+    "platformOff": "Sin dominio de la plataforma para este tipo.",
+    "example": "Ejemplo: {host}",
+    "routeType": "Tipo",
+    "hostPlaceholder": "tarjeta.tuempresa.com",
+    "instructions": "En el DNS, crea dos registros CNAME que apunten a {target}: uno con el nombre {host} y otro con el nombre *.{host}. Luego haz clic en Verificar.",
+    "certificate": "El certificado comodín de este dominio lo configura el equipo de operaciones de la plataforma.",
+    "removeMessage": "Las direcciones de tus clientes en este dominio dejan de abrir y vuelven al dominio de la plataforma.",
+    "house": "Los dominios predeterminados de la plataforma valen para los clientes de la casa y los define operaciones.",
+    "readOnly": "Solo el dueño y los administradores del socio cambian los dominios predeterminados."
+  },
+  "picker": {
+    "label": "Dominio",
+    "default": "Predeterminado: {host}",
+    "defaultNone": "Predeterminado (no disponible)",
+    "save": "Guardar dominio",
+    "address": "Dirección: {url}",
+    "none": "Sin dirección pública. Registra un dominio propio."
   }
 }
