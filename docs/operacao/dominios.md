@@ -40,5 +40,5 @@ O endpoint responde 200 para um domínio ativo de um parceiro ativo ou de um wor
 ## Pendências
 
 - A limpeza de um workspace excluído apaga as linhas de `workspace_domains`, mas não os Custom Hostnames no Cloudflare.
-- As rotas públicas (site, perfil digital, quiz) ainda não existem. `resolvePublicDomain` já devolve o workspace de um host ativo.
+- As rotas públicas (site, perfil digital, quiz) ainda não existem. `resolvePublicDomain` já devolve o workspace de um host ativo. Domínios padrão por tipo e endereços públicos estão planejados em [plano-cf2c-dominios-publicos.md](plano-cf2c-dominios-publicos.md).
 - O Cloudflare como integração da plataforma (vários serviços) fica para uma etapa própria.
