@@ -1332,6 +1332,33 @@ model EmailTemplate {
   @@map("email_templates")
 }
 
+/// In-app notice of the bell, one per person (CF3c); text written on display.
+model UserNotification {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  eventType      String    @map("event_type")
+  data           Json      @default("{}")
+  linkUrl        String?   @map("link_url")
+  idempotencyKey String    @unique @map("idempotency_key")
+  readAt         DateTime? @map("read_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("user_notifications")
+}
+
+/// What a person turned off, per event and channel (CF3c); no row is on.
+model NotificationPreference {
+  userId    String   @map("user_id") @db.Uuid
+  eventType String   @map("event_type")
+  channel   String
+  enabled   Boolean
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@id([userId, eventType, channel])
+  @@map("notification_preferences")
+}
+
 /// Platform ceiling per quota key (CF4); a key without a row has no ceiling.
 model QuotaCeiling {
   quotaKey  String   @id @map("quota_key")

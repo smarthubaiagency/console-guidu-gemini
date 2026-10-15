@@ -28,6 +28,7 @@ import ptBR_mcp from "./pt-BR/mcp.json";
 import ptBR_moduleCatalog from "./pt-BR/moduleCatalog.json";
 import ptBR_modules from "./pt-BR/modules.json";
 import ptBR_nav from "./pt-BR/nav.json";
+import ptBR_notificationCenter from "./pt-BR/notificationCenter.json";
 import ptBR_notifications from "./pt-BR/notifications.json";
 import ptBR_operations from "./pt-BR/operations.json";
 import ptBR_overview from "./pt-BR/overview.json";
@@ -75,6 +76,7 @@ import en_mcp from "./en/mcp.json";
 import en_moduleCatalog from "./en/moduleCatalog.json";
 import en_modules from "./en/modules.json";
 import en_nav from "./en/nav.json";
+import en_notificationCenter from "./en/notificationCenter.json";
 import en_notifications from "./en/notifications.json";
 import en_operations from "./en/operations.json";
 import en_overview from "./en/overview.json";
@@ -122,6 +124,7 @@ import es_mcp from "./es/mcp.json";
 import es_moduleCatalog from "./es/moduleCatalog.json";
 import es_modules from "./es/modules.json";
 import es_nav from "./es/nav.json";
+import es_notificationCenter from "./es/notificationCenter.json";
 import es_notifications from "./es/notifications.json";
 import es_operations from "./es/operations.json";
 import es_overview from "./es/overview.json";
@@ -173,6 +176,7 @@ export const MESSAGE_FILES = {
     moduleCatalog: ptBR_moduleCatalog,
     modules: ptBR_modules,
     nav: ptBR_nav,
+    notificationCenter: ptBR_notificationCenter,
     notifications: ptBR_notifications,
     operations: ptBR_operations,
     overview: ptBR_overview,
@@ -222,6 +226,7 @@ export const MESSAGE_FILES = {
     moduleCatalog: en_moduleCatalog,
     modules: en_modules,
     nav: en_nav,
+    notificationCenter: en_notificationCenter,
     notifications: en_notifications,
     operations: en_operations,
     overview: en_overview,
@@ -271,6 +276,7 @@ export const MESSAGE_FILES = {
     moduleCatalog: es_moduleCatalog,
     modules: es_modules,
     nav: es_nav,
+    notificationCenter: es_notificationCenter,
     notifications: es_notifications,
     operations: es_operations,
     overview: es_overview,
@@ -322,6 +328,7 @@ export const NAMESPACES = [
   "moduleCatalog",
   "modules",
   "nav",
+  "notificationCenter",
   "notifications",
   "operations",
   "overview",

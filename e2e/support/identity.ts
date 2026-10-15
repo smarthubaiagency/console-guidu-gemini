@@ -146,6 +146,23 @@ export async function seedGuid(
   return (await response.json()) as { agentId: string | null };
 }
 
+/** Seeds a notice in the bell of the user with that e-mail (CF3c). */
+export async function seedNotification(
+  request: APIRequestContext,
+  params: {
+    email: string;
+    eventType: string;
+    data: Record<string, string>;
+    linkUrl?: string;
+  },
+): Promise<{ id: string }> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-notification`, {
+    data: params,
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { id: string };
+}
+
 /** Runs the job worker until no job waits; returns how many still wait. */
 export async function runJobs(request: APIRequestContext): Promise<number> {
   const response = await request.post(`${AUTH_BASE_URL}/__control/run-jobs`, {

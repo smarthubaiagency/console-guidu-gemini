@@ -4,6 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import {
   BadgeCheck,
+  Bell,
   ChevronsUpDown,
   Languages,
   LogOut,
@@ -105,6 +106,12 @@ export function NavUser({ user }: Readonly<{ user: ShellUser }>) {
                 <Link href="/app/account/language">
                   <Languages />
                   {t("language")}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/app/account/notifications">
+                  <Bell />
+                  {t("notifications")}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

@@ -1,5 +1,7 @@
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
+import { channelsFor, postNotice } from "./inbox";
+import { inboxNotice } from "./inbox-content";
 import { notify, type NotificationLanguage } from "./notify";
 import { withSender } from "./sender";
 import { emailTemplateFor } from "./template-store";
@@ -12,8 +14,12 @@ import {
 } from "./types";
 
 /**
- * Records the delivery once per key, then hands it to the transport and
- * keeps the outcome. Returns 1 for a new delivery, 0 for a repeated key.
+ * Records the delivery once per key, then distributes it to the channels
+ * (CF3c): the bell of the recipient, when the worker knows the person
+ * (`recipientUserId`), and the e-mail through the transport, keeping the
+ * outcome. Each channel follows the person's preferences, except for
+ * essential events; an e-mail turned off is kept as "skipped / opted_out".
+ * Returns 1 for a new delivery, 0 for a repeated key.
  * The message is rendered in the recipient's language (I5); the subject
  * kept is the one sent. The sender is the one of `senderPartnerId` (the
  * partner whose brand the e-mail carries; null for the platform's brand),
@@ -30,6 +36,8 @@ export async function deliverNotification(
     partnerId: string;
     relatedId: string;
     senderPartnerId?: string | null;
+    /** The person of the address, when known: their bell and preferences. */
+    recipientUserId?: string | null;
   }>,
 ): Promise<number> {
   const { event } = args;
@@ -59,8 +67,27 @@ export async function deliverNotification(
     on conflict (idempotency_key) do nothing
   `;
   if (inserted === 0) return 0;
+
+  const userId = args.recipientUserId ?? null;
+  const channels = await channelsFor(tx, userId, event.type);
+  const notice = channels.has("app") ? inboxNotice(event) : null;
+  if (userId && notice) {
+    await postNotice(tx, {
+      userId,
+      notice,
+      idempotencyKey: event.idempotencyKey,
+    });
+  }
+
   let status: "sent" | "skipped" | "failed";
   let reason: string | null;
+  if (!channels.has("email")) {
+    await tx.notificationDelivery.updateMany({
+      where: { idempotencyKey: event.idempotencyKey, status: "pending" },
+      data: { status: "skipped", reason: "opted_out" },
+    });
+    return 1;
+  }
   try {
     const result = await notify(event, brand, args.transport, language);
     status = result.status;

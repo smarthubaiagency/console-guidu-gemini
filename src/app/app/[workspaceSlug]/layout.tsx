@@ -5,6 +5,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { prisma } from "@/lib/prisma/client";
 import { listRequestUserWorkspaces } from "@/core/partners/request-context";
 import { getConsoleAccess } from "@/core/auth/console-access";
+import { loadNotificationBell } from "@/core/notifications/bell";
 import { loadAppNavigation } from "@/core/module-runtime/loaders";
 import { AppShell } from "@/components/layout/shell/app-shell";
 import { WorkspaceSwitcher } from "@/components/layout/shell/workspace-switcher";
@@ -70,6 +71,7 @@ export default async function WorkspaceLayout({
       }
       user={{ email: identity.email }}
       access={access}
+      bell={await loadNotificationBell(identity.userId)}
     >
       {children}
     </AppShell>

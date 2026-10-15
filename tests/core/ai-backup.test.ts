@@ -166,6 +166,9 @@ describeDatabase("A2c: backup of the customer's key", requiredVars, () => {
       `delete from public.notification_deliveries where idempotency_key like 'ai-key:${GUID}:%'`,
     );
     await admin.$executeRawUnsafe(
+      `delete from public.user_notifications where idempotency_key like 'ai-key:${GUID}:%'`,
+    );
+    await admin.$executeRawUnsafe(
       `delete from public.ai_usage_events where agent_id = '${GUID}'`,
     );
     await admin.$executeRawUnsafe(
@@ -465,6 +468,19 @@ describeDatabase("A2c: backup of the customer's key", requiredVars, () => {
       true,
     );
     expect(deliveries.every((d) => d.relatedId === GUID)).toBe(true);
+    // CF3c: the same notices in the owner's bell, once each.
+    const bell = await admin.userNotification.findMany({
+      where: {
+        idempotencyKey: { startsWith: `ai-key:${GUID}:` },
+        userId: ids.userA,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    expect(bell.map((n) => n.eventType)).toEqual([
+      "ai.agent.key_backup",
+      "ai.agent.key_paused",
+    ]);
+    expect(bell[0]?.linkUrl).toMatch(/\/settings\/credentials$/);
     const audit = await admin.auditEvent.findFirstOrThrow({
       where: { action: "ai.agent.key_paused", resourceId: GUID },
       orderBy: { occurredAt: "desc" },

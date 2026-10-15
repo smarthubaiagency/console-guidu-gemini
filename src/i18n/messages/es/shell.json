@@ -4,6 +4,7 @@
   "mfaSession": "Sesión MFA AAL2 activa",
   "backToApp": "Volver a la app del cliente",
   "language": "Idioma",
+  "notifications": "Notificaciones",
   "workspaces": "Tus workspaces",
   "toggleSidebar": "Abrir o contraer el menú lateral",
   "toggleItem": "Abrir o cerrar {item}",

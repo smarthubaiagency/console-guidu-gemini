@@ -1,0 +1,60 @@
+{
+  "bell": {
+    "label": "Notices",
+    "labelUnread": "Notices: {count} unread",
+    "title": "Notices",
+    "empty": "No notices here.",
+    "markRead": "Mark as read",
+    "markAllRead": "Mark all as read",
+    "preferences": "Notice preferences",
+    "marked": "Notice marked as read.",
+    "markedAll": "All notices were marked as read.",
+    "nothingToMark": "There are no notices to mark.",
+    "more": "Showing the {count} most recent notices."
+  },
+  "events": {
+    "pastDue": {
+      "title": "Subscription past due: {organization}",
+      "body": "The paid period ended on {periodEnd} and no new payment was recorded.",
+      "nextStep": "Without payment, the subscription will be suspended on {nextStepOn}."
+    },
+    "suspended": {
+      "title": "Subscription suspended: {organization}",
+      "body": "The subscription was suspended for non-payment of the period that ended on {periodEnd}."
+    },
+    "aiKeyBackup": {
+      "title": "The AI key of {workspace} failed",
+      "body": "{agent} is using the backup key. Replace or test the key by {date}; otherwise, the agent will be paused."
+    },
+    "aiKeyPaused": {
+      "title": "AI agent paused in {workspace}",
+      "body": "{agent} was paused because the AI key was not fixed within 24 hours. Replace and test the key, then turn the agent back on."
+    },
+    "aiAgent": "Your AI agent",
+    "unknown": {
+      "title": "Notice",
+      "body": "You have a new notice."
+    }
+  },
+  "preferences": {
+    "metadataTitle": "Notifications",
+    "title": "Notifications",
+    "description": "Choose where to receive each notice: by e-mail or in the dashboard bell.",
+    "event": "Notice",
+    "channels": {
+      "email": "E-mail",
+      "app": "In the app"
+    },
+    "locked": "Required",
+    "lockedHint": "Security and billing notices are required and cannot be turned off.",
+    "unavailable": "Does not apply to this notice",
+    "toggle": "{event} by {channel}",
+    "saved": "Preference saved.",
+    "errors": {
+      "locked": "This notice is required and cannot be turned off."
+    }
+  },
+  "errors": {
+    "notFound": "Notice not found."
+  }
+}
