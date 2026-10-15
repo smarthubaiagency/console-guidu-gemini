@@ -69,3 +69,28 @@ Apresentados ao Marcelo, sem decisão. Levar para a DP0 como perguntas ou defaul
 - Rodar `pnpm prettier --check` nos `.md` antes do commit; a CI roda `format:check` no repositório todo.
 - Nenhum identificador de modelo em commit, PR ou documento novo.
 - Cada documento de planejamento tem versão no topo e seção de histórico.
+
+## 8. Atualização — sessão do Claude Code de 15/10/2026
+
+Continuação deste handoff. As seções 4 e 5 acima ficam como registro; o que vale agora está no [plano do perfil digital v0.3](../modules/perfil-digital/plano-perfil-digital.md), no [plano da CF2c v0.2](../operacao/plano-cf2c-dominios-publicos.md) e no novo [plano da CF2d v0.1](../operacao/plano-cf2d-enderecos.md).
+
+Decidido pelo Marcelo nesta sessão:
+
+- Links e redes: só o admin do workspace cria e edita templates. A pessoa edita foto, nome, cargo, telefone, e-mail (livre) e LinkedIn pessoal. Campo vazio não aparece; o admin não oculta campo. O admin pode editar os dados pessoais de qualquer perfil.
+- Rota pública no manifesto: sim, com ADR nova.
+- Unidade: linha de `workspace_locations` com finalidade "perfil digital"; template ligado à unidade, um por unidade. A tela "Lojas" vira "Unidades". O endereço fiscal vai para o cadastro da empresa (CF2d).
+- Unidade desativada mantém os endereços reservados; excluir só sem nada ligado.
+- Perfil excluído: endereço reservado por 30 dias, depois livre para qualquer workspace; até ser ocupado, 307 para o perfil master da unidade. Troca de slug com o perfil ativo: 308.
+- Perfil master: um por unidade, obrigatório, criado com o template; só dados da empresa e da unidade; formulário sem dono no CRM.
+- Modelos base (o "template mestre" do legado): criados pela plataforma ou pelo parceiro; visibilidade geral ou restrita a uma empresa; o template nasce como cópia.
+- Modo de design pelo plano: smart (individual, 3 cores) ou gerenciado (corporativo, sem controle de cor no workspace).
+- Reaproveitar o código do legado (registrar na DP0 por causa da ADR 0007). Ordem das telas: `/admin` e `/app` primeiro, `/platform` por último.
+- Onboarding automático fica para depois. Prioridade: criar unidade, vincular template, adicionar usuário, editar dados e ver o perfil na rota pública.
+
+Achados desta sessão:
+
+- O repositório `smarthubaiagency/cartaopro-linkko` (commit `d739429`) foi lido. As 24 regras de `smart_design_system` e as 5 paletas prontas estão em `scripts/create-smart-design-system.mjs:385-432`; a escala e o contraste, em `lib/theme/color-utils.ts`.
+- Os bancos do legado se perderam. A estrutura pode ser refeita pelos dumps; os dados não.
+- A ADR 0018 (configurações em cascata) está como "Proposto" e só tem os níveis plataforma, parceiro e workspace.
+
+Próximo passo: DP0 (só documentação) com o "pode começar" do Marcelo. Propostas ainda abertas estão nos itens 12 a 18 do plano v0.3.
