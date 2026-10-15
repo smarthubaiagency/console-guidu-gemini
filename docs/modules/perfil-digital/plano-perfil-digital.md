@@ -1,5 +1,7 @@
 # Perfil digital: planejamento do módulo
 
+- **Versão:** 0.2, 15/10/2026.
+
 Início do planejamento em 14/10/2026, a partir da [comparação dos relatórios](comparativo-relatorios.md). Base técnica: [relatório do Opus](analise-opus-legado.md), com os complementos indicados na comparação. Nada aqui foi implementado.
 
 ## 1. O que o módulo entrega
@@ -22,14 +24,11 @@ Juntei as perguntas dos três relatórios, sem repetição, na ordem em que trav
    - Todo cartão pertence a uma unidade e usa o template dela; trocar a unidade troca o template.
    - O cartão só é publicado se a unidade tiver template publicado.
    - O endereço fiscal não é do módulo: entra no cadastro do workspace (núcleo), que hoje não tem esse campo.
-4. **Endereço público. Decidido pelo Marcelo em 15/10/2026** (vale para perfil, site, quiz e landing pages):
-   - A plataforma tem um domínio padrão por tipo de rota pública: `mobio.pro` para o perfil digital, `quiz.mobio.pro` para quiz e `mobio.page` para páginas e sites.
-   - Cada workspace ganha um subdomínio do domínio padrão, com o slug do workspace, que já é único na plataforma: `rodobens.mobio.pro/{slug-do-usuário}`.
-   - O parceiro pode cadastrar domínios padrão próprios para os clientes dele, como já faz com o domínio do painel (`console.dominiodoparceiro.com`).
-   - O workspace pode cadastrar domínios próprios (`cards.rodobens.com/{slug}`), dentro da cota `core.public_domains`.
-   - Cada ferramenta com rota pública tem um seletor de domínio; sem escolha, usa o padrão do tipo.
-   - Defaults que adotei, a confirmar: o subdomínio padrão não conta na cota; o padrão do parceiro, quando existe, substitui o da plataforma para os clientes dele; o quiz segue o mesmo formato, `rodobens.quiz.mobio.pro/{slug}`.
-   - Isso é núcleo (domínios), não do módulo, e vira uma etapa própria antes da DP1 (seção 3).
+4. **Endereço público. Decidido pelo Marcelo em 15/10/2026.** As regras de domínio são da plataforma e estão em [plano-cf2c-dominios-publicos.md](../../operacao/plano-cf2c-dominios-publicos.md). O que vale para o módulo:
+   - O cartão publica em `{host}/{slug}`. O host vem da cascata do núcleo: domínio próprio do workspace para perfil digital → padrão do parceiro → padrão da plataforma (ex.: `mobio.pro/{slug}`).
+   - O slug é único por host. No domínio padrão, ele é disputado entre todos os workspaces que usam aquele host.
+   - O módulo não guarda slug nem histórico em tabela própria: reserva, publica e troca o endereço pelo serviço de endereços públicos do núcleo, que cuida de reservados e redirecionamento 308.
+   - Subdomínio por workspace (`rodobens.mobio.pro`) fica fora do MVP.
 5. **Links e redes.** Empresa no template e pessoais no cartão, com o admin escolhendo quais campos o membro edita. Recomendo sim.
 6. **Rota pública no contrato de módulos.** Estender o manifesto com destino público e registrar numa ADR nova. Sem isso não há página pública.
 
@@ -52,24 +51,31 @@ Juntei as perguntas dos três relatórios, sem repetição, na ordem em que trav
 
 Cada etapa só começa com o seu "pode começar".
 
-| Etapa | Entrega                                                                                                                                                                                                                                                       | Migration     |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| DP0   | `MODULE_SPEC.md` do módulo com as decisões acima; ADR da rota pública de módulos                                                                                                                                                                              | Não           |
-| CF2c  | Núcleo, domínios públicos padrão (decisão 4): domínios padrão por tipo na plataforma e no parceiro, subdomínio por workspace, domínio escolhido por ferramenta, resolução de host para workspace e tipo; DNS e certificado curinga no Cloudflare e no Traefik | Sim           |
-| DP1a  | Núcleo: destino público no manifesto de módulos (ADR nova) e rota pública que usa a resolução da CF2c                                                                                                                                                         | Não           |
-| DP1b  | Dados: templates com versões (um por unidade), cartões ligados à unidade, histórico de slug, RLS e testes com dois workspaces; manifesto, permissões e cotas                                                                                                  | Sim           |
-| DP1c  | Painel: lista de cartões, editor na gaveta, unidades (sobre `workspace_locations`), editor do template (Design, Blocos, SEO, Prévia, Publicar), "Meu cartão"                                                                                                  | Não           |
-| DP1d  | Público: página com blocos Hero, CTA, Links, Redes, Mapa, QR e Rodapé; SEO e Open Graph; vCard com escape; QR; evento de visita                                                                                                                               | Sim (eventos) |
-| DP2   | Troca de contato e formulário fixo, no CRM, com consentimento, limite de taxa e aviso por e-mail                                                                                                                                                              | Sim           |
-| DP3   | Cliques por bloco e por link, agregação diária no worker, tela de métricas                                                                                                                                                                                    | Sim           |
-| DP4   | Formulários personalizados, anexos (com storage), pixels com consentimento, webhooks                                                                                                                                                                          | Sim           |
-| DP5   | Mover unidade entre workspaces (decisão 15), biblioteca de templates do parceiro, PWA, Wallet, cartão físico                                                                                                                                                  | Sim           |
-| DP6   | Importação do legado, se aprovada                                                                                                                                                                                                                             | Não           |
+| Etapa | Entrega                                                                                                                                                                           | Migration     |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| DP0   | `MODULE_SPEC.md` do módulo com as decisões acima; ADR da rota pública de módulos                                                                                                  | Não           |
+| CF2c  | Plataforma, fora deste módulo: domínios padrão e endereços públicos ([plano-cf2c-dominios-publicos.md](../../operacao/plano-cf2c-dominios-publicos.md)). Pré-requisito da DP1     | Sim           |
+| DP1a  | Núcleo: destino público no manifesto de módulos (ADR nova) e rota pública que usa a resolução da CF2c                                                                             | Não           |
+| DP1b  | Dados: templates com versões (um por unidade), cartões ligados à unidade, endereço pelo serviço do núcleo (CF2c), RLS e testes com dois workspaces; manifesto, permissões e cotas | Sim           |
+| DP1c  | Painel: lista de cartões, editor na gaveta, unidades (sobre `workspace_locations`), editor do template (Design, Blocos, SEO, Prévia, Publicar), "Meu cartão"                      | Não           |
+| DP1d  | Público: página com blocos Hero, CTA, Links, Redes, Mapa, QR e Rodapé; SEO e Open Graph; vCard com escape; QR; evento de visita                                                   | Sim (eventos) |
+| DP2   | Troca de contato e formulário fixo, no CRM, com consentimento, limite de taxa e aviso por e-mail                                                                                  | Sim           |
+| DP3   | Cliques por bloco e por link, agregação diária no worker, tela de métricas                                                                                                        | Sim           |
+| DP4   | Formulários personalizados, anexos (com storage), pixels com consentimento, webhooks                                                                                              | Sim           |
+| DP5   | Mover unidade entre workspaces (decisão 15), biblioteca de templates do parceiro, PWA, Wallet, cartão físico                                                                      | Sim           |
+| DP6   | Importação do legado, se aprovada                                                                                                                                                 | Não           |
 
 ## 4. O que não trazer do legado
 
-Conteúdo pessoal no template; `templateId` vindo do cliente; template mestre marcado por workspace; busca de perfil só por slug; slug trocado sem histórico; HTML do admin sem sanitização; upload por MIME do cliente (SVG); vCard sem escape; webhook sem bloqueio de rede interna; hash de IP sem sal; 96 colunas de cor; Directus.
+Conteúdo pessoal no template; `templateId` vindo do cliente; template mestre marcado por workspace; busca de perfil só por slug; slug trocado sem histórico (agora resolvido no núcleo); HTML do admin sem sanitização; upload por MIME do cliente (SVG); vCard sem escape; webhook sem bloqueio de rede interna; hash de IP sem sal; 96 colunas de cor; Directus.
 
 ## 5. Próximo passo
 
-Com as respostas das perguntas 5 e 6 e a confirmação dos defaults das 3 e 4, escrevo a `MODULE_SPEC.md` (DP0) e o rascunho da ADR da rota pública.
+Com as respostas das perguntas 5 e 6 e a confirmação dos defaults da 3, escrevo a `MODULE_SPEC.md` (DP0) e o rascunho da ADR da rota pública.
+
+## 6. Histórico
+
+| Versão | Data       | Mudança                                                                                                                                                                |
+| ------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1    | 14/10/2026 | Primeira versão, a partir da comparação dos relatórios                                                                                                                 |
+| 0.2    | 15/10/2026 | Decisão 4 refeita: endereço `{host}/{slug}` com cascata de domínios; subdomínio por workspace fora do MVP; regras de domínio movidas para o plano da CF2c (plataforma) |
