@@ -22,11 +22,17 @@ export function createNonce(): string {
  * they need). Styles keep `'unsafe-inline'`: the shadcn/Radix components set
  * inline styles and inject `<style>` tags without a nonce, and a style cannot
  * run code. Development needs `'unsafe-eval'` for React's debugging and must
- * not upgrade requests, since it is served over plain HTTP.
+ * not upgrade requests, since it is served over plain HTTP. Product
+ * analytics (CF7) adds its provider's origin to `connect-src`, and only
+ * while it is on; scripts stay nonce-only (no third-party script is
+ * loaded: the dashboard posts the events itself).
  */
 export function contentSecurityPolicy(
   nonce: string,
-  { production }: Readonly<{ production: boolean }>,
+  {
+    production,
+    analyticsOrigin = null,
+  }: Readonly<{ production: boolean; analyticsOrigin?: string | null }>,
 ): string {
   const directives = [
     "default-src 'self'",
@@ -34,7 +40,7 @@ export function contentSecurityPolicy(
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self'",
-    "connect-src 'self'",
+    `connect-src 'self'${analyticsOrigin && /^https:\/\/[a-z0-9.-]+$/.test(analyticsOrigin) ? ` ${analyticsOrigin}` : ""}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

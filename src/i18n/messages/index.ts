@@ -3,6 +3,7 @@
 import ptBR_account from "./pt-BR/account.json";
 import ptBR_aiAgents from "./pt-BR/aiAgents.json";
 import ptBR_aiConsole from "./pt-BR/aiConsole.json";
+import ptBR_analytics from "./pt-BR/analytics.json";
 import ptBR_api from "./pt-BR/api.json";
 import ptBR_apiErrors from "./pt-BR/apiErrors.json";
 import ptBR_auth from "./pt-BR/auth.json";
@@ -18,6 +19,7 @@ import ptBR_domains from "./pt-BR/domains.json";
 import ptBR_email from "./pt-BR/email.json";
 import ptBR_errors from "./pt-BR/errors.json";
 import ptBR_executions from "./pt-BR/executions.json";
+import ptBR_gateway from "./pt-BR/gateway.json";
 import ptBR_googleBusiness from "./pt-BR/googleBusiness.json";
 import ptBR_helloWorld from "./pt-BR/helloWorld.json";
 import ptBR_home from "./pt-BR/home.json";
@@ -54,6 +56,7 @@ import ptBR_workspace from "./pt-BR/workspace.json";
 import en_account from "./en/account.json";
 import en_aiAgents from "./en/aiAgents.json";
 import en_aiConsole from "./en/aiConsole.json";
+import en_analytics from "./en/analytics.json";
 import en_api from "./en/api.json";
 import en_apiErrors from "./en/apiErrors.json";
 import en_auth from "./en/auth.json";
@@ -69,6 +72,7 @@ import en_domains from "./en/domains.json";
 import en_email from "./en/email.json";
 import en_errors from "./en/errors.json";
 import en_executions from "./en/executions.json";
+import en_gateway from "./en/gateway.json";
 import en_googleBusiness from "./en/googleBusiness.json";
 import en_helloWorld from "./en/helloWorld.json";
 import en_home from "./en/home.json";
@@ -105,6 +109,7 @@ import en_workspace from "./en/workspace.json";
 import es_account from "./es/account.json";
 import es_aiAgents from "./es/aiAgents.json";
 import es_aiConsole from "./es/aiConsole.json";
+import es_analytics from "./es/analytics.json";
 import es_api from "./es/api.json";
 import es_apiErrors from "./es/apiErrors.json";
 import es_auth from "./es/auth.json";
@@ -120,6 +125,7 @@ import es_domains from "./es/domains.json";
 import es_email from "./es/email.json";
 import es_errors from "./es/errors.json";
 import es_executions from "./es/executions.json";
+import es_gateway from "./es/gateway.json";
 import es_googleBusiness from "./es/googleBusiness.json";
 import es_helloWorld from "./es/helloWorld.json";
 import es_home from "./es/home.json";
@@ -160,6 +166,7 @@ export const MESSAGE_FILES = {
     account: ptBR_account,
     aiAgents: ptBR_aiAgents,
     aiConsole: ptBR_aiConsole,
+    analytics: ptBR_analytics,
     api: ptBR_api,
     apiErrors: ptBR_apiErrors,
     auth: ptBR_auth,
@@ -175,6 +182,7 @@ export const MESSAGE_FILES = {
     email: ptBR_email,
     errors: ptBR_errors,
     executions: ptBR_executions,
+    gateway: ptBR_gateway,
     googleBusiness: ptBR_googleBusiness,
     helloWorld: ptBR_helloWorld,
     home: ptBR_home,
@@ -213,6 +221,7 @@ export const MESSAGE_FILES = {
     account: en_account,
     aiAgents: en_aiAgents,
     aiConsole: en_aiConsole,
+    analytics: en_analytics,
     api: en_api,
     apiErrors: en_apiErrors,
     auth: en_auth,
@@ -228,6 +237,7 @@ export const MESSAGE_FILES = {
     email: en_email,
     errors: en_errors,
     executions: en_executions,
+    gateway: en_gateway,
     googleBusiness: en_googleBusiness,
     helloWorld: en_helloWorld,
     home: en_home,
@@ -266,6 +276,7 @@ export const MESSAGE_FILES = {
     account: es_account,
     aiAgents: es_aiAgents,
     aiConsole: es_aiConsole,
+    analytics: es_analytics,
     api: es_api,
     apiErrors: es_apiErrors,
     auth: es_auth,
@@ -281,6 +292,7 @@ export const MESSAGE_FILES = {
     email: es_email,
     errors: es_errors,
     executions: es_executions,
+    gateway: es_gateway,
     googleBusiness: es_googleBusiness,
     helloWorld: es_helloWorld,
     home: es_home,
@@ -321,6 +333,7 @@ export const NAMESPACES = [
   "account",
   "aiAgents",
   "aiConsole",
+  "analytics",
   "api",
   "apiErrors",
   "auth",
@@ -336,6 +349,7 @@ export const NAMESPACES = [
   "email",
   "errors",
   "executions",
+  "gateway",
   "googleBusiness",
   "helloWorld",
   "home",

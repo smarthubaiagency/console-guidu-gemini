@@ -93,6 +93,10 @@
     "platform_ai_dashboard": "Panel",
     "platform_ai_providers": "Proveedores y modelos",
     "partner_ai_dashboard": "Panel de IA",
-    "partner_ai_providers": "Proveedores y modelos"
+    "partner_ai_providers": "Proveedores y modelos",
+    "platform_billing_overview": "Resumen",
+    "platform_billing_gateway": "Pasarela",
+    "platform_settings_analytics": "Analytics",
+    "partner_settings_analytics": "Analytics"
   }
 }

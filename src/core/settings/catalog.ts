@@ -12,6 +12,13 @@ import {
   narrowProviders,
   ProvidersSchema,
 } from "@/core/ai/models";
+import {
+  ANALYTICS_PROVIDERS,
+  type AnalyticsProvider,
+  POSTHOG_REGIONS,
+  type PosthogRegion,
+  SiteIdSchema,
+} from "@/core/analytics/config";
 
 /**
  * Settings catalog (CF1, levantamento.md): what each key means, where it may
@@ -181,6 +188,46 @@ export const SETTINGS = {
     schema: BaseUrlsSchema,
     default: {},
     levels: ["platform"],
+  }),
+  /**
+   * Product analytics (CF7), off by default until the LGPD review
+   * (D-PA-06). Platform only: the switch, the provider, its site
+   * identifier (public: it goes to the browser) and PostHog's region.
+   */
+  "analytics.enabled": define<boolean>({
+    schema: z.boolean(),
+    default: false,
+    levels: ["platform"],
+  }),
+  "analytics.provider": define<AnalyticsProvider>({
+    schema: z.enum(ANALYTICS_PROVIDERS),
+    default: "plausible",
+    levels: ["platform"],
+  }),
+  "analytics.site_id": define<string | null>({
+    schema: SiteIdSchema.nullable(),
+    default: null,
+    levels: ["platform"],
+  }),
+  "analytics.posthog_region": define<PosthogRegion>({
+    schema: z.enum(POSTHOG_REGIONS),
+    default: "us",
+    levels: ["platform"],
+  }),
+  /**
+   * The partner's own identifier for its brand (CF7, optional): login and
+   * /app of its customers, same provider and consent as the platform, and
+   * only while the platform's switch is on.
+   */
+  "analytics.partner_enabled": define<boolean>({
+    schema: z.boolean(),
+    default: false,
+    levels: ["partner"],
+  }),
+  "analytics.partner_site_id": define<string | null>({
+    schema: SiteIdSchema.nullable(),
+    default: null,
+    levels: ["partner"],
   }),
 } as const;
 

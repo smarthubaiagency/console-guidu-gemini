@@ -93,6 +93,10 @@
     "platform_ai_dashboard": "Dashboard",
     "platform_ai_providers": "Providers and models",
     "partner_ai_dashboard": "AI dashboard",
-    "partner_ai_providers": "Providers and models"
+    "partner_ai_providers": "Providers and models",
+    "platform_billing_overview": "Overview",
+    "platform_billing_gateway": "Gateway",
+    "platform_settings_analytics": "Analytics",
+    "partner_settings_analytics": "Analytics"
   }
 }
