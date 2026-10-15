@@ -78,4 +78,37 @@ describe("resolveSettings (CF1)", () => {
     ]);
     expect(none.values["region.currency"]).toBe("JPY");
   });
+
+  it("lets a requirement only tighten (CF5a)", () => {
+    expect(resolveSettings([]).values["security.mfa.app"]).toBe(false);
+
+    // The partner requires it: the workspace cannot turn it off.
+    const partner = resolveSettings([
+      row("partner", "security.mfa.app", true),
+      row("workspace", "security.mfa.app", false),
+    ]);
+    expect(partner.detail["security.mfa.app"]).toEqual({
+      value: true,
+      source: "partner",
+      lockedBy: "partner",
+    });
+
+    // The workspace may require it for itself, never locking anyone.
+    const workspace = resolveSettings([
+      row("platform", "security.mfa.app", false),
+      row("workspace", "security.mfa.app", true),
+    ]);
+    expect(workspace.detail["security.mfa.app"]).toEqual({
+      value: true,
+      source: "workspace",
+      lockedBy: null,
+    });
+
+    // Seen from the workspace page, the platform's requirement is a lock.
+    const inherited = resolveSettings(
+      [row("platform", "security.mfa.app", true)],
+      { above: "workspace" },
+    );
+    expect(inherited.detail["security.mfa.app"].lockedBy).toBe("platform");
+  });
 });

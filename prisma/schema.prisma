@@ -1500,3 +1500,18 @@ model ChannelDelivery {
   @@unique([executionId, part])
   @@map("channel_deliveries")
 }
+
+/// Optional IP allow list of an area (CF5a): /platform (no partner) or the
+/// /admin of a partner. The addresses are `cidr[]`, read and written by raw
+/// SQL (`src/core/security/ip-allowlist.ts`).
+model IpAllowlist {
+  id        String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  area      String
+  partnerId String?               @map("partner_id") @db.Uuid
+  entries   Unsupported("cidr[]")
+  updatedBy String                @map("updated_by") @db.Uuid
+  createdAt DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime              @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("ip_allowlists")
+}

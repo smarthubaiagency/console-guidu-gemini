@@ -52,6 +52,7 @@ export type NavIconKey =
   | "languages"
   | "globe"
   | "mail"
+  | "shield"
   | "users";
 
 export type NavItem = Readonly<{
@@ -430,6 +431,13 @@ export function buildAppSettingsNavigation(
       id: "settings.system",
       label: "Sistema",
       items: [
+        // MFA required of the team (CF5a): every member reads, owner/admin edit.
+        item({
+          id: "core.security",
+          label: "Segurança",
+          href: `${base}/security`,
+          iconKey: "shield",
+        }),
         // Export and deletion of the workspace (F3e): owner/admin.
         ...(input.grants("workspace.data.export") ||
         input.grants("workspace.delete")
@@ -721,6 +729,29 @@ export function buildPlatformSettingsNavigation(
           : []),
       ],
     },
+    {
+      id: "settings.system",
+      label: "Sistema",
+      items: [
+        // Access (MFA, IP list), password and session, events (CF5a).
+        ...(input.grants("platform.security.read")
+          ? [
+              item({
+                id: "platform.settings.security",
+                label: "Segurança",
+                href: "/platform/settings/security",
+                iconKey: "shield",
+              }),
+              item({
+                id: "platform.settings.security.events",
+                label: "Eventos de segurança",
+                href: "/platform/settings/security/events",
+                iconKey: "activity",
+              }),
+            ]
+          : []),
+      ],
+    },
     { id: "settings.modules", label: "Módulos", items: moduleItems },
   ];
   return sections.filter((section) => section.items.length > 0);
@@ -939,6 +970,29 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "Planos e limites",
                 href: "/admin/settings/plans",
                 iconKey: "gauge",
+              }),
+            ]
+          : []),
+      ],
+    },
+    {
+      id: "settings.system",
+      label: "Sistema",
+      items: [
+        // MFA of the customers, IP list of /admin and events (CF5a).
+        ...(grants("partner.security.read")
+          ? [
+              item({
+                id: "partner.settings.security",
+                label: "Segurança",
+                href: "/admin/settings/security",
+                iconKey: "shield",
+              }),
+              item({
+                id: "partner.settings.security.events",
+                label: "Eventos de segurança",
+                href: "/admin/settings/security/events",
+                iconKey: "activity",
               }),
             ]
           : []),

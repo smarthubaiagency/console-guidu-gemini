@@ -1,0 +1,146 @@
+{
+  "title": "Seguridad",
+  "description": {
+    "platform": "Verificación en dos pasos por área, lista de IP de /platform, contraseña y sesión.",
+    "partner": "Verificación en dos pasos de sus clientes, lista de IP de su /admin, contraseña y sesión.",
+    "workspace": "Verificación en dos pasos exigida al equipo de este workspace."
+  },
+  "mfa": {
+    "title": "Verificación en dos pasos (MFA)",
+    "description": {
+      "platform": "/platform y /admin siempre exigen el segundo factor. En los workspaces, la plataforma puede exigirlo a todos.",
+      "partner": "Su /admin siempre exige el segundo factor. En los workspaces de sus clientes, usted puede exigirlo.",
+      "workspace": "Con la exigencia activada, todos los miembros confirman el segundo factor para entrar en este workspace."
+    },
+    "areas": {
+      "platform": "Plataforma (/platform)",
+      "admin": "Panel del socio (/admin)",
+      "app": "Workspaces (/app)",
+      "team": "Equipo de este workspace"
+    },
+    "always": "Siempre exigida",
+    "required": "Exigida",
+    "optional": "Opcional",
+    "requiredBy": {
+      "platform": "Exigida por la plataforma",
+      "partner": "Exigida por el socio"
+    },
+    "toggle": {
+      "platform": "Exigir MFA en todos los workspaces",
+      "partner": "Exigir MFA en los workspaces de sus clientes",
+      "workspace": "Exigir MFA a todos los miembros de este workspace"
+    },
+    "lockedBy": {
+      "platform": "La plataforma ya exige MFA en todos los workspaces.",
+      "partner": "El socio ya exige MFA en los workspaces de sus clientes."
+    },
+    "saverMissing": "Aún no confirmó la MFA en esta sesión. Actívela en Mi cuenta › Seguridad antes de exigirla al equipo.",
+    "hint": "Quien aún no tiene el segundo factor es llevado a activarlo al entrar; nadie pierde el acceso para activarlo.",
+    "save": "Guardar MFA",
+    "readOnly": "Solo los gestores cambian esta configuración."
+  },
+  "ip": {
+    "title": {
+      "platform": "Lista de IP de la plataforma",
+      "partner": "Lista de IP del /admin"
+    },
+    "description": {
+      "platform": "Opcional. Con una lista, solo estas direcciones entran en /platform. No afecta a las claves de API.",
+      "partner": "Opcional. Con una lista, solo estas direcciones entran en su /admin. Sus clientes no se ven afectados."
+    },
+    "state": "Estado",
+    "on": "Activada ({count, plural, one {# dirección} other {# direcciones}})",
+    "off": "Desactivada: cualquier dirección entra",
+    "current": "Su dirección ahora",
+    "unknown": "no identificada",
+    "label": "Direcciones permitidas (una por línea; IPv4 o IPv6, con o sin máscara)",
+    "placeholder": "203.0.113.10\n198.51.100.0/24",
+    "hint": "La lista debe incluir su dirección actual, para que usted no quede fuera. Déjela vacía y guarde para desactivarla.",
+    "save": "Guardar lista",
+    "readOnly": "Solo los gestores de esta área ven y cambian la lista de IP."
+  },
+  "password": {
+    "title": "Contraseña y sesión",
+    "description": "Estas reglas viven en la configuración de Supabase Auth del proyecto, no en este panel.",
+    "inAuth": "Supabase Auth",
+    "rules": "Longitud y reglas de la contraseña",
+    "leaked": "Bloqueo de contraseña filtrada",
+    "session": "Tiempo de sesión e inactividad",
+    "attempts": "Intentos y bloqueo",
+    "https": "HTTPS y HSTS",
+    "httpsValue": "Siempre activos",
+    "emailCheck": "Verificación de correo",
+    "emailCheckValue": "Siempre activa",
+    "note": "Esta pantalla solo informa. Cambiar estos valores toca Auth y lo hace la operación de la plataforma, con aprobación."
+  },
+  "events": {
+    "title": "Eventos de seguridad",
+    "description": {
+      "platform": "Inicios de sesión, MFA, claves, roles, invitaciones, soporte y cambios de seguridad de toda la plataforma.",
+      "partner": "Inicios de sesión en su dominio, eventos de su equipo y de sus clientes."
+    },
+    "columns": {
+      "when": "Cuándo",
+      "event": "Evento",
+      "who": "Quién",
+      "result": "Resultado"
+    },
+    "result": {
+      "success": "Éxito",
+      "denied": "Denegado",
+      "error": "Error"
+    },
+    "empty": "Aún no hay eventos de seguridad.",
+    "older": "Más antiguos",
+    "newest": "Más recientes",
+    "you": "usted",
+    "system": "Sistema",
+    "user": "Usuario {id}",
+    "actions": {
+      "auth_sign_in": "Inicio de sesión",
+      "auth_mfa_verified": "Segundo factor confirmado",
+      "auth_mfa_failed": "Segundo factor rechazado",
+      "auth_mfa_enrolled": "MFA activada",
+      "auth_mfa_unenrolled": "MFA eliminada",
+      "api_keys_created": "Clave de API creada",
+      "api_keys_revoked": "Clave de API revocada",
+      "platform_api_keys_create": "Clave de la API de la plataforma creada",
+      "platform_api_keys_revoke": "Clave de la API de la plataforma revocada",
+      "credentials_created": "Credencial creada",
+      "credentials_revoked": "Credencial revocada",
+      "partner_ai_credentials_create": "Clave de IA del socio creada",
+      "partner_ai_credentials_revoke": "Clave de IA del socio revocada",
+      "organization_members_role_changed": "Rol en la empresa cambiado",
+      "organization_members_removed": "Miembro eliminado de la empresa",
+      "workspace_members_role_changed": "Rol en el workspace cambiado",
+      "workspace_members_removed": "Miembro eliminado del workspace",
+      "partner_member_join": "Miembro se unió al socio",
+      "partner_member_update": "Miembro del socio cambiado",
+      "invitations_created": "Invitación creada",
+      "invitations_accepted": "Invitación aceptada",
+      "invitations_revoked": "Invitación revocada",
+      "partner_invitation_create": "Invitación del socio creada",
+      "partner_invitation_revoke": "Invitación del socio revocada",
+      "partner_support_request": "Acceso de soporte solicitado",
+      "partner_support_end": "Acceso de soporte terminado",
+      "partner_support_revoke": "Acceso de soporte revocado",
+      "platform_settings_save": "Seguridad de la plataforma cambiada",
+      "partner_settings_save": "Seguridad del socio cambiada",
+      "workspace_settings_save": "Seguridad del workspace cambiada",
+      "platform_security_ip_allowlist_save": "Lista de IP de la plataforma cambiada",
+      "partner_security_ip_allowlist_save": "Lista de IP del socio cambiada"
+    }
+  },
+  "messages": {
+    "saved": "Configuración de seguridad guardada.",
+    "allowlistSaved": "Lista de IP guardada."
+  },
+  "errors": {
+    "ipBlocked": "Su dirección de red no está permitida en esta área.",
+    "invalidEntries": "Dirección no válida en la lista: {entries}.",
+    "tooMany": "La lista admite hasta 50 direcciones.",
+    "selfExcluded": "La lista debe incluir su dirección actual ({ip}).",
+    "ipUnknown": "No se pudo leer su dirección de red; la lista no se guardó.",
+    "enrolFirst": "Active y confirme la verificación en dos pasos en su cuenta antes de exigirla al equipo."
+  }
+}

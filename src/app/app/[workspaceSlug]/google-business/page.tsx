@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { Store, Clock } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
@@ -28,7 +28,8 @@ export default async function GoogleBusinessPage({ params }: PageProps) {
       identity.userId,
       workspaceSlug,
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     notFound();
   }
   const t = await getTranslations("googleBusiness");

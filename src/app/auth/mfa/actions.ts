@@ -7,6 +7,7 @@ import { isAccessDeniedError } from "@/core/auth/errors";
 import { AUTH_MESSAGES, type AuthFormState } from "@/core/auth/form-state";
 import { requireUser } from "@/core/auth/identity";
 import { safeInternalPath } from "@/core/auth/redirects";
+import { recordAuthEvent } from "@/core/security/auth-events";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { actionFailure } from "@/core/i18n/errors";
 import { AppError } from "@/shared/errors";
@@ -49,8 +50,9 @@ export async function verifyMfaChallenge(
   // page that rendered this form may have been open since before an
   // administrator blocked the identity, and the JWT alone would still look
   // valid (specification section 8, AC03).
+  let userId: string;
   try {
-    await requireUser();
+    userId = (await requireUser()).userId;
   } catch (error) {
     if (isAccessDeniedError(error)) redirect(error.route(parsed.data.next));
     throw error;
@@ -78,6 +80,7 @@ export async function verifyMfaChallenge(
   });
 
   if (error) {
+    await recordAuthEvent(userId, "auth.mfa_failed", "denied");
     return actionFailure(
       new AppError({
         code: "invalid_input",
@@ -87,5 +90,6 @@ export async function verifyMfaChallenge(
     );
   }
 
+  await recordAuthEvent(userId, "auth.mfa_verified", "success");
   redirect(safeInternalPath(parsed.data.next));
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { Hand } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
@@ -36,7 +36,8 @@ export default async function HelloWorldPage({ params }: PageProps) {
       identity.userId,
       workspaceSlug,
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     notFound();
   }
 

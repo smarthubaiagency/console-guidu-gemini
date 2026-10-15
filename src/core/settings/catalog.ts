@@ -42,6 +42,11 @@ type Definition<T> = Readonly<{
   default: T;
   /** Levels where the key may be set, top-down. */
   levels: readonly SettingLevel[];
+  /**
+   * A requirement that only tightens (CF5a): a `true` above stops the levels
+   * below as if locked, and nobody locks it by hand.
+   */
+  tightenOnly?: boolean;
 }>;
 
 function define<T>(definition: Definition<T>): Definition<T> {
@@ -88,6 +93,17 @@ export const SETTINGS = {
     default: null,
     levels: ["platform", "partner"],
   }),
+  /**
+   * Second factor required in the workspaces (CF5a): the platform for every
+   * workspace, the partner for its customers, the workspace for its team.
+   * /platform and /admin always require it, outside the cascade.
+   */
+  "security.mfa.app": define<boolean>({
+    schema: z.boolean(),
+    default: false,
+    levels: ["platform", "partner", "workspace"],
+    tightenOnly: true,
+  }),
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS;
@@ -101,6 +117,11 @@ export const SETTING_KEYS = Object.keys(SETTINGS) as SettingKey[];
 
 export function isSettingKey(key: string): key is SettingKey {
   return Object.hasOwn(SETTINGS, key);
+}
+
+/** True for keys that only tighten (a `true` above locks the levels below). */
+export function isTightenOnly(key: SettingKey): boolean {
+  return (SETTINGS[key] as Definition<unknown>).tightenOnly === true;
 }
 
 /** Keys a level may set. */

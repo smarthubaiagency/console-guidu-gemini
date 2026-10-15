@@ -1,6 +1,7 @@
 import {
   type EffectiveSettings,
   isSettingKey,
+  isTightenOnly,
   SETTING_KEYS,
   SETTING_LEVELS,
   type SettingKey,
@@ -15,7 +16,8 @@ import {
  * Per key, top-down: the catalog default, then each level the key allows.
  * A row that does not pass the catalog schema is ignored (an old value of a
  * changed key never breaks a page). A locked platform or partner row stops
- * the levels below, so a value written under a lock has no effect.
+ * the levels below, so a value written under a lock has no effect. A key
+ * that only tightens (CF5a) locks itself wherever it is `true`.
  */
 
 export type SettingRow = Readonly<{
@@ -59,7 +61,8 @@ function resolveKey(
     if (!parsed.success) continue;
     resolved = { value: parsed.data, source: level, lockedBy: null };
     candidates.push(parsed.data);
-    if (row.locked && level !== "workspace") {
+    const locks = row.locked || (isTightenOnly(key) && parsed.data === true);
+    if (locks && level !== "workspace") {
       resolved = { ...resolved, lockedBy: level };
       break;
     }

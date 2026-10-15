@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Plus, ShoppingBag } from "lucide-react";
 
@@ -73,7 +73,8 @@ export default async function PortfolioPage({
       identity.userId,
       workspaceSlug,
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     notFound();
   }
   const search = typeof q === "string" ? q.slice(0, 100) : "";

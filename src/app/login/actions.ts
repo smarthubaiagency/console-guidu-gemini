@@ -6,6 +6,7 @@ import { z } from "zod";
 import { AUTH_MESSAGES, type AuthFormState } from "@/core/auth/form-state";
 import { provisionIdentity } from "@/core/auth/identity";
 import { safeInternalPath } from "@/core/auth/redirects";
+import { recordAuthEvent } from "@/core/security/auth-events";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { actionFailure } from "@/core/i18n/errors";
 import { AppError } from "@/shared/errors";
@@ -63,6 +64,10 @@ export async function signInWithPassword(
   }
 
   if (!decision.allowed) redirect("/login?error=unavailable");
+
+  // Segurança › Eventos (CF5a). Failed attempts stay in Supabase Auth: the
+  // e-mail of a failed attempt may not even be a user.
+  await recordAuthEvent(decision.userId, "auth.sign_in", "success", "password");
 
   // Password alone is aal1. When the identity has a verified factor, Supabase
   // reports aal2 as the next level and the session is only complete after the

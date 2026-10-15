@@ -25,6 +25,7 @@ import { AppError } from "@/shared/errors";
 
 import {
   isSettingKey,
+  isTightenOnly,
   keysOfLevel,
   type SettingKey,
   type SettingLevel,
@@ -192,7 +193,10 @@ export async function saveSettings(
     const current = rows.find(
       (row) => row.scope === actor.level && row.key === key,
     );
-    const locked = actor.level !== "workspace" && (input.locks?.[key] ?? false);
+    const locked =
+      actor.level !== "workspace" &&
+      !isTightenOnly(key) &&
+      (input.locks?.[key] ?? false);
     if (lockedBy) {
       if (raw === undefined || raw === null) continue;
       throw invalid(

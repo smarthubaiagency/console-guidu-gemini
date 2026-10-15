@@ -4,6 +4,7 @@ import { recordAudit } from "@/core/audit/record";
 import { adminAuditContext } from "@/core/module-runtime/settings";
 import { PermissionDeniedError } from "@/core/permissions/guard";
 import { isPartnerRole, type PartnerRoleKey } from "@/core/permissions/matrix";
+import { isAreaIpAllowed } from "@/core/security/ip-gate";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
@@ -21,8 +22,25 @@ export type PartnerMembership = Readonly<{
   role: PartnerRoleKey;
 }>;
 
-/** Active role of the user in an active partner, or null. */
+/**
+ * Active role of the user in an active partner, or null. Also null when the
+ * partner's /admin IP allow list (CF5a) leaves the request's address out:
+ * every page and action of the partner console reads the role here.
+ */
 export async function getPartnerMembership(
+  prisma: PrismaClient,
+  userId: string,
+  partnerId: string,
+): Promise<PartnerMembership | null> {
+  const membership = await readPartnerMembership(prisma, userId, partnerId);
+  if (!membership) return null;
+  return (await isAreaIpAllowed(prisma, "admin", partnerId))
+    ? membership
+    : null;
+}
+
+/** The partner role regardless of the request's address. */
+export async function readPartnerMembership(
   prisma: PrismaClient,
   userId: string,
   partnerId: string,

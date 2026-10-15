@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
-import { getPlatformAdminMember } from "@/core/admin/platform";
+import { readPlatformAdminMember } from "@/core/admin/platform";
 import { recordAudit } from "@/core/audit/record";
 import { InvalidApiKeyError } from "@/core/mcp/authenticate";
 import { PermissionDeniedError } from "@/core/permissions/guard";
@@ -264,7 +264,8 @@ export async function authenticatePlatformApiKey(
     if (!parsed.success) throw invalid();
     scopes.push(parsed.data);
   }
-  const member = await getPlatformAdminMember(prisma, row.user_id);
+  // Keys belong to machines, outside the /platform IP allow list (CF5a).
+  const member = await readPlatformAdminMember(prisma, row.user_id);
   const role = member?.role as PlatformAdminRoleKey | undefined;
   if (!role || !scopes.every((scope) => roleAllowsScope(role, scope))) {
     throw invalid();

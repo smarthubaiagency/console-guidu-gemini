@@ -87,6 +87,9 @@ export const Permissions = {
   // Platform defaults of the settings catalog (CF1, Plataforma ›
   // Configurações › Geral).
   PLATFORM_SETTINGS_MANAGE: "platform.settings.manage",
+  // Configurações › Segurança and its events (CF5a); editing needs
+  // platform.settings.manage.
+  PLATFORM_SECURITY_READ: "platform.security.read",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
@@ -109,6 +112,8 @@ export const Permissions = {
   // The partner's defaults of the settings catalog for its customers (CF1,
   // /admin › Configurações).
   PARTNER_SETTINGS_MANAGE: "partner.settings.manage",
+  // Configurações › Segurança and the partner's security events (CF5a).
+  PARTNER_SECURITY_READ: "partner.security.read",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

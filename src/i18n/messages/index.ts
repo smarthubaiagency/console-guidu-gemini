@@ -41,6 +41,7 @@ import ptBR_portfolio from "./pt-BR/portfolio.json";
 import ptBR_preferences from "./pt-BR/preferences.json";
 import ptBR_privacy from "./pt-BR/privacy.json";
 import ptBR_proposals from "./pt-BR/proposals.json";
+import ptBR_security from "./pt-BR/security.json";
 import ptBR_settings from "./pt-BR/settings.json";
 import ptBR_shell from "./pt-BR/shell.json";
 import ptBR_support from "./pt-BR/support.json";
@@ -89,6 +90,7 @@ import en_portfolio from "./en/portfolio.json";
 import en_preferences from "./en/preferences.json";
 import en_privacy from "./en/privacy.json";
 import en_proposals from "./en/proposals.json";
+import en_security from "./en/security.json";
 import en_settings from "./en/settings.json";
 import en_shell from "./en/shell.json";
 import en_support from "./en/support.json";
@@ -137,6 +139,7 @@ import es_portfolio from "./es/portfolio.json";
 import es_preferences from "./es/preferences.json";
 import es_privacy from "./es/privacy.json";
 import es_proposals from "./es/proposals.json";
+import es_security from "./es/security.json";
 import es_settings from "./es/settings.json";
 import es_shell from "./es/shell.json";
 import es_support from "./es/support.json";
@@ -189,6 +192,7 @@ export const MESSAGE_FILES = {
     preferences: ptBR_preferences,
     privacy: ptBR_privacy,
     proposals: ptBR_proposals,
+    security: ptBR_security,
     settings: ptBR_settings,
     shell: ptBR_shell,
     support: ptBR_support,
@@ -239,6 +243,7 @@ export const MESSAGE_FILES = {
     preferences: en_preferences,
     privacy: en_privacy,
     proposals: en_proposals,
+    security: en_security,
     settings: en_settings,
     shell: en_shell,
     support: en_support,
@@ -289,6 +294,7 @@ export const MESSAGE_FILES = {
     preferences: es_preferences,
     privacy: es_privacy,
     proposals: es_proposals,
+    security: es_security,
     settings: es_settings,
     shell: es_shell,
     support: es_support,
@@ -341,6 +347,7 @@ export const NAMESPACES = [
   "preferences",
   "privacy",
   "proposals",
+  "security",
   "settings",
   "shell",
   "support",
