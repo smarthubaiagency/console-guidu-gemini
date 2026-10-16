@@ -107,6 +107,11 @@
     "platform_billing_overview": "Resumen",
     "platform_billing_gateway": "Pasarela",
     "platform_settings_analytics": "Analytics",
-    "partner_settings_analytics": "Analytics"
+    "partner_settings_analytics": "Analytics",
+    "core_events": "Eventos",
+    "core_notifications": "Notificaciones",
+    "platform_settings_notifications": "Notificaciones",
+    "partner_settings_notifications": "Notificaciones",
+    "partner_events": "Eventos"
   }
 }

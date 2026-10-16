@@ -107,6 +107,11 @@
     "platform_billing_overview": "Visão geral",
     "platform_billing_gateway": "Gateway",
     "platform_settings_analytics": "Analytics",
-    "partner_settings_analytics": "Analytics"
+    "partner_settings_analytics": "Analytics",
+    "core_events": "Eventos",
+    "core_notifications": "Notificações",
+    "platform_settings_notifications": "Notificações",
+    "partner_settings_notifications": "Notificações",
+    "partner_events": "Eventos"
   }
 }
