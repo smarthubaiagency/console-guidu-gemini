@@ -6,6 +6,9 @@ import { PGlite } from "@electric-sql/pglite";
 import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { Pool } from "pg";
 
+import { computeSeal } from "../../src/core/events/seal";
+import { RIG } from "./rig";
+
 /**
  * Postgres for the end-to-end suite, served by PGlite over the wire protocol
  * so Prisma connects to it unchanged.
@@ -89,8 +92,18 @@ export type TestDatabase = Readonly<{
   seedNotification: (params: SeedNotificationParams) => Promise<{ id: string }>;
   /** Turns the maintenance window off (CF5c), keeping its fields. */
   maintenanceOff: () => Promise<void>;
+  /** A sealed event of the Event Hub in a workspace, with one delivery (H1). */
+  seedEvent: (params: SeedEventParams) => Promise<{ id: string }>;
   close: () => Promise<void>;
 }>;
+
+/** An event of the Event Hub, as `emitEvent` would write it (H1). */
+export type SeedEventParams = {
+  workspaceSlug: string;
+  type: string;
+  module: string;
+  data: Record<string, unknown>;
+};
 
 /** A notice of the bell, as the worker would write it (CF3c). */
 export type SeedNotificationParams = {
@@ -334,6 +347,69 @@ export async function startTestDatabase(
       }
       return { partnerId };
     },
+    seedEvent: async (params) => {
+      const ws = await pool.query<{ id: string; organization_id: string; partner_id: string }>(
+        `select w.id, w.organization_id, o.partner_id from public.workspaces w
+         join public.organizations o on o.id = w.organization_id where w.slug = $1`,
+        [params.workspaceSlug],
+      );
+      const target = ws.rows[0];
+      if (!target) throw new Error(`Workspace not found: ${params.workspaceSlug}`);
+      const chainKey = `ws:${target.id}`;
+      const head = await pool.query<{ content_hash: string; seq: string }>(
+        `select content_hash, seq from public.events where chain_key = $1 order by seq desc limit 1`,
+        [chainKey],
+      );
+      const id = crypto.randomUUID();
+      const occurredAt = new Date();
+      const prevHash = head.rows[0]?.content_hash ?? null;
+      const contentHash = computeSeal(
+        {
+          id,
+          type: params.type,
+          partnerId: target.partner_id,
+          organizationId: target.organization_id,
+          workspaceId: target.id,
+          subjectType: null,
+          subjectId: null,
+          createdBy: null,
+          occurredAt,
+          data: params.data,
+          prevHash,
+        },
+        RIG.eventsHmacKey,
+      );
+      await pool.query(
+        `insert into public.events (id, type, module, level, partner_id, organization_id, workspace_id,
+           severity, audiences, route, data, idempotency_key, occurred_at, chain_key, seq,
+           content_hash, prev_hash, key_version, dispatched_at)
+         values ($1, $2, $3, 'workspace', $4, $5, $6, 'attention', array['customer'], 'service_mode',
+           $7::jsonb, $8, $9, $10, $11, $12, $13, $14, now())`,
+        [
+          id,
+          params.type,
+          params.module,
+          target.partner_id,
+          target.organization_id,
+          target.id,
+          JSON.stringify(params.data),
+          `e2e:${id}`,
+          occurredAt,
+          chainKey,
+          Number(head.rows[0]?.seq ?? 0) + 1,
+          contentHash,
+          prevHash,
+          RIG.eventsHmacKeyId,
+        ],
+      );
+      await pool.query(
+        `insert into public.notification_deliveries (partner_id, event_type, recipient_email, subject,
+           idempotency_key, event_id, channel, status, reason)
+         values ($1, $2, 'dono@e2e.test', 'Aviso', $3, $4, 'email', 'skipped', 'no_provider')`,
+        [target.partner_id, params.type, `e2e:${id}:email`, id],
+      );
+      return { id };
+    },
     maintenanceOff: async () => {
       await pool.query(`update public.platform_maintenance set enabled = false`);
     },
@@ -399,6 +475,9 @@ export async function startTestDatabase(
             WORKER_DATABASE_URL: `${url}?pgbouncer=true&connection_limit=2`,
             WORKER_CONCURRENCY: "1",
             GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
+            // Seal of the Event Hub (H1), the same as the web's.
+            EVENTS_HMAC_KEY: RIG.eventsHmacKey,
+            EVENTS_HMAC_KEY_ID: RIG.eventsHmacKeyId,
             // Deterministic machine translation (I6); never the real provider.
             TRANSLATION_PROVIDER: "fake",
             TRANSLATION_ANTHROPIC_API_KEY: "",

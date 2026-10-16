@@ -146,6 +146,16 @@ export type NotificationDeliveryView = Readonly<{
   createdAt: Date;
 }>;
 
+const DELIVERY_STATUSES = ["pending", "sent", "skipped", "failed"] as const;
+
+/** The states of the hub (H1) shown as the four of the billing panel. */
+function deliveryStatus(status: string): NotificationDeliveryView["status"] {
+  if (status === "delivered") return "sent";
+  if (status === "blocked_policy") return "skipped";
+  if (status === "queued") return "pending";
+  return DELIVERY_STATUSES.find((s) => s === status) ?? "pending";
+}
+
 export async function listNotificationDeliveries(
   tx: ContextTransaction,
   actor: BillingActor,
@@ -155,8 +165,9 @@ export async function listNotificationDeliveries(
   requireAllowed(
     partnerId ? canReadPartnerBilling(actor) : canReadPlatformBilling(actor),
   );
+  // E-mails only: the WhatsApp of the hub (H1) has its own screens.
   const rows = await tx.notificationDelivery.findMany({
-    where: partnerId ? { partnerId } : {},
+    where: partnerId ? { partnerId, channel: "email" } : { channel: "email" },
     orderBy: { createdAt: "desc" },
     take,
     select: {
@@ -176,10 +187,9 @@ export async function listNotificationDeliveries(
   );
   return rows.map((row) => ({
     ...row,
-    status:
-      (["pending", "sent", "skipped", "failed"] as const).find(
-        (s) => s === row.status,
-      ) ?? "pending",
+    recipientEmail: row.recipientEmail ?? "",
+    subject: row.subject ?? "",
+    status: deliveryStatus(row.status),
     partnerName: names.get(row.partnerId) ?? "—",
   }));
 }

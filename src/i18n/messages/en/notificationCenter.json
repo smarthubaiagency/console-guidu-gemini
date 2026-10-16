@@ -38,6 +38,10 @@
     "gbAnalysesDone": {
       "title": "Analyses finished",
       "body": "The background analyses of the profile {location} finished."
+    },
+    "eventsChainBroken": {
+      "title": "Event seal does not match",
+      "body": "The Event Hub check found {count} event(s) with a broken seal or chain."
     }
   },
   "preferences": {

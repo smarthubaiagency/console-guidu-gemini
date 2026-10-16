@@ -8,6 +8,8 @@ const WEB_OK = {
   APP_URL: "https://console.guidu.co",
   APP_NAME: "GUIDU",
   ENCRYPTION_KEY: "a".repeat(64),
+  EVENTS_HMAC_KEY: "e".repeat(64),
+  EVENTS_HMAC_KEY_ID: "k1",
   PARTNER_SUBDOMAIN_BASE: "guidu.co",
   NEXT_PUBLIC_SUPABASE_URL: "https://ref.supabase.co",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_x",
@@ -18,6 +20,8 @@ const WORKER_OK = {
   WORKER_DATABASE_URL: "postgresql://app_worker:x@db.example:5432/postgres",
   APP_URL: "https://console.guidu.co",
   APP_NAME: "GUIDU",
+  EVENTS_HMAC_KEY: "e".repeat(64),
+  EVENTS_HMAC_KEY_ID: "k1",
 };
 
 describe("environment check (F6a)", () => {
@@ -69,6 +73,22 @@ describe("environment check (F6a)", () => {
         MAPS_INTELLIGENCE_PROVIDER: "dataforseo",
       }),
     ).toEqual([]);
+  });
+
+  it("requires the seal key of the Event Hub in the web and the worker (H1)", () => {
+    for (const target of ["web", "worker"] as const) {
+      const base = target === "web" ? WEB_OK : WORKER_OK;
+      const problems = envProblems(target, {
+        ...base,
+        EVENTS_HMAC_KEY: "curta",
+        EVENTS_HMAC_KEY_ID: undefined,
+      });
+      expect(problems.map((p) => p.split(":")[0]).sort()).toEqual([
+        "EVENTS_HMAC_KEY",
+        "EVENTS_HMAC_KEY_ID",
+      ]);
+      expect(problems.join("\n")).not.toContain("curta");
+    }
   });
 
   it("stops production only", () => {
