@@ -23,7 +23,7 @@
 ### 0.1 Conferência com a H1 (Central de Eventos, branch `claude/h1-event-hub`)
 
 - **Número da ADR:** a H1 já usa a **ADR 0022** (Central de Eventos). A do chat interno passa a ser a **0023**, e a revisão da ADR 0014 aponta para ela.
-- **Migration:** a H1 usa `20261125090000`; o Inbox começa em `20261126090000`.
+- **Migration:** a H1 usa `20261125090000`; a AUD1 usa `20261126090000`; o Inbox começa em `20261127090000`.
 - **Avisos do Inbox** (conversa nova, atribuição, sem resposta) entram no catálogo da H1. Por isso a janela do Inbox (IN4) começa depois do merge da H1. Documentos, prova de conceito e núcleo Matrix não dependem dela.
 - **Rotas:** a H1 não mexe em `src/app/app/`, então a mudança de pastas (IN2) não conflita com ela.
 - **Permissões:** a H1 mexe na parte da plataforma de `src/core/permissions/matrix.ts`; a função Atendente mexe na parte do workspace do mesmo arquivo. Conflito pequeno, resolvido no merge.

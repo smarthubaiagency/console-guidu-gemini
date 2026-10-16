@@ -60,7 +60,7 @@ As mensagens não são copiadas para o Supabase.
 
 ## 7. Avisos
 
-**[Proposta]** Conversa nova, conversa atribuída a mim e conversa sem resposta há X minutos entram como eventos no catálogo da Central de Eventos (ADR 0022), com o sino como canal padrão.
+**[Proposta]** Conversa nova, conversa atribuída a mim e conversa sem resposta há X minutos entram como eventos no catálogo da Central de Eventos ([ADR 0022](../../adr/0022-central-de-eventos.md)), com o sino como canal padrão.
 
 ## 8. Dúvidas em aberto
 

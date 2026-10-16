@@ -4,7 +4,7 @@
 - **Data:** 16/10/2026
 - **Aprovador:** Marcelo
 - **Decisão de origem:** decisão de Marcelo em 16/10/2026, com as respostas da mesma data registradas no [plano do Inbox](../modules/inbox/plano.md) §0. O rascunho do Marcelo tinha o número 0022, que ficou com a Central de Eventos (etapa H1).
-- **Relaciona-se com:** [ADR 0002](0002-jobs-e-hospedagem.md), [ADR 0006](0006-manifesto-de-modulos.md), [ADR 0011](0011-camada-de-canais-no-nucleo.md), [ADR 0014](0014-shell-padrao-sidebar-08.md) (revisão de 16/10/2026: Inbox em tela cheia), [ADR 0020](0020-modo-de-servico-gerenciado.md); ADR 0022 (Central de Eventos, H1); [canais.md](../modules/ai-agents/canais.md) §1 e §3; [especificação do Inbox](../modules/inbox/especificacao.md).
+- **Relaciona-se com:** [ADR 0002](0002-jobs-e-hospedagem.md), [ADR 0006](0006-manifesto-de-modulos.md), [ADR 0011](0011-camada-de-canais-no-nucleo.md), [ADR 0014](0014-shell-padrao-sidebar-08.md) (revisão de 16/10/2026: Inbox em tela cheia), [ADR 0020](0020-modo-de-servico-gerenciado.md); [ADR 0022](0022-central-de-eventos.md) (Central de Eventos, H1); [canais.md](../modules/ai-agents/canais.md) §1 e §3; [especificação do Inbox](../modules/inbox/especificacao.md).
 
 ## Contexto
 
@@ -41,6 +41,6 @@ A regra 2 da ADR 0011 diz que um módulo nunca chama o provedor diretamente. O n
 - O Chatwoot continua como opção do comerciante. Trocar um número de lugar é mudar a rota (ADR 0011).
 - Ligar números de clientes direto ao GUIDU exige o app da Meta verificado (verificação da empresa), com prazo próprio.
 - O Synapse passa a ser dependência de produção do console, com backup, monitoramento e plano de escala (migração para Conduit ou Dendrite já prevista). A operação de produção entra na F6c.
-- Os avisos do Inbox (conversa nova, atribuição, sem resposta) entram no catálogo da Central de Eventos (ADR 0022).
+- Os avisos do Inbox (conversa nova, atribuição, sem resposta) entram no catálogo da Central de Eventos ([ADR 0022](0022-central-de-eventos.md)).
 - Os e2e precisam de um Synapse no CI, com porta deslocada pelo `E2E_PORT_OFFSET`.
 - **Prova de conceito antes da implementação completa (IN1):** Application Service registrado; login JWT; console com lista de salas, timeline e envio; o Element fazendo papel de consumidor; a IA respondendo na sala; e o status da conversa visível nos dois lados.
