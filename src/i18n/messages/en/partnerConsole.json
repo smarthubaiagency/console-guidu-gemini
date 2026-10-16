@@ -36,7 +36,12 @@
     "since": "since {date}",
     "empty": "No customers yet.",
     "created": "Customer registered. Send the invitation to the owner.",
-    "createdEmailed": "Customer created. Invitation e-mailed to {email}."
+    "createdEmailed": "Customer created. Invitation e-mailed to {email}.",
+    "serviceMode": "Service mode",
+    "modes": {
+      "gerenciado": "Managed",
+      "padrao": "Standard"
+    }
   },
   "members": {
     "metaTitle": "Members (Partner)",

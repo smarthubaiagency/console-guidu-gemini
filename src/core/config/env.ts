@@ -59,6 +59,20 @@ const notFakeGoogle = z
     error: "o Google de teste não roda em produção",
   });
 
+const notFakeGoogleBusiness = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "o Google Meu Negócio de teste não roda em produção",
+  });
+
+const notFakeSpecialist = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "a IA de teste do agente especialista não roda em produção",
+  });
+
 const WEB = z.object({
   DATABASE_URL: postgresUrl,
   APP_URL: httpsOrigin,
@@ -67,6 +81,8 @@ const WEB = z.object({
   PARTNER_SUBDOMAIN_BASE: required,
   TRANSLATION_PROVIDER: notFakeTranslation,
   GOOGLE_OAUTH_PROVIDER: notFakeGoogle,
+  GOOGLE_BUSINESS_PROVIDER: notFakeGoogleBusiness,
+  GOOGLE_BUSINESS_SPECIALIST_PROVIDER: notFakeSpecialist,
 });
 
 /** Supabase accepts either the public or the server-only names. */
@@ -95,6 +111,7 @@ const WORKER = z.object({
   APP_URL: httpsOrigin,
   APP_NAME: required,
   TRANSLATION_PROVIDER: notFakeTranslation,
+  GOOGLE_BUSINESS_PROVIDER: notFakeGoogleBusiness,
 });
 
 export type EnvTarget = "web" | "worker";

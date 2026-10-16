@@ -3,8 +3,312 @@
   "breadcrumbModules": "Módulos",
   "title": "Perfil de Empresa en Google",
   "description": "Gestión de presencia en línea, reseñas, horarios y fotos de tiendas físicas.",
-  "inDevelopment": {
-    "title": "Módulo en Desarrollo",
-    "body": "La integración con la Google Business Profile API depende de conectores OAuth globales y credenciales operativas."
+  "home": {
+    "description": "Los perfiles de Google de cada unidad, con los análisis y la automatización del agente.",
+    "addLocation": "Agregar local",
+    "managed": "Tu empresa es gestionada por el socio: él cuida los perfiles y tú haces el seguimiento aquí.",
+    "emptyTitle": "Aún no hay perfiles conectados",
+    "emptyDescription": "Conecta el perfil de Google de una unidad para empezar.",
+    "noUnit": "Sin unidad",
+    "configured": "{count} de {total} áreas configuradas"
+  },
+  "window": {
+    "title": "Agregar local",
+    "subtitle": "Conecta un perfil de Google al workspace {workspace}.",
+    "close": "Cerrar",
+    "stagesLabel": "Etapas",
+    "stages": {
+      "connect": "Conectar",
+      "analyze": "Leer y analizar",
+      "ready": "Listo"
+    },
+    "connect": {
+      "title": "Inicia sesión con la cuenta de Google del perfil",
+      "description": "Usa la cuenta que administra el perfil en Google. Después eliges qué perfil conectar.",
+      "readOnly": "En esta etapa el agente solo lee y sugiere: nada cambia en el perfil.",
+      "oneAtATime": "Un perfil a la vez. Para otra unidad, repite Agregar local.",
+      "signIn": "Iniciar sesión con Google",
+      "notConfigured": "La conexión con Google aún no está configurada en este entorno."
+    },
+    "permissions": {
+      "title": "Faltan permisos de Google",
+      "description": "Sin ellos el agente no puede leer el perfil. Mira para qué sirve cada uno.",
+      "items": {
+        "manage_profile": {
+          "title": "Gestionar tu perfil de Google",
+          "why": "Para leer el perfil y las reseñas y preparar sugerencias. Cambiar algo en el perfil siempre depende de tu permiso."
+        },
+        "account_identity": {
+          "title": "Ver tu nombre y correo",
+          "why": "Para mostrar qué cuenta de Google está conectada."
+        }
+      },
+      "missing": "Falta",
+      "granted": "Concedido",
+      "promise": "El agente no borra el perfil y no cambia nada sin tu permiso.",
+      "back": "Volver a los permisos de Google"
+    },
+    "denied": {
+      "title": "Conexión cancelada",
+      "description": "La cuenta de Google no se conectó. Puedes intentarlo de nuevo cuando quieras."
+    },
+    "failed": {
+      "title": "No se pudo conectar",
+      "description": "Google no completó la conexión. Inténtalo de nuevo."
+    },
+    "retry": "Intentar de nuevo",
+    "choose": {
+      "title": "Elige el perfil",
+      "description": "Estos son los perfiles que administra la cuenta. Elige uno.",
+      "none": "La cuenta no administra ningún perfil.",
+      "expired": "La conexión con Google caducó. Inicia sesión de nuevo.",
+      "continue": "Continuar"
+    },
+    "analyze": {
+      "title": "Leyendo y analizando el perfil",
+      "description": "Cada paso se marca cuando termina."
+    },
+    "steps": {
+      "read": "Leyendo el perfil",
+      "unit": "Creando o vinculando la unidad",
+      "finish": "Preparando la página de automatización"
+    },
+    "stepState": {
+      "pending": "En cola",
+      "running": "En curso",
+      "done": "Listo",
+      "failed": "Falló",
+      "waiting": "Esperándote"
+    },
+    "unit": {
+      "title": "Ya existe una unidad con esta dirección",
+      "description": "Vincula el perfil a ella para no duplicar la unidad, o crea una nueva.",
+      "link": "Vincular a {name}",
+      "create": "Crear una unidad nueva"
+    },
+    "ready": {
+      "title": "{count, plural, =0 {Ningún punto para validar} one {Encontramos # punto para validar} other {Encontramos # puntos para validar}}",
+      "description": "Revisa cada área en la página de automatización.",
+      "background": "Otros análisis siguen en segundo plano. Te avisamos en la campana cuando terminen.",
+      "open": "Abrir la página de automatización"
+    },
+    "errors": {
+      "connect": "No se pudo iniciar la conexión",
+      "read": "No se pudo leer el perfil",
+      "unit": "No se pudo vincular la unidad",
+      "finish": "No se pudo terminar"
+    }
+  },
+  "automation": {
+    "metaTitle": "Automatización del perfil",
+    "reviewed": "Revisado",
+    "suggestOnly": "Solo sugiere hasta la primera revisión",
+    "askAgent": "Hablar con el agente",
+    "configured": "{count} de {total} áreas configuradas",
+    "diagnosis": "{ok} de {total} elementos en orden",
+    "points": "{count, plural, =0 {Ningún punto para validar} one {# punto para validar} other {# puntos para validar}}",
+    "areasLabel": "Áreas",
+    "lock": "Hasta que alguien apruebe todas las áreas por primera vez, el agente solo sugiere, incluso en las áreas en automático.",
+    "areasTitle": "Áreas del agente",
+    "running": "Análisis en curso",
+    "approved": "Aprobada",
+    "pending": "Falta revisar",
+    "toggle": "Activar o desactivar {area}",
+    "autonomy": {
+      "title": "Cómo actúa el agente en esta área",
+      "description": "Puedes cambiarlo cuando quieras.",
+      "auto": {
+        "title": "Confiar en el agente (automático)",
+        "description": "El agente aplica solo lo que está dentro de las reglas."
+      },
+      "approval": {
+        "title": "Revisar y aprobar antes",
+        "description": "El agente prepara y tú apruebas cada cambio antes de que vaya al perfil."
+      },
+      "aboveCeiling": "El automático no está habilitado para ti."
+    },
+    "numbers": "Números",
+    "tips": {
+      "title": "Consejos de los análisis",
+      "description": "Lo que los análisis encontraron en esta área. No se cambió nada en el perfil."
+    },
+    "noTips": {
+      "title": "Ningún consejo en esta área",
+      "description": "Los análisis no encontraron puntos para validar aquí."
+    },
+    "current": "Hoy",
+    "suggested": "Sugerencia",
+    "severity": {
+      "critical": "Crítico",
+      "high": "Alto",
+      "medium": "Medio",
+      "low": "Bajo"
+    },
+    "learnMore": "Necesito saber más",
+    "approve": "Aprobado, puede seguir",
+    "insights": {
+      "title": "Otros análisis",
+      "description": "Resultados que no dependen de una configuración.",
+      "running": "En curso. El resultado aparece aquí cuando termine.",
+      "failed": "Este análisis no terminó. Se intentará de nuevo."
+    },
+    "runStatus": {
+      "pending": "En cola",
+      "running": "En curso",
+      "done": "Listo",
+      "failed": "Falló",
+      "skipped": "No aplica"
+    },
+    "errors": {
+      "save": "No se pudo guardar"
+    },
+    "saved": {
+      "approved": "¡{area} aprobada!",
+      "toggled": "¡{area} guardada!",
+      "reviewed": "Página revisada: el agente ya puede actuar según la autonomía de cada área."
+    },
+    "agent": {
+      "title": "Agente de Google",
+      "description": "Responde dudas sobre el perfil y las áreas. No cambia nada.",
+      "emptyTitle": "Pregunta al agente",
+      "emptyDescription": "Por ejemplo: ¿qué cambia si dejo las reseñas en automático?",
+      "you": "Tú",
+      "agentName": "Agente",
+      "label": "Tu pregunta",
+      "placeholder": "Escribe tu duda",
+      "send": "Enviar",
+      "notice": "El agente responde con base en el perfil y los análisis. En esta conversación no cambia nada.",
+      "error": "El agente no respondió"
+    }
+  },
+  "areas": {
+    "reviews": {
+      "name": "Reseñas",
+      "description": "Responde las reseñas con el tono de tu marca, lleva las negativas a una persona del equipo y prepara las solicitudes de reseña, siempre la misma solicitud para todos."
+    },
+    "defense": {
+      "name": "Defensa del perfil",
+      "description": "Guarda la versión aprobada del perfil y avisa cuando alguien, o el propio Google, cambia teléfono, dirección, sitio, nombre, categoría u horario."
+    },
+    "info": {
+      "name": "Información",
+      "description": "Cuida la descripción, las categorías, los atributos y los servicios del perfil, a partir de los datos que ya tienes en GUIDU."
+    },
+    "hours": {
+      "name": "Horarios",
+      "description": "Mantiene los horarios iguales a los de la unidad y recuerda los feriados antes de que lleguen."
+    },
+    "posts": {
+      "name": "Publicaciones",
+      "description": "Escribe publicaciones de novedades, ofertas y eventos con lo que ya tienes en el Portafolio."
+    },
+    "photos": {
+      "name": "Fotos",
+      "description": "Publica de a poco las fotos que envíes, con descripción. Nunca usa imágenes generadas por IA."
+    }
+  },
+  "analyses": {
+    "info-checklist": "Revisando la información del perfil",
+    "hours-checklist": "Revisando horarios y feriados",
+    "photos-checklist": "Revisando fotos, logo y portada",
+    "reviews-summary": "Analizando reseñas",
+    "unknown": "Análisis"
+  },
+  "findings": {
+    "generic": {
+      "title": "Punto para validar"
+    },
+    "primary-category": {
+      "title": "Sin categoría principal",
+      "detail": "La categoría principal le dice a Google en qué búsquedas aparece el perfil."
+    },
+    "additional-categories": {
+      "title": "Sin categorías adicionales",
+      "detail": "Las categorías adicionales ayudan a aparecer en búsquedas relacionadas con lo que haces."
+    },
+    "description-missing": {
+      "title": "Perfil sin descripción",
+      "detail": "Una buena descripción explica qué haces, para quién y dónde."
+    },
+    "description-short": {
+      "title": "Descripción corta",
+      "detail": "La descripción tiene {length} caracteres; con menos de {min} dice poco del negocio."
+    },
+    "description-link": {
+      "title": "Enlace en la descripción",
+      "detail": "Google no permite enlaces en la descripción; pueden hacer que se rechace el cambio."
+    },
+    "phone-missing": {
+      "title": "Sin teléfono",
+      "detail": "Sin teléfono, quien encuentra el perfil no puede llamar."
+    },
+    "website-missing": {
+      "title": "Sin sitio web",
+      "detail": "El enlace del sitio lleva a quien busca hasta ti."
+    },
+    "attributes-missing": {
+      "title": "Sin atributos",
+      "detail": "Atributos como accesibilidad y formas de pago responden dudas antes de la visita."
+    },
+    "regular-hours-missing": {
+      "title": "Sin horario de atención",
+      "detail": "Sin horario, Google no muestra si estás abierto."
+    },
+    "holidays-missing": {
+      "title": "Feriado sin horario especial",
+      "detail": "{count, plural, one {# feriado nacional} other {# feriados nacionales}} en los próximos 45 días sin horario especial; el próximo es el {date}."
+    },
+    "photos-few": {
+      "title": "Pocas fotos",
+      "detail": "El perfil tiene {count} fotos; recomendamos al menos {min}."
+    },
+    "logo-missing": {
+      "title": "Sin logo",
+      "detail": "El logo ayuda a reconocer la marca en la búsqueda."
+    },
+    "cover-missing": {
+      "title": "Sin foto de portada",
+      "detail": "La portada es la primera imagen que aparece en el perfil."
+    },
+    "reviews-unanswered": {
+      "title": "Reseñas sin respuesta",
+      "detail": "{count, plural, one {# reseña} other {# reseñas}} sin respuesta, {negative} de ellas con 1 o 2 estrellas."
+    },
+    "reviews-response-rate": {
+      "title": "Tasa de respuesta baja",
+      "detail": "Respondiste el {rate}% de las reseñas leídas; lo recomendado es al menos {target}%."
+    }
+  },
+  "metrics": {
+    "upcomingHolidays": "Feriados en los próximos 45 días",
+    "photos": "Fotos",
+    "rating": "Calificación media",
+    "reviewCount": "Reseñas",
+    "reviewsRead": "Reseñas leídas",
+    "responseRate": "Tasa de respuesta (%)",
+    "unanswered": "Sin respuesta",
+    "unansweredNegative": "Negativas sin respuesta",
+    "last30Days": "Reseñas en los últimos 30 días",
+    "stars1": "1 estrella",
+    "stars2": "2 estrellas",
+    "stars3": "3 estrellas",
+    "stars4": "4 estrellas",
+    "stars5": "5 estrellas"
+  },
+  "errors": {
+    "provider": "Google no respondió ahora. Inténtalo de nuevo.",
+    "notConfigured": "La conexión con Google aún no está configurada.",
+    "notFound": "Recurso no encontrado.",
+    "forbidden": "No puedes cambiar este perfil.",
+    "alreadyLinked": "Este perfil ya está vinculado a una unidad.",
+    "unitTaken": "Esta unidad ya tiene un perfil.",
+    "invalidUnit": "Los datos del perfil no forman una unidad válida.",
+    "invalidInput": "Datos no válidos.",
+    "aboveCeiling": "Esta autonomía supera el límite definido para ti.",
+    "connectionExpired": "La conexión con Google caducó. Inicia sesión de nuevo.",
+    "noOrigin": "Dirección de retorno no configurada (APP_URL).",
+    "specialistUnavailable": "El agente aún no tiene clave y modelo de IA.",
+    "specialistFailed": "El agente no pudo responder ahora. Inténtalo de nuevo.",
+    "questionInvalid": "Escribe tu pregunta."
   }
 }

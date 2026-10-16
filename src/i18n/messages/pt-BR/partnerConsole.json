@@ -36,7 +36,12 @@
     "since": "desde {date}",
     "empty": "Nenhum cliente ainda.",
     "created": "Cliente cadastrado. Envie o convite ao responsável.",
-    "createdEmailed": "Cliente criado. Convite enviado por e-mail para {email}."
+    "createdEmailed": "Cliente criado. Convite enviado por e-mail para {email}.",
+    "serviceMode": "Modo de serviço",
+    "modes": {
+      "gerenciado": "Gerenciado",
+      "padrao": "Padrão"
+    }
   },
   "members": {
     "metaTitle": "Membros (Parceiro)",

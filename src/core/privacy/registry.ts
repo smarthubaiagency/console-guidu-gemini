@@ -1,5 +1,6 @@
 import { aiAgentsDataContract } from "@/modules/ai-agents/data";
 import { crmDataContract } from "@/modules/crm/data";
+import { googleBusinessDataContract } from "@/modules/google-business/data";
 import { portfolioDataContract } from "@/modules/portfolio/data";
 import { helloWorldDataContract } from "@/modules/hello-world/data";
 
@@ -13,6 +14,7 @@ import type { ModuleDataContract } from "./contract";
 const CONTRACTS: readonly ModuleDataContract[] = [
   aiAgentsDataContract,
   crmDataContract,
+  googleBusinessDataContract,
   portfolioDataContract,
   helloWorldDataContract,
 ];

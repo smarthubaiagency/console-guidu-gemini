@@ -57,6 +57,10 @@ const PUBLIC: Record<string, string> = {
     "retorno do Google; confere o state assinado e só devolve ao host de origem, onde a sessão conclui (CF6b)",
   "api/integrations/google/fake-consent/route.ts":
     "consentimento do Google falso dos testes; 404 fora de GOOGLE_OAUTH_PROVIDER=fake (CF6b)",
+  "auth/google-business/callback/route.ts":
+    "retorno do consentimento do Google no Adicionar local; confere a sessão, o cookie cifrado e o nonce (GB1a)",
+  "api/google-business/fake-consent/route.ts":
+    "consentimento falso do Google Meu Negócio dos testes; 404 fora de GOOGLE_BUSINESS_PROVIDER=fake (GB1a)",
   "api/billing/stripe/webhook/route.ts":
     "webhook do Stripe; confere a assinatura com o segredo cifrado (CF7)",
 };

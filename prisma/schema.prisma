@@ -1663,3 +1663,101 @@ model PlatformMaintenance {
 
   @@map("platform_maintenance")
 }
+
+/// Service mode of a company (GB1a, ADR 0020): `padrao` or `gerenciado` and
+/// the partner that manages it. No row means `padrao`.
+model OrganizationServiceMode {
+  organizationId String   @id @map("organization_id") @db.Uuid
+  partnerId      String   @map("partner_id") @db.Uuid
+  mode           String
+  setBy          String?  @map("set_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@index([partnerId, mode])
+  @@map("organization_service_modes")
+}
+
+/// Google ficha linked to a unit of the workspace (GB1a).
+model GbLocation {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String    @map("organization_id") @db.Uuid
+  workspaceId      String    @map("workspace_id") @db.Uuid
+  unitId           String?   @unique @map("unit_id") @db.Uuid
+  provider         String
+  externalId       String    @map("external_id")
+  accountRef       String?   @map("account_ref")
+  placeId          String?   @map("place_id")
+  name             String
+  connectionStatus String    @default("connected") @map("connection_status")
+  onboardingStatus String    @default("reading") @map("onboarding_status")
+  reviewedAt       DateTime? @map("reviewed_at") @db.Timestamptz()
+  reviewedBy       String?   @map("reviewed_by") @db.Uuid
+  createdBy        String    @map("created_by") @db.Uuid
+  updatedBy        String?   @map("updated_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, provider, externalId])
+  @@index([workspaceId, createdAt])
+  @@map("gb_locations")
+}
+
+/// Version of a ficha (GB1a): the initial one is the base of the defense.
+model GbSnapshot {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gbLocationId   String   @map("gb_location_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  kind           String
+  data           Json
+  reviews        Json     @default("[]")
+  createdBy      String   @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([gbLocationId, createdAt(sort: Desc)])
+  @@map("gb_snapshots")
+}
+
+/// Result of one analysis of the registry for a ficha (GB1a and GB1b).
+model GbAnalysisRun {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gbLocationId   String    @map("gb_location_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  analysisKey    String    @map("analysis_key")
+  area           String
+  phase          String
+  status         String    @default("pending")
+  findings       Json      @default("[]")
+  metrics        Json      @default("{}")
+  error          String?
+  startedAt      DateTime? @map("started_at") @db.Timestamptz()
+  finishedAt     DateTime? @map("finished_at") @db.Timestamptz()
+  createdBy      String    @map("created_by") @db.Uuid
+  updatedBy      String?   @map("updated_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@unique([gbLocationId, analysisKey])
+  @@map("gb_analysis_runs")
+}
+
+/// Ficha level of the agent settings and approval of each area (GB1a).
+model GbAreaSetting {
+  gbLocationId   String    @map("gb_location_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  area           String
+  enabled        Boolean
+  autonomy       String
+  approvedAt     DateTime? @map("approved_at") @db.Timestamptz()
+  approvedBy     String?   @map("approved_by") @db.Uuid
+  updatedBy      String    @map("updated_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@id([gbLocationId, area])
+  @@map("gb_area_settings")
+}

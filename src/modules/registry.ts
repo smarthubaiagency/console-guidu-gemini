@@ -35,7 +35,11 @@ type RegistryEntryInput = Readonly<{
 const ENTRIES: readonly RegistryEntryInput[] = [
   { manifest: portfolioManifest },
   { manifest: crmManifest },
-  { manifest: googleBusinessManifest },
+  {
+    manifest: googleBusinessManifest,
+    technicalGate: () =>
+      process.env.GUIDU_MODULE_GOOGLE_BUSINESS_ENABLED === "true",
+  },
   {
     manifest: aiAgentsManifest,
     technicalGate: () => process.env.GUIDU_MODULE_AI_AGENTS_ENABLED === "true",

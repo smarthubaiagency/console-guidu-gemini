@@ -3,8 +3,312 @@
   "breadcrumbModules": "Modules",
   "title": "Google Business Profile",
   "description": "Manage online presence, reviews, opening hours and photos of physical stores.",
-  "inDevelopment": {
-    "title": "Module in Development",
-    "body": "The integration with the Google Business Profile API depends on global OAuth connectors and operational credentials."
+  "home": {
+    "description": "The Google profiles of each unit, with the analyses and the agent's automation.",
+    "addLocation": "Add location",
+    "managed": "Your company is managed by the partner: they take care of the profiles and you follow along here.",
+    "emptyTitle": "No profile connected yet",
+    "emptyDescription": "Connect the Google profile of a unit to get started.",
+    "noUnit": "No unit",
+    "configured": "{count} of {total} areas configured"
+  },
+  "window": {
+    "title": "Add location",
+    "subtitle": "Connect a Google profile to the workspace {workspace}.",
+    "close": "Close",
+    "stagesLabel": "Steps",
+    "stages": {
+      "connect": "Connect",
+      "analyze": "Read and analyze",
+      "ready": "Done"
+    },
+    "connect": {
+      "title": "Sign in with the profile's Google account",
+      "description": "Use the account that manages the profile on Google. Then you choose which profile to connect.",
+      "readOnly": "At this step the agent only reads and suggests: nothing changes on the profile.",
+      "oneAtATime": "One profile at a time. For another unit, run Add location again.",
+      "signIn": "Sign in with Google",
+      "notConfigured": "The Google connection is not configured in this environment yet."
+    },
+    "permissions": {
+      "title": "Google permissions are missing",
+      "description": "Without them the agent cannot read the profile. See what each one is for.",
+      "items": {
+        "manage_profile": {
+          "title": "Manage your Google profile",
+          "why": "To read the profile and the reviews and prepare suggestions. Changing anything on the profile always depends on your permission."
+        },
+        "account_identity": {
+          "title": "See your name and e-mail",
+          "why": "To show which Google account is connected."
+        }
+      },
+      "missing": "Missing",
+      "granted": "Granted",
+      "promise": "The agent does not delete the profile and changes nothing without your permission.",
+      "back": "Back to Google permissions"
+    },
+    "denied": {
+      "title": "Connection canceled",
+      "description": "The Google account was not connected. You can try again whenever you want."
+    },
+    "failed": {
+      "title": "Could not connect",
+      "description": "Google did not complete the connection. Try again."
+    },
+    "retry": "Try again",
+    "choose": {
+      "title": "Choose the profile",
+      "description": "These are the profiles the account manages. Choose one.",
+      "none": "The account manages no profile.",
+      "expired": "The Google connection expired. Sign in again.",
+      "continue": "Continue"
+    },
+    "analyze": {
+      "title": "Reading and analyzing the profile",
+      "description": "Each step is marked when it ends."
+    },
+    "steps": {
+      "read": "Reading the profile",
+      "unit": "Creating or linking the unit",
+      "finish": "Preparing the automation page"
+    },
+    "stepState": {
+      "pending": "Queued",
+      "running": "Running",
+      "done": "Done",
+      "failed": "Failed",
+      "waiting": "Waiting for you"
+    },
+    "unit": {
+      "title": "A unit with this address already exists",
+      "description": "Link the profile to it so the unit is not duplicated, or create a new one.",
+      "link": "Link to {name}",
+      "create": "Create a new unit"
+    },
+    "ready": {
+      "title": "{count, plural, =0 {No points to validate} one {We found # point to validate} other {We found # points to validate}}",
+      "description": "Review each area on the automation page.",
+      "background": "Other analyses keep running in the background. We will let you know in the bell when they finish.",
+      "open": "Open the automation page"
+    },
+    "errors": {
+      "connect": "Could not start the connection",
+      "read": "Could not read the profile",
+      "unit": "Could not link the unit",
+      "finish": "Could not finish"
+    }
+  },
+  "automation": {
+    "metaTitle": "Profile automation",
+    "reviewed": "Reviewed",
+    "suggestOnly": "Only suggests until the first review",
+    "askAgent": "Talk to the agent",
+    "configured": "{count} of {total} areas configured",
+    "diagnosis": "{ok} of {total} items in order",
+    "points": "{count, plural, =0 {No points to validate} one {# point to validate} other {# points to validate}}",
+    "areasLabel": "Areas",
+    "lock": "Until someone approves every area for the first time, the agent only suggests, even in areas set to automatic.",
+    "areasTitle": "Agent areas",
+    "running": "Analysis running",
+    "approved": "Approved",
+    "pending": "To review",
+    "toggle": "Turn {area} on or off",
+    "autonomy": {
+      "title": "How the agent acts in this area",
+      "description": "You can change it any time.",
+      "auto": {
+        "title": "Trust the agent (automatic)",
+        "description": "The agent applies on its own what is within the rules."
+      },
+      "approval": {
+        "title": "Review and approve first",
+        "description": "The agent prepares and you approve each change before it goes to the profile."
+      },
+      "aboveCeiling": "Automatic is not allowed for you."
+    },
+    "numbers": "Numbers",
+    "tips": {
+      "title": "Tips from the analyses",
+      "description": "What the analyses found in this area. Nothing was changed on the profile."
+    },
+    "noTips": {
+      "title": "No tips in this area",
+      "description": "The analyses found no points to validate here."
+    },
+    "current": "Today",
+    "suggested": "Suggestion",
+    "severity": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "learnMore": "I need to know more",
+    "approve": "Approved, go ahead",
+    "insights": {
+      "title": "Other analyses",
+      "description": "Results that do not depend on a setting.",
+      "running": "Running. The result shows here when it ends.",
+      "failed": "This analysis did not finish. It will be tried again."
+    },
+    "runStatus": {
+      "pending": "Queued",
+      "running": "Running",
+      "done": "Done",
+      "failed": "Failed",
+      "skipped": "Not applicable"
+    },
+    "errors": {
+      "save": "Could not save"
+    },
+    "saved": {
+      "approved": "{area} approved!",
+      "toggled": "{area} saved!",
+      "reviewed": "Page reviewed: the agent may now act according to each area's autonomy."
+    },
+    "agent": {
+      "title": "Google agent",
+      "description": "Answers questions about the profile and the areas. Changes nothing.",
+      "emptyTitle": "Ask the agent",
+      "emptyDescription": "For example: what changes if I set reviews to automatic?",
+      "you": "You",
+      "agentName": "Agent",
+      "label": "Your question",
+      "placeholder": "Write your question",
+      "send": "Send",
+      "notice": "The agent answers based on the profile and the analyses. In this conversation it changes nothing.",
+      "error": "The agent did not answer"
+    }
+  },
+  "areas": {
+    "reviews": {
+      "name": "Reviews",
+      "description": "Replies to reviews in your brand's tone, takes negative ones to a person on the team and prepares review requests, always the same request for everyone."
+    },
+    "defense": {
+      "name": "Profile defense",
+      "description": "Keeps the approved version of the profile and warns when someone, or Google itself, changes the phone, address, website, name, category or hours."
+    },
+    "info": {
+      "name": "Information",
+      "description": "Takes care of the profile's description, categories, attributes and services, from the data you already have in GUIDU."
+    },
+    "hours": {
+      "name": "Hours",
+      "description": "Keeps the hours equal to the unit's and reminds you of holidays before they come."
+    },
+    "posts": {
+      "name": "Posts",
+      "description": "Writes posts about news, offers and events with what you already have in the Portfolio."
+    },
+    "photos": {
+      "name": "Photos",
+      "description": "Publishes the photos you send little by little, with a description. Never uses AI-generated images."
+    }
+  },
+  "analyses": {
+    "info-checklist": "Checking the profile information",
+    "hours-checklist": "Checking hours and holidays",
+    "photos-checklist": "Checking photos, logo and cover",
+    "reviews-summary": "Analyzing reviews",
+    "unknown": "Analysis"
+  },
+  "findings": {
+    "generic": {
+      "title": "Point to validate"
+    },
+    "primary-category": {
+      "title": "No primary category",
+      "detail": "The primary category tells Google which searches the profile shows in."
+    },
+    "additional-categories": {
+      "title": "No additional categories",
+      "detail": "Additional categories help you show in searches related to what you do."
+    },
+    "description-missing": {
+      "title": "Profile without a description",
+      "detail": "A good description explains what you do, for whom and where."
+    },
+    "description-short": {
+      "title": "Short description",
+      "detail": "The description has {length} characters; under {min} it says little about the business."
+    },
+    "description-link": {
+      "title": "Link in the description",
+      "detail": "Google does not allow links in the description; they may get the change rejected."
+    },
+    "phone-missing": {
+      "title": "No phone",
+      "detail": "Without a phone, whoever finds the profile cannot call."
+    },
+    "website-missing": {
+      "title": "No website",
+      "detail": "The website link takes searchers to you."
+    },
+    "attributes-missing": {
+      "title": "No attributes",
+      "detail": "Attributes such as accessibility and payment methods answer questions before the visit."
+    },
+    "regular-hours-missing": {
+      "title": "No opening hours",
+      "detail": "Without hours, Google does not show whether you are open."
+    },
+    "holidays-missing": {
+      "title": "Holiday without special hours",
+      "detail": "{count, plural, one {# national holiday} other {# national holidays}} in the next 45 days without special hours; the next one is on {date}."
+    },
+    "photos-few": {
+      "title": "Few photos",
+      "detail": "The profile has {count} photos; we recommend at least {min}."
+    },
+    "logo-missing": {
+      "title": "No logo",
+      "detail": "The logo helps people recognize the brand in search."
+    },
+    "cover-missing": {
+      "title": "No cover photo",
+      "detail": "The cover is the first image shown on the profile."
+    },
+    "reviews-unanswered": {
+      "title": "Unanswered reviews",
+      "detail": "{count, plural, one {# review} other {# reviews}} without a reply, {negative} of them with 1 or 2 stars."
+    },
+    "reviews-response-rate": {
+      "title": "Low response rate",
+      "detail": "You replied to {rate}% of the reviews read; at least {target}% is recommended."
+    }
+  },
+  "metrics": {
+    "upcomingHolidays": "Holidays in the next 45 days",
+    "photos": "Photos",
+    "rating": "Average rating",
+    "reviewCount": "Reviews",
+    "reviewsRead": "Reviews read",
+    "responseRate": "Response rate (%)",
+    "unanswered": "Unanswered",
+    "unansweredNegative": "Unanswered negative reviews",
+    "last30Days": "Reviews in the last 30 days",
+    "stars1": "1 star",
+    "stars2": "2 stars",
+    "stars3": "3 stars",
+    "stars4": "4 stars",
+    "stars5": "5 stars"
+  },
+  "errors": {
+    "provider": "Google did not answer now. Try again.",
+    "notConfigured": "The Google connection is not configured yet.",
+    "notFound": "Resource not found.",
+    "forbidden": "You cannot change this profile.",
+    "alreadyLinked": "This profile is already linked to a unit.",
+    "unitTaken": "This unit already has a profile.",
+    "invalidUnit": "The profile data does not make a valid unit.",
+    "invalidInput": "Invalid data.",
+    "aboveCeiling": "This autonomy is above the limit set for you.",
+    "connectionExpired": "The Google connection expired. Sign in again.",
+    "noOrigin": "Return address not configured (APP_URL).",
+    "specialistUnavailable": "The agent does not have an AI key and model yet.",
+    "specialistFailed": "The agent could not answer now. Try again.",
+    "questionInvalid": "Write your question."
   }
 }
