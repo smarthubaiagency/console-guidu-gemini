@@ -185,10 +185,10 @@ async function queryEvents(
 ): Promise<PlatformEventRow[]> {
   const rows = await tx.$queryRaw<RawRow[]>`
     select * from private.platform_events(
-      ${filters.type ?? null}, ${filters.module ?? null},
+      ${filters.type ?? null}::text, ${filters.module ?? null}::text,
       ${filters.partner ?? null}::uuid, ${filters.customer ?? null}::uuid,
       ${dayStart(filters.from)}::timestamptz, ${dayStart(filters.to, 1)}::timestamptz,
-      ${eventId}::uuid, ${limit}
+      ${eventId}::uuid, ${limit}::integer
     )
   `;
   return rows.map(toRow);
