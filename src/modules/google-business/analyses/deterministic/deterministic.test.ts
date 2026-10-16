@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// The registry also loads the intelligence analyses (server-only, GB1b).
+vi.mock("server-only", () => ({}));
 
 import type { LocationSnapshot, ReviewSummary } from "../contract";
 import { locationAnalyses } from "../registry";

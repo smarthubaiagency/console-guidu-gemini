@@ -4,7 +4,6 @@ import { afterAll, beforeAll, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import { QuotaExceededError } from "@/core/entitlements/quotas";
-import { PermissionDeniedError } from "@/core/permissions/guard";
 import { withContext, type RequestContext } from "@/lib/prisma/with-context";
 import type {
   AnalysisContext,
@@ -302,7 +301,7 @@ describeDatabase(
         run(viewer, (tx) =>
           addMapsKeyword(tx, viewer, UNIT, { keyword: "ortodontista" }),
         ),
-      ).rejects.toBeInstanceOf(PermissionDeniedError);
+      ).rejects.toMatchObject({ code: "forbidden" });
     });
 
     it("keeps the keywords within the plan quota", async () => {

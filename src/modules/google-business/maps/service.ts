@@ -11,7 +11,7 @@ import type {
 } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import { requireManager, requireReader } from "../server/access";
+import { requireManager, requireReader } from "../server/actors";
 
 import type { CompetitorStat } from "./competitors";
 import type { LatLng } from "./geo";

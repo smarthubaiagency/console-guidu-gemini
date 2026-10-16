@@ -10,18 +10,29 @@ import {
 } from "@/core/permissions/matrix";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
-import {
-  type ContextTransaction,
-  type RequestContext,
-  withContext,
-} from "@/lib/prisma/with-context";
+import { type RequestContext, withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
-import { gbForbidden, gbNotFound } from "./errors";
+import { gbNotFound } from "./errors";
 import {
   readServiceMode,
   type ServiceMode,
 } from "@/core/organizations/service-mode";
 import type { GbTarget } from "./target";
+import {
+  type GbActorKind,
+  managerKind,
+  partnerManages,
+  requireManager,
+  requireReader,
+} from "./actors";
+
+export {
+  type GbActorKind,
+  managerKind,
+  partnerManages,
+  requireManager,
+  requireReader,
+};
 
 /**
  * Who may do what with the fichas of a workspace (GB1a, ADR 0020):
@@ -35,8 +46,6 @@ import type { GbTarget } from "./target";
  * Every page and action resolves this again on the server; RLS repeats it.
  */
 
-export type GbActorKind = "member" | "partner";
-
 export type GbAccess = Readonly<{
   target: GbTarget;
   ctx: RequestContext;
@@ -48,55 +57,6 @@ export type GbAccess = Readonly<{
 
 export function gbModuleAvailable(): boolean {
   return isModuleTechnicallyAvailable("google-business");
-}
-
-/** True when the partner of the context manages the context's company. */
-export async function partnerManages(
-  tx: ContextTransaction,
-  ctx: RequestContext,
-): Promise<boolean> {
-  if (!ctx.partnerId) return false;
-  const [row] = await tx.$queryRaw<{ ok: boolean }[]>`
-    select private.partner_manages_organization(${ctx.organizationId}::uuid) as ok
-  `;
-  return row?.ok === true;
-}
-
-/**
- * Who operates in this context, checked inside the transaction of each
- * write: the managing partner, or owner/admin of the workspace in `padrao`
- * mode. Null: read only.
- */
-export async function managerKind(
-  tx: ContextTransaction,
-  ctx: RequestContext,
-): Promise<GbActorKind | null> {
-  const role = await getEffectiveWorkspaceRole(tx, ctx);
-  if (role === "owner" || role === "admin") {
-    const mode = await readServiceMode(tx, ctx.organizationId);
-    return mode === "padrao" ? "member" : null;
-  }
-  if (role) return null;
-  return (await partnerManages(tx, ctx)) ? "partner" : null;
-}
-
-export async function requireManager(
-  tx: ContextTransaction,
-  ctx: RequestContext,
-): Promise<GbActorKind> {
-  const kind = await managerKind(tx, ctx);
-  if (!kind) throw gbForbidden();
-  return kind;
-}
-
-/** Readers: members of the workspace or the managing partner. */
-export async function requireReader(
-  tx: ContextTransaction,
-  ctx: RequestContext,
-): Promise<void> {
-  if (await getEffectiveWorkspaceRole(tx, ctx)) return;
-  if (await partnerManages(tx, ctx)) return;
-  throw gbNotFound();
 }
 
 export async function resolveAppAccess(
