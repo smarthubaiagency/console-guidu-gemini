@@ -17,6 +17,7 @@ import {
   type InboxNotice,
   type NotificationContent,
 } from "@/core/notifications/inbox-content";
+import type { NotificationLanguage } from "@/core/notifications/notify";
 import { notificationLanguages } from "@/core/notifications/language";
 import { isHttpUrl } from "@/core/notifications/markup";
 import { getNotificationTransport } from "@/core/notifications/transport";
@@ -82,7 +83,7 @@ export type DispatchResult = Readonly<{
   whatsapp: string | null;
 }>;
 
-type EventRow = Readonly<{
+export type EventRow = Readonly<{
   id: string;
   type: string;
   route: string;
@@ -172,12 +173,33 @@ export function bellNoticeOf(
         data: { count: String(Number(data.count) || 1) },
         linkUrl,
       };
+    case "events.access_requested":
+      return {
+        eventType: type,
+        data: {
+          requester: str(data.requester).slice(0, MAX_VALUE),
+          workspace: str(data.workspaceName).slice(0, MAX_VALUE),
+          hours: String(Number(data.hours) || 72),
+        },
+        linkUrl,
+      };
+    case "security.api_key_created":
+    case "security.api_key_revoked":
+    case "security.mfa_requirement_off":
+      return {
+        eventType: type,
+        data: {
+          workspace: str(data.workspaceName).slice(0, MAX_VALUE),
+          key: (str(data.keyName) || str(data.prefix)).slice(0, MAX_VALUE),
+        },
+        linkUrl,
+      };
     default:
       return null;
   }
 }
 
-async function brandOf(
+export async function brandOf(
   tx: ContextTransaction,
   event: EventRow,
   definition: EventDefinition,
@@ -489,7 +511,7 @@ export async function dispatchEvent(
             : null;
         const language = recipient.email
           ? await languageOf(recipient.email)
-          : { locale: SOURCE_LOCALE, messages: undefined };
+          : ({ locale: SOURCE_LOCALE } as NotificationLanguage);
         const outcome = await deliverPersonWhatsApp(
           tx,
           {

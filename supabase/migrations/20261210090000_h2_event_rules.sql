@@ -593,6 +593,7 @@ create table public.event_access_grants (
   workspace_id     uuid not null,
   -- Written by the database when the request is made.
   workspace_slug   text,
+  workspace_name   text,
   requester_label  text check (requester_label is null or length(requester_label) <= 254),
   event_ids        uuid[] not null check (cardinality(event_ids) between 1 and 50),
   requested_by     uuid not null references public.profiles(id) on delete cascade,
@@ -683,7 +684,8 @@ declare
   v_prev_partner text := current_setting('app.event_partner', true);
 begin
   perform set_config('app.event_workspace', new.workspace_id::text, true);
-  select w.slug into new.workspace_slug from public.workspaces w where w.id = new.workspace_id;
+  select w.slug, w.name into new.workspace_slug, new.workspace_name
+  from public.workspaces w where w.id = new.workspace_id;
   if new.requester_kind = 'partner' then
     perform set_config('app.event_partner', new.partner_id::text, true);
     select m.email into new.requester_label
@@ -826,7 +828,7 @@ create policy event_access_grants_worker_expire on public.event_access_grants
   with check (status = 'expired');
 
 grant select (id, requester_kind, partner_id, organization_id, workspace_id, workspace_slug,
-              requester_label, event_ids, requested_by, reason, reference, duration_hours,
+              workspace_name, requester_label, event_ids, requested_by, reason, reference, duration_hours,
               status, expires_at, created_at)
   on public.event_access_grants to app_worker;
 grant update (status, updated_at) on public.event_access_grants to app_worker;

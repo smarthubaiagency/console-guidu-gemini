@@ -42,6 +42,34 @@
     "eventsChainBroken": {
       "title": "El sello de un evento no coincide",
       "body": "La verificación de la Central de Eventos encontró {count} evento(s) con el sello o la cadena rotos."
+    },
+    "accessRequested": {
+      "title": "Solicitud de acceso a los datos",
+      "body": "{requester} pidió acceso a los datos de eventos de {workspace} por {hours} horas."
+    },
+    "apiKeyCreated": {
+      "title": "Clave de API creada",
+      "body": "Se creó la clave {key} en {workspace}."
+    },
+    "apiKeyRevoked": {
+      "title": "Clave de API revocada",
+      "body": "Se revocó la clave {key} en {workspace}."
+    },
+    "mfaRequirementOff": {
+      "title": "La verificación en dos pasos ya no se exige",
+      "body": "Se retiró la exigencia en {workspace}."
+    },
+    "eventReminder": {
+      "title": "Recordatorio: {event}",
+      "body": "Espera una decisión desde hace {hours} horas."
+    },
+    "eventEscalation": {
+      "title": "Sin respuesta: {event}",
+      "body": "Espera una decisión desde hace {hours} horas y se te reenvió."
+    },
+    "eventDigest": {
+      "title": "Resumen del día",
+      "body": "{count} aviso(s) guardado(s) para el resumen."
     }
   },
   "preferences": {
