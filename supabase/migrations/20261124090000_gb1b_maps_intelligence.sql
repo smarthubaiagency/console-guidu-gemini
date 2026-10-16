@@ -219,7 +219,8 @@ create trigger gb_maps_competitors_guard_identity
   for each row execute function private.gb_maps_guard_identity();
 
 -- ----------------------------------------------------------------------------
--- 2. Policies: members read; owner and admin write, signing the rows
+-- 2. Policies: members (or the managing partner, ADR 0020) read; owner and
+-- admin (or the managing partner) write, signing the rows
 -- ----------------------------------------------------------------------------
 do $$
 declare
@@ -231,7 +232,10 @@ begin
       using (
         workspace_id = private.context_uuid('app.workspace_id')
         and organization_id = private.context_uuid('app.organization_id')
-        and private.is_workspace_member(workspace_id, organization_id)
+        and (
+          private.is_workspace_member(workspace_id, organization_id)
+          or private.partner_manages_organization(organization_id)
+        )
       )$p$, t || '_select', t);
   end loop;
 
@@ -243,20 +247,29 @@ begin
         and organization_id = private.context_uuid('app.organization_id')
         and created_by = private.context_uuid('app.user_id')
         and updated_by is null
-        and private.current_workspace_role() in ('owner', 'admin')
+        and (
+          private.current_workspace_role() in ('owner', 'admin')
+          or private.partner_manages_organization(organization_id)
+        )
       )$p$, t || '_insert', t);
     execute format($p$
       create policy %I on public.%I for update to app_runtime
       using (
         workspace_id = private.context_uuid('app.workspace_id')
         and organization_id = private.context_uuid('app.organization_id')
-        and private.current_workspace_role() in ('owner', 'admin')
+        and (
+          private.current_workspace_role() in ('owner', 'admin')
+          or private.partner_manages_organization(organization_id)
+        )
       )
       with check (
         workspace_id = private.context_uuid('app.workspace_id')
         and organization_id = private.context_uuid('app.organization_id')
         and updated_by = private.context_uuid('app.user_id')
-        and private.current_workspace_role() in ('owner', 'admin')
+        and (
+          private.current_workspace_role() in ('owner', 'admin')
+          or private.partner_manages_organization(organization_id)
+        )
       )$p$, t || '_update', t);
     execute format('grant select, insert, update on public.%I to app_runtime', t);
   end loop;
@@ -269,7 +282,10 @@ create policy gb_maps_scans_insert on public.gb_maps_scans
     workspace_id = private.context_uuid('app.workspace_id')
     and organization_id = private.context_uuid('app.organization_id')
     and created_by = private.context_uuid('app.user_id')
-    and private.current_workspace_role() in ('owner', 'admin')
+    and (
+          private.current_workspace_role() in ('owner', 'admin')
+          or private.partner_manages_organization(organization_id)
+        )
   );
 
 create policy gb_maps_scan_results_insert on public.gb_maps_scan_results
@@ -277,7 +293,10 @@ create policy gb_maps_scan_results_insert on public.gb_maps_scan_results
   with check (
     workspace_id = private.context_uuid('app.workspace_id')
     and organization_id = private.context_uuid('app.organization_id')
-    and private.current_workspace_role() in ('owner', 'admin')
+    and (
+          private.current_workspace_role() in ('owner', 'admin')
+          or private.partner_manages_organization(organization_id)
+        )
   );
 
 grant select, insert on public.gb_maps_scans, public.gb_maps_scan_results to app_runtime;

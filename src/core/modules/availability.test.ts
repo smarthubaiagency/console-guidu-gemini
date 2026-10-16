@@ -35,9 +35,11 @@ describe("Module Availability", () => {
       }
     });
 
-    it("returns false for coming-soon google-business and true for the portfolio", () => {
-      vi.stubEnv("GUIDU_MODULE_AI_AGENTS_ENABLED", "true");
+    it("gates google-business on GUIDU_MODULE_GOOGLE_BUSINESS_ENABLED (GB1a) and keeps the portfolio on", () => {
+      vi.stubEnv("GUIDU_MODULE_GOOGLE_BUSINESS_ENABLED", "");
       expect(isModuleTechnicallyAvailable("google-business")).toBe(false);
+      vi.stubEnv("GUIDU_MODULE_GOOGLE_BUSINESS_ENABLED", "true");
+      expect(isModuleTechnicallyAvailable("google-business")).toBe(true);
       expect(isModuleTechnicallyAvailable("portfolio")).toBe(true);
     });
   });

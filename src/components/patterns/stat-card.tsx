@@ -5,7 +5,9 @@ import { cn } from "@/lib/utils";
 
 /**
  * A number with its label (U4, ADR 0021). `framed` is the card inside a
- * grey frame whose top carries the icon and label; `plain` is one card.
+ * grey frame whose top carries the icon and label; `flush` is the same with
+ * the white card meeting the frame on the sides and bottom (the "Portfolio
+ * Growth" model); `plain` is one card.
  */
 export function StatCard({
   label,
@@ -22,7 +24,7 @@ export function StatCard({
   icon?: ReactNode;
   /** Small control on the right of the label, such as a menu button. */
   action?: ReactNode;
-  variant?: "framed" | "plain";
+  variant?: "framed" | "flush" | "plain";
   className?: string;
 }>) {
   const labelRow = (
@@ -55,10 +57,20 @@ export function StatCard({
       </Card>
     );
   }
+  if (variant === "flush") {
+    return (
+      <Card variant="framed" className={cn("p-0", className)}>
+        <div className="px-4 py-2.5">{labelRow}</div>
+        <div className="bg-card border-border rounded-card -mx-px -mb-px flex flex-1 flex-col gap-1 border p-4">
+          {body}
+        </div>
+      </Card>
+    );
+  }
   return (
     <Card variant="framed" className={className}>
       <div className="px-3 py-2">{labelRow}</div>
-      <div className="bg-card border-border rounded-inner shadow-card flex flex-col gap-1 border p-4">
+      <div className="bg-card border-border rounded-inner shadow-card flex flex-1 flex-col gap-1 border p-4">
         {body}
       </div>
     </Card>

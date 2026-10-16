@@ -5,13 +5,13 @@ import { z } from "zod";
 
 import { recordAudit } from "@/core/audit/record";
 import { assertWithinQuota, resolveQuota } from "@/core/entitlements/quotas";
-import { Permissions } from "@/core/permissions/catalog";
-import { requireWorkspacePermission } from "@/core/permissions/guard";
 import type {
   ContextTransaction,
   RequestContext,
 } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
+
+import { requireManager, requireReader } from "../server/access";
 
 import type { CompetitorStat } from "./competitors";
 import type { LatLng } from "./geo";
@@ -37,8 +37,9 @@ import type {
  * Data of the Saúde no Maps of a unit (GB1b): keywords, reference
  * competitors and measurements, in the tables of the GB1b migration. Every
  * function runs inside the caller's context transaction (RLS applies);
- * reads need `workspace.read`, writes `workspace.locations.manage` (owner
- * and admin, the same rule the database repeats). Writes are audited.
+ * reads need a member or the managing partner, writes the operator of the
+ * ficha (owner/admin in `padrao` mode or the managing partner, ADR 0020),
+ * the same rule the database repeats. Writes are audited.
  */
 
 export type MapsKeyword = Readonly<{
@@ -112,7 +113,7 @@ export async function listMapsKeywords(
   ctx: RequestContext,
   unitId: string,
 ): Promise<MapsKeyword[]> {
-  await requireWorkspacePermission(tx, ctx, Permissions.WORKSPACE_READ);
+  await requireReader(tx, ctx);
   await loadUnit(tx, ctx, unitId);
   const rows = await tx.gbMapsKeyword.findMany({
     where: { workspaceId: ctx.workspaceId, locationId: unitId },
@@ -155,11 +156,7 @@ export async function addMapsKeyword(
   unitId: string,
   input: unknown,
 ): Promise<MapsKeyword> {
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_LOCATIONS_MANAGE,
-  );
+  await requireManager(tx, ctx);
   const parsed = KeywordInput.safeParse(input);
   if (!parsed.success) {
     throw invalid("keywordInvalid", "Use de 2 a 80 caracteres.");
@@ -212,11 +209,7 @@ export async function setMapsKeywordStatus(
   keywordId: string,
   status: "active" | "paused",
 ): Promise<MapsKeyword> {
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_LOCATIONS_MANAGE,
-  );
+  await requireManager(tx, ctx);
   if (
     !Uuid.safeParse(keywordId).success ||
     !["active", "paused"].includes(status)
@@ -270,11 +263,7 @@ export async function ensureAgentKeywords(
   unitId: string,
   suggestions: readonly string[],
 ): Promise<{ keywords: MapsKeyword[]; created: number; trimmed: number }> {
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_LOCATIONS_MANAGE,
-  );
+  await requireManager(tx, ctx);
   await loadUnit(tx, ctx, unitId);
   await lockUnit(tx, unitId);
   const existing = await tx.gbMapsKeyword.findMany({
@@ -344,7 +333,7 @@ export async function listReferenceCompetitors(
   ctx: RequestContext,
   unitId: string,
 ): Promise<MapsReferenceCompetitor[]> {
-  await requireWorkspacePermission(tx, ctx, Permissions.WORKSPACE_READ);
+  await requireReader(tx, ctx);
   await loadUnit(tx, ctx, unitId);
   const rows = await tx.gbMapsCompetitor.findMany({
     where: { workspaceId: ctx.workspaceId, locationId: unitId },
@@ -362,11 +351,7 @@ export async function setReferenceCompetitor(
   placeId: string,
   active: boolean,
 ): Promise<MapsReferenceCompetitor> {
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_LOCATIONS_MANAGE,
-  );
+  await requireManager(tx, ctx);
   const parsed = PlaceId.safeParse(placeId);
   if (!parsed.success) throw invalid("placeInvalid", "Concorrente inválido.");
   await loadUnit(tx, ctx, unitId);
@@ -417,11 +402,7 @@ export async function ensureReferenceCompetitors(
   unitId: string,
   placeIds: readonly string[],
 ): Promise<number> {
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_LOCATIONS_MANAGE,
-  );
+  await requireManager(tx, ctx);
   await lockUnit(tx, unitId);
   const count = await tx.gbMapsCompetitor.count({
     where: { workspaceId: ctx.workspaceId, locationId: unitId },
@@ -476,11 +457,7 @@ export async function planMapsScan(
   unitId: string,
   now: Date,
 ): Promise<MapsScanPlan> {
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_LOCATIONS_MANAGE,
-  );
+  await requireManager(tx, ctx);
   await loadUnit(tx, ctx, unitId);
   const where = { workspaceId: ctx.workspaceId, locationId: unitId };
   const [baseline, monthlyUsed, gridQuota, scanQuota] = await Promise.all([
@@ -513,7 +490,7 @@ export async function previousCompetitors(
   ctx: RequestContext,
   unitId: string,
 ): Promise<Map<string, CompetitorStat[]>> {
-  await requireWorkspacePermission(tx, ctx, Permissions.WORKSPACE_READ);
+  await requireReader(tx, ctx);
   const last = await tx.gbMapsScan.findFirst({
     where: { workspaceId: ctx.workspaceId, locationId: unitId },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -585,11 +562,7 @@ export async function recordMapsScan(
   input: MapsScanInput,
   now: Date,
 ): Promise<{ scanId: string; isBaseline: boolean }> {
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_LOCATIONS_MANAGE,
-  );
+  await requireManager(tx, ctx);
   await loadUnit(tx, ctx, input.unitId);
   await lockUnit(tx, input.unitId);
   if (input.keywords.length === 0) {
@@ -670,7 +643,7 @@ export async function baselineSummary(
   ctx: RequestContext,
   unitId: string,
 ): Promise<{ score: number | null; solv: number } | null> {
-  await requireWorkspacePermission(tx, ctx, Permissions.WORKSPACE_READ);
+  await requireReader(tx, ctx);
   const baseline = await tx.gbMapsScan.findFirst({
     where: {
       workspaceId: ctx.workspaceId,
@@ -703,7 +676,7 @@ export async function loadMapsHealthView(
   ctx: RequestContext,
   unitId: string,
 ): Promise<MapsHealthView | null> {
-  await requireWorkspacePermission(tx, ctx, Permissions.WORKSPACE_READ);
+  await requireReader(tx, ctx);
   await loadUnit(tx, ctx, unitId);
   const where = { workspaceId: ctx.workspaceId, locationId: unitId };
   const [latest, baseline, references] = await Promise.all([

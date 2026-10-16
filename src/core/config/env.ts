@@ -74,6 +74,20 @@ const notFakeSuggestions = z
     error: "a IA de teste das sugestões não roda em produção",
   });
 
+const notFakeGoogleBusiness = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "o Google Meu Negócio de teste não roda em produção",
+  });
+
+const notFakeSpecialist = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "a IA de teste do agente especialista não roda em produção",
+  });
+
 const WEB = z.object({
   DATABASE_URL: postgresUrl,
   APP_URL: httpsOrigin,
@@ -84,6 +98,8 @@ const WEB = z.object({
   GOOGLE_OAUTH_PROVIDER: notFakeGoogle,
   MAPS_INTELLIGENCE_PROVIDER: notFakeMaps,
   GB_SUGGESTIONS_PROVIDER: notFakeSuggestions,
+  GOOGLE_BUSINESS_PROVIDER: notFakeGoogleBusiness,
+  GOOGLE_BUSINESS_SPECIALIST_PROVIDER: notFakeSpecialist,
 });
 
 /** Supabase accepts either the public or the server-only names. */
@@ -114,6 +130,7 @@ const WORKER = z.object({
   TRANSLATION_PROVIDER: notFakeTranslation,
   MAPS_INTELLIGENCE_PROVIDER: notFakeMaps,
   GB_SUGGESTIONS_PROVIDER: notFakeSuggestions,
+  GOOGLE_BUSINESS_PROVIDER: notFakeGoogleBusiness,
 });
 
 export type EnvTarget = "web" | "worker";

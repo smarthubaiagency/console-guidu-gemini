@@ -29,6 +29,18 @@ import {
   WorkspaceScopeSchema,
   type WorkspaceScopeType,
 } from "@/core/mcp/scopes";
+import {
+  AUTONOMY_LEVELS,
+  type Autonomy,
+  type BaseSkill,
+  DEFAULT_TRIGGER_SETTINGS,
+  mergeSkillSettings,
+  minAutonomy,
+  type SkillSetting,
+  SkillSettingsSchema,
+  type TriggerSettings,
+  TriggerSettingsSchema,
+} from "@/modules/google-business/areas";
 
 /** Scopes each plan allows its API keys (CF6b), by plan key. */
 const PlanScopesSchema = z
@@ -283,6 +295,34 @@ export const SETTINGS = {
     schema: SiteIdSchema.nullable(),
     default: null,
     levels: ["partner"],
+  }),
+  /**
+   * Base skills of the GMN agent (GB1a, especificação §8): switch and
+   * autonomy per skill. Each level sets only the skills it changes; the
+   * levels merge skill by skill and the platform default fills the rest.
+   * The ficha level lives in the module (`gb_area_settings`).
+   */
+  "google_business.skills": define<Partial<Record<BaseSkill, SkillSetting>>>({
+    schema: SkillSettingsSchema,
+    default: {},
+    levels: ["platform", "partner", "workspace"],
+    narrow: mergeSkillSettings,
+  }),
+  /**
+   * Ceiling of the GMN agent's autonomy (GB1a): the platform sets it, the
+   * partner may only lower it for its customers; no skill goes above it.
+   */
+  "google_business.autonomy_ceiling": define<Autonomy>({
+    schema: z.enum(AUTONOMY_LEVELS),
+    default: "auto",
+    levels: ["platform", "partner"],
+    narrow: minAutonomy,
+  }),
+  /** Default triggers of the GMN agent (GB1a, especificação §8.5). */
+  "google_business.triggers": define<TriggerSettings>({
+    schema: TriggerSettingsSchema,
+    default: DEFAULT_TRIGGER_SETTINGS,
+    levels: ["platform", "partner", "workspace"],
   }),
 } as const;
 

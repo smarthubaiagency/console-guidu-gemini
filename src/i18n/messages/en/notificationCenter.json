@@ -34,6 +34,10 @@
     "unknown": {
       "title": "Notice",
       "body": "You have a new notice."
+    },
+    "gbAnalysesDone": {
+      "title": "Analyses finished",
+      "body": "The background analyses of the profile {location} finished."
     }
   },
   "preferences": {

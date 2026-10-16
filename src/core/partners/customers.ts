@@ -7,6 +7,12 @@ import { recordAudit } from "@/core/audit/record";
 import { startSubscription } from "@/core/billing/partner";
 import { adminAuditContext } from "@/core/module-runtime/settings";
 import { generateInvitationToken } from "@/core/organizations/invitations";
+import {
+  PARTNER_REGISTRATION_DEFAULT_MODE,
+  recordRegistrationMode,
+  type ServiceMode,
+  ServiceModeSchema,
+} from "@/core/organizations/service-mode";
 import { PermissionDeniedError } from "@/core/permissions/guard";
 import {
   hasPartnerRolePermission,
@@ -243,6 +249,7 @@ const CustomerInputSchema = z.object({
     .max(254),
   templateId: z.string().uuid().nullable(),
   planId: z.string().uuid().nullable(),
+  serviceMode: ServiceModeSchema,
 });
 
 const CUSTOMER_ISSUE_KEYS = {
@@ -261,6 +268,8 @@ export type CustomerInput = Readonly<{
   templateId?: string | null;
   /** Base plan of the pending subscription; default: the first active one. */
   planId?: string | null;
+  /** Service mode of the company (ADR 0020); default `gerenciado`. */
+  serviceMode?: ServiceMode | null;
 }>;
 
 function isUniqueViolation(error: unknown): boolean {
@@ -297,6 +306,7 @@ export async function createPartnerCustomer(
     ...input,
     templateId: input.templateId || null,
     planId: input.planId || null,
+    serviceMode: input.serviceMode || PARTNER_REGISTRATION_DEFAULT_MODE,
   });
   if (!parsed.success) {
     throw invalidPartnerParse(parsed.error, CUSTOMER_ISSUE_KEYS);
@@ -327,6 +337,14 @@ export async function createPartnerCustomer(
     insert into public.organizations (id, name, status, partner_id)
     values (${organizationId}::uuid, ${data.organizationName}, 'active', ${partnerId}::uuid)
   `;
+  // Service mode (ADR 0020, GB1a): a customer registered by the partner is
+  // managed by default; the partner may register it as `padrao`.
+  await recordRegistrationMode(tx, {
+    organizationId,
+    partnerId,
+    mode: data.serviceMode,
+    userId: actor.userId,
+  });
   try {
     await tx.$executeRaw`
       insert into public.workspaces (id, organization_id, slug, name, status)
@@ -391,6 +409,7 @@ export async function createPartnerCustomer(
       targetSlug: data.workspaceSlug,
       emailDomain: data.ownerEmail.split("@")[1] ?? "unknown",
       target: partnerId,
+      mode: data.serviceMode,
     },
   });
 

@@ -56,6 +56,11 @@ export default defineConfig({
       // Agent GMN (GB1b): fake maps provider and fake AI suggestions.
       MAPS_INTELLIGENCE_PROVIDER: "fake",
       GB_SUGGESTIONS_PROVIDER: "fake",
+      // Google Meu Negócio (GB1a): the module on, the fake provider with its
+      // consent page and the fixed answer of the specialist; never Zernio.
+      GUIDU_MODULE_GOOGLE_BUSINESS_ENABLED: "true",
+      GOOGLE_BUSINESS_PROVIDER: "fake",
+      GOOGLE_BUSINESS_SPECIALIST_PROVIDER: "fake",
       // The Chatwoot double of the rig listens on 127.0.0.1 over http (A5a).
       GUIDU_CHANNELS_ALLOW_PRIVATE: "true",
       // Custom domains (CF2b): the CNAME target shown in the instructions and

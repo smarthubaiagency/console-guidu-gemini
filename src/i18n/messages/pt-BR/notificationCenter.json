@@ -34,6 +34,10 @@
     "unknown": {
       "title": "Aviso",
       "body": "Você tem um aviso novo."
+    },
+    "gbAnalysesDone": {
+      "title": "Análises concluídas",
+      "body": "As análises em segundo plano da ficha {location} terminaram."
     }
   },
   "preferences": {

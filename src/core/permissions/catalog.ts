@@ -8,7 +8,8 @@
  *   e integrations.manage. Não espalhar comparações de nome de papel pelo código.
  *   Exportar, excluir, publicar, alterar credenciais e delegar acesso são permissões distintas."
  * - Stable, typed namespaced permission identifiers for the core domain.
- * - Does NOT define permissions for unreleased/unspecified modules (Catalog, Google Business).
+ * - Module permissions live in each manifest; the partner permission of
+ *   Google Business (GB1a) is here because partner roles are core.
  * ============================================================================
  */
 
@@ -114,6 +115,9 @@ export const Permissions = {
   PARTNER_SETTINGS_MANAGE: "partner.settings.manage",
   // Configurações › Segurança and the partner's security events (CF5a).
   PARTNER_SECURITY_READ: "partner.security.read",
+  // Operate the Google fichas of the companies the partner manages (GB1a,
+  // ADR 0020): onboarding, automation page and the GMN agent.
+  PARTNER_GOOGLE_BUSINESS_MANAGE: "partner.google_business.manage",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

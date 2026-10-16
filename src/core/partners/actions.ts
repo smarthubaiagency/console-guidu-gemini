@@ -360,6 +360,10 @@ export async function createPartnerCustomerAction(
             workspaceSlug: text(formData, "workspaceSlug"),
             ownerEmail: text(formData, "ownerEmail"),
             templateId: text(formData, "templateId") || null,
+            serviceMode:
+              text(formData, "serviceMode") === "padrao"
+                ? "padrao"
+                : "gerenciado",
           },
           origin,
         ),

@@ -239,6 +239,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_AI_AGENTS_MANAGE,
     Permissions.PARTNER_SETTINGS_MANAGE,
     Permissions.PARTNER_SECURITY_READ,
+    Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
@@ -252,6 +253,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_AI_AGENTS_MANAGE,
     Permissions.PARTNER_SETTINGS_MANAGE,
     Permissions.PARTNER_SECURITY_READ,
+    Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
   ]),
   partner_finance: new Set([
     Permissions.PARTNER_READ,
@@ -264,6 +266,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_CUSTOMERS_READ,
     Permissions.PARTNER_SUPPORT_REQUEST,
     Permissions.PARTNER_AI_AGENTS_READ,
+    Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
   ]),
 };
 

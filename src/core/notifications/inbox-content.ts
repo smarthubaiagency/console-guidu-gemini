@@ -92,6 +92,8 @@ const EVENT_KEYS: Readonly<Record<string, string>> = {
   "billing.subscription.suspended": "suspended",
   "ai.agent.key_backup": "aiKeyBackup",
   "ai.agent.key_paused": "aiKeyPaused",
+  // Posted by the background analyses of a Google ficha (GB1a).
+  "google_business.analyses_done": "gbAnalysesDone",
 };
 
 function text(data: unknown, name: string): string {
@@ -149,6 +151,13 @@ export function renderInboxNotice(
       return {
         title: t(`${key}.title`, values),
         body: t(`${key}.body`, values),
+      };
+    }
+    case "gbAnalysesDone": {
+      const values = { location: text(data, "location") };
+      return {
+        title: t("gbAnalysesDone.title", values),
+        body: t("gbAnalysesDone.body", values),
       };
     }
     default:

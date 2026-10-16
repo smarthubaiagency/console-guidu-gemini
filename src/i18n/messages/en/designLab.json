@@ -124,7 +124,7 @@
       "items": "shadcn Item with variant=\"card\" for lists of files and records; FieldCard for a read-only value with an action (copy, open).",
       "inputGroup": "A field with buttons next to the text, like the AI message box. Not for regular forms.",
       "empty": "When a list or tab has nothing yet. Say what to do next.",
-      "stats": "Framed StatCard for the main numbers; StatGroup for several numbers side by side inside a card; Amount greys the cents (optional).",
+      "stats": "StatCard: framed (frame with a card inside), flush (card meeting the frame on the sides and bottom) and plain (a single card) for the main numbers; StatGroup for several numbers side by side inside a card; Amount greys the cents (optional).",
       "keyValue": "Short label and value summaries, such as rates and times.",
       "tags": "Filters and audiences the person can remove. Show a few and count the rest.",
       "headers": "Every new screen starts with PageCanvas (grey background) and PageTitle; each block has a SectionHeader with actions on the right."
@@ -237,7 +237,9 @@
       "answered": "Solved by the GUIDS",
       "answeredCaption": "Without handing off to the team",
       "sent": "Sent",
-      "read": "Read"
+      "read": "Read",
+      "growth": "Growth",
+      "growthCaption": "Since the plan started"
     },
     "keyValue": {
       "responseTime": "Average response time",
