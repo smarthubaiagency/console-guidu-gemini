@@ -616,7 +616,7 @@ begin
     end if;
     perform set_config('app.service_mode_token', p_token_hash, true);
     select * into v_row from public.service_mode_requests r
-    where r.token_hash = p_token_hash for update;
+    where r.token_hash = p_token_hash;
     if v_row.id is null or v_row.partner_id is distinct from private.current_partner_id() then
       perform set_config('app.service_mode_token', coalesce(v_prev_token, ''), true);
       return query select 'not_found'::text, null::uuid, null::uuid, null::uuid, null::text, null::uuid, null::uuid, null::uuid;
@@ -627,7 +627,7 @@ begin
   else
     perform set_config('app.service_mode_request', coalesce(p_request_id::text, ''), true);
     select * into v_row from public.service_mode_requests r
-    where r.id = p_request_id for update;
+    where r.id = p_request_id;
     if v_row.id is null
        or v_row.organization_id is distinct from private.context_uuid('app.organization_id')
        or private.current_organization_role() is distinct from 'owner' then
@@ -641,6 +641,8 @@ begin
 
   perform set_config('app.service_mode_org', v_row.organization_id::text, true);
   perform pg_advisory_xact_lock(hashtextextended('service_mode:' || v_row.organization_id::text, 0));
+  -- Read again under the lock of the company and the row.
+  select * into v_row from public.service_mode_requests r where r.id = v_row.id for update;
 
   if v_row.status <> 'pending' or v_row.token_used_at is not null then
     v_outcome := 'already_decided';
