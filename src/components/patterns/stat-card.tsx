@@ -61,7 +61,7 @@ export function StatCard({
     return (
       <Card variant="framed" className={cn("p-0", className)}>
         <div className="px-4 py-2.5">{labelRow}</div>
-        <div className="bg-card border-border rounded-card -mx-px -mb-px flex flex-col gap-1 border px-4 pt-4 pb-4">
+        <div className="bg-card border-border rounded-card -mx-px -mb-px flex flex-1 flex-col gap-1 border p-4">
           {body}
         </div>
       </Card>
@@ -70,7 +70,7 @@ export function StatCard({
   return (
     <Card variant="framed" className={className}>
       <div className="px-3 py-2">{labelRow}</div>
-      <div className="bg-card border-border rounded-inner shadow-card flex flex-col gap-1 border p-4">
+      <div className="bg-card border-border rounded-inner shadow-card flex flex-1 flex-col gap-1 border p-4">
         {body}
       </div>
     </Card>
