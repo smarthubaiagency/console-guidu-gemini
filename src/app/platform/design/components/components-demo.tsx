@@ -9,6 +9,7 @@ import {
   Info,
   Send,
   Sparkles,
+  TrendingUp,
   Wallet,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -537,7 +538,17 @@ export function ComponentsDemo() {
         hint={t("hints.stats")}
         code="@/components/patterns/stat-card · stat-group · amount"
       >
-        <div className="grid gap-4 md:grid-cols-2">
+        <div
+          className="grid gap-4 md:grid-cols-3"
+          data-testid="components-stat-cards"
+        >
+          <StatCard
+            variant="flush"
+            icon={<TrendingUp className="size-4" />}
+            label={t("stats.growth")}
+            value={<span className="text-success-text">+10,72%</span>}
+            caption={t("stats.growthCaption")}
+          />
           <StatCard
             icon={<Wallet className="size-4" />}
             label={t("stats.sales")}

@@ -128,7 +128,7 @@ Toda tela nova segue os componentes modelo; as telas antigas entram no padrão q
 </PageCanvas>
 ```
 
-- **Cards:** `Card` com `variant` `surface` (padrão), `panel` (bloco que contém cards), `inset` (painel cinza interno) ou `framed` (moldura com card dentro); números com `StatCard` e `StatGroup`.
+- **Cards:** `Card` com `variant` `surface` (padrão), `panel` (bloco que contém cards), `inset` (painel cinza interno) ou `framed` (moldura com card dentro); números com `StatCard` (`framed`, `flush` ou `plain`) e `StatGroup`.
 - **Selos de situação:** `Badge` com `success`, `warning`, `danger`, `info` ou `neutral`.
 - **Abas e filtros:** `TabsList variant="segmented"` e `ToggleGroup variant="segmented"`.
 - **Listas:** `Item variant="card"`, `KeyValueList`, `Table variant="soft"`, `TagList`; vazio com `Empty`.
