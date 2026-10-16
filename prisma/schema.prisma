@@ -196,12 +196,18 @@ model NotificationDelivery {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   partnerId      String   @map("partner_id") @db.Uuid
   eventType      String   @map("event_type")
-  recipientEmail String   @map("recipient_email")
-  subject        String
+  recipientEmail String?  @map("recipient_email")
+  subject        String?
   idempotencyKey String   @unique @map("idempotency_key")
   relatedId      String?  @map("related_id") @db.Uuid
   status         String   @default("pending")
   reason         String?
+  /// Event Hub (H1): the event, the channel, the person and the provider.
+  eventId         String?  @map("event_id") @db.Uuid
+  channel         String   @default("email")
+  recipientUserId String?  @map("recipient_user_id") @db.Uuid
+  provider        String?
+  attempts        Int      @default(0)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 

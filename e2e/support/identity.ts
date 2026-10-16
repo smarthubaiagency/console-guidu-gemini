@@ -72,9 +72,10 @@ export async function maintenanceOff(request: APIRequestContext): Promise<void> 
 export async function makePlatformAdmin(
   request: APIRequestContext,
   email: string,
+  role: "owner" | "operations" | "billing" | "support" = "owner",
 ): Promise<void> {
   const response = await request.post(`${AUTH_BASE_URL}/__control/platform-admin`, {
-    data: { email },
+    data: { email, role },
   });
   expect(response.status()).toBe(200);
 }
@@ -163,6 +164,23 @@ export async function seedNotification(
   },
 ): Promise<{ id: string }> {
   const response = await request.post(`${AUTH_BASE_URL}/__control/seed-notification`, {
+    data: params,
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { id: string };
+}
+
+/** Seeds a sealed event of the Event Hub in a workspace (H1). */
+export async function seedEvent(
+  request: APIRequestContext,
+  params: {
+    workspaceSlug: string;
+    type: string;
+    module: string;
+    data: Record<string, unknown>;
+  },
+): Promise<{ id: string }> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-event`, {
     data: params,
   });
   expect(response.status()).toBe(200);

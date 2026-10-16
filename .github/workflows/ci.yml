@@ -17,6 +17,49 @@ env:
   SUPABASE_CLI_VERSION: 2.110.0
 
 jobs:
+  # Decides whether a pull request changes only documentation (every file in
+  # docs/ or ending in .md). Then `db` and `e2e` are skipped, and a skipped
+  # job counts as passed for the branch protection; `quality` always runs.
+  # A push to main, an empty or unreadable diff, or a failure of this job
+  # runs everything (fail closed).
+  changes:
+    name: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.diff.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Detect a documentation-only pull request
+        id: diff
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          docs_only=false
+          if [[ "$EVENT_NAME" == "pull_request" && -n "$BASE_SHA" && -n "$HEAD_SHA" ]]; then
+            if files="$(git diff --name-only "$BASE_SHA...$HEAD_SHA")" && [[ -n "$files" ]]; then
+              docs_only=true
+              while IFS= read -r file; do
+                case "$file" in
+                  docs/*|*.md) ;;
+                  *) docs_only=false; echo "Code change: $file"; break ;;
+                esac
+              done <<<"$files"
+            else
+              echo "Diff empty or unreadable: every job runs"
+            fi
+          else
+            echo "Not a pull request: every job runs"
+          fi
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          echo "Documentation only: $docs_only"
+
   quality:
     name: quality
     runs-on: ubuntu-24.04
@@ -34,6 +77,16 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+      # Next.js build cache, keyed by the lockfile and the code; a code
+      # change restores the last cache of the same lockfile. Hashed before
+      # the install, so node_modules never enters the key.
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**', 'next.config.ts', 'tsconfig.json', 'postcss.config.*', 'prisma/**') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Generate ephemeral encryption key
         shell: bash
         run: |
@@ -41,6 +94,10 @@ jobs:
           echo "::add-mask::$enc_key"
           echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
           echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
+          events_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$events_key"
+          echo "EVENTS_HMAC_KEY=$events_key" >> "$GITHUB_ENV"
+          echo "EVENTS_HMAC_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       # F6a: fails on a high or critical advisory in what ships to production.
       # Dev-only tooling is reviewed in the audit report, not blocked here.
@@ -55,6 +112,8 @@ jobs:
 
   db:
     name: db
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # Ephemeral Redis for the API rate limit (F4a); nothing persists.
@@ -88,6 +147,10 @@ jobs:
           echo "::add-mask::$enc_key"
           echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
           echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
+          events_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$events_key"
+          echo "EVENTS_HMAC_KEY=$events_key" >> "$GITHUB_ENV"
+          echo "EVENTS_HMAC_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm generate
 
@@ -220,6 +283,8 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/payment-gateway-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/gb-maps-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/google-business-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/events-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/platform-audit-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/security-catalog.sql
 
       - name: Prisma and Data API isolation suite
@@ -240,6 +305,8 @@ jobs:
 
   e2e:
     name: e2e
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
@@ -262,10 +329,37 @@ jobs:
           echo "::add-mask::$enc_key"
           echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
           echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
+          events_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$events_key"
+          echo "EVENTS_HMAC_KEY=$events_key" >> "$GITHUB_ENV"
+          echo "EVENTS_HMAC_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm generate
+      # Chromium cached by the @playwright/test version of the lockfile; on
+      # a hit only the system packages (not cacheable) are installed.
+      - name: Read the Playwright version from the lockfile
+        id: playwright
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -nE "s/^  '@playwright\/test@([0-9][^']*)':.*/\1/p" pnpm-lock.yaml | head -n 1)"
+          if [[ -z "$version" ]]; then
+            echo "::error::@playwright/test not found in pnpm-lock.yaml"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright Chromium
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
       - name: Install Playwright Chromium with system dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
+      - name: Install Playwright system dependencies (Chromium from cache)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
       - name: Run Playwright E2E tests
         run: pnpm test:e2e
       # The AI agents module is behind its flag (C04); its screens run here
@@ -281,4 +375,3 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
-

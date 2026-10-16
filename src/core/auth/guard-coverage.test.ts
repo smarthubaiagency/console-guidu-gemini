@@ -78,12 +78,12 @@ const PUBLIC_ACTIONS: Record<string, string> = {
 
 /** Old addresses that only redirect to a guarded page. */
 const REDIRECT_ONLY = new Set([
-  "app/[workspaceSlug]/crm/contacts/[contactId]/page.tsx",
-  "app/[workspaceSlug]/hello-world/records/[recordId]/page.tsx",
-  "app/[workspaceSlug]/portfolio/[itemId]/page.tsx",
+  "app/[workspaceSlug]/(shell)/crm/contacts/[contactId]/page.tsx",
+  "app/[workspaceSlug]/(shell)/hello-world/records/[recordId]/page.tsx",
+  "app/[workspaceSlug]/(shell)/portfolio/[itemId]/page.tsx",
   // Settings indexes (CF1): open the guarded General page of their level.
   "admin/settings/page.tsx",
-  "app/[workspaceSlug]/settings/page.tsx",
+  "app/[workspaceSlug]/(shell)/settings/page.tsx",
   "platform/settings/page.tsx",
   // Marca moved to Configurações (CF2).
   "admin/brand/page.tsx",

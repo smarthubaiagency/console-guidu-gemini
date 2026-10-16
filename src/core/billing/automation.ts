@@ -3,17 +3,10 @@ import { z } from "zod";
 import { recordAudit } from "@/core/audit/record";
 import { appConfig } from "@/core/config/app";
 import { definePlatformJob, type JobSchedule } from "@/core/jobs/definition";
-import { notificationLanguages } from "@/core/notifications/language";
-import { deliverNotification } from "@/core/notifications/delivery";
-import { postPartnerNotice } from "@/core/notifications/inbox";
-import { inboxNotice } from "@/core/notifications/inbox-content";
-import type { NotificationLanguage } from "@/core/notifications/notify";
+import { dispatchEvent } from "@/core/events/dispatch";
+import { emitEvent, WORKER_ACTOR } from "@/core/events/emit";
 import { getNotificationTransport } from "@/core/notifications/transport";
-import type {
-  NotificationBrand,
-  NotificationEvent,
-  NotificationTransport,
-} from "@/core/notifications/types";
+import type { NotificationTransport } from "@/core/notifications/types";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
 import { partnerHostOrigin } from "@/core/partners/hosts";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
@@ -28,8 +21,10 @@ import { toDateOnly } from "./subscriptions";
  *   "suspensa". Both terms live in `billing_settings` (provisional). Each run
  *   moves a subscription one step at most, so the partner always hears
  *   about the arrears before a suspension.
- * - Only the partner is notified (billing e-mail, else its owners), through
- *   the notification port; each delivery is recorded once per key, as
+ * - Only the partner is notified (billing e-mail, else its owners, and the
+ *   owners' bell), through the Event Hub (H1): the transition emits
+ *   `billing.subscription.past_due` or `.suspended` (route `partner`) and
+ *   dispatches it at once; each delivery is recorded once per key, as
  *   "não enviada" while there is no e-mail provider (D-PA-08).
  * - Monthly: payout report per partner for the closed month.
  *
@@ -114,29 +109,22 @@ export async function readBillingTerms(
 
 type Recipient = Readonly<{
   partnerName: string;
-  emails: readonly string[];
   billingUrl: string;
 }>;
 
+/**
+ * The partner's name and the link to its billing page; who receives the
+ * notice is the hub's (`private.event_recipients`, route `partner`).
+ */
 async function partnerRecipient(
   tx: ContextTransaction,
   partnerId: string,
 ): Promise<Recipient | null> {
-  const [partner, profile, owners, domains] = await Promise.all([
+  const [partner, domains] = await Promise.all([
     tx.partner.findUnique({
       where: { id: partnerId },
       select: { name: true, isHouse: true },
     }),
-    tx.partnerBillingProfile.findUnique({
-      where: { partnerId },
-      select: { billingEmail: true },
-    }),
-    // Raw: the worker reads only these columns of partner_members.
-    tx.$queryRaw<{ email: string }[]>`
-      select email from public.partner_members
-      where partner_id = ${partnerId}::uuid and role = 'partner_owner' and status = 'active'
-      order by created_at
-    `,
     tx.partnerDomain.findMany({
       where: { partnerId, status: "active" },
       orderBy: { host: "asc" },
@@ -144,10 +132,6 @@ async function partnerRecipient(
     }),
   ]);
   if (!partner) return null;
-  const emails = profile
-    ? [profile.billingEmail]
-    : owners.map((owner) => owner.email);
-  const unique = [...new Set(emails.map((e) => e.trim().toLowerCase()))];
   // The partner console of its own domain (custom first); the platform
   // host for the house partner or a partner still without a domain.
   const domain = domains.find((d) => d.kind === "custom") ?? domains[0] ?? null;
@@ -157,13 +141,8 @@ async function partnerRecipient(
       : partnerHostOrigin(domain.host, process.env);
   return {
     partnerName: partner.name,
-    emails: unique.filter((e) => e.length > 0),
     billingUrl: new URL("/admin/billing", origin).toString(),
   };
-}
-
-function platformBrand(): NotificationBrand {
-  return { name: appConfig.name, supportEmail: null, supportUrl: null };
 }
 
 export type DailyTransitionsResult = Readonly<{
@@ -196,7 +175,6 @@ export async function runDailyTransitions(
   });
 
   const recipients = new Map<string, Recipient | null>();
-  const languageOf = notificationLanguages(tx);
   const organizationNames = new Map<string, string>();
   let pastDue = 0;
   let suspended = 0;
@@ -257,64 +235,31 @@ export async function runDailyTransitions(
     }
     const periodEnd = toDateOnly(subscription.currentPeriodEnd);
     const { suspendOn } = overdueSchedule(periodEnd, terms);
-    const content = {
+    const emitted = await emitEvent(tx, {
       type:
         to === "past_due"
           ? "billing.subscription.past_due"
           : "billing.subscription.suspended",
+      actor: WORKER_ACTOR,
+      partnerId: subscription.partnerId,
+      organizationId: subscription.organizationId,
+      subject: { type: "subscription", id: subscription.id },
       data: {
         partnerName: recipient.partnerName,
         organizationName:
           organizationNames.get(subscription.organizationId) ?? "Cliente",
-        periodEnd,
-        nextStepOn: to === "past_due" ? suspendOn : null,
+        periodEnd: isoDate(periodEnd),
+        nextStepOn: to === "past_due" ? isoDate(suspendOn) : null,
         billingUrl: recipient.billingUrl,
       },
-    } as const;
-    const key = `subscription:${subscription.id}:${to}:${isoDate(periodEnd)}`;
-    for (const email of recipient.emails) {
-      notices += await deliver(
-        tx,
-        transport,
-        await languageOf(email),
-        {
-          ...content,
-          recipientEmail: email,
-          idempotencyKey: `${key}:${email}`,
-        },
-        subscription.partnerId,
-        subscription.id,
-      );
-    }
-    // The bell of the partner's active owners (CF3c), once per transition.
-    const notice = inboxNotice(content);
-    if (notice) {
-      await postPartnerNotice(tx, {
-        partnerId: subscription.partnerId,
-        notice,
-        idempotencyKey: key,
-      });
+      idempotencyKey: `subscription:${subscription.id}:${to}:${isoDate(periodEnd)}`,
+    });
+    // At once, in this run (the queued dispatch then finds it done).
+    if (emitted.created) {
+      notices += (await dispatchEvent(tx, emitted.id, { transport })).notices;
     }
   }
   return { date, pastDue, suspended, notices };
-}
-
-async function deliver(
-  tx: ContextTransaction,
-  transport: NotificationTransport,
-  language: NotificationLanguage,
-  event: NotificationEvent,
-  partnerId: string,
-  relatedId: string,
-): Promise<number> {
-  return deliverNotification(tx, {
-    transport,
-    language,
-    event,
-    brand: platformBrand(),
-    partnerId,
-    relatedId,
-  });
 }
 
 export const dailyTransitionsJob = definePlatformJob({

@@ -45,6 +45,7 @@ export type NavIconKey =
   | "layers"
   | "play-circle"
   | "plug"
+  | "scroll-text"
   | "inbox"
   | "map-pin"
   | "building"
@@ -493,6 +494,7 @@ export function buildPlatformNavigation(
   const canManageLegal = input.grants("platform.legal.manage");
   const canReadBilling = input.grants("platform.billing.read");
   const canReadOperations = input.grants("platform.operations.read");
+  const canReadEvents = input.grants("platform.events.read");
   // AI of the house (A3a): templates and backup key, behind the module flag.
   const canManageAi =
     input.grants("platform.ai.manage") &&
@@ -607,6 +609,30 @@ export function buildPlatformNavigation(
                     iconKey: "activity",
                   }),
                 ],
+              }),
+            ]
+          : []),
+        // Central de Eventos (H1): the situation of every event; billing
+        // sees the billing ones only.
+        ...(canReadEvents
+          ? [
+              item({
+                id: "platform.events",
+                label: "Eventos",
+                href: "/platform/events",
+                iconKey: "inbox",
+              }),
+            ]
+          : []),
+        // The whole audit trail (AUD1): every internal role; the database
+        // narrows billing to the billing actions.
+        ...(input.grants("platform.audit.read")
+          ? [
+              item({
+                id: "platform.audit",
+                label: "Auditoria",
+                href: "/platform/audit",
+                iconKey: "scroll-text",
               }),
             ]
           : []),

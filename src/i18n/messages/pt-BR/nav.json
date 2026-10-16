@@ -47,6 +47,8 @@
     "platform_operations": "Operações",
     "platform_operations_health": "Saúde e filas",
     "platform_operations_maintenance": "Manutenção",
+    "platform_events": "Eventos",
+    "platform_audit": "Auditoria",
     "platform_api-keys": "Chaves de API",
     "platform_legal": "Termos e privacidade",
     "platform_brand": "Marca",

@@ -69,3 +69,34 @@ Marcelo definiu o cabeçalho de todas as páginas e que **todos os componentes d
    **U3e (12/10/2026):** o ESLint (`no-restricted-syntax` em `eslint.config.mjs`) barra `<button>`, `<input>`, `<select>`, `<textarea>` e `<table>` crus em `src/**/*.tsx` fora de `src/components/ui/`; `<input type="hidden">` continua liberado. O protótipo congelado de Agentes de IA fica fora da regra até sair na A2. A demonstração da gaveta em `/platform/design/workbench`, que tinha escapado da U3d, passa a usar `Button`, `Table`, `Label` e `Textarea`.
 
 5. **Dependência.** `cmdk` 1.1.1 (base do `Command`), versão exata.
+
+## Revisão de 16/10/2026 — Inbox em tela cheia (sidebar-09)
+
+Marcelo definiu que o Inbox do chat interno ([ADR 0023](0023-chat-interno-como-cliente-matrix.md)) abre em tela cheia, com o bloco `sidebar-09` do shadcn/ui, e que o foco da janela é a conversa: tudo o que é preciso para conduzir um atendimento deve estar ao alcance sem voltar ao dashboard.
+
+1. **Exceção única ao "um shell só".** A rota `/app/[workspaceSlug]/inbox` usa o `InboxShell`, montado a partir do bloco `sidebar-09` do registro oficial, com as mesmas mudanças mínimas do item 4. Todas as demais rotas continuam no `AppShell` com a sidebar-08. Outro shell exige nova ADR.
+2. **Rotas.** Para que o Inbox não herde a sidebar-08, `src/app/app/[workspaceSlug]/` passa a ter (etapa IN2):
+   - `layout.tsx`: só as guardas (sessão, aceite legal e contexto do workspace), sem shell;
+   - `(shell)/layout.tsx`: o `AppShell`, com todas as rotas atuais movidas para `(shell)/` (as URLs não mudam);
+   - `(fullscreen)/inbox/`: o `InboxShell` e as páginas do Inbox (etapa IN4).
+
+   `resolveRequestWorkspaceContext` é envolvida em `cache()` do React para não consultar o banco duas vezes por requisição.
+
+3. **Barra de ícones exclusiva do Inbox.** A barra estreita do `sidebar-09` não repete o menu do console:
+   - **topo:** as visões do Inbox: Minhas, Não atribuídas, Todas e Resolvidas (outras, como Pedidos e reservas, entram quando existirem);
+   - **base:** no máximo **um** ícone, **Dashboard**, que volta para a navegação normal (`/app/[workspaceSlug]`).
+
+   O seletor de workspace, o menu da conta e a busca ⌘K não aparecem no Inbox. Trocar de workspace ou de conta é feito pelo dashboard.
+
+4. **Tudo para conduzir a conversa fica na janela.** Layout em três colunas (`Resizable`): lista de conversas, conversa e painel de contexto. Edições abrem em gaveta interna dentro da janela, nunca por navegação para outra tela. Na v1 o painel mostra o contato, o status, o responsável e as etiquetas; as ferramentas do atendimento (itens do portfólio, notas internas, respostas rápidas, Assistente de IA) entram depois da v1.
+5. **O Inbox não lê tabelas de outros módulos.** Cada ferramenta do painel usa o serviço público do módulo dono (Adendo §7) e respeita habilitação, plano e permissão do mesmo jeito que o resto do console. **[Proposta]** Módulos contribuem ferramentas para o painel pelo manifesto (capacidade `inboxTools`, com chave do componente e permissão exigida), como já fazem com `navigation`.
+6. **Estado da sidebar.** O `InboxShell` usa um cookie próprio (`inbox_sidebar_state`), para que recolher a barra no Inbox não recolha a sidebar-08 do resto do console.
+7. **Celular.** A lista ocupa a tela. Ao abrir uma conversa, ela empilha por cima com botão de voltar, e o painel de contexto abre como gaveta (`Sheet`).
+8. **Função Atendente.** O usuário com a função de workspace Atendente vê só o dashboard e o Inbox (especificação do Inbox §3).
+
+### Consequências
+
+- O console passa a ter dois shells, com fronteira explícita: o Inbox e todo o resto. Atualizar o shadcn significa atualizar os dois blocos.
+- Mover as rotas atuais para `(shell)/` é uma mudança só de pastas, mas toca todos os arquivos de página. É um PR separado (IN2), sem outras alterações, para revisão fácil.
+- Os e2e do Inbox não usam `e2e/support/sidebar.ts`; ganham um helper próprio para a barra de ícones e o painel de contexto.
+- Uma ferramenta que hoje só existe como tela do dashboard precisa ganhar versão de painel ou gaveta antes de entrar no Inbox. Essa é a regra que mantém o atendente dentro da conversa.

@@ -17,6 +17,15 @@ Registre e execute: **Contexto → Objetivo → Requisitos → Lógica → Plano
 - `pnpm test:e2e`: e2e local (requer `pnpm exec playwright install chromium`).
 - Migrations nascem em `supabase/migrations/`; o CI as reaplica do zero.
 
+## Trabalho em paralelo e testes
+
+Combinado com o Marcelo; detalhes nos handoffs de [15/10/2026](docs/handoff/2026-10-15-handoff.md) e [16/10/2026](docs/handoff/2026-10-16-handoff.md).
+
+- Duas etapas por vez, cada uma com subagente, worktree, branch e PR próprios.
+- Cada worktree tem seu banco local (`LOCAL_DB_NAME`), suas portas (`E2E_PORT_OFFSET`) e seu índice de Redis (`REDIS_URL`). Ninguém mexe num worktree enquanto os testes dele rodam.
+- Os testes rodam num subagente do modelo mais barato da família atual, definido pelo Marcelo. Ele só executa e relata; o agente principal diagnostica e corrige.
+- Quando algo falha, a nova rodada repete só o que falhou: o comando, a suíte ou o arquivo de teste (por exemplo, o arquivo e2e sozinho). A rodada completa acontece uma vez, no fim, antes do push. Falha que passa sozinha é tratada como instabilidade e anotada.
+
 ## Banco e segurança
 
 O desenvolvimento usa exclusivamente o Supabase dev `console-guidu` (`ssulunrysnvwyqjlkpry`), conforme ADR 0010 (que ajusta a ADR 0008 para este repositório). SQL e migrations só podem atingir esse projeto, sempre a partir de arquivo versionado. Migrations remotas são aplicadas com `MIGRATION_DATABASE_URL=... pnpm tsx scripts/migrate.ts` depois do PR aprovado. Nunca execute DDL ad hoc, edite migration aplicada, use produção, exponha `.env` ou segredos. Supabase local existe somente no CI. Toda consulta de domínio usa Prisma dentro de `withContext`; autorização é revalidada no servidor.

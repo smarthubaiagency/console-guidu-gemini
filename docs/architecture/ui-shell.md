@@ -49,6 +49,10 @@ export default async function Layout({ children }) {
 - **Textos:** namespace `shell`, nos três idiomas.
 - **Estado:** cookie `sidebar_state`; atalho Ctrl/⌘+B; gaveta abaixo de 768 px.
 
+## Layouts do workspace (`/app/[workspaceSlug]`)
+
+O `layout.tsx` de `src/app/app/[workspaceSlug]/` só tem as guardas (`requireUserPage`, `requireLegalAcceptance` e a resolução do contexto do workspace, com o 404 uniforme) e renderiza `children`, sem shell. O `AppShell` (lista de workspaces, atalhos de console, menu, sino e marca) fica no grupo de rotas `(shell)/`, que tem o próprio `layout.tsx` e reúne todas as telas do workspace. O grupo `(fullscreen)/` fica reservado para o Inbox em tela cheia (etapa IN4), que terá o seu próprio shell. Grupos não entram na URL. Os dois layouts resolvem o contexto, mas `resolveRequestWorkspaceContext` usa `cache()` do React e consulta o banco uma vez por requisição. Tela nova do workspace vai em `(shell)/`.
+
 ## Cabeçalho (60 px)
 
 | Lado     | Conteúdo                                                                                       |

@@ -19,6 +19,7 @@ import ptBR_designLab from "./pt-BR/designLab.json";
 import ptBR_domains from "./pt-BR/domains.json";
 import ptBR_email from "./pt-BR/email.json";
 import ptBR_errors from "./pt-BR/errors.json";
+import ptBR_events from "./pt-BR/events.json";
 import ptBR_executions from "./pt-BR/executions.json";
 import ptBR_gateway from "./pt-BR/gateway.json";
 import ptBR_gbIntelligence from "./pt-BR/gbIntelligence.json";
@@ -43,6 +44,7 @@ import ptBR_partnerConsole from "./pt-BR/partnerConsole.json";
 import ptBR_partners from "./pt-BR/partners.json";
 import ptBR_plans from "./pt-BR/plans.json";
 import ptBR_platform from "./pt-BR/platform.json";
+import ptBR_platformAudit from "./pt-BR/platformAudit.json";
 import ptBR_platformKeys from "./pt-BR/platformKeys.json";
 import ptBR_portfolio from "./pt-BR/portfolio.json";
 import ptBR_preferences from "./pt-BR/preferences.json";
@@ -75,6 +77,7 @@ import en_designLab from "./en/designLab.json";
 import en_domains from "./en/domains.json";
 import en_email from "./en/email.json";
 import en_errors from "./en/errors.json";
+import en_events from "./en/events.json";
 import en_executions from "./en/executions.json";
 import en_gateway from "./en/gateway.json";
 import en_gbIntelligence from "./en/gbIntelligence.json";
@@ -99,6 +102,7 @@ import en_partnerConsole from "./en/partnerConsole.json";
 import en_partners from "./en/partners.json";
 import en_plans from "./en/plans.json";
 import en_platform from "./en/platform.json";
+import en_platformAudit from "./en/platformAudit.json";
 import en_platformKeys from "./en/platformKeys.json";
 import en_portfolio from "./en/portfolio.json";
 import en_preferences from "./en/preferences.json";
@@ -131,6 +135,7 @@ import es_designLab from "./es/designLab.json";
 import es_domains from "./es/domains.json";
 import es_email from "./es/email.json";
 import es_errors from "./es/errors.json";
+import es_events from "./es/events.json";
 import es_executions from "./es/executions.json";
 import es_gateway from "./es/gateway.json";
 import es_gbIntelligence from "./es/gbIntelligence.json";
@@ -155,6 +160,7 @@ import es_partnerConsole from "./es/partnerConsole.json";
 import es_partners from "./es/partners.json";
 import es_plans from "./es/plans.json";
 import es_platform from "./es/platform.json";
+import es_platformAudit from "./es/platformAudit.json";
 import es_platformKeys from "./es/platformKeys.json";
 import es_portfolio from "./es/portfolio.json";
 import es_preferences from "./es/preferences.json";
@@ -191,6 +197,7 @@ export const MESSAGE_FILES = {
     domains: ptBR_domains,
     email: ptBR_email,
     errors: ptBR_errors,
+    events: ptBR_events,
     executions: ptBR_executions,
     gateway: ptBR_gateway,
     gbIntelligence: ptBR_gbIntelligence,
@@ -215,6 +222,7 @@ export const MESSAGE_FILES = {
     partners: ptBR_partners,
     plans: ptBR_plans,
     platform: ptBR_platform,
+    platformAudit: ptBR_platformAudit,
     platformKeys: ptBR_platformKeys,
     portfolio: ptBR_portfolio,
     preferences: ptBR_preferences,
@@ -249,6 +257,7 @@ export const MESSAGE_FILES = {
     domains: en_domains,
     email: en_email,
     errors: en_errors,
+    events: en_events,
     executions: en_executions,
     gateway: en_gateway,
     gbIntelligence: en_gbIntelligence,
@@ -273,6 +282,7 @@ export const MESSAGE_FILES = {
     partners: en_partners,
     plans: en_plans,
     platform: en_platform,
+    platformAudit: en_platformAudit,
     platformKeys: en_platformKeys,
     portfolio: en_portfolio,
     preferences: en_preferences,
@@ -307,6 +317,7 @@ export const MESSAGE_FILES = {
     domains: es_domains,
     email: es_email,
     errors: es_errors,
+    events: es_events,
     executions: es_executions,
     gateway: es_gateway,
     gbIntelligence: es_gbIntelligence,
@@ -331,6 +342,7 @@ export const MESSAGE_FILES = {
     partners: es_partners,
     plans: es_plans,
     platform: es_platform,
+    platformAudit: es_platformAudit,
     platformKeys: es_platformKeys,
     portfolio: es_portfolio,
     preferences: es_preferences,
@@ -367,6 +379,7 @@ export const NAMESPACES = [
   "domains",
   "email",
   "errors",
+  "events",
   "executions",
   "gateway",
   "gbIntelligence",
@@ -391,6 +404,7 @@ export const NAMESPACES = [
   "partners",
   "plans",
   "platform",
+  "platformAudit",
   "platformKeys",
   "portfolio",
   "preferences",

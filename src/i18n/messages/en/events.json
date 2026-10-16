@@ -1,0 +1,141 @@
+{
+  "metaTitle": "Events",
+  "title": "Events",
+  "description": "The situation of every event of the Event Hub: type, customer, date, seal and deliveries. The data stays with the customer.",
+  "filters": {
+    "type": "Type",
+    "allTypes": "All types",
+    "module": "Module",
+    "allModules": "All modules",
+    "partner": "Partner",
+    "allPartners": "All partners",
+    "customer": "Customer",
+    "allCustomers": "All customers",
+    "from": "From",
+    "to": "To",
+    "apply": "Filter",
+    "clear": "Clear"
+  },
+  "list": {
+    "title": "{count, plural, =0 {No events} one {# event} other {# events}}",
+    "emptyTitle": "No events",
+    "empty": "No events match these filters.",
+    "platform": "Platform",
+    "panelLabel": "Event",
+    "deliveries": "{count, plural, =0 {no deliveries} one {# delivery} other {# deliveries}}",
+    "failed": "{count, plural, one {# failed} other {# failed}}"
+  },
+  "severity": {
+    "info": "Information",
+    "attention": "Attention",
+    "urgent": "Urgent"
+  },
+  "integrity": {
+    "ok": "Seal matches",
+    "broken": "Broken seal",
+    "unverifiable": "No key to check",
+    "pending": "Not checked yet"
+  },
+  "chain": {
+    "ok": "Chain intact",
+    "broken": "Broken chain"
+  },
+  "detail": {
+    "situation": "Situation",
+    "type": "Type",
+    "module": "Module",
+    "severity": "Severity",
+    "status": "Status",
+    "partner": "Partner",
+    "customer": "Customer",
+    "workspace": "Workspace",
+    "subject": "Subject",
+    "occurredAt": "When",
+    "eventId": "Event ID",
+    "seal": "Seal",
+    "contentHash": "Seal (HMAC-SHA256)",
+    "prevHash": "Previous seal",
+    "none": "None (first of the chain)",
+    "keyVersion": "Key version",
+    "position": "Position in the chain",
+    "chainKey": "Chain",
+    "verification": "Verification",
+    "verifiedAt": "Last check",
+    "never": "Never",
+    "dispatchedAt": "Notices sent at",
+    "notDispatched": "Waiting",
+    "deliveries": "Deliveries",
+    "noDeliveries": "No delivery recorded.",
+    "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+    "dataHidden": "The event's data stays with the customer. The platform sees only the situation and the seal."
+  },
+  "status": {
+    "open": "Open",
+    "resolved": "Resolved",
+    "dismissed": "Dismissed",
+    "pending": "Pending",
+    "approved": "Approved",
+    "denied": "Denied",
+    "expired": "Expired"
+  },
+  "channels": {
+    "email": "E-mail",
+    "app": "Bell",
+    "whatsapp": "WhatsApp"
+  },
+  "delivery": {
+    "pending": "Pending",
+    "queued": "Queued",
+    "sent": "Sent",
+    "delivered": "Delivered",
+    "failed": "Failed",
+    "skipped": "Not sent",
+    "blocked_policy": "Blocked by policy"
+  },
+  "check": {
+    "title": "Check presented data",
+    "description": "Paste the data the customer presented, as JSON. The seal is computed again without opening the event's data.",
+    "label": "Data (JSON)",
+    "submit": "Check seal",
+    "ok": "The data matches the event's seal.",
+    "mismatch": "The data does not match the event's seal.",
+    "unknown_key": "There is no key to check this seal."
+  },
+  "keychain": {
+    "title": "View data",
+    "description": "Full access (keychain): write the reason. The opening is recorded in the platform's audit.",
+    "reason": "Reason",
+    "reasonHint": "From {min} to {max} characters.",
+    "submit": "View data",
+    "cancel": "Cancel",
+    "opened": "Data opened. The opening was recorded in the audit.",
+    "data": "Event data"
+  },
+  "team": {
+    "title": "Platform team",
+    "description": "Roles of the internal team and full access (keychain) to the events' data. Only the owner grants or removes it; each opening asks for MFA and a reason.",
+    "colName": "Person",
+    "colRole": "Role",
+    "colStatus": "Status",
+    "colKeychain": "Full access",
+    "keychainLabel": "Full access (keychain) of {name}",
+    "granted": "Full access granted.",
+    "revoked": "Full access removed.",
+    "noName": "No name",
+    "active": "Active",
+    "inactive": "Inactive",
+    "roles": {
+      "owner": "Owner",
+      "operations": "Operations",
+      "billing": "Billing",
+      "support": "Support"
+    }
+  },
+  "errors": {
+    "forbidden": "You do not have permission for this action.",
+    "notFound": "Event not found.",
+    "reason": "Write the reason ({min} to {max} characters).",
+    "json": "Paste the data as JSON.",
+    "memberNotFound": "Person not found in the platform team."
+  }
+}
