@@ -124,7 +124,7 @@
       "items": "Item do shadcn com variant=\"card\" para listas de arquivos e registros; FieldCard para um valor só leitura com ação (copiar, abrir).",
       "inputGroup": "Campo com botões junto do texto, como a caixa de mensagem com IA. Não use para formulário comum.",
       "empty": "Quando uma lista ou aba ainda não tem nada. Diga o que fazer a seguir.",
-      "stats": "StatCard com moldura para os números principais; StatGroup para vários números lado a lado dentro de um card; Amount deixa os centavos em cinza (opcional).",
+      "stats": "StatCard: framed (moldura com card dentro), flush (card colado na moldura nas laterais e embaixo) e plain (um card só) para os números principais; StatGroup para vários números lado a lado dentro de um card; Amount deixa os centavos em cinza (opcional).",
       "keyValue": "Resumos curtos de rótulo e valor, como taxas e tempos.",
       "tags": "Filtros e públicos que a pessoa pode tirar. Mostre poucos e conte o resto.",
       "headers": "Toda tela nova começa com PageCanvas (fundo cinza) e PageTitle; cada bloco tem SectionHeader com ações à direita."
@@ -237,7 +237,9 @@
       "answered": "Resolvidas pelo GUIDS",
       "answeredCaption": "Sem passar para a equipe",
       "sent": "Enviadas",
-      "read": "Lidas"
+      "read": "Lidas",
+      "growth": "Crescimento",
+      "growthCaption": "Desde o início do plano"
     },
     "keyValue": {
       "responseTime": "Tempo médio de resposta",

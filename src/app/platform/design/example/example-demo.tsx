@@ -173,18 +173,21 @@ export function ExampleDemo() {
                 data-testid="example-stats"
               >
                 <StatCard
+                  variant="flush"
                   icon={<MessageCircle className="size-4" />}
                   label={t("stats.conversations")}
                   value="1.284"
                   caption={t("stats.conversationsCaption")}
                 />
                 <StatCard
+                  variant="flush"
                   icon={<Flame className="size-4" />}
                   label={t("stats.hotLeads")}
                   value={<span className="text-success-text">+86</span>}
                   caption={t("stats.hotLeadsCaption")}
                 />
                 <StatCard
+                  variant="flush"
                   icon={<Wallet className="size-4" />}
                   label={t("stats.sales")}
                   value={
