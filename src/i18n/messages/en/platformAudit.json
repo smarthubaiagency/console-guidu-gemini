@@ -1,0 +1,88 @@
+{
+  "title": "Audit",
+  "description": "Everything recorded in the platform audit trail, across all partners and customers.",
+  "descriptionBilling": "Billing actions recorded in the platform audit trail.",
+  "billingOnly": "Billing only",
+  "filters": {
+    "title": "Filters",
+    "description": "Combine the filters and apply them. The period uses the São Paulo time zone.",
+    "partner": "Partner",
+    "organization": "Company",
+    "workspace": "Workspace",
+    "action": "Action (starts with)",
+    "actionPlaceholder": "e.g. billing. or partner.member",
+    "actionInvalid": "Use lowercase letters, numbers, dots and underscores.",
+    "result": "Result",
+    "origin": "Origin",
+    "actor": "Actor (id)",
+    "actorPlaceholder": "user id",
+    "actorInvalid": "Enter a valid user id.",
+    "from": "From",
+    "to": "To",
+    "any": "All",
+    "apply": "Apply",
+    "clear": "Clear",
+    "fixFields": "Fix the highlighted fields",
+    "periodInvalid": "Invalid period",
+    "periodInvalidDetails": "The end date comes before the start date."
+  },
+  "list": {
+    "title": "Events",
+    "description": "{count, plural, =0 {No events on this page} one {# event on this page} other {# events on this page}}, newest first.",
+    "columns": {
+      "when": "When",
+      "event": "Action",
+      "where": "Company or partner",
+      "actor": "Who",
+      "result": "Result"
+    },
+    "open": "Details",
+    "security": "Security",
+    "platform": "Platform",
+    "user": "User {id}",
+    "newest": "Newest",
+    "older": "Older"
+  },
+  "empty": {
+    "title": "No events",
+    "description": "Nothing was recorded with these filters."
+  },
+  "result": {
+    "success": "Success",
+    "denied": "Denied",
+    "error": "Error"
+  },
+  "origin": {
+    "app": "Dashboard",
+    "api": "API",
+    "mcp": "MCP",
+    "worker": "Job",
+    "admin": "Administration"
+  },
+  "principal": {
+    "user": "User",
+    "service": "System",
+    "api_key": "API key"
+  },
+  "detail": {
+    "label": "Event detail",
+    "id": "Event id",
+    "occurredAt": "Date (UTC)",
+    "action": "Action",
+    "actor": "Who",
+    "actorId": "Actor id",
+    "principal": "Actor type",
+    "represented": "On behalf of",
+    "partner": "Partner",
+    "organization": "Company",
+    "workspace": "Workspace",
+    "resource": "Resource",
+    "client": "API client",
+    "request": "Request",
+    "metadata": "Metadata",
+    "noMetadata": "No metadata.",
+    "allowlist": "Metadata goes through an allowlist of fields when recorded: secrets, keys and full e-mails are never stored.",
+    "filterActor": "Filter by this actor",
+    "securityLink": "View in security events"
+  }
+}

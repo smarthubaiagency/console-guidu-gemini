@@ -61,6 +61,10 @@ export type FakeGoTrue = Readonly<{
   close: () => Promise<void>;
 }>;
 
+/** Internal platform roles the e2e can seed (owner when omitted). */
+export const PLATFORM_ADMIN_SEED_ROLES = ["owner", "operations", "billing", "support"] as const;
+export type PlatformAdminSeedRole = (typeof PLATFORM_ADMIN_SEED_ROLES)[number];
+
 export type FakeGoTrueOptions = Readonly<{
   port: number;
   /** Called when a user is created, so the harness can mirror `auth.users`. */
@@ -72,7 +76,7 @@ export type FakeGoTrueOptions = Readonly<{
   /** `count(*)` of profile rows for an identity, for the provisioning checks. */
   onCountProfiles: (email: string) => Promise<number>;
   /** Seeds user as platform admin in platform_admin_members table. */
-  onMakePlatformAdmin: (email: string) => Promise<void>;
+  onMakePlatformAdmin: (email: string, role?: PlatformAdminSeedRole) => Promise<void>;
   /** Seeds workspace and membership in database. */
   onSeedWorkspace: (params: {
     email: string;
@@ -278,7 +282,11 @@ export async function startFakeGoTrue(
       const body = await readBody(request);
       const email = asString(body.email);
       if (!email) return json(response, 400, { msg: "invalid" });
-      await options.onMakePlatformAdmin(email);
+      const role = asString(body.role);
+      if (role !== null && !PLATFORM_ADMIN_SEED_ROLES.includes(role as PlatformAdminSeedRole)) {
+        return json(response, 400, { msg: "invalid role" });
+      }
+      await options.onMakePlatformAdmin(email, (role ?? "owner") as PlatformAdminSeedRole);
       return json(response, 200, { admin: email });
     }
 

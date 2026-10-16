@@ -72,9 +72,10 @@ export async function maintenanceOff(request: APIRequestContext): Promise<void> 
 export async function makePlatformAdmin(
   request: APIRequestContext,
   email: string,
+  role: "owner" | "operations" | "billing" | "support" = "owner",
 ): Promise<void> {
   const response = await request.post(`${AUTH_BASE_URL}/__control/platform-admin`, {
-    data: { email },
+    data: { email, role },
   });
   expect(response.status()).toBe(200);
 }

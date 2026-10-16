@@ -45,6 +45,7 @@ export type NavIconKey =
   | "layers"
   | "play-circle"
   | "plug"
+  | "scroll-text"
   | "inbox"
   | "map-pin"
   | "building"
@@ -607,6 +608,18 @@ export function buildPlatformNavigation(
                     iconKey: "activity",
                   }),
                 ],
+              }),
+            ]
+          : []),
+        // The whole audit trail (AUD1): every internal role; the database
+        // narrows billing to the billing actions.
+        ...(input.grants("platform.audit.read")
+          ? [
+              item({
+                id: "platform.audit",
+                label: "Auditoria",
+                href: "/platform/audit",
+                iconKey: "scroll-text",
               }),
             ]
           : []),

@@ -142,7 +142,8 @@ export type PlatformAdminRoleKey =
 
 /**
  * Platform admin role permission mapping (Proposta F2, sujeita à confirmação
- * do produto). Billing and support only read module state.
+ * do produto). Billing and support only read module state. Every role reads
+ * the audit trail (AUD1); the database narrows billing to billing actions.
  */
 export const PLATFORM_ROLE_PERMISSIONS: Record<
   PlatformAdminRoleKey,
@@ -163,6 +164,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_AI_MANAGE,
     Permissions.PLATFORM_SETTINGS_MANAGE,
     Permissions.PLATFORM_SECURITY_READ,
+    Permissions.PLATFORM_AUDIT_READ,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -178,6 +180,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_AI_MANAGE,
     Permissions.PLATFORM_SETTINGS_MANAGE,
     Permissions.PLATFORM_SECURITY_READ,
+    Permissions.PLATFORM_AUDIT_READ,
   ]),
   billing: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -185,6 +188,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_PARTNERS_READ,
     Permissions.PLATFORM_BILLING_READ,
     Permissions.PLATFORM_BILLING_MANAGE,
+    Permissions.PLATFORM_AUDIT_READ,
   ]),
   support: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -192,6 +196,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_PARTNERS_READ,
     Permissions.PLATFORM_OPERATIONS_READ,
     Permissions.PLATFORM_SECURITY_READ,
+    Permissions.PLATFORM_AUDIT_READ,
   ]),
 };
 
