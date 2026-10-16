@@ -82,7 +82,9 @@ const str = (value: unknown): string =>
 
 function day(value: unknown): Date {
   const raw = str(value);
-  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T00:00:00Z` : raw);
+  const date = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T00:00:00Z` : raw,
+  );
   return Number.isNaN(date.getTime()) ? new Date(0) : date;
 }
 

@@ -32,15 +32,21 @@ const material: SealMaterial = {
 
 describe("event seal (H1)", () => {
   it("writes canonical JSON with the keys sorted at every level", () => {
-    expect(canonicalJson({ b: 1, a: { d: [3, { z: 1, y: 2 }], c: null } })).toBe(
-      '{"a":{"c":null,"d":[3,{"y":2,"z":1}]},"b":1}',
-    );
+    expect(
+      canonicalJson({ b: 1, a: { d: [3, { z: 1, y: 2 }], c: null } }),
+    ).toBe('{"a":{"c":null,"d":[3,{"y":2,"z":1}]},"b":1}');
     expect(canonicalJson({ b: undefined, a: "x" })).toBe('{"a":"x"}');
     // The order of the input never changes the text.
     expect(
-      sealedText({ ...material, data: { backupUntil: "x", workspaceName: "y" } }),
+      sealedText({
+        ...material,
+        data: { backupUntil: "x", workspaceName: "y" },
+      }),
     ).toBe(
-      sealedText({ ...material, data: { workspaceName: "y", backupUntil: "x" } }),
+      sealedText({
+        ...material,
+        data: { workspaceName: "y", backupUntil: "x" },
+      }),
     );
   });
 
@@ -59,7 +65,10 @@ describe("event seal (H1)", () => {
         KEY,
       ),
     ).toBe(
-      computeSeal({ ...material, data: { at: "2026-10-17T12:00:00.000Z" } }, KEY),
+      computeSeal(
+        { ...material, data: { at: "2026-10-17T12:00:00.000Z" } },
+        KEY,
+      ),
     );
   });
 
@@ -68,7 +77,10 @@ describe("event seal (H1)", () => {
     const seal = computeSeal(material, KEY);
     expect(checkSeal(material, seal, "k1", keys)).toBe("ok");
     const changed: SealMaterial[] = [
-      { ...material, data: { ...(material.data as object), workspaceName: "Outra" } },
+      {
+        ...material,
+        data: { ...(material.data as object), workspaceName: "Outra" },
+      },
       { ...material, workspaceId: "a0000000-0000-4000-8000-000000000021" },
       { ...material, occurredAt: new Date("2026-10-16T12:00:00.124Z") },
       { ...material, createdBy: "a0000000-0000-4000-8000-000000000031" },

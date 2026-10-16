@@ -116,8 +116,12 @@ export async function verifyEventChains(
   let events = 0;
   let broken = 0;
   let unverifiable = 0;
-  const newly: { id: string; type: string; chainKey: string; reason: string }[] =
-    [];
+  const newly: {
+    id: string;
+    type: string;
+    chainKey: string;
+    reason: string;
+  }[] = [];
   for (const { chain_key: chainKey } of chains) {
     let previous: { seq: number; content_hash: string } | null = null;
     let after = 0;

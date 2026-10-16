@@ -169,6 +169,23 @@ export async function seedNotification(
   return (await response.json()) as { id: string };
 }
 
+/** Seeds a sealed event of the Event Hub in a workspace (H1). */
+export async function seedEvent(
+  request: APIRequestContext,
+  params: {
+    workspaceSlug: string;
+    type: string;
+    module: string;
+    data: Record<string, unknown>;
+  },
+): Promise<{ id: string }> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-event`, {
+    data: params,
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { id: string };
+}
+
 /** Runs the job worker until no job waits; returns how many still wait. */
 export async function runJobs(request: APIRequestContext): Promise<number> {
   const response = await request.post(`${AUTH_BASE_URL}/__control/run-jobs`, {

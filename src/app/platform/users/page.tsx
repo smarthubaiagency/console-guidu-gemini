@@ -3,10 +3,7 @@ import { Users } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
-import {
-  getPlatformAdminMember,
-  listAdminUsers,
-} from "@/core/admin/platform";
+import { getPlatformAdminMember, listAdminUsers } from "@/core/admin/platform";
 import { KeychainSwitch } from "@/components/events/keychain-switch";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -133,7 +130,11 @@ export default async function AdminUsersPage() {
       </div>
 
       {team ? (
-        <Card variant="panel" className="px-4 sm:px-6" data-testid="platform-team">
+        <Card
+          variant="panel"
+          className="px-4 sm:px-6"
+          data-testid="platform-team"
+        >
           <CardHeader className="px-0">
             <CardTitle>{te("title")}</CardTitle>
             <CardDescription>{te("description")}</CardDescription>
@@ -160,9 +161,13 @@ export default async function AdminUsersPage() {
                         {te(`roles.${member.role as "owner"}`)}
                       </Badge>
                       <Badge
-                        variant={member.status === "active" ? "success" : "danger"}
+                        variant={
+                          member.status === "active" ? "success" : "danger"
+                        }
                       >
-                        {member.status === "active" ? te("active") : te("inactive")}
+                        {member.status === "active"
+                          ? te("active")
+                          : te("inactive")}
                       </Badge>
                       <span className="text-12 text-text-secondary">
                         {te("colKeychain")}

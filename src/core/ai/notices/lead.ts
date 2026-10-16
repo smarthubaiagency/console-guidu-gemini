@@ -324,7 +324,10 @@ async function noticeMessage(
     workspace: { id: ctx.workspaceId, name: workspace?.name ?? null },
     conversation_id: notice.conversationId,
   };
-  const send = (event: string, body: Record<string, unknown>): NoticeMessage => ({
+  const send = (
+    event: string,
+    body: Record<string, unknown>,
+  ): NoticeMessage => ({
     kind: "send",
     event,
     to: ownerPhone,

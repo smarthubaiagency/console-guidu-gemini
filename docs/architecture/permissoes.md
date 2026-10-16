@@ -103,6 +103,19 @@ As permissões possuem namespace estável declarado em [`src/core/permissions/ca
 
 *\* Sujeito à verificação de escalonamento em `roles.ts` (admins não podem convidar owners nem alterar/remover owners).*
 
+### 4.3 Central de Eventos na plataforma (H1, ADR 0022)
+
+| Permissão | `owner` | `operations` | `support` | `billing` | capacidade `keychain` |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| `platform.events.read` (situação dos eventos e das entregas, sem dados) | ✅ | ✅ | ✅ | ✅* | — |
+| `platform.events.read_all_data` (dados completos de qualquer evento) | ❌ | ❌ | ❌ | ❌ | ✅** |
+| `platform.capabilities.manage` (conceder e retirar `keychain`) | ✅ | ❌ | ❌ | ❌ | — |
+
+*\* `billing` vê só os eventos do módulo `billing`; o banco corta o resto (`private.platform_events`).*
+*\*\* `keychain` é uma capacidade somada ao papel principal (tabela `platform_admin_capabilities`), não um papel; dá só essa permissão. O `owner` não a tem por padrão e pode concedê-la a si mesmo (auditado em `platform.capability.grant`/`.revoke`). Cada abertura exige MFA (AAL2), motivo de 10 a 500 caracteres e grava `platform.event.view_data` (event_id, tipo, motivo, IP) na auditoria da plataforma, sem empresa nem workspace: o cliente não é avisado. A leitura e o registro acontecem na mesma chamada (`private.read_event_data`).*
+
+No parceiro, `partner_owner`, `partner_admin` e `partner_support` leem a situação dos eventos dos seus clientes (`private.partner_events`); os dados só das empresas que gerenciam (`private.partner_manages_organization`) e dos eventos endereçados ao próprio parceiro. Os membros do workspace leem os eventos com audiência cliente, com os dados (RLS da tabela `events`).
+
 ---
 
 ## 5. Implementação dos Guards de Servidor

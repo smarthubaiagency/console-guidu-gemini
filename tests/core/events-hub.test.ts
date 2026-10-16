@@ -30,7 +30,10 @@ import type {
   NotificationTransport,
   OutboundMessage,
 } from "@/core/notifications/types";
-import { type ContextTransaction, withContext } from "@/lib/prisma/with-context";
+import {
+  type ContextTransaction,
+  withContext,
+} from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
 import { contextA, ids } from "./fixtures";
@@ -105,14 +108,17 @@ describeDatabase("H1: Event Hub", requiredVars, () => {
           workspaceName: "Loja H1",
           agentName: null,
           backupUntil: "2026-10-17T12:00:00.000Z",
-          credentialsUrl: "https://app.guidu.test/app/loja/settings/credentials",
+          credentialsUrl:
+            "https://app.guidu.test/app/loja/settings/credentials",
         },
         idempotencyKey: `h1-test:${run}:${key}`,
       }),
     );
 
   async function sealRow(id: string): Promise<EventSealRow & { seq: bigint }> {
-    const [row] = await admin.$queryRawUnsafe<(EventSealRow & { seq: bigint })[]>(
+    const [row] = await admin.$queryRawUnsafe<
+      (EventSealRow & { seq: bigint })[]
+    >(
       `select id, type, partner_id, organization_id, workspace_id, subject_type, subject_id,
               created_by, occurred_at, data, prev_hash, content_hash, key_version, seq
        from public.events where id = '${id}'`,
@@ -295,7 +301,11 @@ describeDatabase("H1: Event Hub", requiredVars, () => {
     const resultM = await asWorker((tx) =>
       dispatchEvent(tx, managed.id, { transport }),
     );
-    expect(resultS).toMatchObject({ status: "dispatched", notices: 1, bell: 1 });
+    expect(resultS).toMatchObject({
+      status: "dispatched",
+      notices: 1,
+      bell: 1,
+    });
     expect(resultM).toMatchObject({ status: "dispatched", notices: 2 });
     expect(sent.map((m) => m.to).sort()).toEqual([
       `dono-${run}@agencia-h1.test`,
@@ -447,7 +457,9 @@ describeDatabase("H1: Event Hub", requiredVars, () => {
       where: { action: "platform.events.chain_broken", resourceId: first.id },
     });
     expect(audits).toBe(1);
-    const [alarm] = await admin.$queryRawUnsafe<{ data: { eventIds: string[] } }[]>(
+    const [alarm] = await admin.$queryRawUnsafe<
+      { data: { eventIds: string[] } }[]
+    >(
       `select data from public.events where type = 'platform.events.chain_broken'
        and data -> 'eventIds' ? '${first.id}'`,
     );

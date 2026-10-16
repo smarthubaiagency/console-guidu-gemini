@@ -75,23 +75,23 @@ describe("Event Hub catalog (H1)", () => {
     expect(route("google_business.analyses_done")).toBe("subject_person");
     expect(route("ai.agent.lead_hot")).toBe("explicit");
     expect(route("ai.agent.referral_recommended")).toBe("explicit");
-    expect(eventDefinition("ai.agent.lead_hot")?.channels).toEqual(["whatsapp"]);
-    expect(eventDefinition("platform.events.chain_broken")?.destinations).toEqual(
-      ["audit", "notify"],
-    );
+    expect(eventDefinition("ai.agent.lead_hot")?.channels).toEqual([
+      "whatsapp",
+    ]);
+    expect(
+      eventDefinition("platform.events.chain_broken")?.destinations,
+    ).toEqual(["audit", "notify"]);
   });
 
   it("derives the e-mail templates and the channels without changing them", () => {
-    expect(EMAIL_TEMPLATE_EVENTS.map((e) => [e.type, e.group, e.key])).toEqual(
-      [
-        ["invitation.created", "account", "invitation"],
-        ["email.test", "account", "emailTest"],
-        ["billing.subscription.past_due", "billing", "pastDue"],
-        ["billing.subscription.suspended", "billing", "suspended"],
-        ["ai.agent.key_backup", "ai", "aiKeyBackup"],
-        ["ai.agent.key_paused", "ai", "aiKeyPaused"],
-      ],
-    );
+    expect(EMAIL_TEMPLATE_EVENTS.map((e) => [e.type, e.group, e.key])).toEqual([
+      ["invitation.created", "account", "invitation"],
+      ["email.test", "account", "emailTest"],
+      ["billing.subscription.past_due", "billing", "pastDue"],
+      ["billing.subscription.suspended", "billing", "suspended"],
+      ["ai.agent.key_backup", "ai", "aiKeyBackup"],
+      ["ai.agent.key_paused", "ai", "aiKeyPaused"],
+    ]);
     expect(EMAIL_TEMPLATE_EVENTS.every((e) => e.essential)).toBe(true);
     expect(
       Object.fromEntries(NOTIFICATION_EVENTS.map((e) => [e.type, e.channels])),

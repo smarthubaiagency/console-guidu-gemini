@@ -44,7 +44,10 @@ function denied(): AppError {
 export function canReadEvents(actor: PlatformEventsActor): boolean {
   return (
     actor.platformRole !== null &&
-    hasPlatformRolePermission(actor.platformRole, Permissions.PLATFORM_EVENTS_READ)
+    hasPlatformRolePermission(
+      actor.platformRole,
+      Permissions.PLATFORM_EVENTS_READ,
+    )
   );
 }
 

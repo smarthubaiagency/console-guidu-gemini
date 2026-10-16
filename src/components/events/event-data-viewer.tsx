@@ -90,7 +90,9 @@ export function EventDataViewer({ eventId }: Readonly<{ eventId: string }>) {
           <p
             id={`event-reason-hint-${eventId}`}
             className={
-              fieldError ? "text-12 text-danger-text" : "text-11 text-text-secondary"
+              fieldError
+                ? "text-12 text-danger-text"
+                : "text-11 text-text-secondary"
             }
             data-testid="event-reason-hint"
           >

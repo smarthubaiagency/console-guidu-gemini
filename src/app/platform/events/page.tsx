@@ -64,7 +64,10 @@ export async function generateMetadata(): Promise<Metadata> {
 const BASE = "/platform/events";
 
 type SearchParams = Partial<
-  Record<"type" | "module" | "partner" | "customer" | "from" | "to" | "event", string>
+  Record<
+    "type" | "module" | "partner" | "customer" | "from" | "to" | "event",
+    string
+  >
 >;
 
 const SEVERITY_BADGE = {
@@ -79,7 +82,10 @@ const INTEGRITY_BADGE = {
   unverifiable: "warning",
 } as const;
 
-const DELIVERY_BADGE: Record<string, "success" | "danger" | "warning" | "neutral"> = {
+const DELIVERY_BADGE: Record<
+  string,
+  "success" | "danger" | "warning" | "neutral"
+> = {
   sent: "success",
   delivered: "success",
   failed: "danger",
@@ -144,9 +150,13 @@ export default async function PlatformEventsPage({
   const partners = new Map<string, string>();
   const customers = new Map<string, string>();
   for (const row of source) {
-    if (row.partnerId) partners.set(row.partnerId, row.partnerName ?? row.partnerId);
+    if (row.partnerId)
+      partners.set(row.partnerId, row.partnerName ?? row.partnerId);
     if (row.organizationId) {
-      customers.set(row.organizationId, row.organizationName ?? row.organizationId);
+      customers.set(
+        row.organizationId,
+        row.organizationName ?? row.organizationId,
+      );
     }
   }
 
@@ -165,7 +175,8 @@ export default async function PlatformEventsPage({
   const customerOf = (row: PlatformEventRow) =>
     row.organizationName ?? row.partnerName ?? t("list.platform");
   const integrityBadge = (row: PlatformEventRow) => {
-    const key = (row.integrity ?? "pending") as keyof typeof INTEGRITY_BADGE | "pending";
+    const key = (row.integrity ?? "pending") as
+      keyof typeof INTEGRITY_BADGE | "pending";
     return (
       <Badge
         variant={key === "pending" ? "neutral" : INTEGRITY_BADGE[key]}
@@ -200,10 +211,15 @@ export default async function PlatformEventsPage({
               defaultValue={filters.type ?? ""}
               className="w-full"
             >
-              <NativeSelectOption value="">{t("filters.allTypes")}</NativeSelectOption>
+              <NativeSelectOption value="">
+                {t("filters.allTypes")}
+              </NativeSelectOption>
               {EVENT_CATALOG.filter((definition) => !definition.inline).map(
                 (definition) => (
-                  <NativeSelectOption key={definition.type} value={definition.type}>
+                  <NativeSelectOption
+                    key={definition.type}
+                    value={definition.type}
+                  >
                     {definition.type}
                   </NativeSelectOption>
                 ),
@@ -220,7 +236,9 @@ export default async function PlatformEventsPage({
               defaultValue={filters.module ?? ""}
               className="w-full"
             >
-              <NativeSelectOption value="">{t("filters.allModules")}</NativeSelectOption>
+              <NativeSelectOption value="">
+                {t("filters.allModules")}
+              </NativeSelectOption>
               {EVENT_MODULES.map((module) => (
                 <NativeSelectOption key={module} value={module}>
                   {module}
@@ -238,7 +256,9 @@ export default async function PlatformEventsPage({
               defaultValue={filters.partner ?? ""}
               className="w-full"
             >
-              <NativeSelectOption value="">{t("filters.allPartners")}</NativeSelectOption>
+              <NativeSelectOption value="">
+                {t("filters.allPartners")}
+              </NativeSelectOption>
               {[...partners].map(([id, name]) => (
                 <NativeSelectOption key={id} value={id}>
                   {name}
@@ -256,7 +276,9 @@ export default async function PlatformEventsPage({
               defaultValue={filters.customer ?? ""}
               className="w-full"
             >
-              <NativeSelectOption value="">{t("filters.allCustomers")}</NativeSelectOption>
+              <NativeSelectOption value="">
+                {t("filters.allCustomers")}
+              </NativeSelectOption>
               {[...customers].map(([id, name]) => (
                 <NativeSelectOption key={id} value={id}>
                   {name}
@@ -269,13 +291,23 @@ export default async function PlatformEventsPage({
               <Label htmlFor="events-from" className="text-12">
                 {t("filters.from")}
               </Label>
-              <Input id="events-from" name="from" type="date" defaultValue={filters.from ?? ""} />
+              <Input
+                id="events-from"
+                name="from"
+                type="date"
+                defaultValue={filters.from ?? ""}
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="events-to" className="text-12">
                 {t("filters.to")}
               </Label>
-              <Input id="events-to" name="to" type="date" defaultValue={filters.to ?? ""} />
+              <Input
+                id="events-to"
+                name="to"
+                type="date"
+                defaultValue={filters.to ?? ""}
+              />
             </div>
           </div>
           <div className="flex items-end gap-2">
@@ -339,11 +371,14 @@ export default async function PlatformEventsPage({
                     <ItemActions>
                       <Badge
                         variant={
-                          SEVERITY_BADGE[row.severity as keyof typeof SEVERITY_BADGE] ??
-                          "neutral"
+                          SEVERITY_BADGE[
+                            row.severity as keyof typeof SEVERITY_BADGE
+                          ] ?? "neutral"
                         }
                       >
-                        {t(`severity.${row.severity as keyof typeof SEVERITY_BADGE}`)}
+                        {t(
+                          `severity.${row.severity as keyof typeof SEVERITY_BADGE}`,
+                        )}
                       </Badge>
                       {integrityBadge(row)}
                     </ItemActions>
@@ -393,17 +428,21 @@ function EventPanel({
   integrity: React.ReactNode;
 }>) {
   const mono = (value: string) => (
-    <span className="font-mono text-12 break-all">{value}</span>
+    <span className="text-12 font-mono break-all">{value}</span>
   );
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6" data-testid="event-panel">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-18 text-text font-semibold font-mono" data-testid="event-panel-type">
+        <h2
+          className="text-18 text-text font-mono font-semibold"
+          data-testid="event-panel-type"
+        >
           {detail.type}
         </h2>
         <Badge
           variant={
-            SEVERITY_BADGE[detail.severity as keyof typeof SEVERITY_BADGE] ?? "neutral"
+            SEVERITY_BADGE[detail.severity as keyof typeof SEVERITY_BADGE] ??
+            "neutral"
           }
         >
           {t(`severity.${detail.severity as keyof typeof SEVERITY_BADGE}`)}
@@ -464,17 +503,24 @@ function EventPanel({
           </div>
           <KeyValueList
             items={[
-              { label: t("detail.contentHash"), value: mono(detail.contentHash) },
+              {
+                label: t("detail.contentHash"),
+                value: mono(detail.contentHash),
+              },
               {
                 label: t("detail.prevHash"),
-                value: detail.prevHash ? mono(detail.prevHash) : t("detail.none"),
+                value: detail.prevHash
+                  ? mono(detail.prevHash)
+                  : t("detail.none"),
               },
               { label: t("detail.keyVersion"), value: mono(detail.keyVersion) },
               { label: t("detail.chainKey"), value: mono(detail.chainKey) },
               { label: t("detail.position"), value: String(detail.seq) },
               {
                 label: t("detail.verifiedAt"),
-                value: detail.verifiedAt ? when(detail.verifiedAt) : t("detail.never"),
+                value: detail.verifiedAt
+                  ? when(detail.verifiedAt)
+                  : t("detail.never"),
               },
             ]}
           />
@@ -486,12 +532,16 @@ function EventPanel({
           <CardTitle>{t("detail.deliveries")}</CardTitle>
           <CardDescription>
             {t("detail.dispatchedAt")}:{" "}
-            {detail.dispatchedAt ? when(detail.dispatchedAt) : t("detail.notDispatched")}
+            {detail.dispatchedAt
+              ? when(detail.dispatchedAt)
+              : t("detail.notDispatched")}
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
           {detail.deliveryList.length === 0 ? (
-            <p className="text-12 text-text-secondary">{t("detail.noDeliveries")}</p>
+            <p className="text-12 text-text-secondary">
+              {t("detail.noDeliveries")}
+            </p>
           ) : (
             <ItemGroup className="gap-2">
               {detail.deliveryList.map((delivery) => (
@@ -517,7 +567,9 @@ function EventPanel({
                     </ItemDescription>
                   </ItemContent>
                   <ItemActions>
-                    <Badge variant={DELIVERY_BADGE[delivery.status] ?? "neutral"}>
+                    <Badge
+                      variant={DELIVERY_BADGE[delivery.status] ?? "neutral"}
+                    >
                       {t(`delivery.${delivery.status as "sent"}`)}
                     </Badge>
                   </ItemActions>
