@@ -9,6 +9,7 @@ import {
 import type { ChannelFetch } from "@/core/channels/http";
 import { appConfig } from "@/core/config/app";
 import { definePlatformJob } from "@/core/jobs/definition";
+import { SOURCE_LOCALE, type Messages } from "@/core/i18n/locales";
 import { deliverNotification } from "@/core/notifications/delivery";
 import { postNotice, preferencesOf } from "@/core/notifications/inbox";
 import {
@@ -21,6 +22,7 @@ import { isHttpUrl } from "@/core/notifications/markup";
 import { getNotificationTransport } from "@/core/notifications/transport";
 import type {
   NotificationBrand,
+  NotificationEvent,
   NotificationTransport,
 } from "@/core/notifications/types";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
@@ -32,10 +34,19 @@ import {
   eventDefinition,
 } from "./catalog";
 import { EVENTS_DISPATCH_JOB_KIND } from "./emit";
-import { deliverWhatsApp } from "./whatsapp";
+import { eventNotificationSettings } from "./rule-settings";
+import {
+  bypassesQuietHours,
+  effectiveRule,
+  inQuietHours,
+  nextDigestAt,
+  quietWindowEnd,
+} from "./rules";
+import { defaultWhatsappText, fillTags, hubNoticeText, tagValues } from "./texts";
+import { deliverPersonWhatsApp, deliverWhatsApp } from "./whatsapp";
 
 /**
- * Destination `notify` of the Event Hub (H1): the job `events.dispatch`
+ * Destination `notify` of the Event Hub (H1, rules in H2): the job `events.dispatch`
  * (platform, app_worker) tells the event's recipients on the channels its
  * type has. Who: `private.event_recipients` by the route (the worker never
  * reads members itself). Each person's preferences apply, except for
@@ -47,6 +58,13 @@ import { deliverWhatsApp } from "./whatsapp";
  * Every delivery keeps the event's id. The keys of the deliveries are the
  * event's key plus the address (or `user:<id>`, or `whatsapp`), so running
  * again is a no-op.
+ *
+ * H2: the rule of the type (`notifications.rules` of the cascade, read for
+ * the event's partner and workspace) says whether it is on, the channels,
+ * the audience (the route, or roles) and immediate or digest. WhatsApp to
+ * a person needs their accepted number and respects the quiet window
+ * (urgent security events go through); a digest queues the delivery for
+ * `events.notices-tick`. With no rule anywhere the H1 behaviour holds.
  */
 
 export type DispatchDeps = Readonly<{
@@ -68,6 +86,7 @@ type EventRow = Readonly<{
   id: string;
   type: string;
   route: string;
+  severity: string;
   partner_id: string | null;
   organization_id: string | null;
   workspace_id: string | null;
@@ -75,6 +94,7 @@ type EventRow = Readonly<{
   data: Record<string, unknown>;
   idempotency_key: string;
   dispatched_at: Date | null;
+  occurred_at: Date;
 }>;
 
 const str = (value: unknown): string =>
@@ -186,26 +206,107 @@ async function brandOf(
   };
 }
 
-/** Channels of the type a person keeps on (essential ones always). */
+/**
+ * Channels of the rule a person keeps on: essential events always on e-mail
+ * and the bell; WhatsApp is the person's choice even then (they accepted
+ * the number, and may turn a type off).
+ */
 async function personChannels(
   tx: ContextTransaction,
   definition: EventDefinition,
+  channels: readonly EventChannel[],
   userId: string | null,
 ): Promise<ReadonlySet<EventChannel>> {
-  const preferences =
-    userId && !definition.essential
-      ? await preferencesOf(tx, userId, definition.type)
-      : [];
+  const preferences = userId
+    ? await preferencesOf(tx, userId, definition.type)
+    : [];
   return new Set(
-    definition.channels.filter(
-      (channel) =>
-        definition.essential ||
-        preferences.find((p) => p.channel === channel)?.enabled !== false,
-    ),
+    channels.filter((channel) => {
+      const off =
+        preferences.find((p) => p.channel === channel)?.enabled === false;
+      if (channel === "whatsapp") return !off;
+      return definition.essential || !off;
+    }),
   );
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** A person or an address to tell, with the role and accepted WhatsApp. */
+export type AudienceMember = Readonly<{
+  user_id: string | null;
+  email: string | null;
+  role: string | null;
+  whatsapp: string | null;
+}>;
+
+/** Who to tell: the route (`roles` null) or the roles of a rule. */
+export async function eventAudience(
+  tx: ContextTransaction,
+  eventId: string,
+  roles: readonly string[] | null,
+): Promise<AudienceMember[]> {
+  return roles === null
+    ? tx.$queryRaw<AudienceMember[]>`
+        select user_id, email, role, whatsapp
+        from private.event_audience(${eventId}::uuid, null::text[])`
+    : tx.$queryRaw<AudienceMember[]>`
+        select user_id, email, role, whatsapp
+        from private.event_audience(${eventId}::uuid, ${[...roles]}::text[])`;
+}
+
+/** The WhatsApp text of an event for a person, in their language. */
+export async function whatsappTextOf(
+  tx: ContextTransaction,
+  event: Pick<EventRow, "type" | "partner_id" | "data">,
+  brand: string,
+  locale: string,
+  messages?: Messages,
+): Promise<string> {
+  const [row] = await tx.$queryRaw<{ body: string }[]>`
+    select body from private.whatsapp_template(
+      ${event.partner_id}::uuid, ${event.type}, ${locale})
+  `;
+  const body = row?.body ?? defaultWhatsappText(event.type, locale, messages);
+  return fillTags(body, tagValues(event.type, event.data, brand, locale));
+}
+
+/** Queues a delivery of the digest (e-mail or bell): sent by the tick job. */
+async function queueDigest(
+  tx: ContextTransaction,
+  args: Readonly<{
+    event: EventRow;
+    channel: "email" | "app";
+    userId: string | null;
+    email: string | null;
+    subject: string | null;
+    relatedId: string;
+    until: Date;
+  }>,
+): Promise<number> {
+  if (!args.event.partner_id) return 0;
+  const who = args.channel === "email" ? args.email : `user:${args.userId}`;
+  if (!who) return 0;
+  const key = `${args.event.idempotency_key}:digest:${args.channel}:${who}`.slice(0, 200);
+  const inserted = await tx.$executeRaw`
+    insert into public.notification_deliveries
+      (partner_id, event_type, idempotency_key, related_id, event_id, channel,
+       recipient_user_id, recipient_email, subject)
+    values (${args.event.partner_id}::uuid, ${args.event.type}, ${key},
+            ${args.relatedId}::uuid, ${args.event.id}::uuid, ${args.channel},
+            ${args.userId}::uuid, ${args.email}, ${args.subject})
+    on conflict (idempotency_key) do nothing
+  `;
+  if (inserted > 0) {
+    await tx.$executeRaw`
+      update public.notification_deliveries
+      set status = 'queued', hold_reason = 'digest', deliver_after = ${args.until},
+          reason = 'digest'
+      where idempotency_key = ${key} and status = 'pending'
+    `;
+  }
+  return inserted;
+}
 
 export async function dispatchEvent(
   tx: ContextTransaction,
@@ -214,8 +315,8 @@ export async function dispatchEvent(
 ): Promise<DispatchResult> {
   const now = deps.now ?? (() => new Date());
   const [event] = await tx.$queryRaw<EventRow[]>`
-    select id, type, route, partner_id, organization_id, workspace_id, subject_id,
-           data, idempotency_key, dispatched_at
+    select id, type, route, severity, partner_id, organization_id, workspace_id, subject_id,
+           data, idempotency_key, dispatched_at, occurred_at
     from public.events where id = ${eventId}::uuid
   `;
   if (!event) return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
@@ -229,70 +330,196 @@ export async function dispatchEvent(
     await markDone();
     return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
   }
+  const settings = await eventNotificationSettings(tx, event.id);
+  const rule = effectiveRule(definition, settings.rules);
+  if (!rule.enabled) {
+    await markDone();
+    return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
+  }
+  const explicit = definition.route === "explicit";
+  const personWhatsApp = !explicit && rule.channels.includes("whatsapp");
   // E-mail and the bell are done once; only a failed WhatsApp comes back.
-  if (event.dispatched_at && !definition.channels.includes("whatsapp")) {
+  if (event.dispatched_at && !rule.channels.includes("whatsapp")) {
     return { status: "done", notices: 0, bell: 0, whatsapp: null };
   }
 
+  const relatedId =
+    event.subject_id && UUID.test(event.subject_id)
+      ? event.subject_id
+      : event.id;
+  const digest = rule.delivery === "digest";
+  const digestAt = nextDigestAt(now(), settings.digestTime, settings.timeZone);
+
   let notices = 0;
   let bell = 0;
-  if (
-    !event.dispatched_at &&
-    (definition.channels.includes("email") ||
-      definition.channels.includes("app"))
-  ) {
-    const recipients = await tx.$queryRaw<
-      { user_id: string | null; email: string | null }[]
-    >`select user_id, email from private.event_recipients(${event.id}::uuid)`;
+  let whatsapp: string | null = null;
+  const needsAudience =
+    (!event.dispatched_at &&
+      (rule.channels.includes("email") || rule.channels.includes("app"))) ||
+    personWhatsApp;
+  if (needsAudience) {
+    const recipients = await eventAudience(
+      tx,
+      event.id,
+      rule.recipients === "route" ? null : rule.recipients,
+    );
     const content = notificationContentOf(event.type, event.data);
-    const notice = bellNoticeOf(event.type, event.data);
+    const notice =
+      bellNoticeOf(event.type, event.data) ??
+      ({ eventType: event.type, data: {}, linkUrl: null } as InboxNotice);
     const languageOf = notificationLanguages(tx);
     const sender =
       recipients.length > 0 ? await brandOf(tx, event, definition) : null;
-    const relatedId =
-      event.subject_id && UUID.test(event.subject_id)
-        ? event.subject_id
-        : event.id;
     const transport = deps.transport ?? getNotificationTransport();
     for (const recipient of recipients) {
-      const on = await personChannels(tx, definition, recipient.user_id);
-      if (
-        recipient.email &&
-        content &&
-        sender &&
-        event.partner_id &&
-        definition.channels.includes("email")
-      ) {
-        // Applies the preferences again and posts the bell with the e-mail.
-        notices += await deliverNotification(tx, {
-          transport,
-          language: await languageOf(recipient.email),
-          brand: sender.brand,
-          partnerId: event.partner_id,
-          senderPartnerId: sender.senderPartnerId,
-          relatedId,
-          recipientUserId: recipient.user_id,
-          eventId: event.id,
-          event: {
-            ...content,
-            recipientEmail: recipient.email,
-            idempotencyKey: `${event.idempotency_key}:${recipient.email}`,
-          },
-        });
-        continue;
+      const on = await personChannels(
+        tx,
+        definition,
+        rule.channels,
+        recipient.user_id,
+      );
+      if (!event.dispatched_at) {
+        const wantsEmail =
+          on.has("email") &&
+          Boolean(recipient.email) &&
+          Boolean(sender) &&
+          Boolean(event.partner_id);
+        const wantsBell = on.has("app") && Boolean(recipient.user_id);
+        if (digest) {
+          if (wantsEmail && recipient.email) {
+            const language = await languageOf(recipient.email);
+            notices += await queueDigest(tx, {
+              event,
+              channel: "email",
+              userId: recipient.user_id,
+              email: recipient.email,
+              subject: hubNoticeText(
+                definition,
+                event.data,
+                sender?.brand.name ?? appConfig.name,
+                language.locale,
+                language.messages,
+              ).subject.slice(0, 200),
+              relatedId,
+              until: digestAt,
+            });
+          }
+          if (wantsBell) {
+            bell += await queueDigest(tx, {
+              event,
+              channel: "app",
+              userId: recipient.user_id,
+              email: null,
+              subject: null,
+              relatedId,
+              until: digestAt,
+            });
+          }
+        } else if (wantsEmail && recipient.email && sender && event.partner_id) {
+          const language = await languageOf(recipient.email);
+          const generic = content
+            ? null
+            : hubNoticeText(
+                definition,
+                event.data,
+                sender.brand.name,
+                language.locale,
+                language.messages,
+              );
+          const link = str(event.data.linkUrl);
+          const emailContent: NotificationContent = content ?? {
+            type: "events.notice",
+            data: {
+              eventType: event.type,
+              subject: generic!.subject,
+              paragraphs: [generic!.body],
+              actionLabel: generic!.action,
+              url: link && isHttpUrl(link) ? link : null,
+            },
+          };
+          // Applies the preferences again and posts the bell with the e-mail.
+          notices += await deliverNotification(tx, {
+            transport,
+            language,
+            brand: sender.brand,
+            partnerId: event.partner_id,
+            senderPartnerId: sender.senderPartnerId,
+            relatedId,
+            recipientUserId: recipient.user_id,
+            eventId: event.id,
+            bell: wantsBell,
+            event: {
+              ...emailContent,
+              recipientEmail: recipient.email,
+              idempotencyKey: `${event.idempotency_key}:${recipient.email}`,
+            } as NotificationEvent,
+          });
+          // A generic e-mail has no bell of its own: post it here.
+          if (!content && wantsBell && recipient.user_id) {
+            bell += await postNotice(tx, {
+              userId: recipient.user_id,
+              notice,
+              idempotencyKey: `${event.idempotency_key}:user:${recipient.user_id}`,
+              eventId: event.id,
+            });
+          }
+        } else if (wantsBell && recipient.user_id) {
+          bell += await postNotice(tx, {
+            userId: recipient.user_id,
+            notice,
+            idempotencyKey: `${event.idempotency_key}:user:${recipient.user_id}`,
+            eventId: event.id,
+          });
+        }
       }
-      if (recipient.user_id && notice && on.has("app")) {
-        bell += await postNotice(tx, {
-          userId: recipient.user_id,
-          notice,
-          idempotencyKey: `${event.idempotency_key}:user:${recipient.user_id}`,
-        });
+      if (
+        personWhatsApp &&
+        recipient.user_id &&
+        on.has("whatsapp") &&
+        event.partner_id
+      ) {
+        const hold = digest
+          ? { reason: "digest" as const, until: digestAt }
+          : !bypassesQuietHours(definition) &&
+              inQuietHours(now(), settings.quiet, settings.timeZone)
+            ? {
+                reason: "quiet_hours" as const,
+                until: quietWindowEnd(now(), settings.quiet, settings.timeZone),
+              }
+            : null;
+        const language = recipient.email
+          ? await languageOf(recipient.email)
+          : { locale: SOURCE_LOCALE, messages: undefined };
+        const outcome = await deliverPersonWhatsApp(
+          tx,
+          {
+            event: {
+              id: event.id,
+              type: event.type,
+              partnerId: event.partner_id,
+              subjectId: event.subject_id,
+              idempotencyKey: event.idempotency_key,
+              data: event.data,
+            },
+            userId: recipient.user_id,
+            phone: recipient.whatsapp,
+            text: await whatsappTextOf(
+              tx,
+              event,
+              sender?.brand.name ?? appConfig.name,
+              language.locale,
+              language.messages,
+            ),
+            hold,
+          },
+          deps,
+        );
+        whatsapp = outcome.status;
       }
     }
   }
 
-  let whatsapp: string | null = null;
-  if (definition.channels.includes("whatsapp") && event.partner_id) {
+  if (explicit && rule.channels.includes("whatsapp") && event.partner_id) {
     const outcome = await deliverWhatsApp(
       tx,
       {

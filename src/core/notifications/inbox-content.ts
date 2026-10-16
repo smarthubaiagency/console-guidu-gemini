@@ -73,6 +73,7 @@ export function inboxNotice(content: NotificationContent): InboxNotice | null {
     }
     case "invitation.created":
     case "email.test":
+    case "events.notice":
       return null;
   }
 }
@@ -97,6 +98,14 @@ const EVENT_KEYS: Readonly<Record<string, string>> = {
   "google_business.analyses_done": "gbAnalysesDone",
   // The seal check of the Event Hub found a broken chain (H1).
   "platform.events.chain_broken": "eventsChainBroken",
+  // Event Hub (H2): access to the data, security, reminders and digest.
+  "events.access_requested": "accessRequested",
+  "security.api_key_created": "apiKeyCreated",
+  "security.api_key_revoked": "apiKeyRevoked",
+  "security.mfa_requirement_off": "mfaRequirementOff",
+  "events.reminder": "eventReminder",
+  "events.escalation": "eventEscalation",
+  "events.digest": "eventDigest",
 };
 
 function text(data: unknown, name: string): string {
@@ -168,6 +177,47 @@ export function renderInboxNotice(
       return {
         title: t("eventsChainBroken.title", values),
         body: t("eventsChainBroken.body", values),
+      };
+    }
+    case "accessRequested": {
+      const values = {
+        requester: text(data, "requester"),
+        workspace: text(data, "workspace"),
+        hours: text(data, "hours") || "72",
+      };
+      return {
+        title: t("accessRequested.title", values),
+        body: t("accessRequested.body", values),
+      };
+    }
+    case "apiKeyCreated":
+    case "apiKeyRevoked":
+    case "mfaRequirementOff": {
+      const values = {
+        workspace: text(data, "workspace"),
+        key: text(data, "key"),
+      };
+      return {
+        title: t(`${key}.title`, values),
+        body: t(`${key}.body`, values),
+      };
+    }
+    case "eventReminder":
+    case "eventEscalation": {
+      const values = {
+        event: text(data, "event"),
+        hours: text(data, "hours") || "0",
+      };
+      return {
+        title: t(`${key}.title`, values),
+        body: t(`${key}.body`, values),
+      };
+    }
+    case "eventDigest": {
+      const values = { count: text(data, "count") || "0" };
+      return {
+        title: t("eventDigest.title", values),
+        body: t("eventDigest.body", values),
       };
     }
     default:

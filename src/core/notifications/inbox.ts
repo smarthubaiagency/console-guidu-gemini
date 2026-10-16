@@ -83,14 +83,16 @@ export async function postNotice(
     userId: string;
     notice: InboxNotice;
     idempotencyKey: string;
+    /** The Event Hub event of the notice (H2), for its trace. */
+    eventId?: string | null;
   }>,
 ): Promise<number> {
   return tx.$executeRaw`
     insert into public.user_notifications
-      (user_id, event_type, data, link_url, idempotency_key)
+      (user_id, event_type, data, link_url, idempotency_key, event_id)
     values (${args.userId}::uuid, ${args.notice.eventType},
             ${JSON.stringify(args.notice.data)}::jsonb, ${args.notice.linkUrl},
-            ${args.idempotencyKey})
+            ${args.idempotencyKey}, ${args.eventId ?? null}::uuid)
     on conflict (idempotency_key) do nothing
   `;
 }
