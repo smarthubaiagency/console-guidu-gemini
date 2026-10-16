@@ -29,6 +29,7 @@ export const CLIENT_NAMESPACES = [
   "gbIntelligence",
   "googleBusiness",
   "events",
+  "platformAudit",
 ] as const;
 
 export function clientMessages(

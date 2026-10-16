@@ -67,7 +67,7 @@ export type TestDatabase = Readonly<{
   ) => Promise<void>;
   blockIdentity: (email: string) => Promise<void>;
   countProfiles: (email: string) => Promise<number>;
-  makePlatformAdmin: (email: string) => Promise<void>;
+  makePlatformAdmin: (email: string, role?: string) => Promise<void>;
   seedWorkspace: (params: {
     email: string;
     orgName: string;
@@ -200,12 +200,12 @@ export async function startTestDatabase(
       );
       return Number(result.rows[0]?.count ?? 0);
     },
-    makePlatformAdmin: async (email) => {
+    makePlatformAdmin: async (email, role = "owner") => {
       await pool.query(
         `insert into public.platform_admin_members (user_id, role, status)
-         select id, 'owner', 'active' from auth.users where lower(email) = lower($1)
-         on conflict (user_id) do update set role = 'owner', status = 'active'`,
-        [email],
+         select id, $2, 'active' from auth.users where lower(email) = lower($1)
+         on conflict (user_id) do update set role = excluded.role, status = 'active'`,
+        [email, role],
       );
     },
     seedWorkspace: async (params) => {

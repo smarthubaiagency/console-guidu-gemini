@@ -256,6 +256,11 @@ describe("generated navigation", () => {
     expect(find(billing, "platform.operations")).toBeUndefined();
     expect(find(billing, "platform.settings.plans")).toBeDefined();
     expect(find(support, "platform.settings.plans")).toBeUndefined();
+    // Audit trail (AUD1): every internal role, none without a role.
+    expect(find(owner, "platform.audit")?.href).toBe("/platform/audit");
+    expect(find(billing, "platform.audit")).toBeDefined();
+    expect(find(support, "platform.audit")).toBeDefined();
+    expect(find(none, "platform.audit")).toBeUndefined();
     // Administrative keys (F4e): every internal role creates their own.
     expect(find(billing, "platform.api-keys")?.href).toBe("/platform/api-keys");
     expect(find(support, "platform.api-keys")).toBeDefined();

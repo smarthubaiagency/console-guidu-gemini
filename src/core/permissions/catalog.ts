@@ -99,6 +99,9 @@ export const Permissions = {
   PLATFORM_EVENTS_READ_ALL_DATA: "platform.events.read_all_data",
   // Grant and remove capabilities (`keychain`) of the platform team.
   PLATFORM_CAPABILITIES_MANAGE: "platform.capabilities.manage",
+  // Plataforma › Auditoria (AUD1): the whole audit trail; the database
+  // narrows billing to the billing actions.
+  PLATFORM_AUDIT_READ: "platform.audit.read",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",

@@ -1,0 +1,88 @@
+{
+  "title": "Auditoría",
+  "description": "Todo lo registrado en la pista de auditoría de la plataforma, de todos los socios y clientes.",
+  "descriptionBilling": "Acciones de cobro registradas en la pista de auditoría de la plataforma.",
+  "billingOnly": "Solo cobro",
+  "filters": {
+    "title": "Filtros",
+    "description": "Combine los filtros y aplíquelos. El período usa la zona horaria de São Paulo.",
+    "partner": "Socio",
+    "organization": "Empresa",
+    "workspace": "Workspace",
+    "action": "Acción (empieza con)",
+    "actionPlaceholder": "ej.: billing. o partner.member",
+    "actionInvalid": "Use letras minúsculas, números, punto y guion bajo.",
+    "result": "Resultado",
+    "origin": "Origen",
+    "actor": "Actor (id)",
+    "actorPlaceholder": "id del usuario",
+    "actorInvalid": "Ingrese un id de usuario válido.",
+    "from": "Desde",
+    "to": "Hasta",
+    "any": "Todos",
+    "apply": "Aplicar",
+    "clear": "Limpiar",
+    "fixFields": "Corrija los campos destacados",
+    "periodInvalid": "Período inválido",
+    "periodInvalidDetails": "La fecha final es anterior a la inicial."
+  },
+  "list": {
+    "title": "Eventos",
+    "description": "{count, plural, =0 {Ningún evento en esta página} one {# evento en esta página} other {# eventos en esta página}}, del más reciente al más antiguo.",
+    "columns": {
+      "when": "Cuándo",
+      "event": "Acción",
+      "where": "Empresa o socio",
+      "actor": "Quién",
+      "result": "Resultado"
+    },
+    "open": "Detalles",
+    "security": "Seguridad",
+    "platform": "Plataforma",
+    "user": "Usuario {id}",
+    "newest": "Más recientes",
+    "older": "Más antiguos"
+  },
+  "empty": {
+    "title": "Ningún evento",
+    "description": "No se registró nada con estos filtros."
+  },
+  "result": {
+    "success": "Éxito",
+    "denied": "Denegado",
+    "error": "Error"
+  },
+  "origin": {
+    "app": "Panel",
+    "api": "API",
+    "mcp": "MCP",
+    "worker": "Rutina",
+    "admin": "Administración"
+  },
+  "principal": {
+    "user": "Usuario",
+    "service": "Sistema",
+    "api_key": "Clave de API"
+  },
+  "detail": {
+    "label": "Detalle del evento",
+    "id": "Id del evento",
+    "occurredAt": "Fecha (UTC)",
+    "action": "Acción",
+    "actor": "Quién",
+    "actorId": "Id del actor",
+    "principal": "Tipo de actor",
+    "represented": "En nombre de",
+    "partner": "Socio",
+    "organization": "Empresa",
+    "workspace": "Workspace",
+    "resource": "Recurso",
+    "client": "Cliente de la API",
+    "request": "Solicitud",
+    "metadata": "Metadatos",
+    "noMetadata": "Sin metadatos.",
+    "allowlist": "Los metadatos pasan por una lista de campos permitidos al registrarse: secretos, claves y correos completos nunca se guardan.",
+    "filterActor": "Filtrar por este actor",
+    "securityLink": "Ver en eventos de seguridad"
+  }
+}
