@@ -15,4 +15,11 @@ describe("cn", () => {
       "text-muted-foreground text-xs",
     );
   });
+
+  it("lets the model-card radii and shadow replace the stock ones", () => {
+    expect(cn("rounded-md shadow-sm", "rounded-inner shadow-card")).toBe(
+      "rounded-inner shadow-card",
+    );
+    expect(cn("rounded-card", "rounded-panel")).toBe("rounded-panel");
+  });
 });

@@ -1,14 +1,36 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+// GUIDU variants (U4, ADR 0021): `default` is the upstream card; the others
+// are the layered model cards (panel > surface > inset, framed holds a card).
+const cardVariants = cva("text-card-foreground flex flex-col", {
+  variants: {
+    variant: {
+      default: "bg-card gap-6 rounded-xl border py-6 shadow-sm",
+      surface:
+        "bg-card border-card-border shadow-card rounded-card gap-5 border py-5",
+      panel:
+        "bg-card border-card-border shadow-card rounded-panel gap-6 border py-6",
+      inset: "bg-surface-inset rounded-inner gap-4 py-4",
+      framed: "bg-surface-inset border-border rounded-card gap-0 border p-1.5",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+function Card({
+  className,
+  variant = "default",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof cardVariants>) {
   return (
     <div
       data-slot="card"
-      className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
-        className,
-      )}
+      data-variant={variant}
+      className={cn(cardVariants({ variant }), className)}
       {...props}
     />
   );
@@ -88,4 +110,5 @@ export {
   CardAction,
   CardDescription,
   CardContent,
+  cardVariants,
 };

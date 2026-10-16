@@ -89,7 +89,7 @@
   },
   "components": {
     "title": "Componentes",
-    "subtitle": "Os componentes shadcn que toda tela usa (ADR 0014). Use para aprovar o visual e como referência ao criar telas.",
+    "subtitle": "Os componentes do shadcn e os padrões do projeto (ADR 0014 e ADR 0021). Use para aprovar o visual e como referência ao criar telas.",
     "sampleNotice": "Página de demonstração: os dados são exemplos e nada é gravado.",
     "groups": {
       "buttons": "Botões",
@@ -100,7 +100,15 @@
       "badges": "Etiquetas",
       "cards": "Cartões",
       "table": "Tabela",
-      "alerts": "Estado de página"
+      "alerts": "Estado de página",
+      "accordion": "Acordeon em cards",
+      "items": "Itens e campos",
+      "inputGroup": "Caixa de mensagem",
+      "empty": "Estado vazio",
+      "stats": "Números",
+      "keyValue": "Rótulo e valor",
+      "tags": "Etiquetas removíveis",
+      "headers": "Fundo, título e seção"
     },
     "hints": {
       "buttons": "Use Button em toda ação. Destrutivo só para ação que não pode ser desfeita.",
@@ -111,7 +119,15 @@
       "badges": "Para situação e categoria, nunca como botão.",
       "cards": "Para agrupar um bloco de conteúdo com título.",
       "table": "Para listas com colunas.",
-      "alerts": "Só para estado da página (link expirado, acesso negado). Resultado de ação vai para o banner de avisos (ADR 0016)."
+      "alerts": "Só para estado da página (link expirado, acesso negado). Resultado de ação vai para o banner de avisos (ADR 0016).",
+      "accordion": "Lista de itens que abrem para mostrar detalhes. Use variant=\"cards\" nas telas novas; o padrão com linhas fica para listas simples.",
+      "items": "Item do shadcn com variant=\"card\" para listas de arquivos e registros; FieldCard para um valor só leitura com ação (copiar, abrir).",
+      "inputGroup": "Campo com botões junto do texto, como a caixa de mensagem com IA. Não use para formulário comum.",
+      "empty": "Quando uma lista ou aba ainda não tem nada. Diga o que fazer a seguir.",
+      "stats": "StatCard com moldura para os números principais; StatGroup para vários números lado a lado dentro de um card; Amount deixa os centavos em cinza (opcional).",
+      "keyValue": "Resumos curtos de rótulo e valor, como taxas e tempos.",
+      "tags": "Filtros e públicos que a pessoa pode tirar. Mostre poucos e conte o resto.",
+      "headers": "Toda tela nova começa com PageCanvas (fundo cinza) e PageTitle; cada bloco tem SectionHeader com ações à direita."
     },
     "variants": {
       "default": "Principal",
@@ -120,7 +136,13 @@
       "ghost": "Discreto",
       "link": "Link",
       "destructive": "Destrutivo",
-      "disabled": "Desativado"
+      "disabled": "Desativado",
+      "icon": "Botão de ícone",
+      "success": "Concluído",
+      "warning": "Pausado",
+      "danger": "Erro",
+      "info": "Informação",
+      "neutral": "Em espera"
     },
     "field": {
       "name": "Nome",
@@ -143,13 +165,31 @@
       "overview": "Visão geral",
       "settings": "Configurações",
       "overviewBody": "Conteúdo da aba Visão geral.",
-      "settingsBody": "Conteúdo da aba Configurações."
+      "settingsBody": "Conteúdo da aba Configurações.",
+      "period": "Período",
+      "periods": {
+        "7d": "7 dias",
+        "30d": "30 dias",
+        "year": "Ano"
+      }
     },
     "card": {
       "title": "Plano Pro",
       "description": "Até 3 GUIDS e 5 usuários",
       "body": "Cartão de exemplo com título, descrição, conteúdo e ação.",
-      "action": "Ver plano"
+      "action": "Ver plano",
+      "variants": {
+        "surface": "surface",
+        "panel": "panel",
+        "inset": "inset",
+        "framed": "framed"
+      },
+      "hints": {
+        "surface": "Card padrão das telas novas.",
+        "panel": "Bloco grande que contém outros cards.",
+        "inset": "Painel cinza dentro de um card.",
+        "framed": "Moldura cinza com rótulo e um card dentro."
+      }
     },
     "table": {
       "name": "Nome",
@@ -164,6 +204,161 @@
     "alert": {
       "title": "Link expirado",
       "body": "Peça um novo convite a quem administra o workspace."
+    },
+    "sections": {
+      "base": "Componentes base",
+      "baseHint": "Os componentes do shadcn, com as variantes do GUIDU (ADR 0014 e ADR 0021).",
+      "patterns": "Padrões do projeto",
+      "patternsHint": "Montagens feitas só com peças do shadcn, para os blocos que se repetem nas telas."
+    },
+    "accordion": {
+      "welcome": "Boas-vindas",
+      "why": "Por que escolher a loja?",
+      "body": "Conteúdo do item aberto: números, etiquetas ou um formulário curto."
+    },
+    "items": {
+      "details": "Detalhes do arquivo",
+      "fieldLabel": "Chave de API",
+      "copy": "Copiar"
+    },
+    "inputGroup": {
+      "label": "Mensagem",
+      "placeholder": "Escreva a mensagem...",
+      "askAi": "Perguntar à IA",
+      "send": "Enviar"
+    },
+    "empty": {
+      "title": "Nenhuma conversa ainda",
+      "description": "Quando o GUIDS atender alguém, a conversa aparece aqui."
+    },
+    "stats": {
+      "sales": "Vendas atribuídas",
+      "salesCaption": "Informadas pelo comerciante",
+      "answered": "Resolvidas pelo GUIDS",
+      "answeredCaption": "Sem passar para a equipe",
+      "sent": "Enviadas",
+      "read": "Lidas"
+    },
+    "keyValue": {
+      "responseTime": "Tempo médio de resposta",
+      "aiCost": "Custo de IA no período"
+    },
+    "tags": {
+      "remove": "Remover {tag}",
+      "more": "Mais {count} etiquetas"
+    },
+    "headers": {
+      "title": "Mensagens principais",
+      "description": "Título da seção, descrição e ação",
+      "action": "Ver mais"
+    }
+  },
+  "example": {
+    "title": "Atendimento Loja Centro",
+    "subtitle": "Página modelo (ADR 0021): um GUIDS que responde os clientes da loja no WhatsApp. Dados de exemplo, nada é gravado.",
+    "download": "Baixar relatório",
+    "share": "Compartilhar",
+    "more": "Mais opções",
+    "viewMore": "Ver mais",
+    "tabs": {
+      "overview": "Visão geral",
+      "audience": "Público",
+      "results": "Resultados",
+      "settings": "Configurações"
+    },
+    "stats": {
+      "conversations": "Conversas",
+      "conversationsCaption": "Nos últimos 30 dias",
+      "hotLeads": "Leads quentes",
+      "hotLeadsCaption": "Avisados ao comerciante",
+      "sales": "Vendas atribuídas",
+      "salesCaption": "Informadas pelo comerciante"
+    },
+    "messages": {
+      "title": "Mensagens principais",
+      "description": "As mensagens que o GUIDS mais envia nesta campanha",
+      "items": {
+        "welcome": "Boas-vindas",
+        "why": "Por que escolher a loja?",
+        "trust": "Clientes que confiam na loja",
+        "launch": "Lançamento da nova coleção"
+      },
+      "status": {
+        "neutral": "Em espera",
+        "success": "Publicada",
+        "warning": "Pausada"
+      },
+      "sent": "Enviadas",
+      "read": "Lidas",
+      "replied": "Respondidas",
+      "newLeads": "Novos leads",
+      "audience": "Público:"
+    },
+    "removeTag": "Remover {tag}",
+    "moreTags": "Mais {count} etiquetas",
+    "composer": {
+      "label": "Nova mensagem",
+      "placeholder": "Descreva a nova mensagem...",
+      "attach": "Anexar",
+      "askAi": "Perguntar à IA",
+      "create": "Criar mensagem"
+    },
+    "leads": {
+      "title": "Leads recentes",
+      "description": "Contatos que o GUIDS qualificou nesta semana",
+      "name": "Nome",
+      "interest": "Interesse",
+      "temperature": "Temperatura",
+      "value": "Valor estimado",
+      "open": "Abrir",
+      "openLead": "Abrir lead {name}",
+      "temperatures": {
+        "success": "Quente",
+        "warning": "Morno",
+        "neutral": "Frio"
+      },
+      "rows": {
+        "ana": {
+          "name": "Ana Ribeiro",
+          "interest": "Sofá retrátil"
+        },
+        "bruno": {
+          "name": "Bruno Costa",
+          "interest": "Mesa de jantar"
+        },
+        "carla": {
+          "name": "Carla Mendes",
+          "interest": "Almofadas"
+        }
+      }
+    },
+    "empty": {
+      "title": "Nada por aqui ainda",
+      "description": "Esta aba é só um exemplo do estado vazio."
+    },
+    "channel": {
+      "title": "Canal conectado",
+      "description": "O GUIDS responde por esta caixa de entrada",
+      "inbox": "Caixa do Chatwoot",
+      "copy": "Copiar"
+    },
+    "performance": {
+      "title": "Desempenho",
+      "period": "Período",
+      "periods": {
+        "7d": "7 dias",
+        "30d": "30 dias",
+        "year": "Ano"
+      },
+      "answered": "Conversas resolvidas pelo GUIDS",
+      "answeredCaption": "Sem passar para a equipe",
+      "responseTime": "Tempo médio de resposta",
+      "handoffs": "Passadas para a equipe",
+      "aiCost": "Custo de IA no período"
+    },
+    "attachments": {
+      "title": "Anexos",
+      "details": "Detalhes de {name}"
     }
   }
 }

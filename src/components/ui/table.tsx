@@ -3,7 +3,12 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+// GUIDU variant (U4, ADR 0021): `soft` puts the header in a rounded grey band.
+function Table({
+  className,
+  variant = "default",
+  ...props
+}: React.ComponentProps<"table"> & { variant?: "default" | "soft" }) {
   return (
     <div
       data-slot="table-container"
@@ -11,7 +16,8 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        data-variant={variant}
+        className={cn("group/table w-full caption-bottom text-sm", className)}
         {...props}
       />
     </div>
@@ -22,7 +28,10 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn(
+        "[&_tr]:border-b group-data-[variant=soft]/table:[&_tr]:border-b-0 group-data-[variant=soft]/table:[&_tr]:hover:bg-transparent",
+        className,
+      )}
       {...props}
     />
   );
@@ -70,6 +79,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
       data-slot="table-head"
       className={cn(
         "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "group-data-[variant=soft]/table:bg-surface-inset group-data-[variant=soft]/table:text-text-secondary group-data-[variant=soft]/table:first:rounded-l-inner group-data-[variant=soft]/table:last:rounded-r-inner group-data-[variant=soft]/table:px-4 group-data-[variant=soft]/table:font-normal",
         className,
       )}
       {...props}
@@ -83,6 +93,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
       data-slot="table-cell"
       className={cn(
         "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "group-data-[variant=soft]/table:px-4 group-data-[variant=soft]/table:py-3",
         className,
       )}
       {...props}

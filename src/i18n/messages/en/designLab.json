@@ -89,7 +89,7 @@
   },
   "components": {
     "title": "Components",
-    "subtitle": "The shadcn components every screen uses (ADR 0014). Use it to approve the look and as a reference when building screens.",
+    "subtitle": "The shadcn components and the project patterns (ADR 0014 and ADR 0021). Use it to approve the look and as the reference when building screens.",
     "sampleNotice": "Demo page: the data are samples and nothing is saved.",
     "groups": {
       "buttons": "Buttons",
@@ -100,7 +100,15 @@
       "badges": "Badges",
       "cards": "Cards",
       "table": "Table",
-      "alerts": "Page state"
+      "alerts": "Page state",
+      "accordion": "Card accordion",
+      "items": "Items and fields",
+      "inputGroup": "Message box",
+      "empty": "Empty state",
+      "stats": "Numbers",
+      "keyValue": "Label and value",
+      "tags": "Removable tags",
+      "headers": "Canvas, title and section"
     },
     "hints": {
       "buttons": "Use Button for every action. Destructive only for actions that cannot be undone.",
@@ -111,7 +119,15 @@
       "badges": "For status and category, never as a button.",
       "cards": "To group a block of content with a title.",
       "table": "For lists with columns.",
-      "alerts": "Only for page states (expired link, access denied). Action results go to the notice banner (ADR 0016)."
+      "alerts": "Only for page states (expired link, access denied). Action results go to the notice banner (ADR 0016).",
+      "accordion": "Items that open to show details. Use variant=\"cards\" on new screens; the default lines are for simple lists.",
+      "items": "shadcn Item with variant=\"card\" for lists of files and records; FieldCard for a read-only value with an action (copy, open).",
+      "inputGroup": "A field with buttons next to the text, like the AI message box. Not for regular forms.",
+      "empty": "When a list or tab has nothing yet. Say what to do next.",
+      "stats": "Framed StatCard for the main numbers; StatGroup for several numbers side by side inside a card; Amount greys the cents (optional).",
+      "keyValue": "Short label and value summaries, such as rates and times.",
+      "tags": "Filters and audiences the person can remove. Show a few and count the rest.",
+      "headers": "Every new screen starts with PageCanvas (grey background) and PageTitle; each block has a SectionHeader with actions on the right."
     },
     "variants": {
       "default": "Primary",
@@ -120,7 +136,13 @@
       "ghost": "Ghost",
       "link": "Link",
       "destructive": "Destructive",
-      "disabled": "Disabled"
+      "disabled": "Disabled",
+      "icon": "Icon button",
+      "success": "Done",
+      "warning": "Paused",
+      "danger": "Error",
+      "info": "Info",
+      "neutral": "Waiting"
     },
     "field": {
       "name": "Name",
@@ -143,13 +165,31 @@
       "overview": "Overview",
       "settings": "Settings",
       "overviewBody": "Content of the Overview tab.",
-      "settingsBody": "Content of the Settings tab."
+      "settingsBody": "Content of the Settings tab.",
+      "period": "Period",
+      "periods": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "year": "Year"
+      }
     },
     "card": {
       "title": "Pro plan",
       "description": "Up to 3 GUIDS and 5 users",
       "body": "Sample card with title, description, content and action.",
-      "action": "View plan"
+      "action": "View plan",
+      "variants": {
+        "surface": "surface",
+        "panel": "panel",
+        "inset": "inset",
+        "framed": "framed"
+      },
+      "hints": {
+        "surface": "Default card on new screens.",
+        "panel": "Large block that holds other cards.",
+        "inset": "Grey panel inside a card.",
+        "framed": "Grey frame with a label and a card inside."
+      }
     },
     "table": {
       "name": "Name",
@@ -164,6 +204,161 @@
     "alert": {
       "title": "Link expired",
       "body": "Ask the workspace administrator for a new invitation."
+    },
+    "sections": {
+      "base": "Base components",
+      "baseHint": "The shadcn components with the GUIDU variants (ADR 0014 and ADR 0021).",
+      "patterns": "Project patterns",
+      "patternsHint": "Built only from shadcn parts, for the blocks that repeat across screens."
+    },
+    "accordion": {
+      "welcome": "Welcome",
+      "why": "Why choose the store?",
+      "body": "Content of the open item: numbers, tags or a short form."
+    },
+    "items": {
+      "details": "File details",
+      "fieldLabel": "API key",
+      "copy": "Copy"
+    },
+    "inputGroup": {
+      "label": "Message",
+      "placeholder": "Write the message...",
+      "askAi": "Ask AI",
+      "send": "Send"
+    },
+    "empty": {
+      "title": "No conversations yet",
+      "description": "When the GUIDS talks to someone, the conversation shows up here."
+    },
+    "stats": {
+      "sales": "Attributed sales",
+      "salesCaption": "Reported by the merchant",
+      "answered": "Solved by the GUIDS",
+      "answeredCaption": "Without handing off to the team",
+      "sent": "Sent",
+      "read": "Read"
+    },
+    "keyValue": {
+      "responseTime": "Average response time",
+      "aiCost": "AI cost in the period"
+    },
+    "tags": {
+      "remove": "Remove {tag}",
+      "more": "{count} more tags"
+    },
+    "headers": {
+      "title": "Top messages",
+      "description": "Section title, description and action",
+      "action": "View more"
+    }
+  },
+  "example": {
+    "title": "Downtown Store Support",
+    "subtitle": "Model page (ADR 0021): a GUIDS that answers the store's customers on WhatsApp. Sample data, nothing is saved.",
+    "download": "Download report",
+    "share": "Share",
+    "more": "More options",
+    "viewMore": "View more",
+    "tabs": {
+      "overview": "Overview",
+      "audience": "Audience",
+      "results": "Results",
+      "settings": "Settings"
+    },
+    "stats": {
+      "conversations": "Conversations",
+      "conversationsCaption": "In the last 30 days",
+      "hotLeads": "Hot leads",
+      "hotLeadsCaption": "Sent to the merchant",
+      "sales": "Attributed sales",
+      "salesCaption": "Reported by the merchant"
+    },
+    "messages": {
+      "title": "Top messages",
+      "description": "The messages the GUIDS sends most in this campaign",
+      "items": {
+        "welcome": "Welcome",
+        "why": "Why choose the store?",
+        "trust": "Customers who trust the store",
+        "launch": "New collection launch"
+      },
+      "status": {
+        "neutral": "Waiting",
+        "success": "Published",
+        "warning": "Paused"
+      },
+      "sent": "Sent",
+      "read": "Read",
+      "replied": "Replied",
+      "newLeads": "New leads",
+      "audience": "Audience:"
+    },
+    "removeTag": "Remove {tag}",
+    "moreTags": "{count} more tags",
+    "composer": {
+      "label": "New message",
+      "placeholder": "Describe the new message...",
+      "attach": "Attach",
+      "askAi": "Ask AI",
+      "create": "Create message"
+    },
+    "leads": {
+      "title": "Recent leads",
+      "description": "Contacts the GUIDS qualified this week",
+      "name": "Name",
+      "interest": "Interest",
+      "temperature": "Temperature",
+      "value": "Estimated value",
+      "open": "Open",
+      "openLead": "Open lead {name}",
+      "temperatures": {
+        "success": "Hot",
+        "warning": "Warm",
+        "neutral": "Cold"
+      },
+      "rows": {
+        "ana": {
+          "name": "Ana Ribeiro",
+          "interest": "Recliner sofa"
+        },
+        "bruno": {
+          "name": "Bruno Costa",
+          "interest": "Dining table"
+        },
+        "carla": {
+          "name": "Carla Mendes",
+          "interest": "Cushions"
+        }
+      }
+    },
+    "empty": {
+      "title": "Nothing here yet",
+      "description": "This tab only shows the empty state."
+    },
+    "channel": {
+      "title": "Connected channel",
+      "description": "The GUIDS answers through this inbox",
+      "inbox": "Chatwoot inbox",
+      "copy": "Copy"
+    },
+    "performance": {
+      "title": "Performance",
+      "period": "Period",
+      "periods": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "year": "Year"
+      },
+      "answered": "Conversations solved by the GUIDS",
+      "answeredCaption": "Without handing off to the team",
+      "responseTime": "Average response time",
+      "handoffs": "Handed off to the team",
+      "aiCost": "AI cost in the period"
+    },
+    "attachments": {
+      "title": "Attachments",
+      "details": "Details of {name}"
     }
   }
 }

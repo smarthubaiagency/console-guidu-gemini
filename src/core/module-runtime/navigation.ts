@@ -696,6 +696,12 @@ export function buildPlatformNavigation(
                     href: "/platform/design/components",
                     iconKey: "layers",
                   }),
+                  item({
+                    id: "platform.design.example",
+                    label: "Página modelo",
+                    href: "/platform/design/example",
+                    iconKey: "layers",
+                  }),
                 ],
               }),
             ]

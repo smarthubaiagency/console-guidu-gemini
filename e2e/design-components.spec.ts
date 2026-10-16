@@ -7,6 +7,7 @@
  * - Plataforma › Configurações › Padrões de interface › Componentes shows
  *   the shadcn components every screen uses; the interactive ones (select,
  *   switch, tabs) work and the form kit labels its fields.
+ * - The model components of the U4 (ADR 0021) render and respond.
  * ============================================================================
  */
 
@@ -66,4 +67,21 @@ test("the components catalogue shows the shadcn components working", async ({
   await expect(page.getByTestId("components-table")).toContainText(
     "Maria Souza",
   );
+
+  // Model components (U4, ADR 0021): status badges, the card accordion
+  // and the removable tags.
+  await expect(page.getByTestId("components-status")).toContainText(
+    "Concluído",
+  );
+  const accordion = page.getByTestId("components-accordion");
+  await expect(accordion.getByText("Conteúdo do item aberto")).toBeVisible();
+  await accordion.getByRole("button", { name: /Boas-vindas/ }).click();
+  await expect(
+    accordion.getByRole("button", { name: /Boas-vindas/ }),
+  ).toHaveAttribute("aria-expanded", "true");
+  const tags = page.getByTestId("components-tags");
+  await expect(tags.getByText("+2")).toBeVisible();
+  await tags.getByRole("button", { name: "Remover #parceiro" }).click();
+  await expect(tags.getByText("#parceiro")).toHaveCount(0);
+  await expect(tags.getByText("+1")).toBeVisible();
 });
