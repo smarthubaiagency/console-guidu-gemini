@@ -61,6 +61,12 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_SECURITY_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ_ALL_DATA]: false,
+        [Permissions.WORKSPACE_EVENTS_READ]: true,
+        [Permissions.WORKSPACE_EVENTS_MANAGE]: true,
+        [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PLATFORM_EVENTS_MANAGE]: false,
+        [Permissions.PARTNER_EVENTS_READ]: false,
+        [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -120,6 +126,12 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_SECURITY_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ_ALL_DATA]: false,
+        [Permissions.WORKSPACE_EVENTS_READ]: true,
+        [Permissions.WORKSPACE_EVENTS_MANAGE]: true,
+        [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PLATFORM_EVENTS_MANAGE]: false,
+        [Permissions.PARTNER_EVENTS_READ]: false,
+        [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -179,6 +191,12 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_SECURITY_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ_ALL_DATA]: false,
+        [Permissions.WORKSPACE_EVENTS_READ]: true,
+        [Permissions.WORKSPACE_EVENTS_MANAGE]: false,
+        [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PLATFORM_EVENTS_MANAGE]: false,
+        [Permissions.PARTNER_EVENTS_READ]: false,
+        [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -238,6 +256,12 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_SECURITY_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ_ALL_DATA]: false,
+        [Permissions.WORKSPACE_EVENTS_READ]: true,
+        [Permissions.WORKSPACE_EVENTS_MANAGE]: false,
+        [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PLATFORM_EVENTS_MANAGE]: false,
+        [Permissions.PARTNER_EVENTS_READ]: false,
+        [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -280,10 +304,10 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(21);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(20);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(8);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(4);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(23);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(22);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(9);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(5);
     });
   });
 
@@ -333,6 +357,12 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_SECURITY_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ_ALL_DATA]: false,
+        [Permissions.WORKSPACE_EVENTS_READ]: false,
+        [Permissions.WORKSPACE_EVENTS_MANAGE]: false,
+        [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PLATFORM_EVENTS_MANAGE]: false,
+        [Permissions.PARTNER_EVENTS_READ]: false,
+        [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -392,6 +422,12 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_SECURITY_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ_ALL_DATA]: false,
+        [Permissions.WORKSPACE_EVENTS_READ]: false,
+        [Permissions.WORKSPACE_EVENTS_MANAGE]: false,
+        [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PLATFORM_EVENTS_MANAGE]: false,
+        [Permissions.PARTNER_EVENTS_READ]: false,
+        [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -451,6 +487,12 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_SECURITY_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ]: false,
         [Permissions.PLATFORM_EVENTS_READ_ALL_DATA]: false,
+        [Permissions.WORKSPACE_EVENTS_READ]: false,
+        [Permissions.WORKSPACE_EVENTS_MANAGE]: false,
+        [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PLATFORM_EVENTS_MANAGE]: false,
+        [Permissions.PARTNER_EVENTS_READ]: false,
+        [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,

@@ -48,6 +48,8 @@ const ALL_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permissions.WORKSPACE_DATA_EXPORT,
   Permissions.WORKSPACE_PROPOSALS_REVIEW,
   Permissions.WORKSPACE_LOCATIONS_MANAGE,
+  Permissions.WORKSPACE_EVENTS_READ,
+  Permissions.WORKSPACE_EVENTS_MANAGE,
 ]);
 
 /** Owner only: deleting the workspace (F3e, decision of 17/10/2026). */
@@ -80,6 +82,7 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
     Permissions.API_KEYS_REVOKE_OWN,
     Permissions.AI_AGENTS_USE,
     Permissions.AI_AGENTS_CONVERSATIONS_READ,
+    Permissions.WORKSPACE_EVENTS_READ,
   ]),
 
   // Workspace Viewer: leitura básica e chaves próprias (restrição a escopos read-only na C12).
@@ -88,6 +91,7 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
     Permissions.WORKSPACE_MEMBERS_READ,
     Permissions.API_KEYS_CREATE_OWN,
     Permissions.API_KEYS_REVOKE_OWN,
+    Permissions.WORKSPACE_EVENTS_READ,
   ]),
 };
 
@@ -167,6 +171,8 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_EVENTS_READ,
     Permissions.PLATFORM_CAPABILITIES_MANAGE,
     Permissions.PLATFORM_AUDIT_READ,
+    Permissions.PLATFORM_EVENTS_REQUEST_ACCESS,
+    Permissions.PLATFORM_EVENTS_MANAGE,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -184,6 +190,8 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_SECURITY_READ,
     Permissions.PLATFORM_EVENTS_READ,
     Permissions.PLATFORM_AUDIT_READ,
+    Permissions.PLATFORM_EVENTS_REQUEST_ACCESS,
+    Permissions.PLATFORM_EVENTS_MANAGE,
   ]),
   billing: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -203,6 +211,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_SECURITY_READ,
     Permissions.PLATFORM_EVENTS_READ,
     Permissions.PLATFORM_AUDIT_READ,
+    Permissions.PLATFORM_EVENTS_REQUEST_ACCESS,
   ]),
 };
 
@@ -275,6 +284,8 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_SETTINGS_MANAGE,
     Permissions.PARTNER_SECURITY_READ,
     Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
+    Permissions.PARTNER_EVENTS_READ,
+    Permissions.PARTNER_EVENTS_REQUEST_ACCESS,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
@@ -289,6 +300,8 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_SETTINGS_MANAGE,
     Permissions.PARTNER_SECURITY_READ,
     Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
+    Permissions.PARTNER_EVENTS_READ,
+    Permissions.PARTNER_EVENTS_REQUEST_ACCESS,
   ]),
   partner_finance: new Set([
     Permissions.PARTNER_READ,
@@ -302,6 +315,8 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_SUPPORT_REQUEST,
     Permissions.PARTNER_AI_AGENTS_READ,
     Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
+    Permissions.PARTNER_EVENTS_READ,
+    Permissions.PARTNER_EVENTS_REQUEST_ACCESS,
   ]),
 };
 
