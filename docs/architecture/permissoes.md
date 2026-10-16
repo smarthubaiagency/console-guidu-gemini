@@ -44,28 +44,31 @@ A atribuição das permissões específicas para os papéis `editor` e `viewer`,
 
 As permissões possuem namespace estável declarado em [`src/core/permissions/catalog.ts`](../../src/core/permissions/catalog.ts):
 
-| Permissão                      | Namespace          | Descrição                                                                     |
-| ------------------------------ | ------------------ | ----------------------------------------------------------------------------- |
-| `workspace.read`               | Workspace          | Visualizar metadados básicos e dashboard do workspace                         |
-| `workspace.settings.update`    | Workspace          | Alterar configurações gerais do workspace                                     |
-| `workspace.members.read`       | Workspace          | Listar membros do workspace                                                   |
-| `workspace.members.invite`     | Workspace          | Adicionar ou convidar novos membros para o workspace                          |
-| `workspace.members.manage`     | Workspace          | Atualizar papéis ou remover membros do workspace                              |
-| `credentials.read`             | Credenciais BYOK   | Visualizar metadados e valores mascarados de credenciais                      |
-| `credentials.manage`           | Credenciais BYOK   | Cadastrar, atualizar, substituir e revogar credenciais                        |
-| `channels.read`                | Canais de mensagem | Ver conexões, rotas e eventos recebidos dos canais (A5a)                      |
-| `channels.manage`              | Canais de mensagem | Cadastrar, testar e remover conexões e trocar rotas (ADR 0011)                |
-| `api_keys.create_own`          | Chaves de API      | Criar chaves de API próprias para acesso à plataforma / MCP                   |
-| `api_keys.revoke_own`          | Chaves de API      | Revogar as próprias chaves de API                                             |
-| `api_keys.revoke_any`          | Chaves de API      | Revogar chaves de API de qualquer membro do workspace                         |
-| `api_keys.read_all`            | Chaves de API      | Listar metadados de todas as chaves de API do workspace                       |
-| `ai_agents.use`                | Agentes de IA      | Executar prompts e interagir com sessões de agentes (módulo congelado na C04) |
-| `ai_agents.manage`             | Agentes de IA      | Criar, configurar e alterar agentes de IA (módulo congelado na C04)           |
-| `ai_agents.conversations.read` | Agentes de IA      | Ler conversas, transcrições e áudios dos GUIDS (A2a)                          |
-| `organization.read`            | Organização        | Visualizar dados institucionais da organização contratante                    |
-| `organization.members.invite`  | Organização        | Convidar novos membros para a organização                                     |
-| `organization.members.manage`  | Organização        | Atualizar papéis, transferir propriedade e remover membros da organização     |
-| `organization.settings.update` | Organização        | Alterar razão social, cotas e configurações corporativas                      |
+| Permissão                       | Namespace          | Descrição                                                                     |
+| ------------------------------- | ------------------ | ----------------------------------------------------------------------------- |
+| `workspace.read`                | Workspace          | Visualizar metadados básicos e dashboard do workspace                         |
+| `workspace.settings.update`     | Workspace          | Alterar configurações gerais do workspace                                     |
+| `workspace.members.read`        | Workspace          | Listar membros do workspace                                                   |
+| `workspace.members.invite`      | Workspace          | Adicionar ou convidar novos membros para o workspace                          |
+| `workspace.members.manage`      | Workspace          | Atualizar papéis ou remover membros do workspace                              |
+| `credentials.read`              | Credenciais BYOK   | Visualizar metadados e valores mascarados de credenciais                      |
+| `credentials.manage`            | Credenciais BYOK   | Cadastrar, atualizar, substituir e revogar credenciais                        |
+| `channels.read`                 | Canais de mensagem | Ver conexões, rotas e eventos recebidos dos canais (A5a)                      |
+| `channels.manage`               | Canais de mensagem | Cadastrar, testar e remover conexões e trocar rotas (ADR 0011)                |
+| `api_keys.create_own`           | Chaves de API      | Criar chaves de API próprias para acesso à plataforma / MCP                   |
+| `api_keys.revoke_own`           | Chaves de API      | Revogar as próprias chaves de API                                             |
+| `api_keys.revoke_any`           | Chaves de API      | Revogar chaves de API de qualquer membro do workspace                         |
+| `api_keys.read_all`             | Chaves de API      | Listar metadados de todas as chaves de API do workspace                       |
+| `ai_agents.use`                 | Agentes de IA      | Executar prompts e interagir com sessões de agentes (módulo congelado na C04) |
+| `ai_agents.manage`              | Agentes de IA      | Criar, configurar e alterar agentes de IA (módulo congelado na C04)           |
+| `ai_agents.conversations.read`  | Agentes de IA      | Ler conversas, transcrições e áudios dos GUIDS (A2a)                          |
+| `organization.read`             | Organização        | Visualizar dados institucionais da organização contratante                    |
+| `organization.members.invite`   | Organização        | Convidar novos membros para a organização                                     |
+| `organization.members.manage`   | Organização        | Atualizar papéis, transferir propriedade e remover membros da organização     |
+| `organization.settings.update`  | Organização        | Alterar razão social, cotas e configurações corporativas                      |
+| `workspace.service_mode.manage` | Modo de serviço    | Aprovar ou recusar o pedido de gerenciado e voltar para o padrão (GB1c)       |
+| `partner.service_mode.request`  | Modo de serviço    | Pedir o modo gerenciado para um cliente e cancelar o pedido (GB1c)            |
+| `platform.service_mode.request` | Modo de serviço    | Pedir o modo gerenciado para um cliente direto, parceiro zero (GB1c)          |
 
 _Nota: Permissões para módulos não especificados (Catálogo, Google Business) ou áreas não implementadas (cobrança, exportação) não foram inventadas._
 
@@ -75,27 +78,29 @@ _Nota: Permissões para módulos não especificados (Catálogo, Google Business)
 
 ### 4.1 Papéis de Workspace (`WorkspaceRole`)
 
-| Permissão                      | `owner` | `admin` | `editor` | `viewer` |
-| ------------------------------ | :-----: | :-----: | :------: | :------: |
-| `workspace.read`               |   ✅    |   ✅    |    ✅    |    ✅    |
-| `workspace.settings.update`    |   ✅    |   ✅    |    ❌    |    ❌    |
-| `workspace.members.read`       |   ✅    |   ✅    |    ✅    |    ✅    |
-| `workspace.members.invite`     |   ✅    |   ✅    |    ❌    |    ❌    |
-| `workspace.members.manage`     |   ✅    |   ✅*   |    ❌    |    ❌    |
-| `credentials.read`             |   ✅    |   ✅    |    ✅    |    ❌    |
-| `credentials.manage`           |   ✅    |   ✅    |    ❌    |    ❌    |
-| `channels.read`                |   ✅    |   ✅    |    ✅    |    ❌    |
-| `channels.manage`              |   ✅    |   ✅    |    ❌    |    ❌    |
-| `api_keys.create_own`          |   ✅    |   ✅    |    ✅    |   ✅**   |
-| `api_keys.revoke_own`          |   ✅    |   ✅    |    ✅    |    ✅    |
-| `api_keys.revoke_any`          |   ✅    |   ✅    |    ❌    |    ❌    |
-| `api_keys.read_all`            |   ✅    |   ✅    |    ❌    |    ❌    |
-| `ai_agents.use`                |   ✅    |   ✅    |    ✅    |    ❌    |
-| `ai_agents.manage`             |   ✅    |   ✅    |    ❌    |    ❌    |
-| `ai_agents.conversations.read` |   ✅    |   ✅    |    ✅    |    ❌    |
+| Permissão                       | `owner` | `admin` | `editor` | `viewer` |
+| ------------------------------- | :-----: | :-----: | :------: | :------: |
+| `workspace.read`                |   ✅    |   ✅    |    ✅    |    ✅    |
+| `workspace.settings.update`     |   ✅    |   ✅    |    ❌    |    ❌    |
+| `workspace.members.read`        |   ✅    |   ✅    |    ✅    |    ✅    |
+| `workspace.members.invite`      |   ✅    |   ✅    |    ❌    |    ❌    |
+| `workspace.members.manage`      |   ✅    |   ✅*   |    ❌    |    ❌    |
+| `credentials.read`              |   ✅    |   ✅    |    ✅    |    ❌    |
+| `credentials.manage`            |   ✅    |   ✅    |    ❌    |    ❌    |
+| `channels.read`                 |   ✅    |   ✅    |    ✅    |    ❌    |
+| `channels.manage`               |   ✅    |   ✅    |    ❌    |    ❌    |
+| `api_keys.create_own`           |   ✅    |   ✅    |    ✅    |   ✅**   |
+| `api_keys.revoke_own`           |   ✅    |   ✅    |    ✅    |    ✅    |
+| `api_keys.revoke_any`           |   ✅    |   ✅    |    ❌    |    ❌    |
+| `api_keys.read_all`             |   ✅    |   ✅    |    ❌    |    ❌    |
+| `ai_agents.use`                 |   ✅    |   ✅    |    ✅    |    ❌    |
+| `ai_agents.manage`              |   ✅    |   ✅    |    ❌    |    ❌    |
+| `ai_agents.conversations.read`  |   ✅    |   ✅    |    ✅    |    ❌    |
+| `workspace.service_mode.manage` |  ✅***  |   ❌    |    ❌    |    ❌    |
 
 _\* Sujeito à verificação de escalonamento em `roles.ts` (admins não podem alterar ou remover owners)._
 _\*\* No viewer, criação de chaves de API é restrita a escopos puramente de leitura (restrição aplicada na C12)._
+_\*\*\* GB1c: o consentimento do gerenciado é do owner da empresa. O banco confere `organization_members.role = 'owner'` (não basta ser owner de um workspace): `private.service_mode_request_decide` e a política `organization_service_modes_owner_update`. Os demais membros só leem o card Configurações › Modo de serviço._
 
 ### 4.2 Papéis de Organização (`OrganizationRole`)
 
@@ -112,23 +117,24 @@ _\* Sujeito à verificação de escalonamento em `roles.ts` (admins não podem c
 
 Permissões da área `/platform` (`PLATFORM_ROLE_PERMISSIONS` em [`src/core/permissions/matrix.ts`](../../src/core/permissions/matrix.ts)), concedidas só pelo papel interno ativo em `platform_admin_members`.
 
-| Permissão                   | `owner` | `operations` | `billing` | `support` |
-| --------------------------- | :-----: | :----------: | :-------: | :-------: |
-| `platform.modules.read`     |   ✅    |      ✅      |    ✅     |    ✅     |
-| `platform.modules.manage`   |   ✅    |      ✅      |    ❌     |    ❌     |
-| `platform.customers.read`   |   ✅    |      ✅      |    ✅     |    ✅     |
-| `platform.brand.manage`     |   ✅    |      ✅      |    ❌     |    ❌     |
-| `platform.legal.manage`     |   ✅    |      ✅      |    ❌     |    ❌     |
-| `platform.partners.read`    |   ✅    |      ✅      |    ✅     |    ✅     |
-| `platform.partners.manage`  |   ✅    |      ✅      |    ❌     |    ❌     |
-| `platform.billing.read`     |   ✅    |      ✅      |    ✅     |    ❌     |
-| `platform.billing.manage`   |   ✅    |      ❌      |    ✅     |    ❌     |
-| `platform.operations.read`  |   ✅    |      ✅      |    ❌     |    ✅     |
-| `platform.languages.manage` |   ✅    |      ✅      |    ❌     |    ❌     |
-| `platform.ai.manage`        |   ✅    |      ✅      |    ❌     |    ❌     |
-| `platform.settings.manage`  |   ✅    |      ✅      |    ❌     |    ❌     |
-| `platform.security.read`    |   ✅    |      ✅      |    ❌     |    ✅     |
-| `platform.audit.read`       |   ✅    |      ✅      |    ✅*    |    ✅     |
+| Permissão                       | `owner` | `operations` | `billing` | `support` |
+| ------------------------------- | :-----: | :----------: | :-------: | :-------: |
+| `platform.modules.read`         |   ✅    |      ✅      |    ✅     |    ✅     |
+| `platform.modules.manage`       |   ✅    |      ✅      |    ❌     |    ❌     |
+| `platform.customers.read`       |   ✅    |      ✅      |    ✅     |    ✅     |
+| `platform.brand.manage`         |   ✅    |      ✅      |    ❌     |    ❌     |
+| `platform.legal.manage`         |   ✅    |      ✅      |    ❌     |    ❌     |
+| `platform.partners.read`        |   ✅    |      ✅      |    ✅     |    ✅     |
+| `platform.partners.manage`      |   ✅    |      ✅      |    ❌     |    ❌     |
+| `platform.billing.read`         |   ✅    |      ✅      |    ✅     |    ❌     |
+| `platform.billing.manage`       |   ✅    |      ❌      |    ✅     |    ❌     |
+| `platform.operations.read`      |   ✅    |      ✅      |    ❌     |    ✅     |
+| `platform.languages.manage`     |   ✅    |      ✅      |    ❌     |    ❌     |
+| `platform.ai.manage`            |   ✅    |      ✅      |    ❌     |    ❌     |
+| `platform.settings.manage`      |   ✅    |      ✅      |    ❌     |    ❌     |
+| `platform.security.read`        |   ✅    |      ✅      |    ❌     |    ✅     |
+| `platform.audit.read`           |   ✅    |      ✅      |    ✅*    |    ✅     |
+| `platform.service_mode.request` |   ✅    |      ✅      |    ❌     |    ❌     |
 
 _\* AUD1: o `billing` abre Plataforma › Auditoria, mas o banco (`private.platform_audit_events` e `private.is_billing_audit_action`) devolve a ele só as ações de cobrança (`billing.`, `platform.billing.`, `partner.billing.`, `partner.payment.`, `partner.subscription.` e `partner.checkout.`). Os demais papéis veem toda a trilha, com os metadados já filtrados pela allowlist na gravação._
 
@@ -142,6 +148,19 @@ _\* AUD1: o `billing` abre Plataforma › Auditoria, mas o banco (`private.platf
 
 _\* `billing` vê só os eventos do módulo `billing`; o banco corta o resto (`private.platform_events`)._
 _\*\* `keychain` é uma capacidade somada ao papel principal (tabela `platform_admin_capabilities`), não um papel; dá só essa permissão. O `owner` não a tem por padrão e pode concedê-la a si mesmo (auditado em `platform.capability.grant`/`.revoke`). Cada abertura exige MFA (AAL2), motivo de 10 a 500 caracteres e grava `platform.event.view_data` (event_id, tipo, motivo, IP) na auditoria da plataforma, sem empresa nem workspace: o cliente não é avisado. A leitura e o registro acontecem na mesma chamada (`private.read_event_data`)._
+
+### 4.5 Modos de serviço (GB1c, ADR 0020)
+
+| Quem                                                   | Pede o gerenciado | Cancela o pedido | Decide (link ou `/app`) |      Volta para o padrão       |  Lê o workspace no gerenciado   |
+| ------------------------------------------------------ | :---------------: | :--------------: | :---------------------: | :----------------------------: | :-----------------------------: |
+| `partner_owner`, `partner_admin` (parceiro da empresa) |        ✅         |        ✅        |           ❌            | ✅ (fim do contrato, sem tela) |               ✅                |
+| `partner_support` (parceiro da empresa)                |        ❌         |        ❌        |           ❌            |               ❌               |               ✅                |
+| `partner_finance`                                      |        ❌         |        ❌        |           ❌            |               ❌               |               ❌                |
+| Plataforma `owner`, `operations` (clientes diretos)    |        ✅         |        ✅        |           ❌            |               ❌               | só como membro do parceiro zero |
+| Owner da empresa                                       |        ❌         |        ❌        |           ✅            |               ✅               |                —                |
+| Admin e demais membros do workspace                    |        ❌         |        ❌        |           ❌            |               ❌               |                —                |
+
+O acesso do gerenciado não passa pela matriz: as políticas RLS de CRM, GUIDS (escrita), conversas, leads, avisos, canais, portfólio e configurações do workspace aceitam `private.partner_manages_organization(org)`. A chave de IA (`credentials`) nunca. Toda escrita de quem gerencia vira `audit_events` com origem `partner`.
 
 No parceiro, `partner_owner`, `partner_admin` e `partner_support` leem a situação dos eventos dos seus clientes (`private.partner_events`); os dados só das empresas que gerenciam (`private.partner_manages_organization`) e dos eventos endereçados ao próprio parceiro. Os membros do workspace leem os eventos com audiência cliente, com os dados (RLS da tabela `events`).
 
