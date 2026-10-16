@@ -32,7 +32,13 @@ export function contentSecurityPolicy(
   {
     production,
     analyticsOrigin = null,
-  }: Readonly<{ production: boolean; analyticsOrigin?: string | null }>,
+    matrixOrigin = null,
+  }: Readonly<{
+    production: boolean;
+    analyticsOrigin?: string | null;
+    /** PROVA IN1: o homeserver Matrix, só com GUIDU_INBOX_POC=1. */
+    matrixOrigin?: string | null;
+  }>,
 ): string {
   const directives = [
     "default-src 'self'",
@@ -40,7 +46,7 @@ export function contentSecurityPolicy(
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self'",
-    `connect-src 'self'${analyticsOrigin && /^https:\/\/[a-z0-9.-]+$/.test(analyticsOrigin) ? ` ${analyticsOrigin}` : ""}`,
+    `connect-src 'self'${analyticsOrigin && /^https:\/\/[a-z0-9.-]+$/.test(analyticsOrigin) ? ` ${analyticsOrigin}` : ""}${matrixOrigin && /^https?:\/\/[a-z0-9.-]+(:\d+)?$/.test(matrixOrigin) ? ` ${matrixOrigin}` : ""}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

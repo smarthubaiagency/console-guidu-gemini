@@ -69,6 +69,12 @@ export default async function proxy(request: NextRequest) {
   const csp = contentSecurityPolicy(nonce, {
     production: process.env.NODE_ENV === "production",
     analyticsOrigin: await analyticsCspOrigin(),
+    // PROVA IN1 (docs/modules/inbox/prova-de-conceito.md): o navegador fala
+    // com o homeserver; só com a flag ligada.
+    matrixOrigin:
+      process.env.GUIDU_INBOX_POC === "1"
+        ? (process.env.MATRIX_HOMESERVER_URL ?? null)
+        : null,
   });
   forwarded.set(NONCE_HEADER, nonce);
   forwarded.set("content-security-policy", csp);
