@@ -52,9 +52,12 @@ const KNOWN_STATUSES = [
 export async function EventTraceCards({
   trace,
   names,
+  deliveries = true,
 }: Readonly<{
   trace: EventTrace;
   names?: ReadonlyMap<string, string>;
+  /** False when the page shows the deliveries itself (Plataforma, H1). */
+  deliveries?: boolean;
 }>) {
   const t = await getTranslations("eventRules.trace");
   const format = await getFormatter();
@@ -73,6 +76,7 @@ export async function EventTraceCards({
 
   return (
     <>
+      {deliveries ? (
       <Card variant="surface" className="px-4" data-testid="event-trace-deliveries">
         <CardHeader className="px-0">
           <CardTitle>{t("deliveries")}</CardTitle>
@@ -126,6 +130,7 @@ export async function EventTraceCards({
           )}
         </CardContent>
       </Card>
+      ) : null}
 
       {trace.viewer !== "partner_situation" ? (
         <Card variant="surface" className="px-4" data-testid="event-trace-audit">
