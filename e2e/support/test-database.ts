@@ -6,6 +6,8 @@ import { PGlite } from "@electric-sql/pglite";
 import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { Pool } from "pg";
 
+import { RIG } from "./rig";
+
 /**
  * Postgres for the end-to-end suite, served by PGlite over the wire protocol
  * so Prisma connects to it unchanged.
@@ -399,6 +401,9 @@ export async function startTestDatabase(
             WORKER_DATABASE_URL: `${url}?pgbouncer=true&connection_limit=2`,
             WORKER_CONCURRENCY: "1",
             GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
+            // Seal of the Event Hub (H1), the same as the web's.
+            EVENTS_HMAC_KEY: RIG.eventsHmacKey,
+            EVENTS_HMAC_KEY_ID: RIG.eventsHmacKeyId,
             // Deterministic machine translation (I6); never the real provider.
             TRANSLATION_PROVIDER: "fake",
             TRANSLATION_ANTHROPIC_API_KEY: "",

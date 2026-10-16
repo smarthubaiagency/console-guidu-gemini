@@ -91,6 +91,14 @@ export const Permissions = {
   // Configurações › Segurança and its events (CF5a); editing needs
   // platform.settings.manage.
   PLATFORM_SECURITY_READ: "platform.security.read",
+  // Central de Eventos (H1, ADR 0022): the situation of every event and of
+  // its deliveries, never the data (billing: only billing events).
+  PLATFORM_EVENTS_READ: "platform.events.read",
+  // The full data of any event: only the `keychain` capability gives it,
+  // never a role; each opening asks for MFA and a reason and is audited.
+  PLATFORM_EVENTS_READ_ALL_DATA: "platform.events.read_all_data",
+  // Grant and remove capabilities (`keychain`) of the platform team.
+  PLATFORM_CAPABILITIES_MANAGE: "platform.capabilities.manage",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",

@@ -47,6 +47,9 @@ export default defineConfig({
         process.env.ENCRYPTION_KEY ||
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
       ENCRYPTION_KEY_ID: process.env.ENCRYPTION_KEY_ID || "k1",
+      // Seal of the Event Hub (H1); the rig seeds sealed events with it.
+      EVENTS_HMAC_KEY: RIG.eventsHmacKey,
+      EVENTS_HMAC_KEY_ID: RIG.eventsHmacKeyId,
       // Reference module is restricted to development and tests (Adendo §9).
       GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
       // Deterministic machine translation (I6); never the real provider.

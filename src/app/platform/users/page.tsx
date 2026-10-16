@@ -3,7 +3,31 @@ import { Users } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
-import { listAdminUsers } from "@/core/admin/platform";
+import {
+  getPlatformAdminMember,
+  listAdminUsers,
+} from "@/core/admin/platform";
+import { KeychainSwitch } from "@/components/events/keychain-switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
+import { platformTeam, type TeamMember } from "@/core/events/platform";
+import { hasPlatformRolePermission } from "@/core/permissions/matrix";
+import { Permissions } from "@/core/permissions/catalog";
+import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import {
   Table,
   TableBody,
@@ -22,7 +46,20 @@ export default async function AdminUsersPage() {
   const identity = await requirePlatformAdminPage("/platform/users");
   const users = await listAdminUsers(prisma, identity.userId);
   const t = await getTranslations("platform.users");
+  const te = await getTranslations("events.team");
   const format = await getFormatter();
+  // The platform team and full access (keychain, H1): the owner only.
+  const admin = await getPlatformAdminMember(prisma, identity.userId);
+  const role = admin?.status === "active" ? admin.role : null;
+  let team: TeamMember[] | null = null;
+  if (
+    role &&
+    hasPlatformRolePermission(role, Permissions.PLATFORM_CAPABILITIES_MANAGE)
+  ) {
+    team = await withIdentityContext(prisma, identity.userId, (tx) =>
+      platformTeam(tx, { userId: identity.userId, platformRole: role }),
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -94,6 +131,55 @@ export default async function AdminUsersPage() {
           </Table>
         </div>
       </div>
+
+      {team ? (
+        <Card variant="panel" className="px-4 sm:px-6" data-testid="platform-team">
+          <CardHeader className="px-0">
+            <CardTitle>{te("title")}</CardTitle>
+            <CardDescription>{te("description")}</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            <ItemGroup className="gap-2">
+              {team.map((member) => {
+                const name = member.fullName ?? te("noName");
+                return (
+                  <Item
+                    key={member.userId}
+                    variant="card"
+                    size="sm"
+                    data-testid="platform-team-member"
+                  >
+                    <ItemContent>
+                      <ItemTitle>{name}</ItemTitle>
+                      <ItemDescription className="font-mono">
+                        {member.userId}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <Badge variant="neutral">
+                        {te(`roles.${member.role as "owner"}`)}
+                      </Badge>
+                      <Badge
+                        variant={member.status === "active" ? "success" : "danger"}
+                      >
+                        {member.status === "active" ? te("active") : te("inactive")}
+                      </Badge>
+                      <span className="text-12 text-text-secondary">
+                        {te("colKeychain")}
+                      </span>
+                      <KeychainSwitch
+                        userId={member.userId}
+                        enabled={member.keychain}
+                        label={te("keychainLabel", { name })}
+                      />
+                    </ItemActions>
+                  </Item>
+                );
+              })}
+            </ItemGroup>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

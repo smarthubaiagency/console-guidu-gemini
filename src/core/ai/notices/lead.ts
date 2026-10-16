@@ -10,7 +10,8 @@ import {
   providerJson,
 } from "@/core/channels/http";
 import { decryptSecret } from "@/core/credentials/crypto";
-import { enqueueJob } from "@/core/jobs/service";
+import { contextPartnerId, emitEvent } from "@/core/events/emit";
+import type { EventType } from "@/core/events/catalog";
 import { defineDetachedJob, type JobSession } from "@/core/jobs/definition";
 import { SkipJobError } from "@/core/jobs/errors";
 import type {
@@ -33,11 +34,23 @@ import { format, promptLocale, promptTexts } from "../prompt/texts";
  * - E-mail and SMS wait for a provider: the notice is kept, skipped.
  * The panel lists every notice with its state. A referral the GUIDS gives
  * a contact (A6b) is told the same way, with its own event.
+ *
+ * Since the Event Hub (H1) the notice is an event (`ai.agent.lead_hot` or
+ * `ai.agent.referral_recommended`, route `explicit`) emitted in the
+ * transaction of the scoring, with the message already written (the
+ * worker of the hub never reads the agent, the contact or the referral);
+ * `events.dispatch` posts it by the partner's webhook and writes the state
+ * back to `ai_lead_notices`. The job `ai-agents.lead-notice` stays for the
+ * runs queued before the hub.
  */
 
 export const LEAD_NOTICE_JOB_KIND = "ai-agents.lead-notice";
 export const LEAD_NOTICE_EVENT = "lead.hot";
 export const REFERRAL_NOTICE_EVENT = "referral.recommended";
+
+/** The events of the Event Hub (H1) for each kind of notice. */
+export const LEAD_HUB_EVENT: EventType = "ai.agent.lead_hot";
+export const REFERRAL_HUB_EVENT: EventType = "ai.agent.referral_recommended";
 
 type Rules = AgentConfig["rules"];
 
@@ -96,13 +109,7 @@ export async function recordLeadNotice(
     },
     select: { id: true },
   });
-  await enqueueJob(
-    tx,
-    ctx,
-    leadNoticeJob,
-    { noticeId: row.id },
-    { idempotencyKey: `lead-notice:${row.id}` },
-  );
+  await emitNoticeEvent(tx, ctx, row.id);
   return row.id;
 }
 
@@ -147,13 +154,7 @@ export async function recordReferralNotice(
     },
     select: { id: true },
   });
-  await enqueueJob(
-    tx,
-    ctx,
-    leadNoticeJob,
-    { noticeId: row.id },
-    { idempotencyKey: `lead-notice:${row.id}` },
-  );
+  await emitNoticeEvent(tx, ctx, row.id);
   return row.id;
 }
 
@@ -253,36 +254,42 @@ export type LeadNoticeDeps = Readonly<{
   now?: () => Date;
 }>;
 
-type Prepared =
-  | Readonly<{ kind: "done"; status: string }>
+/** What a notice says, or why it cannot be sent. */
+type NoticeMessage =
+  | Readonly<{ kind: "skip"; reason: string }>
   | Readonly<{
       kind: "send";
+      /** The A6 name of the event (`lead.hot`, `referral.recommended`). */
       event: string;
-      url: string;
-      secret: string;
-      body: string;
+      to: string;
+      /** Fields of the body besides `event`, `to` and `sent_at`. */
+      message: Record<string, unknown>;
     }>;
 
-async function prepare(
+type NoticeRow = Readonly<{
+  id: string;
+  kind: string;
+  agentId: string;
+  contactId: string | null;
+  conversationId: string;
+  referralId: string | null;
+  reasonText: string | null;
+  points: number | null;
+  temperature: string | null;
+  channel: string;
+  createdAt: Date;
+}>;
+
+/**
+ * The message of a notice, read as whom runs the turn: the agent as
+ * stored, the contact, the referral and the reasons of the score.
+ */
+async function noticeMessage(
   tx: ContextTransaction,
   ctx: RequestContext,
-  noticeId: string,
-  now: Date,
-): Promise<Prepared> {
-  const notice = await tx.aiLeadNotice.findFirst({
-    where: { id: noticeId, workspaceId: ctx.workspaceId },
-  });
-  if (!notice) throw new SkipJobError("Aviso não encontrado.");
-  if (notice.status === "sent" || notice.status === "skipped") {
-    return { kind: "done", status: notice.status };
-  }
-  const skip = async (reason: string): Promise<Prepared> => {
-    await tx.aiLeadNotice.update({
-      where: { id: notice.id },
-      data: { status: "skipped", reason },
-    });
-    return { kind: "done", status: "skipped" };
-  };
+  notice: NoticeRow,
+): Promise<NoticeMessage> {
+  const skip = (reason: string): NoticeMessage => ({ kind: "skip", reason });
   if (notice.channel === "email") return skip("email_provider_pending");
   if (notice.channel === "sms") return skip("sms_unavailable");
 
@@ -297,10 +304,6 @@ async function prepare(
   const config = parsed.data;
   const ownerPhone = config.rules.owner_phone;
   if (!ownerPhone) return skip("no_owner_phone");
-  const [webhook] = await tx.$queryRaw<
-    { url: string; encrypted_secret: string }[]
-  >`select url, encrypted_secret from private.ai_notice_webhook()`;
-  if (!webhook) return skip("no_webhook");
 
   const workspace = await tx.workspace.findFirst({
     where: { id: ctx.workspaceId },
@@ -316,19 +319,16 @@ async function prepare(
   const common = {
     notice_id: notice.id,
     created_at: notice.createdAt.toISOString(),
-    sent_at: now.toISOString(),
-    to: ownerPhone,
     language: config.overview.language ?? "pt-BR",
     agent: { id: notice.agentId, name: agentName },
     workspace: { id: ctx.workspaceId, name: workspace?.name ?? null },
     conversation_id: notice.conversationId,
   };
-  const send = (event: string, body: Record<string, unknown>): Prepared => ({
+  const send = (event: string, body: Record<string, unknown>): NoticeMessage => ({
     kind: "send",
     event,
-    url: webhook.url,
-    secret: decryptSecret(webhook.encrypted_secret),
-    body: JSON.stringify({ event, ...common, ...body }),
+    to: ownerPhone,
+    message: { ...common, ...body },
   });
 
   if (notice.kind === "referral") {
@@ -396,6 +396,96 @@ async function prepare(
       reasons,
     },
   });
+}
+
+/**
+ * The notice as an event of the hub (H1), in the transaction that recorded
+ * it: the message goes in the event (WhatsApp target and body), the
+ * dispatch only posts it.
+ */
+async function emitNoticeEvent(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  noticeId: string,
+): Promise<void> {
+  const notice = await tx.aiLeadNotice.findFirstOrThrow({
+    where: { id: noticeId, workspaceId: ctx.workspaceId },
+  });
+  const message = await noticeMessage(tx, ctx, notice);
+  await emitEvent(tx, {
+    type: notice.kind === "referral" ? REFERRAL_HUB_EVENT : LEAD_HUB_EVENT,
+    actor: {
+      userId: ctx.userId,
+      principalType: ctx.principalType ?? "user",
+      origin: "worker",
+    },
+    partnerId: await contextPartnerId(tx),
+    organizationId: ctx.organizationId,
+    workspaceId: ctx.workspaceId,
+    subject: { type: "ai_lead_notice", id: notice.id },
+    data: {
+      noticeId: notice.id,
+      whatsapp:
+        message.kind === "send"
+          ? { to: message.to, skip: null, message: message.message }
+          : { to: null, skip: message.reason, message: {} },
+    },
+    idempotencyKey: `lead-notice:${notice.id}`,
+  });
+}
+
+type Prepared =
+  | Readonly<{ kind: "done"; status: string }>
+  | Readonly<{
+      kind: "send";
+      event: string;
+      url: string;
+      secret: string;
+      body: string;
+    }>;
+
+/** The legacy job (runs queued before the hub): message and webhook. */
+async function prepare(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  noticeId: string,
+  now: Date,
+): Promise<Prepared> {
+  const notice = await tx.aiLeadNotice.findFirst({
+    where: { id: noticeId, workspaceId: ctx.workspaceId },
+  });
+  if (!notice) throw new SkipJobError("Aviso não encontrado.");
+  if (notice.status === "sent" || notice.status === "skipped") {
+    return { kind: "done", status: notice.status };
+  }
+  const skip = async (reason: string): Promise<Prepared> => {
+    await tx.aiLeadNotice.update({
+      where: { id: notice.id },
+      data: { status: "skipped", reason },
+    });
+    return { kind: "done", status: "skipped" };
+  };
+  const message = await noticeMessage(tx, ctx, notice);
+  if (message.kind === "skip") return skip(message.reason);
+  const [webhook] = await tx.$queryRaw<
+    { url: string; encrypted_secret: string }[]
+  >`select url, encrypted_secret from private.ai_notice_webhook()`;
+  if (!webhook) return skip("no_webhook");
+  const { notice_id, created_at, ...rest } = message.message;
+  return {
+    kind: "send",
+    event: message.event,
+    url: webhook.url,
+    secret: decryptSecret(webhook.encrypted_secret),
+    body: JSON.stringify({
+      event: message.event,
+      notice_id,
+      created_at,
+      sent_at: now.toISOString(),
+      to: message.to,
+      ...rest,
+    }),
+  };
 }
 
 function failureReason(error: unknown): string {
