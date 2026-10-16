@@ -66,6 +66,29 @@ export function notificationEventDefinition(
   return NOTIFICATION_EVENTS.find((event) => event.type === type) ?? null;
 }
 
+/**
+ * The channels of an event delivered by e-mail: the notification event's,
+ * else the Event Hub catalog's for a type with an e-mail but no editable
+ * template (the consent e-mail of the service modes, GB1c).
+ */
+export function deliveryEventDefinition(
+  type: string,
+): NotificationEventDefinition | null {
+  const known = notificationEventDefinition(type);
+  if (known) return known;
+  const hub = eventDefinition(type);
+  if (!hub) return null;
+  return {
+    type: type as NotificationEventType,
+    group: "account",
+    key: type,
+    essential: hub.essential,
+    channels: NOTIFICATION_CHANNELS.filter((channel) =>
+      (hub.channels as readonly string[]).includes(channel),
+    ),
+  };
+}
+
 export function isNotificationChannel(
   value: string,
 ): value is NotificationChannel {

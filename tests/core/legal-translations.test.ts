@@ -99,7 +99,7 @@ describeDatabase(
         }),
       );
       const [row] = await admin.$queryRawUnsafe<{ id: string }[]>(
-        `select id from public.partner_legal_documents where partner_id = '${partnerId}'`,
+        `select id from public.partner_legal_documents where partner_id = '${partnerId}' and kind = 'terms'`,
       );
       documentId = row!.id;
     });

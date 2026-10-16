@@ -6,6 +6,7 @@ import { AppError } from "@/shared/errors";
 import {
   canChangeChannel,
   isNotificationChannel,
+  deliveryEventDefinition,
   notificationEventDefinition,
   PREFERENCE_EVENTS,
   resolveChannels,
@@ -51,7 +52,7 @@ export async function channelsFor(
   userId: string | null,
   eventType: string,
 ): Promise<ReadonlySet<NotificationChannel>> {
-  const definition = notificationEventDefinition(eventType);
+  const definition = deliveryEventDefinition(eventType);
   return resolveChannels(
     definition,
     userId && definition && !definition.essential

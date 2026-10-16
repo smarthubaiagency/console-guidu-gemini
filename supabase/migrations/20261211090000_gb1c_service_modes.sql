@@ -366,18 +366,18 @@ declare
   v_expires timestamptz := now() + interval '7 days';
 begin
   if v_user is null then
-    raise exception 'service_mode:forbidden' using errcode = '42501';
+    raise exception 'service_mode:forbidden';
   end if;
   if p_via = 'partner' then
     if coalesce(private.current_partner_role(), '') not in ('partner_owner', 'partner_admin') then
-      raise exception 'service_mode:forbidden' using errcode = '42501';
+      raise exception 'service_mode:forbidden';
     end if;
   elsif p_via = 'platform' then
     if coalesce(private.current_platform_admin_role(), '') not in ('owner', 'operations') then
-      raise exception 'service_mode:forbidden' using errcode = '42501';
+      raise exception 'service_mode:forbidden';
     end if;
   else
-    raise exception 'service_mode:invalid' using errcode = '22023';
+    raise exception 'service_mode:invalid';
   end if;
 
   perform set_config('app.service_mode_org', coalesce(p_organization_id::text, ''), true);
@@ -386,7 +386,7 @@ begin
   if v_partner is null
      or (p_via = 'partner' and v_partner is distinct from private.current_partner_id())
      or (p_via = 'platform' and v_partner <> '00000000-0000-4000-8000-000000000000'::uuid) then
-    raise exception 'service_mode:not_found' using errcode = 'P0002';
+    raise exception 'service_mode:not_found';
   end if;
   perform set_config('app.service_mode_partner', v_partner::text, true);
   perform pg_advisory_xact_lock(hashtextextended('service_mode:' || p_organization_id::text, 0));
@@ -395,7 +395,7 @@ begin
     select 1 from public.organization_service_modes m
     where m.organization_id = p_organization_id and m.partner_id = v_partner and m.mode = 'gerenciado'
   ) then
-    raise exception 'service_mode:already_managed' using errcode = '23514';
+    raise exception 'service_mode:already_managed';
   end if;
 
   update public.service_mode_requests r set status = 'expired'
@@ -404,7 +404,7 @@ begin
     select 1 from public.service_mode_requests r
     where r.organization_id = p_organization_id and r.status = 'pending'
   ) then
-    raise exception 'service_mode:pending_exists' using errcode = '23505';
+    raise exception 'service_mode:pending_exists';
   end if;
 
   select m.user_id into v_owner
@@ -412,7 +412,7 @@ begin
   where m.organization_id = p_organization_id and m.role = 'owner' and m.status = 'active'
   order by m.created_at, m.user_id limit 1;
   if v_owner is null then
-    raise exception 'service_mode:no_owner' using errcode = '23514';
+    raise exception 'service_mode:no_owner';
   end if;
 
   select w.id, w.slug, w.name into v_ws, v_ws_slug, v_ws_name
@@ -420,7 +420,7 @@ begin
   where w.organization_id = p_organization_id and w.status = 'active'
   order by w.created_at, w.id limit 1;
   if v_ws is null then
-    raise exception 'service_mode:no_workspace' using errcode = '23514';
+    raise exception 'service_mode:no_workspace';
   end if;
 
   select p.name into v_partner_name from public.partners p where p.id = v_partner;
@@ -474,7 +474,7 @@ begin
      or (p_via = 'partner' and coalesce(private.current_partner_role(), '') not in ('partner_owner', 'partner_admin'))
      or (p_via = 'platform' and coalesce(private.current_platform_admin_role(), '') not in ('owner', 'operations'))
      or p_via not in ('partner', 'platform') then
-    raise exception 'service_mode:forbidden' using errcode = '42501';
+    raise exception 'service_mode:forbidden';
   end if;
   perform set_config('app.service_mode_request', coalesce(p_request_id::text, ''), true);
   select r.organization_id, r.workspace_id, r.partner_id into v_org, v_ws, v_partner
@@ -483,7 +483,7 @@ begin
   if v_org is null
      or (p_via = 'partner' and v_partner is distinct from private.current_partner_id())
      or (p_via = 'platform' and v_partner <> '00000000-0000-4000-8000-000000000000'::uuid) then
-    raise exception 'service_mode:not_found' using errcode = 'P0002';
+    raise exception 'service_mode:not_found';
   end if;
   perform set_config('app.service_mode_org', v_org::text, true);
   update public.service_mode_requests r
@@ -606,7 +606,7 @@ declare
   v_slug text;
 begin
   if p_decision not in ('approve', 'deny') then
-    raise exception 'service_mode:invalid' using errcode = '22023';
+    raise exception 'service_mode:invalid';
   end if;
 
   if p_token_hash is not null then
@@ -917,7 +917,7 @@ declare
   v_email text;
 begin
   if p_token_hash is null or p_token_hash !~ '^[0-9a-f]{64}$' then
-    raise exception 'service_mode:invalid' using errcode = '22023';
+    raise exception 'service_mode:invalid';
   end if;
   perform set_config('app.event_id', coalesce(p_event_id::text, ''), true);
   select nullif(e.subject_id, '')::uuid, e.organization_id into v_request, v_org
