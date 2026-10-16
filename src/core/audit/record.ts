@@ -29,8 +29,7 @@ import {
 } from "@/lib/prisma/with-context";
 
 /** `partner`: the managing partner team in a managed company (GB1c). */
-export type AuditOrigin =
-  "app" | "api" | "mcp" | "worker" | "admin" | "partner";
+export type AuditOrigin = "app" | "api" | "mcp" | "worker" | "admin" | "partner";
 export type AuditResult = "success" | "denied" | "error";
 export type ActorPrincipalType = "user" | "service" | "api_key";
 
@@ -236,35 +235,17 @@ export async function recordAudit(
 
   const actorPrincipalType = ctx.principalType ?? "user";
   const origin = params.origin ?? "app";
-  const workspaceId =
-    ctx.workspaceId && ctx.workspaceId.trim().length > 0
-      ? ctx.workspaceId
-      : null;
-  const organizationId =
-    ctx.organizationId && ctx.organizationId.trim().length > 0
-      ? ctx.organizationId
-      : null;
-  const grantId =
-    ctx.grantId && ctx.grantId.trim().length > 0 ? ctx.grantId : null;
-  const actorUserId =
-    ctx.userId && ctx.userId.trim().length > 0 ? ctx.userId : null;
+  const workspaceId = ctx.workspaceId && ctx.workspaceId.trim().length > 0 ? ctx.workspaceId : null;
+  const organizationId = ctx.organizationId && ctx.organizationId.trim().length > 0 ? ctx.organizationId : null;
+  const grantId = ctx.grantId && ctx.grantId.trim().length > 0 ? ctx.grantId : null;
+  const actorUserId = ctx.userId && ctx.userId.trim().length > 0 ? ctx.userId : null;
 
-  const orgIdSql = organizationId
-    ? Prisma.sql`${organizationId}::uuid`
-    : Prisma.sql`null`;
-  const wsIdSql = workspaceId
-    ? Prisma.sql`${workspaceId}::uuid`
-    : Prisma.sql`null`;
-  const actorIdSql = actorUserId
-    ? Prisma.sql`${actorUserId}::uuid`
-    : Prisma.sql`null`;
+  const orgIdSql = organizationId ? Prisma.sql`${organizationId}::uuid` : Prisma.sql`null`;
+  const wsIdSql = workspaceId ? Prisma.sql`${workspaceId}::uuid` : Prisma.sql`null`;
+  const actorIdSql = actorUserId ? Prisma.sql`${actorUserId}::uuid` : Prisma.sql`null`;
   const grantIdSql = grantId ? Prisma.sql`${grantId}::uuid` : Prisma.sql`null`;
-  const resourceIdSql = params.resourceId
-    ? Prisma.sql`${params.resourceId}`
-    : Prisma.sql`null`;
-  const requestIdSql = params.requestId
-    ? Prisma.sql`${params.requestId}`
-    : Prisma.sql`null`;
+  const resourceIdSql = params.resourceId ? Prisma.sql`${params.resourceId}` : Prisma.sql`null`;
+  const requestIdSql = params.requestId ? Prisma.sql`${params.requestId}` : Prisma.sql`null`;
 
   await tx.$executeRaw`
     insert into public.audit_events (

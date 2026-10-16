@@ -94,6 +94,11 @@ export type TestDatabase = Readonly<{
   maintenanceOff: () => Promise<void>;
   /** A sealed event of the Event Hub in a workspace, with one delivery (H1). */
   seedEvent: (params: SeedEventParams) => Promise<{ id: string }>;
+  /** A CRM contact in a workspace, as its owner would add it (GB1c). */
+  seedCrmContact: (params: {
+    workspaceSlug: string;
+    name: string;
+  }) => Promise<{ id: string }>;
   close: () => Promise<void>;
 }>;
 
@@ -346,6 +351,20 @@ export async function startTestDatabase(
         );
       }
       return { partnerId };
+    },
+    seedCrmContact: async (params) => {
+      const result = await pool.query<{ id: string }>(
+        `insert into public.crm_contacts (organization_id, workspace_id, name, created_by)
+         select w.organization_id, w.id, $2,
+                (select m.user_id from public.workspace_members m
+                 where m.workspace_id = w.id and m.role = 'owner' order by m.created_at limit 1)
+         from public.workspaces w where w.slug = $1
+         returning id`,
+        [params.workspaceSlug, params.name],
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error(`Workspace not found: ${params.workspaceSlug}`);
+      return { id: row.id };
     },
     seedEvent: async (params) => {
       const ws = await pool.query<{ id: string; organization_id: string; partner_id: string }>(

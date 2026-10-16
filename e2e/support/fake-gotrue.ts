@@ -107,6 +107,10 @@ export type FakeGoTrueOptions = Readonly<{
   onMaintenanceOff?: () => Promise<void>;
   /** Seeds a sealed event of the Event Hub (H1). */
   onSeedEvent?: (params: SeedEventParams) => Promise<{ id: string }>;
+  onSeedCrmContact?: (params: {
+    workspaceSlug: string;
+    name: string;
+  }) => Promise<{ id: string }>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -363,6 +367,20 @@ export async function startFakeGoTrue(
         organizationId: asString(body.organizationId) ?? undefined,
       });
       return json(response, 200, seeded);
+    }
+
+    if (path === "/__control/seed-crm-contact" && method === "POST") {
+      const body = await readBody(request);
+      const workspaceSlug = asString(body.workspaceSlug);
+      const name = asString(body.name);
+      if (!workspaceSlug || !name || !options.onSeedCrmContact) {
+        return json(response, 400, { msg: "invalid parameters" });
+      }
+      return json(
+        response,
+        200,
+        await options.onSeedCrmContact({ workspaceSlug, name }),
+      );
     }
 
     if (path === "/__control/seed-event" && method === "POST") {

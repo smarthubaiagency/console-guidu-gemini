@@ -187,6 +187,18 @@ export async function seedEvent(
   return (await response.json()) as { id: string };
 }
 
+/** Seeds a CRM contact in a workspace, owned by its owner (GB1c). */
+export async function seedCrmContact(
+  request: APIRequestContext,
+  params: { workspaceSlug: string; name: string },
+): Promise<{ id: string }> {
+  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-crm-contact`, {
+    data: params,
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { id: string };
+}
+
 /** Runs the job worker until no job waits; returns how many still wait. */
 export async function runJobs(request: APIRequestContext): Promise<number> {
   const response = await request.post(`${AUTH_BASE_URL}/__control/run-jobs`, {
