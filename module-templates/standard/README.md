@@ -19,7 +19,7 @@ Esta pasta é excluída do TypeScript, do ESLint e do build. Os arquivos não co
 2. Copiar esta pasta para `src/modules/__MODULE_KEY__` e trocar os placeholders.
 3. Registrar o manifesto em `src/modules/registry.ts`, com `technicalGate` se o módulo precisar ficar desligado por ambiente.
 4. Registrar os componentes de Settings em `src/modules/settings-components.ts`.
-5. Copiar `app-wrappers/page.tsx` para `src/app/app/[workspaceSlug]/__MODULE_KEY__/page.tsx`, um arquivo por rota declarada.
+5. Copiar `app-wrappers/page.tsx` para `src/app/app/[workspaceSlug]/(shell)/__MODULE_KEY__/page.tsx`, um arquivo por rota declarada.
 6. Propor a migration em `database-proposals/` e, depois de revisada, movê-la para `supabase/migrations/` com timestamp maior que o último. Atualizar `prisma/schema.prisma`. Tabelas com `workspace_id NOT NULL`, FK composta, `ENABLE` e `FORCE RLS`, nenhum grant para `anon`/`authenticated`.
 7. Escrever os testes: isolamento entre dois workspaces, bloqueio sem permissão, módulo desabilitado e limite. Usar `tests/` deste modelo como ponto de partida.
 8. Seguir o checklist em `docs/modules/README.md` e abrir o PR.

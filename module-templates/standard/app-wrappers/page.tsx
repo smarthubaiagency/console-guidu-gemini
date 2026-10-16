@@ -1,4 +1,4 @@
-// Copiar para src/app/app/[workspaceSlug]/__MODULE_KEY__/page.tsx.
+// Copiar para src/app/app/[workspaceSlug]/(shell)/__MODULE_KEY__/page.tsx.
 import { notFound } from "next/navigation";
 
 import { ModuleNotice } from "@/components/modules/module-notice";
