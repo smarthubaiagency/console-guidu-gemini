@@ -18,6 +18,7 @@ export const AUDIT_ORIGINS: readonly AuditOrigin[] = [
   "mcp",
   "worker",
   "admin",
+  "partner",
 ];
 
 /**

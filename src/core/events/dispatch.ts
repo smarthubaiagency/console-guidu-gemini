@@ -24,6 +24,10 @@ import type {
   NotificationTransport,
 } from "@/core/notifications/types";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
+import {
+  type ExplicitRecipient,
+  serviceModeRecipients,
+} from "@/core/service-modes/notices";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import {
@@ -241,9 +245,13 @@ export async function dispatchEvent(
     (definition.channels.includes("email") ||
       definition.channels.includes("app"))
   ) {
-    const recipients = await tx.$queryRaw<
-      { user_id: string | null; email: string | null }[]
-    >`select user_id, email from private.event_recipients(${event.id}::uuid)`;
+    // Types with their own recipients (route `explicit`, GB1c) answer them,
+    // with a content or a notice per person; the others follow the route.
+    const recipients: readonly ExplicitRecipient[] =
+      (await serviceModeRecipients(tx, event)) ??
+      (await tx.$queryRaw<
+        { user_id: string | null; email: string | null }[]
+      >`select user_id, email from private.event_recipients(${event.id}::uuid)`);
     const content = notificationContentOf(event.type, event.data);
     const notice = bellNoticeOf(event.type, event.data);
     const languageOf = notificationLanguages(tx);
@@ -256,9 +264,11 @@ export async function dispatchEvent(
     const transport = deps.transport ?? getNotificationTransport();
     for (const recipient of recipients) {
       const on = await personChannels(tx, definition, recipient.user_id);
+      const ownContent = recipient.content ?? content;
+      const ownNotice = recipient.notice ?? notice;
       if (
         recipient.email &&
-        content &&
+        ownContent &&
         sender &&
         event.partner_id &&
         definition.channels.includes("email")
@@ -274,17 +284,20 @@ export async function dispatchEvent(
           recipientUserId: recipient.user_id,
           eventId: event.id,
           event: {
-            ...content,
+            ...ownContent,
             recipientEmail: recipient.email,
             idempotencyKey: `${event.idempotency_key}:${recipient.email}`,
           },
         });
         continue;
       }
-      if (recipient.user_id && notice && on.has("app")) {
+      const bellNotice =
+        ownNotice ??
+        (recipient.content ? inboxNotice(recipient.content) : null);
+      if (recipient.user_id && bellNotice && on.has("app")) {
         bell += await postNotice(tx, {
           userId: recipient.user_id,
-          notice,
+          notice: bellNotice,
           idempotencyKey: `${event.idempotency_key}:user:${recipient.user_id}`,
         });
       }

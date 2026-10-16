@@ -260,6 +260,32 @@ export function renderNotification(
         ),
       };
     }
+    case "service_mode.change_requested": {
+      const { data } = event;
+      const names = {
+        organization: data.organizationName,
+        partner: data.partnerName,
+      };
+      return {
+        subject: t("serviceModeRequest.subject", names),
+        ...layout(
+          t,
+          brand,
+          [
+            t("serviceModeRequest.body", names),
+            t("serviceModeRequest.scope"),
+            t("serviceModeRequest.back"),
+            t("serviceModeRequest.expires", {
+              date: formatDate(locale, data.expiresAt),
+            }),
+          ],
+          {
+            label: t("serviceModeRequest.action"),
+            url: safeLink(data.approveUrl),
+          },
+        ),
+      };
+    }
   }
 }
 
@@ -316,6 +342,14 @@ export function templateValues(
         agente: event.data.agentName ?? t("aiKey.unnamedAgent"),
         data: formatDate(locale, event.data.backupUntil),
         link: safeLink(event.data.credentialsUrl),
+        marca,
+      };
+    case "service_mode.change_requested":
+      return {
+        organizacao: event.data.organizationName,
+        parceiro: event.data.partnerName,
+        data: formatDate(locale, event.data.expiresAt),
+        link: safeLink(event.data.approveUrl),
         marca,
       };
   }
@@ -425,6 +459,19 @@ export function defaultEmailTemplate(
         paragraph(t(`${prefix}.body`, names)),
         paragraph(t(`${prefix}.nextStep`, { date: tag("data") })),
         action(t("aiKey.action")),
+      ]);
+    }
+    case "service_mode.change_requested": {
+      const names = {
+        organization: tag("organizacao"),
+        partner: tag("parceiro"),
+      };
+      return build(t("serviceModeRequest.subject", names), [
+        paragraph(t("serviceModeRequest.body", names)),
+        paragraph(t("serviceModeRequest.scope")),
+        paragraph(t("serviceModeRequest.back")),
+        paragraph(t("serviceModeRequest.expires", { date: tag("data") })),
+        action(t("serviceModeRequest.action")),
       ]);
     }
   }

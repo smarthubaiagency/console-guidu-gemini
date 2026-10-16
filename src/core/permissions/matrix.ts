@@ -50,10 +50,14 @@ const ALL_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permissions.WORKSPACE_LOCATIONS_MANAGE,
 ]);
 
-/** Owner only: deleting the workspace (F3e, decision of 17/10/2026). */
+/**
+ * Owner only: deleting the workspace (F3e, decision of 17/10/2026) and the
+ * service mode of the company (GB1c: consent is the owner's).
+ */
 const OWNER_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   ...ALL_WORKSPACE_PERMISSIONS,
   Permissions.WORKSPACE_DELETE,
+  Permissions.WORKSPACE_SERVICE_MODE_MANAGE,
 ]);
 
 /**
@@ -167,6 +171,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_EVENTS_READ,
     Permissions.PLATFORM_CAPABILITIES_MANAGE,
     Permissions.PLATFORM_AUDIT_READ,
+    Permissions.PLATFORM_SERVICE_MODE_REQUEST,
   ]),
   operations: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -184,6 +189,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     Permissions.PLATFORM_SECURITY_READ,
     Permissions.PLATFORM_EVENTS_READ,
     Permissions.PLATFORM_AUDIT_READ,
+    Permissions.PLATFORM_SERVICE_MODE_REQUEST,
   ]),
   billing: new Set([
     Permissions.PLATFORM_MODULES_READ,
@@ -253,7 +259,8 @@ export const PARTNER_ROLES: readonly PartnerRoleKey[] = [
  * role reads workspace data; support access comes with a temporary grant
  * (P4b). The configuration of the customers' GUIDS is the exception decided
  * for AI agents (A1, D-AG-17): read by owner, admin and support, edited by
- * owner and admin; conversations still need the grant. Billing (P5m) is read by owner, admin and finance and managed by
+ * owner and admin; conversations still need the grant, except in a company the partner
+ * manages (GB1c, ADR 0020), where RLS opens the workspace data. Billing (P5m) is read by owner, admin and finance and managed by
  * owner and finance; partner_support never sees money.
  */
 export const PARTNER_ROLE_PERMISSIONS: Record<
@@ -275,6 +282,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_SETTINGS_MANAGE,
     Permissions.PARTNER_SECURITY_READ,
     Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
+    Permissions.PARTNER_SERVICE_MODE_REQUEST,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
@@ -289,6 +297,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_SETTINGS_MANAGE,
     Permissions.PARTNER_SECURITY_READ,
     Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
+    Permissions.PARTNER_SERVICE_MODE_REQUEST,
   ]),
   partner_finance: new Set([
     Permissions.PARTNER_READ,

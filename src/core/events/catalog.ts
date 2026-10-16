@@ -240,6 +240,45 @@ const CATALOG = [
     channels: ["app"],
     level: "workspace",
   },
+  // -- Service modes (GB1c, ADR 0020): the request, its decision and the way
+  //    back to `padrao`. The link goes only by e-mail to the owner, with a
+  //    token the dispatch writes (never in the event's data).
+  {
+    type: "service_mode.change_requested",
+    module: "service_modes",
+    severity: "attention",
+    essential: true,
+    audiences: ["customer", "partner"],
+    purpose: "transactional",
+    route: "explicit",
+    destinations: ["notify"],
+    channels: ["email", "app"],
+    level: "workspace",
+  },
+  {
+    type: "service_mode.changed",
+    module: "service_modes",
+    severity: "attention",
+    essential: true,
+    audiences: ["customer", "partner"],
+    purpose: "transactional",
+    route: "explicit",
+    destinations: ["notify"],
+    channels: ["app"],
+    level: "workspace",
+  },
+  {
+    type: "service_mode.change_denied",
+    module: "service_modes",
+    severity: "info",
+    essential: true,
+    audiences: ["customer", "partner"],
+    purpose: "transactional",
+    route: "explicit",
+    destinations: ["notify"],
+    channels: ["app"],
+    level: "workspace",
+  },
   // -- Platform: the seal check found a broken chain -------------------------
   {
     type: "platform.events.chain_broken",

@@ -40,5 +40,13 @@
     "subject": "Correo de prueba de {brand}",
     "body": "Este es un correo de prueba enviado desde la configuración de correo de {brand}. Si lo recibiste, el envío funciona.",
     "action": "Abrir configuración de correo"
+  },
+  "serviceModeRequest": {
+    "subject": "{partner} pide gestionar {organization}",
+    "body": "{partner} pidió pasar {organization} al modo gestionado. Solo el propietario de la empresa puede aprobar.",
+    "scope": "En el modo gestionado, el equipo de quien gestiona ve y opera todo el espacio de trabajo: agentes de IA (GUIDS), campañas, reseñas, CRM, conversaciones y configuración. La clave de IA de la empresa sigue siendo solo suya.",
+    "back": "Puede volver al modo estándar en cualquier momento, en Configuración › Modo de servicio.",
+    "expires": "El enlace es de un solo uso y vale hasta el {date}.",
+    "action": "Ver la solicitud y decidir"
   }
 }

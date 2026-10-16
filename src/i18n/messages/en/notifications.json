@@ -40,5 +40,13 @@
     "subject": "Test e-mail from {brand}",
     "body": "This is a test e-mail sent from the e-mail settings of {brand}. If you got it, sending works.",
     "action": "Open e-mail settings"
+  },
+  "serviceModeRequest": {
+    "subject": "{partner} asks to manage {organization}",
+    "body": "{partner} asked to move {organization} to the managed mode. Only the company owner can approve.",
+    "scope": "In the managed mode, the managing team sees and operates the whole workspace: AI agents (GUIDS), campaigns, reviews, CRM, conversations and settings. The company's AI key stays yours alone.",
+    "back": "You can go back to the standard mode at any time, in Settings › Service mode.",
+    "expires": "The link can be used once and is valid until {date}.",
+    "action": "See the request and decide"
   }
 }

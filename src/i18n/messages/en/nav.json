@@ -107,6 +107,7 @@
     "platform_billing_overview": "Overview",
     "platform_billing_gateway": "Gateway",
     "platform_settings_analytics": "Analytics",
-    "partner_settings_analytics": "Analytics"
+    "partner_settings_analytics": "Analytics",
+    "core_serviceMode": "Service mode"
   }
 }

@@ -65,6 +65,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: true,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
@@ -124,6 +127,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
@@ -183,6 +189,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -242,6 +251,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -280,7 +292,7 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(21);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(22);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(20);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(8);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(4);
@@ -337,6 +349,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -396,6 +411,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -455,6 +473,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,

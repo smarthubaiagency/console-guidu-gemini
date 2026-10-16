@@ -585,6 +585,7 @@ returns table(
   request_id uuid,
   organization_id uuid,
   workspace_id uuid,
+  workspace_slug text,
   partner_id uuid,
   decided_by uuid,
   requested_by uuid
@@ -602,6 +603,7 @@ declare
   v_via text;
   v_by uuid;
   v_outcome text;
+  v_slug text;
 begin
   if p_decision not in ('approve', 'deny') then
     raise exception 'service_mode:invalid' using errcode = '22023';
@@ -609,7 +611,7 @@ begin
 
   if p_token_hash is not null then
     if p_token_hash !~ '^[0-9a-f]{64}$' or private.current_partner_id() is null then
-      return query select 'not_found'::text, null::uuid, null::uuid, null::uuid, null::uuid, null::uuid, null::uuid;
+      return query select 'not_found'::text, null::uuid, null::uuid, null::uuid, null::text, null::uuid, null::uuid, null::uuid;
       return;
     end if;
     perform set_config('app.service_mode_token', p_token_hash, true);
@@ -617,7 +619,7 @@ begin
     where r.token_hash = p_token_hash for update;
     if v_row.id is null or v_row.partner_id is distinct from private.current_partner_id() then
       perform set_config('app.service_mode_token', coalesce(v_prev_token, ''), true);
-      return query select 'not_found'::text, null::uuid, null::uuid, null::uuid, null::uuid, null::uuid, null::uuid;
+      return query select 'not_found'::text, null::uuid, null::uuid, null::uuid, null::text, null::uuid, null::uuid, null::uuid;
       return;
     end if;
     v_via := 'link';
@@ -630,7 +632,7 @@ begin
        or v_row.organization_id is distinct from private.context_uuid('app.organization_id')
        or private.current_organization_role() is distinct from 'owner' then
       perform set_config('app.service_mode_request', coalesce(v_prev_request, ''), true);
-      return query select 'not_found'::text, null::uuid, null::uuid, null::uuid, null::uuid, null::uuid, null::uuid;
+      return query select 'not_found'::text, null::uuid, null::uuid, null::uuid, null::text, null::uuid, null::uuid, null::uuid;
       return;
     end if;
     v_via := 'app';
@@ -654,7 +656,7 @@ begin
     insert into public.organization_service_modes as m
       (organization_id, partner_id, mode, set_by, source, request_id)
     values (v_row.organization_id, v_row.partner_id, 'gerenciado', v_by, 'request', v_row.id)
-    on conflict (organization_id) do update
+    on conflict on constraint organization_service_modes_pkey do update
       set mode = 'gerenciado', set_by = excluded.set_by, source = 'request',
           request_id = excluded.request_id
       where m.partner_id = excluded.partner_id;
@@ -679,11 +681,13 @@ begin
     );
   end if;
 
+  select w.slug into v_slug from public.workspaces w where w.id = v_row.workspace_id;
+
   perform set_config('app.service_mode_org', coalesce(v_prev_org, ''), true);
   perform set_config('app.service_mode_request', coalesce(v_prev_request, ''), true);
   perform set_config('app.service_mode_token', coalesce(v_prev_token, ''), true);
   return query select v_outcome, v_row.id, v_row.organization_id, v_row.workspace_id,
-    v_row.partner_id, v_by, v_row.requested_by;
+    v_slug, v_row.partner_id, v_by, v_row.requested_by;
 end;
 $$;
 
@@ -956,7 +960,7 @@ alter function private.service_mode_issue_link(uuid, text) owner to app_rls_help
 -- asked and the company owners. Denied: who asked. Back to `padrao`: the
 -- partner's owners and admins and the company owners.
 create function private.service_mode_event_recipients(p_event_id uuid)
-returns table(user_id uuid, email text)
+returns table(user_id uuid, kind text, organization_name text)
 language plpgsql
 volatile
 security definer
@@ -973,6 +977,7 @@ declare
   v_subject text;
   v_to text;
   v_requester uuid;
+  v_org_name text;
 begin
   perform set_config('app.event_id', coalesce(p_event_id::text, ''), true);
   select e.type, e.organization_id, e.partner_id, e.subject_type, e.subject_id, e.data ->> 'to'
@@ -985,6 +990,7 @@ begin
   end if;
   perform set_config('app.service_mode_org', v_org::text, true);
   perform set_config('app.service_mode_partner', v_partner::text, true);
+  select o.name into v_org_name from public.organizations o where o.id = v_org;
   if v_subject_type = 'service_mode_request' then
     select r.requested_by into v_requester
     from public.service_mode_requests r
@@ -993,22 +999,24 @@ begin
 
   return query
     with people as (
-      select v_requester as person
-      where v_requester is not null and v_type in ('service_mode.changed', 'service_mode.change_denied')
+      select v_requester as person, 'requester'::text as person_kind, 1 as rank
+      where v_requester is not null
         and (v_type = 'service_mode.change_denied' or v_to = 'gerenciado')
-      union
-      select m.user_id
+      union all
+      select m.user_id, 'owner', 2
       from public.organization_members m
       where v_type = 'service_mode.changed'
         and m.organization_id = v_org and m.role = 'owner' and m.status = 'active'
-      union
-      select pm.user_id
+      union all
+      select pm.user_id, 'partner', 3
       from public.partner_members pm
       where v_type = 'service_mode.changed' and v_to = 'padrao'
         and pm.partner_id = v_partner and pm.status = 'active'
         and pm.role in ('partner_owner', 'partner_admin')
     )
-    select p.person, null::text from people p where p.person is not null order by p.person;
+    select distinct on (p.person) p.person, p.person_kind, v_org_name
+    from people p where p.person is not null
+    order by p.person, p.rank;
 
   perform set_config('app.service_mode_org', coalesce(v_prev_org, ''), true);
   perform set_config('app.service_mode_partner', coalesce(v_prev_partner, ''), true);

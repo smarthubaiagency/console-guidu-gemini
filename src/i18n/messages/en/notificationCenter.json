@@ -42,6 +42,24 @@
     "eventsChainBroken": {
       "title": "Event seal does not match",
       "body": "The Event Hub check found {count} event(s) with a broken seal or chain."
+    },
+    "serviceModeRequested": {
+      "title": "Management request for {organization}",
+      "body": "{partner} asked to manage the company. Open it to approve or deny."
+    },
+    "serviceModeChanged": {
+      "gerenciado": {
+        "title": "{organization} is now managed",
+        "body": "The request was approved and the managing team now has access to the workspace."
+      },
+      "padrao": {
+        "title": "{organization} is back to the standard mode",
+        "body": "The access of the managing team has ended."
+      }
+    },
+    "serviceModeDenied": {
+      "title": "Management request denied",
+      "body": "The owner of {organization} denied the management request."
     }
   },
   "preferences": {
