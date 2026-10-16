@@ -19,6 +19,7 @@ import ptBR_designLab from "./pt-BR/designLab.json";
 import ptBR_domains from "./pt-BR/domains.json";
 import ptBR_email from "./pt-BR/email.json";
 import ptBR_errors from "./pt-BR/errors.json";
+import ptBR_events from "./pt-BR/events.json";
 import ptBR_executions from "./pt-BR/executions.json";
 import ptBR_gateway from "./pt-BR/gateway.json";
 import ptBR_gbIntelligence from "./pt-BR/gbIntelligence.json";
@@ -76,6 +77,7 @@ import en_designLab from "./en/designLab.json";
 import en_domains from "./en/domains.json";
 import en_email from "./en/email.json";
 import en_errors from "./en/errors.json";
+import en_events from "./en/events.json";
 import en_executions from "./en/executions.json";
 import en_gateway from "./en/gateway.json";
 import en_gbIntelligence from "./en/gbIntelligence.json";
@@ -133,6 +135,7 @@ import es_designLab from "./es/designLab.json";
 import es_domains from "./es/domains.json";
 import es_email from "./es/email.json";
 import es_errors from "./es/errors.json";
+import es_events from "./es/events.json";
 import es_executions from "./es/executions.json";
 import es_gateway from "./es/gateway.json";
 import es_gbIntelligence from "./es/gbIntelligence.json";
@@ -194,6 +197,7 @@ export const MESSAGE_FILES = {
     domains: ptBR_domains,
     email: ptBR_email,
     errors: ptBR_errors,
+    events: ptBR_events,
     executions: ptBR_executions,
     gateway: ptBR_gateway,
     gbIntelligence: ptBR_gbIntelligence,
@@ -253,6 +257,7 @@ export const MESSAGE_FILES = {
     domains: en_domains,
     email: en_email,
     errors: en_errors,
+    events: en_events,
     executions: en_executions,
     gateway: en_gateway,
     gbIntelligence: en_gbIntelligence,
@@ -312,6 +317,7 @@ export const MESSAGE_FILES = {
     domains: es_domains,
     email: es_email,
     errors: es_errors,
+    events: es_events,
     executions: es_executions,
     gateway: es_gateway,
     gbIntelligence: es_gbIntelligence,
@@ -373,6 +379,7 @@ export const NAMESPACES = [
   "domains",
   "email",
   "errors",
+  "events",
   "executions",
   "gateway",
   "gbIntelligence",

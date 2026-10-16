@@ -3,6 +3,8 @@ import { leadNoticeJob } from "@/core/ai/notices/lead";
 import { guidTurnJob } from "@/core/ai/turn/guid";
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
 import { channelDispatchJob } from "@/core/channels/registry";
+import { eventsDispatchJob } from "@/core/events/dispatch";
+import { verifyChainsJob, verifyChainsSchedule } from "@/core/events/verify";
 import { translateTextsJob } from "@/core/i18n/machine/texts-job";
 import { translateDocumentJob } from "@/core/legal/machine-job";
 import { workspaceExportJob } from "@/core/privacy/export";
@@ -21,6 +23,9 @@ import type { JobDefinition, JobSchedule } from "./definition";
 const DEFINITIONS = [
   ...billingJobs,
   ...privacyJobs,
+  // Event Hub (H1): dispatch of each event and the daily seal check.
+  eventsDispatchJob,
+  verifyChainsJob,
   translateTextsJob,
   translateDocumentJob,
   workspaceExportJob,
@@ -51,5 +56,10 @@ export function getJobDefinition(kind: string): JobDefinition<unknown> | null {
 
 /** Recurring platform jobs started by the worker's scheduler. */
 export function listJobSchedules(): readonly JobSchedule[] {
-  return [...billingSchedules, ...privacySchedules, keyWatchSchedule];
+  return [
+    ...billingSchedules,
+    ...privacySchedules,
+    keyWatchSchedule,
+    verifyChainsSchedule,
+  ];
 }

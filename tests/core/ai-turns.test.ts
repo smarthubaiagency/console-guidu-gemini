@@ -8,11 +8,8 @@ vi.mock("server-only", () => ({}));
 import { parseAgentConfig } from "@/core/ai/config/schema";
 import { promptLocale } from "@/core/ai/prompt/texts";
 import { buildTools, type ToolEnv } from "@/core/ai/tools/catalog";
-import {
-  deliverLeadNotice,
-  LEAD_NOTICE_JOB_KIND,
-  signNotice,
-} from "@/core/ai/notices/lead";
+import { deliverLeadNotice, signNotice } from "@/core/ai/notices/lead";
+import { dispatchEvent } from "@/core/events/dispatch";
 import { createGuidTurnJob, runGuidTurn } from "@/core/ai/turn/guid";
 import { startAssistantTurn } from "@/core/ai/turn/assistant";
 import { encryptSecret } from "@/core/credentials/crypto";
@@ -161,6 +158,9 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
   });
   const admin = new PrismaClient({
     datasources: { db: { url: adminUrl ?? "" } },
+  });
+  const workerDb = new PrismaClient({
+    datasources: { db: { url: workerUrl ?? "" } },
   });
   let credentialId = "";
   let houseConfig: unknown = null;
@@ -315,6 +315,7 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
     );
     await prisma.$disconnect();
     await admin.$disconnect();
+    await workerDb.$disconnect();
   });
 
   const send = (text: string, conversationId?: string) =>
@@ -745,12 +746,22 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
       status: "pending",
       conversationId: sent.conversationId,
     });
-    // The delivery job was queued for this notice.
+    // The hub (H1) got the event in the scoring's transaction, with the
+    // message written, and its dispatch was queued.
+    const [hubEvent] = await admin.$queryRawUnsafe<
+      { id: string; type: string; data: Record<string, unknown> }[]
+    >(
+      `select id, type, data from public.events where idempotency_key = 'lead-notice:${notice.id}'`,
+    );
+    expect(hubEvent?.type).toBe("ai.agent.lead_hot");
+    expect(hubEvent?.data).toMatchObject({
+      noticeId: notice.id,
+      whatsapp: { to: "+5511988887777", skip: null },
+    });
     await admin.jobRun.findFirstOrThrow({
       where: {
-        kind: LEAD_NOTICE_JOB_KIND,
-        workspaceId: ids.workspaceA,
-        payload: { equals: { noticeId: notice.id } },
+        kind: "events.dispatch",
+        idempotencyKey: `event:${hubEvent!.id}`,
       },
     });
 
@@ -767,60 +778,73 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
     });
     try {
       const posts: { url: string; init: RequestInit }[] = [];
-      let answer = new Response("ok", { status: 200 });
+      let answer = new Response("erro", { status: 500 });
       const fetch = (async (url: string | URL, init: RequestInit = {}) => {
         posts.push({ url: String(url), init });
         return answer;
       }) as typeof globalThis.fetch;
-      const deliver = () =>
-        deliverLeadNotice(
-          session(crypto.randomUUID(), contextA),
-          contextA,
-          { noticeId: notice.id },
-          { fetch, now: () => new Date("2026-10-14T12:00:00Z") },
+      // The dispatch of the hub, as the worker (app_worker).
+      const dispatch = () =>
+        workerDb.$transaction((tx) =>
+          dispatchEvent(tx as unknown as ContextTransaction, hubEvent!.id, {
+            fetch,
+            now: () => new Date("2026-10-14T12:00:00Z"),
+          }),
         );
 
-      await expect(deliver()).resolves.toEqual({ status: "sent" });
-      expect(posts).toHaveLength(1);
-      const headers = new Headers(posts[0]!.init.headers);
-      const body = String(posts[0]!.init.body);
-      expect(posts[0]!.url).toBe("https://198.51.100.20/guidu");
+      // A failure stays visible and a follow-up run is queued.
+      await expect(dispatch()).resolves.toMatchObject({ whatsapp: "failed" });
+      expect(
+        await admin.aiLeadNotice.findUniqueOrThrow({
+          where: { id: notice.id },
+        }),
+      ).toMatchObject({ status: "failed", reason: "http_500", attempts: 1 });
+      await admin.jobRun.findFirstOrThrow({
+        where: {
+          kind: "events.dispatch",
+          idempotencyKey: `event:${hubEvent!.id}:retry:1`,
+        },
+      });
+
+      answer = new Response("ok", { status: 200 });
+      await expect(dispatch()).resolves.toMatchObject({ whatsapp: "sent" });
+      expect(posts).toHaveLength(2);
+      const headers = new Headers(posts[1]!.init.headers);
+      const body = String(posts[1]!.init.body);
+      expect(posts[1]!.url).toBe("https://198.51.100.20/guidu");
       expect(headers.get("x-guidu-event")).toBe("lead.hot");
+      expect(headers.get("x-guidu-event-id")).toBe(hubEvent!.id);
       expect(headers.get("x-guidu-signature")).toBe(
         signNotice(secret, headers.get("x-guidu-timestamp") ?? "", body),
       );
       expect(JSON.parse(body)).toMatchObject({
         event: "lead.hot",
+        event_id: hubEvent!.id,
+        notice_id: notice.id,
         to: "+5511988887777",
         text: "Lead quente no Anna: Maria Souza (+5511977776666), score 30 (morno). Motivos: Pede proposta.",
         lead: { name: "Maria Souza", score: 30, reasons: ["Pede proposta"] },
         agent: { id: GUID, name: "Anna" },
       });
-      // Sent once: running it again sends nothing.
-      await expect(deliver()).resolves.toEqual({ status: "sent" });
-      expect(posts).toHaveLength(1);
-
-      // A failure stays visible and the queue tries again.
-      await admin.aiLeadNotice.update({
-        where: { id: notice.id },
-        data: { status: "pending" },
+      expect(
+        await admin.aiLeadNotice.findUniqueOrThrow({
+          where: { id: notice.id },
+        }),
+      ).toMatchObject({ status: "sent", reason: null, attempts: 2 });
+      const delivery = await admin.notificationDelivery.findUniqueOrThrow({
+        where: { idempotencyKey: `lead-notice:${notice.id}:whatsapp` },
       });
-      answer = new Response("erro", { status: 500 });
-      await expect(deliver()).rejects.toThrow(/http_500/);
-      expect(
-        await admin.aiLeadNotice.findUniqueOrThrow({
-          where: { id: notice.id },
-        }),
-      ).toMatchObject({ status: "failed", reason: "http_500", attempts: 2 });
-
-      // Without a webhook the notice is kept, not sent.
-      await admin.partnerNoticeWebhook.delete({ where: { partnerId: HOUSE } });
-      await expect(deliver()).resolves.toEqual({ status: "skipped" });
-      expect(
-        await admin.aiLeadNotice.findUniqueOrThrow({
-          where: { id: notice.id },
-        }),
-      ).toMatchObject({ status: "skipped", reason: "no_webhook" });
+      expect(delivery).toMatchObject({
+        channel: "whatsapp",
+        status: "sent",
+        eventId: hubEvent!.id,
+        provider: "partner_webhook",
+        partnerId: HOUSE,
+        recipientEmail: null,
+      });
+      // Sent once: running it again sends nothing.
+      await expect(dispatch()).resolves.toMatchObject({ whatsapp: "done" });
+      expect(posts).toHaveLength(2);
     } finally {
       await admin.partnerNoticeWebhook.deleteMany({
         where: { partnerId: HOUSE },

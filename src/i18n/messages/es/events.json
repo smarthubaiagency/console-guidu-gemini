@@ -1,0 +1,141 @@
+{
+  "metaTitle": "Eventos",
+  "title": "Eventos",
+  "description": "La situación de todos los eventos de la Central de Eventos: tipo, cliente, fecha, sello y entregas. Los datos quedan con el cliente.",
+  "filters": {
+    "type": "Tipo",
+    "allTypes": "Todos los tipos",
+    "module": "Módulo",
+    "allModules": "Todos los módulos",
+    "partner": "Socio",
+    "allPartners": "Todos los socios",
+    "customer": "Cliente",
+    "allCustomers": "Todos los clientes",
+    "from": "Desde",
+    "to": "Hasta",
+    "apply": "Filtrar",
+    "clear": "Limpiar"
+  },
+  "list": {
+    "title": "{count, plural, =0 {Ningún evento} one {# evento} other {# eventos}}",
+    "emptyTitle": "Ningún evento",
+    "empty": "Ningún evento con estos filtros.",
+    "platform": "Plataforma",
+    "panelLabel": "Evento",
+    "deliveries": "{count, plural, =0 {sin entregas} one {# entrega} other {# entregas}}",
+    "failed": "{count, plural, one {# falló} other {# fallaron}}"
+  },
+  "severity": {
+    "info": "Información",
+    "attention": "Atención",
+    "urgent": "Urgente"
+  },
+  "integrity": {
+    "ok": "El sello coincide",
+    "broken": "Sello roto",
+    "unverifiable": "Sin clave para verificar",
+    "pending": "Aún no verificado"
+  },
+  "chain": {
+    "ok": "Cadena íntegra",
+    "broken": "Cadena rota"
+  },
+  "detail": {
+    "situation": "Situación",
+    "type": "Tipo",
+    "module": "Módulo",
+    "severity": "Gravedad",
+    "status": "Estado",
+    "partner": "Socio",
+    "customer": "Cliente",
+    "workspace": "Workspace",
+    "subject": "Sujeto",
+    "occurredAt": "Cuándo",
+    "eventId": "ID del evento",
+    "seal": "Sello",
+    "contentHash": "Sello (HMAC-SHA256)",
+    "prevHash": "Sello anterior",
+    "none": "Ninguno (primero de la cadena)",
+    "keyVersion": "Versión de la clave",
+    "position": "Posición en la cadena",
+    "chainKey": "Cadena",
+    "verification": "Verificación",
+    "verifiedAt": "Última verificación",
+    "never": "Nunca",
+    "dispatchedAt": "Avisos enviados el",
+    "notDispatched": "En espera",
+    "deliveries": "Entregas",
+    "noDeliveries": "Ninguna entrega registrada.",
+    "attempts": "{count, plural, one {# intento} other {# intentos}}",
+    "dataHidden": "Los datos del evento quedan con el cliente. La plataforma ve solo la situación y el sello."
+  },
+  "status": {
+    "open": "Abierto",
+    "resolved": "Resuelto",
+    "dismissed": "Descartado",
+    "pending": "Pendiente",
+    "approved": "Aprobado",
+    "denied": "Denegado",
+    "expired": "Vencido"
+  },
+  "channels": {
+    "email": "Correo",
+    "app": "Campana",
+    "whatsapp": "WhatsApp"
+  },
+  "delivery": {
+    "pending": "Pendiente",
+    "queued": "En cola",
+    "sent": "Enviado",
+    "delivered": "Entregado",
+    "failed": "Falló",
+    "skipped": "No enviado",
+    "blocked_policy": "Bloqueado por la política"
+  },
+  "check": {
+    "title": "Verificar un dato presentado",
+    "description": "Pegue los datos que presentó el cliente, en JSON. El sello se recalcula sin abrir los datos del evento.",
+    "label": "Datos (JSON)",
+    "submit": "Verificar sello",
+    "ok": "Los datos coinciden con el sello del evento.",
+    "mismatch": "Los datos no coinciden con el sello del evento.",
+    "unknown_key": "No hay clave para verificar este sello."
+  },
+  "keychain": {
+    "title": "Ver datos",
+    "description": "Acceso total (keychain): escriba el motivo. La apertura queda registrada en la auditoría de la plataforma.",
+    "reason": "Motivo",
+    "reasonHint": "De {min} a {max} caracteres.",
+    "submit": "Ver datos",
+    "cancel": "Cancelar",
+    "opened": "Datos abiertos. La apertura quedó registrada en la auditoría.",
+    "data": "Datos del evento"
+  },
+  "team": {
+    "title": "Equipo de la plataforma",
+    "description": "Roles del equipo interno y el acceso total (keychain) a los datos de los eventos. Solo el owner lo concede o retira; cada apertura pide MFA y motivo.",
+    "colName": "Persona",
+    "colRole": "Rol",
+    "colStatus": "Situación",
+    "colKeychain": "Acceso total",
+    "keychainLabel": "Acceso total (keychain) de {name}",
+    "granted": "Acceso total concedido.",
+    "revoked": "Acceso total retirado.",
+    "noName": "Sin nombre",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "roles": {
+      "owner": "Owner",
+      "operations": "Operaciones",
+      "billing": "Cobranza",
+      "support": "Soporte"
+    }
+  },
+  "errors": {
+    "forbidden": "No tiene permiso para esta acción.",
+    "notFound": "Evento no encontrado.",
+    "reason": "Escriba el motivo (de {min} a {max} caracteres).",
+    "json": "Pegue los datos en JSON.",
+    "memberNotFound": "Persona no encontrada en el equipo de la plataforma."
+  }
+}

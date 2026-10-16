@@ -115,5 +115,7 @@ export class EmailSendError extends Error {
 }
 
 export interface NotificationTransport {
+  /** Name of the provider kept with each delivery (H1), when there is one. */
+  readonly provider?: string;
   send(message: OutboundMessage): Promise<SendResult>;
 }

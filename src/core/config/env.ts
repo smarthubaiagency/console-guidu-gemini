@@ -45,6 +45,16 @@ const encryptionKey = required.refine(
   { error: "deve ter 32 bytes (64 hex ou 44 base64)" },
 );
 
+/** Seal of the Event Hub (H1): a secret of 32 or more characters and its version. */
+const eventsKey = required.refine((value) => value.length >= 32, {
+  error: "deve ter pelo menos 32 caracteres",
+});
+
+const eventsKeyId = required.refine(
+  (value) => /^[A-Za-z0-9_.-]{1,32}$/.test(value),
+  { error: "deve ter de 1 a 32 letras, números, ponto, hífen ou _" },
+);
+
 const notFakeTranslation = z
   .string()
   .optional()
@@ -93,6 +103,8 @@ const WEB = z.object({
   APP_URL: httpsOrigin,
   APP_NAME: required,
   ENCRYPTION_KEY: encryptionKey,
+  EVENTS_HMAC_KEY: eventsKey,
+  EVENTS_HMAC_KEY_ID: eventsKeyId,
   PARTNER_SUBDOMAIN_BASE: required,
   TRANSLATION_PROVIDER: notFakeTranslation,
   GOOGLE_OAUTH_PROVIDER: notFakeGoogle,
@@ -127,6 +139,8 @@ const WORKER = z.object({
   WORKER_DATABASE_URL: postgresUrl,
   APP_URL: httpsOrigin,
   APP_NAME: required,
+  EVENTS_HMAC_KEY: eventsKey,
+  EVENTS_HMAC_KEY_ID: eventsKeyId,
   TRANSLATION_PROVIDER: notFakeTranslation,
   MAPS_INTELLIGENCE_PROVIDER: notFakeMaps,
   GB_SUGGESTIONS_PROVIDER: notFakeSuggestions,

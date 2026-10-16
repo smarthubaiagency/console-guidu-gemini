@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { getLocale } from "next-intl/server";
 
 import { getRequestBrand } from "@/core/brand/resolve";
-import { notify } from "@/core/notifications/notify";
+import { sendInline } from "@/core/events/inline";
 import { withSender } from "@/core/notifications/sender";
 import { emailTemplateFor } from "@/core/notifications/template-store";
 import { getNotificationTransport } from "@/core/notifications/transport";
@@ -29,7 +29,7 @@ export async function emailInvitation(
   try {
     const brand = await getRequestBrand();
     const locale = await getLocale();
-    const result = await notify(
+    const result = await sendInline(
       {
         type: "invitation.created",
         recipientEmail: invitation.email,

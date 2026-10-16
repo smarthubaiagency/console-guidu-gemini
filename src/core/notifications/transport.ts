@@ -60,6 +60,7 @@ export function resendTransport(
   fetchImpl: typeof fetch = fetch,
 ): NotificationTransport {
   return {
+    provider: "resend",
     async send(message) {
       let response: Response;
       try {

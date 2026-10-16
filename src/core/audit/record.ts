@@ -102,6 +102,11 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "mode",
   "startsAt",
   "endsAt",
+  // Event Hub (H1): the event of an audited destination and the chain check.
+  "eventId",
+  "eventType",
+  "chainKey",
+  "capability",
 ]);
 
 /**
