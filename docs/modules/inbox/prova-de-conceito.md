@@ -7,14 +7,14 @@
 
 ## Versões
 
-| Peça | Versão |
-| --- | --- |
-| Synapse | 1.163.0 (pip, `matrix-synapse[jwt]`, Python 3.13.16), SQLite |
-| `matrix-js-sdk` | 43.0.0 (a 44.0.0 tem 3 dias; ficou de fora pela idade mínima) |
-| Next.js | 16.4.0 (dev, Turbopack), Node 22.22.0 |
-| Postgres do console | 16.15 local, banco `guidu_in1` |
-| Navegador | Chromium 1194 (Playwright) |
-| Modelo do agente | `MockLanguageModelV4` de `ai/test` (o mesmo dos testes), resposta fixa |
+| Peça                | Versão                                                                 |
+| ------------------- | ---------------------------------------------------------------------- |
+| Synapse             | 1.163.0 (pip, `matrix-synapse[jwt]`, Python 3.13.16), SQLite           |
+| `matrix-js-sdk`     | 43.0.0 (a 44.0.0 tem 3 dias; ficou de fora pela idade mínima)          |
+| Next.js             | 16.4.0 (dev, Turbopack), Node 22.22.0                                  |
+| Postgres do console | 16.15 local, banco `guidu_in1`                                         |
+| Navegador           | Chromium 1194 (Playwright)                                             |
+| Modelo do agente    | `MockLanguageModelV4` de `ai/test` (o mesmo dos testes), resposta fixa |
 
 ## Ambiente e decisões da prova
 
@@ -55,17 +55,17 @@ bash scripts/local/synapse-poc.sh stop
 
 ## Código da prova
 
-| Arquivo | O que faz |
-| --- | --- |
-| `scripts/local/synapse-poc.sh` | Instala, configura, sobe e para o Synapse |
-| `scripts/local/inbox-poc.ts` | GoTrue falso, semente, bootstrap do admin, consumidor, 300 salas, medições |
-| `scripts/local/inbox-poc-browser.ts` | Atendente no Chromium e as capturas |
-| `scripts/local/inbox-poc-checks/*.mjs` | Verificações avulsas: JWT, o que o consumidor vê, filtros do Sliding Sync |
-| `src/core/channels/matrix-poc/` | Config, chamadas ao Synapse, JWT, transações do AS, agente, arquivo JSON |
-| `src/app/api/matrix/as/[...path]/route.ts` | Entrada do Application Service |
-| `src/app/api/matrix/poc/session/route.ts` | Provisiona a conta e entrega o JWT curto |
-| `src/app/app/[workspaceSlug]/(fullscreen)/inbox/` | Tela crua do Inbox |
-| `src/core/security/headers.ts`, `src/proxy.ts` | Origem do homeserver no `connect-src`, só com a flag |
+| Arquivo                                           | O que faz                                                                  |
+| ------------------------------------------------- | -------------------------------------------------------------------------- |
+| `scripts/local/synapse-poc.sh`                    | Instala, configura, sobe e para o Synapse                                  |
+| `scripts/local/inbox-poc.ts`                      | GoTrue falso, semente, bootstrap do admin, consumidor, 300 salas, medições |
+| `scripts/local/inbox-poc-browser.ts`              | Atendente no Chromium e as capturas                                        |
+| `scripts/local/inbox-poc-checks/*.mjs`            | Verificações avulsas: JWT, o que o consumidor vê, filtros do Sliding Sync  |
+| `src/core/channels/matrix-poc/`                   | Config, chamadas ao Synapse, JWT, transações do AS, agente, arquivo JSON   |
+| `src/app/api/matrix/as/[...path]/route.ts`        | Entrada do Application Service                                             |
+| `src/app/api/matrix/poc/session/route.ts`         | Provisiona a conta e entrega o JWT curto                                   |
+| `src/app/app/[workspaceSlug]/(fullscreen)/inbox/` | Tela crua do Inbox                                                         |
+| `src/core/security/headers.ts`, `src/proxy.ts`    | Origem do homeserver no `connect-src`, só com a flag                       |
 
 ---
 
@@ -186,17 +186,17 @@ O Synapse 1.163 anuncia `org.matrix.simplified_msc3575` e serve o MSC4186 sem co
 
 Cenário: 300 salas criadas pelo núcleo para a Ana (cada uma com o estado da conversa e 3 mensagens), 305 no total. Criação: 100 s. Cinco rodadas por linha, login novo em cada uma:
 
-| Medição | Mediana | Tamanho | Salas na resposta |
-| --- | ---: | ---: | ---: |
-| HTTP `/sync` inicial, sem filtro | 2.188 ms | 1.360 KiB | 305 |
-| HTTP `/sync` inicial, timeline 1 e membros sob demanda | 1.656 ms | 1.023 KiB | 305 |
-| HTTP Sliding Sync, 20 primeiras | 31 ms | 23 KiB | 20 |
-| HTTP Sliding Sync, rolar para 20–39 | 48 ms | 24 KiB | 20 |
-| HTTP Sliding Sync, lista inteira (0–304) | 711 ms | 347 KiB | 305 |
-| `matrix-js-sdk` no Node, sync clássico até o primeiro `Sync` | 1.701 ms | — | 305 |
-| `matrix-js-sdk` no Node, Sliding Sync até a primeira resposta | 63 ms | — | 20 |
-| Navegador, sync clássico (tela crua) | ~2.060 ms | — | 308 |
-| Navegador, Sliding Sync, 50 primeiras | ~150 ms | — | 50 |
+| Medição                                                       |   Mediana |   Tamanho | Salas na resposta |
+| ------------------------------------------------------------- | --------: | --------: | ----------------: |
+| HTTP `/sync` inicial, sem filtro                              |  2.188 ms | 1.360 KiB |               305 |
+| HTTP `/sync` inicial, timeline 1 e membros sob demanda        |  1.656 ms | 1.023 KiB |               305 |
+| HTTP Sliding Sync, 20 primeiras                               |     31 ms |    23 KiB |                20 |
+| HTTP Sliding Sync, rolar para 20–39                           |     48 ms |    24 KiB |                20 |
+| HTTP Sliding Sync, lista inteira (0–304)                      |    711 ms |   347 KiB |               305 |
+| `matrix-js-sdk` no Node, sync clássico até o primeiro `Sync`  |  1.701 ms |         — |               305 |
+| `matrix-js-sdk` no Node, Sliding Sync até a primeira resposta |     63 ms |         — |                20 |
+| Navegador, sync clássico (tela crua)                          | ~2.060 ms |         — |               308 |
+| Navegador, Sliding Sync, 50 primeiras                         |   ~150 ms |         — |                50 |
 
 O `count` da lista volta certo (305). Abrir uma sala vira assinatura (`modifyRoomSubscriptions`), com timeline e estado completos, e o envio funciona. Capturas: [lista clássica](prova-de-conceito/03-lista-classic.png), [lista com Sliding Sync](prova-de-conceito/03-lista-sliding.png) e [sala aberta com Sliding Sync](prova-de-conceito/04-sliding-sala.png).
 
