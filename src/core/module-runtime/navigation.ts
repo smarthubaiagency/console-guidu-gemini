@@ -463,6 +463,14 @@ export function buildAppSettingsNavigation(
               }),
             ]
           : []),
+        // Service mode of the company (GB1c, ADR 0020): every member reads,
+        // the company owner decides.
+        item({
+          id: "core.serviceMode",
+          label: "Modo de serviço",
+          href: `${base}/service-mode`,
+          iconKey: "handshake",
+        }),
         // Temporary partner support access (ADR 0012, P4b2): owner/admin.
         ...(input.grants("workspace.members.manage")
           ? [

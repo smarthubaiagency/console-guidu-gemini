@@ -37,6 +37,11 @@ import { requirePartnerConsolePage } from "@/core/auth/page-guard";
 import { partnerGrants } from "@/core/module-runtime/loaders";
 import { readServiceModes } from "@/core/organizations/service-mode";
 import { createPartnerCustomerAction } from "@/core/partners/actions";
+import {
+  cancelManagedModePartnerAction,
+  requestManagedModePartnerAction,
+} from "@/core/service-modes/actions";
+import { latestRequests } from "@/core/service-modes/service";
 import { listWorkspaceTemplates } from "@/core/partners/customers";
 import { listPartnerCustomers } from "@/core/partners/members";
 import { prisma } from "@/lib/prisma/client";
@@ -69,6 +74,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const STATUS_KEYS = new Set(["active", "suspended", "inactive"]);
 
+const SITUATION_VARIANT = {
+  pending: "warning",
+  approved: "success",
+  denied: "danger",
+  expired: "neutral",
+  cancelled: "neutral",
+} as const;
+
 interface PageProps {
   searchParams: Promise<{
     workspace?: string;
@@ -82,6 +95,7 @@ type ManagedWorkspace = Readonly<{
   organizationId: string;
   name: string;
   locations: readonly LocationSummary[];
+  crmContacts: number;
 }>;
 
 /**
@@ -100,40 +114,48 @@ export default async function PartnerCustomersPage({
     return <ModuleNotice variant="denied" />;
   }
   const canManage = grants("partner.customers.manage");
+  const canRequestMode = grants("partner.service_mode.request");
   const operatesFichas =
     gbModuleAvailable() && partnerMayOperate(membership.role);
   const query = await searchParams;
 
-  const { customers, templates, modes, workspaces } = await withIdentityContext(
-    prisma,
-    identity.userId,
-    async (tx) => {
-      const customers = await listPartnerCustomers(tx, partner.partnerId);
-      const modes = await readServiceModes(
-        tx,
-        customers.map((c) => c.id),
-      );
-      const managed = customers
-        .filter((c) => modes.get(c.id) === "gerenciado")
-        .map((c) => c.id);
-      return {
-        customers,
-        modes,
-        templates: canManage
-          ? await listWorkspaceTemplates(tx, partner.partnerId)
-          : [],
-        workspaces:
-          operatesFichas && managed.length > 0
-            ? await tx.workspace.findMany({
-                where: { organizationId: { in: managed }, status: "active" },
-                orderBy: { name: "asc" },
-                select: { id: true, organizationId: true, name: true },
-              })
+  const { customers, templates, modes, requests, workspaces } =
+    await withIdentityContext(
+      prisma,
+      identity.userId,
+      async (tx) => {
+        const customers = await listPartnerCustomers(tx, partner.partnerId);
+        const modes = await readServiceModes(
+          tx,
+          customers.map((c) => c.id),
+        );
+        const managed = customers
+          .filter((c) => modes.get(c.id) === "gerenciado")
+          .map((c) => c.id);
+        return {
+          customers,
+          modes,
+          requests: await latestRequests(
+            tx,
+            customers.map((c) => c.id),
+          ),
+          templates: canManage
+            ? await listWorkspaceTemplates(tx, partner.partnerId)
             : [],
-      };
-    },
-    { partnerId: partner.partnerId },
-  );
+          // The workspaces of the companies it manages (ADR 0020): the GB1a
+          // fichas and, since the GB1c, the CRM read through the managed mode.
+          workspaces:
+            managed.length > 0
+              ? await tx.workspace.findMany({
+                  where: { organizationId: { in: managed }, status: "active" },
+                  orderBy: { name: "asc" },
+                  select: { id: true, organizationId: true, name: true },
+                })
+              : [],
+        };
+      },
+      { partnerId: partner.partnerId },
+    );
 
   const managedWorkspaces: ManagedWorkspace[] = await Promise.all(
     workspaces.map(async (workspace) => {
@@ -143,10 +165,16 @@ export default async function PartnerCustomersPage({
         organizationId: workspace.organizationId,
         partnerId: partner.partnerId,
       };
-      const locations = await withContext(prisma, ctx, (tx) =>
-        listLocations(tx, ctx),
-      ).catch(() => []);
-      return { ...workspace, locations };
+      const [locations, crmContacts] = await withContext(
+        prisma,
+        ctx,
+        async (tx) =>
+          Promise.all([
+            operatesFichas ? listLocations(tx, ctx) : Promise.resolve([]),
+            tx.crmContact.count({ where: { workspaceId: workspace.id } }),
+          ]),
+      ).catch(() => [[], 0] as const);
+      return { ...workspace, locations, crmContacts };
     }),
   );
 
@@ -170,6 +198,7 @@ export default async function PartnerCustomersPage({
 
   const t = await getTranslations("partnerConsole");
   const tg = await getTranslations("googleBusiness");
+  const ts = await getTranslations("serviceMode");
   const format = await getFormatter();
 
   return (
@@ -254,6 +283,7 @@ export default async function PartnerCustomersPage({
         <ItemGroup className="gap-2" data-testid="partner-customers">
           {customers.map((customer) => {
             const mode = modes.get(customer.id) ?? "padrao";
+            const request = requests.get(customer.id) ?? null;
             const own = managedWorkspaces.filter(
               (w) => w.organizationId === customer.id,
             );
@@ -278,10 +308,53 @@ export default async function PartnerCustomersPage({
                     })}
                   </ItemDescription>
                 </ItemContent>
-                <ItemActions>
+                <ItemActions className="flex-wrap">
                   <Badge variant={mode === "gerenciado" ? "info" : "neutral"}>
                     {t(`customers.modes.${mode}`)}
                   </Badge>
+                  {request && mode === "padrao" ? (
+                    <Badge
+                      variant={SITUATION_VARIANT[request.situation]}
+                      data-testid="service-mode-request"
+                    >
+                      {request.situation === "pending"
+                        ? ts("console.pendingUntil", {
+                            date: format.dateTime(request.expiresAt, {
+                              dateStyle: "short",
+                            }),
+                          })
+                        : ts(`situation.${request.situation}`)}
+                    </Badge>
+                  ) : null}
+                  {canRequestMode && mode === "padrao" ? (
+                    request?.situation === "pending" ? (
+                      <ActionForm
+                        action={cancelManagedModePartnerAction}
+                        submitLabel={ts("console.cancel")}
+                        tone="neutral"
+                        testId="cancel-managed-mode"
+                      >
+                        <input
+                          type="hidden"
+                          name="requestId"
+                          value={request.id}
+                        />
+                      </ActionForm>
+                    ) : (
+                      <ActionForm
+                        action={requestManagedModePartnerAction}
+                        submitLabel={ts("console.request")}
+                        tone="neutral"
+                        testId="request-managed-mode"
+                      >
+                        <input
+                          type="hidden"
+                          name="organizationId"
+                          value={customer.id}
+                        />
+                      </ActionForm>
+                    )
+                  ) : null}
                 </ItemActions>
                 {own.length > 0 ? (
                   <div
@@ -303,14 +376,22 @@ export default async function PartnerCustomersPage({
                             <p className="text-14 text-text min-w-0 flex-1 font-semibold">
                               {workspace.name}
                             </p>
-                            <Button asChild size="sm" variant="outline">
-                              <Link href={windowPath(target, "connect")}>
-                                <Plus />
-                                {tg("home.addLocation")}
-                              </Link>
-                            </Button>
+                            <Badge variant="neutral" data-testid="managed-crm">
+                              {ts("console.crmContacts", {
+                                count: workspace.crmContacts,
+                              })}
+                            </Badge>
+                            {operatesFichas ? (
+                              <Button asChild size="sm" variant="outline">
+                                <Link href={windowPath(target, "connect")}>
+                                  <Plus />
+                                  {tg("home.addLocation")}
+                                </Link>
+                              </Button>
+                            ) : null}
                           </div>
-                          {workspace.locations.length > 0 ? (
+                          {!operatesFichas ? null : workspace.locations.length >
+                            0 ? (
                             <ItemGroup className="gap-2">
                               {workspace.locations.map((location) => (
                                 <Item
