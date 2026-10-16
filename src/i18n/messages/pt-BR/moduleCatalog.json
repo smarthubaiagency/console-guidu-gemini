@@ -26,7 +26,12 @@
   "google_business": {
     "name": "Google Meu Negócio",
     "description": "Integração e sincronização de perfis comerciais (especificação em aberto).",
-    "nav": { "google_business": "Google Meu Negócio" }
+    "nav": { "google_business": "Google Meu Negócio" },
+    "quotas": {
+      "google_business_maps_keywords": "Palavras-chave monitoradas no mapa por unidade.",
+      "google_business_maps_grid_size": "Pontos por lado da grade do mapa (7 = 7x7).",
+      "google_business_maps_scans_per_month": "Medições do mapa por unidade por mês."
+    }
   },
   "ai_agents": {
     "name": "Agentes de IA",

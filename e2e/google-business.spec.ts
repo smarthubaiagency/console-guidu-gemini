@@ -68,12 +68,13 @@ async function connectAndChoose(page: Page, ficha: RegExp) {
   await page.waitForLoadState("networkidle");
   await page.getByLabel(ficha).check();
   await page.getByRole("button", { name: "Continuar" }).click();
+  // 3 reading steps + the blocking analyses (4 deterministic, AI suggestions).
   const steps = page.getByTestId("onboarding-steps");
-  await expect(steps.getByRole("listitem")).toHaveCount(7);
+  await expect(steps.getByRole("listitem")).toHaveCount(8);
   await expect(page.getByTestId("onboarding-ready")).toBeVisible({
     timeout: 30_000,
   });
-  await expect(steps.locator('[data-state="done"]')).toHaveCount(7);
+  await expect(steps.locator('[data-state="done"]')).toHaveCount(8);
 }
 
 test("the customer adds a location and reviews the automation page", async ({

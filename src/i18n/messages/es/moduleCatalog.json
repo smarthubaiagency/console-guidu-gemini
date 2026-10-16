@@ -26,7 +26,12 @@
   "google_business": {
     "name": "Perfil de Empresa de Google",
     "description": "Integración y sincronización de perfiles comerciales (especificación pendiente).",
-    "nav": { "google_business": "Perfil de Empresa de Google" }
+    "nav": { "google_business": "Perfil de Empresa de Google" },
+    "quotas": {
+      "google_business_maps_keywords": "Palabras clave monitoreadas en el mapa por unidad.",
+      "google_business_maps_grid_size": "Puntos por lado de la cuadrícula del mapa (7 = 7x7).",
+      "google_business_maps_scans_per_month": "Mediciones del mapa por unidad por mes."
+    }
   },
   "ai_agents": {
     "name": "Agentes de IA",

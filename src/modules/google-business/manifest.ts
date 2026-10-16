@@ -1,5 +1,7 @@
 import { defineModuleManifest } from "@/core/module-contracts/manifest";
 
+import { MAPS_QUOTA_DEFAULTS, MapsQuotas } from "./maps/quotas";
+
 /**
  * Google Meu Negócio — Agente GMN (especificação em
  * docs/modules/google-business/especificacao.md). GB1a: onboarding
@@ -45,6 +47,27 @@ export const googleBusinessManifest = defineModuleManifest({
       iconKey: "store",
       order: 20,
       requiredPermissions: [GoogleBusinessPermissions.READ],
+    },
+  ],
+  // Saúde no Maps (GB1b): per unit; the starting point does not count.
+  entitlements: [
+    {
+      key: MapsQuotas.KEYWORDS,
+      kind: "quota",
+      description: "Palavras-chave monitoradas no mapa por unidade.",
+      defaultLimit: MAPS_QUOTA_DEFAULTS.keywords,
+    },
+    {
+      key: MapsQuotas.GRID_SIZE,
+      kind: "quota",
+      description: "Pontos por lado da grade do mapa (7 = 7x7).",
+      defaultLimit: MAPS_QUOTA_DEFAULTS.gridSize,
+    },
+    {
+      key: MapsQuotas.SCANS_PER_MONTH,
+      kind: "quota",
+      description: "Medições do mapa por unidade por mês.",
+      defaultLimit: MAPS_QUOTA_DEFAULTS.scansPerMonth,
     },
   ],
   permissions: [

@@ -1,0 +1,183 @@
+{
+  "steps": {
+    "aiSuggestions": "Sugestões da IA",
+    "mapsKeywords": "Palavras-chave do mapa",
+    "mapsCompetitors": "Concorrentes e avaliações",
+    "mapsGeoGrid": "Mapa de posições e nota"
+  },
+  "findings": {
+    "description": {
+      "title": "Descrição: sugestão da IA",
+      "detail": "A descrição atual tem {length} caracteres (o Google aceita até 750). Compare a atual com a sugerida; nada muda na ficha sem a sua aprovação."
+    },
+    "descriptionPolicy": {
+      "title": "A descrição tem {problem, select, link {um link} contact {dados de contato} promotion {uma promoção} other {conteúdo proibido}}",
+      "detail": "O Google não aceita link, contato nem promoção na descrição. Ação: troque pela versão sugerida, sem esse conteúdo."
+    },
+    "nameKeywords": {
+      "title": "O nome da ficha tem palavra-chave, cidade ou slogan",
+      "detail": "As diretrizes do Google pedem o nome real do negócio; nome com palavra-chave pode suspender a ficha. Ação: use o nome real (sugestão ao lado, quando houver)."
+    },
+    "categories": {
+      "title": "Categorias: sugestão da IA",
+      "detail": "Hoje a ficha tem {count, plural, =0 {nenhuma categoria adicional} one {# categoria adicional} other {# categorias adicionais}}. A categoria principal é o que mais pesa na busca local; confira a sugestão."
+    },
+    "reply": {
+      "title": "Rascunho de resposta para a avaliação de {rating, plural, one {# estrela} other {# estrelas}}",
+      "detail": "{origin, select, ai {Escrito pela IA, sem dado sensível, sem nome de funcionário e sem discussão.} other {Resposta segura da faixa de estrelas: a sugestão da IA não passou nas regras de privacidade ou não veio.}} Revise antes de publicar."
+    },
+    "keywordsChosen": {
+      "title": "Palavras-chave do mapa: {keywords}",
+      "detail": "O agente escolheu {count, plural, one {# palavra-chave} other {# palavras-chave}} a partir da categoria da ficha. Ajuste quando quiser."
+    },
+    "keywordsKept": {
+      "title": "Palavras-chave do mapa: {keywords}",
+      "detail": "Mantivemos {count, plural, one {a # palavra-chave monitorada} other {as # palavras-chave monitoradas}} desta unidade."
+    },
+    "keywordsNone": {
+      "title": "Sem palavra-chave para medir o mapa",
+      "detail": "A ficha não tem categoria principal. Ação: confirme a categoria da ficha ou cadastre as palavras-chave à mão."
+    },
+    "score": {
+      "title": "Saúde no Maps: {score} de 100",
+      "detail": "Conta: visibilidade {visibility} de 35 + avaliações {reviews} de 25 + ritmo e respostas {activity} de 20 + ficha completa {profile} de 20. {weakest, select, visibility {Ação: use o nome dos bairros da região na descrição, nas postagens e nas respostas.} reviews {Ação: peça avaliação a todos os clientes atendidos, com o mesmo pedido para todos.} activity {Ação: responda as avaliações pendentes e mantenha um ritmo constante de pedidos.} profile {Ação: complete a ficha (descrição, categorias, horários e fotos).} other {}}"
+    },
+    "notFound": {
+      "title": "A ficha não aparece no mapa para “{keyword}”",
+      "detail": "Nenhum dos {total} pontos da grade mostra a ficha entre os 20 primeiros. Ação: confirme se a categoria principal corresponde a “{keyword}” e use o termo na descrição e nas postagens (nunca no nome)."
+    },
+    "solvWeak": {
+      "title": "Top 3 em {solv}% do mapa para “{keyword}”",
+      "detail": "No top 3 em {top3} de {total} pontos; aparece em {found}, na posição média {averageRank}. {direction, select, n {A região mais fraca é o norte.} ne {A região mais fraca é o nordeste.} e {A região mais fraca é o leste.} se {A região mais fraca é o sudeste.} s {A região mais fraca é o sul.} sw {A região mais fraca é o sudoeste.} w {A região mais fraca é o oeste.} nw {A região mais fraca é o noroeste.} other {}} {vocabulary, select, yes {Ação: use os bairros onde os concorrentes aparecem na frente ({neighborhoods}) na descrição, nas postagens e nas respostas.} other {Ação: use o nome dos bairros da região na descrição, nas postagens e nas respostas.}} A distância pesa e nenhum conteúdo resolve estar longe."
+    },
+    "solvModerate": {
+      "title": "Top 3 em {solv}% do mapa para “{keyword}”",
+      "detail": "No top 3 em {top3} de {total} pontos; aparece em {found}, na posição média {averageRank}. {direction, select, n {A região mais fraca é o norte.} ne {A região mais fraca é o nordeste.} e {A região mais fraca é o leste.} se {A região mais fraca é o sudeste.} s {A região mais fraca é o sul.} sw {A região mais fraca é o sudoeste.} w {A região mais fraca é o oeste.} nw {A região mais fraca é o noroeste.} other {}} {vocabulary, select, yes {Ação: reforce os bairros {neighborhoods} na descrição, nas postagens e nas respostas.} other {Ação: reforce o nome dos bairros da região no conteúdo da ficha.}}"
+    },
+    "solvStrong": {
+      "title": "Top 3 em {solv}% do mapa para “{keyword}”",
+      "detail": "Presença forte: top 3 em {top3} de {total} pontos, posição média {averageRank}. Ação: mantenha o ritmo de avaliações e acompanhe os concorrentes novos."
+    },
+    "baseline": {
+      "title": "Ponto de partida gravado",
+      "detail": "Primeiro mapa da unidade: top 3 em {solv}% dos pontos e nota {score}. Os próximos relatórios comparam com ele. Não consome a cota mensal."
+    },
+    "progress": {
+      "title": "Desde o ponto de partida: top 3 de {baselineSolv}% para {solv}%",
+      "detail": "Nota de {baselineScore} para {score}."
+    },
+    "competitors": {
+      "title": "{count, plural, =0 {Nenhum concorrente} one {# concorrente} other {# concorrentes}} no raio para “{keyword}”",
+      "detail": "O mais forte da grade: {leader} (nota {leaderRating}, {leaderReviews, plural, one {# avaliação} other {# avaliações}})."
+    },
+    "newCompetitor": {
+      "title": "Concorrente novo no raio: {name}",
+      "detail": "Entrou no top 10 de “{keyword}” (posição média {averageRank}, nota {rating}, {reviews, plural, one {# avaliação} other {# avaliações}}). Ação: compare a nota e o número de avaliações com os seus, mantenha o pedido de avaliação a todos os clientes e marque-o como concorrente de referência se fizer sentido."
+    },
+    "reviewsPace": {
+      "title": "Ritmo de avaliações: {monthly} por mês",
+      "detail": "Última avaliação há {days} dias. Ritmo bom; mantenha o pedido de avaliação a todos os clientes."
+    },
+    "reviewsPaceLow": {
+      "title": "Poucas avaliações novas: {monthly} por mês",
+      "detail": "Última avaliação há {days} dias; a referência é {reference} por mês. Ação: peça avaliação a todos os clientes atendidos, sempre com o mesmo pedido, no horário comercial."
+    },
+    "reviewsGap": {
+      "title": "Intervalo de {days} dias sem avaliação",
+      "detail": "Intervalos longos sem avaliação nova costumam derrubar a posição (estudo de mercado, não regra do Google). Ação: mantenha o pedido de avaliação constante, a todos os clientes."
+    },
+    "responseLow": {
+      "title": "{rate}% das avaliações respondidas",
+      "detail": "{pending, plural, one {# avaliação está} other {# avaliações estão}} sem resposta. Ação: responda; os rascunhos estão nas sugestões da IA."
+    },
+    "responseGood": {
+      "title": "{rate}% das avaliações respondidas",
+      "detail": "{pending, plural, =0 {Nenhuma avaliação pendente.} one {# avaliação pendente.} other {# avaliações pendentes.}} Continue respondendo todas."
+    },
+    "ratingBelow": {
+      "title": "Nota {rating} abaixo da mediana dos concorrentes ({median})",
+      "detail": "Ação: responda as avaliações negativas e leve cada caso para um canal privado; peça avaliação a todos os clientes, sem filtrar quem ficou satisfeito."
+    },
+    "countBelow": {
+      "title": "{count} avaliações; os concorrentes têm {median} (mediana)",
+      "detail": "Ação: use o link e o QR de pedido de avaliação com todos os clientes atendidos, no horário comercial."
+    },
+    "reviewsBurst": {
+      "title": "{days, plural, one {# dia} other {# dias}} com várias avaliações 5 estrelas juntas",
+      "detail": "Picos de 5 estrelas no mesmo dia podem parecer artificiais (sinal de estudo de mercado, não regra do Google). Ação: espace os pedidos e faça o mesmo pedido a todos os clientes."
+    },
+    "reviewsDistribution": {
+      "title": "Distribuição das avaliações lidas",
+      "detail": "5★ {five} · 4★ {four} · 3★ {three} · 2★ {two} · 1★ {one}"
+    },
+    "mapsQuota": {
+      "title": "Medições do mapa do mês esgotadas ({used} de {limit})",
+      "detail": "A próxima medição entra no mês que vem ou com um plano maior. O ponto de partida não conta."
+    },
+    "mapsNoCoordinates": {
+      "title": "Sem a localização da unidade",
+      "detail": "O mapa é montado ao redor da unidade. Ação: confira o endereço e as coordenadas da unidade e rode a análise de novo."
+    }
+  },
+  "errors": {
+    "unitNotFound": "Unidade não encontrada.",
+    "keywordInvalid": "Use de 2 a 80 caracteres.",
+    "keywordExists": "Esta palavra-chave já é monitorada.",
+    "placeInvalid": "Concorrente inválido.",
+    "noKeywords": "Nenhuma palavra-chave para medir."
+  },
+  "maps": {
+    "title": "Saúde no Maps",
+    "description": "Posição no mapa frente aos concorrentes, com a conta à vista.",
+    "empty": "Ainda não há medição do mapa desta unidade.",
+    "measuredAt": "Medido em {date}",
+    "baselineBadge": "Ponto de partida",
+    "baselineCompare": "Ponto de partida em {date}: nota {score}, top 3 em {solv}%",
+    "score": "Nota",
+    "scoreValue": "{score} de 100",
+    "breakdownTitle": "Como a nota é calculada",
+    "breakdownTotal": "Total: {score} de 100",
+    "points": "{points} de {max}",
+    "dimensions": {
+      "visibility": "Visibilidade no mapa",
+      "reviews": "Avaliações frente aos concorrentes",
+      "activity": "Ritmo e respostas",
+      "profile": "Ficha completa"
+    },
+    "formulas": {
+      "visibility": "Visibilidade média de {visibility}% (top 3 vale 3, posições 4 a 10 valem 1) em {keywords, plural, one {# palavra-chave} other {# palavras-chave}}, vezes 35.",
+      "reviews": "Nota {rating} contra {ratingReference} e {reviewCount} avaliações contra {countReference} ({reference, select, competitors {mediana dos concorrentes} other {referência fixa}}).",
+      "activity": "{monthlyAverage} avaliações por mês (referência {paceReference}) e {responseRate}% respondidas.",
+      "profile": "{done} de {total} itens da ficha em ordem."
+    },
+    "solv": "SoLV",
+    "solvHint": "Pontos da grade no top 3",
+    "averageRank": "Posição média",
+    "averageRankHint": "Onde a ficha aparece",
+    "found": "Pontos com a ficha",
+    "foundValue": "{found} de {total}",
+    "heatmapTitle": "Mapa de posições",
+    "heatmapCaption": "Grade {size}×{size}, raio de {radius} km. Cada quadrado é uma busca feita daquele ponto; o do meio é a unidade.",
+    "cell": "Linha {row}, coluna {column}: {rank, select, none {fora dos 20} other {posição {rank}}}",
+    "legend": {
+      "top3": "1 a 3",
+      "visible": "4 a 10",
+      "buried": "11 a 20",
+      "none": "Fora dos 20"
+    },
+    "neighborhoods": "Bairros para usar no conteúdo",
+    "competitorsTitle": "Concorrentes no raio",
+    "competitorsDescription": "Os mais fortes da grade para “{keyword}”.",
+    "columns": {
+      "name": "Concorrente",
+      "rating": "Nota",
+      "reviews": "Avaliações",
+      "appearances": "Pontos",
+      "averageRank": "Posição média"
+    },
+    "reference": "Referência",
+    "cost": "{calls, plural, one {# consulta} other {# consultas}}, custo estimado de US$ {cost}",
+    "demoTitle": "Saúde no Maps (demonstração)",
+    "demoSubtitle": "Componente do agente GMN com dados de exemplo. A página de automação usa o mesmo componente."
+  }
+}

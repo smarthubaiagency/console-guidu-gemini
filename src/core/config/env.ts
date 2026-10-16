@@ -59,6 +59,21 @@ const notFakeGoogle = z
     error: "o Google de teste não roda em produção",
   });
 
+/** Maps and AI suggestions of the agent GMN (GB1b): fakes are for tests. */
+const notFakeMaps = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "o provedor de mapa de teste não roda em produção",
+  });
+
+const notFakeSuggestions = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "a IA de teste das sugestões não roda em produção",
+  });
+
 const notFakeGoogleBusiness = z
   .string()
   .optional()
@@ -81,6 +96,8 @@ const WEB = z.object({
   PARTNER_SUBDOMAIN_BASE: required,
   TRANSLATION_PROVIDER: notFakeTranslation,
   GOOGLE_OAUTH_PROVIDER: notFakeGoogle,
+  MAPS_INTELLIGENCE_PROVIDER: notFakeMaps,
+  GB_SUGGESTIONS_PROVIDER: notFakeSuggestions,
   GOOGLE_BUSINESS_PROVIDER: notFakeGoogleBusiness,
   GOOGLE_BUSINESS_SPECIALIST_PROVIDER: notFakeSpecialist,
 });
@@ -111,6 +128,8 @@ const WORKER = z.object({
   APP_URL: httpsOrigin,
   APP_NAME: required,
   TRANSLATION_PROVIDER: notFakeTranslation,
+  MAPS_INTELLIGENCE_PROVIDER: notFakeMaps,
+  GB_SUGGESTIONS_PROVIDER: notFakeSuggestions,
   GOOGLE_BUSINESS_PROVIDER: notFakeGoogleBusiness,
 });
 

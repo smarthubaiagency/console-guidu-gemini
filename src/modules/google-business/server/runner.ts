@@ -16,6 +16,7 @@ import {
   type LocationSnapshot,
   type ReviewSummary,
 } from "../analyses/contract";
+import { runWithIntelligenceRuntime } from "../analyses/intelligence/runtime";
 import { locationAnalyses } from "../analyses/registry";
 
 /**
@@ -128,14 +129,20 @@ export async function runAnalysis(
 
   let result: AnalysisResult;
   try {
+    // The intelligence analyses (GB1b) open their transactions through
+    // the runner's own (web request or detached job of the worker).
     const raw = await withTimeout(
-      analysis.run({
-        request: ctx,
-        locationId: input.locationId,
-        unitId: input.unitId,
-        snapshot: input.snapshot,
-        reviews: input.reviews,
-      }),
+      runWithIntelligenceRuntime(
+        { transaction: (_ctx, operation) => db(operation) },
+        () =>
+          analysis.run({
+            request: ctx,
+            locationId: input.locationId,
+            unitId: input.unitId,
+            snapshot: input.snapshot,
+            reviews: input.reviews,
+          }),
+      ),
       timeoutMs,
     );
     const parsed = ResultSchema.safeParse(raw);

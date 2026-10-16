@@ -1,0 +1,183 @@
+{
+  "steps": {
+    "aiSuggestions": "AI suggestions",
+    "mapsKeywords": "Map keywords",
+    "mapsCompetitors": "Competitors and reviews",
+    "mapsGeoGrid": "Ranking map and score"
+  },
+  "findings": {
+    "description": {
+      "title": "Description: AI suggestion",
+      "detail": "The current description has {length} characters (Google accepts up to 750). Compare the current one with the suggestion; nothing changes on the profile without your approval."
+    },
+    "descriptionPolicy": {
+      "title": "The description has {problem, select, link {a link} contact {contact details} promotion {a promotion} other {forbidden content}}",
+      "detail": "Google does not accept links, contact details or promotions in the description. Action: replace it with the suggested version, without that content."
+    },
+    "nameKeywords": {
+      "title": "The profile name has a keyword, city or slogan",
+      "detail": "Google's guidelines ask for the real business name; a name with keywords may get the profile suspended. Action: use the real name (suggestion next to it, when there is one)."
+    },
+    "categories": {
+      "title": "Categories: AI suggestion",
+      "detail": "The profile has {count, plural, =0 {no additional category} one {# additional category} other {# additional categories}} today. The primary category weighs the most in local search; check the suggestion."
+    },
+    "reply": {
+      "title": "Draft reply to the {rating, plural, one {# star} other {# star}} review",
+      "detail": "{origin, select, ai {Written by the AI, with no sensitive data, no employee name and no argument.} other {Safe reply of the star band: the AI suggestion did not pass the privacy rules or did not come.}} Review it before publishing."
+    },
+    "keywordsChosen": {
+      "title": "Map keywords: {keywords}",
+      "detail": "The agent picked {count, plural, one {# keyword} other {# keywords}} from the profile category. Adjust them whenever you like."
+    },
+    "keywordsKept": {
+      "title": "Map keywords: {keywords}",
+      "detail": "We kept the {count, plural, one {# monitored keyword} other {# monitored keywords}} of this unit."
+    },
+    "keywordsNone": {
+      "title": "No keyword to measure the map",
+      "detail": "The profile has no primary category. Action: confirm the profile category or add the keywords by hand."
+    },
+    "score": {
+      "title": "Maps health: {score} out of 100",
+      "detail": "Math: visibility {visibility} of 35 + reviews {reviews} of 25 + pace and replies {activity} of 20 + complete profile {profile} of 20. {weakest, select, visibility {Action: use the names of the neighbourhoods around you in the description, posts and replies.} reviews {Action: ask every customer served for a review, with the same request for everyone.} activity {Action: reply to the pending reviews and keep a steady pace of requests.} profile {Action: complete the profile (description, categories, hours and photos).} other {}}"
+    },
+    "notFound": {
+      "title": "The profile does not show on the map for “{keyword}”",
+      "detail": "None of the {total} grid points shows the profile in the top 20. Action: check that the primary category matches “{keyword}” and use the term in the description and posts (never in the name)."
+    },
+    "solvWeak": {
+      "title": "Top 3 in {solv}% of the map for “{keyword}”",
+      "detail": "In the top 3 at {top3} of {total} points; shows at {found}, average position {averageRank}. {direction, select, n {The weakest area is the north.} ne {The weakest area is the northeast.} e {The weakest area is the east.} se {The weakest area is the southeast.} s {The weakest area is the south.} sw {The weakest area is the southwest.} w {The weakest area is the west.} nw {The weakest area is the northwest.} other {}} {vocabulary, select, yes {Action: use the neighbourhoods where competitors rank ahead ({neighborhoods}) in the description, posts and replies.} other {Action: use the names of the neighbourhoods around you in the description, posts and replies.}} Distance weighs, and no content fixes being far."
+    },
+    "solvModerate": {
+      "title": "Top 3 in {solv}% of the map for “{keyword}”",
+      "detail": "In the top 3 at {top3} of {total} points; shows at {found}, average position {averageRank}. {direction, select, n {The weakest area is the north.} ne {The weakest area is the northeast.} e {The weakest area is the east.} se {The weakest area is the southeast.} s {The weakest area is the south.} sw {The weakest area is the southwest.} w {The weakest area is the west.} nw {The weakest area is the northwest.} other {}} {vocabulary, select, yes {Action: reinforce the neighbourhoods {neighborhoods} in the description, posts and replies.} other {Action: reinforce the names of the neighbourhoods around you in the profile content.}}"
+    },
+    "solvStrong": {
+      "title": "Top 3 in {solv}% of the map for “{keyword}”",
+      "detail": "Strong presence: top 3 at {top3} of {total} points, average position {averageRank}. Action: keep the review pace and watch for new competitors."
+    },
+    "baseline": {
+      "title": "Starting point recorded",
+      "detail": "First map of the unit: top 3 in {solv}% of the points and score {score}. The next reports compare with it. It does not use the monthly quota."
+    },
+    "progress": {
+      "title": "Since the starting point: top 3 from {baselineSolv}% to {solv}%",
+      "detail": "Score from {baselineScore} to {score}."
+    },
+    "competitors": {
+      "title": "{count, plural, =0 {No competitor} one {# competitor} other {# competitors}} in the radius for “{keyword}”",
+      "detail": "The strongest of the grid: {leader} (rating {leaderRating}, {leaderReviews, plural, one {# review} other {# reviews}})."
+    },
+    "newCompetitor": {
+      "title": "New competitor in the radius: {name}",
+      "detail": "Entered the top 10 for “{keyword}” (average position {averageRank}, rating {rating}, {reviews, plural, one {# review} other {# reviews}}). Action: compare its rating and number of reviews with yours, keep asking every customer for a review and mark it as a reference competitor if it makes sense."
+    },
+    "reviewsPace": {
+      "title": "Review pace: {monthly} per month",
+      "detail": "Last review {days} days ago. Good pace; keep asking every customer for a review."
+    },
+    "reviewsPaceLow": {
+      "title": "Few new reviews: {monthly} per month",
+      "detail": "Last review {days} days ago; the reference is {reference} per month. Action: ask every customer served for a review, always with the same request, during business hours."
+    },
+    "reviewsGap": {
+      "title": "{days}-day gap without a review",
+      "detail": "Long gaps without new reviews tend to drop the position (market study, not a Google rule). Action: keep the review request steady, to every customer."
+    },
+    "responseLow": {
+      "title": "{rate}% of the reviews replied",
+      "detail": "{pending, plural, one {# review is} other {# reviews are}} without a reply. Action: reply; the drafts are in the AI suggestions."
+    },
+    "responseGood": {
+      "title": "{rate}% of the reviews replied",
+      "detail": "{pending, plural, =0 {No review pending.} one {# review pending.} other {# reviews pending.}} Keep replying to all of them."
+    },
+    "ratingBelow": {
+      "title": "Rating {rating} below the competitors' median ({median})",
+      "detail": "Action: reply to the negative reviews and take each case to a private channel; ask every customer for a review, without filtering who was satisfied."
+    },
+    "countBelow": {
+      "title": "{count} reviews; competitors have {median} (median)",
+      "detail": "Action: use the review request link and QR code with every customer served, during business hours."
+    },
+    "reviewsBurst": {
+      "title": "{days, plural, one {# day} other {# days}} with several 5-star reviews together",
+      "detail": "Peaks of 5 stars on the same day may look artificial (market study signal, not a Google rule). Action: space the requests and make the same request to every customer."
+    },
+    "reviewsDistribution": {
+      "title": "Distribution of the reviews read",
+      "detail": "5★ {five} · 4★ {four} · 3★ {three} · 2★ {two} · 1★ {one}"
+    },
+    "mapsQuota": {
+      "title": "Map measurements of the month used up ({used} of {limit})",
+      "detail": "The next measurement comes next month or with a bigger plan. The starting point does not count."
+    },
+    "mapsNoCoordinates": {
+      "title": "No location for the unit",
+      "detail": "The map is built around the unit. Action: check the address and coordinates of the unit and run the analysis again."
+    }
+  },
+  "errors": {
+    "unitNotFound": "Unit not found.",
+    "keywordInvalid": "Use 2 to 80 characters.",
+    "keywordExists": "This keyword is already monitored.",
+    "placeInvalid": "Invalid competitor.",
+    "noKeywords": "No keyword to measure."
+  },
+  "maps": {
+    "title": "Maps health",
+    "description": "Position on the map against competitors, with the math in view.",
+    "empty": "There is no map measurement for this unit yet.",
+    "measuredAt": "Measured on {date}",
+    "baselineBadge": "Starting point",
+    "baselineCompare": "Starting point on {date}: score {score}, top 3 in {solv}%",
+    "score": "Score",
+    "scoreValue": "{score} out of 100",
+    "breakdownTitle": "How the score is calculated",
+    "breakdownTotal": "Total: {score} out of 100",
+    "points": "{points} of {max}",
+    "dimensions": {
+      "visibility": "Visibility on the map",
+      "reviews": "Reviews against competitors",
+      "activity": "Pace and replies",
+      "profile": "Complete profile"
+    },
+    "formulas": {
+      "visibility": "Mean visibility of {visibility}% (top 3 is worth 3, positions 4 to 10 are worth 1) over {keywords, plural, one {# keyword} other {# keywords}}, times 35.",
+      "reviews": "Rating {rating} against {ratingReference} and {reviewCount} reviews against {countReference} ({reference, select, competitors {competitors' median} other {fixed reference}}).",
+      "activity": "{monthlyAverage} reviews per month (reference {paceReference}) and {responseRate}% replied.",
+      "profile": "{done} of {total} profile items in order."
+    },
+    "solv": "SoLV",
+    "solvHint": "Grid points in the top 3",
+    "averageRank": "Average position",
+    "averageRankHint": "Where the profile shows",
+    "found": "Points with the profile",
+    "foundValue": "{found} of {total}",
+    "heatmapTitle": "Ranking map",
+    "heatmapCaption": "{size}×{size} grid, {radius} km radius. Each square is a search made from that point; the middle one is the unit.",
+    "cell": "Row {row}, column {column}: {rank, select, none {outside the top 20} other {position {rank}}}",
+    "legend": {
+      "top3": "1 to 3",
+      "visible": "4 to 10",
+      "buried": "11 to 20",
+      "none": "Outside the top 20"
+    },
+    "neighborhoods": "Neighbourhoods to use in the content",
+    "competitorsTitle": "Competitors in the radius",
+    "competitorsDescription": "The strongest of the grid for “{keyword}”.",
+    "columns": {
+      "name": "Competitor",
+      "rating": "Rating",
+      "reviews": "Reviews",
+      "appearances": "Points",
+      "averageRank": "Average position"
+    },
+    "reference": "Reference",
+    "cost": "{calls, plural, one {# query} other {# queries}}, estimated cost US$ {cost}",
+    "demoTitle": "Maps health (demo)",
+    "demoSubtitle": "Component of the GMN agent with sample data. The automation page uses the same component."
+  }
+}

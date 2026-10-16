@@ -13,6 +13,8 @@ import {
 } from "../provider";
 import type { LocationOption } from "../provider/port";
 import type { GbAccess } from "../server/access";
+import { loadMapsHealthView } from "../maps/service";
+import type { MapsHealthView } from "../maps/view";
 import { loadAutomation } from "../server/automation";
 import {
   GB_CONNECT_COOKIE,
@@ -100,13 +102,25 @@ export async function AddLocationSlot({
 export async function automationPageData(
   access: GbAccess,
   locationId: string,
-): Promise<AutomationPageData> {
-  const view = await withContext(prisma, access.ctx, (tx) =>
-    loadAutomation(tx, access.ctx, locationId),
-  );
+): Promise<AutomationPageData & { maps: MapsHealthView | null }> {
+  const { view, maps } = await withContext(prisma, access.ctx, async (tx) => {
+    const view = await loadAutomation(tx, access.ctx, locationId);
+    // Saúde no Maps of the unit (GB1b), shown on the same page.
+    const row = await tx.gbLocation.findFirst({
+      where: { id: locationId, workspaceId: access.ctx.workspaceId },
+      select: { unitId: true },
+    });
+    const maps = row?.unitId
+      ? await loadMapsHealthView(tx, access.ctx, row.unitId)
+      : null;
+    return { view, maps };
+  });
   const t = (await getTranslations()) as unknown as Translator;
   const format = await getFormatter();
-  return presentAutomation(view, t, (value) =>
-    format.number(value, { maximumFractionDigits: 1 }),
-  );
+  return {
+    ...presentAutomation(view, t, (value) =>
+      format.number(value, { maximumFractionDigits: 1 }),
+    ),
+    maps,
+  };
 }

@@ -1292,6 +1292,98 @@ model WorkspaceLocation {
   @@map("workspace_locations")
 }
 
+/// Keyword monitored on the map of a unit (GB1b, Saúde no Maps). Chosen by
+/// the agent from the category or by whoever operates; paused ones do not
+/// count in the plan quota. The `normalized` generated column (unique per
+/// unit) is left out of the client.
+model GbMapsKeyword {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  locationId     String   @map("location_id") @db.Uuid
+  keyword        String
+  source         String
+  status         String   @default("active")
+  createdBy      String   @map("created_by") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, locationId, status, createdAt])
+  @@map("gb_maps_keywords")
+}
+
+/// Reference competitor of a unit (GB1b): the Google place id only.
+model GbMapsCompetitor {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  locationId     String   @map("location_id") @db.Uuid
+  placeId        String   @map("place_id")
+  source         String
+  status         String   @default("active")
+  createdBy      String   @map("created_by") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([locationId, placeId])
+  @@index([workspaceId, locationId, status])
+  @@map("gb_maps_competitors")
+}
+
+/// One measurement of the map of a unit (GB1b); the first is the starting
+/// point. Append-only.
+model GbMapsScan {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId     String   @map("organization_id") @db.Uuid
+  workspaceId        String   @map("workspace_id") @db.Uuid
+  locationId         String   @map("location_id") @db.Uuid
+  isBaseline         Boolean  @default(false) @map("is_baseline")
+  gridSize           Int      @map("grid_size") @db.SmallInt
+  radiusM            Int      @map("radius_m")
+  keywordCount       Int      @map("keyword_count") @db.SmallInt
+  score              Int?     @db.SmallInt
+  scoreBreakdown     Json     @default("[]") @map("score_breakdown")
+  reviewStats        Json     @default("{}") @map("review_stats")
+  provider           String
+  apiCalls           Int      @default(0) @map("api_calls")
+  costEstimateMicros BigInt   @default(0) @map("cost_estimate_micros")
+  createdBy          String   @map("created_by") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  results GbMapsScanResult[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, locationId, createdAt(sort: Desc)])
+  @@map("gb_maps_scans")
+}
+
+/// Result of one keyword in a measurement of the map (GB1b).
+model GbMapsScanResult {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  scanId         String   @map("scan_id") @db.Uuid
+  keywordId      String   @map("keyword_id") @db.Uuid
+  keyword        String
+  ranks          Json
+  solv           Decimal  @db.Decimal(5, 2)
+  averageRank    Decimal? @map("average_rank") @db.Decimal(5, 2)
+  foundPoints    Int      @map("found_points") @db.SmallInt
+  totalPoints    Int      @map("total_points") @db.SmallInt
+  competitors    Json     @default("[]")
+  neighborhoods  Json     @default("[]")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  scan GbMapsScan @relation(fields: [scanId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([scanId, keywordId])
+  @@index([workspaceId, scanId])
+  @@map("gb_maps_scan_results")
+}
+
 /// Item of the Portfolio module (F5a): UCP product fields, internal
 /// management and AI governance, and the vertical extension in `details`.
 model PortfolioItem {

@@ -21,6 +21,7 @@ import ptBR_email from "./pt-BR/email.json";
 import ptBR_errors from "./pt-BR/errors.json";
 import ptBR_executions from "./pt-BR/executions.json";
 import ptBR_gateway from "./pt-BR/gateway.json";
+import ptBR_gbIntelligence from "./pt-BR/gbIntelligence.json";
 import ptBR_googleBusiness from "./pt-BR/googleBusiness.json";
 import ptBR_helloWorld from "./pt-BR/helloWorld.json";
 import ptBR_home from "./pt-BR/home.json";
@@ -76,6 +77,7 @@ import en_email from "./en/email.json";
 import en_errors from "./en/errors.json";
 import en_executions from "./en/executions.json";
 import en_gateway from "./en/gateway.json";
+import en_gbIntelligence from "./en/gbIntelligence.json";
 import en_googleBusiness from "./en/googleBusiness.json";
 import en_helloWorld from "./en/helloWorld.json";
 import en_home from "./en/home.json";
@@ -131,6 +133,7 @@ import es_email from "./es/email.json";
 import es_errors from "./es/errors.json";
 import es_executions from "./es/executions.json";
 import es_gateway from "./es/gateway.json";
+import es_gbIntelligence from "./es/gbIntelligence.json";
 import es_googleBusiness from "./es/googleBusiness.json";
 import es_helloWorld from "./es/helloWorld.json";
 import es_home from "./es/home.json";
@@ -190,6 +193,7 @@ export const MESSAGE_FILES = {
     errors: ptBR_errors,
     executions: ptBR_executions,
     gateway: ptBR_gateway,
+    gbIntelligence: ptBR_gbIntelligence,
     googleBusiness: ptBR_googleBusiness,
     helloWorld: ptBR_helloWorld,
     home: ptBR_home,
@@ -247,6 +251,7 @@ export const MESSAGE_FILES = {
     errors: en_errors,
     executions: en_executions,
     gateway: en_gateway,
+    gbIntelligence: en_gbIntelligence,
     googleBusiness: en_googleBusiness,
     helloWorld: en_helloWorld,
     home: en_home,
@@ -304,6 +309,7 @@ export const MESSAGE_FILES = {
     errors: es_errors,
     executions: es_executions,
     gateway: es_gateway,
+    gbIntelligence: es_gbIntelligence,
     googleBusiness: es_googleBusiness,
     helloWorld: es_helloWorld,
     home: es_home,
@@ -363,6 +369,7 @@ export const NAMESPACES = [
   "errors",
   "executions",
   "gateway",
+  "gbIntelligence",
   "googleBusiness",
   "helloWorld",
   "home",

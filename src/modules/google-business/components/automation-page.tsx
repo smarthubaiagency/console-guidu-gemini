@@ -63,6 +63,8 @@ import type {
   FindingText,
   RunText,
 } from "./present";
+import { MapsHealthPanel } from "./maps/maps-health-panel";
+import type { MapsHealthView } from "../maps/view";
 import { SpecialistChat } from "./specialist-chat";
 
 /**
@@ -160,7 +162,7 @@ export function AutomationPage({
   initialArea,
 }: Readonly<{
   target: GbTarget;
-  data: AutomationPageData;
+  data: AutomationPageData & { maps?: MapsHealthView | null };
   initialArea: AutomationArea | null;
 }>) {
   const t = useTranslations("googleBusiness.automation");
@@ -457,6 +459,8 @@ export function AutomationPage({
           </CardFooter>
         </Card>
       </div>
+
+      {data.maps ? <MapsHealthPanel view={data.maps} /> : null}
 
       {data.insights.length > 0 ? (
         <Card variant="panel" className="px-4 sm:px-6" data-testid="insights">

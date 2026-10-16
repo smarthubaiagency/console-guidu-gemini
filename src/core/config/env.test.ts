@@ -48,6 +48,29 @@ describe("environment check (F6a)", () => {
     expect(problems.join("\n")).not.toContain(secret);
   });
 
+  it("refuses the fake maps provider and the fake suggestions AI (GB1b)", () => {
+    const fakes = {
+      MAPS_INTELLIGENCE_PROVIDER: "fake",
+      GB_SUGGESTIONS_PROVIDER: "fake",
+    };
+    for (const target of ["web", "worker"] as const) {
+      const problems = envProblems(target, {
+        ...(target === "web" ? WEB_OK : WORKER_OK),
+        ...fakes,
+      });
+      expect(problems.map((p) => p.split(":")[0]).sort()).toEqual([
+        "GB_SUGGESTIONS_PROVIDER",
+        "MAPS_INTELLIGENCE_PROVIDER",
+      ]);
+    }
+    expect(
+      envProblems("worker", {
+        ...WORKER_OK,
+        MAPS_INTELLIGENCE_PROVIDER: "dataforseo",
+      }),
+    ).toEqual([]);
+  });
+
   it("stops production only", () => {
     expect(() => assertEnv("worker", { NODE_ENV: "production" })).toThrow(
       /WORKER_DATABASE_URL: obrigatória/,

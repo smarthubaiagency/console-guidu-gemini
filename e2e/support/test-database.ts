@@ -402,6 +402,9 @@ export async function startTestDatabase(
             // Deterministic machine translation (I6); never the real provider.
             TRANSLATION_PROVIDER: "fake",
             TRANSLATION_ANTHROPIC_API_KEY: "",
+            // Agent GMN (GB1b): never the real maps provider or AI.
+            MAPS_INTELLIGENCE_PROVIDER: "fake",
+            GB_SUGGESTIONS_PROVIDER: "fake",
           },
           stdio: "ignore",
         },

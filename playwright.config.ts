@@ -53,6 +53,9 @@ export default defineConfig({
       TRANSLATION_PROVIDER: "fake",
       // Google OAuth (CF6b): the consent answers at once, nothing leaves.
       GOOGLE_OAUTH_PROVIDER: "fake",
+      // Agent GMN (GB1b): fake maps provider and fake AI suggestions.
+      MAPS_INTELLIGENCE_PROVIDER: "fake",
+      GB_SUGGESTIONS_PROVIDER: "fake",
       // Google Meu Negócio (GB1a): the module on, the fake provider with its
       // consent page and the fixed answer of the specialist; never Zernio.
       GUIDU_MODULE_GOOGLE_BUSINESS_ENABLED: "true",
