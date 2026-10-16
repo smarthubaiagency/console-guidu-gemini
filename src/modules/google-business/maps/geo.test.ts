@@ -66,7 +66,9 @@ describe("Haversine and the map grid (GB1b)", () => {
 
   it("rounds coordinates to 7 decimals and refuses bad sizes", () => {
     for (const point of buildGrid(SAO_PAULO, 3, 2)) {
-      expect(point.latitude.toString().split(".")[1]?.length ?? 0).toBeLessThanOrEqual(7);
+      expect(
+        point.latitude.toString().split(".")[1]?.length ?? 0,
+      ).toBeLessThanOrEqual(7);
     }
     expect(isValidGridSize(7)).toBe(true);
     expect(isValidGridSize(8)).toBe(false);

@@ -11,7 +11,12 @@ import { MapsProviderError } from "./types";
  * test (the fetch is a stub that records what it was asked).
  */
 
-type Call = { url: string; method: string; headers: Record<string, string>; body: unknown };
+type Call = {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: unknown;
+};
 
 function stubFetch(answer: (call: Call) => unknown, status = 200) {
   const calls: Call[] = [];
@@ -31,7 +36,12 @@ function stubFetch(answer: (call: Call) => unknown, status = 200) {
 const LOGIN = "login@guidu.test";
 const PASSWORD = "segredo-da-conta";
 
-function mapsItem(rank: number, title: string, placeId: string, borough?: string) {
+function mapsItem(
+  rank: number,
+  title: string,
+  placeId: string,
+  borough?: string,
+) {
   return {
     type: "maps_search",
     rank_group: rank,
@@ -55,7 +65,11 @@ describe("DataForSEO adapter (GB1b)", () => {
         const tasks = call.body as { tag: string }[];
         return {
           status_code: 20000,
-          tasks: tasks.map((task, index) => ({ id: `task-${index}`, status_code: 20100, data: { tag: task.tag } })),
+          tasks: tasks.map((task, index) => ({
+            id: `task-${index}`,
+            status_code: 20100,
+            data: { tag: task.tag },
+          })),
         };
       }
       const id = call.url.split("/").at(-1)!;
@@ -63,7 +77,10 @@ describe("DataForSEO adapter (GB1b)", () => {
       polled.set(id, seen);
       // Every task is still in the queue on the first poll.
       if (seen === 1) {
-        return { status_code: 20000, tasks: [{ id, status_code: 40602, status_message: "Task In Queue" }] };
+        return {
+          status_code: 20000,
+          tasks: [{ id, status_code: 40602, status_message: "Task In Queue" }],
+        };
       }
       const index = Number(id.split("-")[1]);
       return {
@@ -118,11 +135,17 @@ describe("DataForSEO adapter (GB1b)", () => {
     });
     expect(slept).toEqual([1000]);
     expect(result).toHaveLength(9);
-    expect(result[4]!.items.map((i) => [i.rank, i.name, i.neighborhood])).toEqual([
+    expect(
+      result[4]!.items.map((i) => [i.rank, i.name, i.neighborhood]),
+    ).toEqual([
       [1, "Rival", "Centro"],
       [2, "Minha Loja", null],
     ]);
-    expect(result[0]!.items[0]).toMatchObject({ rating: 4.7, reviews: 88, categories: ["Dentista", "Clínica odontológica"] });
+    expect(result[0]!.items[0]).toMatchObject({
+      rating: 4.7,
+      reviews: 88,
+      categories: ["Dentista", "Clínica odontológica"],
+    });
   });
 
   it("gives up after the bounded wait", async () => {
@@ -153,14 +176,31 @@ describe("DataForSEO adapter (GB1b)", () => {
   it("maps account errors without leaking the credentials", async () => {
     for (const [status, body, code] of [
       [401, {}, "auth"],
-      [200, { status_code: 40200, status_message: "Payment required" }, "funds"],
-      [200, { status_code: 40202, status_message: "Rate limit" }, "rate_limited"],
+      [
+        200,
+        { status_code: 40200, status_message: "Payment required" },
+        "funds",
+      ],
+      [
+        200,
+        { status_code: 40202, status_message: "Rate limit" },
+        "rate_limited",
+      ],
       [500, {}, "bad_response"],
     ] as const) {
       const { fetch } = stubFetch(() => body, status);
-      const provider = createDataForSeoProvider({ login: LOGIN, password: PASSWORD, fetch });
+      const provider = createDataForSeoProvider({
+        login: LOGIN,
+        password: PASSWORD,
+        fetch,
+      });
       const error = (await provider
-        .placeReviews({ placeId: "abc", languageCode: "pt", countryCode: "BR", depth: 20 })
+        .placeReviews({
+          placeId: "abc",
+          languageCode: "pt",
+          countryCode: "BR",
+          depth: 20,
+        })
         .catch((e: unknown) => e)) as MapsProviderError;
       expect(error.code).toBe(code);
       expect(error.message).not.toContain(PASSWORD);
@@ -176,7 +216,26 @@ describe("DataForSEO adapter (GB1b)", () => {
       if (call.url.includes("my_business_info")) {
         return {
           status_code: 20000,
-          tasks: [{ id: "x", status_code: 20000, result: [{ items: [{ title: "Minha Loja", place_id: "me", category: "Dentista", latitude: -23.5, longitude: -46.6, rating: { value: 4.4, votes_count: 31 } }] }] }],
+          tasks: [
+            {
+              id: "x",
+              status_code: 20000,
+              result: [
+                {
+                  items: [
+                    {
+                      title: "Minha Loja",
+                      place_id: "me",
+                      category: "Dentista",
+                      latitude: -23.5,
+                      longitude: -46.6,
+                      rating: { value: 4.4, votes_count: 31 },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         };
       }
       return {
@@ -188,8 +247,21 @@ describe("DataForSEO adapter (GB1b)", () => {
             result: [
               {
                 items: [
-                  { review_id: "r1", rating: { value: 5 }, timestamp: "2026-09-01 10:00:00 +00:00", review_text: "Ótimo", profile_name: "Ana Souza", owner_answer: "Obrigado!" },
-                  { review_id: "r2", rating: { value: 2 }, timestamp: "2026-09-02 10:00:00 -03:00", review_text: null, profile_name: "Bruno" },
+                  {
+                    review_id: "r1",
+                    rating: { value: 5 },
+                    timestamp: "2026-09-01 10:00:00 +00:00",
+                    review_text: "Ótimo",
+                    profile_name: "Ana Souza",
+                    owner_answer: "Obrigado!",
+                  },
+                  {
+                    review_id: "r2",
+                    rating: { value: 2 },
+                    timestamp: "2026-09-02 10:00:00 -03:00",
+                    review_text: null,
+                    profile_name: "Bruno",
+                  },
                   { review_id: "bad", rating: { value: 0 }, timestamp: "x" },
                 ],
               },
@@ -198,15 +270,52 @@ describe("DataForSEO adapter (GB1b)", () => {
         ],
       };
     });
-    const provider = createDataForSeoProvider({ login: LOGIN, password: PASSWORD, fetch, sleep: async () => {} });
-    const profile = await provider.placeProfile({ placeId: "me", languageCode: "pt", countryCode: "BR" });
-    expect(profile).toMatchObject({ name: "Minha Loja", location: { latitude: -23.5, longitude: -46.6 }, rating: 4.4, reviewCount: 31 });
-    expect(calls[0]!.body).toEqual([{ keyword: "place_id:me", language_code: "pt", location_code: 2076 }]);
+    const provider = createDataForSeoProvider({
+      login: LOGIN,
+      password: PASSWORD,
+      fetch,
+      sleep: async () => {},
+    });
+    const profile = await provider.placeProfile({
+      placeId: "me",
+      languageCode: "pt",
+      countryCode: "BR",
+    });
+    expect(profile).toMatchObject({
+      name: "Minha Loja",
+      location: { latitude: -23.5, longitude: -46.6 },
+      rating: 4.4,
+      reviewCount: 31,
+    });
+    expect(calls[0]!.body).toEqual([
+      { keyword: "place_id:me", language_code: "pt", location_code: 2076 },
+    ]);
 
-    const reviews = await provider.placeReviews({ placeId: "me", languageCode: "pt", countryCode: "BR", depth: 20 });
+    const reviews = await provider.placeReviews({
+      placeId: "me",
+      languageCode: "pt",
+      countryCode: "BR",
+      depth: 20,
+    });
     expect(reviews).toEqual([
-      { externalId: "r1", rating: 5, text: "Ótimo", authorName: "Ana Souza", createdAt: "2026-09-01T10:00:00.000Z", replied: true, replyText: "Obrigado!" },
-      { externalId: "r2", rating: 2, text: null, authorName: "Bruno", createdAt: "2026-09-02T13:00:00.000Z", replied: false, replyText: null },
+      {
+        externalId: "r1",
+        rating: 5,
+        text: "Ótimo",
+        authorName: "Ana Souza",
+        createdAt: "2026-09-01T10:00:00.000Z",
+        replied: true,
+        replyText: "Obrigado!",
+      },
+      {
+        externalId: "r2",
+        rating: 2,
+        text: null,
+        authorName: "Bruno",
+        createdAt: "2026-09-02T13:00:00.000Z",
+        replied: false,
+        replyText: null,
+      },
     ]);
     expect(parseTimestamp("not a date")).toBeNull();
   });
@@ -215,22 +324,41 @@ describe("DataForSEO adapter (GB1b)", () => {
 describe("choice of the maps provider and the Places locator (GB1b)", () => {
   it("follows the environment and needs both credentials", () => {
     expect(mapsProviderId({ MAPS_INTELLIGENCE_PROVIDER: "fake" })).toBe("fake");
-    expect(mapsProviderId({ DATAFORSEO_LOGIN: "a", DATAFORSEO_PASSWORD: "b" })).toBe("dataforseo");
+    expect(
+      mapsProviderId({ DATAFORSEO_LOGIN: "a", DATAFORSEO_PASSWORD: "b" }),
+    ).toBe("dataforseo");
     expect(mapsProviderId({ DATAFORSEO_LOGIN: "a" })).toBeNull();
     expect(mapsProviderId({})).toBeNull();
-    expect(getMapsProvider({ MAPS_INTELLIGENCE_PROVIDER: "fake" })?.id).toBe("fake");
+    expect(getMapsProvider({ MAPS_INTELLIGENCE_PROVIDER: "fake" })?.id).toBe(
+      "fake",
+    );
     expect(getMapsProvider({})).toBeNull();
-    expect(getPlaceLocator({ GOOGLE_MAPS_API_KEY: "k", MAPS_INTELLIGENCE_PROVIDER: "fake" })).toBeNull();
+    expect(
+      getPlaceLocator({
+        GOOGLE_MAPS_API_KEY: "k",
+        MAPS_INTELLIGENCE_PROVIDER: "fake",
+      }),
+    ).toBeNull();
     expect(getPlaceLocator({ GOOGLE_MAPS_API_KEY: "k" })).not.toBeNull();
   });
 
   it("asks Places only for the location and keeps the key in the header", async () => {
-    const { fetch, calls } = stubFetch(() => ({ location: { latitude: -23.5, longitude: -46.6 } }));
+    const { fetch, calls } = stubFetch(() => ({
+      location: { latitude: -23.5, longitude: -46.6 },
+    }));
     const locator = createGoogleMapsLocator({ apiKey: "chave-places", fetch });
-    expect(await locator.locate("ChIJabc")).toEqual({ latitude: -23.5, longitude: -46.6 });
-    expect(calls[0]!.url).toBe("https://places.googleapis.com/v1/places/ChIJabc");
+    expect(await locator.locate("ChIJabc")).toEqual({
+      latitude: -23.5,
+      longitude: -46.6,
+    });
+    expect(calls[0]!.url).toBe(
+      "https://places.googleapis.com/v1/places/ChIJabc",
+    );
     expect(calls[0]!.url).not.toContain("chave-places");
-    expect(calls[0]!.headers).toMatchObject({ "X-Goog-Api-Key": "chave-places", "X-Goog-FieldMask": "location" });
+    expect(calls[0]!.headers).toMatchObject({
+      "X-Goog-Api-Key": "chave-places",
+      "X-Goog-FieldMask": "location",
+    });
     expect(await locator.locate("bad id!")).toBeNull();
   });
 });

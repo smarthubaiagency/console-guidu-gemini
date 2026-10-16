@@ -19,8 +19,20 @@ const RANKS = [
 describe("SoLV, average position and visibility (GB1b)", () => {
   it("computes SoLV as top-3 points over all points", () => {
     expect(computeSolv(RANKS)).toBe(44.44);
-    expect(computeSolv([[1, 1, 1], [1, 1, 1], [1, 1, 1]])).toBe(100);
-    expect(computeSolv([[null, null, null], [null, 30, null], [null, null, null]])).toBe(0);
+    expect(
+      computeSolv([
+        [1, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1],
+      ]),
+    ).toBe(100);
+    expect(
+      computeSolv([
+        [null, null, null],
+        [null, 30, null],
+        [null, null, null],
+      ]),
+    ).toBe(0);
   });
 
   it("averages the position where the unit shows up", () => {
@@ -35,7 +47,13 @@ describe("SoLV, average position and visibility (GB1b)", () => {
   });
 
   it("treats positions outside 1–20 as not found", () => {
-    expect(gridMetrics([[0, 21, 3], [2, 1, 1], [1, 1, 1]])).toMatchObject({
+    expect(
+      gridMetrics([
+        [0, 21, 3],
+        [2, 1, 1],
+        [1, 1, 1],
+      ]),
+    ).toMatchObject({
       totalPoints: 9,
       foundPoints: 7,
       top3Points: 7,
@@ -56,7 +74,13 @@ describe("SoLV, average position and visibility (GB1b)", () => {
         [1, 2, 2],
       ]),
     ).toBe("e");
-    expect(weakestDirection([[1, 1, 1], [1, 1, 1], [1, 1, 1]])).toBeNull();
+    expect(
+      weakestDirection([
+        [1, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1],
+      ]),
+    ).toBeNull();
   });
 
   it("returns every number at once", () => {

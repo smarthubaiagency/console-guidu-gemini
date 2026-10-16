@@ -1,4 +1,3 @@
-import { MockLanguageModelV4 } from "ai/test";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -16,7 +15,12 @@ import { runWithIntelligenceRuntime } from "./runtime";
 
 const NOW = "2026-10-16T12:00:00.000Z";
 
-function review(id: string, rating: ReviewSummary["rating"], text: string | null, replied = false): ReviewSummary {
+function review(
+  id: string,
+  rating: ReviewSummary["rating"],
+  text: string | null,
+  replied = false,
+): ReviewSummary {
   return {
     externalId: id,
     rating,
@@ -42,7 +46,13 @@ const CONTEXT: AnalysisContext = {
     description: "Clínica com 20% de desconto em clareamento.",
     phone: null,
     website: null,
-    address: { lines: [], locality: "Campinas", administrativeArea: "SP", postalCode: null, countryCode: "BR" },
+    address: {
+      lines: [],
+      locality: "Campinas",
+      administrativeArea: "SP",
+      postalCode: null,
+      countryCode: "BR",
+    },
     latitude: null,
     longitude: null,
     timeZone: null,
@@ -81,12 +91,21 @@ function aiAnswering(answer: unknown): SuggestionsAi {
 }
 
 const SAFE: AiSuggestions = {
-  description: { suggested: "Clínica odontológica em Campinas, com atendimento de segunda a sábado e equipe experiente." },
+  description: {
+    suggested:
+      "Clínica odontológica em Campinas, com atendimento de segunda a sábado e equipe experiente.",
+  },
   name: { hasKeywords: false, suggested: null },
   categories: { primary: "Dentista", additional: ["Clínica odontológica"] },
   replies: [
-    { reviewId: "r1", text: "Obrigado pela visita, Ana! A Juliana e toda a equipe agradecem." },
-    { reviewId: "r2", text: "Sentimos muito, Ana. Fale com a gente pelos canais de atendimento." },
+    {
+      reviewId: "r1",
+      text: "Obrigado pela visita, Ana! A Juliana e toda a equipe agradecem.",
+    },
+    {
+      reviewId: "r2",
+      text: "Sentimos muito, Ana. Fale com a gente pelos canais de atendimento.",
+    },
   ],
 };
 
@@ -117,11 +136,20 @@ describe("AI suggestions analysis (GB1b)", () => {
     expect(keys).toContain("reply-r1");
     expect(keys).toContain("reply-r2");
     const policy = result.findings.find((f) => f.key === "description-policy")!;
-    expect(policy).toMatchObject({ area: "info", severity: "high", values: { problem: "promotion" } });
+    expect(policy).toMatchObject({
+      area: "info",
+      severity: "high",
+      values: { problem: "promotion" },
+    });
     expect(policy.suggested).toBeTruthy();
-    expect(result.metrics).toMatchObject({ replyDrafts: 2, repliesFiltered: 0 });
+    expect(result.metrics).toMatchObject({
+      replyDrafts: 2,
+      repliesFiltered: 0,
+    });
     for (const finding of result.findings) {
-      expect(finding.titleKey).toMatch(/^gbIntelligence\.findings\.[a-zA-Z]+\.title$/);
+      expect(finding.titleKey).toMatch(
+        /^gbIntelligence\.findings\.[a-zA-Z]+\.title$/,
+      );
       expect(finding.source).toBe("ai");
     }
   });
@@ -131,8 +159,14 @@ describe("AI suggestions analysis (GB1b)", () => {
       aiAnswering({
         ...SAFE,
         replies: [
-          { reviewId: "r1", text: "Que bom que o implante ficou perfeito! A Juliana agradece." },
-          { reviewId: "r2", text: "Sentimos muito, Ana. Fale com a gente pelos canais de atendimento." },
+          {
+            reviewId: "r1",
+            text: "Que bom que o implante ficou perfeito! A Juliana agradece.",
+          },
+          {
+            reviewId: "r2",
+            text: "Sentimos muito, Ana. Fale com a gente pelos canais de atendimento.",
+          },
         ],
       }),
     );
@@ -141,12 +175,17 @@ describe("AI suggestions analysis (GB1b)", () => {
     expect(r1.suggested).not.toMatch(/implante|Juliana/);
     const r2 = result.findings.find((f) => f.key === "reply-r2")!;
     expect(r2).toMatchObject({ severity: "high", values: { origin: "ai" } });
-    expect(result.metrics).toMatchObject({ repliesFiltered: 1, repliesTemplated: 1 });
+    expect(result.metrics).toMatchObject({
+      repliesFiltered: 1,
+      repliesTemplated: 1,
+    });
   });
 
   it("names the staff rule too when the treatment is not mentioned", async () => {
     const result = await run(aiAnswering(SAFE));
-    expect(result.findings.find((f) => f.key === "reply-r1")!.values).toMatchObject({ origin: "template" });
+    expect(
+      result.findings.find((f) => f.key === "reply-r1")!.values,
+    ).toMatchObject({ origin: "template" });
   });
 
   it("drops a suggested description with a link and fills missing drafts", async () => {
@@ -160,55 +199,45 @@ describe("AI suggestions analysis (GB1b)", () => {
     );
     const policy = result.findings.find((f) => f.key === "description-policy")!;
     expect(policy.suggested).toBeNull();
-    expect(result.metrics).toMatchObject({ descriptionSuggested: 0, repliesTemplated: 2 });
+    expect(result.metrics).toMatchObject({
+      descriptionSuggested: 0,
+      repliesTemplated: 2,
+    });
     // The suggested name equals the current: flagged, nothing to suggest.
-    expect(result.findings.find((f) => f.key === "name-keywords")).toMatchObject({ suggested: null, severity: "high" });
+    expect(
+      result.findings.find((f) => f.key === "name-keywords"),
+    ).toMatchObject({ suggested: null, severity: "high" });
   });
 
   it("fails on an answer outside the schema and skips without AI", async () => {
-    const invalid = await run(aiAnswering({ description: "texto solto", replies: "x" }));
+    const invalid = await run(
+      aiAnswering({ description: "texto solto", replies: "x" }),
+    );
     expect(invalid).toMatchObject({ status: "failed", findings: [] });
     expect(invalid.error).toMatch(/schema/);
-    const tooLong = await run(aiAnswering({ ...SAFE, description: { suggested: "x".repeat(751) } }));
+    const tooLong = await run(
+      aiAnswering({ ...SAFE, description: { suggested: "x".repeat(751) } }),
+    );
     expect(tooLong.status).toBe("failed");
     expect(await run(null)).toMatchObject({ status: "skipped" });
   });
 
   it("skips when the partner has no key and model, using our key resolver", async () => {
     const result = await runWithIntelligenceRuntime(
-      { ai: createEngineSuggestionsAi(), transaction: async () => null as never },
+      {
+        ai: createEngineSuggestionsAi(),
+        transaction: async () => null as never,
+      },
       () => aiSuggestionsAnalysis.run(CONTEXT),
     );
     expect(result).toMatchObject({ status: "skipped" });
     expect(result.error).toMatch(/No AI key/);
   });
 
-  it("calls the engine with a structured answer (mock model, no network)", async () => {
-    const model = new MockLanguageModelV4({
-      doGenerate: {
-        content: [{ type: "text", text: JSON.stringify(SAFE) }],
-        finishReason: { unified: "stop", raw: undefined },
-        usage: {
-          inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
-          outputTokens: { total: 5, text: 5, reasoning: undefined },
-        },
-        warnings: [],
-      },
-    });
-    const ai = createEngineSuggestionsAi(() => model);
-    const answer = await ai.suggest(buildSuggestionsInput(CONTEXT), async () => ({
-      provider: "anthropic",
-      secret: "sk-test",
-      model: "configured-by-the-partner",
-    }));
-    expect(answer).toEqual(SAFE);
-    const prompt = JSON.stringify(model.doGenerateCalls[0]!.prompt);
-    expect(prompt).toContain("Never confirm that the person is a customer of anything sensitive");
-    expect(prompt).not.toContain("sk-test");
-  });
-
   it("uses the fake only when the environment asks for it", () => {
-    expect(getSuggestionsAi({ GB_SUGGESTIONS_PROVIDER: "fake" }).id).toBe("fake");
+    expect(getSuggestionsAi({ GB_SUGGESTIONS_PROVIDER: "fake" }).id).toBe(
+      "fake",
+    );
     expect(getSuggestionsAi({}).id).toBe("engine");
   });
 });

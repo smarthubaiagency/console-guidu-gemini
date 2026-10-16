@@ -42,7 +42,12 @@ describe("plan quotas of the map (GB1b)", () => {
     });
     // Plus one profile (US$ 0.0015) and 60 reviews (3 × US$ 0.00075).
     expect(
-      estimateScanCost({ gridSize: 7, keywords: 1, profileCalls: 1, reviewsFetched: 60 }),
+      estimateScanCost({
+        gridSize: 7,
+        keywords: 1,
+        profileCalls: 1,
+        reviewsFetched: 60,
+      }),
     ).toEqual({ apiCalls: 49 + 1 + 3, micros: 49 * 600 + 1500 + 3 * 750 });
   });
 

@@ -76,12 +76,22 @@ describe("Saúde no Maps 0–100 with the math in view (GB1b)", () => {
     expect(byKey.reviews).toMatchObject({
       points: 10.6,
       max: 25,
-      inputs: { rating: 4.2, ratingReference: 4.6, reviewCount: 30, countReference: 120, reference: "competitors" },
+      inputs: {
+        rating: 4.2,
+        ratingReference: 4.6,
+        reviewCount: 30,
+        countReference: 120,
+        reference: "competitors",
+      },
     });
     // Activity: 1 of 2 per month → 5; 50% replied → 5.
     expect(byKey.activity).toMatchObject({ points: 10, max: 20 });
     // Profile: category, phone, hours, address = 4 of 8.
-    expect(byKey.profile).toMatchObject({ points: 10, max: 20, inputs: { done: 4, total: 8 } });
+    expect(byKey.profile).toMatchObject({
+      points: 10,
+      max: 20,
+      inputs: { done: 4, total: 8 },
+    });
     expect(score.score).toBe(Math.round(15.8 + 10.6 + 10 + 10));
     expect(score.breakdown.reduce((sum, d) => sum + d.max, 0)).toBe(100);
     expect(Object.values(SCORE_WEIGHTS).reduce((a, b) => a + b, 0)).toBe(100);
@@ -108,7 +118,9 @@ describe("Saúde no Maps 0–100 with the math in view (GB1b)", () => {
       },
     });
     expect(score.score).toBe(100);
-    expect(score.breakdown.find((d) => d.key === "reviews")?.inputs.reference).toBe("fixed");
+    expect(
+      score.breakdown.find((d) => d.key === "reviews")?.inputs.reference,
+    ).toBe("fixed");
     expect(weakestDimension(score)).toBeNull();
   });
 
@@ -116,8 +128,19 @@ describe("Saúde no Maps 0–100 with the math in view (GB1b)", () => {
     const score = computeHealthScore({
       visibility: [],
       solv: [],
-      reviews: stats({ rating: null, reviewCount: 0, monthlyAverage: 0, responseRate: null }),
-      snapshot: { ...SNAPSHOT, primaryCategory: null, phone: null, regularHours: [], address: null },
+      reviews: stats({
+        rating: null,
+        reviewCount: 0,
+        monthlyAverage: 0,
+        responseRate: null,
+      }),
+      snapshot: {
+        ...SNAPSHOT,
+        primaryCategory: null,
+        phone: null,
+        regularHours: [],
+        address: null,
+      },
     });
     expect(score.score).toBe(0);
     expect(weakestDimension(score)?.key).toBe("visibility");

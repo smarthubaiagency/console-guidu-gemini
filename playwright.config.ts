@@ -53,6 +53,9 @@ export default defineConfig({
       TRANSLATION_PROVIDER: "fake",
       // Google OAuth (CF6b): the consent answers at once, nothing leaves.
       GOOGLE_OAUTH_PROVIDER: "fake",
+      // Agent GMN (GB1b): fake maps provider and fake AI suggestions.
+      MAPS_INTELLIGENCE_PROVIDER: "fake",
+      GB_SUGGESTIONS_PROVIDER: "fake",
       // The Chatwoot double of the rig listens on 127.0.0.1 over http (A5a).
       GUIDU_CHANNELS_ALLOW_PRIVATE: "true",
       // Custom domains (CF2b): the CNAME target shown in the instructions and

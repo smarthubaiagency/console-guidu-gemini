@@ -624,6 +624,9 @@ export async function recordMapsScan(
       apiCalls: input.apiCalls,
       costEstimateMicros: BigInt(input.costEstimateMicros),
       createdBy: ctx.userId,
+      // The clock of the run, so the monthly quota and the reuse window
+      // read the same time the analysis used.
+      createdAt: now,
     },
     select: { id: true },
   });
