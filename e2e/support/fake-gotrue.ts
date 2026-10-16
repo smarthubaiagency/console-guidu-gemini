@@ -361,15 +361,20 @@ export async function startFakeGoTrue(
       const body = await readBody(request);
       const workspaceSlug = asString(body.workspaceSlug);
       const type = asString(body.type);
-      const module = asString(body.module);
+      const moduleKey = asString(body.module);
       const data =
         body.data && typeof body.data === "object"
           ? (body.data as Record<string, unknown>)
           : {};
-      if (!workspaceSlug || !type || !module || !options.onSeedEvent) {
+      if (!workspaceSlug || !type || !moduleKey || !options.onSeedEvent) {
         return json(response, 400, { msg: "invalid parameters" });
       }
-      return json(response, 200, await options.onSeedEvent({ workspaceSlug, type, module, data }));
+      return json(response, 200, await options.onSeedEvent({
+          workspaceSlug,
+          type,
+          module: moduleKey,
+          data,
+        }));
     }
 
     if (path === "/__control/seed-notification" && method === "POST") {
