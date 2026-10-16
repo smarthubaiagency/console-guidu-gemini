@@ -26,6 +26,9 @@
   --color-surface-hover: oklch(97% 0 0);
   --color-surface-raised: oklch(98.5% 0 0);
   --color-surface-input: #ffffff;
+  /* U4 (ADR 0021): grey canvas behind cards and the inset panel inside them */
+  --color-surface-canvas: oklch(97.6% 0 0);
+  --color-surface-inset: oklch(96.5% 0 0);
   --color-text: oklch(14.5% 0 0);
   --color-text-secondary: oklch(55.6% 0 0);
   --color-text-tertiary: oklch(70.8% 0 0);
@@ -137,9 +140,15 @@
   --radius-lg: 8px;
   --radius-xl: 12px;
   --radius-2xl: 16px;
+  /* U4 (ADR 0021): layered card radii, outer to inner */
+  --radius-panel: 24px;
+  --radius-card: 18px;
+  --radius-inner: 12px;
+  --radius-control: 10px;
 
   /* Elevation (dark overrides below) */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg:
@@ -162,6 +171,8 @@
   --color-surface-hover: #2c2c2c;
   --color-surface-raised: #2c2c2c;
   --color-surface-input: #252525;
+  --color-surface-canvas: #141414;
+  --color-surface-inset: #1e1e1e;
   --color-text: #d4d4d4;
   --color-text-secondary: #9b9b9b;
   --color-text-tertiary: #7f7f7f;
@@ -195,6 +206,7 @@
   --color-ai-text: #c9a8ee;
   --shadow-xs: none;
   --shadow-sm: none;
+  --shadow-card: none;
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
   --shadow-lg:
     0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
@@ -204,7 +216,7 @@
 }
 
 /* Tailwind inlines shadow values into utilities, so flat dark cards need this override. */
-[data-theme="dark"] :is(.shadow-xs, .shadow-sm) {
+[data-theme="dark"] :is(.shadow-xs, .shadow-sm, .shadow-card) {
   --tw-shadow: 0 0 #0000;
 }
 

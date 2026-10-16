@@ -19,6 +19,7 @@ Decisões em [ADR 0014](../adr/0014-shell-padrao-sidebar-08.md) (shell, cabeçal
 | `src/components/layout/shell/shell-breadcrumb.tsx`   | Breadcrumb do item ativo (seção › grupo › página)                           |
 | `src/components/layout/workbench/*`                  | Gaveta interna: `WorkbenchLayout`, `WorkbenchPanel`, `WorkbenchDrawer`      |
 | `src/components/ui/*`, `src/hooks/use-mobile.ts`     | Componentes do shadcn/ui                                                    |
+| `src/components/patterns/*`                          | Padrões do projeto montados com o shadcn (ADR 0021)                         |
 
 ## Uso numa área nova
 
@@ -108,7 +109,30 @@ Para conteúdo que não é registro de lista (um chat, um painel), use `Workbenc
 
 ## Atualizar o shadcn
 
-Baixe o arquivo novo do registro (`apps/v4/registry/new-york-v4/ui/<nome>.tsx` em `shadcn-ui/ui`) ou rode `npx shadcn@latest add <nome>` numa máquina com acesso a `ui.shadcn.com`. Depois, repita as mudanças mínimas listadas na ADR 0014 (item 4) e rode o e2e `e2e/shell.spec.ts`.
+Baixe o arquivo novo do registro (`apps/v4/registry/new-york-v4/ui/<nome>.tsx` em `shadcn-ui/ui`) ou rode `npx shadcn@latest add <nome>` numa máquina com acesso a `ui.shadcn.com`. Depois, repita as mudanças mínimas listadas na ADR 0014 (item 4) e as variantes do GUIDU da ADR 0021 (item 3), e rode os e2e `e2e/shell.spec.ts`, `e2e/design-components.spec.ts` e `e2e/design-example.spec.ts`.
+
+## Componentes modelo (ADR 0021)
+
+Toda tela nova segue os componentes modelo; as telas antigas entram no padrão quando forem mexidas. Referências vivas: `/platform/design/components` (catálogo, com quando usar e o import) e `/platform/design/example` (página modelo).
+
+```tsx
+<PageCanvas>
+  <PageTitle icon={<Bot className="size-6" />} title="…" description="…" actions={…} />
+  <Card variant="panel" className="px-6">
+    <Tabs defaultValue="overview">
+      <TabsList variant="segmented">…</TabsList>
+    </Tabs>
+    <SectionHeader title="…" description="…" actions={…} />
+    <Accordion type="single" collapsible variant="cards">…</Accordion>
+  </Card>
+</PageCanvas>
+```
+
+- **Cards:** `Card` com `variant` `surface` (padrão), `panel` (bloco que contém cards), `inset` (painel cinza interno) ou `framed` (moldura com card dentro); números com `StatCard` e `StatGroup`.
+- **Selos de situação:** `Badge` com `success`, `warning`, `danger`, `info` ou `neutral`.
+- **Abas e filtros:** `TabsList variant="segmented"` e `ToggleGroup variant="segmented"`.
+- **Listas:** `Item variant="card"`, `KeyValueList`, `Table variant="soft"`, `TagList`; vazio com `Empty`.
+- **Raios:** `rounded-panel` (24 px) › `rounded-card` (18 px) › `rounded-inner` (12 px) › `rounded-control` (10 px).
 
 ## Avisos (ADR 0016)
 

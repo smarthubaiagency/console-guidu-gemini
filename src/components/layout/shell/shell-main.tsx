@@ -170,6 +170,8 @@ export function ShellMain({
             data-slot="shell-content"
             className={cn(
               "h-full overflow-y-auto p-4 transition-all duration-500 ease-in-out motion-reduce:transition-none md:p-6",
+              // Pages built on the model cards (U4, ADR 0021) get the grey canvas.
+              "has-data-[slot=page-canvas]:bg-surface-canvas",
               assistantOpen && assistantSize === "default" && "lg:pr-drawer",
             )}
           >

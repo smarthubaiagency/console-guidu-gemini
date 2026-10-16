@@ -17,6 +17,12 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
+        // GUIDU status variants (U4, ADR 0021): soft tinted pills.
+        success: "border-success-border bg-success-bg text-success-text",
+        warning: "border-warning-border bg-warning-bg text-warning-text",
+        danger: "border-danger-border bg-danger-bg text-danger-text",
+        info: "border-info-border bg-info-bg text-info-text",
+        neutral: "border-border bg-surface-inset text-text-secondary",
       },
     },
     defaultVariants: {
