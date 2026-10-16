@@ -430,7 +430,12 @@ async function emitNoticeEvent(
       noticeId: notice.id,
       whatsapp:
         message.kind === "send"
-          ? { to: message.to, skip: null, message: message.message }
+          ? {
+              to: message.to,
+              skip: null,
+              message: message.message,
+              name: message.event,
+            }
           : { to: null, skip: message.reason, message: {} },
     },
     idempotencyKey: `lead-notice:${notice.id}`,

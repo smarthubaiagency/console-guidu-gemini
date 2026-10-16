@@ -120,7 +120,7 @@ Migration `20261125090000_h1_event_hub`. Código em `src/core/events/`.
 **Decisões adotadas por padrão (a confirmar)**
 
 1. `prev_hash` entra no material do selo (além do pedido), para que remover ou reordenar eventos quebre o selo seguinte.
-2. Nomes novos `ai.agent.lead_hot` e `ai.agent.referral_recommended`: o fluxo do parceiro passa a receber `event` com esses tipos (antes `lead.hot` e `referral.recommended`). O job antigo `ai-agents.lead-notice` ficou só para execuções já enfileiradas.
+2. Nomes novos no catálogo, `ai.agent.lead_hot` e `ai.agent.referral_recommended`, mas o webhook do parceiro continua recebendo `event` (corpo e cabeçalho `x-guidu-event`) com os nomes da A6, `lead.hot` e `referral.recommended`, para não quebrar os fluxos que já existem; o `event_id` do hub vai junto. O job antigo `ai-agents.lead-notice` ficou só para execuções já enfileiradas.
 3. Convite e e-mail de teste não viram linha em `events` na H1 (precisam da resposta imediata); ficam governados pelo catálogo.
 4. O sino não vira linha de entrega (o `user_notifications` é o registro); a gaveta mostra e-mail e WhatsApp.
 5. A plataforma lê a situação das entregas por função, sem endereço (não abrimos a tabela ao suporte).

@@ -26,6 +26,8 @@ import { EVENTS_DISPATCH_JOB_KIND } from "./emit";
 export const WHATSAPP_MAX_ATTEMPTS = 3;
 const RETRY_DELAY_SECONDS = 60;
 
+const WIRE_NAME = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
+
 /** What an event of the `explicit` route carries for the channel. */
 export type WhatsAppTarget = Readonly<{
   /** The number to tell (e.g. the agent's `owner_phone`). */
@@ -34,6 +36,12 @@ export type WhatsAppTarget = Readonly<{
   skip?: string | null;
   /** Fields of the body besides `event`, `event_id`, `to` and `sent_at`. */
   message: Readonly<Record<string, unknown>>;
+  /**
+   * The `event` name the partner's flow already knows (A6: `lead.hot`,
+   * `referral.recommended`); null sends the catalog type. Keeps the
+   * webhook contract of the partners unchanged by the hub.
+   */
+  name?: string | null;
 }>;
 
 export type WhatsAppOutcome = Readonly<{
@@ -78,6 +86,10 @@ export function whatsAppTargetOf(
     to: typeof target.to === "string" && target.to.trim() ? target.to : null,
     skip: typeof target.skip === "string" ? target.skip.slice(0, 80) : null,
     message,
+    name:
+      typeof target.name === "string" && WIRE_NAME.test(target.name)
+        ? target.name
+        : null,
   };
 }
 
@@ -141,9 +153,10 @@ export async function deliverWhatsApp(
 
   const sentAt = now();
   const timestamp = String(Math.floor(sentAt.getTime() / 1000));
+  const wireName = target.name ?? event.type;
   const body = JSON.stringify({
     ...target.message,
-    event: event.type,
+    event: wireName,
     event_id: event.id,
     to: target.to,
     sent_at: sentAt.toISOString(),
@@ -156,7 +169,7 @@ export async function deliverWhatsApp(
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-guidu-event": event.type,
+          "x-guidu-event": wireName,
           "x-guidu-event-id": event.id,
           "x-guidu-timestamp": timestamp,
           "x-guidu-signature": signWebhookBody(

@@ -812,13 +812,13 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
       const headers = new Headers(posts[1]!.init.headers);
       const body = String(posts[1]!.init.body);
       expect(posts[1]!.url).toBe("https://198.51.100.20/guidu");
-      expect(headers.get("x-guidu-event")).toBe("ai.agent.lead_hot");
+      expect(headers.get("x-guidu-event")).toBe("lead.hot");
       expect(headers.get("x-guidu-event-id")).toBe(hubEvent!.id);
       expect(headers.get("x-guidu-signature")).toBe(
         signNotice(secret, headers.get("x-guidu-timestamp") ?? "", body),
       );
       expect(JSON.parse(body)).toMatchObject({
-        event: "ai.agent.lead_hot",
+        event: "lead.hot",
         event_id: hubEvent!.id,
         notice_id: notice.id,
         to: "+5511988887777",
