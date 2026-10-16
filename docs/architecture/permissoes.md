@@ -103,6 +103,30 @@ As permissões possuem namespace estável declarado em [`src/core/permissions/ca
 
 *\* Sujeito à verificação de escalonamento em `roles.ts` (admins não podem convidar owners nem alterar/remover owners).*
 
+### 4.3 Papéis da Plataforma (`PlatformAdminRoleKey`)
+
+Permissões da área `/platform` (`PLATFORM_ROLE_PERMISSIONS` em [`src/core/permissions/matrix.ts`](../../src/core/permissions/matrix.ts)), concedidas só pelo papel interno ativo em `platform_admin_members`.
+
+| Permissão | `owner` | `operations` | `billing` | `support` |
+| --- | :---: | :---: | :---: | :---: |
+| `platform.modules.read` | ✅ | ✅ | ✅ | ✅ |
+| `platform.modules.manage` | ✅ | ✅ | ❌ | ❌ |
+| `platform.customers.read` | ✅ | ✅ | ✅ | ✅ |
+| `platform.brand.manage` | ✅ | ✅ | ❌ | ❌ |
+| `platform.legal.manage` | ✅ | ✅ | ❌ | ❌ |
+| `platform.partners.read` | ✅ | ✅ | ✅ | ✅ |
+| `platform.partners.manage` | ✅ | ✅ | ❌ | ❌ |
+| `platform.billing.read` | ✅ | ✅ | ✅ | ❌ |
+| `platform.billing.manage` | ✅ | ❌ | ✅ | ❌ |
+| `platform.operations.read` | ✅ | ✅ | ❌ | ✅ |
+| `platform.languages.manage` | ✅ | ✅ | ❌ | ❌ |
+| `platform.ai.manage` | ✅ | ✅ | ❌ | ❌ |
+| `platform.settings.manage` | ✅ | ✅ | ❌ | ❌ |
+| `platform.security.read` | ✅ | ✅ | ❌ | ✅ |
+| `platform.audit.read` | ✅ | ✅ | ✅* | ✅ |
+
+*\* AUD1: o `billing` abre Plataforma › Auditoria, mas o banco (`private.platform_audit_events` e `private.is_billing_audit_action`) devolve a ele só as ações de cobrança (`billing.`, `platform.billing.`, `partner.billing.`, `partner.payment.`, `partner.subscription.` e `partner.checkout.`). Os demais papéis veem toda a trilha, com os metadados já filtrados pela allowlist na gravação.*
+
 ---
 
 ## 5. Implementação dos Guards de Servidor

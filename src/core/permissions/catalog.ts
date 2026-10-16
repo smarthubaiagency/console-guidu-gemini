@@ -91,6 +91,9 @@ export const Permissions = {
   // Configurações › Segurança and its events (CF5a); editing needs
   // platform.settings.manage.
   PLATFORM_SECURITY_READ: "platform.security.read",
+  // Plataforma › Auditoria (AUD1): the whole audit trail; the database
+  // narrows billing to the billing actions.
+  PLATFORM_AUDIT_READ: "platform.audit.read",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
