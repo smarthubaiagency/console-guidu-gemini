@@ -59,6 +59,21 @@ const notFakeGoogle = z
     error: "o Google de teste não roda em produção",
   });
 
+/** Maps and AI suggestions of the agent GMN (GB1b): fakes are for tests. */
+const notFakeMaps = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "o provedor de mapa de teste não roda em produção",
+  });
+
+const notFakeSuggestions = z
+  .string()
+  .optional()
+  .refine((value) => value?.trim() !== "fake", {
+    error: "a IA de teste das sugestões não roda em produção",
+  });
+
 const WEB = z.object({
   DATABASE_URL: postgresUrl,
   APP_URL: httpsOrigin,
@@ -67,6 +82,8 @@ const WEB = z.object({
   PARTNER_SUBDOMAIN_BASE: required,
   TRANSLATION_PROVIDER: notFakeTranslation,
   GOOGLE_OAUTH_PROVIDER: notFakeGoogle,
+  MAPS_INTELLIGENCE_PROVIDER: notFakeMaps,
+  GB_SUGGESTIONS_PROVIDER: notFakeSuggestions,
 });
 
 /** Supabase accepts either the public or the server-only names. */
@@ -95,6 +112,8 @@ const WORKER = z.object({
   APP_URL: httpsOrigin,
   APP_NAME: required,
   TRANSLATION_PROVIDER: notFakeTranslation,
+  MAPS_INTELLIGENCE_PROVIDER: notFakeMaps,
+  GB_SUGGESTIONS_PROVIDER: notFakeSuggestions,
 });
 
 export type EnvTarget = "web" | "worker";

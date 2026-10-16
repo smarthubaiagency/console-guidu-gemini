@@ -26,7 +26,12 @@
   "google_business": {
     "name": "Google Business Profile",
     "description": "Integration and sync of business profiles (specification pending).",
-    "nav": { "google_business": "Google Business Profile" }
+    "nav": { "google_business": "Google Business Profile" },
+    "quotas": {
+      "google_business_maps_keywords": "Keywords monitored on the map per unit.",
+      "google_business_maps_grid_size": "Points per side of the map grid (7 = 7x7).",
+      "google_business_maps_scans_per_month": "Map measurements per unit per month."
+    }
   },
   "ai_agents": {
     "name": "AI Agents",

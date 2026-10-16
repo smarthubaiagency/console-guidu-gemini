@@ -702,6 +702,12 @@ export function buildPlatformNavigation(
                     href: "/platform/design/example",
                     iconKey: "layers",
                   }),
+                  item({
+                    id: "platform.design.maps",
+                    label: "Saúde no Maps",
+                    href: "/platform/design/maps",
+                    iconKey: "layers",
+                  }),
                 ],
               }),
             ]

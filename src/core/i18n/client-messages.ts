@@ -26,6 +26,7 @@ export const CLIENT_NAMESPACES = [
   "aiConsole",
   "designLab",
   "analytics",
+  "gbIntelligence",
 ] as const;
 
 export function clientMessages(
