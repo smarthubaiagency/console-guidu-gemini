@@ -15,6 +15,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata() {
   const t = await getTranslations("locations");
@@ -40,6 +41,8 @@ export default async function LocationsPage({ params }: PageProps) {
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const { locations, canManage, timezone } = await withContext(
     prisma,
     context,

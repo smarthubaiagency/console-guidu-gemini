@@ -23,7 +23,8 @@
   "roleOptions": {
     "member": "Member (Standard access to modules)",
     "admin": "Administrator (Manages members and settings)",
-    "owner": "Owner (Full management and contracting)"
+    "owner": "Owner (Full management and contracting)",
+    "attendant": "Attendant (Only the dashboard and the Inbox)"
   },
   "ownerOnlyHint": "* Only owners can invite other owners (AC04).",
   "cancel": "Cancel",
@@ -43,7 +44,8 @@
   "roles": {
     "owner": "Owner",
     "admin": "Administrator",
-    "member": "Member"
+    "member": "Member",
+    "attendant": "Attendant"
   },
   "active": "Active",
   "removeMember": "Remove member",

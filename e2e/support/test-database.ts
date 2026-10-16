@@ -74,13 +74,15 @@ export type TestDatabase = Readonly<{
     orgSlug: string;
     wsName: string;
     wsSlug: string;
-    role?: "owner" | "admin" | "member" | "viewer";
+    role?: "owner" | "admin" | "member" | "viewer" | "attendant";
+    /** Company role; owner unless given (the Attendant is a `member`). */
+    orgRole?: "owner" | "admin" | "member";
   }) => Promise<{ organizationId: string; workspaceId: string }>;
   seedInvitation: (params: {
     organizationId: string;
     workspaceId?: string | undefined;
     email: string;
-    role?: ("owner" | "admin" | "member" | "viewer") | undefined;
+    role?: ("owner" | "admin" | "member" | "viewer" | "attendant") | undefined;
     expiresInHours?: number | undefined;
   }) => Promise<{ id: string; rawToken: string }>;
   seedPartner: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
@@ -120,10 +122,7 @@ export type SeedPartnerParams = {
   host: string;
   memberEmail: string;
   role:
-    | "partner_owner"
-    | "partner_admin"
-    | "partner_finance"
-    | "partner_support";
+    "partner_owner" | "partner_admin" | "partner_finance" | "partner_support";
   organizationId?: string | undefined;
 };
 
@@ -240,9 +239,9 @@ export async function startTestDatabase(
 
       await pool.query(
         `insert into public.organization_members (organization_id, user_id, role, status)
-         values ($1, $2, 'owner', 'active')
-         on conflict (organization_id, user_id) do update set role = 'owner', status = 'active'`,
-        [orgId, userId],
+         values ($1, $2, $3, 'active')
+         on conflict (organization_id, user_id) do update set role = excluded.role, status = 'active'`,
+        [orgId, userId, params.orgRole ?? "owner"],
       );
 
       const existingWs = await pool.query<{ id: string }>(
@@ -281,11 +280,16 @@ export async function startTestDatabase(
       );
       const inviterId = inviterRes.rows[0]?.user_id;
       if (!inviterId) {
-        throw new Error(`No member found for organization ${params.organizationId}`);
+        throw new Error(
+          `No member found for organization ${params.organizationId}`,
+        );
       }
 
       const rawToken = crypto.randomBytes(32).toString("hex");
-      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+      const tokenHash = crypto
+        .createHash("sha256")
+        .update(rawToken)
+        .digest("hex");
       const hours = params.expiresInHours ?? 168;
 
       const res = await pool.query<{ id: string }>(
@@ -348,13 +352,18 @@ export async function startTestDatabase(
       return { partnerId };
     },
     seedEvent: async (params) => {
-      const ws = await pool.query<{ id: string; organization_id: string; partner_id: string }>(
+      const ws = await pool.query<{
+        id: string;
+        organization_id: string;
+        partner_id: string;
+      }>(
         `select w.id, w.organization_id, o.partner_id from public.workspaces w
          join public.organizations o on o.id = w.organization_id where w.slug = $1`,
         [params.workspaceSlug],
       );
       const target = ws.rows[0];
-      if (!target) throw new Error(`Workspace not found: ${params.workspaceSlug}`);
+      if (!target)
+        throw new Error(`Workspace not found: ${params.workspaceSlug}`);
       const chainKey = `ws:${target.id}`;
       const head = await pool.query<{ content_hash: string; seq: string }>(
         `select content_hash, seq from public.events where chain_key = $1 order by seq desc limit 1`,
@@ -411,7 +420,9 @@ export async function startTestDatabase(
       return { id };
     },
     maintenanceOff: async () => {
-      await pool.query(`update public.platform_maintenance set enabled = false`);
+      await pool.query(
+        `update public.platform_maintenance set enabled = false`,
+      );
     },
     seedNotification: async (params) => {
       const userRes = await pool.query<{ id: string }>(

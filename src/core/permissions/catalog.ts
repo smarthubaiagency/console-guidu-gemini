@@ -51,6 +51,15 @@ export const Permissions = {
   // Conversations, transcripts and audio of the GUIDS (A2a).
   AI_AGENTS_CONVERSATIONS_READ: "ai_agents.conversations.read",
 
+  // Inbox of the workspace (especificação do Inbox §3, AT1). The module
+  // arrives in IN4; the permissions exist now for the Attendant role.
+  /** Open the Inbox and read the conversations. */
+  INBOX_VIEW: "inbox.view",
+  /** Reply, take an unassigned conversation, change status and labels. */
+  INBOX_REPLY: "inbox.reply",
+  /** Assign to others, create labels, choose the route of each number. */
+  INBOX_MANAGE: "inbox.manage",
+
   // Organization core
   ORGANIZATION_READ: "organization.read",
   ORGANIZATION_MEMBERS_INVITE: "organization.members.invite",

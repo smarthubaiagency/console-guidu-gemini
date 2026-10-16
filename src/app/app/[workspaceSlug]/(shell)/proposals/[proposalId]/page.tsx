@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata() {
   const t = await getTranslations("proposals");
@@ -52,6 +53,8 @@ export default async function ProposalPage({ params }: PageProps) {
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const view = await withContext(prisma, context, async (tx) => {
     const grants = workspaceGrants(
       await getEffectiveWorkspaceRole(tx, context),

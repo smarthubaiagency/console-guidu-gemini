@@ -64,6 +64,7 @@ export const WORKSPACE_ROLE_KEYS = [
   "admin",
   "editor",
   "viewer",
+  "attendant",
 ] as const;
 
 const semver = z.string().regex(SEMVER, "Use versão semântica X.Y.Z.");
