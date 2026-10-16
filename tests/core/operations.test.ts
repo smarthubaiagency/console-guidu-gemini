@@ -59,6 +59,9 @@ describeDatabase("F3d: operations overview", requiredVars, () => {
 
   beforeAll(async () => {
     await cleanup();
+    // The failure finishes now, so it is among the 20 latest the overview
+    // shows: test workers with a few job kinds fail the `events.dispatch`
+    // runs other files leave pending in the shared database (H1).
     const base = `'${kind}', 'workspace', '${ids.organizationA}', '${ids.workspaceA}', '${ids.userA}'`;
     await admin.$executeRawUnsafe(
       `insert into public.job_runs
@@ -69,7 +72,7 @@ describeDatabase("F3d: operations overview", requiredVars, () => {
          (${base}, 'f3d-ok', 'succeeded', now() - interval '1 hour',
           now() - interval '1 hour', now() - interval '1 hour' + interval '500 milliseconds', 1, null),
          (${base}, 'f3d-failed', 'failed', now() - interval '40 minutes',
-          now() - interval '35 minutes', now() - interval '30 minutes', 3, 'Falha simulada F3d.')`,
+          now() - interval '35 minutes', now(), 3, 'Falha simulada F3d.')`,
     );
   });
 
