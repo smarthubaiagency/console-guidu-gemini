@@ -1,8 +1,8 @@
 # Especificação do módulo Google Meu Negócio — Agente GMN
 
-- **Versão:** 0.1
+- **Versão:** 0.2
 - **Data:** 16/10/2026
-- **Estado:** Proposta para aprovação no PR da etapa G0. Só documentação: nada aqui foi implementado.
+- **Estado:** G0 aprovada; GB1a (onboarding "Adicionar local" e página de automação) implementada, GB1b em paralelo. O que a GB1a construiu está marcado **[GB1a]**.
 - **Chave do módulo:** `google-business` (hoje só manifesto "em breve", `src/modules/google-business/manifest.ts`).
 - **Origem:** decisões do Marcelo em 15 e 16/10/2026 nesta conversa; telas do concorrente (Paige) e uma proposta do Google AI Studio enviadas por ele; [documento técnico da SoulLocal v2.11](../documento-tecnico-soullocal-v2_11.md) (§5.1, §5.1A, §7.7 e §9.1); o repositório `AgriciDaniel/claude-seo` (MIT) para a inteligência de mapa.
 - **ADRs:** [0019](../../adr/0019-subagente-especialista.md) (subagente especialista), [0020](../../adr/0020-modo-de-servico-gerenciado.md) (modo de serviço gerenciado), [0011](../../adr/0011-camada-de-canais-no-nucleo.md) (canais), [0015](../../adr/0015-janela-de-edicao-gaveta-interna.md) (gaveta), [0017](../../adr/0017-sdk-dos-agentes-de-ia.md) (SDK) e [0018](../../adr/0018-configuracoes-em-cascata.md) (cascata).
@@ -44,10 +44,14 @@ O que diferencia do concorrente: aprovação pelo WhatsApp com o Assistente, a f
 |                                 | **Padrão** (o cliente paga a ferramenta)                                                                 | **Gerenciado** (o cliente paga gestão e consultoria)                                                   |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Quem opera                      | O cliente, com acesso total às ferramentas: conecta a ficha, configura, usa o agente                     | A equipe do parceiro ou da GUIDU, pela tela de trabalho do `/admin`                                    |
-| Chave de IA do agente GMN       | A do cliente (como nos GUIDS)                                                                            | A da plataforma ou do parceiro                                                                         |
+| Chave de IA                     | Por tipo de trabalho, não por modo (abaixo)                                                              | Por tipo de trabalho, não por modo (abaixo)                                                            |
 | O que o parceiro e a GUIDU veem | Situação da ficha, sem os dados. Suporte só pelo acesso pontual que já existe (`partner_support_grants`) | **O workspace inteiro**: GUIDS, campanhas, avaliações, CRM e conversas                                 |
 | Como entra                      | Padrão de quem chega pelo onboarding                                                                     | No contrato (aceite dos termos no primeiro acesso) ou por pedido formal aprovado pelo owner da empresa |
 | Volta para padrão               | —                                                                                                        | O cliente pode pedir sozinho, a qualquer momento; o acesso de quem gerencia cai na hora                |
+
+**Chave de IA por tipo de trabalho [Decidido, 16/10/2026]:** o que é inteligência e serviço nosso usa a **nossa chave** (a da plataforma, ou a do parceiro quando é ele quem presta o serviço), em qualquer modo: a análise do onboarding, os relatórios, o Assistente de conta e o agente especialista GMN (inclusive no modo padrão). Usa a **chave do cliente**: os GUIDS, a automação de respostas às avaliações e o agente no widget do site. Cliente sem chave com a automação de respostas ligada: as respostas ficam como rascunho para aprovar, com aviso pedindo a chave; a chave reserva continua só para terminar conversas dos GUIDS (regra da A2c). Detalhe na ADR 0019, item 5.
+
+**[GB1a] Mínimo implementado:** tabela `organization_service_modes` (sem linha = padrão); o parceiro escolhe o modo ao cadastrar o cliente em `/admin` › Clientes (gerenciado por padrão; quem entra sozinho fica no padrão); uma função auxiliar única, `private.partner_manages_organization(org)`, usada nas políticas de `workspace_locations`, das tabelas `gb_*`, dos workspaces e das execuções `google-business.*`. **Fica para depois:** o pedido de troca por link seguro (`service_mode_requests`), a volta ao padrão pelo cliente, a cláusula de gerenciamento nos termos do primeiro acesso e a retrofit dos demais módulos (CRM, GUIDS, conversas) para aceitar o gerenciado pela mesma função.
 
 **Pedido de troca de padrão para gerenciado [Decidido]:** a GUIDU ou o parceiro faz o pedido; o owner da empresa recebe um e-mail com link seguro e aprova. **[Proposta]** O link é de uso único, vale 7 dias e registra quem aprovou, quando e de qual IP (prova de consentimento, LGPD). O link tokenizado é a mesma primitiva que o documento técnico prevê para onboarding, aprovações e relatório (§9.4).
 
@@ -59,7 +63,8 @@ O que diferencia do concorrente: aprovação pelo WhatsApp com o Assistente, a f
 
 - **Subagente do Assistente [Decidido]** (ADR 0019): o Assistente conversa com o cliente; o agente GMN recebe o pedido, prepara propostas e relatórios e executa o que foi aprovado. Ele também roda sozinho nos gatilhos e rotinas ([seção 8.5](#85-acionamento)).
 - **Na gaveta [Proposta]:** em qualquer tela do módulo, quem opera conversa com o agente GMN diretamente ("troca o sábado para 8h–12h", "por que caímos nas buscas?"); a resposta vem com a proposta pronta para aplicar. O clique de quem opera conta como aprovação.
-- **Chaves [Decidido]:** gerenciado usa a chave da plataforma ou do parceiro; padrão usa a chave do cliente. A chave reserva da plataforma segue a regra da A2c (só termina o que está aberto, depois pausa com aviso).
+- **Chaves [Decidido, revisto em 16/10/2026]:** a chave é escolhida pelo tipo de trabalho, não pelo modo (seção 3). O agente especialista GMN, a análise do onboarding e os relatórios usam a nossa chave (plataforma, ou parceiro quando ele presta o serviço); a automação de respostas às avaliações usa a chave do cliente e, sem ela, deixa as respostas como rascunho para aprovar, com aviso pedindo a chave. A chave reserva da plataforma segue a regra da A2c (só termina conversas abertas dos GUIDS, depois pausa com aviso).
+- **[GB1a] Na gaveta, só dúvidas:** nesta etapa o agente responde a dúvidas sobre a ficha, os achados e as áreas ("Preciso saber mais"), sem ferramentas e sem alterar nada. Tipo `specialist` mínimo no motor (`src/core/ai/specialist/`), com o modelo e a chave de administrador do Assistente do parceiro que atende o contexto.
 
 ### 4.2 Aprovação pelo WhatsApp
 
@@ -110,17 +115,33 @@ O que diferencia do concorrente: aprovação pelo WhatsApp com o Assistente, a f
 
 ## 7. Onboarding e ponto de partida
 
-**[Decidido]** A posição frente aos concorrentes é definida no primeiro onboarding.
+**[Decidido]** A posição frente aos concorrentes é definida no primeiro onboarding. **[Decidido, 16/10/2026]** Todo local novo passa pelo fluxo "Adicionar local".
 
-1. **Conexão:** quem opera conecta a conta Google e liga cada ficha a uma unidade.
-2. **Perguntas:** só as 3 ou 4 que mudam o resultado (postagens por semana, quem aprova, janela de silêncio, se já pode responder avaliações de 5 estrelas sozinho). O resto vem da cascata ([seção 8](#8-configurações-do-agente)).
-3. **Palavras-chave:** o agente sugere de 3 a 5 a partir da categoria e do Portfólio; quem opera confirma.
-4. **Primeiro mapa e primeira nota** por palavra-chave.
-5. **Concorrentes de referência:** quem opera marca de 3 a 5 entre os mais fortes do raio.
-6. **Ponto de partida:** tudo gravado com data. Os relatórios comparam sempre com ele ("em outubro você aparecia no top 3 em 12% do mapa; hoje, em 41%"). **[Proposta]** O ponto de partida entra no onboarding e não consome a cota mensal.
-7. **Site:** se o cliente não tem site, o onboarding oferece o módulo `local-business-website` ([seção 15](#15-módulos-vizinhos)).
+### 7.1 Fluxo "Adicionar local" [GB1a]
 
-**Trava de segurança [Proposta]:** enquanto ninguém revisar o primeiro diagnóstico de uma ficha, o agente fica em "só sugerir", mesmo com autonomia automática. Ficha recém-conectada nunca é alterada antes de alguém olhar.
+1. **Onde:** em `/admin` › Clientes (o parceiro ou a GUIDU, nas empresas que gerencia) e no `/app` › Google Meu Negócio (owner e admin do cliente no modo padrão), o botão **"Adicionar local"** abre uma **janela em tela cheia por cima do painel** (exceção própria à ADR 0015, registrada em `docs/architecture/ui-shell.md`).
+2. **Conectar:** login no Google e escolha de **uma** ficha por vez. Se faltarem permissões, a janela mostra cada permissão, para que serve, que o agente não apaga a ficha nem altera nada sem permissão, e o botão "Voltar às permissões do Google". Sem selos que não temos.
+3. **Ler e analisar:** passos à vista ("Lendo a ficha", "Criando ou ligando a unidade", um passo por análise `blocking` do registro, "Preparando a página de automação"); cada um marca concluído quando termina de verdade, sem barra fingida.
+4. **Pronto:** "Encontramos X pontos para validar". O botão abre a **página de automação** daquele local e a janela fecha.
+5. **Em segundo plano:** cria a unidade em `workspace_locations` com os dados da ficha (nome, endereço, telefone, coordenadas, fuso, horários e horários especiais) e liga a ficha a ela (`gb_locations`, uma ficha por unidade). Se já existir unidade com o mesmo endereço, a janela propõe ligar a ela em vez de duplicar. Grava a **versão inicial da ficha** (`gb_snapshots`, `initial`, base da defesa) com as avaliações públicas lidas.
+6. **Análises:** todas começam no onboarding, com o agente ligado ou não, e só leem e sugerem. O registro `locationAnalyses` do contrato ([contrato-analises.md](contrato-analises.md)) é rodado por fase: as `blocking` terminam antes de a janela fechar; as `background` seguem num job do worker (`google-business.background-analyses`) e a área aparece "em andamento" até o resultado chegar, com aviso no sino ao concluir. Cada `AnalysisResult` fica em `gb_analysis_runs`.
+7. **Análises determinísticas da GB1a** (sem IA): informações (categorias, descrição, link na descrição, telefone, site, atributos), horários e feriados nacionais dos próximos 45 dias (urgente a 14 dias), fotos, logo e capa (só o que o provedor informa) e o resumo das avaliações (nota, ritmo de 30 dias, distribuição, sem resposta, taxa de resposta). Cada item conta para "X de Y itens em ordem"; item sem dado do provedor fica fora da conta.
+
+### 7.2 Página de automação [GB1a]
+
+- Topo com as áreas em passos e **"X de 6 áreas configuradas"** (mede configuração, nunca "otimização"), o diagnóstico "X de Y itens em ordem" e os pontos para validar.
+- À esquerda as áreas (Avaliações, Defesa da ficha, Informações, Horários, Postagens, Fotos), cada uma ligando as skills de base dela, com liga e desliga. À direita: o que a área faz, a escolha "Confiar no agente (automático)" ou "Revisar e aprovar antes", os números e as dicas que as análises encontraram, e os botões **"Preciso saber mais"** (o agente na gaveta, só dúvidas) e **"Aprovado, pode seguir"** (grava e vai para a próxima área). Serviços e saúde no Maps aparecem em "Outras análises", de forma genérica para qualquer análise do registro.
+- Proibido na tela: "mais de 1.000 pontos de dados", "reverte em segundos", "geotagging", percentual de "otimização" e cidade sem dado real.
+- **Trava [Decidido]:** enquanto ninguém aprovar todas as áreas pela primeira vez, o agente fica em "só sugerir", mesmo nas áreas em automático (`gb_locations.reviewed_at`).
+
+### 7.3 Depois do fluxo (próximas etapas)
+
+1. **Perguntas:** só as 3 ou 4 que mudam o resultado (postagens por semana, quem aprova, janela de silêncio, se já pode responder avaliações de 5 estrelas sozinho). O resto vem da cascata ([seção 8](#8-configurações-do-agente)).
+2. **Palavras-chave:** o agente sugere de 3 a 5 a partir da categoria e do Portfólio; quem opera confirma.
+3. **Primeiro mapa e primeira nota** por palavra-chave.
+4. **Concorrentes de referência:** quem opera marca de 3 a 5 entre os mais fortes do raio.
+5. **Ponto de partida:** tudo gravado com data. Os relatórios comparam sempre com ele ("em outubro você aparecia no top 3 em 12% do mapa; hoje, em 41%"). **[Proposta]** O ponto de partida entra no onboarding e não consome a cota mensal.
+6. **Site:** se o cliente não tem site, o onboarding oferece o módulo `local-business-website` ([seção 15](#15-módulos-vizinhos)).
 
 ## 8. Configurações do agente
 
@@ -133,7 +154,7 @@ Configurações › Agente GMN, no layout de dois cards da ADR 0018. Tudo mora n
 | **Empresa**    | Ajusta dentro do que o parceiro liberou. No padrão, quem mexe é o cliente; no gerenciado, quem opera  |
 | **Ficha**      | Sobrescreve o necessário numa unidade (por exemplo, uma loja que abre domingo)                        |
 
-**[Proposta]** Chaves `google_business.*` na tabela `settings`; os tetos de volume entram no catálogo de cotas por plano (CF4). O nível "ficha" é novo na cascata: entra como sobrescrita própria do módulo, não como quarto escopo da tabela `settings` (decisão de implementação na GB1).
+**[GB1a]** Chaves `google_business.skills` (liga e desliga e autonomia por skill de base; os níveis se somam skill a skill), `google_business.autonomy_ceiling` (teto da autonomia: a plataforma define, o parceiro só abaixa) e `google_business.triggers` (padrões de acionamento da seção 8.5) na tabela `settings`. O nível "ficha" é sobrescrita própria do módulo (`gb_area_settings`, por área), nunca acima do teto. Os tetos de volume entram no catálogo de cotas por plano (CF4). O editor completo de Agente, Soul e skills próprias é da GB7.
 
 ### 8.1 Agente, Soul e Skills
 
@@ -260,7 +281,8 @@ Telas seguem o padrão do projeto: shell sidebar-08 (ADR 0014), componentes shad
 
 - **API oficial do Google:** o acesso é aprovado por projeto do Google Cloud (até 14 dias; antes disso, a cota é zero). O escopo `business.manage` é sensível e entra na verificação do app OAuth da GUIDU (CF6b), somado aos de Drive, Planilhas e Agenda.
 - **Avisos do Google:** a Notifications API envia, via Pub/Sub, avaliação nova, avaliação alterada e alteração feita pelo Google. Dados de perfil em geral exigem checagem periódica.
-- **Chaves e segredos** em variáveis de ambiente ou no cofre, nunca no chat nem no repositório (`ZERNIO_API_KEY`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`, `GOOGLE_MAPS_API_KEY`, nomes a confirmar na GB1).
+- **Chaves e segredos** em variáveis de ambiente ou no cofre, nunca no chat nem no repositório (`ZERNIO_API_KEY`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`, `GOOGLE_MAPS_API_KEY`).
+- **[GB1a]** Porta em `src/modules/google-business/provider/`: `GOOGLE_BUSINESS_PROVIDER=fake` nos testes e e2e (tela de consentimento falsa, recusada em produção); senão Zernio com `ZERNIO_API_KEY` e `ZERNIO_PROFILE_ID` (o perfil da Zernio onde as contas são conectadas). Todos os caminhos de endpoint ficam em `zernio-endpoints.ts`, tirados da referência pública da API da Zernio (SDK Go gerado do OpenAPI), pois docs.zernio.com não estava acessível; conferir com a conta real (pendências). O adaptador só lê: conexão em modo `headless`, lista de fichas, seleção de uma ficha, detalhes e avaliações. Endereço e número de fotos não vêm na resposta confirmada e ficam como "sem dado".
 - **Operadores de dados:** Zernio e DataForSEO tratam dados dos clientes e entram como operadores no contrato e na política de privacidade (pendência LGPD).
 
 ## 12. Dados (proposta)
@@ -269,10 +291,12 @@ Nomes são propostas; as migrations saem em cada etapa. Toda tabela com FORCE RL
 
 | Tabela                            | Para quê                                                                                    |
 | --------------------------------- | ------------------------------------------------------------------------------------------- |
-| `organization_service_modes`      | Modo de serviço da empresa e o parceiro que gerencia (ADR 0020)                             |
+| `organization_service_modes`      | Modo de serviço da empresa e o parceiro que gerencia (ADR 0020) **[GB1a]**                  |
 | `service_mode_requests`           | Pedidos de troca com o link seguro (hash do token, prazo, decisão, IP)                      |
-| `gb_locations`                    | Ficha ligada a uma unidade: conta, `place_id`, provedor, situação da conexão                |
-| `gb_snapshots`                    | Última versão aprovada da ficha (base da defesa)                                            |
+| `gb_locations`                    | Ficha ligada a uma unidade: conta, `place_id`, provedor, situação da conexão **[GB1a]**     |
+| `gb_snapshots`                    | Versões da ficha: a inicial do onboarding e as aprovadas (base da defesa) **[GB1a]**        |
+| `gb_analysis_runs`                | Resultado de cada análise do registro por ficha, com fase e situação **[GB1a]**             |
+| `gb_area_settings`                | Nível "ficha" das configurações (liga e autonomia por área) e aprovação da área **[GB1a]**  |
 | `gb_changes`                      | Linha do tempo: proposta, quem, estado (enviado, em análise, publicado, recusado), desfazer |
 | `gb_reviews`, `gb_review_replies` | Avaliações e respostas, com o contato do CRM quando escalada                                |
 | `gb_posts`, `gb_media`            | Postagens e fila de fotos do cliente                                                        |
@@ -333,17 +357,18 @@ As configurações ficam na `settings` (ADR 0018). Os dados do workspace entram 
 
 ## 17. Etapas
 
-| Etapa | Entrega                                                                                                                                                                                                                     |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| G0    | Esta especificação, as ADRs 0019 e 0020 e as pendências (só documentação)                                                                                                                                                   |
-| GB1   | Base: porta `GoogleBusinessProvider` (Zernio e falso), ficha por unidade, modos de serviço com pedido por link seguro, configurações do agente em cascata (Agente, Soul, skills de base), esqueleto da carteira no `/admin` |
-| GB2   | Avaliações e defesa: respostas por estrela, escalonamento para o CRM, autonomia e aprovação pelo WhatsApp, alertas e desfazer                                                                                               |
-| GB3   | Diagnóstico e tela de trabalho: checklist, aplicar na hora, linha do tempo, agente na gaveta, troca rápida de ficha                                                                                                         |
-| GB4   | Saúde no Maps: porta `MapsIntelligenceProvider`, mapa de posições, SoLV, concorrentes, avaliações, consistência, nota, cotas e custo; ponto de partida no onboarding; diagnóstico de prospecção                             |
-| GB5   | Postagens e pedido de avaliação (horário comercial)                                                                                                                                                                         |
-| GB6   | Fotos (tela, link e WhatsApp), horários e feriados, serviços do Portfólio                                                                                                                                                   |
-| GB7   | Relatórios (mensal do cliente, semanal da carteira) e skills próprias com teste e versões                                                                                                                                   |
-| GB8   | Troca da Zernio pela API oficial do Google (white label), quando o acesso for aprovado                                                                                                                                      |
+| Etapa | Entrega                                                                                                                                                                                                                                                                                                                                                                                |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G0    | Esta especificação, as ADRs 0019 e 0020 e as pendências (só documentação)                                                                                                                                                                                                                                                                                                              |
+| GB1a  | Onboarding "Adicionar local" (janela em tela cheia, conexão com o provedor, unidade criada ou ligada, versão inicial), runner das análises por fase com as análises determinísticas, página de automação, agente na gaveta só para dúvidas (`specialist` mínimo), porta `GoogleBusinessProvider` (Zernio e falso), modos de serviço mínimos e as chaves `google_business.*` da cascata |
+| GB1b  | Análises inteligentes do local (sugestões da IA por área, com a nossa chave) e a saúde no Maps, entregues pelo registro do [contrato](contrato-analises.md), com tabelas próprias ligadas à unidade                                                                                                                                                                                    |
+| GB2   | Avaliações e defesa: respostas por estrela, escalonamento para o CRM, autonomia e aprovação pelo WhatsApp, alertas e desfazer; pedido de troca de modo por link seguro                                                                                                                                                                                                                 |
+| GB3   | Tela de trabalho: carteira, aplicar na hora, linha do tempo, agente na gaveta com ações, troca rápida de ficha                                                                                                                                                                                                                                                                         |
+| GB4   | Saúde no Maps completa: porta `MapsIntelligenceProvider`, mapa de posições, SoLV, concorrentes, consistência, nota, cotas e custo; ponto de partida no onboarding; diagnóstico de prospecção                                                                                                                                                                                           |
+| GB5   | Postagens e pedido de avaliação (horário comercial)                                                                                                                                                                                                                                                                                                                                    |
+| GB6   | Fotos (tela, link e WhatsApp), horários e feriados, serviços do Portfólio                                                                                                                                                                                                                                                                                                              |
+| GB7   | Relatórios (mensal do cliente, semanal da carteira), editor de Agente, Soul e skills próprias com teste e versões                                                                                                                                                                                                                                                                      |
+| GB8   | Troca da Zernio pela API oficial do Google (white label), quando o acesso for aprovado                                                                                                                                                                                                                                                                                                 |
 
 Cada etapa começa com o "pode começar" do Marcelo e vira um PR com testes. O módulo `local-business-website` tem etapas próprias, depois da GB4.
 

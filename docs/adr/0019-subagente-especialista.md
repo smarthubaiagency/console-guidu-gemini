@@ -16,7 +16,7 @@ O motor de agentes tem dois tipos: o Assistente GUIDU (um por parceiro, conversa
 2. **Acionamento.** O especialista roda em três situações: (a) quando o Assistente chama a ferramenta `delegate_to_specialist` com um pedido estruturado; (b) em gatilhos e rotinas, como job do worker; (c) na gaveta, quando quem opera conversa com ele diretamente. Em (a), a resposta volta ao Assistente como dado estruturado (proposta, relatório ou pergunta), validado por Zod; o Assistente decide como falar com o cliente.
 3. **O especialista não fala com o cliente final** nem com o visitante. Avisos e aprovações saem pelo Assistente (WhatsApp, sino, e-mail).
 4. **Contexto vem do servidor.** Empresa, ficha e modo de serviço saem do job ou da sessão; nenhum argumento de ferramenta escolhe empresa ou ficha. As ferramentas seguem a allowlist em código, com guarda de tempo, de tamanho e auditoria, como nos GUIDS.
-5. **Chave por modo de serviço** (ADR 0020): gerenciado usa a chave do parceiro, ou da plataforma no parceiro zero; padrão usa a chave do cliente. A chave reserva da plataforma segue a regra da A2c.
+5. **Chave por tipo de trabalho, não por modo** (revisto pelo Marcelo em 16/10/2026): tudo que é inteligência e serviço nosso usa a **nossa chave** (a da plataforma, ou a do parceiro quando é ele quem presta o serviço): a análise do onboarding, os relatórios, o Assistente de conta e o agente especialista GMN, inclusive no modo padrão. Usa a **chave do cliente**: os GUIDS, a automação de respostas às avaliações e o agente no widget do site. Cliente sem chave com a automação de respostas ligada: as respostas ficam como rascunho para aprovar, com aviso pedindo a chave. A chave reserva da plataforma continua só para terminar conversas dos GUIDS (regra da A2c).
 6. **Skills em camadas.** Skills da plataforma são travadas (não editáveis nem desligáveis); parceiro e empresa podem duplicar e criar skills próprias, que só escolhem entre as ferramentas permitidas e só entram em uso depois de um teste com sucesso. Cada versão é guardada.
 7. **Escrita só por proposta.** Toda alteração externa (ficha, resposta, postagem) passa pelo mecanismo de propostas da F4d e pela autonomia configurada; "automático" é uma proposta aprovada pela regra, registrada igual às outras.
 
@@ -29,6 +29,8 @@ O motor de agentes tem dois tipos: o Assistente GUIDU (um por parceiro, conversa
 | Orquestrador externo (n8n, control plane)        | O motor fica dentro da plataforma (ADR 0017); estado, consumo e auditoria nas nossas tabelas                                                  |
 
 ## Consequências
+
+- **GB1a (mínimo):** o tipo `specialist` existe no código (`src/core/ai/specialist/`), definido pela plataforma e sem ferramentas; o agente GMN responde a dúvidas na gaveta da página de automação com o modelo e a chave de administrador do Assistente do parceiro que atende o contexto (a da plataforma no parceiro zero). Sem conversa gravada nem consumo no painel ainda: a chamada fica na auditoria (`google_business.specialist.ask`, com o total de tokens). A ferramenta `delegate_to_specialist`, as skills com escopo e o consumo separado ficam para as próximas etapas.
 
 - O motor ganha o tipo `specialist`, a ferramenta `delegate_to_specialist` no Assistente e a tabela de skills com escopo (`ai_agent_skills`).
 - O consumo do especialista entra no painel de IA (CF6a) separado do Assistente e dos GUIDS.

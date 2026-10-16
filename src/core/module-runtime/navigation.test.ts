@@ -79,9 +79,9 @@ describe("generated navigation", () => {
     expect(find(sections, "core.overview")?.href).toBe("/app/acme");
   });
 
-  it("keeps coming-soon modules as placeholders and hides gated ones", () => {
+  it("hides modules switched off in the environment (GB1a: Google Business)", () => {
     const sections = app("viewer");
-    expect(find(sections, "google-business")?.badge).toBe("Em breve");
+    expect(find(sections, "google-business")).toBeUndefined();
     expect(find(sections, "ai-agents")).toBeUndefined();
     vi.stubEnv("GUIDU_MODULE_HELLO_WORLD_ENABLED", "false");
     expect(
@@ -168,7 +168,11 @@ describe("generated navigation", () => {
   });
 
   it("orders module entries deterministically", () => {
-    const ids = app("owner", { "hello-world": enabled })[0]?.items.map(
+    vi.stubEnv("GUIDU_MODULE_GOOGLE_BUSINESS_ENABLED", "true");
+    const ids = app("owner", {
+      "hello-world": enabled,
+      "google-business": enabled,
+    })[0]?.items.map(
       (i) => i.id,
     );
     expect(ids).toEqual([

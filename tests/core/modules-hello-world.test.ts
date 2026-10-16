@@ -108,12 +108,12 @@ describeDatabase(
       expect(Number(count)).toBeGreaterThan(0);
     });
 
-    it("refuses to enable a coming-soon module", async () => {
+    it("refuses to enable a module switched off in the environment", async () => {
       await expect(
         withContext(prisma, contextA, (tx) =>
           setWorkspaceModuleStatus(tx, contextA, "google-business", "enabled"),
         ),
-      ).rejects.toSatisfy(expectAppError("conflict"));
+      ).rejects.toSatisfy(expectAppError("not_found"));
     });
 
     it("creates, lists and reads records with permission and workspace isolation", async () => {

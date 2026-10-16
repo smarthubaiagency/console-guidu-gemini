@@ -459,6 +459,18 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     `;
   }
 
+  /** The managing partner of a workspace job's company (ADR 0020). */
+  async function partnerStillManages(
+    tx: ContextTransaction,
+    ctx: RequestContext,
+  ): Promise<boolean> {
+    if (!ctx.partnerId) return false;
+    const [row] = await tx.$queryRaw<{ ok: boolean }[]>`
+      select private.partner_manages_organization(${ctx.organizationId}::uuid) as ok
+    `;
+    return row?.ok === true;
+  }
+
   /** Sets the requester's context and switches to app_runtime. */
   async function enterContext(
     tx: ContextTransaction,
@@ -475,8 +487,13 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     `;
     await tx.$executeRawUnsafe("set local role app_runtime");
     // Re-check before the effect: a member removed after the enqueue has
-    // no role now, and the job stops here.
-    if (!(await getEffectiveWorkspaceRole(tx, ctx))) {
+    // no role now, and the job stops here. The partner that manages the
+    // company (ADR 0020) runs the jobs it may queue (GB1a), checked again
+    // by the same helper the policies use.
+    if (
+      !(await getEffectiveWorkspaceRole(tx, ctx)) &&
+      !(await partnerStillManages(tx, ctx))
+    ) {
       throw new SkipJobError(
         "Quem pediu a execução não tem mais acesso a este workspace.",
       );

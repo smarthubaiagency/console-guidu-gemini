@@ -3,8 +3,312 @@
   "breadcrumbModules": "Módulos",
   "title": "Google Meu Negócio",
   "description": "Gestão de presença online, avaliações, horários e fotos de lojas físicas.",
-  "inDevelopment": {
-    "title": "Módulo em Desenvolvimento",
-    "body": "A integração com a Google Business Profile API depende de conectores OAuth globais e credenciais operacionais."
+  "home": {
+    "description": "As fichas do Google de cada unidade, com as análises e a automação do agente.",
+    "addLocation": "Adicionar local",
+    "managed": "Sua empresa é gerenciada pelo parceiro: ele cuida das fichas e você acompanha por aqui.",
+    "emptyTitle": "Nenhuma ficha conectada ainda",
+    "emptyDescription": "Conecte a ficha do Google de uma unidade para começar.",
+    "noUnit": "Sem unidade",
+    "configured": "{count} de {total} áreas configuradas"
+  },
+  "window": {
+    "title": "Adicionar local",
+    "subtitle": "Conecte uma ficha do Google ao workspace {workspace}.",
+    "close": "Fechar",
+    "stagesLabel": "Etapas",
+    "stages": {
+      "connect": "Conectar",
+      "analyze": "Ler e analisar",
+      "ready": "Pronto"
+    },
+    "connect": {
+      "title": "Entre com a conta do Google da ficha",
+      "description": "Use a conta que administra a ficha no Google. Depois você escolhe qual ficha conectar.",
+      "readOnly": "Nesta etapa o agente só lê e sugere: nada é alterado na ficha.",
+      "oneAtATime": "Uma ficha por vez. Para outra unidade, repita o Adicionar local.",
+      "signIn": "Entrar com Google",
+      "notConfigured": "A conexão com o Google ainda não foi configurada neste ambiente."
+    },
+    "permissions": {
+      "title": "Faltaram permissões do Google",
+      "description": "Sem elas o agente não consegue ler a ficha. Veja para que serve cada uma.",
+      "items": {
+        "manage_profile": {
+          "title": "Gerenciar sua ficha do Google",
+          "why": "Para ler a ficha e as avaliações e preparar as sugestões. Alterar algo na ficha sempre depende da sua permissão."
+        },
+        "account_identity": {
+          "title": "Ver seu nome e e-mail",
+          "why": "Para mostrar qual conta do Google está conectada."
+        }
+      },
+      "missing": "Faltando",
+      "granted": "Concedida",
+      "promise": "O agente não apaga a ficha e não altera nada sem a sua permissão.",
+      "back": "Voltar às permissões do Google"
+    },
+    "denied": {
+      "title": "Conexão cancelada",
+      "description": "A conta do Google não foi conectada. Você pode tentar de novo quando quiser."
+    },
+    "failed": {
+      "title": "Não deu para conectar",
+      "description": "O Google não concluiu a conexão. Tente de novo."
+    },
+    "retry": "Tentar de novo",
+    "choose": {
+      "title": "Escolha a ficha",
+      "description": "Estas são as fichas que a conta administra. Escolha uma.",
+      "none": "A conta não administra nenhuma ficha.",
+      "expired": "A conexão com o Google expirou. Entre de novo.",
+      "continue": "Continuar"
+    },
+    "analyze": {
+      "title": "Lendo e analisando a ficha",
+      "description": "Cada passo fica marcado quando termina."
+    },
+    "steps": {
+      "read": "Lendo a ficha",
+      "unit": "Criando ou ligando a unidade",
+      "finish": "Preparando a página de automação"
+    },
+    "stepState": {
+      "pending": "Na fila",
+      "running": "Em andamento",
+      "done": "Concluído",
+      "failed": "Falhou",
+      "waiting": "Aguardando você"
+    },
+    "unit": {
+      "title": "Já existe uma unidade com este endereço",
+      "description": "Ligue a ficha a ela para não duplicar a unidade, ou crie uma nova.",
+      "link": "Ligar a {name}",
+      "create": "Criar uma unidade nova"
+    },
+    "ready": {
+      "title": "{count, plural, =0 {Nenhum ponto para validar} one {Encontramos # ponto para validar} other {Encontramos # pontos para validar}}",
+      "description": "Revise cada área na página de automação.",
+      "background": "Outras análises continuam em segundo plano. Avisamos no sino quando terminarem.",
+      "open": "Abrir a página de automação"
+    },
+    "errors": {
+      "connect": "Não deu para iniciar a conexão",
+      "read": "Não deu para ler a ficha",
+      "unit": "Não deu para ligar a unidade",
+      "finish": "Não deu para concluir"
+    }
+  },
+  "automation": {
+    "metaTitle": "Automação da ficha",
+    "reviewed": "Revisada",
+    "suggestOnly": "Só sugere até a primeira revisão",
+    "askAgent": "Falar com o agente",
+    "configured": "{count} de {total} áreas configuradas",
+    "diagnosis": "{ok} de {total} itens em ordem",
+    "points": "{count, plural, =0 {Nenhum ponto para validar} one {# ponto para validar} other {# pontos para validar}}",
+    "areasLabel": "Áreas",
+    "lock": "Até alguém aprovar todas as áreas pela primeira vez, o agente só sugere, mesmo nas áreas em automático.",
+    "areasTitle": "Áreas do agente",
+    "running": "Análise em andamento",
+    "approved": "Aprovada",
+    "pending": "Falta revisar",
+    "toggle": "Ligar ou desligar {area}",
+    "autonomy": {
+      "title": "Como o agente age nesta área",
+      "description": "Você pode mudar quando quiser.",
+      "auto": {
+        "title": "Confiar no agente (automático)",
+        "description": "O agente aplica sozinho o que estiver dentro das regras."
+      },
+      "approval": {
+        "title": "Revisar e aprovar antes",
+        "description": "O agente prepara e você aprova cada alteração antes de ir para a ficha."
+      },
+      "aboveCeiling": "O automático não está liberado para você."
+    },
+    "numbers": "Números",
+    "tips": {
+      "title": "Dicas das análises",
+      "description": "O que as análises encontraram nesta área. Nada foi alterado na ficha."
+    },
+    "noTips": {
+      "title": "Nenhuma dica nesta área",
+      "description": "As análises não encontraram pontos para validar aqui."
+    },
+    "current": "Hoje",
+    "suggested": "Sugestão",
+    "severity": {
+      "critical": "Crítico",
+      "high": "Alto",
+      "medium": "Médio",
+      "low": "Baixo"
+    },
+    "learnMore": "Preciso saber mais",
+    "approve": "Aprovado, pode seguir",
+    "insights": {
+      "title": "Outras análises",
+      "description": "Resultados que não dependem de uma configuração.",
+      "running": "Em andamento. O resultado aparece aqui quando terminar.",
+      "failed": "Esta análise não terminou. Ela será tentada de novo."
+    },
+    "runStatus": {
+      "pending": "Na fila",
+      "running": "Em andamento",
+      "done": "Concluída",
+      "failed": "Falhou",
+      "skipped": "Não se aplica"
+    },
+    "errors": {
+      "save": "Não deu para salvar"
+    },
+    "saved": {
+      "approved": "{area} aprovada!",
+      "toggled": "{area} salva!",
+      "reviewed": "Página revisada: o agente já pode agir conforme a autonomia de cada área."
+    },
+    "agent": {
+      "title": "Agente do Google",
+      "description": "Tira dúvidas sobre a ficha e as áreas. Não altera nada.",
+      "emptyTitle": "Pergunte ao agente",
+      "emptyDescription": "Por exemplo: o que muda se eu deixar as avaliações no automático?",
+      "you": "Você",
+      "agentName": "Agente",
+      "label": "Sua pergunta",
+      "placeholder": "Escreva sua dúvida",
+      "send": "Enviar",
+      "notice": "O agente responde com base na ficha e nas análises. Nesta conversa ele não altera nada.",
+      "error": "O agente não respondeu"
+    }
+  },
+  "areas": {
+    "reviews": {
+      "name": "Avaliações",
+      "description": "Responde às avaliações no tom da sua marca, leva as negativas para uma pessoa da equipe e prepara os pedidos de avaliação, sempre o mesmo pedido para todos."
+    },
+    "defense": {
+      "name": "Defesa da ficha",
+      "description": "Guarda a versão aprovada da ficha e avisa quando alguém, ou o próprio Google, muda telefone, endereço, site, nome, categoria ou horário."
+    },
+    "info": {
+      "name": "Informações",
+      "description": "Cuida da descrição, das categorias, dos atributos e dos serviços da ficha, a partir dos dados que você já tem na GUIDU."
+    },
+    "hours": {
+      "name": "Horários",
+      "description": "Mantém os horários iguais aos da unidade e lembra dos feriados antes que cheguem."
+    },
+    "posts": {
+      "name": "Postagens",
+      "description": "Escreve postagens de novidades, ofertas e eventos com o que você já tem no Portfólio."
+    },
+    "photos": {
+      "name": "Fotos",
+      "description": "Publica aos poucos as fotos que você enviar, com descrição. Nunca usa imagem gerada por IA."
+    }
+  },
+  "analyses": {
+    "info-checklist": "Conferindo as informações da ficha",
+    "hours-checklist": "Conferindo horários e feriados",
+    "photos-checklist": "Conferindo fotos, logo e capa",
+    "reviews-summary": "Analisando avaliações",
+    "unknown": "Análise"
+  },
+  "findings": {
+    "generic": {
+      "title": "Ponto para validar"
+    },
+    "primary-category": {
+      "title": "Sem categoria principal",
+      "detail": "A categoria principal diz ao Google em que buscas a ficha aparece."
+    },
+    "additional-categories": {
+      "title": "Sem categorias adicionais",
+      "detail": "Categorias adicionais ajudam a aparecer em buscas relacionadas ao que você faz."
+    },
+    "description-missing": {
+      "title": "Ficha sem descrição",
+      "detail": "Uma boa descrição explica o que você faz, para quem e onde."
+    },
+    "description-short": {
+      "title": "Descrição curta",
+      "detail": "A descrição tem {length} caracteres; com menos de {min} ela diz pouco sobre o negócio."
+    },
+    "description-link": {
+      "title": "Link na descrição",
+      "detail": "O Google não permite links na descrição; eles podem fazer a alteração ser recusada."
+    },
+    "phone-missing": {
+      "title": "Sem telefone",
+      "detail": "Sem telefone, quem encontra a ficha não consegue ligar."
+    },
+    "website-missing": {
+      "title": "Sem site",
+      "detail": "O link do site leva quem busca até você."
+    },
+    "attributes-missing": {
+      "title": "Sem atributos",
+      "detail": "Atributos como acessibilidade e formas de pagamento respondem dúvidas antes da visita."
+    },
+    "regular-hours-missing": {
+      "title": "Sem horário de funcionamento",
+      "detail": "Sem horário, o Google não mostra se você está aberto."
+    },
+    "holidays-missing": {
+      "title": "Feriado sem horário especial",
+      "detail": "{count, plural, one {# feriado nacional} other {# feriados nacionais}} nos próximos 45 dias sem horário especial; o próximo é em {date}."
+    },
+    "photos-few": {
+      "title": "Poucas fotos",
+      "detail": "A ficha tem {count} fotos; recomendamos pelo menos {min}."
+    },
+    "logo-missing": {
+      "title": "Sem logo",
+      "detail": "O logo ajuda a reconhecer a marca na busca."
+    },
+    "cover-missing": {
+      "title": "Sem foto de capa",
+      "detail": "A capa é a primeira imagem que aparece na ficha."
+    },
+    "reviews-unanswered": {
+      "title": "Avaliações sem resposta",
+      "detail": "{count, plural, one {# avaliação} other {# avaliações}} sem resposta, {negative} delas com 1 ou 2 estrelas."
+    },
+    "reviews-response-rate": {
+      "title": "Taxa de resposta baixa",
+      "detail": "Você respondeu {rate}% das avaliações lidas; o recomendado é pelo menos {target}%."
+    }
+  },
+  "metrics": {
+    "upcomingHolidays": "Feriados nos próximos 45 dias",
+    "photos": "Fotos",
+    "rating": "Nota média",
+    "reviewCount": "Avaliações",
+    "reviewsRead": "Avaliações lidas",
+    "responseRate": "Taxa de resposta (%)",
+    "unanswered": "Sem resposta",
+    "unansweredNegative": "Negativas sem resposta",
+    "last30Days": "Avaliações nos últimos 30 dias",
+    "stars1": "1 estrela",
+    "stars2": "2 estrelas",
+    "stars3": "3 estrelas",
+    "stars4": "4 estrelas",
+    "stars5": "5 estrelas"
+  },
+  "errors": {
+    "provider": "O Google não respondeu agora. Tente de novo.",
+    "notConfigured": "A conexão com o Google ainda não foi configurada.",
+    "notFound": "Recurso não encontrado.",
+    "forbidden": "Você não pode alterar esta ficha.",
+    "alreadyLinked": "Esta ficha já está ligada a uma unidade.",
+    "unitTaken": "Esta unidade já tem uma ficha.",
+    "invalidUnit": "Os dados da ficha não formam uma unidade válida.",
+    "invalidInput": "Dados inválidos.",
+    "aboveCeiling": "Essa autonomia passa do limite definido para você.",
+    "connectionExpired": "A conexão com o Google expirou. Entre de novo.",
+    "noOrigin": "Endereço de retorno não configurado (APP_URL).",
+    "specialistUnavailable": "O agente ainda não tem chave e modelo de IA.",
+    "specialistFailed": "O agente não conseguiu responder agora. Tente de novo.",
+    "questionInvalid": "Escreva sua pergunta."
   }
 }

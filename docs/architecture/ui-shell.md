@@ -107,6 +107,10 @@ Para conteúdo que não é registro de lista (um chat, um painel), use `Workbenc
 - A edição tem URL própria (`?edit=<id>`).
 - Referência viva: `/platform/design/workbench`.
 
+### Exceção: janela de onboarding em tela cheia
+
+A janela "Adicionar local" do Google Meu Negócio (GB1a) abre em tela cheia por cima do painel (`fixed`, cobrindo menu e cabeçalho, abaixo do SmartStatusBanner). É uma exceção própria à ADR 0015: não é edição de registro, e sim um fluxo guiado de conexão (Conectar, Ler e analisar, Pronto) que termina abrindo outra página. Ela fecha com Esc e com o botão Fechar, recebe o foco ao abrir e usa só os componentes modelo dentro dela. Novos fluxos de onboarding podem seguir o mesmo formato; edição de registro continua na gaveta.
+
 ## Atualizar o shadcn
 
 Baixe o arquivo novo do registro (`apps/v4/registry/new-york-v4/ui/<nome>.tsx` em `shadcn-ui/ui`) ou rode `npx shadcn@latest add <nome>` numa máquina com acesso a `ui.shadcn.com`. Depois, repita as mudanças mínimas listadas na ADR 0014 (item 4) e as variantes do GUIDU da ADR 0021 (item 3), e rode os e2e `e2e/shell.spec.ts`, `e2e/design-components.spec.ts` e `e2e/design-example.spec.ts`.

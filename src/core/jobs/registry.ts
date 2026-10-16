@@ -8,6 +8,7 @@ import { translateDocumentJob } from "@/core/legal/machine-job";
 import { workspaceExportJob } from "@/core/privacy/export";
 import { privacyJobs, privacySchedules } from "@/core/privacy/maintenance";
 import { proposalExecuteJob } from "@/core/proposals/service";
+import { backgroundAnalysesJob } from "@/modules/google-business/server/jobs";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
 
 import type { JobDefinition, JobSchedule } from "./definition";
@@ -28,6 +29,7 @@ const DEFINITIONS = [
   keyWatchJob,
   leadNoticeJob,
   channelDispatchJob,
+  backgroundAnalysesJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
 

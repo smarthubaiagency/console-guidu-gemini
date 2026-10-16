@@ -36,7 +36,12 @@
     "since": "desde {date}",
     "empty": "Aún no hay clientes.",
     "created": "Cliente registrado. Envía la invitación al responsable.",
-    "createdEmailed": "Cliente creado. Invitación enviada por correo a {email}."
+    "createdEmailed": "Cliente creado. Invitación enviada por correo a {email}.",
+    "serviceMode": "Modo de servicio",
+    "modes": {
+      "gerenciado": "Gestionado",
+      "padrao": "Estándar"
+    }
   },
   "members": {
     "metaTitle": "Miembros (Socio)",
