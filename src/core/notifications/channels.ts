@@ -1,3 +1,5 @@
+import { eventDefinition } from "@/core/events/catalog";
+
 import {
   EMAIL_TEMPLATE_EVENTS,
   type EmailTemplateGroup,
@@ -10,7 +12,8 @@ import type { NotificationEvent } from "./types";
  * has and its recipient keeps on; an essential event (security, billing)
  * reaches every channel it has, whatever the preference, and Minha conta
  * shows it locked. Every event today is essential; the matrix is ready for
- * the optional ones that come later.
+ * the optional ones that come later. The catalog of events (and of their
+ * channels) is the Event Hub's (`core/events/catalog.ts`).
  *
  * Pure and dependency-free: the worker, the server and the screen share it.
  */
@@ -31,20 +34,18 @@ export type NotificationEventDefinition = Readonly<{
 }>;
 
 /**
- * The channels of each event. An invitation goes to an address before it
- * has an account, and the test e-mail is the e-mail itself, so both stay
- * e-mail only and out of the preferences.
+ * The channels of each event come from the Event Hub catalog (H1). An
+ * invitation goes to an address before it has an account, and the test
+ * e-mail is the e-mail itself, so both stay e-mail only and out of the
+ * preferences. WhatsApp is the hub's own channel (the partner's webhook)
+ * and stays out of this matrix.
  */
-const CHANNELS: Readonly<
-  Record<NotificationEventType, readonly NotificationChannel[]>
-> = {
-  "invitation.created": ["email"],
-  "email.test": ["email"],
-  "billing.subscription.past_due": ["email", "app"],
-  "billing.subscription.suspended": ["email", "app"],
-  "ai.agent.key_backup": ["email", "app"],
-  "ai.agent.key_paused": ["email", "app"],
-};
+function channelsOf(type: NotificationEventType): NotificationChannel[] {
+  const definition = eventDefinition(type);
+  return NOTIFICATION_CHANNELS.filter((channel) =>
+    (definition?.channels as readonly string[] | undefined)?.includes(channel),
+  );
+}
 
 export const NOTIFICATION_EVENTS: readonly NotificationEventDefinition[] =
   EMAIL_TEMPLATE_EVENTS.map((event) => ({
@@ -52,7 +53,7 @@ export const NOTIFICATION_EVENTS: readonly NotificationEventDefinition[] =
     group: event.group,
     key: event.key,
     essential: event.essential,
-    channels: CHANNELS[event.type],
+    channels: channelsOf(event.type),
   }));
 
 /** Events of the preference matrix: those that reach a person's bell. */

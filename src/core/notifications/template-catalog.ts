@@ -1,3 +1,8 @@
+import {
+  TEMPLATE_EVENT_TYPES,
+  type EmailTemplateGroup,
+} from "@/core/events/catalog";
+
 import type { TemplateVariable } from "./markup";
 import type { NotificationEvent } from "./types";
 
@@ -11,7 +16,7 @@ import type { NotificationEvent } from "./types";
 
 export type EmailTemplateEvent = NotificationEvent["type"];
 
-export type EmailTemplateGroup = "account" | "billing" | "ai";
+export type { EmailTemplateGroup };
 
 export type EmailTemplateDefinition = Readonly<{
   type: EmailTemplateEvent;
@@ -29,75 +34,68 @@ export type EmailTemplateDefinition = Readonly<{
 const text = (name: string): TemplateVariable => ({ name, kind: "text" });
 const url = (name: string): TemplateVariable => ({ name, kind: "url" });
 
-export const EMAIL_TEMPLATE_EVENTS: readonly EmailTemplateDefinition[] = [
-  {
-    type: "invitation.created",
-    group: "account",
-    key: "invitation",
-    essential: true,
-    variables: [text("organizacao"), text("data"), url("link"), text("marca")],
-  },
-  {
-    type: "email.test",
-    group: "account",
-    key: "emailTest",
-    essential: true,
-    variables: [url("link"), text("marca")],
-  },
-  {
-    type: "billing.subscription.past_due",
-    group: "billing",
-    key: "pastDue",
-    essential: true,
-    variables: [
-      text("parceiro"),
-      text("organizacao"),
-      text("vencimento"),
-      text("proximo_passo"),
-      url("link"),
-      text("marca"),
-    ],
-  },
-  {
-    type: "billing.subscription.suspended",
-    group: "billing",
-    key: "suspended",
-    essential: true,
-    variables: [
-      text("parceiro"),
-      text("organizacao"),
-      text("vencimento"),
-      url("link"),
-      text("marca"),
-    ],
-  },
-  {
-    type: "ai.agent.key_backup",
-    group: "ai",
-    key: "aiKeyBackup",
-    essential: true,
-    variables: [
-      text("workspace"),
-      text("agente"),
-      text("data"),
-      url("link"),
-      text("marca"),
-    ],
-  },
-  {
-    type: "ai.agent.key_paused",
-    group: "ai",
-    key: "aiKeyPaused",
-    essential: true,
-    variables: [
-      text("workspace"),
-      text("agente"),
-      text("data"),
-      url("link"),
-      text("marca"),
-    ],
-  },
-];
+/** The variables each event offers to its template. */
+const VARIABLES: Readonly<
+  Record<EmailTemplateEvent, readonly TemplateVariable[]>
+> = {
+  "invitation.created": [
+    text("organizacao"),
+    text("data"),
+    url("link"),
+    text("marca"),
+  ],
+  "email.test": [url("link"), text("marca")],
+  "billing.subscription.past_due": [
+    text("parceiro"),
+    text("organizacao"),
+    text("vencimento"),
+    text("proximo_passo"),
+    url("link"),
+    text("marca"),
+  ],
+  "billing.subscription.suspended": [
+    text("parceiro"),
+    text("organizacao"),
+    text("vencimento"),
+    url("link"),
+    text("marca"),
+  ],
+  "ai.agent.key_backup": [
+    text("workspace"),
+    text("agente"),
+    text("data"),
+    url("link"),
+    text("marca"),
+  ],
+  "ai.agent.key_paused": [
+    text("workspace"),
+    text("agente"),
+    text("data"),
+    url("link"),
+    text("marca"),
+  ],
+};
+
+/**
+ * The templates, from the Event Hub catalog (H1): the types with a
+ * template, in the catalog's order, with group, key and "essential" from
+ * there and the variables from here.
+ */
+export const EMAIL_TEMPLATE_EVENTS: readonly EmailTemplateDefinition[] =
+  TEMPLATE_EVENT_TYPES.flatMap((definition) => {
+    const type = definition.type as EmailTemplateEvent;
+    const variables = VARIABLES[type];
+    if (!definition.template || !variables) return [];
+    return [
+      {
+        type,
+        group: definition.template.group,
+        key: definition.template.key,
+        essential: definition.essential,
+        variables,
+      },
+    ];
+  });
 
 export const EMAIL_TEMPLATE_GROUPS: readonly EmailTemplateGroup[] = [
   "account",

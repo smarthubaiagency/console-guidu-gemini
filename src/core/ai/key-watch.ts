@@ -3,14 +3,10 @@ import { z } from "zod";
 import { recordAudit } from "@/core/audit/record";
 import { appConfig } from "@/core/config/app";
 import { definePlatformJob, type JobSchedule } from "@/core/jobs/definition";
-import { deliverNotification } from "@/core/notifications/delivery";
-import { postToBell } from "@/core/notifications/inbox";
-import { notificationLanguages } from "@/core/notifications/language";
+import { dispatchEvent } from "@/core/events/dispatch";
+import { emitEvent, WORKER_ACTOR } from "@/core/events/emit";
 import { getNotificationTransport } from "@/core/notifications/transport";
-import type {
-  NotificationBrand,
-  NotificationTransport,
-} from "@/core/notifications/types";
+import type { NotificationTransport } from "@/core/notifications/types";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
 import { partnerHostOrigin } from "@/core/partners/hosts";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
@@ -25,13 +21,16 @@ import { BACKUP_WINDOW_MS } from "./backup";
  * - one in backup for 24 hours is paused (`status = paused`, `key_state =
  *   failed`) and gets the second notice.
  *
- * The notices go to the active owners and admins of the workspace, at the
- * e-mail of their accepted invitation (the only e-mail of a member the
- * application keeps), with the partner's brand and the link to the
- * workspace's keys; each delivery is recorded once per key, as "não
- * enviada" while there is no e-mail provider (D-PA-08). Each person also
- * gets the notice in the bell (CF3c), even without a known e-mail. The
- * panel shows the agent's `key_state` (A3 and A4). Safe to run again.
+ * Each notice is an event of the Event Hub (H1), `ai.agent.key_backup` or
+ * `ai.agent.key_paused` with the route `service_mode`, dispatched at once:
+ * in the standard mode it goes to the active owners and admins of the
+ * workspace, at the e-mail of their accepted invitation (the only e-mail of
+ * a member the application keeps), with the partner's brand and the link
+ * to the workspace's keys; in the managed mode, to the managing partner's
+ * team. Each delivery is recorded once per key, as "não enviada" while
+ * there is no e-mail provider (D-PA-08). Each person also gets the notice
+ * in the bell (CF3c), even without a known e-mail. The panel shows the
+ * agent's `key_state` (A3 and A4). Safe to run again.
  */
 
 export const KEY_WATCH_JOB_KIND = "ai-agents.key-watch";
@@ -50,36 +49,18 @@ type Agent = Readonly<{
   backupStartedAt: Date;
 }>;
 
-type Audience = Readonly<{
+type NoticeContext = Readonly<{
   partnerId: string;
-  /** Partner whose sender settings go with its brand; null for the house. */
-  senderPartnerId: string | null;
   workspaceName: string;
-  /** Each person with the e-mail of their accepted invitation, if any. */
-  recipients: readonly Readonly<{ userId: string; email: string | null }>[];
   credentialsUrl: string;
-  brand: NotificationBrand;
 }>;
 
-/** One recipient per person; an e-mail goes to one person only. */
-function recipientsOf(
-  userIds: readonly string[],
-  emails: ReadonlyMap<string, string>,
-): Audience["recipients"] {
-  const seen = new Set<string>();
-  return [...new Set(userIds)].map((userId) => {
-    const email = emails.get(userId) ?? "";
-    if (!email || seen.has(email)) return { userId, email: null };
-    seen.add(email);
-    return { userId, email };
-  });
-}
-
-async function audienceOf(
+/** The workspace's name and the link to its keys, on the partner's domain. */
+async function noticeContextOf(
   tx: ContextTransaction,
   agent: Agent,
-): Promise<Audience | null> {
-  const [workspace, organization, members] = await Promise.all([
+): Promise<NoticeContext | null> {
+  const [workspace, organization] = await Promise.all([
     tx.workspace.findFirst({
       where: { id: agent.workspaceId },
       select: { name: true, slug: true },
@@ -88,28 +69,13 @@ async function audienceOf(
       where: { id: agent.organizationId },
       select: { partnerId: true },
     }),
-    // Raw: the worker reads only these columns of members and invitations.
-    tx.$queryRaw<{ user_id: string }[]>`
-      select user_id from public.workspace_members
-      where workspace_id = ${agent.workspaceId}::uuid and status = 'active'
-        and role in ('owner', 'admin') and support_grant_id is null
-    `,
   ]);
   if (!workspace || !organization?.partnerId) return null;
   const partnerId = organization.partnerId;
-  const userIds = members.map((m) => m.user_id);
-  const [invitations, partner, domains] = await Promise.all([
-    userIds.length > 0
-      ? tx.$queryRaw<{ email: string; accepted_by_user_id: string }[]>`
-          select email, accepted_by_user_id from public.invitations
-          where organization_id = ${agent.organizationId}::uuid and status = 'accepted'
-            and accepted_by_user_id = any(${userIds}::uuid[])
-          order by accepted_at desc
-        `
-      : [],
+  const [partner, domains] = await Promise.all([
     tx.partner.findUnique({
       where: { id: partnerId },
-      select: { name: true, isHouse: true },
+      select: { isHouse: true },
     }),
     tx.partnerDomain.findMany({
       where: { partnerId, status: "active" },
@@ -117,14 +83,6 @@ async function audienceOf(
       select: { host: true, kind: true },
     }),
   ]);
-  // The latest accepted invitation of each person.
-  const byUser = new Map<string, string>();
-  for (const invitation of invitations) {
-    const userId = invitation.accepted_by_user_id;
-    if (userId && !byUser.has(userId)) {
-      byUser.set(userId, invitation.email.trim().toLowerCase());
-    }
-  }
   const house = !partner || partner.isHouse || partnerId === HOUSE_PARTNER_ID;
   // The customer's console on the partner's domain (custom first); the
   // platform host for the house or a partner still without a domain.
@@ -135,18 +93,11 @@ async function audienceOf(
       : partnerHostOrigin(domain.host, process.env);
   return {
     partnerId,
-    senderPartnerId: house ? null : partnerId,
     workspaceName: workspace.name,
-    recipients: recipientsOf(userIds, byUser),
     credentialsUrl: new URL(
       `/app/${workspace.slug}/settings/credentials`,
       origin,
     ).toString(),
-    brand: {
-      name: house ? appConfig.name : partner.name,
-      supportEmail: null,
-      supportUrl: null,
-    },
   };
 }
 
@@ -165,7 +116,6 @@ export async function runKeyWatch(
       backupStartedAt: true,
     },
   });
-  const languageOf = notificationLanguages(tx);
   let paused = 0;
   let notices = 0;
 
@@ -222,44 +172,26 @@ export async function runKeyWatch(
       );
     }
 
-    const audience = await audienceOf(tx, agent);
-    if (!audience) continue;
-    const content = {
+    const context = await noticeContextOf(tx, agent);
+    if (!context) continue;
+    const emitted = await emitEvent(tx, {
       type,
+      actor: WORKER_ACTOR,
+      partnerId: context.partnerId,
+      organizationId: agent.organizationId,
+      workspaceId: agent.workspaceId,
+      subject: { type: "ai_agent", id: agent.id },
       data: {
-        workspaceName: audience.workspaceName,
+        workspaceName: context.workspaceName,
         agentName: null,
-        backupUntil,
-        credentialsUrl: audience.credentialsUrl,
+        backupUntil: backupUntil.toISOString(),
+        credentialsUrl: context.credentialsUrl,
       },
-    } as const;
-    const keyOf = (who: string) =>
-      `ai-key:${agent.id}:${agent.backupStartedAt.toISOString()}:${type}:${who}`;
-    for (const recipient of audience.recipients) {
-      if (!recipient.email) {
-        // No e-mail known (no accepted invitation): the bell only (CF3c).
-        await postToBell(
-          tx,
-          recipient.userId,
-          content,
-          keyOf(`user:${recipient.userId}`),
-        );
-        continue;
-      }
-      notices += await deliverNotification(tx, {
-        transport,
-        language: await languageOf(recipient.email),
-        brand: audience.brand,
-        partnerId: audience.partnerId,
-        senderPartnerId: audience.senderPartnerId,
-        relatedId: agent.id,
-        recipientUserId: recipient.userId,
-        event: {
-          ...content,
-          recipientEmail: recipient.email,
-          idempotencyKey: keyOf(recipient.email),
-        },
-      });
+      idempotencyKey: `ai-key:${agent.id}:${agent.backupStartedAt.toISOString()}:${type}`,
+    });
+    // At once, in this run (the queued dispatch then finds it done).
+    if (emitted.created) {
+      notices += (await dispatchEvent(tx, emitted.id, { transport })).notices;
     }
   }
   return { inBackup: rows.length - paused, paused, notices };

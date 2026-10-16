@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 
 import { signAccessToken } from "./jwt";
 import type {
+  SeedEventParams,
   SeedGuidParams,
   SeedNotificationParams,
   SeedPartnerParams,
@@ -104,6 +105,8 @@ export type FakeGoTrueOptions = Readonly<{
   onSeedNotification?: (params: SeedNotificationParams) => Promise<{ id: string }>;
   /** Turns the maintenance window off (CF5c): specs share the database. */
   onMaintenanceOff?: () => Promise<void>;
+  /** Seeds a sealed event of the Event Hub (H1). */
+  onSeedEvent?: (params: SeedEventParams) => Promise<{ id: string }>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -360,6 +363,26 @@ export async function startFakeGoTrue(
         organizationId: asString(body.organizationId) ?? undefined,
       });
       return json(response, 200, seeded);
+    }
+
+    if (path === "/__control/seed-event" && method === "POST") {
+      const body = await readBody(request);
+      const workspaceSlug = asString(body.workspaceSlug);
+      const type = asString(body.type);
+      const moduleKey = asString(body.module);
+      const data =
+        body.data && typeof body.data === "object"
+          ? (body.data as Record<string, unknown>)
+          : {};
+      if (!workspaceSlug || !type || !moduleKey || !options.onSeedEvent) {
+        return json(response, 400, { msg: "invalid parameters" });
+      }
+      return json(response, 200, await options.onSeedEvent({
+          workspaceSlug,
+          type,
+          module: moduleKey,
+          data,
+        }));
     }
 
     if (path === "/__control/seed-notification" && method === "POST") {

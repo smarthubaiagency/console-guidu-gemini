@@ -69,8 +69,11 @@ test.describe("BYOK Vault and Platform API Keys Management", () => {
       .fill("sk-proj-test-valid-e2e-key-1234567890");
     await page.getByRole("button", { name: "Salvar no Cofre" }).click();
 
-    // Verify credential appears in table with masked value
-    await expect(page.getByText("OpenAI Produção E2E")).toBeVisible();
+    // Verify credential appears in table with masked value (the success
+    // banner also names it, so the check is scoped to the table cell)
+    await expect(
+      page.getByRole("cell", { name: "OpenAI Produção E2E" }),
+    ).toBeVisible();
     await expect(page.getByText("sk-...7890")).toBeVisible();
   });
 

@@ -38,6 +38,8 @@ export async function deliverNotification(
     senderPartnerId?: string | null;
     /** The person of the address, when known: their bell and preferences. */
     recipientUserId?: string | null;
+    /** The Event Hub event of the delivery (H1), kept with it. */
+    eventId?: string | null;
   }>,
 ): Promise<number> {
   const { event } = args;
@@ -59,16 +61,19 @@ export async function deliverNotification(
     language.messages,
     language.template,
   ).subject.slice(0, 200);
+  const userId = args.recipientUserId ?? null;
+  const eventId = args.eventId ?? null;
   const inserted = await tx.$executeRaw`
     insert into public.notification_deliveries
-      (partner_id, event_type, recipient_email, subject, idempotency_key, related_id)
+      (partner_id, event_type, recipient_email, subject, idempotency_key, related_id,
+       event_id, channel, recipient_user_id)
     values (${args.partnerId}::uuid, ${event.type}, ${event.recipientEmail}, ${subject},
-            ${event.idempotencyKey}, ${args.relatedId}::uuid)
+            ${event.idempotencyKey}, ${args.relatedId}::uuid,
+            ${eventId}::uuid, 'email', ${userId}::uuid)
     on conflict (idempotency_key) do nothing
   `;
   if (inserted === 0) return 0;
 
-  const userId = args.recipientUserId ?? null;
   const channels = await channelsFor(tx, userId, event.type);
   const notice = channels.has("app") ? inboxNotice(event) : null;
   if (userId && notice) {
@@ -101,7 +106,12 @@ export async function deliverNotification(
   }
   await tx.notificationDelivery.updateMany({
     where: { idempotencyKey: event.idempotencyKey, status: "pending" },
-    data: { status, reason },
+    data: {
+      status,
+      reason,
+      attempts: 1,
+      provider: status === "skipped" ? null : (args.transport.provider ?? null),
+    },
   });
   return 1;
 }

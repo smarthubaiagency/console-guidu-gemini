@@ -62,12 +62,18 @@ import {
 } from "@/modules/google-business/server/onboarding";
 import type { Db } from "@/modules/google-business/server/runner";
 import { AppError } from "@/shared/errors";
+import { dispatchEvent } from "@/core/events/dispatch";
 
 import { describeDatabase } from "../prisma-rls/describe-database.js";
 
 const databaseUrl = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
 const adminUrl = process.env.MIGRATION_DATABASE_URL ?? process.env.ADMIN_URL;
-const requiredVars = { DATABASE_URL: databaseUrl, ADMIN_URL: adminUrl };
+const workerUrl = process.env.WORKER_DATABASE_URL;
+const requiredVars = {
+  DATABASE_URL: databaseUrl,
+  ADMIN_URL: adminUrl,
+  WORKER_DATABASE_URL: workerUrl,
+};
 
 const HOUSE = "00000000-0000-4000-8000-000000000000";
 const ownerN = "d0000000-0000-4000-8000-000000000001";
@@ -88,6 +94,9 @@ describeDatabase(
     });
     const admin = new PrismaClient({
       datasources: { db: { url: adminUrl ?? "" } },
+    });
+    const workerDb = new PrismaClient({
+      datasources: { db: { url: workerUrl ?? "" } },
     });
     const provider = createFakeGoogleBusinessProvider("http://localhost");
     // Unique per run: audited companies are never deleted.
@@ -170,6 +179,7 @@ describeDatabase(
       vi.unstubAllEnvs();
       await prisma.$disconnect();
       await admin.$disconnect();
+      await workerDb.$disconnect();
     });
 
     it("reads the ficha, creates the unit from it and runs the blocking analyses step by step", async () => {
@@ -279,6 +289,17 @@ describeDatabase(
       const background = after.runs.find((r) => r.key === "test-background");
       expect(background?.status).toBe("done");
       expect(background?.metrics.score).toBe(42);
+      // The Event Hub (H1) got the event in the job; its dispatch (the
+      // worker) posts the notice to whom started the onboarding.
+      const [hubEvent] = await admin.$queryRawUnsafe<
+        { id: string; recipient_user_id: string }[]
+      >(
+        `select id, recipient_user_id from public.events where idempotency_key = 'google-business.analyses:${prepared.locationId}:${jobRunId}'`,
+      );
+      expect(hubEvent?.recipient_user_id).toBe(ownerN);
+      await workerDb.$transaction((tx) =>
+        dispatchEvent(tx as never, hubEvent!.id),
+      );
       const [{ count }] = await admin.$queryRawUnsafe<[{ count: bigint }]>(
         `select count(*) from public.user_notifications where user_id = '${ownerN}' and event_type = 'google_business.analyses_done' and idempotency_key like 'google-business.analyses:${prepared.locationId}:%'`,
       );

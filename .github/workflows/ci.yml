@@ -94,6 +94,10 @@ jobs:
           echo "::add-mask::$enc_key"
           echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
           echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
+          events_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$events_key"
+          echo "EVENTS_HMAC_KEY=$events_key" >> "$GITHUB_ENV"
+          echo "EVENTS_HMAC_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       # F6a: fails on a high or critical advisory in what ships to production.
       # Dev-only tooling is reviewed in the audit report, not blocked here.
@@ -143,6 +147,10 @@ jobs:
           echo "::add-mask::$enc_key"
           echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
           echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
+          events_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$events_key"
+          echo "EVENTS_HMAC_KEY=$events_key" >> "$GITHUB_ENV"
+          echo "EVENTS_HMAC_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm generate
 
@@ -275,6 +283,7 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/payment-gateway-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/gb-maps-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/google-business-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/events-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/platform-audit-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/security-catalog.sql
 
@@ -320,6 +329,10 @@ jobs:
           echo "::add-mask::$enc_key"
           echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
           echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
+          events_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$events_key"
+          echo "EVENTS_HMAC_KEY=$events_key" >> "$GITHUB_ENV"
+          echo "EVENTS_HMAC_KEY_ID=k1" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm generate
       # Chromium cached by the @playwright/test version of the lockfile; on
@@ -362,4 +375,3 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
-

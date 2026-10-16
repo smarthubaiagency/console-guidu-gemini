@@ -22,7 +22,8 @@ export type NotificationContent = DistributiveOmit<
 export type InboxData = Readonly<Record<string, string>>;
 
 export type InboxNotice = Readonly<{
-  eventType: NotificationEvent["type"];
+  /** A notification event, or another event of the hub's catalog (H1). */
+  eventType: string;
   data: InboxData;
   linkUrl: string | null;
 }>;
@@ -94,6 +95,8 @@ const EVENT_KEYS: Readonly<Record<string, string>> = {
   "ai.agent.key_paused": "aiKeyPaused",
   // Posted by the background analyses of a Google ficha (GB1a).
   "google_business.analyses_done": "gbAnalysesDone",
+  // The seal check of the Event Hub found a broken chain (H1).
+  "platform.events.chain_broken": "eventsChainBroken",
 };
 
 function text(data: unknown, name: string): string {
@@ -158,6 +161,13 @@ export function renderInboxNotice(
       return {
         title: t("gbAnalysesDone.title", values),
         body: t("gbAnalysesDone.body", values),
+      };
+    }
+    case "eventsChainBroken": {
+      const values = { count: text(data, "count") || "1" };
+      return {
+        title: t("eventsChainBroken.title", values),
+        body: t("eventsChainBroken.body", values),
       };
     }
     default:

@@ -38,6 +38,10 @@
     "gbAnalysesDone": {
       "title": "Análises concluídas",
       "body": "As análises em segundo plano da ficha {location} terminaram."
+    },
+    "eventsChainBroken": {
+      "title": "Selo de evento não confere",
+      "body": "A verificação da Central de Eventos encontrou {count} evento(s) com o selo ou a corrente quebrados."
     }
   },
   "preferences": {

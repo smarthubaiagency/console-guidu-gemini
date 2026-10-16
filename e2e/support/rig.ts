@@ -19,6 +19,11 @@ export const RIG = {
   // guard for dev resources stays quiet.
   appUrl: `http://localhost:${APP_PORT}`,
   publishableKey: "e2e-publishable-key",
+  // Seal of the Event Hub (H1): the web, the worker and the rig's seeding
+  // of events share it.
+  eventsHmacKey:
+    process.env.EVENTS_HMAC_KEY || "e2e-events-hmac-key-0123456789abcdef0123",
+  eventsHmacKeyId: process.env.EVENTS_HMAC_KEY_ID || "k1",
 } as const;
 
 export const AUTH_BASE_URL = `http://127.0.0.1:${RIG.authPort}`;
