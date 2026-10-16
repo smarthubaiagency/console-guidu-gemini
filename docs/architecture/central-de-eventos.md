@@ -58,16 +58,16 @@ O módulo só diz o que aconteceu; o catálogo decide para onde vai. Cada encaix
 
 ## 5. Lacunas registradas
 
-| Lacuna                                    | Hoje                                                                                          | Onde resolve                                                                           |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Tela de auditoria completa na plataforma  | O `audit_events` não tem leitura geral; só o recorte de segurança (CF5a) e o do gateway (CF7) | **AUD1** (proposta para rodar em paralelo à H1)                                        |
-| Entregas dos avisos visíveis à plataforma | `notification_deliveries` só para os papéis de cobrança (nasceu na F3c)                       | H1 (owner, operations e support veem a situação)                                       |
-| Rastro completo de um evento              | Não existe                                                                                    | H2 (tela do evento: o que houve, quem foi avisado, por qual canal, o que foi auditado) |
-| Analytics de negócio                      | Não existe (o da CF7 é analytics de produto)                                                  | H3, com painel agregado da plataforma                                                  |
-| Papéis múltiplos na plataforma            | `platform_admin_members` tem um papel por pessoa                                              | H1 (`platform_admin_capabilities` para o `keychain`)                                   |
-| Avisos fora do `notify`                   | Lead quente e indicação (webhook A6), análises da GB1a (função própria)                       | H1                                                                                     |
-| Canal WhatsApp e rota por modo            | Não existem no `notify`                                                                       | H1                                                                                     |
-| Flakiness dos e2e `privacy` e `proposals` | Falham sob carga e passam sozinhos                                                            | Corrigir na primeira etapa que mexer neles (seção 7)                                   |
+| Lacuna                                    | Hoje                                                                                                    | Onde resolve                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Tela de auditoria completa na plataforma  | **Resolvida na AUD1** (seção 8): `/platform/audit` lê toda a trilha por `private.platform_audit_events` | AUD1                                                                                   |
+| Entregas dos avisos visíveis à plataforma | `notification_deliveries` só para os papéis de cobrança (nasceu na F3c)                                 | H1 (owner, operations e support veem a situação)                                       |
+| Rastro completo de um evento              | Não existe                                                                                              | H2 (tela do evento: o que houve, quem foi avisado, por qual canal, o que foi auditado) |
+| Analytics de negócio                      | Não existe (o da CF7 é analytics de produto)                                                            | H3, com painel agregado da plataforma                                                  |
+| Papéis múltiplos na plataforma            | `platform_admin_members` tem um papel por pessoa                                                        | H1 (`platform_admin_capabilities` para o `keychain`)                                   |
+| Avisos fora do `notify`                   | Lead quente e indicação (webhook A6), análises da GB1a (função própria)                                 | H1                                                                                     |
+| Canal WhatsApp e rota por modo            | Não existem no `notify`                                                                                 | H1                                                                                     |
+| Flakiness dos e2e `privacy` e `proposals` | Falham sob carga e passam sozinhos                                                                      | Corrigir na primeira etapa que mexer neles (seção 7)                                   |
 
 ## 6. Duas etapas por vez
 
@@ -94,7 +94,20 @@ Com subagentes de teste no modelo Haiku 5.5 (só rodam e relatam; diagnóstico e
 
 **No CI (tempo, sem mexer na garantia):**
 
-6. **PR só de documentação** não precisa de `db` nem de `e2e`: um job `changes` (filtro de caminhos) decide, e os jobs pulados respondem como concluídos, para não travar a proteção da branch. Qualquer arquivo fora de `docs/` e `*.md` roda tudo.
-7. **Cache** do Chromium do Playwright e do `.next/cache` entre execuções.
+6. **PR só de documentação** não precisa de `db` nem de `e2e`: um job `changes` (filtro de caminhos) decide, e os jobs pulados respondem como concluídos, para não travar a proteção da branch. Qualquer arquivo fora de `docs/` e `*.md` roda tudo. **Implementado na AUD1:** o job `changes` faz `git diff --name-only base...head` num passo de shell (sem action de terceiros) e devolve `docs_only`; `db` e `e2e` têm `needs: changes` e `if: !cancelled() && docs_only != 'true'`. Falha fechada: push na `main`, diff vazio ou ilegível e falha do próprio `changes` rodam tudo. O `quality` não depende dele e roda sempre.
+7. **Cache** do Chromium do Playwright e do `.next/cache` entre execuções. **Implementado na AUD1:** no `e2e`, `~/.cache/ms-playwright` com chave pela versão do `@playwright/test` lida do `pnpm-lock.yaml`; com cache, só `playwright install-deps chromium` (pacotes do sistema), sem cache, `install --with-deps`. No `quality` (o job que faz `pnpm build`), `.next/cache` com chave pelo lockfile e pelos arquivos de código (`src/**`, `next.config.ts`, `tsconfig.json`, `postcss.config.*`, `prisma/**`), restaurando o último cache do mesmo lockfile quando só o código muda. O `e2e` roda `pnpm dev`, não `build`, e fica sem cache do `.next`. Nenhuma suíte saiu; a lista das suítes SQL ficou igual, com a `platform-audit-rls.sql` acrescentada.
 8. **E2E instáveis** (`privacy`, `proposals`): corrigir a causa em vez de depender das 2 repetições automáticas do CI.
 9. **Não fazer:** pular jobs com base no diff de código, rodar no CI só o teste que falhou, ou aceitar merge com rodada parcial. Paralelizar o e2e (hoje `workers: 1`) exige dados isolados por teste; fica para uma etapa própria.
+
+## 8. Implementado na AUD1
+
+Branch `claude/aud1-platform-audit`, migration `20261126090000_aud1_platform_audit`.
+
+- **Banco:** `private.platform_audit_events(parceiro, empresa, workspace, prefixo da ação, resultado, origem, ator, de, até, cursor_em, cursor_id, limite)`, `security definer`, dono `app_rls_helper`, `EXECUTE` só para `app_runtime` (grant antes da troca de dono). Devolve a trilha do mais recente ao mais antigo, com cursor por (`occurred_at`, `id`) e no máximo 200 linhas. O `audit_events` continua sem leitura direta pelo `app_runtime`. A política `audit_events_platform_audit_helper_select` (para `app_rls_helper`) repete a regra de papel, no padrão da CF5a.
+- **Papéis:** `owner`, `operations` e `support` veem tudo, com os metadados (já filtrados pela allowlist de `src/core/audit/record.ts` na gravação). `billing` vê só as ações de cobrança, definidas por `private.is_billing_audit_action` pelos prefixos reais do código: `billing.`, `platform.billing.`, `partner.billing.`, `partner.payment.`, `partner.subscription.` e `partner.checkout.`. Parceiro, cliente e membro inativo não veem nada.
+- **Parceiro do evento:** o `partnerId` dos metadados ou, sem ele, o parceiro da empresa. A função devolve ids; o serviço (`src/core/audit/platform-read.ts`) resolve os nomes pelo que o papel já lê (parceiros, listas de empresas, workspaces e usuários da plataforma, e-mail do membro de parceiro).
+- **Prefixo da ação:** comparado como texto (`left(action, n) = prefixo`), sem curinga; o serviço aceita só `[a-z0-9_.]`.
+- **Período:** dias inteiros no fuso de São Paulo (`-03:00`, sem horário de verão desde 2019), fim incluído.
+- **Tela:** `/platform/audit` ("Auditoria", no menu da plataforma para os quatro papéis), permissão `platform.audit.read` revalidada na página e no serviço. Filtros acima, lista paginada (`Table` `soft`, `Badge` de situação, `Empty`), detalhe na gaveta (`WorkbenchLayout`) com `KeyValueList` dos campos e dos metadados, botão "Filtrar por este ator" e link para os eventos de segurança quando o evento também é de segurança e quem vê tem `platform.security.read`. Avisos pelo `useStatus()`; erro de formato fica ao lado do campo.
+- **Testes:** `tests/core/platform-audit-rls.sql` (cada papel, billing restrito, filtros, cursor com empate, parceiro e cliente sem acesso, `app_runtime` sem `SELECT`, dono e grants reais), `src/core/audit/platform-read.test.ts` (filtros, período, cursor com microssegundos, nomes) e `e2e/platform-audit.spec.ts` (lista, filtro, gaveta; billing só cobrança). O `makePlatformAdmin` do e2e aceita o papel (padrão `owner`).
+- **Fora da AUD1:** leitura das entregas (`notification_deliveries`) pela plataforma, que fica com a H1; o cursor da tela de eventos de segurança (CF5a) usa só milissegundos e pode pular eventos do mesmo milissegundo, a corrigir quando ela for mexida.
