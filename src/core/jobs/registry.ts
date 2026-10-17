@@ -20,6 +20,7 @@ import {
 } from "@/core/privacy/lifecycle-jobs";
 import { privacyJobs, privacySchedules } from "@/core/privacy/maintenance";
 import { proposalExecuteJob } from "@/core/proposals/service";
+import { ipBlockedJob } from "@/core/security/ip-blocked-job";
 import { backgroundAnalysesJob } from "@/modules/google-business/server/jobs";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
 
@@ -42,6 +43,8 @@ const DEFINITIONS = [
   // H2: quiet window, digest, escalation and grant expiry; access requests.
   noticesTickJob,
   accessRequestJob,
+  // AJ1: an address refused by the IP gate of /platform or /admin.
+  ipBlockedJob,
   translateTextsJob,
   translateDocumentJob,
   workspaceExportJob,
