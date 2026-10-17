@@ -24,7 +24,7 @@ Os avisos nasceram soltos: o `notify` da CF3c tem 6 eventos; o aviso de lead que
 
 ## Consequências
 
-- Etapas H1 a H5 no [plano](../architecture/central-de-eventos.md#4-etapas); H1 e H2 antes da GB2, H3 com o DP2, H4 com a GB2.
+- Etapas H1 a H5 no [plano](../architecture/central-de-eventos.md#4-etapas); H1 e H2 antes da GB2, H3 com o DP2, H4 com a GB2. Fila revista em 17/10/2026 ([fila-de-etapas.md](../fila-de-etapas.md)): perfil digital fora por enquanto, H4 antes da GB2, H5 dividida em H5a e H5b.
 - Nova variável de ambiente `EVENTS_HMAC_KEY` (e `EVENTS_HMAC_KEY_ID`) no web e no worker; sem ela, a emissão falha na subida, não em silêncio.
 - Lacunas conhecidas registradas no [plano](../architecture/central-de-eventos.md#5-lacunas-registradas), entre elas a tela de auditoria completa da plataforma.
 - A capacidade `keychain` entra na [matriz de permissões](../architecture/permissoes.md) na H1.

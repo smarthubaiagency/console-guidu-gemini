@@ -1,6 +1,7 @@
 # Perfil digital: planejamento do módulo
 
 - **Versão:** 0.4, 15/10/2026.
+- **Estado (17/10/2026):** fora da fila por enquanto, por decisão do Marcelo; volta depois. As previsões deixadas nas outras etapas (Central de Eventos, CF2d, CF2e-1 e a ADR da rota pública) estão em [fila-de-etapas.md](../../fila-de-etapas.md#3-previsão-para-o-perfil-digital).
 
 Início do planejamento em 14/10/2026, a partir da [comparação dos relatórios](comparativo-relatorios.md). Base técnica: [relatório do Opus](analise-opus-legado.md), com os complementos indicados na comparação. Nada aqui foi implementado.
 
