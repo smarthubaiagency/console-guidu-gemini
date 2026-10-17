@@ -4,15 +4,19 @@ import { recordAudit } from "@/core/audit/record";
 import { definePlatformJob, type JobSchedule } from "@/core/jobs/definition";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
+import { enqueueWorkspacePurge } from "./lifecycle-queue";
+import { sendDeletionReminders } from "./notices";
 import { listModuleDataContracts } from "./registry";
 
 /**
  * Daily privacy routine (F3e), a platform job run as app_worker:
  *
- * 1. Purge workspaces whose 30-day grace period is over: module data
- *    through each module's contract, then core rows, then the tombstone
- *    (`deleted`, anonymized name and slug) and the deletion record. The
- *    database lets the worker delete only rows of such workspaces.
+ * 1. Queue the purge of workspaces whose 30-day grace period is over
+ *    (`privacy.workspace-purge`, WS1): the external hooks first, then
+ *    `purgeWorkspace` below (module data through each module's contract,
+ *    core rows, the tombstone with `deleted`, anonymized name and slug, and
+ *    the deletion record). The database lets the worker delete only rows
+ *    of such workspaces. The reminder of 7 days before goes out once.
  * 2. Expire exports past their 24 hours (the file is dropped).
  * 3. Apply retention for enabled categories; all are disabled until the
  *    legal rules, and the database refuses deletes while they are.
@@ -44,7 +48,7 @@ export async function purgeWorkspace(
     ["workspace_locations", () => tx.workspaceLocation.deleteMany({ where })],
     ["settings", () => tx.setting.deleteMany({ where })],
     // Public domains (CF2b, CF2c): the tools' choices before the domains.
-    // The Cloudflare hostnames stay (pending in docs/operacao/dominios.md).
+    // Their Cloudflare hostnames went before, in the external purge (WS1).
     [
       "workspace_public_routes",
       () => tx.workspacePublicRoute.deleteMany({ where }),
@@ -109,7 +113,10 @@ export async function purgeWorkspace(
 
 export type PrivacyRunResult = Readonly<{
   date: string;
-  purged: number;
+  /** Purges queued (privacy.workspace-purge), WS1. */
+  purgesQueued: number;
+  /** Reminders of 7 days before the purge sent now, WS1. */
+  reminders: number;
   exportsExpired: number;
   retentionDeleted: number;
 }>;
@@ -124,12 +131,11 @@ export async function runPrivacyMaintenance(
     order by purge_after
     limit ${PURGE_BATCH}
   `;
+  let purgesQueued = 0;
   for (const workspace of due) {
-    await purgeWorkspace(tx, {
-      id: workspace.id,
-      organizationId: workspace.organization_id,
-    });
+    if (await enqueueWorkspacePurge(tx, workspace.id, date)) purgesQueued += 1;
   }
+  const reminders = await sendDeletionReminders(tx);
 
   // Fallback rate-limit windows older than a day (F4a).
   await tx.$executeRaw`
@@ -187,7 +193,8 @@ export async function runPrivacyMaintenance(
 
   return {
     date,
-    purged: due.length,
+    purgesQueued,
+    reminders,
     exportsExpired,
     retentionDeleted,
   };
@@ -196,7 +203,7 @@ export async function runPrivacyMaintenance(
 export const privacyMaintenanceJob = definePlatformJob({
   kind: "privacy.daily-maintenance",
   description:
-    "Conclui exclusões de workspace vencidas, expira exportações e aplica a retenção ligada.",
+    "Agenda a conclusão das exclusões de workspace vencidas, lembra as próximas, expira exportações e aplica a retenção ligada.",
   payload: z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
   maxAttempts: 5,
   retryDelaySeconds: 60,

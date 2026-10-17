@@ -81,6 +81,22 @@
       "aiKeyPaused": {
         "name": "Agente pausado",
         "description": "Avisa al cliente que el agente fue pausado porque la clave no se corrigió."
+      },
+      "workspaceDeletionScheduled": {
+        "name": "Eliminación de workspace programada",
+        "description": "Avisa al propietario y a los administradores que se pidió la eliminación del workspace y hasta cuándo se puede cancelar."
+      },
+      "workspaceDeletionReminder": {
+        "name": "Recordatorio de eliminación",
+        "description": "Avisa al propietario y a los administradores 7 días antes de que el workspace se elimine definitivamente."
+      },
+      "workspaceDeletionCanceled": {
+        "name": "Eliminación cancelada",
+        "description": "Avisa al propietario y a los administradores que se canceló la eliminación del workspace."
+      },
+      "workspaceDeletionCompleted": {
+        "name": "Workspace eliminado",
+        "description": "Avisa al propietario y a los administradores que el workspace se eliminó definitivamente."
       }
     },
     "essential": "Correo esencial: no se puede desactivar.",
@@ -100,7 +116,7 @@
     "variablesHint": "Haga clic para insertar donde está el cursor. Solo valen las variables de este evento y todo valor se escapa.",
     "variableNames": {
       "organizacao": "Nombre de la organización del cliente",
-      "data": "Fecha y hora del plazo (validez de la invitación o fin del respaldo)",
+      "data": "Fecha y hora del plazo (validez de la invitación, fin del respaldo o eliminación del workspace)",
       "link": "Dirección del botón de acción (úsela como enlace)",
       "marca": "Nombre de la marca",
       "parceiro": "Nombre del socio",

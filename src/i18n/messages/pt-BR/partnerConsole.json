@@ -41,7 +41,9 @@
     "modes": {
       "gerenciado": "Gerenciado",
       "padrao": "Padrão"
-    }
+    },
+    "deletionScheduled": "Exclusão agendada para {date}",
+    "deletionScheduledTitle": "Workspace {workspace}"
   },
   "members": {
     "metaTitle": "Membros (Parceiro)",

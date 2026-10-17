@@ -41,7 +41,9 @@
     "modes": {
       "gerenciado": "Managed",
       "padrao": "Standard"
-    }
+    },
+    "deletionScheduled": "Deletion scheduled for {date}",
+    "deletionScheduledTitle": "Workspace {workspace}"
   },
   "members": {
     "metaTitle": "Members (Partner)",

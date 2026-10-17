@@ -81,6 +81,22 @@
       "aiKeyPaused": {
         "name": "Agent paused",
         "description": "Tells the customer the agent was paused because the key was not fixed."
+      },
+      "workspaceDeletionScheduled": {
+        "name": "Workspace deletion scheduled",
+        "description": "Tells the owner and admins that the workspace's deletion was requested and until when it can be canceled."
+      },
+      "workspaceDeletionReminder": {
+        "name": "Deletion reminder",
+        "description": "Tells the owner and admins 7 days before the workspace is deleted for good."
+      },
+      "workspaceDeletionCanceled": {
+        "name": "Deletion canceled",
+        "description": "Tells the owner and admins that the workspace's deletion was canceled."
+      },
+      "workspaceDeletionCompleted": {
+        "name": "Workspace deleted",
+        "description": "Tells the owner and admins that the workspace was deleted for good."
       }
     },
     "essential": "Essential email: it cannot be turned off.",
@@ -100,7 +116,7 @@
     "variablesHint": "Click to insert where the cursor is. Only this event's variables work, and every value is escaped.",
     "variableNames": {
       "organizacao": "Customer organization name",
-      "data": "Deadline date and time (invitation expiry or end of backup)",
+      "data": "Deadline date and time (invitation expiry, end of backup or workspace deletion)",
       "link": "Address of the action button (use it as a link)",
       "marca": "Brand name",
       "parceiro": "Partner name",

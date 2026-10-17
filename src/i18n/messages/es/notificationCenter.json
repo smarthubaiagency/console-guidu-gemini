@@ -42,6 +42,22 @@
     "eventsChainBroken": {
       "title": "El sello de un evento no coincide",
       "body": "La verificación de la Central de Eventos encontró {count} evento(s) con el sello o la cadena rotos."
+    },
+    "workspaceDeletionScheduled": {
+      "title": "Eliminación de {workspace} programada",
+      "body": "Ningún servicio del workspace funciona hasta la eliminación, el {date}. El propietario puede cancelar hasta entonces."
+    },
+    "workspaceDeletionReminder": {
+      "title": "Faltan 7 días para eliminar {workspace}",
+      "body": "El workspace se eliminará definitivamente el {date}. El propietario todavía puede cancelar."
+    },
+    "workspaceDeletionCanceled": {
+      "title": "Eliminación de {workspace} cancelada",
+      "body": "Los servicios del workspace volvieron a funcionar."
+    },
+    "workspaceDeletionCompleted": {
+      "title": "Workspace {workspace} eliminado",
+      "body": "El workspace y sus datos se borraron definitivamente."
     }
   },
   "preferences": {

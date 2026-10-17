@@ -8,6 +8,7 @@ import type {
 import { AppError } from "@/shared/errors";
 
 import { type Assurance, requireMfa } from "./export";
+import { enqueueWorkspaceLifecycle } from "./lifecycle-queue";
 
 /**
  * Workspace deletion (F3e, decision of 17/10/2026): logical first, with a
@@ -15,6 +16,10 @@ import { type Assurance, requireMfa } from "./export";
  * then on the database closes the workspace to everyone (helpers require an
  * active workspace) and the owner may cancel from /app. After the grace
  * period the daily privacy job purges the data and keeps a tombstone.
+ *
+ * WS1: both the request and the cancel queue the lifecycle run of the
+ * deletion record (`privacy.workspace-lifecycle`), which calls the hooks of
+ * the modules and of the core and tells the owners and admins.
  */
 export const DELETION_GRACE_DAYS = 30;
 
@@ -50,6 +55,8 @@ export async function requestWorkspaceDeletion(
     result: "success",
     metadata: { status: "deletion_scheduled" },
   });
+  // Hooks and notices of the lifecycle (WS1), by the worker.
+  await enqueueWorkspaceLifecycle(tx, ctx.userId, deletionId, "scheduled");
   return {
     deletionId,
     purgeAfter: new Date(Date.now() + DELETION_GRACE_DAYS * 86_400_000),
@@ -106,6 +113,12 @@ export async function cancelWorkspaceDeletion(
       messageKey: "privacy.errors.deletionNotFound",
     });
   }
+  const [canceled] = await tx.$queryRaw<{ id: string | null }[]>`
+    select private.canceled_deletion_id(${workspaceId}::uuid) as id
+  `;
+  if (canceled?.id) {
+    await enqueueWorkspaceLifecycle(tx, userId, canceled.id, "canceled");
+  }
   await recordAudit(
     tx,
     { userId, workspaceId: "", organizationId: "" },
@@ -117,4 +130,34 @@ export async function cancelWorkspaceDeletion(
       metadata: { target: workspaceId, status: "active" },
     },
   );
+}
+
+export type PartnerScheduledDeletion = Readonly<{
+  organizationId: string;
+  workspaceId: string;
+  workspaceName: string;
+  purgeAfter: Date;
+}>;
+
+/**
+ * Scheduled deletions of the context partner's companies (WS1), for the
+ * badge of /admin › Clientes. Reading only: the cancel stays with the owner.
+ */
+export async function listPartnerScheduledDeletions(
+  tx: ContextTransaction,
+): Promise<PartnerScheduledDeletion[]> {
+  const rows = await tx.$queryRaw<
+    {
+      organization_id: string;
+      workspace_id: string;
+      workspace_name: string;
+      purge_after: Date;
+    }[]
+  >`select * from private.partner_scheduled_deletions()`;
+  return rows.map((row) => ({
+    organizationId: row.organization_id,
+    workspaceId: row.workspace_id,
+    workspaceName: row.workspace_name,
+    purgeAfter: row.purge_after,
+  }));
 }
