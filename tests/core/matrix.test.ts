@@ -505,7 +505,7 @@ describeDatabase(
       });
       expect(JSON.stringify(marks)).not.toContain("oi");
       expect(JSON.stringify(marks)).not.toContain("Olá");
-      const marked = await processUntil(async () => {
+      await processUntil(async () => {
         const row = await admin.matrixRoom.findUnique({
           where: { roomId: room.roomId },
         });
