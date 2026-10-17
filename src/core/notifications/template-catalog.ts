@@ -34,6 +34,14 @@ export type EmailTemplateDefinition = Readonly<{
 const text = (name: string): TemplateVariable => ({ name, kind: "text" });
 const url = (name: string): TemplateVariable => ({ name, kind: "url" });
 
+/** Workspace deletion (WS1): name, date of the purge, console link, brand. */
+const deletionVariables: readonly TemplateVariable[] = [
+  text("workspace"),
+  text("data"),
+  url("link"),
+  text("marca"),
+];
+
 /** The variables each event offers to its template. */
 const VARIABLES: Readonly<
   Record<EmailTemplateEvent, readonly TemplateVariable[]>
@@ -60,6 +68,10 @@ const VARIABLES: Readonly<
     url("link"),
     text("marca"),
   ],
+  "workspace.deletion.scheduled": deletionVariables,
+  "workspace.deletion.reminder": deletionVariables,
+  "workspace.deletion.canceled": deletionVariables,
+  "workspace.deletion.completed": deletionVariables,
   "ai.agent.key_backup": [
     text("workspace"),
     text("agente"),

@@ -42,7 +42,8 @@
     "colSlug": "Slug",
     "colOrganization": "Organization",
     "colStatus": "Status",
-    "colCreatedAt": "Created on"
+    "colCreatedAt": "Created on",
+    "deletionScheduled": "Deletion scheduled for {date}"
   },
   "users": {
     "metaTitle": "Users (Admin)",

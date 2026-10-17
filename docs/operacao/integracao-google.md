@@ -16,7 +16,7 @@ Nenhum segredo vai para o repositório: o Client Secret é digitado na tela, cif
 
 - **Plataforma** (owner ou operations): Configurações › API e integrações › **Google**. Informe Client ID, Client Secret e a situação da verificação (em teste, em produção sem verificação, em análise, verificado). Para trocar só a situação, deixe o segredo em branco. No mesmo lugar, os **escopos liberados** para os workspaces.
 - **Parceiro** (owner ou admin): Configurações › Integrações › **Google**. O app próprio é opcional; sem ele, os clientes usam o da GUIDU. O parceiro também pode desligar escopos para os clientes dele (nunca ligar o que a plataforma desligou). Remover o app próprio devolve os clientes ao app da GUIDU, e as conexões feitas com o app do parceiro precisam ser refeitas.
-- **Workspace** (owner ou admin): Configurações › Canais e integrações › **Integrações** › Conectar conta Google. A página mostra a conta, o app usado e os escopos autorizados; "Desconectar" apaga a conexão e revoga o token no Google.
+- **Workspace** (owner ou admin): Configurações › Canais e integrações › **Integrações** › Conectar conta Google. A página mostra a conta, o app usado e os escopos autorizados; "Desconectar" apaga a conexão e revoga o token no Google. Na limpeza final de um workspace excluído, o gancho `core.google_connection` revoga o token antes de apagar a conexão; um token já inválido conta como revogado ([exclusao-suave-workspace.md](exclusao-suave-workspace.md)).
 
 ## 3. Verificação do Google
 

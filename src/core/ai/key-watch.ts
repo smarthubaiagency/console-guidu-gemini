@@ -1,14 +1,13 @@
 import { z } from "zod";
 
 import { recordAudit } from "@/core/audit/record";
-import { appConfig } from "@/core/config/app";
 import { definePlatformJob, type JobSchedule } from "@/core/jobs/definition";
 import { dispatchEvent } from "@/core/events/dispatch";
 import { emitEvent, WORKER_ACTOR } from "@/core/events/emit";
 import { getNotificationTransport } from "@/core/notifications/transport";
 import type { NotificationTransport } from "@/core/notifications/types";
-import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
-import { partnerHostOrigin } from "@/core/partners/hosts";
+import { partnerConsoleOrigin } from "@/core/partners/console-origin";
+import { isWorkspaceActive } from "@/core/workspaces/active";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { BACKUP_WINDOW_MS } from "./backup";
@@ -72,25 +71,8 @@ async function noticeContextOf(
   ]);
   if (!workspace || !organization?.partnerId) return null;
   const partnerId = organization.partnerId;
-  const [partner, domains] = await Promise.all([
-    tx.partner.findUnique({
-      where: { id: partnerId },
-      select: { isHouse: true },
-    }),
-    tx.partnerDomain.findMany({
-      where: { partnerId, status: "active" },
-      orderBy: { host: "asc" },
-      select: { host: true, kind: true },
-    }),
-  ]);
-  const house = !partner || partner.isHouse || partnerId === HOUSE_PARTNER_ID;
-  // The customer's console on the partner's domain (custom first); the
-  // platform host for the house or a partner still without a domain.
-  const domain = domains.find((d) => d.kind === "custom") ?? domains[0] ?? null;
-  const origin =
-    house || !domain
-      ? appConfig.url
-      : partnerHostOrigin(domain.host, process.env);
+  // The customer's console on the partner's domain (custom first).
+  const origin = await partnerConsoleOrigin(tx, partnerId);
   return {
     partnerId,
     workspaceName: workspace.name,
@@ -123,6 +105,8 @@ export async function runKeyWatch(
     if (!row.organizationId || !row.workspaceId || !row.backupStartedAt) {
       continue;
     }
+    // A closed workspace (WS1) gets neither the pause nor the notices.
+    if (!(await isWorkspaceActive(tx, row.workspaceId))) continue;
     const agent: Agent = {
       id: row.id,
       organizationId: row.organizationId,

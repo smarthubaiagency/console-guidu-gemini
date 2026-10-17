@@ -213,6 +213,33 @@ export function createGoogleProvider(
   };
 }
 
+/**
+ * Revokes a token at Google and says how it ended (WS1, final purge of a
+ * workspace): `revoked`, or `already_gone` when Google no longer knows the
+ * token (revoked or expired before). Any other answer, or no answer,
+ * throws, so the purge tries again later.
+ */
+export async function revokeGoogleTokenStrict(
+  token: string,
+  fetcher: typeof fetch = fetch,
+): Promise<"revoked" | "already_gone"> {
+  const response = await fetcher(REVOKE_URL, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ token }).toString(),
+    redirect: "error",
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (response.ok) return "revoked";
+  if (response.status === 400) {
+    const body = (await response.json().catch(() => ({}))) as {
+      error?: unknown;
+    };
+    if (body.error === "invalid_token") return "already_gone";
+  }
+  throw new GoogleOAuthError(`revoke_http_${response.status}`);
+}
+
 function fakeIdToken(email: string, subject: string): string {
   const part = (value: object) =>
     Buffer.from(JSON.stringify(value)).toString("base64url");

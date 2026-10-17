@@ -110,7 +110,8 @@ test("the bell counts, lists and marks notices as read", async ({
     page.getByRole("heading", { name: "Notificações", level: 1 }),
   ).toBeVisible();
   const rows = page.getByTestId("notification-preference-row");
-  await expect(rows).toHaveCount(4);
+  // Four notices of the workspace deletion (WS1) and four of billing and AI.
+  await expect(rows).toHaveCount(8);
   for (const row of await rows.all()) {
     await expect(row).toHaveAttribute("data-locked", "true");
   }
