@@ -345,7 +345,8 @@ export async function runGuidsTurn(
       assignee: null,
     });
     handoff = 1;
-    await noticeHandoff(session, ctx, roomId);
+    // The notice "conversa nova" goes out when the core mirrors this state
+    // (events.ts, `runRoomHandedOff`).
     appLog.info("inbox.guids.handoff", {
       executionId: session.jobRunId,
       workspaceId: ctx.workspaceId,
@@ -358,24 +359,6 @@ export async function runGuidsTurn(
     sent,
     handoff,
   };
-}
-
-/**
- * The GUIDS handed a conversation to the team: the notice "conversa nova"
- * of the IN4b goes to the attendants. Wired at the merge with the IN4b
- * (`noticeNewConversation(tx, { roomId, workspaceId, consumerName })` of
- * `./notices.ts`); until then it does nothing.
- */
-async function noticeHandoff(
-  session: JobSession,
-  ctx: RequestContext,
-  roomId: string,
-): Promise<void> {
-  // MERGE-IN4B: call noticeNewConversation here, in a transaction of
-  // `session`, with `ctx.workspaceId` and `roomId`.
-  void session;
-  void ctx;
-  void roomId;
 }
 
 export function createGuidsTurnJob(deps: GuidsTurnDeps = {}) {

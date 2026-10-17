@@ -23,10 +23,13 @@ import {
 import { matrixWorkspaceLifecycle } from "@/core/matrix/lifecycle";
 import { createConversationRoom } from "@/core/matrix/rooms";
 import { changeConversation } from "@/core/matrix/conversation";
+import { linkContactJob } from "@/modules/inbox/server/jobs";
+import { noticeUnanswered } from "@/modules/inbox/server/notices";
 import { createMatrixSession } from "@/core/matrix/session";
 import {
   CONVERSATION_STATE,
   createRoom,
+  setConversationState,
   createSynapseClient,
   deleteRoom,
   MatrixHttpError,
@@ -193,6 +196,17 @@ describeDatabase(
       return { mxid, token: access_token };
     }
 
+    /** Who an Inbox notice of this type went to (IN4b). */
+    async function recipients(type: string, roomId: string): Promise<string[]> {
+      const rows = await admin.$queryRawUnsafe<{ recipient_user_id: string }[]>(
+        `select recipient_user_id::text from public.events
+         where type = $1 and subject_id = $2 order by created_at`,
+        type,
+        roomId,
+      );
+      return rows.map((row) => row.recipient_user_id);
+    }
+
     /** Marks (or unmarks) a person as attendant of workspace A (IN4a). */
     async function mark(userId: string, on = true) {
       if (on) {
@@ -208,6 +222,12 @@ describeDatabase(
     }
 
     async function cleanup() {
+      await admin.$executeRawUnsafe(
+        `delete from public.events where type like 'inbox.%'`,
+      );
+      await admin.$executeRawUnsafe(
+        `delete from public.job_runs where kind like 'inbox.%' or kind = 'events.dispatch'`,
+      );
       await admin.$executeRawUnsafe(`delete from public.inbox_attendants`);
       await admin.$executeRawUnsafe(
         `delete from public.matrix_workspace_addresses`,
@@ -797,6 +817,103 @@ describeDatabase(
         return row?.status === "pending" && row.statusEventId ? row : null;
       }, "state mirrored");
       expect(mirrored.assignee).toBeNull();
+    });
+
+    it("IN4b: a new room gets its CRM contact and the notices of new, assigned and unanswered", async () => {
+      await mark(ids.userA);
+      const owner = await createMatrixSession(prisma, ids.userA);
+      await run(matrixSyncAccountJob, { userId: ids.userA });
+      await admin.$executeRawUnsafe(
+        `insert into public.workspace_modules (organization_id, workspace_id, module_key, status, updated_by)
+         values ('${ids.organizationA}', '${ids.workspaceA}', 'crm', 'enabled', '${ids.userA}')
+         on conflict (workspace_id, module_key) do update set status = 'enabled'`,
+      );
+      const guest = await consumer();
+      const room = await asWorker((tx) =>
+        createConversationRoom(tx, client, {
+          workspaceId: ids.workspaceA,
+          consumerMxid: guest.mxid,
+          consumerName: "Cliente IN4b",
+        }),
+      );
+
+      // The link row and the job of the contact, as a manager.
+      expect(
+        await admin.inboxConversation.findUniqueOrThrow({
+          where: { roomId: room.roomId },
+        }),
+      ).toMatchObject({ contactState: "pending", contactId: null });
+      const jobRun = await admin.jobRun.findFirstOrThrow({
+        where: { kind: "inbox.link-contact", workspaceId: ids.workspaceA },
+      });
+      expect(jobRun.requestedBy).toBe(ids.userA);
+      // Who answers hears of the new conversation.
+      expect(await recipients("inbox.conversation.new", room.roomId)).toEqual([
+        ids.userA,
+      ]);
+
+      // A transactional workspace job: the worker runs it in the context.
+      const linkContact = linkContactJob as unknown as {
+        run(
+          tx: ContextTransaction,
+          ctx: typeof contextA,
+          payload: { roomId: string },
+        ): Promise<unknown>;
+      };
+      const linked = await withContext(prisma, contextA, (tx) =>
+        linkContact.run(tx, contextA, { roomId: room.roomId }),
+      );
+      expect(linked).toEqual({ state: "linked" });
+      const link = await admin.inboxConversation.findUniqueOrThrow({
+        where: { roomId: room.roomId },
+      });
+      const contact = await admin.crmContact.findUniqueOrThrow({
+        where: { id: link.contactId! },
+      });
+      expect(contact.name).toBe("Cliente IN4b");
+
+      // Assigned by someone else: the assignee hears of it; taking it
+      // oneself tells nobody.
+      await setConversationState(
+        client,
+        room.roomId,
+        { status: "open", assignee: owner.userId },
+        owner.userId,
+      );
+      await setConversationState(
+        client,
+        room.roomId,
+        { status: "pending", assignee: null },
+        owner.userId,
+      );
+      await setConversationState(
+        client,
+        room.roomId,
+        { status: "open", assignee: owner.userId },
+        `@u_aaaaaaaaaaaaaaaaaaaaaaaa:${config.serverName}`,
+      );
+      const assigned = await processUntil(async () => {
+        const people = await recipients(
+          "inbox.conversation.assigned",
+          room.roomId,
+        );
+        return people.length > 0 ? people : null;
+      }, "assignment noticed");
+      expect(assigned).toEqual([ids.userA]);
+
+      // No answer for 15 minutes: the assignee, once per message.
+      await admin.$executeRawUnsafe(
+        `update public.matrix_rooms set last_consumer_message_at = now() - interval '20 minutes',
+           last_team_message_at = null, last_agent_message_at = null
+         where room_id = '${room.roomId}'`,
+      );
+      const first = await asWorker((tx) => noticeUnanswered(tx));
+      expect(first.notices).toBe(1);
+      const again = await asWorker((tx) => noticeUnanswered(tx));
+      expect(again.notices).toBe(0);
+      expect(
+        await recipients("inbox.conversation.unanswered", room.roomId),
+      ).toEqual([ids.userA]);
     });
 
     it("blocks the rooms during the soft deletion, restores them on cancel and purges them", async () => {

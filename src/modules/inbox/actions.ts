@@ -23,7 +23,20 @@ import {
 import { AppError } from "@/shared/errors";
 
 import { loadInboxViewer, type InboxViewer } from "./server/access";
+import {
+  conversationContact,
+  type ConversationContact,
+  linkContact,
+  searchContacts,
+} from "./server/contacts";
 import { listConversations } from "./server/conversations";
+import {
+  createLabel,
+  deleteLabel,
+  type InboxLabel,
+  setRoomLabel,
+  updateLabel,
+} from "./server/labels";
 import { type ConversationPage, INBOX_VIEWS } from "./views";
 
 /**
@@ -71,19 +84,21 @@ const ListInput = z.object({
   workspaceSlug: z.string().min(1).max(120),
   view: z.enum(INBOX_VIEWS),
   search: z.string().max(80).optional(),
+  labelId: z.string().uuid().optional(),
 });
 
 export async function listConversationsAction(
   input: z.input<typeof ListInput>,
 ): Promise<{ page: ConversationPage } | Failure> {
   try {
-    const { workspaceSlug, view, search } = ListInput.parse(input);
+    const { workspaceSlug, view, search, labelId } = ListInput.parse(input);
     return {
-      page: await inInbox(workspaceSlug, (tx, _ctx, viewer) =>
-        listConversations(tx, {
+      page: await inInbox(workspaceSlug, (tx, ctx, viewer) =>
+        listConversations(tx, ctx, {
           view,
           mxid: viewer.mxid,
           search: search ?? null,
+          labelId: labelId ?? null,
         }),
       ),
     };
@@ -122,6 +137,137 @@ export async function changeConversationAction(
       }),
     );
     return { state };
+  } catch (error) {
+    return actionFailure(error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Labels (IN4b)
+// ---------------------------------------------------------------------------
+
+const Slug = z.string().min(1).max(120);
+const RoomId = z.string().min(2).max(255);
+
+const LabelSaveInput = z.object({
+  workspaceSlug: Slug,
+  labelId: z.string().uuid().optional(),
+  name: z.string(),
+  color: z.string(),
+});
+
+export async function saveLabelAction(
+  input: z.input<typeof LabelSaveInput>,
+): Promise<{ label: InboxLabel } | Failure> {
+  try {
+    const { workspaceSlug, labelId, name, color } = LabelSaveInput.parse(input);
+    const label = await inInbox(workspaceSlug, (tx, ctx, viewer) =>
+      labelId
+        ? updateLabel(tx, ctx, viewer, labelId, { name, color })
+        : createLabel(tx, ctx, viewer, { name, color }),
+    );
+    return { label };
+  } catch (error) {
+    return actionFailure(error);
+  }
+}
+
+const LabelDeleteInput = z.object({
+  workspaceSlug: Slug,
+  labelId: z.string().uuid(),
+});
+
+export async function deleteLabelAction(
+  input: z.input<typeof LabelDeleteInput>,
+): Promise<{ ok: true } | Failure> {
+  try {
+    const { workspaceSlug, labelId } = LabelDeleteInput.parse(input);
+    await inInbox(workspaceSlug, (tx, ctx, viewer) =>
+      deleteLabel(tx, ctx, viewer, labelId),
+    );
+    return { ok: true };
+  } catch (error) {
+    return actionFailure(error);
+  }
+}
+
+const RoomLabelInput = z.object({
+  workspaceSlug: Slug,
+  roomId: RoomId,
+  labelId: z.string().uuid(),
+  on: z.boolean(),
+});
+
+export async function setRoomLabelAction(
+  input: z.input<typeof RoomLabelInput>,
+): Promise<{ ok: true } | Failure> {
+  try {
+    const { workspaceSlug, ...rest } = RoomLabelInput.parse(input);
+    await inInbox(workspaceSlug, (tx, ctx, viewer) =>
+      setRoomLabel(tx, ctx, viewer, rest),
+    );
+    return { ok: true };
+  } catch (error) {
+    return actionFailure(error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The CRM contact of a conversation (IN4b)
+// ---------------------------------------------------------------------------
+
+const RoomInput = z.object({ workspaceSlug: Slug, roomId: RoomId });
+
+export async function conversationContactAction(
+  input: z.input<typeof RoomInput>,
+): Promise<{ contact: ConversationContact } | Failure> {
+  try {
+    const { workspaceSlug, roomId } = RoomInput.parse(input);
+    const contact = await inInbox(workspaceSlug, (tx, ctx, viewer) =>
+      conversationContact(tx, ctx, viewer, roomId),
+    );
+    return { contact };
+  } catch (error) {
+    return actionFailure(error);
+  }
+}
+
+const SearchInput = z.object({
+  workspaceSlug: Slug,
+  query: z.string().max(100),
+});
+
+export async function searchContactsAction(
+  input: z.input<typeof SearchInput>,
+): Promise<
+  { contacts: { id: string; name: string; detail: string | null }[] } | Failure
+> {
+  try {
+    const { workspaceSlug, query } = SearchInput.parse(input);
+    const contacts = await inInbox(workspaceSlug, (tx, ctx) =>
+      searchContacts(tx, ctx, query),
+    );
+    return { contacts };
+  } catch (error) {
+    return actionFailure(error);
+  }
+}
+
+const LinkInput = z.object({
+  workspaceSlug: Slug,
+  roomId: RoomId,
+  contactId: z.string().uuid(),
+});
+
+export async function linkContactAction(
+  input: z.input<typeof LinkInput>,
+): Promise<{ ok: true } | Failure> {
+  try {
+    const { workspaceSlug, ...rest } = LinkInput.parse(input);
+    await inInbox(workspaceSlug, (tx, ctx, viewer) =>
+      linkContact(tx, ctx, viewer, rest),
+    );
+    return { ok: true };
   } catch (error) {
     return actionFailure(error);
   }

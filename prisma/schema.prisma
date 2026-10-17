@@ -1949,6 +1949,48 @@ model MatrixWorkspaceAddress {
   @@map("matrix_workspace_addresses")
 }
 
+/// Label catalog of a workspace's Inbox (IN4b).
+model InboxLabel {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  name           String
+  color          String   @default("neutral")
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@unique([id, workspaceId])
+  @@map("inbox_labels")
+}
+
+/// A label on a conversation (IN4b).
+model InboxRoomLabel {
+  roomId         String   @map("room_id")
+  labelId        String   @map("label_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@id([roomId, labelId])
+  @@map("inbox_room_labels")
+}
+
+/// The CRM contact of a conversation (IN4b).
+model InboxConversation {
+  roomId         String   @id @map("room_id")
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  contactId      String?  @map("contact_id") @db.Uuid
+  contactState   String   @default("pending") @map("contact_state")
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("inbox_conversations")
+}
+
 /// Virtual user of a GUIDS in the rooms of the Inbox (IN6).
 model MatrixAgentUser {
   agentId        String   @id @map("agent_id") @db.Uuid

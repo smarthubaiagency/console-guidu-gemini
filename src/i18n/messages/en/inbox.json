@@ -81,6 +81,46 @@
     "notResolved": "The conversation is not resolved.",
     "conversationNotFound": "Conversation not found.",
     "assigneeNotAttendant": "Only an attendant of this conversation can be the assignee.",
-    "notMarkable": "Only owners, admins and editors of the workspace can be marked as attendants."
+    "notMarkable": "Only owners, admins and editors of the workspace can be marked as attendants.",
+    "labelExists": "A label with that name already exists.",
+    "labelNotFound": "Label not found.",
+    "tooManyLabels": "The Inbox takes up to {max} labels."
+  },
+  "unread": "{count, plural, one {# unread message} other {# unread messages}}",
+  "labels": {
+    "title": "Labels",
+    "filter": "Filter by label",
+    "all": "All labels",
+    "empty": "The workspace has no labels yet.",
+    "newPlaceholder": "New label",
+    "color": "Label color",
+    "add": "Create label",
+    "created": "Label created.",
+    "deleted": "Label deleted.",
+    "delete": "Delete",
+    "deleteNamed": "Delete the label {name}",
+    "confirmDelete": "Delete the label {name} from every conversation?",
+    "colors": {
+      "neutral": "Gray",
+      "info": "Blue",
+      "success": "Green",
+      "warning": "Yellow",
+      "danger": "Red"
+    }
+  },
+  "contact": {
+    "phone": "Phone",
+    "email": "E-mail",
+    "company": "Company",
+    "link": "Link to another contact",
+    "search": "Search the CRM",
+    "cancel": "Cancel",
+    "linked": "Contact linked to the conversation.",
+    "state": {
+      "pending": "The contact is being created in the CRM.",
+      "quota": "The plan's contact quota is full: the conversation has no contact.",
+      "none": "This conversation has no CRM contact.",
+      "linked": ""
+    }
   }
 }

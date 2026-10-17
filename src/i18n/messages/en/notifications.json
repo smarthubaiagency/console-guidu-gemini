@@ -59,7 +59,10 @@
     "workspace_deletion_scheduled": "Workspace deletion scheduled",
     "workspace_deletion_reminder": "Workspace deletion reminder",
     "workspace_deletion_canceled": "Workspace deletion canceled",
-    "workspace_deletion_completed": "Workspace deleted"
+    "workspace_deletion_completed": "Workspace deleted",
+    "inbox_conversation_new": "New Inbox conversation",
+    "inbox_conversation_assigned": "Conversation assigned to you",
+    "inbox_conversation_unanswered": "Unanswered conversation"
   },
   "whatsapp": {
     "generic": "{marca}: you have a new notice in {workspace}. {link}",
@@ -72,7 +75,10 @@
     "security_api_key_created": "{marca}: an API key ({chave}) was created in {workspace}. {link}",
     "security_api_key_revoked": "{marca}: the API key {chave} was revoked in {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: the two-step verification requirement was removed in {workspace}. {link}",
-    "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}"
+    "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}",
+    "inbox_conversation_new": "{marca}: new conversation from {contato} in the Inbox of {workspace}. {link}",
+    "inbox_conversation_assigned": "{marca}: the conversation with {contato} was assigned to you. {link}",
+    "inbox_conversation_unanswered": "{marca}: {contato} has had no answer for 15 minutes. {link}"
   },
   "hub": {
     "action": "Open in the dashboard",
@@ -131,6 +137,18 @@
     "escalation": {
       "subject": "No answer: {event}",
       "body": "This notice has been waiting for a decision for {hours} hours and was forwarded to you."
+    },
+    "inbox_conversation_new": {
+      "subject": "New conversation: {contato}",
+      "body": "{contato} started a conversation in the Inbox."
+    },
+    "inbox_conversation_assigned": {
+      "subject": "Conversation assigned: {contato}",
+      "body": "The conversation with {contato} is now yours."
+    },
+    "inbox_conversation_unanswered": {
+      "subject": "No answer: {contato}",
+      "body": "{contato} has been waiting for an answer for 15 minutes."
     }
   },
   "digest": {

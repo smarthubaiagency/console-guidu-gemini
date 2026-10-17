@@ -2,9 +2,13 @@ import "server-only";
 
 import type { Prisma } from "@prisma/client";
 
-import type { ContextTransaction } from "@/lib/prisma/with-context";
+import type {
+  ContextTransaction,
+  RequestContext,
+} from "@/lib/prisma/with-context";
 
 import type { ConversationPage, ConversationStatus, InboxView } from "../views";
+import { labelsOfRooms, listLabels } from "./labels";
 
 /**
  * The list of a view (IN4a, ADR 0023 rule 10): the mirror of the
@@ -37,10 +41,13 @@ function whereOf(
 
 export async function listConversations(
   tx: ContextTransaction,
+  ctx: RequestContext,
   input: Readonly<{
     view: InboxView;
     mxid: string | null;
     search?: string | null;
+    /** Only conversations with this label (IN4b). */
+    labelId?: string | null;
   }>,
 ): Promise<ConversationPage> {
   const base: Prisma.MatrixRoomWhereInput = {
@@ -55,6 +62,14 @@ export async function listConversations(
       ? { consumerName: { contains: search, mode: "insensitive" } }
       : {}),
   };
+  if (input.labelId) {
+    const tagged = await tx.inboxRoomLabel.findMany({
+      where: { labelId: input.labelId, workspaceId: ctx.workspaceId },
+      select: { roomId: true },
+      take: 1000,
+    });
+    where.roomId = { in: tagged.map((row) => row.roomId) };
+  }
   const [rows, mine, unassigned, all, resolved] = await Promise.all([
     tx.matrixRoom.findMany({
       where,
@@ -78,7 +93,15 @@ export async function listConversations(
       where: { ...base, ...whereOf("resolved", input.mxid) },
     }),
   ]);
+  const [labels, byRoom] = await Promise.all([
+    listLabels(tx, ctx),
+    labelsOfRooms(
+      tx,
+      rows.map((row) => row.roomId!),
+    ),
+  ]);
   return {
+    labels,
     items: rows.map((row) => ({
       roomId: row.roomId!,
       status: row.status as ConversationStatus,
@@ -86,6 +109,7 @@ export async function listConversations(
       consumerMxid: row.consumerMxid,
       consumerName: row.consumerName,
       updatedAt: row.updatedAt.toISOString(),
+      labelIds: byRoom.get(row.roomId!) ?? [],
     })),
     counts: { mine, unassigned, all, resolved },
   };

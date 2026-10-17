@@ -5,6 +5,7 @@ import { openConsumerRoom, workspaceOfAddress } from "./addresses";
 import { onConsumerMessage } from "./agent";
 import { coreUserId, isNamespaceUser } from "./config";
 import { ATTENDANT_LOCALPART } from "./jwt";
+import { runRoomAssigned, runRoomHandedOff } from "./room-hooks";
 import {
   CONVERSATION_STATE,
   CONVERSATION_STATUSES,
@@ -106,6 +107,9 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
       content: {
         status: text(content.status, 20),
         assignee: content.assignee === null ? null : text(content.assignee),
+        // Who made the change through the console (IN4b): an assignment by
+        // someone else tells the assignee.
+        by: text(content.by),
       },
     };
   }
@@ -262,6 +266,8 @@ async function handleEvent(
       state: true,
       status: true,
       consumerMxid: true,
+      consumerName: true,
+      assignee: true,
     },
   });
 
@@ -373,7 +379,44 @@ async function handleEvent(
       where id = ${room.id}::uuid
         and (status_event_ts is null or ${ts}::bigint is null or status_event_ts <= ${ts}::bigint)
     `;
-    return updated > 0 ? "processed" : "ignored";
+    if (updated === 0) return "ignored";
+    const by = typeof content.by === "string" ? content.by : null;
+    if (
+      typeof assignee === "string" &&
+      assignee !== room.assignee &&
+      by !== null &&
+      by !== assignee
+    ) {
+      await runRoomAssigned(
+        tx,
+        {
+          roomId: event.roomId,
+          workspaceId: room.workspaceId,
+          consumerName: room.consumerName,
+        },
+        assignee,
+        event.eventId,
+      );
+    }
+    // Only the GUIDS's handoff takes a pending room to open without an
+    // assignee, written by the core (no `by`): the team hears of it now.
+    if (
+      room.status === "pending" &&
+      content.status === "open" &&
+      assignee === null &&
+      by === null
+    ) {
+      await runRoomHandedOff(
+        tx,
+        {
+          roomId: event.roomId,
+          workspaceId: room.workspaceId,
+          consumerName: room.consumerName,
+        },
+        event.eventId,
+      );
+    }
+    return "processed";
   }
   return "ignored";
 }

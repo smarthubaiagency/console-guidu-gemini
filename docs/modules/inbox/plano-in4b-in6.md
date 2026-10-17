@@ -1,7 +1,7 @@
 # Plano do par IN4b + IN6: contexto, etiquetas e avisos; GUIDS na sala
 
 - **Data:** 17/10/2026. Base: `main` com IN3, WS1, IN4a ([janela-inbox.md](janela-inbox.md)), H1 e H2 (Central de Eventos, regras de aviso).
-- **Estado:** respostas da seção 5 aceitas pelo Marcelo (17/10/2026). IN6 feita no branch `claude/in6-guids-sala`, esperando o merge da IN4b para trazer a `main` e abrir o PR ([guids-na-sala.md](guids-na-sala.md)).
+- **Estado:** aprovado em 17/10/2026 com todas as sugestões da seção 5. IN4b em `claude/optimistic-lamport-rjehmm` ([contexto-inbox.md](contexto-inbox.md)); IN6 em `claude/in6-guids-sala`, já com a IN4b, entra depois dela ([guids-na-sala.md](guids-na-sala.md)).
 - **Migrations reservadas:** IN4b `20261212090000_in4b_inbox_context`, IN6 `20261213090000_in6_guids_in_room`. A `20261211090000` já está com a GB1c (PR aberto).
 
 ## 1. O que você vai ver no fim

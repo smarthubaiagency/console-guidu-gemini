@@ -59,7 +59,10 @@
     "workspace_deletion_scheduled": "Exclusão de workspace agendada",
     "workspace_deletion_reminder": "Lembrete da exclusão de workspace",
     "workspace_deletion_canceled": "Exclusão de workspace cancelada",
-    "workspace_deletion_completed": "Workspace excluído"
+    "workspace_deletion_completed": "Workspace excluído",
+    "inbox_conversation_new": "Conversa nova no Inbox",
+    "inbox_conversation_assigned": "Conversa atribuída a você",
+    "inbox_conversation_unanswered": "Conversa sem resposta"
   },
   "whatsapp": {
     "generic": "{marca}: você tem um aviso novo em {workspace}. {link}",
@@ -72,7 +75,10 @@
     "security_api_key_created": "{marca}: uma chave de API ({chave}) foi criada em {workspace}. {link}",
     "security_api_key_revoked": "{marca}: a chave de API {chave} foi revogada em {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: a exigência de verificação em duas etapas foi retirada em {workspace}. {link}",
-    "digital_profile_lead_submitted": "{marca}: chegou um contato novo pelo perfil digital de {workspace}. {link}"
+    "digital_profile_lead_submitted": "{marca}: chegou um contato novo pelo perfil digital de {workspace}. {link}",
+    "inbox_conversation_new": "{marca}: conversa nova de {contato} no Inbox de {workspace}. {link}",
+    "inbox_conversation_assigned": "{marca}: a conversa com {contato} foi atribuída a você. {link}",
+    "inbox_conversation_unanswered": "{marca}: {contato} está sem resposta há 15 minutos. {link}"
   },
   "hub": {
     "action": "Abrir no painel",
@@ -131,6 +137,18 @@
     "escalation": {
       "subject": "Sem resposta: {event}",
       "body": "Este aviso espera uma decisão há {hours} horas e foi encaminhado a você."
+    },
+    "inbox_conversation_new": {
+      "subject": "Conversa nova: {contato}",
+      "body": "{contato} começou uma conversa no Inbox."
+    },
+    "inbox_conversation_assigned": {
+      "subject": "Conversa atribuída: {contato}",
+      "body": "A conversa com {contato} agora é sua."
+    },
+    "inbox_conversation_unanswered": {
+      "subject": "Sem resposta: {contato}",
+      "body": "{contato} está esperando resposta há 15 minutos."
     }
   },
   "digest": {

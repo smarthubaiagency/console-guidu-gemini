@@ -19,12 +19,21 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-import { getRoom, lastMessage, memberName } from "../client/room-data";
+import {
+  getRoom,
+  lastMessage,
+  memberName,
+  unreadCount,
+} from "../client/room-data";
 import type { ConversationPage, InboxView } from "../views";
 import { StatusBadge } from "./status-badge";
 
@@ -44,6 +53,8 @@ export function ConversationList({
   revision,
   me,
   address,
+  labelId,
+  onLabel,
 }: Readonly<{
   view: InboxView;
   page: ConversationPage | null;
@@ -55,9 +66,16 @@ export function ConversationList({
   revision: number;
   me: string | null;
   address: string | null;
+  /** Only conversations with this label (IN4b). */
+  labelId: string | null;
+  onLabel: (labelId: string | null) => void;
 }>) {
   const t = useTranslations("inbox");
   const format = useFormatter();
+  const labels = useMemo(
+    () => new Map((page?.labels ?? []).map((label) => [label.id, label])),
+    [page],
+  );
   const now = useNow({ updateInterval: 30_000 });
 
   const rows = useMemo(() => {
@@ -78,6 +96,7 @@ export function ConversationList({
               : (memberName(room, item.assignee) ?? null),
           last,
           ts: last?.ts ?? Date.parse(item.updatedAt),
+          unread: unreadCount(room, me),
         };
       })
       .sort((a, b) => b.ts - a.ts);
@@ -100,7 +119,7 @@ export function ConversationList({
           </Badge>
         ) : null}
       </header>
-      <div className="border-border border-b p-3">
+      <div className="border-border space-y-2 border-b p-3">
         <InputGroup>
           <InputGroupAddon>
             <Search />
@@ -113,6 +132,22 @@ export function ConversationList({
             aria-label={t("searchPlaceholder")}
           />
         </InputGroup>
+        {labels.size > 0 ? (
+          <NativeSelect
+            size="sm"
+            className="w-full"
+            aria-label={t("labels.filter")}
+            value={labelId ?? ""}
+            onChange={(event) => onLabel(event.target.value || null)}
+          >
+            <NativeSelectOption value="">{t("labels.all")}</NativeSelectOption>
+            {[...labels.values()].map((label) => (
+              <NativeSelectOption key={label.id} value={label.id}>
+                {label.name}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        ) : null}
       </div>
       <ScrollArea className="min-h-0 flex-1">
         {page === null ? (
@@ -145,6 +180,15 @@ export function ConversationList({
                     <span className="text-11 text-text-tertiary ml-auto shrink-0">
                       {format.relativeTime(row.ts, now)}
                     </span>
+                    {row.unread > 0 ? (
+                      <Badge
+                        variant="info"
+                        aria-label={t("unread", { count: row.unread })}
+                        data-testid="inbox-unread"
+                      >
+                        {row.unread}
+                      </Badge>
+                    ) : null}
                   </span>
                   <span className="text-12 text-text-secondary line-clamp-1">
                     {row.last?.body ?? t("noMessages")}
@@ -159,6 +203,20 @@ export function ConversationList({
                           : t("unassigned")}
                     </span>
                   </span>
+                  {row.labelIds.length > 0 ? (
+                    <span className="flex flex-wrap gap-1">
+                      {row.labelIds.flatMap((id) => {
+                        const label = labels.get(id);
+                        return label
+                          ? [
+                              <Badge key={id} variant={label.color}>
+                                {label.name}
+                              </Badge>,
+                            ]
+                          : [];
+                      })}
+                    </span>
+                  ) : null}
                 </Button>
               </li>
             ))}

@@ -86,6 +86,18 @@
     "workspaceDeletionCompleted": {
       "title": "Workspace {workspace} deleted",
       "body": "The workspace and its data were erased for good."
+    },
+    "inboxNew": {
+      "title": "New conversation",
+      "body": "{contact} started a conversation in the Inbox."
+    },
+    "inboxAssigned": {
+      "title": "Conversation assigned to you",
+      "body": "The conversation with {contact} is now yours."
+    },
+    "inboxUnanswered": {
+      "title": "Unanswered conversation",
+      "body": "{contact} has been waiting for an answer for 15 minutes."
     }
   },
   "preferences": {

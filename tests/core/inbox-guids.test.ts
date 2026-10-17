@@ -291,6 +291,9 @@ describeDatabase("IN6: the GUIDS in the room", requiredVars, () => {
       `delete from public.credentials where label = '${LABEL}'`,
     );
     await admin.$executeRawUnsafe(
+      `delete from public.inbox_attendants where workspace_id = '${ids.workspaceA}' and user_id = '${ids.userA}'`,
+    );
+    await admin.$executeRawUnsafe(
       `update public.workspace_modules set config = '{}'::jsonb where workspace_id = '${ids.workspaceA}' and module_key = 'inbox'`,
     );
     await admin.$executeRawUnsafe(
@@ -409,6 +412,22 @@ describeDatabase("IN6: the GUIDS in the room", requiredVars, () => {
       true,
     );
 
+    // IN4b notices: who answers hears of the conversation only at the
+    // handoff while the GUIDS is active.
+    await admin.$executeRawUnsafe(
+      `insert into public.inbox_attendants (workspace_id, organization_id, user_id)
+       values ('${ids.workspaceA}', '${ids.organizationA}', '${ids.userA}') on conflict do nothing`,
+    );
+    const noticed = async (roomId: string) =>
+      (
+        await admin.$queryRawUnsafe<{ type: string; recipient: string }[]>(
+          `select type, recipient_user_id::text as recipient from public.events
+           where type like 'inbox.conversation.%' and subject_id = $1
+           order by created_at`,
+          roomId,
+        )
+      ).map((row) => `${row.type}:${row.recipient}`);
+
     const maria = await consumer();
     const room = await asWorker((tx) =>
       createConversationRoom(tx, client, {
@@ -422,6 +441,7 @@ describeDatabase("IN6: the GUIDS in the room", requiredVars, () => {
       `/_synapse/admin/v1/rooms/${enc(room.roomId)}/members`,
     );
     expect(members).toContain(agent.mxid);
+    expect(await noticed(room.roomId)).toEqual([]);
     const powers = await client.request<{ users: Record<string, number> }>(
       "GET",
       `/_matrix/client/v3/rooms/${enc(room.roomId)}/state/m.room.power_levels/`,
@@ -467,6 +487,9 @@ describeDatabase("IN6: the GUIDS in the room", requiredVars, () => {
       const now = await mirror(room.roomId);
       return now.status === "open" && now.assignee === null;
     }, "handoff mirrored");
+    expect(await noticed(room.roomId)).toEqual([
+      `inbox.conversation.new:${ids.userA}`,
+    ]);
     const kept = await admin.inboxGuidsRoom.findUniqueOrThrow({
       where: { roomId: room.roomId },
     });
