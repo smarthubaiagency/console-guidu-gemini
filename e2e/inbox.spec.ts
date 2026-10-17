@@ -17,7 +17,12 @@
  * ============================================================================
  */
 
-import { expect, type Page, test } from "@playwright/test";
+import {
+  type APIRequestContext,
+  expect,
+  type Page,
+  test,
+} from "@playwright/test";
 
 import {
   createIdentity,
@@ -35,6 +40,16 @@ const env = matrixE2eEnv();
 const bar = (page: Page) => page.getByTestId("inbox-views");
 
 test.skip(!env, "sem Synapse local (MATRIX_E2E_ENV_FILE)");
+
+/**
+ * Runs the worker of the rig with the window closed: the list of the Inbox
+ * asks the database every few seconds, and PGlite serves one session, so
+ * the worker and the open page would collide there.
+ */
+async function jobs(page: Page, request: APIRequestContext): Promise<void> {
+  await page.goto("about:blank");
+  await runJobs(request);
+}
 
 test("a consumer calls the store; the Attendant takes, answers and resolves; the owner reads", async ({
   page,
@@ -76,8 +91,8 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
     bar(page).getByRole("button", { name: "Todas" }),
   ).toHaveAttribute("data-active", "true");
   // The worker registers the address of the store on the chat.
-  await runJobs(request);
-  await page.reload();
+  await jobs(page, request);
+  await page.goto(`/app/${wsSlug}/inbox`);
   const address = (
     await page.getByTestId("inbox-address").textContent()
   )?.trim();
@@ -90,7 +105,7 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await expect
     .poll(
       async () => {
-        await runJobs(request);
+        await jobs(page, request);
         roomId = (await consumers.invites(maria))[0] ?? "";
         return roomId;
       },
@@ -101,7 +116,7 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await consumers.send(maria, roomId, "Olá, quero um orçamento");
 
   // The owner sees the conversation, without the message box.
-  await page.reload();
+  await page.goto(`/app/${wsSlug}/inbox`);
   const list = page.getByTestId("inbox-list");
   await list.getByRole("button", { name: /Maria Cliente/ }).click();
   const conversation = page.getByTestId("inbox-conversation");
@@ -188,7 +203,7 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await expect(
     statusBanner(page).filter({ hasText: "Atendente marcado." }),
   ).toBeVisible();
-  await runJobs(request);
+  await jobs(page, request);
   await page.goto(`/app/${wsSlug}/inbox?view=resolved`);
   await list.getByRole("button", { name: /Maria Cliente/ }).click();
   await expect(page.getByTestId("inbox-read-only")).toHaveCount(0);
