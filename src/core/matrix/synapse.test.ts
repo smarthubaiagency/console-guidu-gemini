@@ -169,9 +169,9 @@ describe("Synapse calls", () => {
     expect(fake.calls[1]!.body).toEqual({ devices: ["A", "B"] });
   });
 
-  it("builds the room of the proof: v12, no guests, no encryption, state at 50", () => {
+  it("builds the room of the proof: v12, no guests, no encryption, state at 50, sending at 10", () => {
     const body = conversationRoomBody({
-      attendants: ["@u_a:hs.test"],
+      powers: { "@u_a:hs.test": 10, "@u_b:hs.test": 0 },
     }) as Record<string, unknown>;
     expect(body).toMatchObject({
       room_version: "12",
@@ -182,8 +182,15 @@ describe("Synapse calls", () => {
       users: Record<string, number>;
       events: Record<string, number>;
       state_default: number;
+      events_default: number;
+      users_default: number;
+      invite: number;
     };
-    expect(power.users).toEqual({ "@u_a:hs.test": 50 });
+    // Who only reads stays at the default 0 (IN4a).
+    expect(power.users).toEqual({ "@u_a:hs.test": 10 });
+    expect(power.users_default).toBe(0);
+    expect(power.events_default).toBe(10);
+    expect(power.invite).toBe(50);
     expect(power.state_default).toBe(100);
     expect(power.events["m.room.encryption"]).toBe(100);
     expect(power.events["m.room.power_levels"]).toBe(100);
@@ -207,7 +214,7 @@ describe("Synapse calls", () => {
 });
 
 describe("events of the Application Service", () => {
-  it("keeps only membership and the conversation state, never a message body", () => {
+  it("keeps only membership (with the display name) and the conversation state, never a message body", () => {
     expect(
       reduceEvent({
         event_id: "$1",
@@ -229,7 +236,7 @@ describe("events of the Application Service", () => {
       state_key: "@a:hs.test",
       sender: "@a:hs.test",
       origin_server_ts: 10,
-      content: { membership: "join" },
+      content: { membership: "join", displayname: "Ana" },
     });
     expect(
       reduceEvent({
