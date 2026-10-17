@@ -13,6 +13,7 @@ import {
   NONCE_HEADER,
 } from "@/core/security/headers";
 import { analyticsCspOrigin } from "@/core/analytics/values";
+import { matrixCspOrigin } from "@/core/matrix/origin";
 import { refreshSupabaseSession } from "@/lib/supabase/session";
 
 /**
@@ -69,6 +70,8 @@ export default async function proxy(request: NextRequest) {
   const csp = contentSecurityPolicy(nonce, {
     production: process.env.NODE_ENV === "production",
     analyticsOrigin: await analyticsCspOrigin(),
+    // The Inbox's browser client talks to the homeserver (IN3, ADR 0023).
+    matrixOrigin: matrixCspOrigin(),
   });
   forwarded.set(NONCE_HEADER, nonce);
   forwarded.set("content-security-policy", csp);

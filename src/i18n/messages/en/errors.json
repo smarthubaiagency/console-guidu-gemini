@@ -20,5 +20,6 @@
   "invitationAccepted": "This invitation has already been accepted.",
   "moduleUnavailable": "Module temporarily unavailable.",
   "providerError": "Failed to reach the AI provider.",
-  "invalidInput": "Invalid input."
+  "invalidInput": "Invalid input.",
+  "chatUnavailable": "The chat is unavailable right now."
 }

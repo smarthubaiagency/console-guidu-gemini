@@ -77,6 +77,9 @@ describe("Permissions Matrix", () => {
         [Permissions.AI_AGENTS_USE]: true,
         [Permissions.AI_AGENTS_MANAGE]: true,
         [Permissions.AI_AGENTS_CONVERSATIONS_READ]: true,
+        [Permissions.INBOX_VIEW]: true,
+        [Permissions.INBOX_REPLY]: true,
+        [Permissions.INBOX_MANAGE]: true,
         [Permissions.ORGANIZATION_READ]: false,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,
@@ -136,6 +139,9 @@ describe("Permissions Matrix", () => {
         [Permissions.AI_AGENTS_USE]: true,
         [Permissions.AI_AGENTS_MANAGE]: true,
         [Permissions.AI_AGENTS_CONVERSATIONS_READ]: true,
+        [Permissions.INBOX_VIEW]: true,
+        [Permissions.INBOX_REPLY]: true,
+        [Permissions.INBOX_MANAGE]: true,
         [Permissions.ORGANIZATION_READ]: false,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,
@@ -195,6 +201,9 @@ describe("Permissions Matrix", () => {
         [Permissions.AI_AGENTS_USE]: true,
         [Permissions.AI_AGENTS_MANAGE]: false,
         [Permissions.AI_AGENTS_CONVERSATIONS_READ]: true,
+        [Permissions.INBOX_VIEW]: true,
+        [Permissions.INBOX_REPLY]: true,
+        [Permissions.INBOX_MANAGE]: false,
         [Permissions.ORGANIZATION_READ]: false,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,
@@ -254,6 +263,9 @@ describe("Permissions Matrix", () => {
         [Permissions.AI_AGENTS_USE]: false,
         [Permissions.AI_AGENTS_MANAGE]: false,
         [Permissions.AI_AGENTS_CONVERSATIONS_READ]: false,
+        [Permissions.INBOX_VIEW]: false,
+        [Permissions.INBOX_REPLY]: false,
+        [Permissions.INBOX_MANAGE]: false,
         [Permissions.ORGANIZATION_READ]: false,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,
@@ -280,9 +292,9 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(21);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(20);
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(8);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(24);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(23);
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(10);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(4);
     });
   });
@@ -349,6 +361,9 @@ describe("Permissions Matrix", () => {
         [Permissions.AI_AGENTS_USE]: false,
         [Permissions.AI_AGENTS_MANAGE]: false,
         [Permissions.AI_AGENTS_CONVERSATIONS_READ]: false,
+        [Permissions.INBOX_VIEW]: false,
+        [Permissions.INBOX_REPLY]: false,
+        [Permissions.INBOX_MANAGE]: false,
         [Permissions.ORGANIZATION_READ]: true,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: true,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: true,
@@ -408,6 +423,9 @@ describe("Permissions Matrix", () => {
         [Permissions.AI_AGENTS_USE]: false,
         [Permissions.AI_AGENTS_MANAGE]: false,
         [Permissions.AI_AGENTS_CONVERSATIONS_READ]: false,
+        [Permissions.INBOX_VIEW]: false,
+        [Permissions.INBOX_REPLY]: false,
+        [Permissions.INBOX_MANAGE]: false,
         [Permissions.ORGANIZATION_READ]: true,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: true,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: true,
@@ -467,6 +485,9 @@ describe("Permissions Matrix", () => {
         [Permissions.AI_AGENTS_USE]: false,
         [Permissions.AI_AGENTS_MANAGE]: false,
         [Permissions.AI_AGENTS_CONVERSATIONS_READ]: false,
+        [Permissions.INBOX_VIEW]: false,
+        [Permissions.INBOX_REPLY]: false,
+        [Permissions.INBOX_MANAGE]: false,
         [Permissions.ORGANIZATION_READ]: true,
         [Permissions.ORGANIZATION_MEMBERS_INVITE]: false,
         [Permissions.ORGANIZATION_MEMBERS_MANAGE]: false,

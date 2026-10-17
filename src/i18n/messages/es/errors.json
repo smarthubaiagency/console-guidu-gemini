@@ -20,5 +20,6 @@
   "invitationAccepted": "Esta invitación ya fue aceptada.",
   "moduleUnavailable": "Módulo temporalmente no disponible.",
   "providerError": "Falló la comunicación con el proveedor de IA.",
-  "invalidInput": "Datos de entrada no válidos."
+  "invalidInput": "Datos de entrada no válidos.",
+  "chatUnavailable": "El chat no está disponible en este momento."
 }

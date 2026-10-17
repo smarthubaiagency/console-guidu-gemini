@@ -1859,3 +1859,80 @@ model GbAreaSetting {
   @@id([gbLocationId, area])
   @@map("gb_area_settings")
 }
+
+/// Matrix account of a person (IN3, ADR 0023): opaque localpart, no secret.
+model MatrixAccount {
+  profileId     String    @id @map("profile_id") @db.Uuid
+  localpart     String    @unique
+  mxid          String    @unique
+  status        String    @default("active")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+  deactivatedAt DateTime? @map("deactivated_at") @db.Timestamptz()
+
+  @@map("matrix_accounts")
+}
+
+/// A conversation room of a workspace, with the mirrored conversation state (IN3).
+model MatrixRoom {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  roomId         String?   @unique @map("room_id")
+  origin         String
+  state          String    @default("creating")
+  status         String    @default("pending")
+  assignee       String?
+  statusEventId  String?   @map("status_event_id")
+  statusEventTs  BigInt?   @map("status_event_ts")
+  consumerMxid   String?   @map("consumer_mxid")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+  closedAt       DateTime? @map("closed_at") @db.Timestamptz()
+
+  @@unique([id, workspaceId])
+  @@map("matrix_rooms")
+}
+
+/// Membership of a room, followed from the Application Service (IN3).
+model MatrixRoomMember {
+  roomId         String   @map("room_id")
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  userMxid       String   @map("user_mxid")
+  membership     String
+  eventTs        BigInt?  @map("event_ts")
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@id([roomId, userMxid])
+  @@map("matrix_room_members")
+}
+
+/// Transactions pushed by Synapse to the Application Service (IN3).
+model MatrixAsTransaction {
+  txnId      String   @id @map("txn_id")
+  eventCount Int      @map("event_count")
+  stored     Int
+  receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz()
+
+  @@map("matrix_as_transactions")
+}
+
+/// A relevant event of the Application Service, unique by event id (IN3).
+model MatrixEvent {
+  eventId        String    @id @map("event_id")
+  txnId          String    @map("txn_id")
+  roomId         String    @map("room_id")
+  type           String
+  stateKey       String?   @map("state_key")
+  sender         String
+  content        Json
+  originServerTs BigInt?   @map("origin_server_ts")
+  status         String    @default("pending")
+  attempts       Int       @default(0)
+  lastError      String?   @map("last_error")
+  receivedAt     DateTime  @default(now()) @map("received_at") @db.Timestamptz()
+  processedAt    DateTime? @map("processed_at") @db.Timestamptz()
+
+  @@map("matrix_events")
+}
