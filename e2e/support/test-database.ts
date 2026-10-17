@@ -7,6 +7,7 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { Pool } from "pg";
 
 import { computeSeal } from "../../src/core/events/seal";
+import { proposalHash } from "../../src/core/proposals/operation";
 import { FAKE_RESEND_KEY } from "./fake-resend";
 import { EXTERNAL_POSTGRES, RIG } from "./rig";
 
@@ -100,6 +101,16 @@ export type TestDatabase = Readonly<{
   /** A CRM contact in a workspace, as its owner would add it (GB1c). */
   seedCrmContact: (params: {
     workspaceSlug: string;
+    name: string;
+  }) => Promise<{ id: string }>;
+  /**
+   * A managed company with a pending proposal to add a CRM contact (H4):
+   * the workspace's company becomes managed by the partner, the CRM is on
+   * and the proposal waits, with the hash of its content.
+   */
+  seedProposal: (params: {
+    workspaceSlug: string;
+    partnerId: string;
     name: string;
   }) => Promise<{ id: string }>;
   close: () => Promise<void>;
@@ -409,6 +420,63 @@ export async function startTestDatabase(
       if (!row) throw new Error(`Workspace not found: ${params.workspaceSlug}`);
       return { id: row.id };
     },
+    seedProposal: async (params) => {
+      const ws = await pool.query<{
+        id: string;
+        organization_id: string;
+        owner: string;
+      }>(
+        `select w.id, w.organization_id,
+                (select m.user_id from public.workspace_members m
+                 where m.workspace_id = w.id and m.role = 'owner' order by m.created_at limit 1) as owner
+         from public.workspaces w where w.slug = $1`,
+        [params.workspaceSlug],
+      );
+      const target = ws.rows[0];
+      if (!target)
+        throw new Error(`Workspace not found: ${params.workspaceSlug}`);
+      await pool.query(
+        `update public.organizations set partner_id = $1 where id = $2`,
+        [params.partnerId, target.organization_id],
+      );
+      await pool.query(
+        `insert into public.organization_service_modes (organization_id, partner_id, mode)
+         values ($1, $2, 'gerenciado')
+         on conflict (organization_id) do update
+         set partner_id = excluded.partner_id, mode = 'gerenciado'`,
+        [target.organization_id, params.partnerId],
+      );
+      await pool.query(
+        `insert into public.workspace_modules (organization_id, workspace_id, module_key, status, updated_by)
+         values ($1, $2, 'crm', 'enabled', $3)
+         on conflict (workspace_id, module_key) do update set status = 'enabled'`,
+        [target.organization_id, target.id, target.owner],
+      );
+      const payload = { name: params.name };
+      const hash = proposalHash({
+        workspaceId: target.id,
+        operation: "crm.contacts.create",
+        targetId: null,
+        resourceVersion: null,
+        payload,
+      });
+      const result = await pool.query<{ id: string }>(
+        `insert into public.execution_proposals (organization_id, workspace_id, requested_by, origin,
+           operation, payload, payload_hash, reason, idempotency_key, expires_at)
+         values ($1, $2, $3, 'api_key', 'crm.contacts.create', $4::jsonb, $5, 'Lead da conversa',
+           $6, now() + interval '24 hours')
+         returning id`,
+        [
+          target.organization_id,
+          target.id,
+          target.owner,
+          JSON.stringify(payload),
+          hash,
+          `e2e-${crypto.randomUUID()}`,
+        ],
+      );
+      return { id: result.rows[0]!.id };
+    },
     seedEvent: async (params) => {
       const ws = await pool.query<{
         id: string;
@@ -546,7 +614,11 @@ export async function startTestDatabase(
             // pg-boss polls every queue (two dozen) through its own pool; a
             // small one keeps PGlite's single session from interleaving
             // statements and is plenty for a real Postgres too.
-            WORKER_BOSS_MAX_CONNECTIONS: "2",
+            // On PGlite a single one (H4): with two, an interleaved fetch of
+            // a queue (one more since `events.subscriber`) lost its answer
+            // ("unnamed prepared statement does not exist") and left the job
+            // active in pg-boss, never run.
+            WORKER_BOSS_MAX_CONNECTIONS: EXTERNAL_POSTGRES ? "2" : "1",
             GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
             // Seal of the Event Hub (H1), the same as the web's.
             EVENTS_HMAC_KEY: RIG.eventsHmacKey,

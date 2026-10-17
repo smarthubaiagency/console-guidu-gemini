@@ -216,9 +216,27 @@ export async function seedCrmContact(
   request: APIRequestContext,
   params: { workspaceSlug: string; name: string },
 ): Promise<{ id: string }> {
-  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-crm-contact`, {
-    data: params,
-  });
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/seed-crm-contact`,
+    {
+      data: params,
+    },
+  );
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { id: string };
+}
+
+/** A managed company with a pending proposal for the partner (H4). */
+export async function seedProposal(
+  request: APIRequestContext,
+  params: { workspaceSlug: string; partnerId: string; name: string },
+): Promise<{ id: string }> {
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/seed-proposal`,
+    {
+      data: params,
+    },
+  );
   expect(response.status()).toBe(200);
   return (await response.json()) as { id: string };
 }

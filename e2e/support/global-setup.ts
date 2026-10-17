@@ -17,7 +17,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     onUserCreated: (user) => database.insertAuthUser(user),
     onBlockIdentity: (email) => database.blockIdentity(email),
     onCountProfiles: (email) => database.countProfiles(email),
-    onMakePlatformAdmin: (email, role) => database.makePlatformAdmin(email, role),
+    onMakePlatformAdmin: (email, role) =>
+      database.makePlatformAdmin(email, role),
     onSeedWorkspace: (params) => database.seedWorkspace(params),
     onSeedInvitation: (params) => database.seedInvitation(params),
     onSeedPartner: (params) => database.seedPartner(params),
@@ -27,6 +28,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     onMaintenanceOff: () => database.maintenanceOff(),
     onSeedEvent: (params) => database.seedEvent(params),
     onSeedCrmContact: (params) => database.seedCrmContact(params),
+    onSeedProposal: (params) => database.seedProposal(params),
   });
   const chatwoot = await startFakeChatwoot(RIG.chatwootPort);
   const resend = await startFakeResend(RIG.resendPort);
