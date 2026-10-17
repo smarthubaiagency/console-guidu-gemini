@@ -277,6 +277,7 @@
       "channel": "Canal indisponível para este aviso.",
       "role": "Destinatário indisponível para este aviso.",
       "escalation": "Só avisos de aprovação têm escalonamento."
-    }
+    },
+    "mixedWorkspaces": "Um pedido vale para eventos de um mesmo cliente e workspace."
   }
 }

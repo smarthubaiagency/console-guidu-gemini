@@ -277,6 +277,7 @@
       "channel": "Channel unavailable for this notice.",
       "role": "Recipient unavailable for this notice.",
       "escalation": "Only approval notices have escalation."
-    }
+    },
+    "mixedWorkspaces": "One request covers events of a single customer and workspace."
   }
 }

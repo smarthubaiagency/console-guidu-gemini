@@ -33,6 +33,8 @@ import {
 import { textKeyOf } from "@/core/events/texts";
 import type { EventListFilters, EventListRow } from "@/core/events/views";
 
+import { EventSelectCheckbox } from "./event-selection";
+
 export const SEVERITY_BADGE = {
   info: "info",
   attention: "warning",
@@ -161,15 +163,21 @@ export async function EventFilters({
   );
 }
 
-/** The list of events; each row opens the drawer at `?event=<id>`. */
+/**
+ * The list of events; each row opens the drawer at `?event=<id>`. With
+ * `selectable` (inside an `EventSelectionProvider`, AJ1), the rows without
+ * data of a workspace get a tick for one access request.
+ */
 export async function EventList({
   rows,
   href,
   current,
+  selectable = false,
 }: Readonly<{
   rows: readonly EventListRow[];
   href: (eventId: string) => string;
   current: string | null;
+  selectable?: boolean;
 }>) {
   const t = await getTranslations("eventRules.events");
   const tn = await getTranslations("notifications.names");
@@ -192,50 +200,70 @@ export async function EventList({
           </Empty>
         ) : (
           <ItemGroup className="gap-2" data-testid="events-list">
-            {rows.map((row) => (
-              <Item
-                key={row.id}
-                variant="card"
-                size="sm"
-                data-testid="events-row"
-                data-event-type={row.type}
-                asChild
-              >
-                <Link
-                  href={href(row.id)}
-                  scroll={false}
-                  aria-current={row.id === current ? "true" : undefined}
+            {rows.map((row) => {
+              const item = (
+                <Item
+                  key={row.id}
+                  variant="card"
+                  size="sm"
+                  data-testid="events-row"
+                  data-event-type={row.type}
+                  className={selectable ? "min-w-0 flex-1" : undefined}
+                  asChild
                 >
-                  <ItemContent>
-                    <ItemTitle>{tn(textKeyOf(row.type))}</ItemTitle>
-                    <ItemDescription>
-                      {[
-                        row.organizationName,
-                        row.module,
-                        format.dateTime(row.occurredAt, {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                          timeZone: "America/Sao_Paulo",
-                        }),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </ItemDescription>
-                  </ItemContent>
-                  <ItemActions>
-                    <Badge variant={SEVERITY_BADGE[row.severity] ?? "neutral"}>
-                      {t(`severity.${row.severity}`)}
-                    </Badge>
-                    <Badge
-                      variant={STATUS_BADGE[row.status] ?? "neutral"}
-                      data-testid="events-row-status"
-                    >
-                      {t(`status.${row.status}`)}
-                    </Badge>
-                  </ItemActions>
-                </Link>
-              </Item>
-            ))}
+                  <Link
+                    href={href(row.id)}
+                    scroll={false}
+                    aria-current={row.id === current ? "true" : undefined}
+                  >
+                    <ItemContent>
+                      <ItemTitle>{tn(textKeyOf(row.type))}</ItemTitle>
+                      <ItemDescription>
+                        {[
+                          row.organizationName,
+                          row.module,
+                          format.dateTime(row.occurredAt, {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                            timeZone: "America/Sao_Paulo",
+                          }),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <Badge
+                        variant={SEVERITY_BADGE[row.severity] ?? "neutral"}
+                      >
+                        {t(`severity.${row.severity}`)}
+                      </Badge>
+                      <Badge
+                        variant={STATUS_BADGE[row.status] ?? "neutral"}
+                        data-testid="events-row-status"
+                      >
+                        {t(`status.${row.status}`)}
+                      </Badge>
+                    </ItemActions>
+                  </Link>
+                </Item>
+              );
+              if (!selectable) return item;
+              return (
+                <div key={row.id} className="flex items-start gap-2">
+                  {!row.data && row.workspaceId ? (
+                    <EventSelectCheckbox
+                      eventId={row.id}
+                      workspaceId={row.workspaceId}
+                      workspaceLabel={row.organizationName ?? row.workspaceId}
+                    />
+                  ) : (
+                    <span className="w-4 shrink-0" aria-hidden />
+                  )}
+                  {item}
+                </div>
+              );
+            })}
           </ItemGroup>
         )}
       </CardContent>
