@@ -474,11 +474,20 @@ export async function setConversationState(
   client: SynapseClient,
   roomId: string,
   state: Readonly<{ status: ConversationStatus; assignee: string | null }>,
+  /** Who asked for the change (IN4b); the core itself when absent. */
+  by: string | null = null,
 ): Promise<string | null> {
   const { event_id } = await client.request<{ event_id?: string }>(
     "PUT",
     `/_matrix/client/v3/rooms/${enc(roomId)}/state/${CONVERSATION_STATE}/`,
-    { body: { version: 1, status: state.status, assignee: state.assignee } },
+    {
+      body: {
+        version: 1,
+        status: state.status,
+        assignee: state.assignee,
+        ...(by ? { by } : {}),
+      },
+    },
   );
   return typeof event_id === "string" ? event_id : null;
 }

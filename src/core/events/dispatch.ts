@@ -186,6 +186,14 @@ export function bellNoticeOf(
         },
         linkUrl,
       };
+    case "inbox.conversation.new":
+    case "inbox.conversation.assigned":
+    case "inbox.conversation.unanswered":
+      return {
+        eventType: type,
+        data: { contact: str(data.contact).slice(0, MAX_VALUE) },
+        linkUrl,
+      };
     case "platform.events.chain_broken":
       return {
         eventType: type,

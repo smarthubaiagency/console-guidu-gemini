@@ -1,6 +1,8 @@
 import { generateKeyPairSync } from "node:crypto";
 
-import { describe, expect, it } from "vitest";
+import { vi, describe, expect, it } from "vitest";
+
+vi.mock("server-only", () => ({}));
 
 import { handleAppServiceRequest } from "./appservice";
 import { matrixConfig } from "./config";
@@ -273,7 +275,7 @@ describe("events of the Application Service", () => {
           note: "x",
         },
       })?.content,
-    ).toEqual({ status: "open", assignee: "@a:hs.test" });
+    ).toEqual({ status: "open", assignee: "@a:hs.test", by: null });
     expect(
       reduceEvent({
         event_id: "$3",
