@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { PermissionDeniedError } from "@/core/permissions/guard";
-import { listSecurityEvents } from "@/core/security/events";
+import { listSecurityEvents, parseBefore } from "@/core/security/events";
 import { isAreaIpAllowed } from "@/core/security/ip-gate";
 import {
   allowlistView,
@@ -262,10 +262,43 @@ describeDatabase("CF5a: security settings", requiredVars, () => {
       const second = await inPlatform((tx) =>
         listSecurityEvents(tx, {
           limit: 1,
-          before: new Date(first.nextBefore!),
+          before: parseBefore(first.nextBefore!),
         }),
       );
       expect(second.events[0]?.id).not.toBe(first.events[0]?.id);
+    });
+
+    it("never skips events of the same millisecond (AJ1)", async () => {
+      // Three sign-ins in one millisecond, two of them at the same instant.
+      const at = "2026-10-02 09:00:00.123";
+      const sameIds = [
+        "c5aa0000-0000-4000-8000-000000000001",
+        "c5aa0000-0000-4000-8000-000000000002",
+        "c5aa0000-0000-4000-8000-000000000003",
+      ];
+      await admin.$executeRawUnsafe(
+        `insert into public.audit_events
+           (id, actor_user_id, actor_principal_type, origin, action, resource_type, result, metadata, occurred_at)
+         values ($1::uuid, $4::uuid, 'user', 'app', 'auth.sign_in', 'session', 'success', '{}', '${at}456+00'),
+                ($2::uuid, $4::uuid, 'user', 'app', 'auth.sign_in', 'session', 'success', '{}', '${at}456+00'),
+                ($3::uuid, $4::uuid, 'user', 'app', 'auth.sign_in', 'session', 'success', '{}', '${at}789+00')
+         on conflict (id) do nothing`,
+        ...sameIds,
+        PLATFORM_OWNER,
+      );
+      const seen: string[] = [];
+      let before = parseBefore("2026-10-02T09:00:01.000000Z_ffffffff-ffff-4fff-bfff-ffffffffffff");
+      for (let i = 0; i < 3; i += 1) {
+        const page = await inPlatform((tx) =>
+          listSecurityEvents(tx, { limit: 1, before }),
+        );
+        seen.push(page.events[0]!.id);
+        if (i < 2) {
+          expect(page.nextBefore).toMatch(/^2026-10-02T09:00:00\.123\d{3}Z_/);
+          before = parseBefore(page.nextBefore!);
+        }
+      }
+      expect(seen).toEqual([sameIds[2], sameIds[1], sameIds[0]]);
     });
   });
 });
