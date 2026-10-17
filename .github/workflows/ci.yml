@@ -395,6 +395,32 @@ jobs:
         run: pnpm test:e2e e2e/ai-agents.spec.ts e2e/platform-ai.spec.ts e2e/partner-ai.spec.ts
         env:
           GUIDU_MODULE_AI_AGENTS_ENABLED: "true"
+      # IN4a: the Inbox window against a disposable Synapse (pip) on the
+      # runner's own Postgres, its Application Service pointing at the app
+      # of the rig. Only this step sees Matrix turned on.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Start Postgres and a local Synapse for the Inbox
+        env:
+          SYNAPSE_DIR: ${{ runner.temp }}/synapse
+          SYNAPSE_PG_HOST: 127.0.0.1
+          SYNAPSE_PG_PORT: "5432"
+          SYNAPSE_PG_USER: postgres
+          SYNAPSE_PG_PASSWORD: postgres
+          SYNAPSE_APP_URL: http://127.0.0.1:3000
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "alter user postgres password 'postgres'"
+          bash scripts/local/synapse.sh setup
+          bash scripts/local/synapse.sh start
+      - name: Run Inbox E2E tests with the local Synapse
+        run: pnpm test:e2e e2e/inbox.spec.ts
+        env:
+          MATRIX_E2E_ENV_FILE: ${{ runner.temp }}/synapse/setup/console.env
+      - name: Synapse log on failure
+        if: failure()
+        run: tail -n 200 "${{ runner.temp }}/synapse/data/homeserver.log" || true
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
