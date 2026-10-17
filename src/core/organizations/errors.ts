@@ -56,6 +56,15 @@ export class InvitationExpiredError extends Error {
   }
 }
 
+/** The workspace of the invitation is closed, e.g. scheduled for deletion (WS1). */
+export class InvitationWorkspaceClosedError extends Error {
+  readonly code = "INVITATION_WORKSPACE_CLOSED";
+  constructor() {
+    super("The workspace of this invitation is not available");
+    this.name = "InvitationWorkspaceClosedError";
+  }
+}
+
 export class InvitationAlreadyAcceptedError extends Error {
   readonly code = "INVITATION_ALREADY_ACCEPTED";
   constructor() {

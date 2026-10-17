@@ -107,16 +107,21 @@ Pelo Event Hub, rota `customer` (owners e admins ativos do workspace), por e-mai
 
 A chave de idempotência do evento é `workspace-deletion:<id do registro>:<tipo>`, então reenviar não duplica. O aviso "concluída" é enviado dentro da transação da limpeza; se essa transação falhar depois do envio, a nova tentativa pode mandar o e-mail de novo (entrega pelo menos uma vez).
 
+## Decisões do Marcelo (17/10/2026)
+
+- As quatro linhas de aviso de exclusão aparecem travadas (sempre ligadas) nas preferências de notificação.
+- Jobs pulados durante a carência não são refeitos depois do cancelamento; tudo volta a funcionar dali em diante.
+- Convite para um workspace fechado é recusado ("Este workspace não está disponível"), sem criar o membro; o convite continua pendente e volta a valer se o dono cancelar a exclusão dentro do prazo.
+- Sem o Cloudflare configurado, os hostnames ficam e o resultado registra `cloudflare: "off"`.
+- Durante o prazo, o cliente final continua na sala do Inbox, bloqueada (IN3).
+
 ## Pontos em aberto
 
-- Aceitar um convite já enviado ainda cria a participação no workspace fechado. Não tem efeito, porque o workspace continua fechado.
 - As políticas do banco baseadas em `partner_manages_organization` são por organização e não olham o status do workspace; as entradas da aplicação olham.
-- Sem o Cloudflare configurado, os hostnames existentes ficam lá.
-- Jobs pulados durante a carência não são refeitos depois do cancelamento.
 
 ## Testes
 
 - `tests/core/workspace-soft-delete-rls.sql`: barreira no banco, webhook recusado e aceito de novo, fila do ciclo de vida, acesso do worker.
-- `tests/core/workspace-soft-delete.test.ts`: jobs pulados, Event Hub, ciclo de vida completo e limpeza que espera o gancho externo.
+- `tests/core/workspace-soft-delete.test.ts`: jobs pulados, convite recusado, Event Hub, ciclo de vida completo e limpeza que espera o gancho externo.
 - `src/core/privacy/lifecycle.test.ts` e `src/core/jobs/errors.test.ts`: ganchos e classificação.
 - `e2e/workspace-soft-delete.spec.ts`: agenda, webhook recusado, cancela, webhook aceito.

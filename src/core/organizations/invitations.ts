@@ -37,6 +37,7 @@ import {
 import { recordAudit } from "../audit/record";
 import { requestAccountSync } from "../matrix";
 import { appConfig } from "../config/app";
+import { isWorkspaceActive } from "../workspaces/active";
 import type { Identity } from "../auth/identity";
 import {
   InsufficientRoleError,
@@ -46,6 +47,7 @@ import {
   InvitationNotFoundError,
   InvitationRecipientMismatchError,
   InvitationRevokedError,
+  InvitationWorkspaceClosedError,
   SeatLimitExceededError,
 } from "./errors";
 
@@ -388,6 +390,13 @@ export async function acceptInvitation(
           });
         }
         throw new InvitationExpiredError();
+      }
+
+      // A workspace scheduled for deletion (or otherwise closed) takes no
+      // new members (WS1); the invitation stays pending and works again if
+      // the owner cancels the deletion within the grace period.
+      if (workspaceId && !(await isWorkspaceActive(tx, workspaceId))) {
+        throw new InvitationWorkspaceClosedError();
       }
 
       // 6. Serialize seat capacity using Postgres transaction advisory lock (AC06)
