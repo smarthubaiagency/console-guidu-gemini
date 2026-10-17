@@ -2,9 +2,10 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { upsertMember } from "./accounts";
 import { openConsumerRoom, workspaceOfAddress } from "./addresses";
+import { onConsumerMessage } from "./agent";
 import { coreUserId, isNamespaceUser } from "./config";
 import { ATTENDANT_LOCALPART } from "./jwt";
-import { runRoomAssigned } from "./room-hooks";
+import { runRoomAssigned, runRoomHandedOff } from "./room-hooks";
 import {
   CONVERSATION_STATE,
   CONVERSATION_STATUSES,
@@ -263,6 +264,7 @@ async function handleEvent(
       organizationId: true,
       statusEventTs: true,
       state: true,
+      status: true,
       consumerMxid: true,
       consumerName: true,
       assignee: true,
@@ -348,6 +350,15 @@ async function handleEvent(
       at,
       room.id,
     );
+    // IN6: the GUIDS's turn, and a resolved conversation back to pending.
+    if (side === "consumer" && room.state === "active") {
+      await onConsumerMessage(
+        tx,
+        client,
+        { ...room, roomId: event.roomId },
+        event.originServerTs,
+      );
+    }
     return "processed";
   }
 
@@ -384,6 +395,24 @@ async function handleEvent(
           consumerName: room.consumerName,
         },
         assignee,
+        event.eventId,
+      );
+    }
+    // Only the GUIDS's handoff takes a pending room to open without an
+    // assignee, written by the core (no `by`): the team hears of it now.
+    if (
+      room.status === "pending" &&
+      content.status === "open" &&
+      assignee === null &&
+      by === null
+    ) {
+      await runRoomHandedOff(
+        tx,
+        {
+          roomId: event.roomId,
+          workspaceId: room.workspaceId,
+          consumerName: room.consumerName,
+        },
         event.eventId,
       );
     }

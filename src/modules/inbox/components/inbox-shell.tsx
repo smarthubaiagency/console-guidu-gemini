@@ -261,6 +261,7 @@ function InboxWindow({
   );
   const context = (
     <ContextPanel
+      workspaceSlug={workspaceSlug}
       roomId={selected}
       room={room}
       summary={summary}
@@ -269,7 +270,6 @@ function InboxWindow({
       busy={busy}
       revision={matrix.revision}
       onCommand={run}
-      workspaceSlug={workspaceSlug}
       labels={page?.labels ?? []}
       onChanged={refresh}
     />

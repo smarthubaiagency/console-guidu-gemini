@@ -2,6 +2,7 @@ import "server-only";
 
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
+import { inboxAgentActive } from "./guids-settings";
 import { LINK_CONTACT_JOB_KIND } from "./jobs";
 import { noticeAssigned, noticeNewConversation } from "./notices";
 
@@ -21,15 +22,6 @@ export type OpenedRoom = Readonly<{
   organizationId: string;
   consumerName: string | null;
 }>;
-
-/**
- * Whether an agent answers the new conversations of the workspace (the
- * GUIDS of the Inbox, IN6); while one does, the team hears of a
- * conversation only when it is handed over. No agent answers yet.
- */
-export async function agentAnswersInbox(): Promise<boolean> {
-  return false;
-}
 
 async function managerOf(
   tx: ContextTransaction,
@@ -73,7 +65,9 @@ export async function inboxRoomOpened(
       on conflict do nothing
     `;
   }
-  if (!(await agentAnswersInbox())) {
+  // While the GUIDS answers, the team hears of the conversation only when
+  // it is handed over (IN6).
+  if (!(await inboxAgentActive(tx, room.workspaceId))) {
     await noticeNewConversation(tx, room);
   }
 }
@@ -85,4 +79,13 @@ export async function inboxRoomAssigned(
   stateEventId: string,
 ): Promise<void> {
   await noticeAssigned(tx, room, assignee, stateEventId);
+}
+
+/** The GUIDS handed the conversation over: news for who answers (IN6). */
+export async function inboxRoomHandedOff(
+  tx: ContextTransaction,
+  room: Omit<OpenedRoom, "organizationId">,
+  stateEventId: string,
+): Promise<void> {
+  await noticeNewConversation(tx, room, stateEventId);
 }

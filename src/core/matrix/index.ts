@@ -5,6 +5,7 @@
 export { matrixEnabled } from "./config";
 export {
   requestAccountSync,
+  requestAgentSync,
   requestDeviceLogout,
   requestWorkspaceSync,
 } from "./jobs";

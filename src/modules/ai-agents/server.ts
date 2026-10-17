@@ -33,3 +33,12 @@ export {
   type GuidTestMessageResult,
   type GuidTestToolCall,
 } from "./server/services/conversations";
+// Turn of a GUIDS asked by a hub (IN6, canais.md §3.5): the Inbox.
+export {
+  listHubGuids,
+  runTurn,
+  type HubGuidChoice,
+  type HubTurnInput,
+  type HubTurnPlan,
+  type TurnContextLine,
+} from "./server/hub-turn";

@@ -40,6 +40,9 @@
     },
     "quotas": {
       "inbox_attendants": "Marked attendants per workspace."
+    },
+    "settings": {
+      "inbox_workspace": "Inbox"
     }
   },
   "google_business": {

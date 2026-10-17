@@ -4,6 +4,8 @@ import { emitEvent, WORKER_ACTOR } from "@/core/events/emit";
 import { partnerConsoleOrigin } from "@/core/partners/console-origin";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
+import { inboxAgentActive } from "./guids-settings";
+
 /**
  * Notices of the Inbox in the Event Hub (IN4b, ADR 0022): a new
  * conversation (to who answers), a conversation assigned to you and a
@@ -120,7 +122,10 @@ async function emitTo(
   return emitted;
 }
 
-/** A conversation arrived without anyone answering it yet. */
+/**
+ * A conversation arrived without anyone answering it yet, or the GUIDS
+ * handed it over (`handoffEventId`, once per handoff).
+ */
 export async function noticeNewConversation(
   tx: ContextTransaction,
   room: Readonly<{
@@ -128,6 +133,7 @@ export async function noticeNewConversation(
     workspaceId: string;
     consumerName: string | null;
   }>,
+  handoffEventId: string | null = null,
 ): Promise<number> {
   const context = await noticeContext(tx, room.workspaceId);
   if (!context) return 0;
@@ -136,7 +142,9 @@ export async function noticeNewConversation(
     roomId: room.roomId,
     people: await attendantsOf(tx, room.workspaceId),
     contact: room.consumerName,
-    key: `inbox-new:${room.roomId}`,
+    key: handoffEventId
+      ? `inbox-handoff:${handoffEventId}`
+      : `inbox-new:${room.roomId}`,
   });
 }
 
@@ -168,7 +176,7 @@ export async function noticeAssigned(
  * Conversations whose last message is the consumer's for 15 minutes or
  * more, with nobody of the team (nor an agent) answering after it, in the
  * last day (platform job `inbox.unanswered`). Once per message without an
- * answer.
+ * answer. A pending conversation is the GUIDS's while one is active (IN6).
  */
 export async function noticeUnanswered(
   tx: ContextTransaction,
@@ -179,12 +187,13 @@ export async function noticeUnanswered(
     {
       room_id: string;
       workspace_id: string;
+      status: string;
       assignee: string | null;
       consumer_name: string | null;
       last_consumer_message_at: Date;
     }[]
   >`
-    select room.room_id, room.workspace_id, room.assignee, room.consumer_name,
+    select room.room_id, room.workspace_id, room.status, room.assignee, room.consumer_name,
            room.last_consumer_message_at
     from public.matrix_rooms room
     where room.state = 'active'
@@ -199,8 +208,18 @@ export async function noticeUnanswered(
     limit ${batch}
   `;
   const contexts = new Map<string, NoticeContext | null>();
+  const agents = new Map<string, boolean>();
   let notices = 0;
   for (const room of rooms) {
+    if (room.status === "pending") {
+      if (!agents.has(room.workspace_id)) {
+        agents.set(
+          room.workspace_id,
+          await inboxAgentActive(tx, room.workspace_id),
+        );
+      }
+      if (agents.get(room.workspace_id)) continue;
+    }
     if (!contexts.has(room.workspace_id)) {
       contexts.set(
         room.workspace_id,

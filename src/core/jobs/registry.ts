@@ -24,6 +24,7 @@ import { proposalExecuteJob } from "@/core/proposals/service";
 import { ipBlockedJob } from "@/core/security/ip-blocked-job";
 import { backgroundAnalysesJob } from "@/modules/google-business/server/jobs";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
+import { guidsTurnJob } from "@/modules/inbox/server/guids-turn";
 
 import type { JobDefinition, JobSchedule } from "./definition";
 
@@ -58,6 +59,8 @@ const DEFINITIONS = [
   ...matrixJobs,
   // Inbox (IN4b): the CRM contact of a conversation and the notices.
   ...inboxJobs,
+  // The GUIDS answering in the rooms of the Inbox (IN6).
+  guidsTurnJob,
   backgroundAnalysesJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];

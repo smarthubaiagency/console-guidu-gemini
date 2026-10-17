@@ -1,0 +1,45 @@
+{
+  "settings": {
+    "title": "GUIDS en el Inbox",
+    "description": "El GUIDS elegido responde solo las conversaciones pendientes (sin agente humano) y las transfiere al equipo cuando hace falta.",
+    "agent": "GUIDS que atiende",
+    "none": "Ninguno: solo atiende el equipo",
+    "off": "{name} (apagado)",
+    "gone": "GUIDS eliminado",
+    "agentHint": "Solo se puede elegir un GUIDS encendido. En la conversación, el cliente ve el nombre del agente.",
+    "fields": {
+      "grouping_seconds": "Espera para juntar mensajes (segundos)",
+      "max_messages": "Mensajes por respuesta",
+      "max_chars": "Caracteres por mensaje",
+      "interval_ms": "Intervalo entre mensajes (milisegundos)"
+    },
+    "hints": {
+      "grouping_seconds": "Los mensajes seguidos del cliente reciben una sola respuesta. De 0 a 30.",
+      "max_messages": "Las respuestas más largas se juntan en el último mensaje. De 1 a 5.",
+      "max_chars": "Orientación al agente para textos cortos. De 100 a 1.000.",
+      "interval_ms": "Pausa entre un mensaje y otro de la misma respuesta. Hasta 5.000."
+    },
+    "backToBot": "Después de una transferencia, la conversación vuelve al GUIDS con \"Devolver al GUIDS\" en el panel de la conversación. Una conversación resuelta en la que el cliente vuelve a escribir se reabre como pendiente, con el GUIDS.",
+    "save": "Guardar",
+    "viewOnly": "Solo quien gestiona el Inbox cambia esta configuración.",
+    "saved": "Configuración del Inbox guardada."
+  },
+  "panel": {
+    "title": "GUIDS",
+    "agent": "Agente",
+    "none": "Ninguno",
+    "now": "Ahora",
+    "withGuids": "Con el GUIDS",
+    "withTeam": "Con el equipo",
+    "summary": "Resumen del GUIDS",
+    "reason": "Motivo de la transferencia: {reason}",
+    "return": "Devolver al GUIDS",
+    "returned": "Conversación devuelta al GUIDS."
+  },
+  "errors": {
+    "invalidService": "Revisa las reglas de atención.",
+    "guidsNotActive": "Elige un GUIDS encendido de este workspace.",
+    "noGuids": "Ningún GUIDS atiende el Inbox de este workspace.",
+    "alreadyWithGuids": "La conversación ya está con el GUIDS."
+  }
+}

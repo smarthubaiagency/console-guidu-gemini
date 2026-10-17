@@ -2,6 +2,12 @@ import { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+// The catalog outgrew one run (5000 keys, the rest waits for the next run);
+// these cases fill a whole language in one run.
+vi.mock("@/core/i18n/machine/validate", async (original) => ({
+  ...(await original<typeof import("@/core/i18n/machine/validate")>()),
+  MAX_KEYS_PER_RUN: 100_000,
+}));
 
 import { flattenMessages, messageArguments } from "@/core/i18n/locales";
 import {

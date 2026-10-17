@@ -40,6 +40,9 @@
     },
     "quotas": {
       "inbox_attendants": "Atendentes marcados por workspace."
+    },
+    "settings": {
+      "inbox_workspace": "Inbox"
     }
   },
   "google_business": {
