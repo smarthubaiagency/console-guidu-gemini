@@ -10,8 +10,11 @@ import {
   DESTINATION_STAGE,
   type EventDefinition,
   eventDefinition,
+  type EventLevel,
+  type EventRoute,
   type EventType,
   missingDestinations,
+  placementOf,
 } from "./catalog";
 import { chainKeyOf, computeSeal, currentSealKey, normalizeData } from "./seal";
 
@@ -94,24 +97,29 @@ type Scope = Readonly<{
   workspaceId: string | null;
 }>;
 
-function scopeOf(definition: EventDefinition, input: EmitEventInput): Scope {
+type Placement = Readonly<{
+  scope: Scope;
+  level: EventLevel;
+  route: EventRoute;
+}>;
+
+function placementFor(
+  definition: EventDefinition,
+  input: EmitEventInput,
+): Placement {
   const scope = {
     partnerId: input.partnerId ?? null,
     organizationId: input.organizationId ?? null,
     workspaceId: input.workspaceId ?? null,
   };
-  const ok =
-    definition.level === "workspace"
-      ? Boolean(scope.workspaceId && scope.organizationId && scope.partnerId)
-      : definition.level === "partner"
-        ? Boolean(scope.partnerId) && !scope.workspaceId
-        : !scope.partnerId && !scope.organizationId && !scope.workspaceId;
-  if (!ok) {
+  // The type's level, or another one it may also live at (AJ1).
+  const placement = placementOf(definition, scope);
+  if (!placement) {
     throw invalid(
       `O evento ${definition.type} é do nível ${definition.level} e veio com outro escopo.`,
     );
   }
-  return scope;
+  return { scope, ...placement };
 }
 
 const uuidOrNull = (value: string | null) =>
@@ -123,12 +131,12 @@ export async function emitEvent(
 ): Promise<EmittedEvent> {
   const definition = requireEmittable(input.type);
   const key = currentSealKey();
-  const scope = scopeOf(definition, input);
+  const { scope, level, route } = placementFor(definition, input);
   const idempotencyKey = input.idempotencyKey.trim();
   if (!idempotencyKey || idempotencyKey.length > 200) {
     throw invalid("Chave do evento inválida.");
   }
-  if (definition.route === "subject_person" && !input.recipientUserId) {
+  if (route === "subject_person" && !input.recipientUserId) {
     throw invalid(`O evento ${definition.type} precisa da pessoa a avisar.`);
   }
   const status = input.status ?? "open";
@@ -178,10 +186,10 @@ export async function emitEvent(
       data, idempotency_key, created_by, occurred_at, chain_key, seq,
       content_hash, prev_hash, key_version, status
     ) values (
-      ${id}::uuid, ${definition.type}, ${definition.module}, ${definition.level},
+      ${id}::uuid, ${definition.type}, ${definition.module}, ${level},
       ${uuidOrNull(scope.partnerId)}, ${uuidOrNull(scope.organizationId)},
       ${uuidOrNull(scope.workspaceId)}, ${subject?.type ?? null}, ${subject?.id ?? null},
-      ${definition.severity}, ${[...definition.audiences]}::text[], ${definition.route},
+      ${definition.severity}, ${[...definition.audiences]}::text[], ${route},
       ${uuidOrNull(input.recipientUserId ?? null)}, ${json}::jsonb, ${idempotencyKey},
       ${uuidOrNull(createdBy)}, ${occurredAt}, ${chainKey}, ${seq},
       ${contentHash}, ${prevHash}, ${key.version}, ${status}

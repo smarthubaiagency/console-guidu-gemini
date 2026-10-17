@@ -287,7 +287,9 @@ describeDatabase("CF5a: security settings", requiredVars, () => {
         PLATFORM_OWNER,
       );
       const seen: string[] = [];
-      let before = parseBefore("2026-10-02T09:00:01.000000Z_ffffffff-ffff-4fff-bfff-ffffffffffff");
+      let before = parseBefore(
+        "2026-10-02T09:00:01.000000Z_ffffffff-ffff-4fff-bfff-ffffffffffff",
+      );
       for (let i = 0; i < 3; i += 1) {
         const page = await inPlatform((tx) =>
           listSecurityEvents(tx, { limit: 1, before }),

@@ -132,11 +132,14 @@ const EVENT_KEYS: Readonly<Record<string, string>> = {
   "service_mode.change_requested": "serviceModeRequested",
   "service_mode.changed": "serviceModeChanged",
   "service_mode.change_denied": "serviceModeDenied",
+  // The partner (or GUIDU) ended the managed mode (AJ1).
+  "service_mode.reverted_by_partner": "serviceModeRevertedByPartner",
   // Event Hub (H2): access to the data, security, reminders and digest.
   "events.access_requested": "accessRequested",
   "security.api_key_created": "apiKeyCreated",
   "security.api_key_revoked": "apiKeyRevoked",
   "security.mfa_requirement_off": "mfaRequirementOff",
+  "security.ip_blocked": "ipBlocked",
   "events.reminder": "eventReminder",
   "events.escalation": "eventEscalation",
   "events.digest": "eventDigest",
@@ -242,6 +245,28 @@ export function renderInboxNotice(
       return {
         title: t("serviceModeDenied.title", values),
         body: t("serviceModeDenied.body", values),
+      };
+    }
+    case "serviceModeRevertedByPartner": {
+      const values = {
+        organization: text(data, "organization"),
+        partner: text(data, "partner"),
+        reason: text(data, "reason"),
+      };
+      return {
+        title: t("serviceModeRevertedByPartner.title", values),
+        body: t("serviceModeRevertedByPartner.body", values),
+      };
+    }
+    case "ipBlocked": {
+      // The bell may come without the values (the hub's default notice).
+      const values = { ip: text(data, "ip"), area: text(data, "area") };
+      return {
+        title: t("ipBlocked.title", values),
+        body:
+          values.ip && values.area
+            ? t("ipBlocked.body", values)
+            : t("ipBlocked.generic", values),
       };
     }
     case "eventsChainBroken": {

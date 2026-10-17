@@ -130,6 +130,8 @@ export const Permissions = {
   PLATFORM_AUDIT_READ: "platform.audit.read",
   // Ask a direct customer (partner zero) for the managed mode (GB1c).
   PLATFORM_SERVICE_MODE_REQUEST: "platform.service_mode.request",
+  // Move a direct customer back to `padrao`, with a reason (AJ1).
+  PLATFORM_SERVICE_MODE_REVERT: "platform.service_mode.revert",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
@@ -159,6 +161,9 @@ export const Permissions = {
   PARTNER_GOOGLE_BUSINESS_MANAGE: "partner.google_business.manage",
   // Ask a customer for the managed mode and cancel the request (GB1c).
   PARTNER_SERVICE_MODE_REQUEST: "partner.service_mode.request",
+  // Move a managed customer back to `padrao` (end of contract), with a
+  // reason (AJ1).
+  PARTNER_SERVICE_MODE_REVERT: "partner.service_mode.revert",
   // Eventos of the customers (H2): situation of all, data where the
   // partner manages; resolve or dismiss what it manages.
   PARTNER_EVENTS_READ: "partner.events.read",

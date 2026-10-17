@@ -21,6 +21,9 @@ import { generateServiceModeToken, linkUrlOf } from "./requests";
  * - `changed` and `change_denied`: the bell of who asked, of the company
  *   owners and, when the company goes back to `padrao`, of the partner's
  *   owners and admins, each with the link of their own screen.
+ * - `reverted_by_partner` (AJ1): the company owners by e-mail (the hub's
+ *   generic e-mail, with the reason) and bell, linked to their settings;
+ *   the partner's owners and admins by bell, linked to Clientes.
  */
 
 export type ExplicitRecipient = Readonly<{
@@ -50,6 +53,7 @@ const SERVICE_MODE_TYPES = new Set([
   "service_mode.change_requested",
   "service_mode.changed",
   "service_mode.change_denied",
+  "service_mode.reverted_by_partner",
 ]);
 
 export function isServiceModeEvent(type: string): boolean {
@@ -107,6 +111,41 @@ async function changeRecipients(
   }));
 }
 
+async function revertRecipients(
+  tx: ContextTransaction,
+  event: EventLike,
+): Promise<ExplicitRecipient[]> {
+  const rows = await tx.$queryRaw<
+    {
+      user_id: string;
+      email: string | null;
+      kind: string;
+      organization_name: string | null;
+      partner_name: string | null;
+    }[]
+  >`
+    select user_id, email, kind, organization_name, partner_name
+    from private.service_mode_revert_recipients(${event.id}::uuid)
+  `;
+  const settingsUrl = safeLink(event.data.settingsUrl);
+  const consoleUrl = safeLink(event.data.consoleUrl);
+  const reason = str(event.data.reason).slice(0, 200);
+  return rows.map((row) => ({
+    user_id: row.user_id,
+    // Only the owners get the e-mail; the partner's team, the bell.
+    email: row.kind === "owner" ? row.email : null,
+    notice: {
+      eventType: event.type,
+      data: {
+        organization: (row.organization_name ?? "").slice(0, 200),
+        partner: (row.partner_name ?? "").slice(0, 200),
+        reason,
+      },
+      linkUrl: row.kind === "owner" ? settingsUrl : consoleUrl,
+    },
+  }));
+}
+
 /**
  * The recipients of a `service_mode.*` event, or null for any other type
  * (the dispatch then asks `private.event_recipients`).
@@ -116,7 +155,11 @@ export async function serviceModeRecipients(
   event: EventLike,
 ): Promise<ExplicitRecipient[] | null> {
   if (!isServiceModeEvent(event.type)) return null;
-  return event.type === "service_mode.change_requested"
-    ? requestRecipients(tx, event)
-    : changeRecipients(tx, event);
+  if (event.type === "service_mode.change_requested") {
+    return requestRecipients(tx, event);
+  }
+  if (event.type === "service_mode.reverted_by_partner") {
+    return revertRecipients(tx, event);
+  }
+  return changeRecipients(tx, event);
 }
