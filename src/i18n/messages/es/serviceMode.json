@@ -1,0 +1,94 @@
+{
+  "errors": {
+    "forbidden": "No tiene permiso para esta acción en el modo de servicio.",
+    "notFound": "Empresa o solicitud no encontrada.",
+    "alreadyManaged": "La empresa ya está en el modo gestionado.",
+    "pendingExists": "Ya existe una solicitud pendiente para esta empresa.",
+    "noOwner": "La empresa aún no tiene un propietario para aprobar la solicitud.",
+    "noWorkspace": "La empresa no tiene un espacio de trabajo activo.",
+    "invalid": "Datos inválidos."
+  },
+  "modes": {
+    "padrao": "Estándar",
+    "gerenciado": "Gestionado"
+  },
+  "situation": {
+    "pending": "Solicitud pendiente",
+    "approved": "Solicitud aprobada",
+    "denied": "Solicitud rechazada",
+    "expired": "Solicitud vencida",
+    "cancelled": "Solicitud cancelada"
+  },
+  "sources": {
+    "registration": "En el contrato",
+    "request": "Por solicitud aprobada",
+    "customer": "Por la empresa",
+    "partner": "Por el socio"
+  },
+  "results": {
+    "requested": "Solicitud enviada al propietario de la empresa.",
+    "cancelled": "Solicitud cancelada.",
+    "approved": "Modo gestionado aprobado.",
+    "denied": "Solicitud rechazada.",
+    "reverted": "La empresa volvió al modo estándar.",
+    "expired": "Esta solicitud venció.",
+    "alreadyDecided": "Esta solicitud ya fue decidida.",
+    "notFound": "Solicitud no encontrada."
+  },
+  "console": {
+    "column": "Modo de servicio",
+    "request": "Solicitar gestión",
+    "cancel": "Cancelar solicitud",
+    "pendingUntil": "Solicitud pendiente hasta el {date}",
+    "crmContacts": "{count, plural, =0 {Ningún contacto en el CRM} one {# contacto en el CRM} other {# contactos en el CRM}}"
+  },
+  "scope": {
+    "title": "Qué cambia en el modo gestionado",
+    "guids": "Agentes de IA (GUIDS), base de conocimiento y recomendaciones",
+    "campaigns": "Campañas",
+    "reviews": "Reseñas y fichas de Google",
+    "crm": "CRM y contactos",
+    "conversations": "Conversaciones y canales",
+    "settings": "Configuración del espacio de trabajo",
+    "keyNote": "La clave de IA de la empresa nunca es leída ni cambiada por quien gestiona.",
+    "auditNote": "Toda acción de quien gestiona queda registrada en la auditoría del espacio de trabajo."
+  },
+  "settings": {
+    "metaTitle": "Modo de servicio",
+    "title": "Modo de servicio",
+    "description": "Quién opera el espacio de trabajo: la empresa sola (estándar) o el equipo de quien gestiona (gestionado).",
+    "currentTitle": "Modo actual",
+    "mode": "Modo",
+    "managedBy": "Quién gestiona",
+    "since": "Desde",
+    "how": "Cómo empezó",
+    "standardNote": "En el modo estándar, quien gestiona solo ve la situación de los módulos, sin los datos. Soporte solo por el acceso temporal que usted aprueba.",
+    "pendingTitle": "Solicitud de gestión",
+    "pendingDescription": "{partner} pidió gestionar esta empresa. La solicitud vale hasta el {date}.",
+    "approve": "Aprobar",
+    "deny": "Rechazar",
+    "ownerOnly": "Solo el propietario de la empresa aprueba, rechaza o vuelve al modo estándar.",
+    "backTitle": "Volver al modo estándar",
+    "backDescription": "La empresa vuelve a operar sola y el acceso de quien gestiona termina en el acto. Para volver al modo gestionado hará falta una nueva solicitud.",
+    "back": "Volver al modo estándar"
+  },
+  "link": {
+    "metaTitle": "Solicitud de gestión",
+    "title": "Solicitud de gestión",
+    "description": "{partner} pide gestionar {organization}.",
+    "expires": "Este enlace es de un solo uso y vale hasta el {date}.",
+    "consent": "Al decidir, registramos la fecha, la hora y la dirección de red (IP) como prueba de su consentimiento.",
+    "approve": "Aprobar el modo gestionado",
+    "deny": "Rechazar",
+    "notFoundTitle": "Enlace inválido",
+    "notFound": "Este enlace no existe o no pertenece a esta dirección.",
+    "expiredTitle": "Enlace vencido",
+    "expired": "La solicitud venció. Pida a quien gestiona una nueva solicitud.",
+    "approvedTitle": "Gestión aprobada",
+    "approved": "{partner} ya puede gestionar {organization}. Puede volver al modo estándar en cualquier momento en Configuración › Modo de servicio.",
+    "deniedTitle": "Solicitud rechazada",
+    "denied": "Nada cambió: {organization} sigue en el modo estándar.",
+    "cancelledTitle": "Solicitud cancelada",
+    "cancelled": "Quien hizo la solicitud la canceló. Nada cambió."
+  }
+}

@@ -67,6 +67,18 @@ function sampleEvent(
       };
     case "email.test":
       return { ...base, type, data: { settingsUrl: link("/settings/email") } };
+    case "events.notice":
+      return {
+        ...base,
+        type,
+        data: {
+          eventType: "events.notice",
+          subject: sample.workspace,
+          paragraphs: [sample.workspace],
+          actionLabel: sample.workspace,
+          url: link("/app"),
+        },
+      };
     case "billing.subscription.past_due":
     case "billing.subscription.suspended":
       return {
@@ -103,6 +115,19 @@ function sampleEvent(
           agentName: sample.agent,
           backupUntil: new Date(now + day),
           credentialsUrl: link("/app/exemplo/settings/credentials"),
+        },
+      };
+    // Not editable (GB1c); kept for the exhaustive switch.
+    case "service_mode.change_requested":
+      return {
+        ...base,
+        type,
+        data: {
+          organizationName: sample.organization,
+          partnerName: sample.partner,
+          expiresAt: new Date(now + 7 * day),
+          approveUrl: link("/service-mode/exemplo"),
+          settingsUrl: link("/app/exemplo/settings/service-mode"),
         },
       };
   }

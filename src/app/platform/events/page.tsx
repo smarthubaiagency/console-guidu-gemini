@@ -3,7 +3,13 @@ import Link from "next/link";
 import { Inbox } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 
+import {
+  AccessRequestForm,
+  EventStatusButtons,
+  GrantDataViewer,
+} from "@/components/events/event-actions";
 import { EventDataViewer } from "@/components/events/event-data-viewer";
+import { EventTraceCards } from "@/components/events/event-trace";
 import { PresentedDataCheck } from "@/components/events/presented-data-check";
 import { RecordWorkbench } from "@/components/layout/workbench";
 import { ModuleNotice } from "@/components/modules/module-notice";
@@ -42,7 +48,19 @@ import {
 } from "@/components/ui/native-select";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
-import { EVENT_CATALOG, EVENT_MODULES } from "@/core/events/catalog";
+import {
+  activeGrantFor,
+  type AccessGrant,
+  myAccessGrants,
+} from "@/core/events/access";
+import {
+  EVENT_CATALOG,
+  EVENT_MODULES,
+  EVENT_SEVERITIES,
+  EVENT_STATUSES,
+} from "@/core/events/catalog";
+import { type EventTrace, eventTrace } from "@/core/events/views";
+import { platformGrants } from "@/core/module-runtime/loaders";
 import {
   canReadAllData,
   canReadEvents,
@@ -65,7 +83,15 @@ const BASE = "/platform/events";
 
 type SearchParams = Partial<
   Record<
-    "type" | "module" | "partner" | "customer" | "from" | "to" | "event",
+    | "type"
+    | "module"
+    | "partner"
+    | "customer"
+    | "from"
+    | "to"
+    | "event"
+    | "severity"
+    | "status",
     string
   >
 >;
@@ -121,11 +147,13 @@ export default async function PlatformEventsPage({
     customer: params.customer || undefined,
     from: params.from || undefined,
     to: params.to || undefined,
+    severity: params.severity || undefined,
+    status: params.status || undefined,
   });
   const filtered = Object.values(filters).some(Boolean);
   const editKey = params.event || null;
 
-  const { events, everything, detail, capabilities } =
+  const { events, everything, detail, capabilities, trace, accessGrants } =
     await withIdentityContext(prisma, identity.userId, async (tx) => ({
       events: await listPlatformEvents(tx, actor, filters, 100),
       everything: filtered
@@ -133,7 +161,12 @@ export default async function PlatformEventsPage({
         : null,
       detail: editKey ? await platformEventDetail(tx, actor, editKey) : null,
       capabilities: await myCapabilities(tx, identity.userId),
+      trace: editKey ? await eventTrace(tx, editKey) : null,
+      accessGrants: editKey
+        ? await myAccessGrants(tx, identity.userId, editKey)
+        : [],
     }));
+  const grants = platformGrants(actor.platformRole);
   const keychain = canReadAllData(actor, capabilities);
 
   const t = await getTranslations("events");
@@ -288,6 +321,48 @@ export default async function PlatformEventsPage({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
+              <Label htmlFor="events-severity" className="text-12">
+                {t("filters.severity")}
+              </Label>
+              <NativeSelect
+                id="events-severity"
+                name="severity"
+                defaultValue={filters.severity ?? ""}
+                className="w-full"
+              >
+                <NativeSelectOption value="">
+                  {t("filters.allSeverities")}
+                </NativeSelectOption>
+                {EVENT_SEVERITIES.map((severity) => (
+                  <NativeSelectOption key={severity} value={severity}>
+                    {t(`severity.${severity}`)}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="events-status" className="text-12">
+                {t("filters.status")}
+              </Label>
+              <NativeSelect
+                id="events-status"
+                name="status"
+                defaultValue={filters.status ?? ""}
+                className="w-full"
+              >
+                <NativeSelectOption value="">
+                  {t("filters.allStatuses")}
+                </NativeSelectOption>
+                {EVENT_STATUSES.map((status) => (
+                  <NativeSelectOption key={status} value={status}>
+                    {t(`status.${status}`)}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
               <Label htmlFor="events-from" className="text-12">
                 {t("filters.from")}
               </Label>
@@ -395,6 +470,11 @@ export default async function PlatformEventsPage({
   const panel = detail ? (
     <EventPanel
       detail={detail}
+      trace={trace}
+      accessGrant={activeGrantFor(accessGrants, detail.id)}
+      accessPending={accessGrants.some((g) => g.status === "pending")}
+      canRequest={grants("platform.events.request_access")}
+      canManage={grants("platform.events.manage")}
       keychain={keychain}
       when={when}
       t={t}
@@ -414,19 +494,30 @@ export default async function PlatformEventsPage({
   );
 }
 
-function EventPanel({
+async function EventPanel({
   detail,
+  trace,
+  accessGrant,
+  accessPending,
+  canRequest,
+  canManage,
   keychain,
   when,
   t,
   integrity,
 }: Readonly<{
   detail: PlatformEventDetail;
+  trace: EventTrace | null;
+  accessGrant: AccessGrant | null;
+  accessPending: boolean;
+  canRequest: boolean;
+  canManage: boolean;
   keychain: boolean;
   when: (date: Date) => string;
   t: Awaited<ReturnType<typeof getTranslations<"events">>>;
   integrity: React.ReactNode;
 }>) {
+  const ta = await getTranslations("eventRules.access");
   const mono = (value: string) => (
     <span className="text-12 font-mono break-all">{value}</span>
   );
@@ -449,6 +540,13 @@ function EventPanel({
         </Badge>
       </div>
 
+      {canManage && detail.level === "platform" ? (
+        <EventStatusButtons
+          scope={{ level: "platform" }}
+          eventId={detail.id}
+          status={detail.status}
+        />
+      ) : null}
       <Card variant="surface" className="px-4">
         <CardHeader className="px-0">
           <CardTitle>{t("detail.situation")}</CardTitle>
@@ -579,6 +677,38 @@ function EventPanel({
           )}
         </CardContent>
       </Card>
+
+      {trace ? <EventTraceCards trace={trace} deliveries={false} /> : null}
+
+      {canRequest && detail.level === "workspace" ? (
+        <Card variant="surface" className="px-4">
+          <CardHeader className="px-0">
+            <CardTitle>{ta("title")}</CardTitle>
+            <CardDescription>
+              {accessGrant
+                ? ta("granted", {
+                    date: accessGrant.expiresAt
+                      ? when(accessGrant.expiresAt)
+                      : "-",
+                  })
+                : accessPending
+                  ? ta("waiting")
+                  : ta("description")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            {accessGrant ? (
+              <GrantDataViewer
+                level="platform"
+                eventId={detail.id}
+                grantId={accessGrant.id}
+              />
+            ) : accessPending ? null : (
+              <AccessRequestForm level="platform" eventId={detail.id} />
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card variant="surface" className="px-4">
         <CardHeader className="px-0">

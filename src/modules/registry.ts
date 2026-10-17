@@ -24,6 +24,8 @@ import { aiAgentsManifest } from "./ai-agents/manifest";
 import { crmManifest } from "./crm/manifest";
 import { googleBusinessManifest } from "./google-business/manifest";
 import { helloWorldManifest } from "./hello-world/manifest";
+import { inboxManifest } from "./inbox/manifest";
+import { matrixEnabled } from "@/core/matrix/config";
 import { portfolioManifest } from "./portfolio/manifest";
 
 type RegistryEntryInput = Readonly<{
@@ -35,6 +37,8 @@ type RegistryEntryInput = Readonly<{
 const ENTRIES: readonly RegistryEntryInput[] = [
   { manifest: portfolioManifest },
   { manifest: crmManifest },
+  // The Inbox exists only where the Matrix core is configured (IN4a).
+  { manifest: inboxManifest, technicalGate: () => matrixEnabled() },
   {
     manifest: googleBusinessManifest,
     technicalGate: () =>
@@ -72,7 +76,12 @@ const MODULES: ReadonlyMap<string, RegisteredModule> = new Map(
 );
 
 export type ModuleKey =
-  "portfolio" | "crm" | "google-business" | "ai-agents" | "hello-world";
+  | "portfolio"
+  | "crm"
+  | "inbox"
+  | "google-business"
+  | "ai-agents"
+  | "hello-world";
 
 /** All registered modules, in registration order. */
 export function listRegisteredModules(): readonly RegisteredModule[] {

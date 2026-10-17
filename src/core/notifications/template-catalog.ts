@@ -53,6 +53,7 @@ const VARIABLES: Readonly<
     text("marca"),
   ],
   "email.test": [url("link"), text("marca")],
+  "events.notice": [url("link"), text("marca")],
   "billing.subscription.past_due": [
     text("parceiro"),
     text("organizacao"),
@@ -82,6 +83,15 @@ const VARIABLES: Readonly<
   "ai.agent.key_paused": [
     text("workspace"),
     text("agente"),
+    text("data"),
+    url("link"),
+    text("marca"),
+  ],
+  // Not editable (no template in the catalog): the consent e-mail keeps the
+  // code's text, with the single-use link.
+  "service_mode.change_requested": [
+    text("organizacao"),
+    text("parceiro"),
     text("data"),
     url("link"),
     text("marca"),

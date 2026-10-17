@@ -28,7 +28,8 @@ import {
   withContext,
 } from "@/lib/prisma/with-context";
 
-export type AuditOrigin = "app" | "api" | "mcp" | "worker" | "admin";
+/** `partner`: the managing partner team in a managed company (GB1c). */
+export type AuditOrigin = "app" | "api" | "mcp" | "worker" | "admin" | "partner";
 export type AuditResult = "success" | "denied" | "error";
 export type ActorPrincipalType = "user" | "service" | "api_key";
 
@@ -107,6 +108,11 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "eventType",
   "chainKey",
   "capability",
+  // Access to the data of events (H2): who asked, where, for how long.
+  "requesterKind",
+  "workspaceId",
+  "durationHours",
+  "accessGrantId",
 ]);
 
 /**

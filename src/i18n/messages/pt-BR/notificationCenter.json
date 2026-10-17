@@ -43,6 +43,52 @@
       "title": "Selo de evento não confere",
       "body": "A verificação da Central de Eventos encontrou {count} evento(s) com o selo ou a corrente quebrados."
     },
+    "serviceModeRequested": {
+      "title": "Pedido de gerenciamento de {organization}",
+      "body": "{partner} pediu para gerenciar a empresa. Abra para aprovar ou recusar."
+    },
+    "serviceModeChanged": {
+      "gerenciado": {
+        "title": "{organization} agora é gerenciada",
+        "body": "O pedido foi aprovado e a equipe de quem gerencia já tem acesso ao workspace."
+      },
+      "padrao": {
+        "title": "{organization} voltou para o modo padrão",
+        "body": "O acesso de quem gerenciava a empresa terminou."
+      }
+    },
+    "serviceModeDenied": {
+      "title": "Pedido de gerenciamento recusado",
+      "body": "O owner de {organization} recusou o pedido de gerenciamento."
+    },
+    "accessRequested": {
+      "title": "Pedido de acesso aos dados",
+      "body": "{requester} pediu acesso aos dados de eventos de {workspace} por {hours} horas."
+    },
+    "apiKeyCreated": {
+      "title": "Chave de API criada",
+      "body": "A chave {key} foi criada em {workspace}."
+    },
+    "apiKeyRevoked": {
+      "title": "Chave de API revogada",
+      "body": "A chave {key} foi revogada em {workspace}."
+    },
+    "mfaRequirementOff": {
+      "title": "Verificação em duas etapas não é mais exigida",
+      "body": "A exigência foi retirada em {workspace}."
+    },
+    "eventReminder": {
+      "title": "Lembrete: {event}",
+      "body": "Espera uma decisão há {hours} horas."
+    },
+    "eventEscalation": {
+      "title": "Sem resposta: {event}",
+      "body": "Espera uma decisão há {hours} horas e foi encaminhado a você."
+    },
+    "eventDigest": {
+      "title": "Resumo do dia",
+      "body": "{count} aviso(s) guardado(s) para o resumo."
+    },
     "workspaceDeletionScheduled": {
       "title": "Exclusão de {workspace} agendada",
       "body": "Nenhum serviço do workspace funciona até a exclusão, em {date}. O dono pode cancelar até lá."

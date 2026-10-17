@@ -43,6 +43,10 @@ As salas entram no registro de ganchos da WS1 como `core.matrix` (`CORE_RESOURCE
 - `onDeletionScheduled` e `onDeletionCanceled`: rodam no worker, numa transação curta de `app_worker`; só enfileiram `matrix.sync-workspace` (job de plataforma, que o workspace fechado não pula). Fora de `active`, os atendentes saem de todas as salas (salas `blocked`); de volta a `active`, eles voltam. O consumidor continua na sala; quem impede o agente de responder é a WS1.
 - `purgeExternal`: roda no worker antes da limpeza do banco, numa transação curta de `app_worker`. Apaga as salas no Synapse com purge e marca as linhas como `closed`. Idempotente; se falhar, roda de novo. As linhas saem com a limpeza do banco (`purgeWorkspace` apaga `matrix_room_members` e `matrix_rooms`). Sem o Matrix configurado, registra `skipped: true`.
 
+## 3b. Mudanças da IN4a
+
+A IN4a ([janela-inbox.md](janela-inbox.md)) trocou duas regras deste núcleo: a conta e as salas seguem o **nível** de cada pessoa (marca de atendente, decisão de 17/10/2026), e não mais o papel com `inbox.view`; e os atendentes têm poder **10** nas salas (só mandam mensagem), com o estado da conversa gravado pelo núcleo a pedido do console.
+
 ## 4. Como testar
 
 ```sh

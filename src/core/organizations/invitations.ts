@@ -28,6 +28,7 @@ import {
   OrganizationRole,
   OrganizationRoles,
   WorkspaceRole,
+  WorkspaceRoles,
 } from "../permissions/roles";
 import { Permissions } from "../permissions/catalog";
 import {
@@ -36,6 +37,7 @@ import {
 } from "../permissions/guard";
 import { recordAudit } from "../audit/record";
 import { requestAccountSync } from "../matrix";
+import { assertAttendantSeat } from "@/modules/inbox/quotas";
 import { appConfig } from "../config/app";
 import { isWorkspaceActive } from "../workspaces/active";
 import type { Identity } from "../auth/identity";
@@ -178,6 +180,11 @@ export async function createInvitation(
   const totalCommittedSeats = activeMembersCount + pendingInvitesCount;
   if (totalCommittedSeats >= maxSeats) {
     throw new SeatLimitExceededError(organizationId, maxSeats, totalCommittedSeats);
+  }
+
+  // 4b. An Attendant takes a place in the Inbox quota (IN4a).
+  if (role === WorkspaceRoles.ATTENDANT && workspaceId) {
+    await assertAttendantSeat(tx, { organizationId, workspaceId });
   }
 
   // 5. Expire or revoke any previous pending invitation for this exact email & target

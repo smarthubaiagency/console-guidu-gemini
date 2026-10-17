@@ -30,6 +30,18 @@ export const Permissions = {
   WORKSPACE_PROPOSALS_REVIEW: "workspace.proposals.review",
   /** Stores and properties of the business (UCP Location, F5a). */
   WORKSPACE_LOCATIONS_MANAGE: "workspace.locations.manage",
+  /**
+   * Approve or deny a request for the managed mode and go back to
+   * `padrao` (GB1c, ADR 0020): the company owner only.
+   */
+  WORKSPACE_SERVICE_MODE_MANAGE: "workspace.service_mode.manage",
+  /** Eventos of the workspace and their trace (H2): every member reads. */
+  WORKSPACE_EVENTS_READ: "workspace.events.read",
+  /**
+   * Resolve or dismiss an event and decide the requests for its data
+   * (H2, ADR 0022 item 7): owner and admin.
+   */
+  WORKSPACE_EVENTS_MANAGE: "workspace.events.manage",
 
   // BYOK Credentials Vault (Spec §16)
   CREDENTIALS_READ: "credentials.read",
@@ -108,9 +120,16 @@ export const Permissions = {
   PLATFORM_EVENTS_READ_ALL_DATA: "platform.events.read_all_data",
   // Grant and remove capabilities (`keychain`) of the platform team.
   PLATFORM_CAPABILITIES_MANAGE: "platform.capabilities.manage",
+  // Ask a customer for the data of events, with reason and reference (H2,
+  // ADR 0022 item 7): owner, operations and support.
+  PLATFORM_EVENTS_REQUEST_ACCESS: "platform.events.request_access",
+  // Resolve or dismiss the platform's own events (H2).
+  PLATFORM_EVENTS_MANAGE: "platform.events.manage",
   // Plataforma › Auditoria (AUD1): the whole audit trail; the database
   // narrows billing to the billing actions.
   PLATFORM_AUDIT_READ: "platform.audit.read",
+  // Ask a direct customer (partner zero) for the managed mode (GB1c).
+  PLATFORM_SERVICE_MODE_REQUEST: "platform.service_mode.request",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
@@ -138,6 +157,13 @@ export const Permissions = {
   // Operate the Google fichas of the companies the partner manages (GB1a,
   // ADR 0020): onboarding, automation page and the GMN agent.
   PARTNER_GOOGLE_BUSINESS_MANAGE: "partner.google_business.manage",
+  // Ask a customer for the managed mode and cancel the request (GB1c).
+  PARTNER_SERVICE_MODE_REQUEST: "partner.service_mode.request",
+  // Eventos of the customers (H2): situation of all, data where the
+  // partner manages; resolve or dismiss what it manages.
+  PARTNER_EVENTS_READ: "partner.events.read",
+  // Ask a customer for the data of events (H2, ADR 0022 item 7).
+  PARTNER_EVENTS_REQUEST_ACCESS: "partner.events.request_access",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

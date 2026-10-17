@@ -1,4 +1,4 @@
-import { eventDefinition } from "@/core/events/catalog";
+import { EVENT_CATALOG, eventDefinition } from "@/core/events/catalog";
 
 import {
   EMAIL_TEMPLATE_EVENTS,
@@ -66,6 +66,29 @@ export function notificationEventDefinition(
   return NOTIFICATION_EVENTS.find((event) => event.type === type) ?? null;
 }
 
+/**
+ * The channels of an event delivered by e-mail: the notification event's,
+ * else the Event Hub catalog's for a type with an e-mail but no editable
+ * template (the consent e-mail of the service modes, GB1c).
+ */
+export function deliveryEventDefinition(
+  type: string,
+): NotificationEventDefinition | null {
+  const known = notificationEventDefinition(type);
+  if (known) return known;
+  const hub = eventDefinition(type);
+  if (!hub) return null;
+  return {
+    type: type as NotificationEventType,
+    group: "account",
+    key: type,
+    essential: hub.essential,
+    channels: NOTIFICATION_CHANNELS.filter((channel) =>
+      (hub.channels as readonly string[]).includes(channel),
+    ),
+  };
+}
+
 export function isNotificationChannel(
   value: string,
 ): value is NotificationChannel {
@@ -119,4 +142,59 @@ export function resolveChannels(
       channelEnabled(definition, channel, preferences),
     ),
   );
+}
+
+// ---------------------------------------------------------------------------
+// H2: the hub's other notices to people and the WhatsApp column
+// ---------------------------------------------------------------------------
+
+/** Channels a person may turn off in Minha conta (H2 adds WhatsApp). */
+export const PERSON_CHANNELS = ["email", "app", "whatsapp"] as const;
+export type PersonChannel = (typeof PERSON_CHANNELS)[number];
+
+/** Types that may reach a person (not an explicit target, not inline). */
+const PERSON_TYPES = EVENT_CATALOG.filter(
+  (definition) =>
+    definition.destinations.includes("notify") &&
+    !definition.inline &&
+    definition.route !== "explicit",
+);
+
+/**
+ * Notices of the hub without an e-mail template that reach people (H2):
+ * a second block of the matrix, with their e-mail, bell and WhatsApp.
+ */
+export const HUB_PREFERENCE_EVENTS = PERSON_TYPES.filter(
+  (definition) =>
+    definition.level === "workspace" &&
+    !definition.template &&
+    definition.module !== "digital_profile",
+);
+
+/**
+ * Whether a person may change a channel of a type: WhatsApp always (they
+ * accepted the number; essential or not); e-mail and the bell of the
+ * hub's optional notices; the template events as before (CF3c).
+ */
+export function canChangePersonChannel(type: string, channel: string): boolean {
+  const definition = PERSON_TYPES.find((d) => d.type === type);
+  if (!definition) return false;
+  if (channel === "whatsapp") return true;
+  if (channel !== "email" && channel !== "app") return false;
+  if (definition.essential) return false;
+  const template = PREFERENCE_EVENTS.find((e) => e.type === type);
+  if (template) return canChangeChannel(template, channel);
+  return HUB_PREFERENCE_EVENTS.some((d) => d.type === type);
+}
+
+/** The person keeps the channel on (no row is on). */
+export function personChannelEnabled(
+  type: string,
+  channel: PersonChannel,
+  preferences: readonly ChannelPreference[],
+): boolean {
+  const row = preferences.find(
+    (p) => p.eventType === type && p.channel === channel,
+  );
+  return row?.enabled ?? true;
 }

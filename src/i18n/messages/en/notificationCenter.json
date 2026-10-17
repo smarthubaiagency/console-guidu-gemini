@@ -43,6 +43,52 @@
       "title": "Event seal does not match",
       "body": "The Event Hub check found {count} event(s) with a broken seal or chain."
     },
+    "serviceModeRequested": {
+      "title": "Management request for {organization}",
+      "body": "{partner} asked to manage the company. Open it to approve or deny."
+    },
+    "serviceModeChanged": {
+      "gerenciado": {
+        "title": "{organization} is now managed",
+        "body": "The request was approved and the managing team now has access to the workspace."
+      },
+      "padrao": {
+        "title": "{organization} is back to the standard mode",
+        "body": "The access of the managing team has ended."
+      }
+    },
+    "serviceModeDenied": {
+      "title": "Management request denied",
+      "body": "The owner of {organization} denied the management request."
+    },
+    "accessRequested": {
+      "title": "Data access request",
+      "body": "{requester} asked for access to the event data of {workspace} for {hours} hours."
+    },
+    "apiKeyCreated": {
+      "title": "API key created",
+      "body": "The key {key} was created in {workspace}."
+    },
+    "apiKeyRevoked": {
+      "title": "API key revoked",
+      "body": "The key {key} was revoked in {workspace}."
+    },
+    "mfaRequirementOff": {
+      "title": "Two-step verification no longer required",
+      "body": "The requirement was removed in {workspace}."
+    },
+    "eventReminder": {
+      "title": "Reminder: {event}",
+      "body": "Waiting for a decision for {hours} hours."
+    },
+    "eventEscalation": {
+      "title": "No answer: {event}",
+      "body": "Waiting for a decision for {hours} hours and forwarded to you."
+    },
+    "eventDigest": {
+      "title": "Daily digest",
+      "body": "{count} notice(s) kept for the digest."
+    },
     "workspaceDeletionScheduled": {
       "title": "Deletion of {workspace} scheduled",
       "body": "No service of the workspace works until the deletion, on {date}. The owner can cancel until then."

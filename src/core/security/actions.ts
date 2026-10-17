@@ -10,7 +10,12 @@ import { actionFailure } from "@/core/i18n/errors";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { partnerActor } from "@/core/partners/actors";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
-import { saveSettings, type SettingsInput } from "@/core/settings/service";
+import { emitSecurityEvent } from "@/core/events/security";
+import {
+  saveSettings,
+  type SettingsInput,
+  settingsView,
+} from "@/core/settings/service";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
@@ -123,13 +128,27 @@ export async function saveWorkspaceSecurityAction(
         messageKey: "security.errors.enrolFirst",
       });
     }
-    await withContext(prisma, ctx, (tx) =>
-      saveSettings(
+    await withContext(prisma, ctx, async (tx) => {
+      const before = await settingsView(tx, {
+        level: "workspace",
+        userId: identity.userId,
+        ctx,
+      });
+      const after = await saveSettings(
         tx,
         { level: "workspace", userId: identity.userId, ctx },
         input,
-      ),
-    );
+      );
+      // The team's requirement ended here (H2): an event of the hub.
+      if (
+        before.effective.values[MFA_KEY] === true &&
+        after.effective.values[MFA_KEY] !== true
+      ) {
+        await emitSecurityEvent(tx, ctx, "security.mfa_requirement_off", {
+          key: `security:mfa_requirement_off:${ctx.workspaceId}:${Date.now()}`,
+        });
+      }
+    });
     revalidatePath("/", "layout");
     return done("saved");
   } catch (err) {

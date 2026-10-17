@@ -1,0 +1,94 @@
+{
+  "errors": {
+    "forbidden": "Você não tem permissão para esta ação no modo de serviço.",
+    "notFound": "Empresa ou pedido não encontrado.",
+    "alreadyManaged": "A empresa já está no modo gerenciado.",
+    "pendingExists": "Já existe um pedido pendente para esta empresa.",
+    "noOwner": "A empresa ainda não tem um owner para aprovar o pedido.",
+    "noWorkspace": "A empresa não tem um workspace ativo.",
+    "invalid": "Dados inválidos."
+  },
+  "modes": {
+    "padrao": "Padrão",
+    "gerenciado": "Gerenciado"
+  },
+  "situation": {
+    "pending": "Pedido pendente",
+    "approved": "Pedido aprovado",
+    "denied": "Pedido recusado",
+    "expired": "Pedido expirado",
+    "cancelled": "Pedido cancelado"
+  },
+  "sources": {
+    "registration": "No contrato",
+    "request": "Por pedido aprovado",
+    "customer": "Pela empresa",
+    "partner": "Pelo parceiro"
+  },
+  "results": {
+    "requested": "Pedido enviado ao owner da empresa.",
+    "cancelled": "Pedido cancelado.",
+    "approved": "Modo gerenciado aprovado.",
+    "denied": "Pedido recusado.",
+    "reverted": "A empresa voltou para o modo padrão.",
+    "expired": "Este pedido expirou.",
+    "alreadyDecided": "Este pedido já foi decidido.",
+    "notFound": "Pedido não encontrado."
+  },
+  "console": {
+    "column": "Modo de serviço",
+    "request": "Pedir gerenciamento",
+    "cancel": "Cancelar pedido",
+    "pendingUntil": "Pedido pendente até {date}",
+    "crmContacts": "{count, plural, =0 {Nenhum contato no CRM} one {# contato no CRM} other {# contatos no CRM}}"
+  },
+  "scope": {
+    "title": "O que muda no gerenciado",
+    "guids": "Agentes de IA (GUIDS), base de conhecimento e indicações",
+    "campaigns": "Campanhas",
+    "reviews": "Avaliações e fichas do Google",
+    "crm": "CRM e contatos",
+    "conversations": "Conversas e canais",
+    "settings": "Configurações do workspace",
+    "keyNote": "A chave de IA da empresa nunca é lida nem trocada por quem gerencia.",
+    "auditNote": "Toda ação de quem gerencia fica registrada na auditoria do workspace."
+  },
+  "settings": {
+    "metaTitle": "Modo de serviço",
+    "title": "Modo de serviço",
+    "description": "Quem opera o workspace: a empresa sozinha (padrão) ou a equipe de quem gerencia (gerenciado).",
+    "currentTitle": "Modo atual",
+    "mode": "Modo",
+    "managedBy": "Quem gerencia",
+    "since": "Desde",
+    "how": "Como entrou",
+    "standardNote": "No modo padrão, quem gerencia vê só a situação dos módulos, sem os dados. Suporte só pelo acesso pontual que você aprova.",
+    "pendingTitle": "Pedido de gerenciamento",
+    "pendingDescription": "{partner} pediu para gerenciar esta empresa. O pedido vale até {date}.",
+    "approve": "Aprovar",
+    "deny": "Recusar",
+    "ownerOnly": "Só o owner da empresa aprova, recusa ou volta para o padrão.",
+    "backTitle": "Voltar para o padrão",
+    "backDescription": "A empresa volta a operar sozinha e o acesso de quem gerencia termina na hora. Para voltar ao gerenciado, será preciso um novo pedido.",
+    "back": "Voltar para o padrão"
+  },
+  "link": {
+    "metaTitle": "Pedido de gerenciamento",
+    "title": "Pedido de gerenciamento",
+    "description": "{partner} pede para gerenciar {organization}.",
+    "expires": "Este link é de uso único e vale até {date}.",
+    "consent": "Ao decidir, registramos a data, a hora e o endereço de rede (IP) como prova do seu consentimento.",
+    "approve": "Aprovar o gerenciado",
+    "deny": "Recusar",
+    "notFoundTitle": "Link inválido",
+    "notFound": "Este link não existe ou não é deste endereço.",
+    "expiredTitle": "Link expirado",
+    "expired": "O pedido expirou. Peça a quem gerencia um novo pedido.",
+    "approvedTitle": "Gerenciamento aprovado",
+    "approved": "{partner} já pode gerenciar {organization}. Você pode voltar para o padrão a qualquer momento em Configurações › Modo de serviço.",
+    "deniedTitle": "Pedido recusado",
+    "denied": "Nada mudou: {organization} continua no modo padrão.",
+    "cancelledTitle": "Pedido cancelado",
+    "cancelled": "Quem pediu cancelou o pedido. Nada mudou."
+  }
+}

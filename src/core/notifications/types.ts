@@ -32,6 +32,18 @@ export type AgentKeyNoticeData = Readonly<{
   credentialsUrl: string;
 }>;
 
+/** Request to move the company to the managed mode (GB1c), to its owner. */
+export type ServiceModeRequestData = Readonly<{
+  organizationName: string;
+  /** Who manages: the partner, or GUIDU for its direct customers. */
+  partnerName: string;
+  expiresAt: Date;
+  /** The single-use link (never stored: built by the dispatch). */
+  approveUrl: string;
+  /** Configurações › Modo de serviço, for the bell. */
+  settingsUrl: string;
+}>;
+
 /** Notice to the owners and admins about a workspace's deletion (WS1). */
 export type WorkspaceDeletionNoticeData = Readonly<{
   workspaceName: string;
@@ -75,6 +87,10 @@ export type NotificationEvent = EventBase &
         data: AgentKeyNoticeData;
       }>
     | Readonly<{
+        type: "service_mode.change_requested";
+        data: ServiceModeRequestData;
+      }>
+    | Readonly<{
         type: WorkspaceDeletionNoticeType;
         data: WorkspaceDeletionNoticeData;
       }>
@@ -82,6 +98,20 @@ export type NotificationEvent = EventBase &
         /** Test e-mail of Configurações › E-mail (CF3a). */
         type: "email.test";
         data: Readonly<{ settingsUrl: string }>;
+      }>
+    | Readonly<{
+        /**
+         * A notice of the Event Hub without a template of its own (H2): the
+         * texts come written in the recipient's language (`core/events/texts.ts`).
+         */
+        type: "events.notice";
+        data: Readonly<{
+          eventType: string;
+          subject: string;
+          paragraphs: readonly string[];
+          actionLabel: string;
+          url: string | null;
+        }>;
       }>
   );
 

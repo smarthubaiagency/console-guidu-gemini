@@ -7,7 +7,8 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { Pool } from "pg";
 
 import { computeSeal } from "../../src/core/events/seal";
-import { RIG } from "./rig";
+import { FAKE_RESEND_KEY } from "./fake-resend";
+import { EXTERNAL_POSTGRES, RIG } from "./rig";
 
 /**
  * Postgres for the end-to-end suite, served by PGlite over the wire protocol
@@ -96,6 +97,11 @@ export type TestDatabase = Readonly<{
   maintenanceOff: () => Promise<void>;
   /** A sealed event of the Event Hub in a workspace, with one delivery (H1). */
   seedEvent: (params: SeedEventParams) => Promise<{ id: string }>;
+  /** A CRM contact in a workspace, as its owner would add it (GB1c). */
+  seedCrmContact: (params: {
+    workspaceSlug: string;
+    name: string;
+  }) => Promise<{ id: string }>;
   close: () => Promise<void>;
 }>;
 
@@ -159,25 +165,40 @@ export async function startTestDatabase(
   port: number,
   repoRoot: string,
 ): Promise<TestDatabase> {
-  const db = await PGlite.create();
-  // The default is a single connection. Every client needs its own: this
-  // harness's pool (10), the web's Prisma (5), and while jobs run the
-  // worker's Prisma (2) and pg-boss pool (10). Queries still run one at a
-  // time, so the cap only has to stay above that sum; at 10 the worker's
-  // connections were refused ("Can't reach database server", ECONNRESET)
-  // and its jobs stayed queued.
-  const server = new PGLiteSocketServer({
-    db,
-    port,
-    host: "127.0.0.1",
-    maxConnections: 40,
-  });
-  await server.start();
-  releaseResetConnections(server);
+  let db: PGlite | null = null;
+  let server: PGLiteSocketServer | null = null;
+  if (EXTERNAL_POSTGRES) {
+    // A fresh database on every run (the AI agents run reuses the service).
+    const admin = new Pool({
+      connectionString: `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`,
+      max: 1,
+    });
+    await admin.query(
+      `drop database if exists ${RIG.databaseName} with (force)`,
+    );
+    await admin.query(`create database ${RIG.databaseName}`);
+    await admin.end();
+  } else {
+    db = await PGlite.create();
+    // The default is a single connection. Every client needs its own: this
+    // harness's pool, the web's Prisma (5), and while jobs run the worker's
+    // Prisma (2) and pg-boss pool. Queries still run one at a time, so the
+    // cap only has to stay above that sum; at 10 the worker's connections
+    // were refused ("Can't reach database server", ECONNRESET) and its jobs
+    // stayed queued.
+    server = new PGLiteSocketServer({
+      db,
+      port,
+      host: "127.0.0.1",
+      maxConnections: 40,
+    });
+    await server.start();
+    releaseResetConnections(server);
+  }
 
-  const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`;
-  const pool = new Pool({ connectionString: url, max: 10 });
-
+  const url = `postgresql://postgres:postgres@127.0.0.1:${port}/${RIG.databaseName}`;
+  // Few connections of its own: its queries are short and mostly in turn.
+  const pool = new Pool({ connectionString: url, max: 3 });
   await pool.query(BOOTSTRAP);
 
   const { readdir } = await import("node:fs/promises");
@@ -374,6 +395,20 @@ export async function startTestDatabase(
       }
       return { partnerId };
     },
+    seedCrmContact: async (params) => {
+      const result = await pool.query<{ id: string }>(
+        `insert into public.crm_contacts (organization_id, workspace_id, name, created_by)
+         select w.organization_id, w.id, $2,
+                (select m.user_id from public.workspace_members m
+                 where m.workspace_id = w.id and m.role = 'owner' order by m.created_at limit 1)
+         from public.workspaces w where w.slug = $1
+         returning id`,
+        [params.workspaceSlug, params.name],
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error(`Workspace not found: ${params.workspaceSlug}`);
+      return { id: row.id };
+    },
     seedEvent: async (params) => {
       const ws = await pool.query<{
         id: string;
@@ -508,6 +543,10 @@ export async function startTestDatabase(
             // Prisma clients (web and worker) would collide there.
             WORKER_DATABASE_URL: `${url}?pgbouncer=true&connection_limit=2`,
             WORKER_CONCURRENCY: "1",
+            // pg-boss polls every queue (two dozen) through its own pool; a
+            // small one keeps PGlite's single session from interleaving
+            // statements and is plenty for a real Postgres too.
+            WORKER_BOSS_MAX_CONNECTIONS: "2",
             GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
             // Seal of the Event Hub (H1), the same as the web's.
             EVENTS_HMAC_KEY: RIG.eventsHmacKey,
@@ -518,6 +557,11 @@ export async function startTestDatabase(
             // Agent GMN (GB1b): never the real maps provider or AI.
             MAPS_INTELLIGENCE_PROVIDER: "fake",
             GB_SUGGESTIONS_PROVIDER: "fake",
+            // E-mails of the dispatch (GB1c: the link of the service mode)
+            // go to the Resend double, as the web's do.
+            RESEND_API_KEY: FAKE_RESEND_KEY,
+            RESEND_API_BASE: `http://127.0.0.1:${RIG.resendPort}`,
+            EMAIL_FROM_ADDRESS: "avisos@guidu.test",
           },
           // Kept in memory and printed only when jobs stay stuck, so a CI
           // failure shows what the worker said.
@@ -563,8 +607,8 @@ export async function startTestDatabase(
     },
     close: async () => {
       await pool.end();
-      await server.stop();
-      await db.close();
+      await server?.stop();
+      await db?.close();
     },
   };
 }

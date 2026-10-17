@@ -1,7 +1,8 @@
 {
   "kinds": {
     "terms": "Terms of use",
-    "privacy": "Privacy policy"
+    "privacy": "Privacy policy",
+    "management": "Management clause"
   },
   "document": {
     "metadataTitle": "Legal documents",

@@ -1,0 +1,274 @@
+{
+  "events": {
+    "metaTitle": "Events",
+    "title": "Events",
+    "description": {
+      "workspace": "What happened in the workspace, who was told and on which channel, what was audited and who saw the data.",
+      "partner": "Your customers' events: the situation of all and the data of the companies you manage."
+    },
+    "filters": {
+      "module": "Module",
+      "severity": "Severity",
+      "status": "Status",
+      "customer": "Customer",
+      "all": "All",
+      "apply": "Filter",
+      "clear": "Clear"
+    },
+    "severity": {
+      "info": "Information",
+      "attention": "Attention",
+      "urgent": "Urgent"
+    },
+    "status": {
+      "open": "Open",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed",
+      "pending": "Pending",
+      "approved": "Approved",
+      "denied": "Denied",
+      "expired": "Expired"
+    },
+    "listTitle": "{count, plural, one {# event} other {# events}}",
+    "emptyTitle": "No events",
+    "empty": "Events show here as soon as they happen.",
+    "panelLabel": "Event",
+    "whatHappened": "What happened",
+    "eventId": "Event id",
+    "type": "Type",
+    "module": "Module",
+    "occurredAt": "When",
+    "customer": "Customer",
+    "seal": "Seal",
+    "dataHidden": "The data stays with the customer. Ask for access to see it.",
+    "you": "You",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "resolve": "Mark as resolved",
+    "dismiss": "Dismiss",
+    "reopen": "Reopen"
+  },
+  "access": {
+    "title": "Access to the data",
+    "description": "Ask the customer for access to this event's data, with the reason and the request reference.",
+    "granted": "Access approved until {date}. Each view is recorded and the customer sees it.",
+    "waiting": "Request sent. Waiting for the customer's decision.",
+    "request": "Ask for access to the data",
+    "requestHint": "The workspace owner or an admin approves. Only you will see it, only this event, for the approved term.",
+    "reason": "Reason",
+    "reasonError": "Write the reason (10 to 500 characters).",
+    "reference": "Request reference",
+    "referenceError": "Enter the request reference (up to 120 characters).",
+    "duration": "Term",
+    "hours": "{hours} hours",
+    "send": "Send request",
+    "cancel": "Cancel",
+    "viewData": "View data",
+    "endAccess": "End access",
+    "revoke": "Revoke",
+    "approve": "Approve",
+    "deny": "Deny",
+    "requestsTitle": "Requests for the data",
+    "requestsDescription": "Support asking to see the data of events of this workspace. You approve, deny or revoke whenever you want.",
+    "noRequests": "No open requests.",
+    "requestedBy": "{who} asked for access",
+    "platformSupport": "Platform support",
+    "partnerSupport": "Partner support",
+    "status": {
+      "pending": "Waiting",
+      "approved": "Approved",
+      "denied": "Denied",
+      "revoked": "Revoked",
+      "expired": "Expired"
+    },
+    "reasonLine": "Reason: {reason} (ref. {reference})",
+    "eventsCount": "{count, plural, one {# event} other {# events}}",
+    "until": "until {date}"
+  },
+  "trace": {
+    "deliveries": "Who was told",
+    "deliveriesHint": "Each delivery with its channel and status, the bell included.",
+    "noDeliveries": "Nobody was told about this event.",
+    "person": "Team member",
+    "channels": {
+      "email": "E-mail",
+      "app": "Bell",
+      "whatsapp": "WhatsApp"
+    },
+    "hold": {
+      "digest": "in the digest of {date}",
+      "quiet_hours": "held until {date} (quiet window)"
+    },
+    "status": {
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "read": "Read",
+      "failed": "Failed",
+      "blocked_policy": "Blocked",
+      "skipped": "Not sent",
+      "pending": "Pending",
+      "queued": "Queued"
+    },
+    "audit": "What was audited",
+    "noAudit": "Nothing audited about this event.",
+    "views": "Data views",
+    "noViews": "Nobody outside saw this event's data.",
+    "viewedBy": "Data seen by {who}, authorized by {by}",
+    "platformSupport": "platform support",
+    "partnerSupport": "partner support"
+  },
+  "settings": {
+    "metaTitle": "Notifications",
+    "title": "Notifications",
+    "description": {
+      "platform": "The default of each notice for the whole platform: channels, who receives, delivery and locks.",
+      "partner": "Adjust your customers' notices within what the platform left open and lock what cannot change.",
+      "workspace": "Adjust this workspace's notices within what was left open."
+    },
+    "columns": {
+      "event": "Notice",
+      "enabled": "On",
+      "recipients": "Who receives",
+      "delivery": "Delivery",
+      "escalation": "Escalation",
+      "lock": "Lock"
+    },
+    "channels": {
+      "app": "Bell",
+      "email": "E-mail",
+      "whatsapp": "WhatsApp"
+    },
+    "essential": "Required",
+    "lockedAbove": "Locked above",
+    "own": "Adjusted here",
+    "toggleEnabled": "{event} on",
+    "toggleChannel": "{event} by {channel}",
+    "toggleLock": "Lock {event}",
+    "recipients": {
+      "route": "Follows the mode",
+      "owner_admin": "Owner and admins",
+      "owner": "Owner only",
+      "members": "Whole team",
+      "partner_team": "Partner team",
+      "partner_owner": "Partner owner",
+      "owner_admin_partner_team": "Customer and partner"
+    },
+    "delivery": {
+      "immediate": "Right away",
+      "digest": "Daily digest"
+    },
+    "escalation": {
+      "hours": "Hours",
+      "to": "Forward to",
+      "none": "Reminder only"
+    },
+    "rulesTitle": "Notice rules",
+    "rulesDescription": {
+      "platform": "What applies when nobody changes anything. Lock a notice so partners and customers cannot change it.",
+      "partner": "Applies to all your customers. Notices locked by the platform do not change.",
+      "workspace": "Notices locked by the platform or the partner do not change."
+    },
+    "saveRules": "Save rules",
+    "rulesHint": "WhatsApp only reaches people who added their number and accepted it in My account. Required notices do not turn off.",
+    "readOnly": "Only the owner and the admins change these rules.",
+    "quiet": {
+      "title": "Quiet window",
+      "description": "A WhatsApp received in this window is held and leaves when it ends, in the workspace's time zone. Urgent security events go through.",
+      "enabled": "Use the quiet window",
+      "start": "Starts",
+      "end": "Ends",
+      "sundays": "All of Sunday"
+    },
+    "inherit": "Use the value from above",
+    "lock": "Lock for the levels below",
+    "digest": {
+      "title": "Daily digest",
+      "description": "Notices delivered in a digest leave together at this time, in the workspace's time zone.",
+      "time": "Time"
+    },
+    "scheduleTitle": "Quiet and digest",
+    "scheduleDescription": "When WhatsApp waits and when the daily digest leaves.",
+    "saveSchedule": "Save times"
+  },
+  "templates": {
+    "title": "WhatsApp templates",
+    "description": "The text of each WhatsApp notice, per language. Each edit creates a new version and the history is kept.",
+    "event": "Notice",
+    "language": "Language",
+    "open": "Open",
+    "source": {
+      "own": "This level's text",
+      "platform": "Platform text",
+      "default": "Default text"
+    },
+    "tags": "Variables: {tags}",
+    "save": "Save new version",
+    "body": "Text",
+    "restore": "Back to the default",
+    "version": "Version {version}",
+    "current": "Current",
+    "noVersions": "No version saved at this level.",
+    "reset": "Back to the first notice"
+  },
+  "whatsapp": {
+    "title": "My WhatsApp",
+    "description": "Your number to receive notices by WhatsApp. Without the acceptance, no notice is sent.",
+    "acceptedAt": "Accepted on {date}",
+    "save": "Save number",
+    "phone": "Number with area code",
+    "consent": "I accept receiving platform notices by WhatsApp on this number.",
+    "remove": "Remove number",
+    "channel": "WhatsApp",
+    "noNumber": "Add your WhatsApp to receive here.",
+    "hubGroup": "Other notices",
+    "errors": {
+      "phone": "Invalid WhatsApp number.",
+      "consent": "Check the acceptance to receive notices by WhatsApp."
+    }
+  },
+  "messages": {
+    "status": {
+      "open": "Event reopened.",
+      "resolved": "Event marked as resolved.",
+      "dismissed": "Event dismissed."
+    },
+    "accessRequested": "Access request sent to the customer.",
+    "dataOpened": "Data opened. The view was recorded and the customer sees it.",
+    "accessWithdrawn": "Access ended.",
+    "accessApproved": "Access approved.",
+    "accessDenied": "Access denied.",
+    "accessRevoked": "Access revoked.",
+    "rulesSaved": "Notice rules saved.",
+    "scheduleSaved": "Times saved.",
+    "templateRestored": "Template back to the default.",
+    "templateSaved": "Version {version} saved.",
+    "whatsappRemoved": "Number removed.",
+    "whatsappSaved": "WhatsApp saved."
+  },
+  "errors": {
+    "forbidden": "You do not have permission for this action.",
+    "eventNotFound": "Event not found.",
+    "grantNotFound": "Access request not found.",
+    "reason": "Write the reason ({min} to {max} characters).",
+    "reference": "Enter the request reference.",
+    "duration": "The term goes from 24 hours to 7 days.",
+    "notPending": "This request was already decided.",
+    "template": "Unknown template.",
+    "templateSize": "The text goes from 1 to 1000 characters.",
+    "templateTags": "Unknown variable: {tags}.",
+    "quiet": "Invalid quiet window.",
+    "status": "You cannot change the status of this event.",
+    "rule": {
+      "level": "This notice is not adjusted at this level.",
+      "essential": "A required notice does not turn off.",
+      "lock": "Only the platform and the partner lock notices.",
+      "channel": "Channel unavailable for this notice.",
+      "role": "Recipient unavailable for this notice.",
+      "escalation": "Only approval notices have escalation."
+    }
+  }
+}

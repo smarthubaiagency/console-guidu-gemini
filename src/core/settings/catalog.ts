@@ -20,6 +20,16 @@ import {
   SiteIdSchema,
 } from "@/core/analytics/config";
 import {
+  DEFAULT_DIGEST_TIME,
+  DEFAULT_QUIET_HOURS,
+  DigestTimeSchema,
+  mergeRules,
+  type QuietHours,
+  QuietHoursSchema,
+  type Rules,
+  RulesSchema,
+} from "@/core/events/rules";
+import {
   GOOGLE_SCOPES,
   type GoogleScope,
   GoogleScopesSchema,
@@ -322,6 +332,34 @@ export const SETTINGS = {
   "google_business.triggers": define<TriggerSettings>({
     schema: TriggerSettingsSchema,
     default: DEFAULT_TRIGGER_SETTINGS,
+    levels: ["platform", "partner", "workspace"],
+  }),
+  /**
+   * Notice rules of the Event Hub (H2, `core/events/rules.ts`), per event
+   * type. Each level sets only the types it changes; the levels merge type
+   * by type, and a type the platform or the partner locked stays as they
+   * left it. No rule: the H1 behaviour.
+   */
+  "notifications.rules": define<Rules>({
+    schema: RulesSchema,
+    default: {},
+    levels: ["platform", "partner", "workspace"],
+    narrow: mergeRules,
+  }),
+  /**
+   * Quiet window of the WhatsApp notices to people (H2): 20h to 8h and
+   * Sundays in the workspace's time zone; an urgent security event goes
+   * through. E-mail and the bell are not held.
+   */
+  "notifications.quiet_hours": define<QuietHours>({
+    schema: QuietHoursSchema,
+    default: DEFAULT_QUIET_HOURS,
+    levels: ["platform", "partner", "workspace"],
+  }),
+  /** Time of the daily digest (H2), in the workspace's time zone. */
+  "notifications.digest_time": define<string>({
+    schema: DigestTimeSchema,
+    default: DEFAULT_DIGEST_TIME,
     levels: ["platform", "partner", "workspace"],
   }),
 } as const;

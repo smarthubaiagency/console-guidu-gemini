@@ -40,7 +40,7 @@ O Atendente não vê configurações, módulos, cobrança nem outras telas. O da
 
 **[Decidido]** O Inbox é um módulo de plano (chave `inbox`), com **cota de atendentes**.
 
-**[Proposta]** Conta como atendente todo membro do workspace com `inbox.reply`. Ao atingir a cota, o convite de um novo membro com essa permissão é recusado com aviso; quem já está continua atendendo.
+**[Decidido em 17/10/2026]** Só atende quem for marcado como atendente na Equipe, mesmo sendo Dono ou Admin; a função Atendente já vem marcada. A cota conta os marcados (5 por workspace quando o plano não define). Ao atingir a cota, marcar, convidar ou trocar alguém para Atendente é recusado com aviso; quem já está continua atendendo. Dono e Admin sem marca abrem o Inbox só para ler e atribuir; Editor sem marca não abre. Detalhes em [janela-inbox.md](janela-inbox.md).
 
 ## 5. Dados
 

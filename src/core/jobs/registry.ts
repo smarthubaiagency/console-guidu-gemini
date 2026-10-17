@@ -4,6 +4,11 @@ import { guidTurnJob } from "@/core/ai/turn/guid";
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
 import { channelDispatchJob } from "@/core/channels/registry";
 import { eventsDispatchJob } from "@/core/events/dispatch";
+import {
+  accessRequestJob,
+  noticesTickJob,
+  noticesTickSchedule,
+} from "@/core/events/notices";
 import { verifyChainsJob, verifyChainsSchedule } from "@/core/events/verify";
 import { translateTextsJob } from "@/core/i18n/machine/texts-job";
 import { translateDocumentJob } from "@/core/legal/machine-job";
@@ -34,6 +39,9 @@ const DEFINITIONS = [
   // Event Hub (H1): dispatch of each event and the daily seal check.
   eventsDispatchJob,
   verifyChainsJob,
+  // H2: quiet window, digest, escalation and grant expiry; access requests.
+  noticesTickJob,
+  accessRequestJob,
   translateTextsJob,
   translateDocumentJob,
   workspaceExportJob,
@@ -71,6 +79,7 @@ export function listJobSchedules(): readonly JobSchedule[] {
     ...privacySchedules,
     keyWatchSchedule,
     verifyChainsSchedule,
+    noticesTickSchedule,
     matrixCleanupSchedule,
   ];
 }

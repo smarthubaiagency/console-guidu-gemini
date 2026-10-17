@@ -33,6 +33,7 @@ export const MODULE_ICON_KEYS = [
   "bot",
   "file-text",
   "hand",
+  "inbox",
   "layout-dashboard",
   "list",
   "puzzle",

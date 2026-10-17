@@ -12,8 +12,23 @@ export const CONVERSATION_STATE = "chat.guidu.conversation";
 export const CONVERSATION_STATUSES = ["open", "pending", "resolved"] as const;
 export type ConversationStatus = (typeof CONVERSATION_STATUSES)[number];
 
-/** Power of the attendants (and the agent): state of the conversation. */
-export const ATTENDANT_POWER = 50;
+/**
+ * Powers in a conversation room (IN4a, decision of 17/10/2026): the state
+ * of the conversation, invites and kicks at 50, for the core (creator) and
+ * the agent; sending at 10, for the attendants who answer and for the
+ * consumer; 0 for who only reads (an owner or admin who is not an
+ * attendant). The attendants change the state through the console, which
+ * checks their permission and writes it as the core.
+ */
+export const STATE_POWER = 50;
+export const REPLY_POWER = 10;
+export const READ_POWER = 0;
+
+export type InboxAccess = "reply" | "read";
+
+export function powerOf(access: InboxAccess): number {
+  return access === "reply" ? REPLY_POWER : READ_POWER;
+}
 
 export class MatrixHttpError extends Error {
   constructor(
@@ -203,12 +218,14 @@ export type PowerLevels = Readonly<{
 export function conversationRoomBody(
   input: Readonly<{
     name?: string | null;
-    attendants?: readonly string[];
+    /** Power of each member other than the core (attendants, consumer). */
+    powers?: Readonly<Record<string, number>>;
   }> = {},
 ): Record<string, unknown> {
   const users: Record<string, number> = {};
-  for (const attendant of input.attendants ?? [])
-    users[attendant] = ATTENDANT_POWER;
+  for (const [mxid, power] of Object.entries(input.powers ?? {})) {
+    if (power > 0) users[mxid] = power;
+  }
   return {
     preset: "private_chat",
     room_version: "12",
@@ -230,13 +247,13 @@ export function conversationRoomBody(
     ],
     power_level_content_override: {
       users,
-      users_default: 0,
-      events_default: 0,
+      users_default: READ_POWER,
+      events_default: REPLY_POWER,
       state_default: 100,
-      invite: ATTENDANT_POWER,
-      kick: ATTENDANT_POWER,
-      ban: ATTENDANT_POWER,
-      redact: ATTENDANT_POWER,
+      invite: STATE_POWER,
+      kick: STATE_POWER,
+      ban: STATE_POWER,
+      redact: STATE_POWER,
       events: {
         "m.room.encryption": 100,
         "m.room.power_levels": 100,
@@ -249,7 +266,7 @@ export function conversationRoomBody(
         "m.room.server_acl": 100,
         "m.room.tombstone": 100,
         "m.room.canonical_alias": 100,
-        [CONVERSATION_STATE]: ATTENDANT_POWER,
+        [CONVERSATION_STATE]: STATE_POWER,
       },
     },
   };
@@ -259,7 +276,7 @@ export async function createRoom(
   client: SynapseClient,
   input: Readonly<{
     name?: string | null;
-    attendants?: readonly string[];
+    powers?: Readonly<Record<string, number>>;
   }> = {},
 ): Promise<string> {
   const { room_id } = await client.request<{ room_id: string }>(
@@ -275,7 +292,7 @@ export async function createRoom(
 const powerPath = (roomId: string) =>
   `/_matrix/client/v3/rooms/${enc(roomId)}/state/m.room.power_levels/`;
 
-/** Sets the power of some users (null removes them), in one state event. */
+/** Sets the power of some users (null or 0 removes them), in one state event. */
 export async function setUserPowers(
   client: SynapseClient,
   roomId: string,
@@ -285,7 +302,7 @@ export async function setUserPowers(
   const users = { ...(current.users ?? {}) };
   let changed = false;
   for (const [user, level] of Object.entries(changes)) {
-    if (level === null) {
+    if (level === null || level === 0) {
       if (user in users) {
         delete users[user];
         changed = true;
@@ -410,6 +427,23 @@ export async function listRooms(
   };
 }
 
+/** Who created a room (admin API), or null when Synapse does not know it. */
+export async function roomCreator(
+  client: SynapseClient,
+  roomId: string,
+): Promise<string | null> {
+  try {
+    const room = await client.request<{ creator?: unknown }>(
+      "GET",
+      `/_synapse/admin/v1/rooms/${enc(roomId)}`,
+    );
+    return typeof room.creator === "string" ? room.creator : null;
+  } catch (error) {
+    if (isError(error, 404) || isError(error, 400)) return null;
+    throw error;
+  }
+}
+
 /** When the room was created (its `m.room.create`), or null. */
 export async function roomCreatedAt(
   client: SynapseClient,
@@ -427,6 +461,71 @@ export async function roomCreatedAt(
       : null;
   } catch (error) {
     if (isError(error, 404) || isError(error, 400)) return null;
+    throw error;
+  }
+}
+
+/**
+ * Writes the conversation state as the core (IN4a). The console checks who
+ * may change it; the room keeps it and the core mirrors it from the
+ * Application Service.
+ */
+export async function setConversationState(
+  client: SynapseClient,
+  roomId: string,
+  state: Readonly<{ status: ConversationStatus; assignee: string | null }>,
+): Promise<string | null> {
+  const { event_id } = await client.request<{ event_id?: string }>(
+    "PUT",
+    `/_matrix/client/v3/rooms/${enc(roomId)}/state/${CONVERSATION_STATE}/`,
+    { body: { version: 1, status: state.status, assignee: state.assignee } },
+  );
+  return typeof event_id === "string" ? event_id : null;
+}
+
+/**
+ * Registers a user of the reserved namespace (the address of a workspace,
+ * IN4a) and sets its name. Registering again is harmless.
+ */
+export async function registerNamespaceUser(
+  client: SynapseClient,
+  localpart: string,
+  displayName: string,
+): Promise<void> {
+  try {
+    await client.request("POST", "/_matrix/client/v3/register", {
+      body: {
+        type: "m.login.application_service",
+        username: localpart,
+        inhibit_login: true,
+      },
+    });
+  } catch (error) {
+    if (!isError(error, 400, "M_USER_IN_USE")) throw error;
+  }
+  const mxid = `@${localpart}:${client.config.serverName}`;
+  await client.request(
+    "PUT",
+    `/_matrix/client/v3/profile/${enc(mxid)}/displayname`,
+    { body: { displayname: displayName }, asUser: mxid },
+  );
+}
+
+/** Display name of a user, or null. */
+export async function displayNameOf(
+  client: SynapseClient,
+  mxid: string,
+): Promise<string | null> {
+  try {
+    const profile = await client.request<{ displayname?: unknown }>(
+      "GET",
+      `/_matrix/client/v3/profile/${enc(mxid)}/displayname`,
+    );
+    return typeof profile.displayname === "string" && profile.displayname
+      ? profile.displayname.slice(0, 255)
+      : null;
+  } catch (error) {
+    if (isError(error, 404)) return null;
     throw error;
   }
 }

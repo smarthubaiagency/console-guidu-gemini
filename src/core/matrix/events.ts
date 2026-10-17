@@ -1,12 +1,15 @@
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { upsertMember } from "./accounts";
-import { isNamespaceUser } from "./config";
+import { openConsumerRoom, workspaceOfAddress } from "./addresses";
+import { coreUserId, isNamespaceUser } from "./config";
+import { ATTENDANT_LOCALPART } from "./jwt";
 import {
   CONVERSATION_STATE,
   CONVERSATION_STATUSES,
   type ConversationStatus,
   leaveAs,
+  roomCreator,
   type SynapseClient,
 } from "./synapse";
 
@@ -60,6 +63,8 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
     const stateKey = text(event.state_key);
     const membership = text(content.membership, 16);
     if (!stateKey || !membership || !MEMBERSHIPS.has(membership)) return null;
+    // The display name names the consumer in the search (IN4a).
+    const name = text(content.displayname, 255);
     return {
       event_id: eventId,
       room_id: roomId,
@@ -67,7 +72,7 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
       state_key: stateKey,
       sender,
       origin_server_ts: ts,
-      content: { membership },
+      content: name ? { membership, displayname: name } : { membership },
     };
   }
   if (event.type === CONVERSATION_STATE && event.state_key === "") {
@@ -85,6 +90,19 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
     };
   }
   return null;
+}
+
+/**
+ * Who may open a conversation by calling the address of a store: anyone
+ * but the core's own users (the namespace and the attendants' accounts).
+ */
+function isConsumer(client: SynapseClient, mxid: string): boolean {
+  if (isNamespaceUser(client.config, mxid)) return false;
+  const local = /^@([^:]+):(.+)$/.exec(mxid);
+  if (!local?.[1]) return false;
+  return !(
+    local[2] === client.config.serverName && ATTENDANT_LOCALPART.test(local[1])
+  );
 }
 
 /** Events of an unknown room wait this long for its row (creation race). */
@@ -112,7 +130,9 @@ function isConversationStatus(value: unknown): value is ConversationStatus {
  * - the conversation state is mirrored in `matrix_rooms` (newest wins);
  * - an invite of a namespace user to a room the core does not know (a room
  *   a consumer created) is refused: in it the consumer would be the owner,
- *   able to turn encryption on and change the power levels.
+ *   able to turn encryption on and change the power levels. When the user
+ *   is the address of a workspace (IN4a), the core opens a room of its own
+ *   for that consumer (or reuses their open one).
  */
 export async function processPendingEvents(
   tx: ContextTransaction,
@@ -217,7 +237,21 @@ async function handleEvent(
         target,
         "O atendimento abre uma sala própria.",
       );
+      const workspaceId = await workspaceOfAddress(tx, target);
+      if (workspaceId && isConsumer(client, event.sender)) {
+        await openConsumerRoom(tx, client, {
+          workspaceId,
+          consumerMxid: event.sender,
+        });
+      }
       return "refused";
+    }
+    // Only a room the core created can still get its row (creation race);
+    // any other (a consumer's own room) is ignored at once (IN4a).
+    if (
+      (await roomCreator(client, event.roomId)) !== coreUserId(client.config)
+    ) {
+      return "ignored";
     }
     return now.getTime() - event.receivedAt.getTime() < UNKNOWN_ROOM_WAIT_MS
       ? "waiting"
@@ -238,6 +272,13 @@ async function handleEvent(
       content.membership,
       event.originServerTs,
     );
+    if (typeof content.displayname === "string" && content.displayname) {
+      await tx.$executeRaw`
+        update public.matrix_rooms set consumer_name = ${content.displayname.slice(0, 255)}
+        where id = ${room.id}::uuid and consumer_mxid = ${event.stateKey}
+          and consumer_name is distinct from ${content.displayname.slice(0, 255)}
+      `;
+    }
     return "processed";
   }
 
