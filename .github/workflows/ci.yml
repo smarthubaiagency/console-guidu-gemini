@@ -434,7 +434,8 @@ jobs:
     needs: changes
     if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # Two specs of up to 5 min each, retried in CI.
+    timeout-minutes: 25
     env:
       APP_NAME: "GUIDU"
       APP_URL: "http://localhost:3000"
@@ -503,7 +504,8 @@ jobs:
           bash scripts/local/synapse.sh setup
           bash scripts/local/synapse.sh start
       - name: Run Inbox E2E tests with the local Synapse
-        run: pnpm test:e2e e2e/inbox.spec.ts e2e/inbox-guids.spec.ts
+        # `list` prints each failure as it happens, before a retry.
+        run: pnpm test:e2e --reporter=list,html e2e/inbox.spec.ts e2e/inbox-guids.spec.ts
         env:
           MATRIX_E2E_ENV_FILE: ${{ runner.temp }}/synapse/setup/console.env
           # IN6: the GUIDS of the Inbox needs the AI agents module.
