@@ -23,7 +23,8 @@
   "roleOptions": {
     "member": "Miembro (Acceso estándar a los módulos)",
     "admin": "Administrador (Gestión de miembros y configuración)",
-    "owner": "Propietario (Gestión completa y contratación)"
+    "owner": "Propietario (Gestión completa y contratación)",
+    "attendant": "Agente de atención (Solo el panel y el Inbox)"
   },
   "ownerOnlyHint": "* Solo los propietarios pueden invitar a otros propietarios (AC04).",
   "cancel": "Cancelar",
@@ -43,7 +44,8 @@
   "roles": {
     "owner": "Propietario",
     "admin": "Administrador",
-    "member": "Miembro"
+    "member": "Miembro",
+    "attendant": "Agente de atención"
   },
   "active": "Activo",
   "removeMember": "Quitar miembro",

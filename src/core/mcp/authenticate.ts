@@ -221,8 +221,12 @@ export async function authenticateApiKey(
           throw new InvalidApiKeyError(requestId);
         }
       } else if (scope === "proposals:write") {
-        // Viewer role has strictly read-only access (C06 / C12)
-        if (role === "viewer") {
+        // Viewer role has strictly read-only access (C06 / C12); proposals
+        // also read the workspace, which the Attendant (AT1) cannot.
+        if (
+          role === "viewer" ||
+          !hasWorkspaceRolePermission(role, Permissions.WORKSPACE_READ)
+        ) {
           throw new InvalidApiKeyError(requestId);
         }
       }

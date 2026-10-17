@@ -12,6 +12,7 @@ import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
 import type { WorkspaceRole } from "@/core/permissions/roles";
 import { getRequestOrigin } from "@/core/partners/resolve";
 import { McpKeysClient, type McpKeysCapabilities } from "./mcp-keys-client";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("mcp");
@@ -34,6 +35,8 @@ export default async function McpSettingsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
 
   const { apiKeys, capabilities, userRole, allowedScopes } = await withContext(
     prisma,

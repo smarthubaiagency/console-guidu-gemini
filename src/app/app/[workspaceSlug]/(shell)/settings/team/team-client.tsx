@@ -60,6 +60,10 @@ export type InvitationDisplay = {
   expiresAt: string;
 };
 
+/** Roles offered in the selectors; the Attendant is a workspace role (AT1). */
+type TeamRole = "owner" | "admin" | "member" | "attendant";
+const TEAM_ROLES: readonly string[] = ["owner", "admin", "member", "attendant"];
+
 export type TeamCapabilities = {
   canManage: boolean;
   canInvite: boolean;
@@ -98,9 +102,7 @@ export function TeamClient({
 
   // Invite Form state
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "member" | "owner">(
-    "member",
-  );
+  const [inviteRole, setInviteRole] = useState<TeamRole>("member");
 
   const isOwner = currentUserRole === "owner";
 
@@ -156,10 +158,7 @@ export function TeamClient({
     });
   };
 
-  const handleUpdateRole = (
-    targetUserId: string,
-    newRole: "owner" | "admin" | "member",
-  ) => {
+  const handleUpdateRole = (targetUserId: string, newRole: TeamRole) => {
     startTransition(async () => {
       const formData = new FormData();
       formData.append("workspaceSlug", workspaceSlug);
@@ -303,13 +302,14 @@ export function TeamClient({
               <NativeSelect
                 id="team-invite-role"
                 value={inviteRole}
-                onChange={(e) =>
-                  setInviteRole(e.target.value as "admin" | "member" | "owner")
-                }
+                onChange={(e) => setInviteRole(e.target.value as TeamRole)}
                 className="w-full"
               >
                 <NativeSelectOption value="member">
                   {t("roleOptions.member")}
+                </NativeSelectOption>
+                <NativeSelectOption value="attendant">
+                  {t("roleOptions.attendant")}
                 </NativeSelectOption>
                 <NativeSelectOption value="admin">
                   {t("roleOptions.admin")}
@@ -404,12 +404,15 @@ export function TeamClient({
                           onChange={(e) =>
                             handleUpdateRole(
                               member.userId,
-                              e.target.value as "owner" | "admin" | "member",
+                              e.target.value as TeamRole,
                             )
                           }
                         >
                           <NativeSelectOption value="member">
                             {t("roles.member")}
+                          </NativeSelectOption>
+                          <NativeSelectOption value="attendant">
+                            {t("roles.attendant")}
                           </NativeSelectOption>
                           <NativeSelectOption value="admin">
                             {t("roles.admin")}
@@ -431,11 +434,13 @@ export function TeamClient({
                           }`}
                         >
                           <Shield className="h-3 w-3" />
-                          {member.role === "owner"
-                            ? t("roles.owner")
-                            : member.role === "admin"
-                              ? t("roles.admin")
-                              : t("roles.member")}
+                          {t(
+                            `roles.${
+                              TEAM_ROLES.includes(member.role)
+                                ? (member.role as TeamRole)
+                                : "member"
+                            }`,
+                          )}
                         </span>
                       )}
                     </TableCell>
@@ -523,7 +528,9 @@ export function TeamClient({
                       {invite.email}
                     </TableCell>
                     <TableCell className="text-text-subtle px-5 capitalize">
-                      {invite.role}
+                      {TEAM_ROLES.includes(invite.role)
+                        ? t(`roles.${invite.role as TeamRole}`)
+                        : invite.role}
                     </TableCell>
                     <TableCell className="px-5">
                       <span

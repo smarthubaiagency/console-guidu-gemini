@@ -63,7 +63,12 @@ export type FakeGoTrue = Readonly<{
 }>;
 
 /** Internal platform roles the e2e can seed (owner when omitted). */
-export const PLATFORM_ADMIN_SEED_ROLES = ["owner", "operations", "billing", "support"] as const;
+export const PLATFORM_ADMIN_SEED_ROLES = [
+  "owner",
+  "operations",
+  "billing",
+  "support",
+] as const;
 export type PlatformAdminSeedRole = (typeof PLATFORM_ADMIN_SEED_ROLES)[number];
 
 export type FakeGoTrueOptions = Readonly<{
@@ -77,7 +82,10 @@ export type FakeGoTrueOptions = Readonly<{
   /** `count(*)` of profile rows for an identity, for the provisioning checks. */
   onCountProfiles: (email: string) => Promise<number>;
   /** Seeds user as platform admin in platform_admin_members table. */
-  onMakePlatformAdmin: (email: string, role?: PlatformAdminSeedRole) => Promise<void>;
+  onMakePlatformAdmin: (
+    email: string,
+    role?: PlatformAdminSeedRole,
+  ) => Promise<void>;
   /** Seeds workspace and membership in database. */
   onSeedWorkspace: (params: {
     email: string;
@@ -85,14 +93,15 @@ export type FakeGoTrueOptions = Readonly<{
     orgSlug: string;
     wsName: string;
     wsSlug: string;
-    role?: "owner" | "admin" | "member" | "viewer";
+    role?: "owner" | "admin" | "member" | "viewer" | "attendant";
+    orgRole?: "owner" | "admin" | "member";
   }) => Promise<{ organizationId: string; workspaceId: string }>;
   /** Seeds invitation in database and returns token. */
   onSeedInvitation?: (params: {
     organizationId: string;
     workspaceId?: string | undefined;
     email: string;
-    role?: ("owner" | "admin" | "member" | "viewer") | undefined;
+    role?: ("owner" | "admin" | "member" | "viewer" | "attendant") | undefined;
     expiresInHours?: number | undefined;
   }) => Promise<{ id: string; rawToken: string }>;
   /** Seeds a partner with an active domain, a member and maybe a customer. */
@@ -102,7 +111,9 @@ export type FakeGoTrueOptions = Readonly<{
   /** Runs the job worker until no job is waiting (F3a). */
   onRunJobs?: () => Promise<{ remaining: number }>;
   /** Seeds a notice in a user's bell (CF3c). */
-  onSeedNotification?: (params: SeedNotificationParams) => Promise<{ id: string }>;
+  onSeedNotification?: (
+    params: SeedNotificationParams,
+  ) => Promise<{ id: string }>;
   /** Turns the maintenance window off (CF5c): specs share the database. */
   onMaintenanceOff?: () => Promise<void>;
   /** Seeds a sealed event of the Event Hub (H1). */
@@ -229,7 +240,10 @@ export async function startFakeGoTrue(
   const server: Server = createServer((request, response) => {
     void handle(request, response).catch((err) => {
       console.error("FAKE GOTRUE ERROR:", err);
-      return json(response, 500, { msg: "fake gotrue failure", error: String(err) });
+      return json(response, 500, {
+        msg: "fake gotrue failure",
+        error: String(err),
+      });
     });
   });
 
@@ -286,10 +300,16 @@ export async function startFakeGoTrue(
       const email = asString(body.email);
       if (!email) return json(response, 400, { msg: "invalid" });
       const role = asString(body.role);
-      if (role !== null && !PLATFORM_ADMIN_SEED_ROLES.includes(role as PlatformAdminSeedRole)) {
+      if (
+        role !== null &&
+        !PLATFORM_ADMIN_SEED_ROLES.includes(role as PlatformAdminSeedRole)
+      ) {
         return json(response, 400, { msg: "invalid role" });
       }
-      await options.onMakePlatformAdmin(email, (role ?? "owner") as PlatformAdminSeedRole);
+      await options.onMakePlatformAdmin(
+        email,
+        (role ?? "owner") as PlatformAdminSeedRole,
+      );
       return json(response, 200, { admin: email });
     }
 
@@ -300,8 +320,11 @@ export async function startFakeGoTrue(
       const orgSlug = asString(body.orgSlug) ?? `org-${Date.now()}`;
       const wsName = asString(body.wsName) ?? "Workspace Teste";
       const wsSlug = asString(body.wsSlug) ?? `ws-${Date.now()}`;
-      const role = asString(body.role) as "owner" | "admin" | "member" | "viewer" | null;
+      const role = asString(body.role) as
+        "owner" | "admin" | "member" | "viewer" | "attendant" | null;
       if (!email) return json(response, 400, { msg: "invalid email" });
+      const orgRole = asString(body.orgRole) as
+        "owner" | "admin" | "member" | null;
       const seeded = await options.onSeedWorkspace({
         email,
         orgName,
@@ -309,6 +332,7 @@ export async function startFakeGoTrue(
         wsName,
         wsSlug,
         role: role ?? "owner",
+        ...(orgRole ? { orgRole } : {}),
       });
       return json(response, 200, seeded);
     }
@@ -318,8 +342,12 @@ export async function startFakeGoTrue(
       const organizationId = asString(body.organizationId);
       const workspaceId = asString(body.workspaceId) ?? undefined;
       const email = asString(body.email);
-      const role = asString(body.role) as "owner" | "admin" | "member" | "viewer" | undefined;
-      const expiresInHours = typeof body.expiresInHours === "number" ? body.expiresInHours : undefined;
+      const role = asString(body.role) as
+        "owner" | "admin" | "member" | "viewer" | "attendant" | undefined;
+      const expiresInHours =
+        typeof body.expiresInHours === "number"
+          ? body.expiresInHours
+          : undefined;
       if (!organizationId || !email || !options.onSeedInvitation) {
         return json(response, 400, { msg: "invalid parameters" });
       }
@@ -334,12 +362,14 @@ export async function startFakeGoTrue(
     }
 
     if (path === "/__control/run-jobs" && method === "POST") {
-      if (!options.onRunJobs) return json(response, 400, { msg: "unsupported" });
+      if (!options.onRunJobs)
+        return json(response, 400, { msg: "unsupported" });
       return json(response, 200, await options.onRunJobs());
     }
 
     if (path === "/__control/maintenance-off" && method === "POST") {
-      if (!options.onMaintenanceOff) return json(response, 400, { msg: "unsupported" });
+      if (!options.onMaintenanceOff)
+        return json(response, 400, { msg: "unsupported" });
       await options.onMaintenanceOff();
       return json(response, 200, { maintenance: "off" });
     }
@@ -351,7 +381,14 @@ export async function startFakeGoTrue(
       const host = asString(body.host);
       const memberEmail = asString(body.memberEmail);
       const role = asString(body.role) as SeedPartnerParams["role"] | null;
-      if (!slug || !name || !host || !memberEmail || !role || !options.onSeedPartner) {
+      if (
+        !slug ||
+        !name ||
+        !host ||
+        !memberEmail ||
+        !role ||
+        !options.onSeedPartner
+      ) {
         return json(response, 400, { msg: "invalid parameters" });
       }
       const seeded = await options.onSeedPartner({
@@ -377,12 +414,16 @@ export async function startFakeGoTrue(
       if (!workspaceSlug || !type || !moduleKey || !options.onSeedEvent) {
         return json(response, 400, { msg: "invalid parameters" });
       }
-      return json(response, 200, await options.onSeedEvent({
+      return json(
+        response,
+        200,
+        await options.onSeedEvent({
           workspaceSlug,
           type,
           module: moduleKey,
           data,
-        }));
+        }),
+      );
     }
 
     if (path === "/__control/seed-notification" && method === "POST") {
@@ -414,7 +455,12 @@ export async function startFakeGoTrue(
       if (!organizationId || !workspaceId || !options.onSeedGuid) {
         return json(response, 400, { msg: "invalid parameters" });
       }
-      const seeded = await options.onSeedGuid({ organizationId, workspaceId, agentName, ready });
+      const seeded = await options.onSeedGuid({
+        organizationId,
+        workspaceId,
+        agentName,
+        ready,
+      });
       return json(response, 200, seeded);
     }
 

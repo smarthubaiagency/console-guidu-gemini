@@ -11,6 +11,7 @@ import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
 import { moduleStateLabelKey } from "@/core/module-runtime/state";
 import { getModuleCatalog } from "@/core/i18n/modules";
 import { prisma } from "@/lib/prisma/client";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata() {
   const t = await getTranslations("modules");
@@ -39,6 +40,8 @@ export default async function ModulesSettingsPage({ params }: PageProps) {
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const { modules, canManage } = await loadWorkspaceModuleViews(
     prisma,
     context,

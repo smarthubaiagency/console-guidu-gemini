@@ -20,5 +20,7 @@
   "statusDescription": "Servicios en conformidad con el estándar de observabilidad y métricas reales.",
   "modulesTitle": "Módulos de la Plataforma",
   "modulesSubtitle": "Módulos habilitados e integrados",
-  "access": "Acceder"
+  "access": "Acceder",
+  "attendantTitle": "Tu acceso es el Inbox",
+  "attendantDescription": "Como Agente de atención, ves este panel y el Inbox, que llega pronto. La configuración, los módulos y los registros quedan con el equipo que administra el workspace."
 }
