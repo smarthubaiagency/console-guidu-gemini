@@ -178,6 +178,6 @@ export async function changeConversation(
   if (next.status === current.status && next.assignee === current.assignee) {
     return next;
   }
-  await setConversationState(client, room.roomId, next);
+  await setConversationState(client, room.roomId, next, input.actor.mxid);
   return next;
 }

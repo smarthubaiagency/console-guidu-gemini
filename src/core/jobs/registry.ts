@@ -13,6 +13,7 @@ import { verifyChainsJob, verifyChainsSchedule } from "@/core/events/verify";
 import { translateTextsJob } from "@/core/i18n/machine/texts-job";
 import { translateDocumentJob } from "@/core/legal/machine-job";
 import { matrixCleanupSchedule, matrixJobs } from "@/core/matrix/jobs";
+import { inboxJobs, unansweredSchedule } from "@/modules/inbox/server/jobs";
 import { workspaceExportJob } from "@/core/privacy/export";
 import {
   workspaceLifecycleJob,
@@ -55,6 +56,8 @@ const DEFINITIONS = [
   channelDispatchJob,
   // Matrix core of the Inbox (IN3).
   ...matrixJobs,
+  // Inbox (IN4b): the CRM contact of a conversation and the notices.
+  ...inboxJobs,
   backgroundAnalysesJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
@@ -84,5 +87,6 @@ export function listJobSchedules(): readonly JobSchedule[] {
     verifyChainsSchedule,
     noticesTickSchedule,
     matrixCleanupSchedule,
+    unansweredSchedule,
   ];
 }

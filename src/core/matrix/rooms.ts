@@ -9,6 +9,7 @@ import {
   upsertMember,
 } from "./accounts";
 import { coreUserId } from "./config";
+import { runRoomOpened } from "./room-hooks";
 import {
   createRoom,
   deactivateUser,
@@ -161,6 +162,13 @@ export async function createConversationRoom(
       consumerMxid: input.consumerMxid ?? null,
       consumerName: input.consumerName?.trim().slice(0, 255) || null,
     },
+  });
+  // CRM contact and the notice of a new conversation (IN4b).
+  await runRoomOpened(tx, {
+    roomId,
+    workspaceId: input.workspaceId,
+    organizationId,
+    consumerName: input.consumerName?.trim().slice(0, 255) || null,
   });
   return { id: row.id, roomId, attendants: attendants.length };
 }

@@ -32,6 +32,9 @@ const TYPE_TAGS: Readonly<Record<string, readonly string[]>> = {
   "ai.agent.key_backup": ["agente", "data"],
   "ai.agent.key_paused": ["agente", "data"],
   "google_business.analyses_done": ["local"],
+  "inbox.conversation.new": ["contato"],
+  "inbox.conversation.assigned": ["contato"],
+  "inbox.conversation.unanswered": ["contato"],
   "events.access_requested": ["solicitante", "motivo", "referencia", "horas"],
   "security.api_key_created": ["chave"],
   "security.api_key_revoked": ["chave"],
@@ -104,6 +107,11 @@ export function tagValues(
       break;
     case "google_business.analyses_done":
       values.local = str(data.location);
+      break;
+    case "inbox.conversation.new":
+    case "inbox.conversation.assigned":
+    case "inbox.conversation.unanswered":
+      values.contato = str(data.contact);
       break;
     case "events.access_requested":
       values.solicitante = str(data.requester);

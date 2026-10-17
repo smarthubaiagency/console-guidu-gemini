@@ -81,6 +81,46 @@
     "notResolved": "La conversación no está resuelta.",
     "conversationNotFound": "Conversación no encontrada.",
     "assigneeNotAttendant": "Solo un agente de esta conversación puede ser el responsable.",
-    "notMarkable": "Solo propietarios, administradores y editores del workspace pueden ser marcados como agentes."
+    "notMarkable": "Solo propietarios, administradores y editores del workspace pueden ser marcados como agentes.",
+    "labelExists": "Ya existe una etiqueta con ese nombre.",
+    "labelNotFound": "Etiqueta no encontrada.",
+    "tooManyLabels": "El Inbox acepta hasta {max} etiquetas."
+  },
+  "unread": "{count, plural, one {# mensaje sin leer} other {# mensajes sin leer}}",
+  "labels": {
+    "title": "Etiquetas",
+    "filter": "Filtrar por etiqueta",
+    "all": "Todas las etiquetas",
+    "empty": "El workspace aún no tiene etiquetas.",
+    "newPlaceholder": "Nueva etiqueta",
+    "color": "Color de la etiqueta",
+    "add": "Crear etiqueta",
+    "created": "Etiqueta creada.",
+    "deleted": "Etiqueta eliminada.",
+    "delete": "Eliminar",
+    "deleteNamed": "Eliminar la etiqueta {name}",
+    "confirmDelete": "¿Eliminar la etiqueta {name} de todas las conversaciones?",
+    "colors": {
+      "neutral": "Gris",
+      "info": "Azul",
+      "success": "Verde",
+      "warning": "Amarillo",
+      "danger": "Rojo"
+    }
+  },
+  "contact": {
+    "phone": "Teléfono",
+    "email": "Correo",
+    "company": "Empresa",
+    "link": "Vincular a otro contacto",
+    "search": "Buscar en el CRM",
+    "cancel": "Cancelar",
+    "linked": "Contacto vinculado a la conversación.",
+    "state": {
+      "pending": "El contacto se está creando en el CRM.",
+      "quota": "La cuota de contactos del plan se agotó: la conversación quedó sin contacto.",
+      "none": "Esta conversación no tiene contacto en el CRM.",
+      "linked": "Vinculada a un contacto del CRM."
+    }
   }
 }

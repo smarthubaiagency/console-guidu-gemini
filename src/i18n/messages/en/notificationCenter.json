@@ -113,6 +113,18 @@
       "title": "Access refused by the IP list",
       "body": "The address {ip} tried to enter {area} and was refused.",
       "generic": "An address outside the allowed IP list was refused."
+    },
+    "inboxNew": {
+      "title": "New conversation",
+      "body": "{contact} started a conversation in the Inbox."
+    },
+    "inboxAssigned": {
+      "title": "Conversation assigned to you",
+      "body": "The conversation with {contact} is now yours."
+    },
+    "inboxUnanswered": {
+      "title": "Unanswered conversation",
+      "body": "{contact} has been waiting for an answer for 15 minutes."
     }
   },
   "preferences": {

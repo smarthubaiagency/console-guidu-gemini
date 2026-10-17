@@ -126,6 +126,10 @@ const EVENT_KEYS: Readonly<Record<string, string>> = {
   "ai.agent.key_paused": "aiKeyPaused",
   // Posted by the background analyses of a Google ficha (GB1a).
   "google_business.analyses_done": "gbAnalysesDone",
+  // Inbox (IN4b): new, assigned and unanswered conversations.
+  "inbox.conversation.new": "inboxNew",
+  "inbox.conversation.assigned": "inboxAssigned",
+  "inbox.conversation.unanswered": "inboxUnanswered",
   // The seal check of the Event Hub found a broken chain (H1).
   "platform.events.chain_broken": "eventsChainBroken",
   // Service modes (GB1c).
@@ -267,6 +271,15 @@ export function renderInboxNotice(
           values.ip && values.area
             ? t("ipBlocked.body", values)
             : t("ipBlocked.generic", values),
+      };
+    }
+    case "inboxNew":
+    case "inboxAssigned":
+    case "inboxUnanswered": {
+      const values = { contact: text(data, "contact") };
+      return {
+        title: t(`${key}.title`, values),
+        body: t(`${key}.body`, values),
       };
     }
     case "eventsChainBroken": {

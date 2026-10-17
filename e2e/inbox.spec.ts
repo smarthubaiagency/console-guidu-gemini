@@ -78,13 +78,17 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
     });
   }
 
-  // The owner turns the Inbox on and opens it: not marked, it reads only.
+  // The owner turns the Inbox (and the CRM, IN4b) on and opens it: not
+  // marked, it reads only.
   await signIn(page, owner);
   await page.goto(`/app/${wsSlug}/settings/modules`);
-  await page.getByRole("button", { name: "Habilitar Inbox" }).click();
-  await expect(
-    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
-  ).toBeVisible();
+  for (const name of ["Habilitar CRM", "Habilitar Inbox"]) {
+    await page.getByRole("button", { name }).click();
+    await expect(
+      statusBanner(page).filter({ hasText: "Módulo habilitado." }),
+    ).toBeVisible();
+    await page.reload();
+  }
   await page.goto(`/app/${wsSlug}/inbox`);
   await expect(bar(page)).toBeVisible();
   await expect(
@@ -129,6 +133,32 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await expect(conversation.getByRole("textbox")).toHaveCount(0);
   await expect(page.getByTestId("inbox-context")).toContainText("Pendente");
 
+  // IN4b: the conversation made its contact in the CRM (job of the rig).
+  await jobs(page, request);
+  await page.goto(`/app/${wsSlug}/crm/contacts`);
+  await expect(page.getByText("Maria Cliente").first()).toBeVisible();
+
+  // IN4b: the owner (manager) keeps the label catalog.
+  await page.goto(`/app/${wsSlug}/inbox?view=all`);
+  await list.getByRole("button", { name: /Maria Cliente/ }).click();
+  const labelsCard = page.getByTestId("inbox-labels");
+  await labelsCard
+    .getByRole("textbox", { name: "Nova etiqueta" })
+    .fill("Orçamento");
+  await labelsCard.getByRole("button", { name: "Criar etiqueta" }).click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Etiqueta criada." }),
+  ).toBeVisible();
+  // The contact card reads the CRM contact; the owner may link another.
+  await expect(page.getByTestId("inbox-contact")).toContainText(
+    "Maria Cliente",
+  );
+  await expect(
+    page.getByTestId("inbox-contact").getByRole("button", {
+      name: "Ligar a outro contato",
+    }),
+  ).toBeVisible();
+
   // The Attendant enters from the dashboard and finds it unassigned.
   await page.context().clearCookies();
   await signIn(page, attendant);
@@ -136,10 +166,30 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await page.getByRole("link", { name: "Abrir o Inbox" }).click();
   await expect(bar(page)).toBeVisible();
   await bar(page).getByRole("button", { name: "Não atribuídas" }).click();
-  await list.getByRole("button", { name: /Maria Cliente/ }).click();
+  // IN4b: the message is unread for the Attendant, in the list and the tab.
+  const row = list.getByRole("button", { name: /Maria Cliente/ });
+  await expect(row.getByTestId("inbox-unread")).toHaveText("1", {
+    timeout: 30_000,
+  });
+  await expect(page).toHaveTitle(/^\(1\) /);
+  await row.click();
   await expect(conversation.getByText("Olá, quero um orçamento")).toBeVisible({
     timeout: 30_000,
   });
+  await expect(row.getByTestId("inbox-unread")).toHaveCount(0, {
+    timeout: 30_000,
+  });
+
+  // IN4b: the Attendant labels the conversation and filters by it.
+  await page
+    .getByTestId("inbox-labels")
+    .getByRole("button", { name: "Orçamento" })
+    .click();
+  await expect(row).toContainText("Orçamento", { timeout: 15_000 });
+  await list
+    .getByRole("combobox", { name: "Filtrar por etiqueta" })
+    .selectOption({ label: "Orçamento" });
+  await expect(row).toBeVisible();
 
   // Takes it.
   const context = page.getByTestId("inbox-context");

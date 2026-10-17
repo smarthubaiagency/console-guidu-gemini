@@ -113,6 +113,18 @@
       "title": "Acceso rechazado por la lista de IP",
       "body": "La dirección {ip} intentó entrar en {area} y fue rechazada.",
       "generic": "Se rechazó una dirección fuera de la lista de IP permitidas."
+    },
+    "inboxNew": {
+      "title": "Conversación nueva",
+      "body": "{contact} empezó una conversación en el Inbox."
+    },
+    "inboxAssigned": {
+      "title": "Conversación asignada a ti",
+      "body": "La conversación con {contact} ahora es tuya."
+    },
+    "inboxUnanswered": {
+      "title": "Conversación sin respuesta",
+      "body": "{contact} espera respuesta hace 15 minutos."
     }
   },
   "preferences": {

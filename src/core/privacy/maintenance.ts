@@ -69,6 +69,10 @@ export async function purgeWorkspace(
     ],
     ["channel_routes", () => tx.channelRoute.deleteMany({ where })],
     ["channel_connections", () => tx.channelConnection.deleteMany({ where })],
+    // Inbox (IN4b): labels on rooms and the CRM links before the rooms.
+    ["inbox_room_labels", () => tx.inboxRoomLabel.deleteMany({ where })],
+    ["inbox_conversations", () => tx.inboxConversation.deleteMany({ where })],
+    ["inbox_labels", () => tx.inboxLabel.deleteMany({ where })],
     // Matrix rooms (IN3): members before their room; the rooms on Synapse
     // are deleted by the Matrix lifecycle (`purgeExternal`), not here.
     ["matrix_room_members", () => tx.matrixRoomMember.deleteMany({ where })],
