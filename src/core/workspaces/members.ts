@@ -29,6 +29,7 @@ import {
   MemberNotFoundError,
 } from "../organizations/errors";
 import { recordAudit } from "../audit/record";
+import { requestAccountSync } from "../matrix";
 import { updateOrganizationMemberRole } from "../organizations/members";
 
 export type WorkspaceMemberItem = {
@@ -97,7 +98,7 @@ export async function addWorkspaceMember(
   }
 
   // 4. Upsert workspace member
-  return tx.workspaceMember.upsert({
+  const member = await tx.workspaceMember.upsert({
     where: {
       workspaceId_userId: {
         workspaceId,
@@ -116,6 +117,9 @@ export async function addWorkspaceMember(
       status: "active",
     },
   });
+  // The Inbox account follows `inbox.view` (IN3).
+  await requestAccountSync(tx, targetUserId);
+  return member;
 }
 
 /**
@@ -205,6 +209,7 @@ export async function updateWorkspaceMemberRole(
       },
       data: { role: newRole },
     });
+    await requestAccountSync(tx, targetUserId);
 
     await recordAudit(
       tx,
@@ -325,6 +330,7 @@ export async function removeWorkspaceMember(
         },
       },
     });
+    await requestAccountSync(tx, targetUserId);
 
     await recordAudit(
       tx,

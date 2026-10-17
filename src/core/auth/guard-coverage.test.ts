@@ -61,6 +61,8 @@ const PUBLIC: Record<string, string> = {
     "retorno do consentimento do Google no Adicionar local; confere a sessão, o cookie cifrado e o nonce (GB1a)",
   "api/google-business/fake-consent/route.ts":
     "consentimento falso do Google Meu Negócio dos testes; 404 fora de GOOGLE_BUSINESS_PROVIDER=fake (GB1a)",
+  "api/matrix/as/[...path]/route.ts":
+    "Application Service do Synapse; confere o hs_token em tempo constante (IN3)",
   "api/billing/stripe/webhook/route.ts":
     "webhook do Stripe; confere a assinatura com o segredo cifrado (CF7)",
 };
@@ -117,6 +119,7 @@ function requiredGuards(path: string): (readonly string[])[] | null {
   if (path.startsWith("api/v1/platform/")) return [GUARDS.platformApi];
   if (path.startsWith("api/v1/")) return [GUARDS.api];
   if (path.startsWith("mcp/")) return [GUARDS.mcp];
+  if (path === "api/matrix/session/route.ts") return [GUARDS.user];
   return null;
 }
 

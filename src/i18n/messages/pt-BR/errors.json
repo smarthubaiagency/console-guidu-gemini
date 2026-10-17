@@ -20,5 +20,6 @@
   "invitationAccepted": "Este convite já foi aceito.",
   "moduleUnavailable": "Módulo temporariamente indisponível.",
   "providerError": "Falha na comunicação com o provedor de IA.",
-  "invalidInput": "Dados de entrada inválidos."
+  "invalidInput": "Dados de entrada inválidos.",
+  "chatUnavailable": "O chat está indisponível no momento."
 }

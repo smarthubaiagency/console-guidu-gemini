@@ -1,7 +1,7 @@
 # Inbox — especificação v0.1
 
 - **Data:** 16/10/2026
-- **Estado:** proposta da etapa IN0, para aprovação no PR. Decisões do Marcelo de 16/10/2026 marcadas **[Decidido]**; o resto é **[Proposta]**.
+- **Estado:** proposta da etapa IN0, para aprovação no PR. Decisões do Marcelo de 16/10/2026 marcadas **[Decidido]**; o resto é **[Proposta]**. As tabelas do núcleo da §5 (contas e salas) nasceram na IN3 ([nucleo-matrix.md](nucleo-matrix.md)).
 - **Base:** [ADR 0023](../../adr/0023-chat-interno-como-cliente-matrix.md) (chat interno como cliente Matrix) e a revisão de 16/10/2026 da [ADR 0014](../../adr/0014-shell-padrao-sidebar-08.md) (Inbox em tela cheia). Plano de etapas em [plano.md](plano.md).
 
 ## 1. O que é

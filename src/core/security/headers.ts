@@ -25,22 +25,38 @@ export function createNonce(): string {
  * not upgrade requests, since it is served over plain HTTP. Product
  * analytics (CF7) adds its provider's origin to `connect-src`, and only
  * while it is on; scripts stay nonce-only (no third-party script is
- * loaded: the dashboard posts the events itself).
+ * loaded: the dashboard posts the events itself). The Matrix homeserver
+ * (IN3) joins `connect-src` when configured: the Inbox talks to it from the
+ * browser (ADR 0023).
  */
 export function contentSecurityPolicy(
   nonce: string,
   {
     production,
     analyticsOrigin = null,
-  }: Readonly<{ production: boolean; analyticsOrigin?: string | null }>,
+    matrixOrigin = null,
+  }: Readonly<{
+    production: boolean;
+    analyticsOrigin?: string | null;
+    /** The Matrix homeserver (IN3), when configured; https in production. */
+    matrixOrigin?: string | null;
+  }>,
 ): string {
+  const matrix =
+    matrixOrigin &&
+    (production
+      ? /^https:\/\/[a-z0-9.-]+(:\d+)?$/
+      : /^https?:\/\/[a-z0-9.-]+(:\d+)?$/
+    ).test(matrixOrigin)
+      ? ` ${matrixOrigin}`
+      : "";
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${production ? "" : " 'unsafe-eval'"}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self'",
-    `connect-src 'self'${analyticsOrigin && /^https:\/\/[a-z0-9.-]+$/.test(analyticsOrigin) ? ` ${analyticsOrigin}` : ""}`,
+    `connect-src 'self'${analyticsOrigin && /^https:\/\/[a-z0-9.-]+$/.test(analyticsOrigin) ? ` ${analyticsOrigin}` : ""}${matrix}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
