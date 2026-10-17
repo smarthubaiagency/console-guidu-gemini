@@ -58,16 +58,16 @@ O módulo só diz o que aconteceu; o catálogo decide para onde vai. Cada encaix
 
 ## 5. Lacunas registradas
 
-| Lacuna                                    | Hoje                                                                                                    | Onde resolve                                                                           |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Tela de auditoria completa na plataforma  | **Resolvida na AUD1** (seção 8): `/platform/audit` lê toda a trilha por `private.platform_audit_events` | AUD1                                                                                   |
-| Entregas dos avisos visíveis à plataforma | `notification_deliveries` só para os papéis de cobrança (nasceu na F3c)                                 | H1 (owner, operations e support veem a situação)                                       |
-| Rastro completo de um evento              | Não existe                                                                                              | H2 (tela do evento: o que houve, quem foi avisado, por qual canal, o que foi auditado) |
-| Analytics de negócio                      | Não existe (o da CF7 é analytics de produto)                                                            | H3, com painel agregado da plataforma                                                  |
-| Papéis múltiplos na plataforma            | `platform_admin_members` tem um papel por pessoa                                                        | H1 (`platform_admin_capabilities` para o `keychain`)                                   |
-| Avisos fora do `notify`                   | Lead quente e indicação (webhook A6), análises da GB1a (função própria)                                 | H1                                                                                     |
-| Canal WhatsApp e rota por modo            | Não existem no `notify`                                                                                 | H1                                                                                     |
-| Flakiness dos e2e `privacy` e `proposals` | Falham sob carga e passam sozinhos                                                                      | Corrigir na primeira etapa que mexer neles (seção 7)                                   |
+| Lacuna                                    | Hoje                                                                                                                      | Onde resolve                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Tela de auditoria completa na plataforma  | **Resolvida na AUD1** (seção 8): `/platform/audit` lê toda a trilha por `private.platform_audit_events`                   | AUD1                                                 |
+| Entregas dos avisos visíveis à plataforma | `notification_deliveries` só para os papéis de cobrança (nasceu na F3c)                                                   | H1 (owner, operations e support veem a situação)     |
+| Rastro completo de um evento              | **Resolvida na H2** (seção 10): gaveta do evento nos 3 níveis com entregas (sino incluído), auditoria e acessos aos dados | H2                                                   |
+| Analytics de negócio                      | Não existe (o da CF7 é analytics de produto)                                                                              | H3, com painel agregado da plataforma                |
+| Papéis múltiplos na plataforma            | `platform_admin_members` tem um papel por pessoa                                                                          | H1 (`platform_admin_capabilities` para o `keychain`) |
+| Avisos fora do `notify`                   | Lead quente e indicação (webhook A6), análises da GB1a (função própria)                                                   | H1                                                   |
+| Canal WhatsApp e rota por modo            | Não existem no `notify`                                                                                                   | H1                                                   |
+| Flakiness dos e2e `privacy` e `proposals` | Falham sob carga e passam sozinhos                                                                                        | Corrigir na primeira etapa que mexer neles (seção 7) |
 
 ## 6. Duas etapas por vez
 
