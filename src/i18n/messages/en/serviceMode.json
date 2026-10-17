@@ -6,7 +6,9 @@
     "pendingExists": "There is already a pending request for this company.",
     "noOwner": "The company has no owner to approve the request yet.",
     "noWorkspace": "The company has no active workspace.",
-    "invalid": "Invalid data."
+    "invalid": "Invalid data.",
+    "reason": "Write the reason (10 to 500 characters).",
+    "notManaged": "The company is not in the managed mode."
   },
   "modes": {
     "padrao": "Standard",
@@ -33,14 +35,22 @@
     "reverted": "The company is back to the standard mode.",
     "expired": "This request has expired.",
     "alreadyDecided": "This request was already decided.",
-    "notFound": "Request not found."
+    "notFound": "Request not found.",
+    "revertedByPartner": "The company is back to the standard mode. The owner was notified."
   },
   "console": {
     "column": "Service mode",
     "request": "Request management",
     "cancel": "Cancel request",
     "pendingUntil": "Pending request until {date}",
-    "crmContacts": "{count, plural, =0 {No contacts in the CRM} one {# contact in the CRM} other {# contacts in the CRM}}"
+    "crmContacts": "{count, plural, =0 {No contacts in the CRM} one {# contact in the CRM} other {# contacts in the CRM}}",
+    "revert": "Return to standard",
+    "revertTitle": "Return {organization} to the standard mode?",
+    "revertDescription": "Your team loses access to the company data at once. The owner gets a bell notice and an e-mail with the reason. Going back to managed needs a new request approved by the owner.",
+    "revertReason": "Reason",
+    "revertReasonHint": "For example: end of the contract. The owner sees this text.",
+    "revertConfirm": "Return to standard",
+    "revertCancel": "Cancel"
   },
   "scope": {
     "title": "What changes in the managed mode",

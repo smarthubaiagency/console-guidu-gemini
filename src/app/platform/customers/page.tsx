@@ -5,6 +5,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { PageCanvas } from "@/components/patterns/page-canvas";
 import { PageTitle } from "@/components/patterns/page-title";
 import { ActionForm } from "@/components/partners/action-form";
+import { RevertToStandardButton } from "@/components/service-modes/revert-to-standard";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -61,6 +62,7 @@ export default async function AdminCustomersPage() {
   // Plan column (F3b): subscriptions are readable by billing roles only.
   const canReadBilling = grants("platform.billing.read");
   const canRequestMode = grants("platform.service_mode.request");
+  const canRevertMode = grants("platform.service_mode.revert");
   const { plans, modes } = await withIdentityContext(
     prisma,
     identity.userId,
@@ -188,6 +190,13 @@ export default async function AdminCustomersPage() {
                                 />
                               </ActionForm>
                             )
+                          ) : null}
+                          {canRevertMode && direct.mode === "gerenciado" ? (
+                            <RevertToStandardButton
+                              level="platform"
+                              organizationId={org.id}
+                              organizationName={org.name}
+                            />
                           ) : null}
                         </div>
                       ) : (

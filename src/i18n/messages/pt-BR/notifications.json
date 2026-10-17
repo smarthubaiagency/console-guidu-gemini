@@ -67,7 +67,9 @@
     "workspace_deletion_scheduled": "Exclusão de workspace agendada",
     "workspace_deletion_reminder": "Lembrete da exclusão de workspace",
     "workspace_deletion_canceled": "Exclusão de workspace cancelada",
-    "workspace_deletion_completed": "Workspace excluído"
+    "workspace_deletion_completed": "Workspace excluído",
+    "service_mode_reverted_by_partner": "Gerenciamento encerrado pelo parceiro",
+    "security_ip_blocked": "Acesso recusado pela lista de IPs"
   },
   "whatsapp": {
     "generic": "{marca}: você tem um aviso novo em {workspace}. {link}",
@@ -80,7 +82,8 @@
     "security_api_key_created": "{marca}: uma chave de API ({chave}) foi criada em {workspace}. {link}",
     "security_api_key_revoked": "{marca}: a chave de API {chave} foi revogada em {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: a exigência de verificação em duas etapas foi retirada em {workspace}. {link}",
-    "digital_profile_lead_submitted": "{marca}: chegou um contato novo pelo perfil digital de {workspace}. {link}"
+    "digital_profile_lead_submitted": "{marca}: chegou um contato novo pelo perfil digital de {workspace}. {link}",
+    "security_ip_blocked": "{marca}: o endereço {ip} foi recusado em {area} pela lista de IPs. {link}"
   },
   "hub": {
     "action": "Abrir no painel",
@@ -139,6 +142,14 @@
     "escalation": {
       "subject": "Sem resposta: {event}",
       "body": "Este aviso espera uma decisão há {hours} horas e foi encaminhado a você."
+    },
+    "service_mode_reverted_by_partner": {
+      "subject": "{parceiro} encerrou o gerenciamento de {empresa}",
+      "body": "{empresa} voltou para o modo padrão e o acesso da equipe de {parceiro} terminou. Motivo: {motivo}"
+    },
+    "security_ip_blocked": {
+      "subject": "Acesso recusado em {area}",
+      "body": "O endereço {ip} tentou entrar em {area} e foi recusado pela lista de IPs permitidos."
     }
   },
   "digest": {

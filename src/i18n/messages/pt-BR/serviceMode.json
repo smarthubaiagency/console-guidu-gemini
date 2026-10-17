@@ -6,7 +6,9 @@
     "pendingExists": "Já existe um pedido pendente para esta empresa.",
     "noOwner": "A empresa ainda não tem um owner para aprovar o pedido.",
     "noWorkspace": "A empresa não tem um workspace ativo.",
-    "invalid": "Dados inválidos."
+    "invalid": "Dados inválidos.",
+    "reason": "Escreva o motivo (de 10 a 500 caracteres).",
+    "notManaged": "A empresa não está no modo gerenciado."
   },
   "modes": {
     "padrao": "Padrão",
@@ -33,14 +35,22 @@
     "reverted": "A empresa voltou para o modo padrão.",
     "expired": "Este pedido expirou.",
     "alreadyDecided": "Este pedido já foi decidido.",
-    "notFound": "Pedido não encontrado."
+    "notFound": "Pedido não encontrado.",
+    "revertedByPartner": "A empresa voltou para o modo padrão. O owner foi avisado."
   },
   "console": {
     "column": "Modo de serviço",
     "request": "Pedir gerenciamento",
     "cancel": "Cancelar pedido",
     "pendingUntil": "Pedido pendente até {date}",
-    "crmContacts": "{count, plural, =0 {Nenhum contato no CRM} one {# contato no CRM} other {# contatos no CRM}}"
+    "crmContacts": "{count, plural, =0 {Nenhum contato no CRM} one {# contato no CRM} other {# contatos no CRM}}",
+    "revert": "Devolver ao padrão",
+    "revertTitle": "Devolver {organization} ao padrão?",
+    "revertDescription": "O acesso da sua equipe aos dados da empresa termina na hora. O owner recebe um aviso no sino e por e-mail com o motivo. Para voltar ao gerenciado, será preciso um novo pedido aprovado pelo owner.",
+    "revertReason": "Motivo",
+    "revertReasonHint": "Por exemplo: fim do contrato. O owner vê este texto.",
+    "revertConfirm": "Devolver ao padrão",
+    "revertCancel": "Cancelar"
   },
   "scope": {
     "title": "O que muda no gerenciado",

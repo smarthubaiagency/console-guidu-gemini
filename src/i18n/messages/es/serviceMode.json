@@ -6,7 +6,9 @@
     "pendingExists": "Ya existe una solicitud pendiente para esta empresa.",
     "noOwner": "La empresa aún no tiene un propietario para aprobar la solicitud.",
     "noWorkspace": "La empresa no tiene un espacio de trabajo activo.",
-    "invalid": "Datos inválidos."
+    "invalid": "Datos inválidos.",
+    "reason": "Escribe el motivo (de 10 a 500 caracteres).",
+    "notManaged": "La empresa no está en el modo gestionado."
   },
   "modes": {
     "padrao": "Estándar",
@@ -33,14 +35,22 @@
     "reverted": "La empresa volvió al modo estándar.",
     "expired": "Esta solicitud venció.",
     "alreadyDecided": "Esta solicitud ya fue decidida.",
-    "notFound": "Solicitud no encontrada."
+    "notFound": "Solicitud no encontrada.",
+    "revertedByPartner": "La empresa volvió al modo estándar. Se avisó al propietario."
   },
   "console": {
     "column": "Modo de servicio",
     "request": "Solicitar gestión",
     "cancel": "Cancelar solicitud",
     "pendingUntil": "Solicitud pendiente hasta el {date}",
-    "crmContacts": "{count, plural, =0 {Ningún contacto en el CRM} one {# contacto en el CRM} other {# contactos en el CRM}}"
+    "crmContacts": "{count, plural, =0 {Ningún contacto en el CRM} one {# contacto en el CRM} other {# contactos en el CRM}}",
+    "revert": "Devolver al estándar",
+    "revertTitle": "¿Devolver {organization} al modo estándar?",
+    "revertDescription": "Tu equipo pierde el acceso a los datos de la empresa en el acto. El propietario recibe un aviso en la campana y por correo con el motivo. Para volver a gestionado, hará falta una nueva solicitud aprobada por el propietario.",
+    "revertReason": "Motivo",
+    "revertReasonHint": "Por ejemplo: fin del contrato. El propietario ve este texto.",
+    "revertConfirm": "Devolver al estándar",
+    "revertCancel": "Cancelar"
   },
   "scope": {
     "title": "Qué cambia en el modo gestionado",

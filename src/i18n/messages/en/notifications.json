@@ -67,7 +67,9 @@
     "workspace_deletion_scheduled": "Workspace deletion scheduled",
     "workspace_deletion_reminder": "Workspace deletion reminder",
     "workspace_deletion_canceled": "Workspace deletion canceled",
-    "workspace_deletion_completed": "Workspace deleted"
+    "workspace_deletion_completed": "Workspace deleted",
+    "service_mode_reverted_by_partner": "Management ended by the partner",
+    "security_ip_blocked": "Access refused by the IP list"
   },
   "whatsapp": {
     "generic": "{marca}: you have a new notice in {workspace}. {link}",
@@ -80,7 +82,8 @@
     "security_api_key_created": "{marca}: an API key ({chave}) was created in {workspace}. {link}",
     "security_api_key_revoked": "{marca}: the API key {chave} was revoked in {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: the two-step verification requirement was removed in {workspace}. {link}",
-    "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}"
+    "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}",
+    "security_ip_blocked": "{marca}: the address {ip} was refused in {area} by the IP list. {link}"
   },
   "hub": {
     "action": "Open in the dashboard",
@@ -139,6 +142,14 @@
     "escalation": {
       "subject": "No answer: {event}",
       "body": "This notice has been waiting for a decision for {hours} hours and was forwarded to you."
+    },
+    "service_mode_reverted_by_partner": {
+      "subject": "{parceiro} ended the management of {empresa}",
+      "body": "{empresa} is back to the standard mode and the access of the {parceiro} team has ended. Reason: {motivo}"
+    },
+    "security_ip_blocked": {
+      "subject": "Access refused in {area}",
+      "body": "The address {ip} tried to enter {area} and was refused by the allowed IP list."
     }
   },
   "digest": {

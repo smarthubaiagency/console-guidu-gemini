@@ -8,6 +8,7 @@ import { ModuleNotice } from "@/components/modules/module-notice";
 import { PageCanvas } from "@/components/patterns/page-canvas";
 import { PageTitle } from "@/components/patterns/page-title";
 import { ActionForm } from "@/components/partners/action-form";
+import { RevertToStandardButton } from "@/components/service-modes/revert-to-standard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -102,8 +103,8 @@ type ManagedWorkspace = Readonly<{
 /**
  * Companies of the partner (ADR 0012, P4a): registration data, the service
  * mode (ADR 0020) and, for the companies it manages, their workspaces with
- * the Google fichas and "Adicionar local" (GB1a). Companies in `padrao`
- * mode show only their registration data.
+ * the Google fichas and "Adicionar local" (GB1a) and "Devolver ao padrão"
+ * (AJ1). Companies in `padrao` mode show only their registration data.
  */
 export default async function PartnerCustomersPage({
   searchParams,
@@ -116,6 +117,7 @@ export default async function PartnerCustomersPage({
   }
   const canManage = grants("partner.customers.manage");
   const canRequestMode = grants("partner.service_mode.request");
+  const canRevertMode = grants("partner.service_mode.revert");
   const operatesFichas =
     gbModuleAvailable() && partnerMayOperate(membership.role);
   const query = await searchParams;
@@ -377,6 +379,13 @@ export default async function PartnerCustomersPage({
                         />
                       </ActionForm>
                     )
+                  ) : null}
+                  {canRevertMode && mode === "gerenciado" ? (
+                    <RevertToStandardButton
+                      level="partner"
+                      organizationId={customer.id}
+                      organizationName={customer.name}
+                    />
                   ) : null}
                 </ItemActions>
                 {own.length > 0 ? (

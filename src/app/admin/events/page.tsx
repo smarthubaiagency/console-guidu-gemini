@@ -7,6 +7,10 @@ import {
   EventStatusButtons,
   GrantDataViewer,
 } from "@/components/events/event-actions";
+import {
+  EventSelectionBar,
+  EventSelectionProvider,
+} from "@/components/events/event-selection";
 import { EventTraceCards } from "@/components/events/event-trace";
 import {
   EventFilters,
@@ -28,7 +32,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { requirePartnerConsolePage } from "@/core/auth/page-guard";
-import { activeGrantFor, myAccessGrants } from "@/core/events/access";
+import {
+  ACCESS_MAX_EVENTS,
+  activeGrantFor,
+  myAccessGrants,
+} from "@/core/events/access";
 import { textKeyOf } from "@/core/events/texts";
 import {
   EventListFilters,
@@ -123,6 +131,7 @@ export default async function PartnerEventsPage({
     return text ? `${BASE}?${text}` : BASE;
   };
 
+  const canRequest = grants("partner.events.request_access");
   const main = (
     <PageCanvas>
       <PageTitle
@@ -131,14 +140,25 @@ export default async function PartnerEventsPage({
         description={t("description.partner")}
       />
       <EventFilters base={BASE} filters={filters} customers={customers} />
-      <EventList rows={data.rows} href={(id) => href(id)} current={editKey} />
+      {canRequest ? (
+        <EventSelectionProvider max={ACCESS_MAX_EVENTS}>
+          <EventSelectionBar level="partner" />
+          <EventList
+            rows={data.rows}
+            href={(id) => href(id)}
+            current={editKey}
+            selectable
+          />
+        </EventSelectionProvider>
+      ) : (
+        <EventList rows={data.rows} href={(id) => href(id)} current={editKey} />
+      )}
     </PageCanvas>
   );
 
   const detail = data.detail;
   const grant = detail ? activeGrantFor(data.accessGrants, detail.id) : null;
   const pending = data.accessGrants.find((g) => g.status === "pending") ?? null;
-  const canRequest = grants("partner.events.request_access");
   const panel = detail ? (
     <div className="flex flex-col gap-4 p-4 md:p-6" data-testid="event-panel">
       <div className="flex flex-wrap items-center gap-2">
@@ -225,7 +245,7 @@ export default async function PartnerEventsPage({
                 grantId={grant.id}
               />
             ) : pending ? null : (
-              <AccessRequestForm level="partner" eventId={detail.id} />
+              <AccessRequestForm level="partner" eventIds={[detail.id]} />
             )}
           </CardContent>
         </Card>

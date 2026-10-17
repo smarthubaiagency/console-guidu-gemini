@@ -104,6 +104,15 @@
     "workspaceDeletionCompleted": {
       "title": "Workspace {workspace} eliminado",
       "body": "El workspace y sus datos se borraron definitivamente."
+    },
+    "serviceModeRevertedByPartner": {
+      "title": "{organization} volvió al modo estándar",
+      "body": "{partner} terminó la gestión. Motivo: {reason}"
+    },
+    "ipBlocked": {
+      "title": "Acceso rechazado por la lista de IP",
+      "body": "La dirección {ip} intentó entrar en {area} y fue rechazada.",
+      "generic": "Se rechazó una dirección fuera de la lista de IP permitidas."
     }
   },
   "preferences": {

@@ -149,6 +149,16 @@ const ERRORS: Readonly<
     message: "Dados inválidos.",
     key: "serviceMode.errors.invalid",
   },
+  reason: {
+    code: "invalid_input",
+    message: "Escreva o motivo (de 10 a 500 caracteres).",
+    key: "serviceMode.errors.reason",
+  },
+  not_managed: {
+    code: "conflict",
+    message: "A empresa não está no modo gerenciado.",
+    key: "serviceMode.errors.notManaged",
+  },
 };
 
 /**

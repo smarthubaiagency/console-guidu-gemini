@@ -87,7 +87,15 @@
     },
     "reasonLine": "Motivo: {reason} (ref. {reference})",
     "eventsCount": "{count, plural, one {# evento} other {# eventos}}",
-    "until": "hasta {date}"
+    "until": "hasta {date}",
+    "selectEvent": "Seleccionar para la solicitud de acceso",
+    "selectOtherWorkspace": "Solo eventos del mismo cliente y espacio de trabajo entran en la misma solicitud.",
+    "selected": "{count, plural, one {# evento seleccionado} other {# eventos seleccionados}} de {workspace}",
+    "selectHint": "Marca eventos de un mismo cliente para pedir acceso a los datos de todos a la vez (hasta {max}).",
+    "requestSelected": "Pedir acceso a los seleccionados",
+    "clearSelection": "Limpiar selección",
+    "requestManyTitle": "Pedir acceso a {count, plural, one {# evento} other {# eventos}}",
+    "requestManyHint": "El propietario o un administrador del espacio de trabajo aprueba. Solo tú verás, solo estos eventos, por el plazo aprobado."
   },
   "trace": {
     "deliveries": "A quién se avisó",
@@ -269,6 +277,7 @@
       "channel": "Canal no disponible para este aviso.",
       "role": "Destinatario no disponible para este aviso.",
       "escalation": "Solo los avisos de aprobación tienen escalamiento."
-    }
+    },
+    "mixedWorkspaces": "Una solicitud vale para eventos de un mismo cliente y espacio de trabajo."
   }
 }

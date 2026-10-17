@@ -36,6 +36,7 @@ const TYPE_TAGS: Readonly<Record<string, readonly string[]>> = {
   "security.api_key_created": ["chave"],
   "security.api_key_revoked": ["chave"],
   "security.mfa_requirement_off": [],
+  "security.ip_blocked": ["ip", "area"],
   "digital_profile.lead.submitted": [],
 };
 
@@ -113,6 +114,15 @@ export function tagValues(
     case "security.api_key_created":
     case "security.api_key_revoked":
       values.chave = str(data.keyName) || str(data.prefix);
+      break;
+    case "security.ip_blocked":
+      values.ip = str(data.ip);
+      values.area = str(data.area) === "admin" ? "/admin" : "/platform";
+      break;
+    case "service_mode.reverted_by_partner":
+      values.empresa = str(data.organizationName);
+      values.parceiro = str(data.partnerName);
+      values.motivo = str(data.reason);
       break;
   }
   return values;
