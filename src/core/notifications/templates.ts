@@ -25,6 +25,14 @@ import type {
 
 export { escapeHtml };
 
+/** Message prefix of each workspace deletion notice (WS1). */
+const DELETION_PREFIX = {
+  "workspace.deletion.scheduled": "workspaceDeletionScheduled",
+  "workspace.deletion.reminder": "workspaceDeletionReminder",
+  "workspace.deletion.canceled": "workspaceDeletionCanceled",
+  "workspace.deletion.completed": "workspaceDeletionCompleted",
+} as const;
+
 /** Only absolute http(s) links reach a template. */
 function safeLink(value: string): string {
   const url = new URL(value);
@@ -236,6 +244,29 @@ export function renderNotification(
         }),
       };
     }
+    case "workspace.deletion.scheduled":
+    case "workspace.deletion.reminder":
+    case "workspace.deletion.canceled":
+    case "workspace.deletion.completed": {
+      const { data } = event;
+      const prefix = DELETION_PREFIX[event.type];
+      const values = {
+        workspace: data.workspaceName,
+        date: formatDate(locale, data.purgeAfter),
+      };
+      return {
+        subject: t(`${prefix}.subject`, values),
+        ...layout(
+          t,
+          brand,
+          [t(`${prefix}.body`, values), t(`${prefix}.nextStep`, values)],
+          {
+            label: t("workspaceDeletion.action"),
+            url: safeLink(data.appUrl),
+          },
+        ),
+      };
+    }
     case "ai.agent.key_backup":
     case "ai.agent.key_paused": {
       const { data } = event;
@@ -335,6 +366,16 @@ export function templateValues(
         marca,
       };
     }
+    case "workspace.deletion.scheduled":
+    case "workspace.deletion.reminder":
+    case "workspace.deletion.canceled":
+    case "workspace.deletion.completed":
+      return {
+        workspace: event.data.workspaceName,
+        data: formatDate(locale, event.data.purgeAfter),
+        link: safeLink(event.data.appUrl),
+        marca,
+      };
     case "ai.agent.key_backup":
     case "ai.agent.key_paused":
       return {
@@ -448,6 +489,18 @@ export function defaultEmailTemplate(
         ),
         paragraph(t("suspended.access")),
         action(t("common.viewBilling")),
+      ]);
+    }
+    case "workspace.deletion.scheduled":
+    case "workspace.deletion.reminder":
+    case "workspace.deletion.canceled":
+    case "workspace.deletion.completed": {
+      const prefix = DELETION_PREFIX[type];
+      const values = { workspace: tag("workspace"), date: tag("data") };
+      return build(t(`${prefix}.subject`, values), [
+        paragraph(t(`${prefix}.body`, values)),
+        paragraph(t(`${prefix}.nextStep`, values)),
+        action(t("workspaceDeletion.action")),
       ]);
     }
     case "ai.agent.key_backup":

@@ -106,6 +106,10 @@ model WorkspaceDeletion {
   canceledBy     String?   @map("canceled_by") @db.Uuid
   purgedAt       DateTime? @map("purged_at") @db.Timestamptz()
   purgeSummary   Json?     @map("purge_summary")
+  /// Results of the lifecycle hooks and notices (WS1).
+  lifecycle      Json      @default("{}")
+  /// The reminder of 7 days before the purge was sent (WS1).
+  reminderSentAt DateTime? @map("reminder_sent_at") @db.Timestamptz()
 
   @@map("workspace_deletions")
 }

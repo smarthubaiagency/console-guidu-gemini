@@ -13,6 +13,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { getRequestPartner } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("billing.checkout");
@@ -38,6 +39,8 @@ export default async function DemoCheckoutPage({ params }: PageProps) {
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const partner = await getRequestPartner();
   if (!partner) notFound();
 

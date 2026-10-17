@@ -27,9 +27,15 @@ export const WorkspaceRoles = {
   ADMIN: "admin",
   EDITOR: "editor",
   VIEWER: "viewer",
+  /**
+   * Atendente (AT1, decisão de 16/10/2026): enters only the dashboard and the
+   * Inbox. Holds no core permission besides `inbox.view` and `inbox.reply`.
+   */
+  ATTENDANT: "attendant",
 } as const;
 
-export type WorkspaceRole = (typeof WorkspaceRoles)[keyof typeof WorkspaceRoles];
+export type WorkspaceRole =
+  (typeof WorkspaceRoles)[keyof typeof WorkspaceRoles];
 
 export const InvitationStatuses = {
   PENDING: "pending",
@@ -54,6 +60,8 @@ export const WS_ROLE_RANK: Record<WorkspaceRole, number> = {
   [WorkspaceRoles.ADMIN]: 300,
   [WorkspaceRoles.EDITOR]: 200,
   [WorkspaceRoles.VIEWER]: 100,
+  // Lowest rank: the Attendant reads less of the workspace than a viewer.
+  [WorkspaceRoles.ATTENDANT]: 50,
 };
 
 /**
@@ -116,7 +124,9 @@ export function canManageOrganizationMember(
 /**
  * Checks whether an actor can invite or assign a target workspace role.
  * - Organization owners or workspace owners can assign any workspace role.
- * - Workspace admins can only assign roles at or below admin (admin, editor, viewer).
+ * - Workspace admins can only assign roles at or below admin (admin, editor,
+ *   viewer, attendant).
+ * - Editors, viewers and attendants assign nothing.
  */
 export function canAssignWorkspaceRole(
   actorOrgRole?: OrganizationRole,

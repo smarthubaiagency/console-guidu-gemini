@@ -60,6 +60,22 @@
     "serviceModeDenied": {
       "title": "Management request denied",
       "body": "The owner of {organization} denied the management request."
+    },
+    "workspaceDeletionScheduled": {
+      "title": "Deletion of {workspace} scheduled",
+      "body": "No service of the workspace works until the deletion, on {date}. The owner can cancel until then."
+    },
+    "workspaceDeletionReminder": {
+      "title": "7 days left before {workspace} is deleted",
+      "body": "The workspace will be deleted for good on {date}. The owner can still cancel."
+    },
+    "workspaceDeletionCanceled": {
+      "title": "Deletion of {workspace} canceled",
+      "body": "The services of the workspace work again."
+    },
+    "workspaceDeletionCompleted": {
+      "title": "Workspace {workspace} deleted",
+      "body": "The workspace and its data were erased for good."
     }
   },
   "preferences": {

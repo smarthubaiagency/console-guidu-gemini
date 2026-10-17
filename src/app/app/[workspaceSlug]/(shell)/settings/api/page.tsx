@@ -15,6 +15,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { getRequestOrigin } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("api");
@@ -42,6 +43,8 @@ export default async function ApiSettingsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const origin = (await getRequestOrigin()) ?? "";
   const base = `${origin}/api/v1`;
   // Limits of the company's plan and usage of the keys (CF6b).

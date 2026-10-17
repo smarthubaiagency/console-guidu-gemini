@@ -39,6 +39,8 @@ export type AdminWorkspace = {
   slug: string;
   status: string;
   createdAt: Date;
+  /** When a scheduled deletion purges it (WS1); null otherwise. */
+  purgeAfter: Date | null;
 };
 
 export type AdminUser = {
@@ -213,6 +215,14 @@ export async function listAdminWorkspaces(
       select id, organization_id, organization_name, name, slug, status, created_at
       from private.list_admin_workspaces()
     `;
+    // Open deletions (WS1); the platform reads the deletion records.
+    const deletions = await tx.workspaceDeletion.findMany({
+      where: { canceledAt: null, purgedAt: null },
+      select: { workspaceId: true, purgeAfter: true },
+    });
+    const purgeAfter = new Map(
+      deletions.map((d) => [d.workspaceId, d.purgeAfter]),
+    );
 
     return rows.map((r) => ({
       id: r.id,
@@ -222,6 +232,10 @@ export async function listAdminWorkspaces(
       slug: r.slug,
       status: r.status,
       createdAt: new Date(r.created_at),
+      purgeAfter:
+        r.status === "deletion_scheduled"
+          ? (purgeAfter.get(r.id) ?? null)
+          : null,
     }));
   });
 }

@@ -44,6 +44,7 @@ import {
 import { latestRequests } from "@/core/service-modes/service";
 import { listWorkspaceTemplates } from "@/core/partners/customers";
 import { listPartnerCustomers } from "@/core/partners/members";
+import { listPartnerScheduledDeletions } from "@/core/privacy/deletion";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
@@ -119,7 +120,7 @@ export default async function PartnerCustomersPage({
     gbModuleAvailable() && partnerMayOperate(membership.role);
   const query = await searchParams;
 
-  const { customers, templates, modes, requests, workspaces } =
+  const { customers, templates, modes, requests, workspaces, deletions } =
     await withIdentityContext(
       prisma,
       identity.userId,
@@ -139,6 +140,8 @@ export default async function PartnerCustomersPage({
             tx,
             customers.map((c) => c.id),
           ),
+          // Scheduled deletions of the companies' workspaces (WS1).
+          deletions: await listPartnerScheduledDeletions(tx),
           templates: canManage
             ? await listWorkspaceTemplates(tx, partner.partnerId)
             : [],
@@ -309,6 +312,26 @@ export default async function PartnerCustomersPage({
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions className="flex-wrap">
+                  {deletions
+                    .filter((d) => d.organizationId === customer.id)
+                    .map((deletion) => (
+                      <Badge
+                        key={deletion.workspaceId}
+                        variant="danger"
+                        title={t("customers.deletionScheduledTitle", {
+                          workspace: deletion.workspaceName,
+                        })}
+                        data-testid="deletion-scheduled"
+                      >
+                        {t("customers.deletionScheduled", {
+                          date: format.dateTime(deletion.purgeAfter, {
+                            day: "2-digit",
+                            month: "2-digit",
+                            timeZone: "America/Sao_Paulo",
+                          }),
+                        })}
+                      </Badge>
+                    ))}
                   <Badge variant={mode === "gerenciado" ? "info" : "neutral"}>
                     {t(`customers.modes.${mode}`)}
                   </Badge>

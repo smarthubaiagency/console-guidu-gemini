@@ -83,6 +83,20 @@ export function inboxNotice(content: NotificationContent): InboxNotice | null {
         linkUrl: link(data.settingsUrl),
       };
     }
+    case "workspace.deletion.scheduled":
+    case "workspace.deletion.reminder":
+    case "workspace.deletion.canceled":
+    case "workspace.deletion.completed": {
+      const { data } = content;
+      return {
+        eventType: content.type,
+        data: {
+          workspace: clip(data.workspaceName),
+          purgeAfter: data.purgeAfter.toISOString(),
+        },
+        linkUrl: link(data.appUrl),
+      };
+    }
     case "invitation.created":
     case "email.test":
       return null;
@@ -103,6 +117,10 @@ export type RenderedNotice = Readonly<{ title: string; body: string }>;
 const EVENT_KEYS: Readonly<Record<string, string>> = {
   "billing.subscription.past_due": "pastDue",
   "billing.subscription.suspended": "suspended",
+  "workspace.deletion.scheduled": "workspaceDeletionScheduled",
+  "workspace.deletion.reminder": "workspaceDeletionReminder",
+  "workspace.deletion.canceled": "workspaceDeletionCanceled",
+  "workspace.deletion.completed": "workspaceDeletionCompleted",
   "ai.agent.key_backup": "aiKeyBackup",
   "ai.agent.key_paused": "aiKeyPaused",
   // Posted by the background analyses of a Google ficha (GB1a).
@@ -166,6 +184,19 @@ export function renderInboxNotice(
         workspace: text(data, "workspace"),
         agent: text(data, "agent") || t("aiAgent", {}),
         date: date(data, "until", format, true),
+      };
+      return {
+        title: t(`${key}.title`, values),
+        body: t(`${key}.body`, values),
+      };
+    }
+    case "workspaceDeletionScheduled":
+    case "workspaceDeletionReminder":
+    case "workspaceDeletionCanceled":
+    case "workspaceDeletionCompleted": {
+      const values = {
+        workspace: text(data, "workspace"),
+        date: date(data, "purgeAfter", format, false),
       };
       return {
         title: t(`${key}.title`, values),

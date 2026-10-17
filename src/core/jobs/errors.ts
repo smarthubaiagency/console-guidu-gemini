@@ -13,6 +13,11 @@ export type FailureOutcome = Readonly<{
   action: "skip" | "fail" | "retry";
   /** Safe message for the Executions page; never internal details. */
   message: string;
+  /**
+   * A skip that is not an error (WS1): the run is recorded as `skipped`
+   * with this reason in its result and no `last_error`.
+   */
+  quietReason?: string;
 }>;
 
 export class SkipJobError extends Error {
@@ -22,7 +27,27 @@ export class SkipJobError extends Error {
   }
 }
 
+/**
+ * The workspace of the run is not active (WS1): scheduled for deletion,
+ * suspended or inactive. Nothing runs for it; the run is skipped quietly.
+ */
+export class WorkspaceClosedError extends SkipJobError {
+  constructor() {
+    super("O workspace não está ativo.");
+    this.name = "WorkspaceClosedError";
+  }
+}
+
+export const WORKSPACE_CLOSED_REASON = "workspace_not_active";
+
 export function classifyJobFailure(error: unknown): FailureOutcome {
+  if (error instanceof WorkspaceClosedError) {
+    return {
+      action: "skip",
+      message: error.safeMessage,
+      quietReason: WORKSPACE_CLOSED_REASON,
+    };
+  }
   if (error instanceof SkipJobError) {
     return { action: "skip", message: error.safeMessage };
   }

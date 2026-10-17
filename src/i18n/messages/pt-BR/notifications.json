@@ -48,5 +48,28 @@
     "back": "Você pode voltar para o modo padrão a qualquer momento, em Configurações › Modo de serviço.",
     "expires": "O link é de uso único e vale até {date}.",
     "action": "Ver o pedido e decidir"
+  },
+  "workspaceDeletion": {
+    "action": "Abrir o painel"
+  },
+  "workspaceDeletionScheduled": {
+    "subject": "Exclusão do workspace {workspace} agendada",
+    "body": "A exclusão do workspace {workspace} foi pedida. Desde agora nenhum serviço dele funciona: canais, agentes de IA, execuções, API, MCP, páginas públicas e avisos.",
+    "nextStep": "Os dados serão apagados de vez em {date}. Até lá, o dono pode cancelar a exclusão no painel."
+  },
+  "workspaceDeletionReminder": {
+    "subject": "Faltam 7 dias para excluir {workspace}",
+    "body": "O workspace {workspace} será excluído de vez em {date}, com todos os seus dados.",
+    "nextStep": "Para manter o workspace, o dono pode cancelar a exclusão no painel até essa data."
+  },
+  "workspaceDeletionCanceled": {
+    "subject": "Exclusão de {workspace} cancelada",
+    "body": "A exclusão do workspace {workspace} foi cancelada e os serviços dele voltaram a funcionar.",
+    "nextStep": "Confira no painel os canais e os agentes de IA do workspace."
+  },
+  "workspaceDeletionCompleted": {
+    "subject": "Workspace {workspace} excluído",
+    "body": "O workspace {workspace} foi excluído de vez, com os seus dados, conforme o pedido de exclusão.",
+    "nextStep": "Este é o último aviso sobre ele. A exclusão estava marcada para {date}."
   }
 }

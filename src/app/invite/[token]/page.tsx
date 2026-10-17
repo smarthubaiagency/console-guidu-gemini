@@ -18,7 +18,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("team.metadataTitle") };
 }
 
-const ROLES = ["owner", "admin", "editor", "viewer", "member"] as const;
+const ROLES = [
+  "owner",
+  "admin",
+  "editor",
+  "viewer",
+  "attendant",
+  "member",
+] as const;
 
 /** Key (in `invite.team.roles`) of a role; unknown roles read as member. */
 function roleKey(role?: string): (typeof ROLES)[number] {

@@ -21,7 +21,7 @@ export const WorkspaceSummary = z.object({
   id,
   name: z.string(),
   slug: z.string(),
-  role: z.enum(["owner", "admin", "editor", "viewer"]),
+  role: z.enum(["owner", "admin", "editor", "viewer", "attendant"]),
   organization: z.object({ id, name: z.string() }),
 });
 
@@ -88,7 +88,7 @@ export const Execution = z.object({
 
 export const Member = z.object({
   userId: id,
-  role: z.enum(["owner", "admin", "editor", "viewer"]),
+  role: z.enum(["owner", "admin", "editor", "viewer", "attendant"]),
   status: z.string(),
   joinedAt: timestamp,
 });

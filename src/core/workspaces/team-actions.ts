@@ -29,11 +29,8 @@ import {
   createInvitation,
   revokeInvitation,
 } from "@/core/organizations/invitations";
-import {
-  updateOrganizationMemberRole,
-  removeOrganizationMember,
-} from "@/core/organizations/members";
-import type { OrganizationRole } from "@/core/permissions/roles";
+import { removeOrganizationMember } from "@/core/organizations/members";
+import { changeTeamMemberRole } from "@/core/workspaces/members";
 
 export type ActionState = {
   success?: boolean;
@@ -48,7 +45,9 @@ export type ActionState = {
 const InviteInput = z.object({
   workspaceSlug: z.string().min(1),
   email: z.string().email().trim(),
-  role: z.enum(["owner", "admin", "member"]),
+  // "attendant" (AT1) is a workspace role: the invitation targets this
+  // workspace and its acceptance makes the person a company member.
+  role: z.enum(["owner", "admin", "member", "attendant"]),
 });
 
 export async function createInvitationAction(
@@ -97,7 +96,7 @@ export async function createInvitationAction(
           organizationId: context.organizationId,
           actorId: identity.userId,
           email,
-          role: role as OrganizationRole,
+          role,
           workspaceId: context.workspaceId,
           ...(origin ? { origin } : {}),
         }),
@@ -182,7 +181,7 @@ export async function revokeInvitationAction(
 const UpdateRoleInput = z.object({
   workspaceSlug: z.string().min(1),
   targetUserId: z.string().uuid(),
-  newRole: z.enum(["owner", "admin", "member"]),
+  newRole: z.enum(["owner", "admin", "member", "attendant"]),
 });
 
 export async function updateMemberRoleAction(
@@ -215,14 +214,15 @@ export async function updateMemberRoleAction(
       workspaceSlug,
     );
 
-    await withContext(prisma, context, async (tx) => {
-      return updateOrganizationMemberRole(tx, {
+    await withContext(prisma, context, (tx) =>
+      changeTeamMemberRole(tx, {
+        workspaceId: context.workspaceId,
         organizationId: context.organizationId,
         actorId: identity.userId,
         targetUserId,
-        newRole: newRole as OrganizationRole,
-      });
-    });
+        choice: newRole,
+      }),
+    );
 
     revalidatePath(`/app/${workspaceSlug}/settings/team`);
 

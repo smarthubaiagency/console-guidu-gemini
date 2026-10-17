@@ -48,6 +48,9 @@ const ALL_WORKSPACE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permissions.WORKSPACE_DATA_EXPORT,
   Permissions.WORKSPACE_PROPOSALS_REVIEW,
   Permissions.WORKSPACE_LOCATIONS_MANAGE,
+  Permissions.INBOX_VIEW,
+  Permissions.INBOX_REPLY,
+  Permissions.INBOX_MANAGE,
 ]);
 
 /**
@@ -84,6 +87,8 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
     Permissions.API_KEYS_REVOKE_OWN,
     Permissions.AI_AGENTS_USE,
     Permissions.AI_AGENTS_CONVERSATIONS_READ,
+    Permissions.INBOX_VIEW,
+    Permissions.INBOX_REPLY,
   ]),
 
   // Workspace Viewer: leitura básica e chaves próprias (restrição a escopos read-only na C12).
@@ -92,6 +97,14 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
     Permissions.WORKSPACE_MEMBERS_READ,
     Permissions.API_KEYS_CREATE_OWN,
     Permissions.API_KEYS_REVOKE_OWN,
+  ]),
+
+  // Workspace Attendant (AT1): only the Inbox. No `workspace.read`, so every
+  // area other than the dashboard (settings, modules, executions, API, MCP and
+  // keys) answers 404 or 403; the dashboard needs only an active membership.
+  [WorkspaceRoles.ATTENDANT]: new Set([
+    Permissions.INBOX_VIEW,
+    Permissions.INBOX_REPLY,
   ]),
 };
 

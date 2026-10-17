@@ -48,5 +48,28 @@
     "back": "Puede volver al modo estándar en cualquier momento, en Configuración › Modo de servicio.",
     "expires": "El enlace es de un solo uso y vale hasta el {date}.",
     "action": "Ver la solicitud y decidir"
+  },
+  "workspaceDeletion": {
+    "action": "Abrir el panel"
+  },
+  "workspaceDeletionScheduled": {
+    "subject": "Eliminación del workspace {workspace} programada",
+    "body": "Se pidió la eliminación del workspace {workspace}. Desde ahora ninguno de sus servicios funciona: canales, agentes de IA, ejecuciones, API, MCP, páginas públicas y avisos.",
+    "nextStep": "Los datos se borrarán definitivamente el {date}. Hasta entonces, el propietario puede cancelar la eliminación en el panel."
+  },
+  "workspaceDeletionReminder": {
+    "subject": "Faltan 7 días para eliminar {workspace}",
+    "body": "El workspace {workspace} se eliminará definitivamente el {date}, con todos sus datos.",
+    "nextStep": "Para conservar el workspace, el propietario puede cancelar la eliminación en el panel hasta esa fecha."
+  },
+  "workspaceDeletionCanceled": {
+    "subject": "Eliminación de {workspace} cancelada",
+    "body": "Se canceló la eliminación del workspace {workspace} y sus servicios volvieron a funcionar.",
+    "nextStep": "Revise en el panel los canales y los agentes de IA del workspace."
+  },
+  "workspaceDeletionCompleted": {
+    "subject": "Workspace {workspace} eliminado",
+    "body": "El workspace {workspace} se eliminó definitivamente, con sus datos, según lo pedido.",
+    "nextStep": "Este es el último aviso sobre él. La eliminación estaba prevista para el {date}."
   }
 }

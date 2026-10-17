@@ -63,8 +63,12 @@ export async function blockIdentity(
 }
 
 /** Turns the maintenance window off (CF5c), straight in the database. */
-export async function maintenanceOff(request: APIRequestContext): Promise<void> {
-  const response = await request.post(`${AUTH_BASE_URL}/__control/maintenance-off`);
+export async function maintenanceOff(
+  request: APIRequestContext,
+): Promise<void> {
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/maintenance-off`,
+  );
   expect(response.status()).toBe(200);
 }
 
@@ -74,9 +78,12 @@ export async function makePlatformAdmin(
   email: string,
   role: "owner" | "operations" | "billing" | "support" = "owner",
 ): Promise<void> {
-  const response = await request.post(`${AUTH_BASE_URL}/__control/platform-admin`, {
-    data: { email, role },
-  });
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/platform-admin`,
+    {
+      data: { email, role },
+    },
+  );
   expect(response.status()).toBe(200);
 }
 
@@ -89,14 +96,21 @@ export async function seedWorkspace(
     orgSlug: string;
     wsName: string;
     wsSlug: string;
-    role?: "owner" | "admin" | "member" | "viewer";
+    role?: "owner" | "admin" | "member" | "viewer" | "attendant";
+    orgRole?: "owner" | "admin" | "member";
   },
 ): Promise<{ organizationId: string; workspaceId: string }> {
-  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-workspace`, {
-    data: params,
-  });
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/seed-workspace`,
+    {
+      data: params,
+    },
+  );
   expect(response.status()).toBe(200);
-  return (await response.json()) as { organizationId: string; workspaceId: string };
+  return (await response.json()) as {
+    organizationId: string;
+    workspaceId: string;
+  };
 }
 
 /** Seeds an invitation in the database and returns rawToken for testing. */
@@ -106,13 +120,16 @@ export async function seedInvitation(
     organizationId: string;
     workspaceId?: string | undefined;
     email: string;
-    role?: ("owner" | "admin" | "member" | "viewer") | undefined;
+    role?: ("owner" | "admin" | "member" | "viewer" | "attendant") | undefined;
     expiresInHours?: number | undefined;
   },
 ): Promise<{ id: string; rawToken: string }> {
-  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-invitation`, {
-    data: params,
-  });
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/seed-invitation`,
+    {
+      data: params,
+    },
+  );
   expect(response.status()).toBe(200);
   return (await response.json()) as { id: string; rawToken: string };
 }
@@ -125,13 +142,17 @@ export async function seedPartner(
     name: string;
     host: string;
     memberEmail: string;
-    role: "partner_owner" | "partner_admin" | "partner_finance" | "partner_support";
+    role:
+      "partner_owner" | "partner_admin" | "partner_finance" | "partner_support";
     organizationId?: string;
   },
 ): Promise<{ partnerId: string }> {
-  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-partner`, {
-    data: params,
-  });
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/seed-partner`,
+    {
+      data: params,
+    },
+  );
   expect(response.status()).toBe(200);
   return (await response.json()) as { partnerId: string };
 }
@@ -163,9 +184,12 @@ export async function seedNotification(
     linkUrl?: string;
   },
 ): Promise<{ id: string }> {
-  const response = await request.post(`${AUTH_BASE_URL}/__control/seed-notification`, {
-    data: params,
-  });
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/seed-notification`,
+    {
+      data: params,
+    },
+  );
   expect(response.status()).toBe(200);
   return (await response.json()) as { id: string };
 }
