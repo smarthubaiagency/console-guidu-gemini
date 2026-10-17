@@ -22,14 +22,18 @@ import {
  *   (a manager who answers may take it from someone);
  * - resolve and reopen: whoever answers (decision of 17/10/2026);
  * - assign to someone (or to nobody): the managers (`inbox.manage`), to a
- *   person who answers in that room.
+ *   person who answers in that room;
+ * - return to the GUIDS (IN6): whoever answers; the conversation goes back
+ *   to pending, without an assignee, and the Inbox GUIDS answers the next
+ *   message of the consumer.
  */
 
 export type ConversationAction =
   | Readonly<{ kind: "take" }>
   | Readonly<{ kind: "resolve" }>
   | Readonly<{ kind: "reopen" }>
-  | Readonly<{ kind: "assign"; assignee: string | null }>;
+  | Readonly<{ kind: "assign"; assignee: string | null }>
+  | Readonly<{ kind: "return" }>;
 
 export type ConversationState = Readonly<{
   status: ConversationStatus;
@@ -125,6 +129,16 @@ export function nextConversationState(
       return action.assignee === null
         ? { status: "pending", assignee: null }
         : { status: "open", assignee: action.assignee };
+    }
+    case "return": {
+      if (!answers) throw denied();
+      if (current.status === "pending" && current.assignee === null) {
+        throw conflict(
+          "A conversa já está com o GUIDS.",
+          "inboxGuids.errors.alreadyWithGuids",
+        );
+      }
+      return { status: "pending", assignee: null };
     }
   }
 }

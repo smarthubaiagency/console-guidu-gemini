@@ -2,6 +2,7 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { upsertMember } from "./accounts";
 import { openConsumerRoom, workspaceOfAddress } from "./addresses";
+import { onConsumerMessage } from "./agent";
 import { coreUserId, isNamespaceUser } from "./config";
 import { ATTENDANT_LOCALPART } from "./jwt";
 import {
@@ -259,6 +260,7 @@ async function handleEvent(
       organizationId: true,
       statusEventTs: true,
       state: true,
+      status: true,
       consumerMxid: true,
     },
   });
@@ -342,6 +344,15 @@ async function handleEvent(
       at,
       room.id,
     );
+    // IN6: the GUIDS's turn, and a resolved conversation back to pending.
+    if (side === "consumer" && room.state === "active") {
+      await onConsumerMessage(
+        tx,
+        client,
+        { ...room, roomId: event.roomId },
+        event.originServerTs,
+      );
+    }
     return "processed";
   }
 

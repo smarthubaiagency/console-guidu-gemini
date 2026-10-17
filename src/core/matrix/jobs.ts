@@ -6,6 +6,7 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { syncAccount } from "./accounts";
 import { ensureWorkspaceAddress } from "./addresses";
+import { syncWorkspaceAgent } from "./agent";
 import { matrixConfig, matrixEnabled } from "./config";
 import { processPendingEvents } from "./events";
 import { cleanupRooms, syncWorkspaceRooms } from "./rooms";
@@ -28,7 +29,8 @@ type MatrixJobKind =
   | "matrix.process-events"
   | "matrix.sync-account"
   | "matrix.sync-workspace"
-  | "matrix.logout-devices";
+  | "matrix.logout-devices"
+  | "matrix.sync-agent";
 
 export async function enqueueMatrixJob(
   tx: ContextTransaction,
@@ -56,6 +58,14 @@ export function requestWorkspaceSync(
   workspaceId: string,
 ): Promise<void> {
   return enqueueMatrixJob(tx, "matrix.sync-workspace", { workspaceId });
+}
+
+/** The Inbox GUIDS of a workspace changed: its user joins the rooms (IN6). */
+export function requestAgentSync(
+  tx: ContextTransaction,
+  workspaceId: string,
+): Promise<void> {
+  return enqueueMatrixJob(tx, "matrix.sync-agent", { workspaceId });
 }
 
 /** The person signed out of the console: end their Matrix sessions. */
@@ -149,6 +159,24 @@ export const matrixSyncWorkspaceJob = definePlatformJob<{
   },
 });
 
+export const matrixSyncAgentJob = definePlatformJob<{ workspaceId: string }>({
+  kind: "matrix.sync-agent",
+  description:
+    "Põe o GUIDS do Inbox nas salas do workspace e tira os agentes que não atendem mais.",
+  payload: z.object({ workspaceId: uuid }).strict(),
+  maxAttempts: 5,
+  retryDelaySeconds: 30,
+  async run(tx, payload) {
+    const result = await syncWorkspaceAgent(tx, client(), payload.workspaceId);
+    if (result.more) await requestAgentSync(tx, payload.workspaceId);
+    return {
+      agent: result.agent !== null,
+      joined: result.joined,
+      removed: result.removed,
+    };
+  },
+});
+
 export const matrixLogoutDevicesJob = definePlatformJob<{ userId: string }>({
   kind: "matrix.logout-devices",
   description: "Encerra as sessões Matrix de quem saiu do console.",
@@ -181,6 +209,7 @@ export const matrixJobs = [
   matrixProcessEventsJob,
   matrixSyncAccountJob,
   matrixSyncWorkspaceJob,
+  matrixSyncAgentJob,
   matrixLogoutDevicesJob,
   matrixCleanupJob,
 ] as const;

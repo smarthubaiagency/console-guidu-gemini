@@ -1054,6 +1054,8 @@ model AiConversation {
   closedAt              DateTime? @map("closed_at") @db.Timestamptz()
   /// Chatwoot (A5b): the external conversation this one answers.
   channelConversationId String?   @map("channel_conversation_id") @db.Uuid
+  /// Inbox (IN6): the Matrix room this one answers.
+  matrixRoomId          String?   @map("matrix_room_id")
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   /// Kept by the trigger: the engine updates only the columns it is granted.
   updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
@@ -1945,6 +1947,38 @@ model MatrixWorkspaceAddress {
   updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
 
   @@map("matrix_workspace_addresses")
+}
+
+/// Virtual user of a GUIDS in the rooms of the Inbox (IN6).
+model MatrixAgentUser {
+  agentId        String   @id @map("agent_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  localpart      String   @unique
+  mxid           String   @unique
+  displayName    String?  @map("display_name")
+  state          String   @default("pending")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("matrix_agent_users")
+}
+
+/// What the GUIDS last answered in a room and its last handoff (IN6).
+model InboxGuidsRoom {
+  roomId              String    @id @map("room_id")
+  workspaceId         String    @map("workspace_id") @db.Uuid
+  organizationId      String    @map("organization_id") @db.Uuid
+  agentId             String    @map("agent_id") @db.Uuid
+  lastAnsweredEventId String?   @map("last_answered_event_id")
+  lastAnsweredTs      BigInt?   @map("last_answered_ts")
+  handoffSummary      String?   @map("handoff_summary")
+  handoffReason       String?   @map("handoff_reason")
+  handoffAt           DateTime? @map("handoff_at") @db.Timestamptz()
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("inbox_guids_rooms")
 }
 
 /// Transactions pushed by Synapse to the Application Service (IN3).

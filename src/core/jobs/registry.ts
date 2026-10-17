@@ -22,6 +22,7 @@ import { privacyJobs, privacySchedules } from "@/core/privacy/maintenance";
 import { proposalExecuteJob } from "@/core/proposals/service";
 import { backgroundAnalysesJob } from "@/modules/google-business/server/jobs";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
+import { guidsTurnJob } from "@/modules/inbox/server/guids-turn";
 
 import type { JobDefinition, JobSchedule } from "./definition";
 
@@ -52,6 +53,8 @@ const DEFINITIONS = [
   channelDispatchJob,
   // Matrix core of the Inbox (IN3).
   ...matrixJobs,
+  // The GUIDS answering in the rooms of the Inbox (IN6).
+  guidsTurnJob,
   backgroundAnalysesJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];

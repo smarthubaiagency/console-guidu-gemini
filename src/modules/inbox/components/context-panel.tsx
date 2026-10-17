@@ -19,6 +19,7 @@ import {
   roomConversation,
 } from "../client/room-data";
 import type { ConversationSummary } from "../views";
+import { GuidsCard } from "./guids-card";
 import { StatusBadge } from "./status-badge";
 import type { ConversationCommand, InboxViewer } from "./types";
 
@@ -30,6 +31,7 @@ import type { ConversationCommand, InboxViewer } from "./types";
  * room holds wins over the mirror, which follows a moment later.
  */
 export function ContextPanel({
+  workspaceSlug,
   roomId,
   room,
   summary,
@@ -38,7 +40,9 @@ export function ContextPanel({
   busy,
   revision,
   onCommand,
+  onChanged,
 }: Readonly<{
+  workspaceSlug: string;
   roomId: string | null;
   room: Room | null;
   summary: ConversationSummary | null;
@@ -47,6 +51,8 @@ export function ContextPanel({
   busy: boolean;
   revision: number;
   onCommand: (command: ConversationCommand) => void;
+  /** Something changed from a card of its own (IN6): refresh the list. */
+  onChanged: () => void | Promise<void>;
 }>) {
   const t = useTranslations("inbox");
   const state = useMemo(() => {
@@ -206,6 +212,15 @@ export function ContextPanel({
               ) : null}
             </CardContent>
           </Card>
+
+          <GuidsCard
+            workspaceSlug={workspaceSlug}
+            roomId={roomId}
+            status={state.status}
+            assignee={state.assignee}
+            answers={answers}
+            onChanged={onChanged}
+          />
         </div>
       </ScrollArea>
     </aside>

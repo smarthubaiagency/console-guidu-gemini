@@ -231,6 +231,7 @@ function InboxWindow({
   );
   const context = (
     <ContextPanel
+      workspaceSlug={workspaceSlug}
       roomId={selected}
       room={room}
       summary={summary}
@@ -239,6 +240,7 @@ function InboxWindow({
       busy={busy}
       revision={matrix.revision}
       onCommand={run}
+      onChanged={refresh}
     />
   );
 
@@ -342,7 +344,11 @@ function InboxWindow({
               {conversation}
             </ResizablePanel>
             <ResizableHandle withHandle />
-            <ResizablePanel id="inbox-panel-context" defaultSize="24" minSize="16">
+            <ResizablePanel
+              id="inbox-panel-context"
+              defaultSize="24"
+              minSize="16"
+            >
               {context}
             </ResizablePanel>
           </ResizablePanelGroup>

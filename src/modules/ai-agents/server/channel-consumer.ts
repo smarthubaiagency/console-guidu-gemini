@@ -98,30 +98,64 @@ async function matchContact(
   return found?.id ?? null;
 }
 
-export async function answerOnChannel(
-  session: JobSession,
-  ctx: RequestContext,
-  input: ChannelTurnInput,
-  deps: GuidTurnDeps = {},
-): Promise<{
+/** Where a GUIDS conversation answers: a Chatwoot conversation or a room. */
+export type TurnLink =
+  | Readonly<{ channel: "chatwoot"; channelConversationId: string }>
+  | Readonly<{ channel: "matrix"; matrixRoomId: string }>;
+
+/** A line said before the new message: the team's or the contact's. */
+export type TurnContextLine = Readonly<{
+  side: "contact" | "team";
+  text: string;
+}>;
+
+export type AnswerTurnInput = Readonly<{
+  agentId: string;
+  link: TurnLink;
+  /** The contact's new messages, as one message. */
+  text: string;
+  media: readonly TurnAttachment[];
+  /** What was said since the agent last answered, oldest first. */
+  context: readonly TurnContextLine[];
+  /** Events with the contact's phone or e-mail, to find the CRM contact. */
+  contactEvents: readonly InboundEvent[];
+  limits: Readonly<{ maxMessages: number; maxChars: number }>;
+  voiceReply: boolean;
+}>;
+
+export type AnswerTurnOutput = Readonly<{
   messages: string[];
-  handoff: boolean;
+  handoff: Readonly<{ reason: string; summary: string }> | null;
   handoffNote: string | null;
   voice: SpokenAnswer | null;
   files: ChannelOutboundFile[];
-}> {
-  const agentId = input.consumerRef;
-  const text = groupedText(input.events);
-  const media = groupedAttachments(input);
+}>;
+
+/**
+ * One turn of a GUIDS for a channel or a hub (A5b, IN6): keeps one open
+ * conversation of the agent per link, writes what was said and the new
+ * message, runs the GUIDS's turn and returns the answer, sending nothing.
+ */
+export async function answerTurn(
+  session: JobSession,
+  ctx: RequestContext,
+  input: AnswerTurnInput,
+  deps: GuidTurnDeps = {},
+): Promise<AnswerTurnOutput> {
+  const { agentId, text, media } = input;
   if (!text && media.length === 0) {
     return {
       messages: [],
-      handoff: false,
+      handoff: null,
       handoffNote: null,
       voice: null,
       files: [],
     };
   }
+  const linkWhere =
+    input.link.channel === "chatwoot"
+      ? { channelConversationId: input.link.channelConversationId }
+      : { matrixRoomId: input.link.matrixRoomId };
   const prepared = await session.transaction(async (tx) => {
     const agent = await tx.aiAgent.findFirst({
       where: { id: agentId, kind: "guid", workspaceId: ctx.workspaceId },
@@ -140,7 +174,7 @@ export async function answerOnChannel(
         agentId,
         kind: "guid",
         workspaceId: ctx.workspaceId,
-        channelConversationId: input.conversation.id,
+        ...linkWhere,
         status: { not: "closed" },
       },
       select: { id: true, status: true, contactId: true },
@@ -152,14 +186,15 @@ export async function answerOnChannel(
           agentId,
           organizationId: ctx.organizationId,
           workspaceId: ctx.workspaceId,
-          channel: input.kind,
-          channelConversationId: input.conversation.id,
-          contactId: await matchContact(tx, ctx, input.events),
+          channel: input.link.channel,
+          ...linkWhere,
+          contactId: await matchContact(tx, ctx, input.contactEvents),
         },
         select: { id: true, status: true, contactId: true },
       });
     } else if (conversation.status === "handoff") {
-      // Back from the team: Chatwoot set the conversation to pending.
+      // Back from the team: the hub only asks while the conversation is
+      // the agent's again (pending in Chatwoot or in the Inbox).
       await tx.aiConversation.update({
         where: { id: conversation.id },
         data: { status: "active" },
@@ -168,10 +203,10 @@ export async function answerOnChannel(
     // Explicit times keep the order: context first, then the message.
     const now = Date.now();
     const said = input.context.flatMap(
-      (event): { role: "user" | "assistant"; content: string }[] => {
-        const content = event.message?.text.trim() ?? "";
+      (line): { role: "user" | "assistant"; content: string }[] => {
+        const content = line.text.trim();
         if (!content) return [];
-        return event.sender === "agent"
+        return line.side === "team"
           ? [
               {
                 role: "assistant" as const,
@@ -232,18 +267,59 @@ export async function answerOnChannel(
       select: { content: true, toolCalls: true },
     }),
   );
+  const handoff =
+    state?.status === "handoff"
+      ? (state.handoff ?? { reason: "", summary: "" })
+      : null;
   return {
     // The text beside a tool call is the model thinking, not the answer.
     messages: answers
       .filter((a) => !Array.isArray(a.toolCalls) || a.toolCalls.length === 0)
       .map((a) => a.content),
-    handoff: state?.status === "handoff",
+    handoff,
     handoffNote: state?.handoff
       ? handoffNote(prepared.language, prepared.agentName, state.handoff)
       : null,
     voice: spoken ?? null,
     files: (state?.outbox ?? []).map((file) => ({ ...file })),
   };
+}
+
+export async function answerOnChannel(
+  session: JobSession,
+  ctx: RequestContext,
+  input: ChannelTurnInput,
+  deps: GuidTurnDeps = {},
+): Promise<{
+  messages: string[];
+  handoff: boolean;
+  handoffNote: string | null;
+  voice: SpokenAnswer | null;
+  files: ChannelOutboundFile[];
+}> {
+  const answer = await answerTurn(
+    session,
+    ctx,
+    {
+      agentId: input.consumerRef,
+      link: {
+        channel: "chatwoot",
+        channelConversationId: input.conversation.id,
+      },
+      text: groupedText(input.events),
+      media: groupedAttachments(input),
+      context: input.context.map((event) => ({
+        side:
+          event.sender === "agent" ? ("team" as const) : ("contact" as const),
+        text: event.message?.text ?? "",
+      })),
+      contactEvents: input.events,
+      limits: input.limits,
+      voiceReply: input.voiceReply,
+    },
+    deps,
+  );
+  return { ...answer, handoff: answer.handoff !== null };
 }
 
 /** The GUIDS of the routes: name and whether it is turned on. */
