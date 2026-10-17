@@ -30,9 +30,11 @@ A thread nova precisa ser aberta **depois** de 17/10/2026 00:17 UTC, quando o Ma
 | AT1 Função Atendente                       | #109                               | Na `main`                                                         | `20261127090000` |
 | WS1 Exclusão suave do workspace            | #110                               | Na `main`                                                         | `20261129090000` |
 | IN3 Núcleo Matrix (e decisões, #114)       | #112                               | Na `main`                                                         | `20261128090000` |
-| IN4a Janela e conversa do Inbox            | `claude/optimistic-lamport-rjehmm` | Esperando PR; [janela-inbox.md](../modules/inbox/janela-inbox.md) | `20261130090000` |
+| IN4a Janela e conversa do Inbox            | #115                               | Na `main`; [janela-inbox.md](../modules/inbox/janela-inbox.md)    | `20261130090000` |
+| IN4b Contexto, etiquetas e avisos          | `claude/optimistic-lamport-rjehmm` | Esperando PR; [contexto-inbox.md](../modules/inbox/contexto-inbox.md) | `20261212090000` |
+| IN6 GUIDS na sala                          | `claude/in6-guids-sala`            | Em construção, entra depois da IN4b                               | —                |
 
-As próximas migrations do Inbox começam em `20261201090000` (IN4b).
+As próximas migrations do Inbox começam depois de `20261212090000` (IN4b).
 
 ## 4. Synapse de teste
 

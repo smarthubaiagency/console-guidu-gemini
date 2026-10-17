@@ -1,7 +1,7 @@
 # Plano do par IN4b + IN6: contexto, etiquetas e avisos; GUIDS na sala
 
 - **Data:** 17/10/2026. Base: `main` com IN3, WS1, IN4a ([janela-inbox.md](janela-inbox.md)), H1 e H2 (Central de Eventos, regras de aviso).
-- **Estado:** proposta; esperando as respostas da seção 5 e o "pode começar".
+- **Estado:** aprovado em 17/10/2026 com todas as sugestões da seção 5; IN4b em [contexto-inbox.md](contexto-inbox.md), IN6 em construção.
 - **Migrations reservadas:** IN4b `20261212090000_in4b_inbox_context`, IN6 `20261213090000_in6_guids_in_room`. A `20261211090000` já está com a GB1c (PR aberto).
 
 ## 1. O que você vai ver no fim

@@ -96,7 +96,7 @@ export function ConversationList({
               : (memberName(room, item.assignee) ?? null),
           last,
           ts: last?.ts ?? Date.parse(item.updatedAt),
-          unread: unreadCount(room),
+          unread: unreadCount(room, me),
         };
       })
       .sort((a, b) => b.ts - a.ts);

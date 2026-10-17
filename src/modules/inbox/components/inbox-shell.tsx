@@ -180,10 +180,10 @@ function InboxWindow({
     if (!matrix.client) return 0;
     let total = 0;
     for (const room of matrix.client.getRooms()) {
-      if (room.getMyMembership() === "join") total += unreadCount(room);
+      if (room.getMyMembership() === "join") total += unreadCount(room, me);
     }
     return total;
-  }, [matrix.client, matrix.revision]);
+  }, [matrix.client, matrix.revision, me]);
   const baseTitle = useRef<string | null>(null);
   useEffect(() => {
     baseTitle.current ??= document.title;

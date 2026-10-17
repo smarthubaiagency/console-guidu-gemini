@@ -138,11 +138,27 @@ export function getRoom(
 }
 
 /** Messages of a room the attendant has not read (Matrix receipts, IN4b). */
-export function unreadCount(room: Room | null): number {
+export function unreadCount(room: Room | null, me: string | null): number {
   if (!room) return 0;
-  return Math.max(
-    0,
-    // `NotificationCountType.Total`, without loading the SDK on the server.
-    room.getUnreadNotificationCount("total" as NotificationCountType) ?? 0,
-  );
+  // `NotificationCountType.Total`, without loading the SDK on the server.
+  const server =
+    room.getUnreadNotificationCount("total" as NotificationCountType) ?? 0;
+  // Synapse counts only by push rules; the loaded timeline after the
+  // attendant's own receipt (or own message) counts too.
+  let local = 0;
+  if (me) {
+    const events = room.getLiveTimeline().getEvents();
+    for (let index = events.length - 1; index >= 0; index -= 1) {
+      const event = events[index]!;
+      const id = event.getId();
+      if (
+        event.getSender() === me ||
+        (id && room.hasUserReadEvent(me, id))
+      ) {
+        break;
+      }
+      if (isText(event.getType(), event.getContent())) local += 1;
+    }
+  }
+  return Math.max(0, server, local);
 }
