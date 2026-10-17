@@ -1080,7 +1080,7 @@ create policy user_notifications_trace_helper_select on public.user_notification
   for select to app_rls_helper
   using (event_id::text = current_setting('app.event_id', true));
 
-grant select (event_id, read_at, created_at) on public.user_notifications to app_rls_helper;
+grant select (id, event_id, read_at, created_at) on public.user_notifications to app_rls_helper;
 
 -- Every delivery of the event, the bell included (one row per notice,
 -- `read` once the person opened it). The person only for the customer and

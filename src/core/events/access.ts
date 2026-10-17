@@ -301,7 +301,7 @@ export async function decideEventAccess(
       ? await tx.$executeRaw`
           update public.event_access_grants
           set status = 'approved', decided_by = ${ctx.userId}::uuid, decided_at = now(),
-              expires_at = now() + make_interval(hours => ${hours})
+              expires_at = now() + make_interval(hours => ${hours}::int)
           where id = ${input.grantId}::uuid and status = 'pending'
         `
       : await tx.$executeRaw`
@@ -310,7 +310,7 @@ export async function decideEventAccess(
           where id = ${input.grantId}::uuid and status = 'pending'
         `;
   if (updated === 0) throw denied();
-  await tx.$queryRaw`select private.event_access_sync(${input.grantId}::uuid)`;
+  await tx.$executeRaw`select private.event_access_sync(${input.grantId}::uuid)`;
   await recordAudit(tx, ctx, {
     action:
       input.decision === "approve"
@@ -370,7 +370,7 @@ export async function withdrawEventAccess(
       and status in ('pending', 'approved')
   `;
   if (updated === 0) throw notFoundGrant();
-  await tx.$queryRaw`select private.event_access_sync(${grantId}::uuid)`;
+  await tx.$executeRaw`select private.event_access_sync(${grantId}::uuid)`;
   await recordAudit(tx, adminAuditContext(userId), {
     action: "event.access.withdraw",
     resourceType: "event_access_grant",

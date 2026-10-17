@@ -274,6 +274,8 @@ values ('f2a00000-0000-4000-8000-0000000000a2', 'platform', 'f2a00000-0000-4000-
     'f2a00000-0000-4000-8000-000000000021', '{f2a00000-0000-4000-8000-0000000000e1}',
     'd0000000-0000-4000-8000-000000000003', 'Chamado do cliente sobre o aviso', 'REF-3', 'approved',
     now() - interval '1 minute', 'd0000000-0000-4000-8000-000000000007', now() - interval '1 day');
+insert into public.user_notifications (user_id, event_type, idempotency_key, event_id)
+values ('d0000000-0000-4000-8000-000000000007', 'ai.agent.key_backup', 'h2:bell', 'f2a00000-0000-4000-8000-0000000000e1');
 insert into public.audit_events (organization_id, workspace_id, actor_user_id, actor_principal_type, origin,
     action, resource_type, resource_id, result, metadata)
 values (null, null, 'd0000000-0000-4000-8000-000000000003', 'user', 'admin', 'platform.event.view_data',
@@ -288,6 +290,10 @@ begin
     raise exception 'grants: read after the term';
   exception when insufficient_privilege then null;
   end;
+  if exists (select 1 from private.event_trace_deliveries('f2a00000-0000-4000-8000-0000000000e1')
+             where recipient_user_id is not null) then
+    raise exception 'trace: the platform sees the people';
+  end if;
   -- The platform sees its keychain opening; the customer does not.
   if not exists (select 1 from private.event_trace_audit('f2a00000-0000-4000-8000-0000000000e1')
                  where action = 'platform.event.view_data') then
@@ -298,6 +304,10 @@ begin
   if exists (select 1 from private.event_trace_audit('f2a00000-0000-4000-8000-0000000000e1')
              where action = 'platform.event.view_data') then
     raise exception 'trace: the customer sees a keychain opening';
+  end if;
+  if (select count(*) from private.event_trace_deliveries('f2a00000-0000-4000-8000-0000000000e1')
+      where channel = 'app' and recipient_user_id = 'd0000000-0000-4000-8000-000000000007') <> 1 then
+    raise exception 'trace: the customer does not see the bell of the event';
   end if;
   if (select private.event_trace_viewer('f2a00000-0000-4000-8000-0000000000e1')) <> 'customer' then
     raise exception 'trace: wrong viewer for the customer';

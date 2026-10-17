@@ -382,7 +382,7 @@ export async function expireAccessGrants(tx: ContextTransaction): Promise<number
     set status = 'expired'
     where (status = 'approved' and expires_at <= now())
        or (status = 'pending'
-           and created_at <= now() - make_interval(days => ${ACCESS_REQUEST_TTL_DAYS}))
+           and created_at <= now() - make_interval(days => ${ACCESS_REQUEST_TTL_DAYS}::int))
     returning id
   `;
   if (expired.length > 0) {
