@@ -120,7 +120,7 @@
       "pending": "The contact is being created in the CRM.",
       "quota": "The plan's contact quota is full: the conversation has no contact.",
       "none": "This conversation has no CRM contact.",
-      "linked": ""
+      "linked": "Linked to a CRM contact."
     }
   }
 }
