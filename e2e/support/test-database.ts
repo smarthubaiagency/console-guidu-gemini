@@ -160,13 +160,17 @@ export async function startTestDatabase(
   repoRoot: string,
 ): Promise<TestDatabase> {
   const db = await PGlite.create();
-  // The default is a single connection; Prisma's pool and this harness's own
-  // client both need one.
+  // The default is a single connection. Every client needs its own: this
+  // harness's pool (10), the web's Prisma (5), and while jobs run the
+  // worker's Prisma (2) and pg-boss pool (10). Queries still run one at a
+  // time, so the cap only has to stay above that sum; at 10 the worker's
+  // connections were refused ("Can't reach database server", ECONNRESET)
+  // and its jobs stayed queued.
   const server = new PGLiteSocketServer({
     db,
     port,
     host: "127.0.0.1",
-    maxConnections: 10,
+    maxConnections: 40,
   });
   await server.start();
   releaseResetConnections(server);

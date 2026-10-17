@@ -19,7 +19,7 @@ Só núcleo, sem tela (a janela é a IN4). Sem as variáveis `MATRIX_*` tudo fic
 | Sessão do navegador                     | `POST /api/matrix/session`              | JWT RS256 de 60 s, `sub` só de localpart `u_`, com `name`. Só para quem tem `inbox.view` num workspace ativo; garante a conta antes. Mesma origem.                                                                                                                                           |
 | Saída do console                        | `/auth/signout`                         | Enfileira a remoção dos dispositivos Matrix da pessoa (API admin). Nunca atrasa a saída.                                                                                                                                                                                                     |
 | CSP                                     | `src/core/security/headers.ts`, `proxy` | Origem do homeserver no `connect-src` quando configurado (só `https` em produção).                                                                                                                                                                                                           |
-| Ciclo de vida do workspace (para a WS1) | `src/core/matrix/lifecycle.ts`          | `matrixWorkspaceLifecycle` (`core.matrix` no registro da WS1). Ver a seção 3.                                                                                                                                                                                            |
+| Ciclo de vida do workspace (para a WS1) | `src/core/matrix/lifecycle.ts`          | `matrixWorkspaceLifecycle` (`core.matrix` no registro da WS1). Ver a seção 3.                                                                                                                                                                                                                |
 | Permissões                              | `src/core/permissions/catalog.ts`       | `inbox.view`, `inbox.reply` e `inbox.manage`, iguais às da AT1 (dono, admin e editor; o Atendente entra com a AT1).                                                                                                                                                                          |
 
 A API admin do Synapse é chamada com o `as_token` (o remetente do AS é admin).
@@ -62,11 +62,15 @@ bash scripts/local/synapse.sh stop     # ou reset, para apagar tudo
 - O teste lê as variáveis do arquivo do Synapse local; o resto da suíte não vê o Matrix ligado.
 - No CI, o job `db` sobe o mesmo Synapse no Postgres do Supabase local (`actions/setup-python` e pip).
 
-## 5. Pendências e decisões a confirmar
+## 5. Decisões e pendências
 
-1. **Atendente (AT1).** As políticas usam `private.matrix_inbox_roles()` (dono, admin, editor). Quando a AT1 entrar, uma migration nova acrescenta `attendant` a essa lista; o lado TypeScript já segue a matriz de permissões.
+Decisões do Marcelo de 17/10/2026 (perguntas da IN3):
+
+1. **Atendente (AT1).** Tem acesso ao Inbox: `attendant` está em `private.matrix_inbox_roles()` junto com dono, admin e editor.
 2. **Membros de suporte** (concessão temporária do parceiro) não ganham conta Matrix, mesmo com `inbox.view`.
 3. **Quem abre a sala.** A IN3 tem o serviço que cria a sala, mas nada o chama ainda: a sala nasce na IN6 (agente) ou na IN7 (Meta), ou por uma API do guidu.chat. O convite do consumidor ao usuário virtual é recusado, sem abrir sala nova.
-4. **Salas e workspaces.** Um atendente de dois workspaces vê as salas dos dois no Sliding Sync; separar por `room_types` ou pela lista do Supabase fica para a IN4.
+4. **Salas e workspaces.** Um atendente de dois workspaces vê as salas dos dois no Sliding Sync; o console separa pela lista de salas do Supabase (`matrix_rooms`) na IN4 (decidido em 17/10/2026).
 5. **Reativação de conta** pela API admin só funciona sem senha quando o login por senha está desligado no Synapse (o caso depois do bootstrap).
 6. **Sala órfã:** a limpeza apaga sala criada pelo núcleo que nenhuma linha conhece há mais de 1 h; toda sala do núcleo precisa ter linha em `matrix_rooms`.
+7. **Exclusão suave.** Durante o prazo, o consumidor continua na sala bloqueada (sem atendentes, e o GUIDS parado pela WS1); a sala é apagada no Synapse ao fim do prazo (decidido em 17/10/2026).
+8. **Dívida técnica: chamadas ao Synapse com a transação do job aberta.** Os jobs `matrix.*` conversam com o Synapse dentro da transação do job (até 10 s por chamada). Aceito na v1 (17/10/2026), porque é mais simples e não deixa dado pela metade. Observar: tempo dos jobs `matrix.*` e espera por conexão no worker. Se aparecer contenção, separar em transações curtas (ler, chamar o Synapse fora da transação, gravar). Registrada em [pendências](../../pendencias.md).
