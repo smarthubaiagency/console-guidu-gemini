@@ -151,17 +151,17 @@ function fakeSession(cursor: { ts: number; id: string } | null = null) {
     },
     inboxGuidsRoom: {
       findUnique: async () => rows.cursor,
-      upsert: async (args: {
-        update: { lastAnsweredTs: bigint; lastAnsweredEventId: string };
-      }) => {
-        rows.cursor = {
-          lastAnsweredTs: args.update.lastAnsweredTs,
-          lastAnsweredEventId: args.update.lastAnsweredEventId,
-        };
-      },
       update: async (args: { data: unknown }) => {
         rows.handoff = args.data;
       },
+    },
+    // The claim of the turn (insert … on conflict, raw SQL).
+    $executeRaw: async (_sql: TemplateStringsArray, ...values: unknown[]) => {
+      rows.cursor = {
+        lastAnsweredEventId: values[4] as string,
+        lastAnsweredTs: values[5] as bigint,
+      };
+      return 1;
     },
   } as unknown as ContextTransaction;
   const session: JobSession = {
@@ -213,6 +213,25 @@ describe("pickTurnInput", () => {
       { side: "contact", text: "Quero falar com alguém" },
       { side: "team", text: "Sou a Bia, já te ajudo" },
     ]);
+  });
+
+  it("keeps what the consumer said to the team as context", () => {
+    const picked = pickTurnInput(
+      client,
+      [
+        { eventId: "$s1", sender: AGENT, ts: 1, body: "", status: "open" },
+        { eventId: "$1", sender: CONSUMER, ts: 2, body: "Alô?" },
+        { eventId: "$s2", sender: TEAM, ts: 3, body: "", status: "pending" },
+        { eventId: "$2", sender: CONSUMER, ts: 4, body: "Ainda estão aí?" },
+      ],
+      {
+        consumerMxid: CONSUMER,
+        lastAnsweredTs: null,
+        lastAnsweredEventId: null,
+      },
+    );
+    expect(picked.fresh.map((m) => m.body)).toEqual(["Ainda estão aí?"]);
+    expect(picked.context).toEqual([{ side: "contact", text: "Alô?" }]);
   });
 
   it("has nothing new when the last message is the team's", () => {

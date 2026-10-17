@@ -163,9 +163,12 @@ export type TurnInput = Readonly<{
 
 /**
  * What the GUIDS answers now (pure): the consumer's messages after the
- * last one it answered and after the team's last message; what the team
- * and the consumer said before them, since the last answer, is context.
- * The agent's own messages are already in its history.
+ * last one it answered and after the team's last message, said while the
+ * conversation was not with the team (pending, or resolved: a resolved
+ * conversation reopens to the GUIDS). What the team and the consumer said
+ * otherwise, since the last answer, is context. The agent's own messages
+ * are already in its history. Before the first change of state in view,
+ * the conversation is taken as pending (a room is born pending).
  */
 export function pickTurnInput(
   client: SynapseClient,
@@ -176,25 +179,41 @@ export function pickTurnInput(
     lastAnsweredEventId: string | null;
   }>,
 ): TurnInput {
-  const after = messages.filter(
-    (m) =>
-      m.eventId !== input.lastAnsweredEventId &&
-      (input.lastAnsweredTs === null || m.ts > input.lastAnsweredTs),
-  );
-  const sides = after.map((m) => ({
-    message: m,
-    side: messageSide(client, m.sender, input.consumerMxid),
-  }));
-  const lastTeam = sides.reduce(
+  let status: string = "pending";
+  const said: {
+    message: RoomMessage;
+    side: ReturnType<typeof messageSide>;
+    withTeam: boolean;
+  }[] = [];
+  for (const m of messages) {
+    if (m.status) {
+      status = m.status;
+      continue;
+    }
+    if (
+      m.eventId === input.lastAnsweredEventId ||
+      (input.lastAnsweredTs !== null && m.ts <= input.lastAnsweredTs)
+    ) {
+      continue;
+    }
+    said.push({
+      message: m,
+      side: messageSide(client, m.sender, input.consumerMxid),
+      withTeam: status === "open",
+    });
+  }
+  const lastTeam = said.reduce(
     (latest, s) =>
       s.side === "team" && s.message.ts > latest ? s.message.ts : latest,
     -1,
   );
-  const fresh = sides
-    .filter((s) => s.side === "consumer" && s.message.ts > lastTeam)
+  const fresh = said
+    .filter(
+      (s) => s.side === "consumer" && !s.withTeam && s.message.ts > lastTeam,
+    )
     .map((s) => s.message);
   const freshIds = new Set(fresh.map((m) => m.eventId));
-  const context = sides
+  const context = said
     .filter(
       (s) =>
         !freshIds.has(s.message.eventId) &&
@@ -240,23 +259,19 @@ export async function runGuidsTurn(
   if (!newest) return { status: "nothing_new" };
 
   // Claimed before the turn: a crash never answers these messages twice.
-  await session.transaction(async (tx) => {
-    const data = {
-      agentId: loaded.agentId,
-      lastAnsweredEventId: newest.eventId,
-      lastAnsweredTs: BigInt(newest.ts),
-    };
-    await tx.inboxGuidsRoom.upsert({
-      where: { roomId },
-      create: {
-        roomId,
-        workspaceId: ctx.workspaceId,
-        organizationId: ctx.organizationId,
-        ...data,
-      },
-      update: data,
-    });
-  });
+  // Raw insert: only the granted columns (Prisma would send created_at).
+  await session.transaction(
+    (tx) => tx.$executeRaw`
+      insert into public.inbox_guids_rooms
+        (room_id, workspace_id, organization_id, agent_id, last_answered_event_id, last_answered_ts)
+      values (${roomId}, ${ctx.workspaceId}::uuid, ${ctx.organizationId}::uuid,
+              ${loaded.agentId}::uuid, ${newest.eventId}, ${BigInt(newest.ts)})
+      on conflict (room_id) do update
+        set agent_id = excluded.agent_id,
+            last_answered_event_id = excluded.last_answered_event_id,
+            last_answered_ts = excluded.last_answered_ts
+    `,
+  );
 
   if (!loaded.joined) await joinAgent(client, roomId, agentMxid);
   await setAgentTyping(client, roomId, agentMxid, true);

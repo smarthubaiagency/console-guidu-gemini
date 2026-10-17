@@ -5,6 +5,9 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { upsertMember } from "./accounts";
 import { userId as mxidOf } from "./config";
 import {
+  CONVERSATION_STATE,
+  CONVERSATION_STATUSES,
+  type ConversationStatus,
   forceJoin,
   kick,
   MatrixHttpError,
@@ -306,12 +309,19 @@ export type RoomMessage = Readonly<{
   sender: string;
   ts: number;
   body: string;
+  /**
+   * Set on a change of the conversation state (its new status), with an
+   * empty body: the turn tells what was said to the team from what was
+   * said to the GUIDS.
+   */
+  status?: ConversationStatus;
 }>;
 
 /**
- * The latest text messages of a room, oldest first, read as the core (it
- * created the room and stays in it). Only `m.text`-like bodies; files and
- * other events are left out (text only in the IN6).
+ * The latest text messages of a room and the changes of the conversation
+ * state among them, oldest first, read as the core (it created the room
+ * and stays in it). Only `m.text`-like bodies; files and other events are
+ * left out (text only in the IN6).
  */
 export async function recentMessages(
   client: SynapseClient,
@@ -325,7 +335,9 @@ export async function recentMessages(
       query: {
         dir: "b",
         limit: String(limit),
-        filter: JSON.stringify({ types: ["m.room.message"] }),
+        filter: JSON.stringify({
+          types: ["m.room.message", CONVERSATION_STATE],
+        }),
       },
     },
   );
@@ -334,6 +346,23 @@ export async function recentMessages(
     if (!raw || typeof raw !== "object") continue;
     const event = raw as Record<string, unknown>;
     const content = (event.content ?? {}) as Record<string, unknown>;
+    if (
+      event.type === CONVERSATION_STATE &&
+      event.state_key === "" &&
+      typeof event.event_id === "string" &&
+      typeof event.sender === "string" &&
+      typeof event.origin_server_ts === "number" &&
+      (CONVERSATION_STATUSES as readonly unknown[]).includes(content.status)
+    ) {
+      out.push({
+        eventId: event.event_id,
+        sender: event.sender,
+        ts: event.origin_server_ts,
+        body: "",
+        status: content.status as ConversationStatus,
+      });
+      continue;
+    }
     if (
       event.type !== "m.room.message" ||
       typeof event.event_id !== "string" ||
