@@ -504,6 +504,10 @@ export async function startTestDatabase(
             // Prisma clients (web and worker) would collide there.
             WORKER_DATABASE_URL: `${url}?pgbouncer=true&connection_limit=2`,
             WORKER_CONCURRENCY: "1",
+            // pg-boss polls every queue (two dozen now) through its own
+            // pool; a small pool keeps the sockets of this single-session
+            // PGlite from interleaving statements and filling its slots.
+            WORKER_BOSS_MAX_CONNECTIONS: "2",
             GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
             // Seal of the Event Hub (H1), the same as the web's.
             EVENTS_HMAC_KEY: RIG.eventsHmacKey,

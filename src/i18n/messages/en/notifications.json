@@ -55,7 +55,11 @@
     "security_api_key_revoked": "API key revoked",
     "security_mfa_requirement_off": "Two-step verification requirement removed",
     "digital_profile_lead_submitted": "Contact from the digital profile",
-    "digital_profile_vcard_downloaded": "Contact card downloaded"
+    "digital_profile_vcard_downloaded": "Contact card downloaded",
+    "workspace_deletion_scheduled": "Workspace deletion scheduled",
+    "workspace_deletion_reminder": "Workspace deletion reminder",
+    "workspace_deletion_canceled": "Workspace deletion canceled",
+    "workspace_deletion_completed": "Workspace deleted"
   },
   "whatsapp": {
     "generic": "{marca}: you have a new notice in {workspace}. {link}",

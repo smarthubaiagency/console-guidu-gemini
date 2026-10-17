@@ -55,7 +55,11 @@
     "security_api_key_revoked": "Chave de API revogada",
     "security_mfa_requirement_off": "Exigência de verificação em duas etapas retirada",
     "digital_profile_lead_submitted": "Contato pelo perfil digital",
-    "digital_profile_vcard_downloaded": "Cartão de contato baixado"
+    "digital_profile_vcard_downloaded": "Cartão de contato baixado",
+    "workspace_deletion_scheduled": "Exclusão de workspace agendada",
+    "workspace_deletion_reminder": "Lembrete da exclusão de workspace",
+    "workspace_deletion_canceled": "Exclusão de workspace cancelada",
+    "workspace_deletion_completed": "Workspace excluído"
   },
   "whatsapp": {
     "generic": "{marca}: você tem um aviso novo em {workspace}. {link}",
