@@ -176,17 +176,15 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
 
   // On a phone: the list fills the screen, the conversation stacks over it
   // and the context opens in a sheet.
+  // The views come from the mirror, which the worker updates.
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`/app/${wsSlug}/inbox?view=resolved`);
-  await expect
-    .poll(
-      async () => {
-        await page.reload();
-        return list.getByRole("button", { name: /Maria Cliente/ }).count();
-      },
-      { timeout: 60_000, intervals: [2_000, 3_000] },
-    )
-    .toBe(1);
+  await expect(async () => {
+    await jobs(page, request);
+    await page.goto(`/app/${wsSlug}/inbox?view=resolved`);
+    await expect(
+      list.getByRole("button", { name: /Maria Cliente/ }),
+    ).toBeVisible({ timeout: 10_000 });
+  }).toPass({ timeout: 120_000 });
   await list.getByRole("button", { name: /Maria Cliente/ }).click();
   await expect(list).toHaveCount(0);
   await page.getByRole("button", { name: "Contexto da conversa" }).click();
