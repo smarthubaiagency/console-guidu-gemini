@@ -33,6 +33,7 @@ import {
   requireWorkspacePermission,
 } from "@/core/permissions/guard";
 import { recordAudit, recordAuditDenied } from "@/core/audit/record";
+import { emitSecurityEvent } from "@/core/events/security";
 import {
   WorkspaceScopeSchema,
   DEFAULT_WORKSPACE_SCOPES,
@@ -175,6 +176,11 @@ export async function createApiKey(
       prefix: record.prefix,
     },
   });
+  await emitSecurityEvent(tx, ctx, "security.api_key_created", {
+    key: `security:api_key_created:${record.id}`,
+    subject: { type: "api_key", id: record.id },
+    data: { keyName: record.name, prefix: record.prefix },
+  });
 
   return {
     apiKey: {
@@ -312,6 +318,11 @@ export async function revokeApiKey(
     metadata: {
       prefix: updated.prefix,
     },
+  });
+  await emitSecurityEvent(tx, ctx, "security.api_key_revoked", {
+    key: `security:api_key_revoked:${updated.id}`,
+    subject: { type: "api_key", id: updated.id },
+    data: { keyName: updated.name, prefix: updated.prefix },
   });
 
   return {

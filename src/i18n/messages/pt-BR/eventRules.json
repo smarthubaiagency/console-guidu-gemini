@@ -1,0 +1,274 @@
+{
+  "events": {
+    "metaTitle": "Eventos",
+    "title": "Eventos",
+    "description": {
+      "workspace": "O que aconteceu no workspace, quem foi avisado e por qual canal, o que foi auditado e quem viu os dados.",
+      "partner": "Os eventos dos seus clientes: a situação de todos e os dados das empresas que você gerencia."
+    },
+    "filters": {
+      "module": "Módulo",
+      "severity": "Gravidade",
+      "status": "Situação",
+      "customer": "Cliente",
+      "all": "Todos",
+      "apply": "Filtrar",
+      "clear": "Limpar"
+    },
+    "severity": {
+      "info": "Informação",
+      "attention": "Atenção",
+      "urgent": "Urgente"
+    },
+    "status": {
+      "open": "Aberto",
+      "resolved": "Resolvido",
+      "dismissed": "Ignorado",
+      "pending": "Pendente",
+      "approved": "Aprovado",
+      "denied": "Negado",
+      "expired": "Expirado"
+    },
+    "listTitle": "{count, plural, one {# evento} other {# eventos}}",
+    "emptyTitle": "Nenhum evento",
+    "empty": "Os eventos aparecem aqui assim que acontecem.",
+    "panelLabel": "Evento",
+    "whatHappened": "O que aconteceu",
+    "eventId": "Id do evento",
+    "type": "Tipo",
+    "module": "Módulo",
+    "occurredAt": "Quando",
+    "customer": "Cliente",
+    "seal": "Selo",
+    "dataHidden": "Os dados ficam com o cliente. Peça acesso para ver.",
+    "you": "Você",
+    "roles": {
+      "owner": "Dono",
+      "admin": "Administrador",
+      "editor": "Editor",
+      "viewer": "Leitor"
+    },
+    "resolve": "Marcar como resolvido",
+    "dismiss": "Ignorar",
+    "reopen": "Reabrir"
+  },
+  "access": {
+    "title": "Acesso aos dados",
+    "description": "Peça ao cliente acesso aos dados deste evento, com o motivo e a referência da solicitação.",
+    "granted": "Acesso aprovado até {date}. Cada visualização fica registrada e o cliente vê.",
+    "waiting": "Pedido enviado. Aguardando a decisão do cliente.",
+    "request": "Pedir acesso aos dados",
+    "requestHint": "O dono ou um administrador do workspace aprova. Só você verá, só este evento, pelo prazo aprovado.",
+    "reason": "Motivo",
+    "reasonError": "Escreva o motivo (de 10 a 500 caracteres).",
+    "reference": "Referência da solicitação",
+    "referenceError": "Informe a referência da solicitação (até 120 caracteres).",
+    "duration": "Prazo",
+    "hours": "{hours} horas",
+    "send": "Enviar pedido",
+    "cancel": "Cancelar",
+    "viewData": "Ver dados",
+    "endAccess": "Encerrar acesso",
+    "revoke": "Revogar",
+    "approve": "Aprovar",
+    "deny": "Recusar",
+    "requestsTitle": "Pedidos de acesso aos dados",
+    "requestsDescription": "Suporte pedindo para ver os dados de eventos deste workspace. Você aprova, recusa ou revoga quando quiser.",
+    "noRequests": "Nenhum pedido aberto.",
+    "requestedBy": "{who} pediu acesso",
+    "platformSupport": "Suporte da plataforma",
+    "partnerSupport": "Suporte do parceiro",
+    "status": {
+      "pending": "Aguardando",
+      "approved": "Aprovado",
+      "denied": "Recusado",
+      "revoked": "Revogado",
+      "expired": "Expirado"
+    },
+    "reasonLine": "Motivo: {reason} (ref. {reference})",
+    "eventsCount": "{count, plural, one {# evento} other {# eventos}}",
+    "until": "até {date}"
+  },
+  "trace": {
+    "deliveries": "Quem foi avisado",
+    "deliveriesHint": "Cada entrega com o canal e a situação, o sino incluído.",
+    "noDeliveries": "Ninguém foi avisado deste evento.",
+    "person": "Pessoa da equipe",
+    "channels": {
+      "email": "E-mail",
+      "app": "Sino",
+      "whatsapp": "WhatsApp"
+    },
+    "hold": {
+      "digest": "no resumo de {date}",
+      "quiet_hours": "guardado até {date} (janela de silêncio)"
+    },
+    "status": {
+      "sent": "Enviado",
+      "delivered": "Entregue",
+      "read": "Lido",
+      "failed": "Falhou",
+      "blocked_policy": "Bloqueado",
+      "skipped": "Não enviado",
+      "pending": "Pendente",
+      "queued": "Na fila"
+    },
+    "audit": "O que foi auditado",
+    "noAudit": "Nada auditado sobre este evento.",
+    "views": "Acessos aos dados",
+    "noViews": "Ninguém de fora viu os dados deste evento.",
+    "viewedBy": "Dados vistos por {who}, autorizado por {by}",
+    "platformSupport": "suporte da plataforma",
+    "partnerSupport": "suporte do parceiro"
+  },
+  "settings": {
+    "metaTitle": "Notificações",
+    "title": "Notificações",
+    "description": {
+      "platform": "O padrão de cada aviso para toda a plataforma: canais, quem recebe, entrega e travas.",
+      "partner": "Ajuste os avisos dos seus clientes dentro do que a plataforma liberou e trave o que não pode mudar.",
+      "workspace": "Ajuste os avisos deste workspace dentro do que foi liberado."
+    },
+    "columns": {
+      "event": "Aviso",
+      "enabled": "Ligado",
+      "recipients": "Quem recebe",
+      "delivery": "Entrega",
+      "escalation": "Escalonamento",
+      "lock": "Travar"
+    },
+    "channels": {
+      "app": "Sino",
+      "email": "E-mail",
+      "whatsapp": "WhatsApp"
+    },
+    "essential": "Obrigatório",
+    "lockedAbove": "Travado acima",
+    "own": "Ajustado aqui",
+    "toggleEnabled": "{event} ligado",
+    "toggleChannel": "{event} por {channel}",
+    "toggleLock": "Travar {event}",
+    "recipients": {
+      "route": "Segue o modo",
+      "owner_admin": "Dono e administradores",
+      "owner": "Só o dono",
+      "members": "Toda a equipe",
+      "partner_team": "Equipe do parceiro",
+      "partner_owner": "Dono do parceiro",
+      "owner_admin_partner_team": "Cliente e parceiro"
+    },
+    "delivery": {
+      "immediate": "Na hora",
+      "digest": "Resumo diário"
+    },
+    "escalation": {
+      "hours": "Horas",
+      "to": "Encaminhar para",
+      "none": "Só lembrete"
+    },
+    "rulesTitle": "Regras de aviso",
+    "rulesDescription": {
+      "platform": "O que vale quando ninguém muda nada. Trave um aviso para que parceiros e clientes não o alterem.",
+      "partner": "Vale para todos os seus clientes. Avisos travados pela plataforma não mudam.",
+      "workspace": "Avisos travados pela plataforma ou pelo parceiro não mudam."
+    },
+    "saveRules": "Salvar regras",
+    "rulesHint": "WhatsApp só chega a quem cadastrou o número e aceitou em Minha conta. Avisos obrigatórios não desligam.",
+    "readOnly": "Só o dono e os administradores mudam estas regras.",
+    "quiet": {
+      "title": "Janela de silêncio",
+      "description": "WhatsApp recebido nesse horário fica guardado e sai no fim da janela, no fuso do workspace. Eventos de segurança urgentes passam.",
+      "enabled": "Usar a janela de silêncio",
+      "start": "Começa",
+      "end": "Termina",
+      "sundays": "Domingo inteiro"
+    },
+    "inherit": "Usar o valor de cima",
+    "lock": "Travar para os níveis abaixo",
+    "digest": {
+      "title": "Resumo diário",
+      "description": "Avisos com entrega em resumo saem juntos neste horário, no fuso do workspace.",
+      "time": "Horário"
+    },
+    "scheduleTitle": "Silêncio e resumo",
+    "scheduleDescription": "Quando o WhatsApp espera e quando sai o resumo do dia.",
+    "saveSchedule": "Salvar horários"
+  },
+  "templates": {
+    "title": "Modelos de WhatsApp",
+    "description": "O texto de cada aviso por WhatsApp, por idioma. Cada edição cria uma versão nova e o histórico fica guardado.",
+    "event": "Aviso",
+    "language": "Idioma",
+    "open": "Abrir",
+    "source": {
+      "own": "Texto deste nível",
+      "platform": "Texto da plataforma",
+      "default": "Texto padrão"
+    },
+    "tags": "Variáveis: {tags}",
+    "save": "Salvar nova versão",
+    "body": "Texto",
+    "restore": "Voltar ao padrão",
+    "version": "Versão {version}",
+    "current": "Atual",
+    "noVersions": "Nenhuma versão salva neste nível.",
+    "reset": "Voltar ao primeiro aviso"
+  },
+  "whatsapp": {
+    "title": "Meu WhatsApp",
+    "description": "Seu número para receber avisos por WhatsApp. Sem o aceite, nenhum aviso é enviado.",
+    "acceptedAt": "Aceite em {date}",
+    "save": "Salvar número",
+    "phone": "Número com DDD",
+    "consent": "Aceito receber avisos da plataforma por WhatsApp neste número.",
+    "remove": "Remover número",
+    "channel": "WhatsApp",
+    "noNumber": "Cadastre seu WhatsApp para receber por aqui.",
+    "hubGroup": "Outros avisos",
+    "errors": {
+      "phone": "Número de WhatsApp inválido.",
+      "consent": "Marque o aceite para receber avisos por WhatsApp."
+    }
+  },
+  "messages": {
+    "status": {
+      "open": "Evento reaberto.",
+      "resolved": "Evento marcado como resolvido.",
+      "dismissed": "Evento ignorado."
+    },
+    "accessRequested": "Pedido de acesso enviado ao cliente.",
+    "dataOpened": "Dados abertos. A visualização foi registrada e o cliente vê.",
+    "accessWithdrawn": "Acesso encerrado.",
+    "accessApproved": "Acesso aprovado.",
+    "accessDenied": "Acesso recusado.",
+    "accessRevoked": "Acesso revogado.",
+    "rulesSaved": "Regras de aviso salvas.",
+    "scheduleSaved": "Horários salvos.",
+    "templateRestored": "Modelo de volta ao padrão.",
+    "templateSaved": "Versão {version} salva.",
+    "whatsappRemoved": "Número removido.",
+    "whatsappSaved": "WhatsApp salvo."
+  },
+  "errors": {
+    "forbidden": "Você não tem permissão para esta ação.",
+    "eventNotFound": "Evento não encontrado.",
+    "grantNotFound": "Pedido de acesso não encontrado.",
+    "reason": "Escreva o motivo (de {min} a {max} caracteres).",
+    "reference": "Informe a referência da solicitação.",
+    "duration": "O prazo vai de 24 horas a 7 dias.",
+    "notPending": "Este pedido já foi decidido.",
+    "template": "Modelo desconhecido.",
+    "templateSize": "O texto vai de 1 a 1000 caracteres.",
+    "templateTags": "Variável desconhecida: {tags}.",
+    "quiet": "Janela de silêncio inválida.",
+    "status": "Você não pode mudar a situação deste evento.",
+    "rule": {
+      "level": "Este aviso não se ajusta neste nível.",
+      "essential": "Aviso obrigatório não desliga.",
+      "lock": "Só a plataforma e o parceiro travam avisos.",
+      "channel": "Canal indisponível para este aviso.",
+      "role": "Destinatário indisponível para este aviso.",
+      "escalation": "Só avisos de aprovação têm escalonamento."
+    }
+  }
+}

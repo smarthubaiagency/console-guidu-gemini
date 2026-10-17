@@ -178,6 +178,7 @@ describe("generated navigation", () => {
       "google-business",
       "hello-world",
       "core.executions",
+      "core.events",
       "core.proposals",
       "core.settings",
     ]);
@@ -339,6 +340,7 @@ describe("generated navigation", () => {
       "/admin/ai/keys",
       "/admin/ai/templates",
       "/admin/settings/general",
+      "/admin/settings/notifications",
       "/admin/settings/brand",
       "/admin/settings/domains",
       "/admin/settings/email",
@@ -356,6 +358,7 @@ describe("generated navigation", () => {
       "/admin/ai/guids",
       "/admin/ai/providers",
       "/admin/settings/general",
+      "/admin/settings/notifications",
       "/admin/settings/domains",
       "/admin/settings/email",
       "/admin/settings/plans",
@@ -375,6 +378,7 @@ describe("generated navigation", () => {
     expect(owner.flatMap((s) => s.items).map((i) => i.href)).toEqual([
       "/admin",
       "/admin/customers",
+      "/admin/events",
       "/admin/modules",
       "/admin/templates",
       "/admin/billing",

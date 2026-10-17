@@ -2,6 +2,7 @@ import { createElement } from "react";
 import {
   Activity,
   Bot,
+  BellRing,
   Building2,
   Code2,
   CreditCard,
@@ -35,6 +36,7 @@ import {
 /** Allowlisted icons for generated navigation (Adendo §8.1). */
 const NAV_ICONS: Record<string, LucideIcon> = {
   activity: Activity,
+  bell: BellRing,
   bot: Bot,
   building: Building2,
   code: Code2,

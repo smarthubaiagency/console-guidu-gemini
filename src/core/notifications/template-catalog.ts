@@ -53,6 +53,7 @@ const VARIABLES: Readonly<
     text("marca"),
   ],
   "email.test": [url("link"), text("marca")],
+  "events.notice": [url("link"), text("marca")],
   "billing.subscription.past_due": [
     text("parceiro"),
     text("organizacao"),

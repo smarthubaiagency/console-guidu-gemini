@@ -14,7 +14,12 @@ import {
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
-import { EVENT_MODULES, isEventType } from "./catalog";
+import {
+  EVENT_MODULES,
+  EVENT_SEVERITIES,
+  EVENT_STATUSES,
+  isEventType,
+} from "./catalog";
 import { type SealCheck, sealKeys } from "./seal";
 import { verifyPresentedData } from "./verify";
 
@@ -74,6 +79,9 @@ export const PlatformEventFilters = z.object({
   customer: z.uuid().optional().catch(undefined),
   from: z.string().regex(DAY).optional().catch(undefined),
   to: z.string().regex(DAY).optional().catch(undefined),
+  // H2: severity and status, filtered over the page read.
+  severity: z.enum(EVENT_SEVERITIES).optional().catch(undefined),
+  status: z.enum(EVENT_STATUSES).optional().catch(undefined),
 });
 export type PlatformEventFilters = z.infer<typeof PlatformEventFilters>;
 
@@ -204,7 +212,15 @@ export async function listPlatformEvents(
   limit = 100,
 ): Promise<PlatformEventRow[]> {
   requireReader(actor);
-  return queryEvents(tx, filters, null, limit);
+  const narrowed = Boolean(filters.severity || filters.status);
+  const rows = await queryEvents(tx, filters, null, narrowed ? 200 : limit);
+  return rows
+    .filter(
+      (row) =>
+        (!filters.severity || row.severity === filters.severity) &&
+        (!filters.status || row.status === filters.status),
+    )
+    .slice(0, limit);
 }
 
 export type DeliverySituation = Readonly<{

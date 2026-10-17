@@ -67,6 +67,18 @@ function sampleEvent(
       };
     case "email.test":
       return { ...base, type, data: { settingsUrl: link("/settings/email") } };
+    case "events.notice":
+      return {
+        ...base,
+        type,
+        data: {
+          eventType: "events.notice",
+          subject: sample.workspace,
+          paragraphs: [sample.workspace],
+          actionLabel: sample.workspace,
+          url: link("/app"),
+        },
+      };
     case "billing.subscription.past_due":
     case "billing.subscription.suspended":
       return {
