@@ -1,7 +1,7 @@
 # Inbox — GUIDS na sala (IN6)
 
 - **Data:** 17/10/2026
-- **Branch:** `claude/in6-guids-sala`. Migration `20261213090000_in6_guids_in_room.sql`.
+- **Branch:** `claude/in6-guids-sala`. Migration `20261215090000_in6_guids_in_room.sql`.
 - **Base:** [plano do par IN4b + IN6](plano-in4b-in6.md) com as respostas da seção 5 aceitas pelo Marcelo (17/10/2026), [ADR 0023](../../adr/0023-chat-interno-como-cliente-matrix.md) (regra 8), [canais.md](../ai-agents/canais.md) §3.5 a §5, [núcleo Matrix](nucleo-matrix.md) (IN3) e [janela do Inbox](janela-inbox.md) (IN4a).
 - **Ordem de merge:** a IN4b entra primeiro; a IN6 traz a `main` antes do PR (resposta 1).
 
@@ -21,7 +21,7 @@
 | Avisos da IN4b                        | `inboxAgentActive` (`src/modules/inbox/server/guids-settings.ts`), `runRoomHandedOff` (`src/core/matrix/room-hooks.ts`) | Com um GUIDS ligado, a conversa nova não avisa ninguém e a pendente não entra no "sem resposta". A transferência avisa "conversa nova" a quem responde, uma vez por transferência, quando o núcleo espelha o estado (pendente → aberta sem responsável, escrito pelo núcleo).                                                                                                                                                                                                                                                                           |
 | Textos                                | namespace `inboxGuids` (pt-BR, en, es) e `moduleCatalog.inbox.settings`                                                 | Namespace próprio para não colidir com os textos da IN4b em `inbox.json`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
-### Migration `20261213090000`
+### Migration `20261215090000`
 
 - Tabelas `matrix_agent_users` (núcleo) e `inbox_guids_rooms` (Inbox): dono `app_migrations`, RLS ligada e forçada, nada para `anon`/`authenticated`, `app_worker` com tudo (inclusive a limpeza do workspace apagado, `src/core/privacy/maintenance.ts`). Quem tem nível no Inbox lê; o cursor e o resumo são gravados por quem gerencia o Inbox (a pessoa do turno), só para sala do workspace.
 - `ai_conversations`: canal `matrix`, `matrix_room_id`, a checagem que liga o canal à referência e a política de inserção.

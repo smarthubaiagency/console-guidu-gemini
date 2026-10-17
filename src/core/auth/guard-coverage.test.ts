@@ -43,6 +43,8 @@ const PUBLIC: Record<string, string> = {
   "auth/mfa/page.tsx": "desafio de MFA; confere a sessão",
   "invite/[token]/page.tsx": "convite; a ação de aceite exige login",
   "partner-invite/[token]/page.tsx": "convite; a ação de aceite exige login",
+  "service-mode/[token]/page.tsx":
+    "pedido de gerenciamento (GB1c); só mostra o pedido do hash do token, uso único e 7 dias, no host do parceiro dono da empresa",
   "auth/callback/route.ts": "retorno do Supabase Auth",
   "auth/signout/route.ts": "logout; confere a origem",
   "api/health/live/route.ts": "saúde do processo",
@@ -76,6 +78,8 @@ const PUBLIC_ACTIONS: Record<string, string> = {
     "link mágico; confere o provedor e a cascata do host, resposta igual para qualquer e-mail (CF5b)",
   "app/forgot-password/actions.ts: requestPasswordRecovery":
     "pedido de recuperação; resposta igual para qualquer e-mail",
+  "core/service-modes/actions.ts: decideServiceModeLinkAction":
+    "decisão pelo link do e-mail (GB1c); confere o hash do token, uso único, prazo de 7 dias e o host do parceiro dono da empresa, e grava IP e navegador",
 };
 
 /** Old addresses that only redirect to a guarded page. */

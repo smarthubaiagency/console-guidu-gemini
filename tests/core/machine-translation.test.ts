@@ -375,7 +375,9 @@ describeDatabase("I6: machine translation", requiredVars, () => {
       partnerId,
     );
     const [doc] = await admin.$queryRawUnsafe<{ id: string }[]>(
-      `select id from public.partner_legal_documents where partner_id = '${partnerId}'`,
+      // The terms it just published, not the management clause every
+      // partner is born with (GB1c).
+      `select id from public.partner_legal_documents where partner_id = '${partnerId}' and kind = 'terms'`,
     );
     const documentId = doc!.id;
     await asUser(

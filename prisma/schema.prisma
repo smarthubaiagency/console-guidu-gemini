@@ -1780,11 +1780,44 @@ model OrganizationServiceMode {
   partnerId      String   @map("partner_id") @db.Uuid
   mode           String
   setBy          String?  @map("set_by") @db.Uuid
+  /// registration, request, customer or partner (GB1c).
+  source         String   @default("registration")
+  requestId      String?  @map("request_id") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
 
   @@index([partnerId, mode])
   @@map("organization_service_modes")
+}
+
+/// Request to move a company to the managed mode (GB1c, ADR 0020). The
+/// token hash is never read by the application (no column grant).
+model ServiceModeRequest {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String    @map("organization_id") @db.Uuid
+  workspaceId      String    @map("workspace_id") @db.Uuid
+  partnerId        String    @map("partner_id") @db.Uuid
+  requestedMode    String    @default("gerenciado") @map("requested_mode")
+  status           String    @default("pending")
+  requestedBy      String?   @map("requested_by") @db.Uuid
+  requestedVia     String    @map("requested_via")
+  recipientUserId  String?   @map("recipient_user_id") @db.Uuid
+  tokenIssuedAt    DateTime? @map("token_issued_at") @db.Timestamptz()
+  tokenUsedAt      DateTime? @map("token_used_at") @db.Timestamptz()
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz()
+  decidedBy        String?   @map("decided_by") @db.Uuid
+  decidedAt        DateTime? @map("decided_at") @db.Timestamptz()
+  decidedVia       String?   @map("decided_via")
+  decidedIp        String?   @map("decided_ip") @db.Inet
+  decidedUserAgent String?   @map("decided_user_agent")
+  cancelledBy      String?   @map("cancelled_by") @db.Uuid
+  cancelledAt      DateTime? @map("cancelled_at") @db.Timestamptz()
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@index([partnerId, createdAt(sort: Desc)])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("service_mode_requests")
 }
 
 /// Google ficha linked to a unit of the workspace (GB1a).

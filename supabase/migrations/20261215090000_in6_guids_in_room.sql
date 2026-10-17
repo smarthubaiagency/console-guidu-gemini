@@ -1,5 +1,5 @@
 -- ============================================================================
--- Migration: 20261213090000_in6_guids_in_room.sql
+-- Migration: 20261215090000_in6_guids_in_room.sql
 -- Module: IN6 — the GUIDS in the room (docs/modules/inbox/plano-in4b-in6.md;
 --         docs/modules/inbox/guids-na-sala.md)
 --

@@ -286,6 +286,8 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/events-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/event-rules-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/platform-audit-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/service-modes-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/aj1-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/matrix-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/inbox-attendants-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/inbox-context-rls.sql

@@ -22,13 +22,29 @@ import { LOCALE_CODE, SOURCE_LOCALE } from "@/core/i18n/locales";
  * Run with the partner of the request host in context.
  */
 
-export const LEGAL_KINDS = ["terms", "privacy"] as const;
+/**
+ * `management`: the management clause (GB1c, ADR 0020), accepted on first
+ * access only by owners of a company registered as managed by the partner
+ * of the host (`private.management_clause_required`).
+ */
+export const LEGAL_KINDS = ["terms", "privacy", "management"] as const;
 export type LegalKind = (typeof LEGAL_KINDS)[number];
 
 export const LEGAL_KIND_LABELS: Record<LegalKind, string> = {
   terms: "Termos de uso",
   privacy: "Política de privacidade",
+  management: "Cláusula de gerenciamento",
 };
+
+/** True when the person of the context must accept the management clause. */
+async function managementClauseRequired(
+  tx: ContextTransaction,
+): Promise<boolean> {
+  const [row] = await tx.$queryRaw<{ required: boolean }[]>`
+    select private.management_clause_required() as required
+  `;
+  return row?.required === true;
+}
 
 export type LegalDocumentView = Readonly<{
   id: string;
@@ -109,7 +125,12 @@ export async function pendingLegalDocuments(
   );
 
   const pending: LegalDocumentView[] = [];
-  for (const kind of LEGAL_KINDS) {
+  const kinds = docs.some((d) => d.kind === "management")
+    ? (await managementClauseRequired(tx))
+      ? LEGAL_KINDS
+      : LEGAL_KINDS.filter((kind) => kind !== "management")
+    : LEGAL_KINDS;
+  for (const kind of kinds) {
     const versions = docs.filter((d) => d.kind === kind); // newest first
     const required = versions.find((d) => d.requiresAcceptance);
     if (!required) continue;

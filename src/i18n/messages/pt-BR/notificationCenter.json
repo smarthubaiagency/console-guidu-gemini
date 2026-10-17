@@ -43,6 +43,24 @@
       "title": "Selo de evento não confere",
       "body": "A verificação da Central de Eventos encontrou {count} evento(s) com o selo ou a corrente quebrados."
     },
+    "serviceModeRequested": {
+      "title": "Pedido de gerenciamento de {organization}",
+      "body": "{partner} pediu para gerenciar a empresa. Abra para aprovar ou recusar."
+    },
+    "serviceModeChanged": {
+      "gerenciado": {
+        "title": "{organization} agora é gerenciada",
+        "body": "O pedido foi aprovado e a equipe de quem gerencia já tem acesso ao workspace."
+      },
+      "padrao": {
+        "title": "{organization} voltou para o modo padrão",
+        "body": "O acesso de quem gerenciava a empresa terminou."
+      }
+    },
+    "serviceModeDenied": {
+      "title": "Pedido de gerenciamento recusado",
+      "body": "O owner de {organization} recusou o pedido de gerenciamento."
+    },
     "accessRequested": {
       "title": "Pedido de acesso aos dados",
       "body": "{requester} pediu acesso aos dados de eventos de {workspace} por {hours} horas."
@@ -86,6 +104,15 @@
     "workspaceDeletionCompleted": {
       "title": "Workspace {workspace} excluído",
       "body": "O workspace e os seus dados foram apagados de vez."
+    },
+    "serviceModeRevertedByPartner": {
+      "title": "{organization} voltou para o modo padrão",
+      "body": "{partner} encerrou o gerenciamento. Motivo: {reason}"
+    },
+    "ipBlocked": {
+      "title": "Acesso recusado pela lista de IPs",
+      "body": "O endereço {ip} tentou entrar em {area} e foi recusado.",
+      "generic": "Um endereço fora da lista de IPs permitidos foi recusado."
     },
     "inboxNew": {
       "title": "Conversa nova",

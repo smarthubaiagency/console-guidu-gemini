@@ -43,6 +43,24 @@
       "title": "El sello de un evento no coincide",
       "body": "La verificación de la Central de Eventos encontró {count} evento(s) con el sello o la cadena rotos."
     },
+    "serviceModeRequested": {
+      "title": "Solicitud de gestión de {organization}",
+      "body": "{partner} pidió gestionar la empresa. Ábrala para aprobar o rechazar."
+    },
+    "serviceModeChanged": {
+      "gerenciado": {
+        "title": "{organization} ahora es gestionada",
+        "body": "La solicitud fue aprobada y el equipo de quien gestiona ya tiene acceso al espacio de trabajo."
+      },
+      "padrao": {
+        "title": "{organization} volvió al modo estándar",
+        "body": "El acceso de quien gestionaba la empresa terminó."
+      }
+    },
+    "serviceModeDenied": {
+      "title": "Solicitud de gestión rechazada",
+      "body": "El propietario de {organization} rechazó la solicitud de gestión."
+    },
     "accessRequested": {
       "title": "Solicitud de acceso a los datos",
       "body": "{requester} pidió acceso a los datos de eventos de {workspace} por {hours} horas."
@@ -86,6 +104,15 @@
     "workspaceDeletionCompleted": {
       "title": "Workspace {workspace} eliminado",
       "body": "El workspace y sus datos se borraron definitivamente."
+    },
+    "serviceModeRevertedByPartner": {
+      "title": "{organization} volvió al modo estándar",
+      "body": "{partner} terminó la gestión. Motivo: {reason}"
+    },
+    "ipBlocked": {
+      "title": "Acceso rechazado por la lista de IP",
+      "body": "La dirección {ip} intentó entrar en {area} y fue rechazada.",
+      "generic": "Se rechazó una dirección fuera de la lista de IP permitidas."
     },
     "inboxNew": {
       "title": "Conversación nueva",

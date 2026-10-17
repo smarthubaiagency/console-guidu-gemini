@@ -9,6 +9,11 @@ import {
   GrantDataViewer,
 } from "@/components/events/event-actions";
 import { EventDataViewer } from "@/components/events/event-data-viewer";
+import {
+  EventSelectCheckbox,
+  EventSelectionBar,
+  EventSelectionProvider,
+} from "@/components/events/event-selection";
 import { EventTraceCards } from "@/components/events/event-trace";
 import { PresentedDataCheck } from "@/components/events/presented-data-check";
 import { RecordWorkbench } from "@/components/layout/workbench";
@@ -49,6 +54,7 @@ import {
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import {
+  ACCESS_MAX_EVENTS,
   activeGrantFor,
   type AccessGrant,
   myAccessGrants,
@@ -220,7 +226,8 @@ export default async function PlatformEventsPage({
     );
   };
 
-  const main = (
+  const canRequest = grants("platform.events.request_access");
+  const list = (
     <PageCanvas>
       <PageTitle
         icon={<Inbox className="size-6" />}
@@ -396,6 +403,7 @@ export default async function PlatformEventsPage({
         </form>
       </Card>
 
+      {canRequest ? <EventSelectionBar level="platform" /> : null}
       <Card variant="panel" className="px-4 sm:px-6">
         <CardHeader className="px-0">
           <CardTitle>{t("list.title", { count: events.length })}</CardTitle>
@@ -413,58 +421,88 @@ export default async function PlatformEventsPage({
             </Empty>
           ) : (
             <ItemGroup className="gap-2" data-testid="event-list">
-              {events.map((row) => (
-                <Item
-                  key={row.id}
-                  variant="card"
-                  size="sm"
-                  data-testid="event-row"
-                  data-event-type={row.type}
-                  asChild
-                >
-                  <Link
-                    href={href(row.id)}
-                    scroll={false}
-                    aria-current={row.id === editKey ? "true" : undefined}
+              {events.map((row) => {
+                const item = (
+                  <Item
+                    key={row.id}
+                    variant="card"
+                    size="sm"
+                    data-testid="event-row"
+                    data-event-type={row.type}
+                    className={canRequest ? "min-w-0 flex-1" : undefined}
+                    asChild
                   >
-                    <ItemContent>
-                      <ItemTitle className="font-mono">{row.type}</ItemTitle>
-                      <ItemDescription>
-                        {[
-                          customerOf(row),
-                          row.workspaceName,
-                          when(row.occurredAt),
-                          t("list.deliveries", { count: row.deliveries }),
-                          row.failedDeliveries > 0
-                            ? t("list.failed", { count: row.failedDeliveries })
-                            : null,
-                        ]
+                    <Link
+                      href={href(row.id)}
+                      scroll={false}
+                      aria-current={row.id === editKey ? "true" : undefined}
+                    >
+                      <ItemContent>
+                        <ItemTitle className="font-mono">{row.type}</ItemTitle>
+                        <ItemDescription>
+                          {[
+                            customerOf(row),
+                            row.workspaceName,
+                            when(row.occurredAt),
+                            t("list.deliveries", { count: row.deliveries }),
+                            row.failedDeliveries > 0
+                              ? t("list.failed", {
+                                  count: row.failedDeliveries,
+                                })
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <Badge
+                          variant={
+                            SEVERITY_BADGE[
+                              row.severity as keyof typeof SEVERITY_BADGE
+                            ] ?? "neutral"
+                          }
+                        >
+                          {t(
+                            `severity.${row.severity as keyof typeof SEVERITY_BADGE}`,
+                          )}
+                        </Badge>
+                        {integrityBadge(row)}
+                      </ItemActions>
+                    </Link>
+                  </Item>
+                );
+                if (!canRequest) return item;
+                // Several events of one workspace in one request (AJ1).
+                return (
+                  <div key={row.id} className="flex items-start gap-2">
+                    {row.workspaceId ? (
+                      <EventSelectCheckbox
+                        eventId={row.id}
+                        workspaceId={row.workspaceId}
+                        workspaceLabel={[customerOf(row), row.workspaceName]
                           .filter(Boolean)
                           .join(" · ")}
-                      </ItemDescription>
-                    </ItemContent>
-                    <ItemActions>
-                      <Badge
-                        variant={
-                          SEVERITY_BADGE[
-                            row.severity as keyof typeof SEVERITY_BADGE
-                          ] ?? "neutral"
-                        }
-                      >
-                        {t(
-                          `severity.${row.severity as keyof typeof SEVERITY_BADGE}`,
-                        )}
-                      </Badge>
-                      {integrityBadge(row)}
-                    </ItemActions>
-                  </Link>
-                </Item>
-              ))}
+                      />
+                    ) : (
+                      <span className="w-4 shrink-0" aria-hidden />
+                    )}
+                    {item}
+                  </div>
+                );
+              })}
             </ItemGroup>
           )}
         </CardContent>
       </Card>
     </PageCanvas>
+  );
+  const main = canRequest ? (
+    <EventSelectionProvider max={ACCESS_MAX_EVENTS}>
+      {list}
+    </EventSelectionProvider>
+  ) : (
+    list
   );
 
   const panel = detail ? (
@@ -473,7 +511,7 @@ export default async function PlatformEventsPage({
       trace={trace}
       accessGrant={activeGrantFor(accessGrants, detail.id)}
       accessPending={accessGrants.some((g) => g.status === "pending")}
-      canRequest={grants("platform.events.request_access")}
+      canRequest={canRequest}
       canManage={grants("platform.events.manage")}
       keychain={keychain}
       when={when}
@@ -704,7 +742,7 @@ async function EventPanel({
                 grantId={accessGrant.id}
               />
             ) : accessPending ? null : (
-              <AccessRequestForm level="platform" eventId={detail.id} />
+              <AccessRequestForm level="platform" eventIds={[detail.id]} />
             )}
           </CardContent>
         </Card>

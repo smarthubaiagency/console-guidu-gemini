@@ -215,45 +215,45 @@ begin
   -- Platform owner and support read every security event, nothing else.
   perform pg_temp.ctx('d0000000-0000-4000-8000-000000000003');
   select string_agg(right(id::text, 1), ',' order by id) into v_ids
-  from private.security_events(null, 200) where id::text like 'c5000000%';
+  from private.security_events(null, null, 200) where id::text like 'c5000000%';
   if v_ids is distinct from '1,2,3,5' then
     raise exception 'security_events: platform owner got %', v_ids;
   end if;
   perform pg_temp.ctx('d0000000-0000-4000-8000-000000000005');
-  if (select count(*) from private.security_events(null, 200) where id::text like 'c5000000%') <> 4 then
+  if (select count(*) from private.security_events(null, null, 200) where id::text like 'c5000000%') <> 4 then
     raise exception 'security_events: platform support misses events';
   end if;
 
   -- The page cursor and the limit.
-  if (select count(*) from private.security_events(now() - interval '1 hour', 200)
+  if (select count(*) from private.security_events(now() - interval '1 hour', null, 200)
       where id::text like 'c5000000%') <> 0 then
     raise exception 'security_events: cursor ignored';
   end if;
-  if (select count(*) from private.security_events(null, 1)) <> 1 then
+  if (select count(*) from private.security_events(null, null, 1)) <> 1 then
     raise exception 'security_events: limit ignored';
   end if;
 
   -- Platform billing reads none.
   perform pg_temp.ctx('d0000000-0000-4000-8000-000000000002');
-  if exists (select 1 from private.security_events(null, 200)) then
+  if exists (select 1 from private.security_events(null, null, 200)) then
     raise exception 'security_events: platform billing reads events';
   end if;
 
   -- The partner admin reads its own and its customers' events.
   perform pg_temp.ctx('d0000000-0000-4000-8000-000000000006', 'b7000000-0000-4000-8000-000000000005');
   select string_agg(right(id::text, 1), ',' order by id) into v_ids
-  from private.security_events(null, 200);
+  from private.security_events(null, null, 200);
   if v_ids is distinct from '1,2,5' then
     raise exception 'security_events: partner admin got %', v_ids;
   end if;
 
   -- Partner support and a partner it does not belong to read none.
   perform pg_temp.ctx('d0000000-0000-4000-8000-000000000004', 'b7000000-0000-4000-8000-000000000005');
-  if exists (select 1 from private.security_events(null, 200)) then
+  if exists (select 1 from private.security_events(null, null, 200)) then
     raise exception 'security_events: partner support reads events';
   end if;
   perform pg_temp.ctx('d0000000-0000-4000-8000-000000000006', 'b7000000-0000-4000-8000-000000000006');
-  if exists (select 1 from private.security_events(null, 200)) then
+  if exists (select 1 from private.security_events(null, null, 200)) then
     raise exception 'security_events: events of a partner without membership';
   end if;
 
@@ -262,6 +262,56 @@ begin
     perform 1 from public.audit_events;
     raise exception 'audit_events: app_runtime reads the table';
   exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test (AJ1): the page cursor is (occurred_at, id); events of the same
+-- instant are never skipped
+-- ----------------------------------------------------------------------------
+begin;
+select pg_temp.fixture();
+insert into public.audit_events
+  (id, actor_user_id, actor_principal_type, origin, action, resource_type, result, metadata, occurred_at)
+values
+  ('c5a00000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000006', 'user', 'app',
+   'auth.sign_in', 'session', 'success', '{}', '2026-10-01 12:00:00.123456+00'),
+  ('c5a00000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000006', 'user', 'app',
+   'auth.sign_in', 'session', 'success', '{}', '2026-10-01 12:00:00.123456+00'),
+  ('c5a00000-0000-4000-8000-000000000003', 'd0000000-0000-4000-8000-000000000006', 'user', 'app',
+   'auth.sign_in', 'session', 'success', '{}', '2026-10-01 12:00:00.123789+00');
+set local role app_runtime;
+do $$
+declare
+  v_ids text;
+begin
+  perform pg_temp.ctx('d0000000-0000-4000-8000-000000000003');
+  -- Newest first, the id breaks the tie.
+  select string_agg(right(id::text, 1), ',') into v_ids
+  from private.security_events('2026-10-01 12:00:01+00', null, 200) where id::text like 'c5a00000%';
+  if v_ids is distinct from '3,2,1' then
+    raise exception 'security_events: order %', v_ids;
+  end if;
+  -- After the row 3 (same millisecond, other microseconds): 2 and 1.
+  select string_agg(right(id::text, 1), ',') into v_ids
+  from private.security_events('2026-10-01 12:00:00.123789+00', 'c5a00000-0000-4000-8000-000000000003', 200)
+  where id::text like 'c5a00000%';
+  if v_ids is distinct from '2,1' then
+    raise exception 'security_events: microseconds cursor got %', v_ids;
+  end if;
+  -- After the row 2 (same instant): only 1.
+  select string_agg(right(id::text, 1), ',') into v_ids
+  from private.security_events('2026-10-01 12:00:00.123456+00', 'c5a00000-0000-4000-8000-000000000002', 200)
+  where id::text like 'c5a00000%';
+  if v_ids is distinct from '1' then
+    raise exception 'security_events: tie cursor got %', v_ids;
+  end if;
+  -- The two-argument version is gone.
+  begin
+    perform 1 from private.security_events(null::timestamptz, 10);
+    raise exception 'security_events: the two-argument version still exists';
+  exception when undefined_function then null;
   end;
 end $$;
 rollback;

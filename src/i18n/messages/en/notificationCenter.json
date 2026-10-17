@@ -43,6 +43,24 @@
       "title": "Event seal does not match",
       "body": "The Event Hub check found {count} event(s) with a broken seal or chain."
     },
+    "serviceModeRequested": {
+      "title": "Management request for {organization}",
+      "body": "{partner} asked to manage the company. Open it to approve or deny."
+    },
+    "serviceModeChanged": {
+      "gerenciado": {
+        "title": "{organization} is now managed",
+        "body": "The request was approved and the managing team now has access to the workspace."
+      },
+      "padrao": {
+        "title": "{organization} is back to the standard mode",
+        "body": "The access of the managing team has ended."
+      }
+    },
+    "serviceModeDenied": {
+      "title": "Management request denied",
+      "body": "The owner of {organization} denied the management request."
+    },
     "accessRequested": {
       "title": "Data access request",
       "body": "{requester} asked for access to the event data of {workspace} for {hours} hours."
@@ -86,6 +104,15 @@
     "workspaceDeletionCompleted": {
       "title": "Workspace {workspace} deleted",
       "body": "The workspace and its data were erased for good."
+    },
+    "serviceModeRevertedByPartner": {
+      "title": "{organization} is back to the standard mode",
+      "body": "{partner} ended the management. Reason: {reason}"
+    },
+    "ipBlocked": {
+      "title": "Access refused by the IP list",
+      "body": "The address {ip} tried to enter {area} and was refused.",
+      "generic": "An address outside the allowed IP list was refused."
     },
     "inboxNew": {
       "title": "New conversation",

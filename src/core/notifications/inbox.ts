@@ -4,6 +4,7 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
 import {
+  deliveryEventDefinition,
   canChangePersonChannel,
   notificationEventDefinition,
   resolveChannels,
@@ -49,7 +50,7 @@ export async function channelsFor(
   userId: string | null,
   eventType: string,
 ): Promise<ReadonlySet<NotificationChannel>> {
-  const definition = notificationEventDefinition(eventType);
+  const definition = deliveryEventDefinition(eventType);
   return resolveChannels(
     definition,
     userId && definition && !definition.essential

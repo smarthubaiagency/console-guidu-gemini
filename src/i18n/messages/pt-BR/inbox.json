@@ -120,7 +120,7 @@
       "pending": "O contato está sendo criado no CRM.",
       "quota": "A cota de contatos do plano acabou: a conversa ficou sem contato.",
       "none": "Esta conversa não tem contato no CRM.",
-      "linked": ""
+      "linked": "Ligada a um contato do CRM."
     }
   }
 }

@@ -191,6 +191,16 @@ test("platform creates a partner whose owner runs the console on the partner dom
   await customerPage.goto(customerInvite!);
   await expect(customerPage.getByText("Cliente E2E")).toBeVisible();
   await customerPage.getByRole("button", { name: "Aceitar Convite" }).click();
+  // GB1c: registered as managed (the default), the owner accepts the
+  // management clause on the first access.
+  await expect(customerPage).toHaveURL(/\/legal\/accept\?next=/);
+  await expect(
+    customerPage.getByRole("heading", { name: "Cláusula de gerenciamento" }),
+  ).toBeVisible();
+  await customerPage.getByLabel("Li e aceito os documentos acima.").check();
+  await customerPage
+    .getByRole("button", { name: "Aceitar e continuar" })
+    .click();
   await expect(customerPage).toHaveURL(new RegExp(`/app/${customerSlug}$`));
   await expect(
     customerPage.getByRole("heading", { name: "Operação E2E" }),

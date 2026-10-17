@@ -1,7 +1,7 @@
 # Inbox — contexto, etiquetas e avisos (IN4b)
 
 - **Data:** 17/10/2026
-- **Branch:** `claude/optimistic-lamport-rjehmm`. Migration `20261212090000_in4b_inbox_context.sql`.
+- **Branch:** `claude/optimistic-lamport-rjehmm`. Migration `20261214090000_in4b_inbox_context.sql`.
 - **Base:** [plano do par IN4b + IN6](plano-in4b-in6.md), com todas as sugestões da seção 5 aceitas pelo Marcelo em 17/10/2026; [janela do Inbox](janela-inbox.md) (IN4a).
 
 ## 1. O que entrou

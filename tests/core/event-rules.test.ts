@@ -36,6 +36,7 @@ import {
 } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 
+import { ids } from "./fixtures";
 import { describeDatabase } from "../prisma-rls/describe-database.js";
 
 /**
@@ -103,6 +104,7 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
   const emit = (
     type:
       | "security.api_key_created"
+      | "security.api_key_revoked"
       | "security.mfa_requirement_off"
       | "google_business.analyses_done"
       | "events.access_requested",
@@ -473,6 +475,74 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
     await expect(
       withIdentityContext(prisma, PLATFORM_OWNER, (tx) =>
         readEventDataByGrant(tx, requester, { eventId: target.id, ip: null }),
+      ),
+    ).rejects.toMatchObject({ code: "forbidden" });
+  });
+
+  it("asks for several events of one workspace in one request (AJ1)", async () => {
+    const first = await emit("security.api_key_created", "many-1", {
+      data: { workspaceName: "Loja H2", keyName: "Primeira" },
+    });
+    const second = await emit("security.api_key_revoked", "many-2", {
+      data: { workspaceName: "Loja H2", keyName: "Segunda" },
+    });
+    const requester = {
+      kind: "platform" as const,
+      userId: PLATFORM_OWNER,
+      platformRole: "owner" as const,
+    };
+    const grant = await withIdentityContext(prisma, PLATFORM_OWNER, (tx) =>
+      requestEventAccess(tx, requester, {
+        workspaceId: wsS,
+        organizationId: orgS,
+        eventIds: [first.id, second.id, first.id],
+        reason: "Chamado 992 do cliente",
+        reference: "CH-992",
+      }),
+    );
+    // One request, the events once each, 72 hours by default.
+    expect(grant.eventIds.sort()).toEqual([first.id, second.id].sort());
+    expect(grant.durationHours).toBe(72);
+    const eventId = await asWorker((tx) => emitAccessRequest(tx, grant.id));
+    const [requestEvent] = await admin.$queryRawUnsafe<
+      { data: Record<string, unknown> }[]
+    >(`select data from public.events where id = '${eventId}'`);
+    expect(requestEvent?.data).toMatchObject({ count: 2 });
+    await withContext(prisma, ctxS, (tx) =>
+      decideEventAccess(tx, ctxS, { grantId: grant.id, decision: "approve" }),
+    );
+    for (const [id, keyName] of [
+      [first.id, "Primeira"],
+      [second.id, "Segunda"],
+    ] as const) {
+      await expect(
+        withIdentityContext(prisma, PLATFORM_OWNER, (tx) =>
+          readEventDataByGrant(tx, requester, { eventId: id, ip: null }),
+        ),
+      ).resolves.toMatchObject({ keyName });
+    }
+
+    // An event of another workspace never rides along.
+    const elsewhere = await asWorker((tx) =>
+      emitEvent(tx, {
+        type: "security.api_key_created",
+        actor: WORKER_ACTOR,
+        partnerId: "00000000-0000-4000-8000-000000000000",
+        organizationId: ids.organizationA,
+        workspaceId: ids.workspaceA,
+        data: { workspaceName: "Outro", keyName: "Outra" },
+        idempotencyKey: `h2-test:${run}:many-elsewhere`,
+      }),
+    );
+    await expect(
+      withIdentityContext(prisma, PLATFORM_OWNER, (tx) =>
+        requestEventAccess(tx, requester, {
+          workspaceId: wsS,
+          organizationId: orgS,
+          eventIds: [first.id, elsewhere.id],
+          reason: "Chamado 993 do cliente",
+          reference: "CH-993",
+        }),
       ),
     ).rejects.toMatchObject({ code: "forbidden" });
   });

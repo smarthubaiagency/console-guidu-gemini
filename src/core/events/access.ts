@@ -110,6 +110,31 @@ export function canRequestAccess(requester: AccessRequester): boolean {
   );
 }
 
+export type AccessTarget = Readonly<{
+  workspaceId: string;
+  organizationId: string;
+}>;
+
+/**
+ * The workspace shared by the asked events (one request covers the events
+ * of one customer's workspace, AJ1): null when one is unknown (or none was
+ * asked), `mixed` when they are of more than one workspace. The database
+ * checks it again (`private.event_access_target_ok`).
+ */
+export function commonTarget(
+  targets: readonly (AccessTarget | null)[],
+): AccessTarget | "mixed" | null {
+  const [first] = targets;
+  if (!first || targets.some((target) => target === null)) return null;
+  return targets.every(
+    (target) =>
+      target!.workspaceId === first.workspaceId &&
+      target!.organizationId === first.organizationId,
+  )
+    ? first
+    : "mixed";
+}
+
 export const AccessRequestInput = z.object({
   workspaceId: z.uuid(),
   organizationId: z.uuid(),

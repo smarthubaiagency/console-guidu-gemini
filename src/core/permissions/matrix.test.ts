@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import { ALL_PERMISSIONS, Permission, Permissions } from "./catalog";
 import {
   hasOrganizationRolePermission,
+  hasPartnerRolePermission,
+  hasPlatformRolePermission,
   hasWorkspaceRolePermission,
   ORGANIZATION_ROLE_PERMISSIONS,
+  PARTNER_ROLE_PERMISSIONS,
+  PLATFORM_ROLE_PERMISSIONS,
   WORKSPACE_ROLE_PERMISSIONS,
 } from "./matrix";
 import {
@@ -71,6 +75,11 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: true,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REVERT]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REVERT]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
@@ -139,6 +148,11 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REVERT]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REVERT]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
@@ -207,6 +221,11 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REVERT]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REVERT]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -275,6 +294,11 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REVERT]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REVERT]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -297,6 +321,11 @@ describe("Permissions Matrix", () => {
       },
       [WorkspaceRoles.ATTENDANT]: {
         [Permissions.WORKSPACE_READ]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REVERT]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REVERT]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
         [Permissions.WORKSPACE_EVENTS_READ]: false,
         [Permissions.WORKSPACE_EVENTS_MANAGE]: false,
         [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
@@ -384,9 +413,9 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      // Inbox (IN) and Central de Eventos (H2: events read, owner and admin
-      // also manage) on top of the base matrix.
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(26);
+      // Inbox (IN), Central de Eventos (H2: events read, owner and admin
+      // also manage) and service modes (GB1c: owner) on top of the base matrix.
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(27);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(25);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(11);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(5);
@@ -450,6 +479,11 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REVERT]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REVERT]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -518,6 +552,11 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REVERT]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REVERT]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -586,6 +625,11 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REVERT]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REVERT]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -636,6 +680,35 @@ describe("Permissions Matrix", () => {
       expect(ORGANIZATION_ROLE_PERMISSIONS[OrganizationRoles.MEMBER].size).toBe(
         1,
       );
+    });
+  });
+
+  describe("Console roles: service mode back to padrao (AJ1)", () => {
+    it("lets partner owner and admin move a customer back, nobody else", () => {
+      const revert = Permissions.PARTNER_SERVICE_MODE_REVERT;
+      expect(hasPartnerRolePermission("partner_owner", revert)).toBe(true);
+      expect(hasPartnerRolePermission("partner_admin", revert)).toBe(true);
+      expect(hasPartnerRolePermission("partner_support", revert)).toBe(false);
+      expect(hasPartnerRolePermission("partner_finance", revert)).toBe(false);
+    });
+
+    it("lets platform owner and operations move a direct customer back", () => {
+      const revert = Permissions.PLATFORM_SERVICE_MODE_REVERT;
+      expect(hasPlatformRolePermission("owner", revert)).toBe(true);
+      expect(hasPlatformRolePermission("operations", revert)).toBe(true);
+      expect(hasPlatformRolePermission("support", revert)).toBe(false);
+      expect(hasPlatformRolePermission("billing", revert)).toBe(false);
+    });
+
+    it("matches exact count of permissions of the console roles", () => {
+      expect(PARTNER_ROLE_PERMISSIONS.partner_owner.size).toBe(18);
+      expect(PARTNER_ROLE_PERMISSIONS.partner_admin.size).toBe(16);
+      expect(PARTNER_ROLE_PERMISSIONS.partner_finance.size).toBe(4);
+      expect(PARTNER_ROLE_PERMISSIONS.partner_support.size).toBe(7);
+      expect(PLATFORM_ROLE_PERMISSIONS.owner.size).toBe(21);
+      expect(PLATFORM_ROLE_PERMISSIONS.operations.size).toBe(19);
+      expect(PLATFORM_ROLE_PERMISSIONS.billing.size).toBe(7);
+      expect(PLATFORM_ROLE_PERMISSIONS.support.size).toBe(8);
     });
   });
 });

@@ -109,6 +109,12 @@ type Definition<T extends string> = Readonly<{
   channels: readonly EventChannel[];
   level: EventLevel;
   /**
+   * Other levels the type may also live at, each with its route (AJ1:
+   * `security.ip_blocked` is the platform's for /platform and the
+   * partner's for its /admin). `emitEvent` picks the level by the scope.
+   */
+  alsoAt?: Readonly<Partial<Record<EventLevel, EventRoute>>>;
+  /**
    * Sent by the request itself, which answers with the outcome at once
    * (the invitation link and the test e-mail): the catalog governs it, but
    * no event row is written and `emitEvent` refuses it.
@@ -304,6 +310,60 @@ const CATALOG = [
     channels: ["app"],
     level: "workspace",
   },
+  // -- Service modes (GB1c, ADR 0020): the request, its decision and the way
+  //    back to `padrao`. The link goes only by e-mail to the owner, with a
+  //    token the dispatch writes (never in the event's data).
+  {
+    type: "service_mode.change_requested",
+    module: "service_modes",
+    severity: "attention",
+    essential: true,
+    audiences: ["customer", "partner"],
+    purpose: "transactional",
+    route: "explicit",
+    destinations: ["notify"],
+    channels: ["email", "app"],
+    level: "workspace",
+  },
+  {
+    type: "service_mode.changed",
+    module: "service_modes",
+    severity: "attention",
+    essential: true,
+    audiences: ["customer", "partner"],
+    purpose: "transactional",
+    route: "explicit",
+    destinations: ["notify"],
+    channels: ["app"],
+    level: "workspace",
+  },
+  {
+    type: "service_mode.change_denied",
+    module: "service_modes",
+    severity: "info",
+    essential: true,
+    audiences: ["customer", "partner"],
+    purpose: "transactional",
+    route: "explicit",
+    destinations: ["notify"],
+    channels: ["app"],
+    level: "workspace",
+  },
+  // The partner (or GUIDU, for the direct customers) ended the managed mode
+  // with a reason (AJ1): the company owners by bell and e-mail, the
+  // partner's owners and admins by bell.
+  {
+    type: "service_mode.reverted_by_partner",
+    module: "service_modes",
+    severity: "attention",
+    essential: true,
+    audiences: ["customer", "partner"],
+    purpose: "transactional",
+    route: "explicit",
+    destinations: ["notify"],
+    channels: ["email", "app"],
+    level: "workspace",
+  },
   // -- Inbox (IN4b): to each person, in the bell; e-mail by preference -------
   {
     type: "inbox.conversation.new",
@@ -398,6 +458,23 @@ const CATALOG = [
     level: "workspace",
     notifyByDefault: false,
   },
+  // The IP allow list refused an address at the door of /platform (level
+  // platform) or of a partner's /admin (level partner), AJ1. At most one per
+  // address, area and hour; only the address and the area are kept.
+  {
+    type: "security.ip_blocked",
+    module: "security",
+    severity: "attention",
+    essential: false,
+    audiences: ["partner", "platform"],
+    purpose: "transactional",
+    route: "partner",
+    destinations: ["notify"],
+    channels: ["app", "email"],
+    level: "partner",
+    alsoAt: { platform: "platform" },
+    notifyByDefault: false,
+  },
   {
     type: "security.mfa_requirement_off",
     module: "security",
@@ -455,6 +532,31 @@ export function eventDefinition(type: string): EventDefinition | null {
 
 export function isEventType(type: string): type is EventType {
   return BY_TYPE.has(type);
+}
+
+/** The level and route of an event of a type, by the scope it comes with. */
+export function placementOf(
+  definition: EventDefinition,
+  scope: Readonly<{
+    partnerId: string | null;
+    organizationId: string | null;
+    workspaceId: string | null;
+  }>,
+): Readonly<{ level: EventLevel; route: EventRoute }> | null {
+  const fits = (level: EventLevel) =>
+    level === "workspace"
+      ? Boolean(scope.workspaceId && scope.organizationId && scope.partnerId)
+      : level === "partner"
+        ? Boolean(scope.partnerId) && !scope.workspaceId
+        : !scope.partnerId && !scope.organizationId && !scope.workspaceId;
+  if (fits(definition.level)) {
+    return { level: definition.level, route: definition.route };
+  }
+  for (const level of EVENT_LEVELS) {
+    const route = definition.alsoAt?.[level];
+    if (route && fits(level)) return { level, route };
+  }
+  return null;
 }
 
 /**

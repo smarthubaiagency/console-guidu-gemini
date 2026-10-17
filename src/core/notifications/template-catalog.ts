@@ -87,6 +87,15 @@ const VARIABLES: Readonly<
     url("link"),
     text("marca"),
   ],
+  // Not editable (no template in the catalog): the consent e-mail keeps the
+  // code's text, with the single-use link.
+  "service_mode.change_requested": [
+    text("organizacao"),
+    text("parceiro"),
+    text("data"),
+    url("link"),
+    text("marca"),
+  ],
 };
 
 /**

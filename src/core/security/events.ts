@@ -1,5 +1,10 @@
 import "server-only";
 
+import {
+  type AuditCursor,
+  encodeAuditCursor,
+  parseAuditCursor,
+} from "@/core/audit/platform-filters";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 /**
@@ -9,6 +14,10 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
  * the events tagged with their partner and those of their customers'
  * companies. The caller's context decides which: the platform reads in an
  * identity context, the partner with its partner id.
+ *
+ * Pages by (`occurred_at`, `id`) with the instant in microseconds, like the
+ * AUD1 trail (AJ1): a cursor of milliseconds skipped the events written in
+ * the same millisecond as the last one shown.
  */
 
 export const SECURITY_EVENTS_PAGE = 50;
@@ -28,13 +37,16 @@ export type SecurityEvent = Readonly<{
 
 export type SecurityEventsPage = Readonly<{
   events: SecurityEvent[];
-  /** Cursor of the next (older) page, or null at the end. */
+  /** Cursor of the next (older) page (`<instant>_<id>`), or null at the end. */
   nextBefore: string | null;
 }>;
+
+export type SecurityEventsCursor = AuditCursor;
 
 type Row = {
   id: string;
   occurred_at: Date;
+  cursor_at: string;
   action: string;
   result: string;
   origin: string;
@@ -43,22 +55,31 @@ type Row = {
   resource_type: string;
 };
 
-/** A cursor from the address bar: an ISO date, or null. */
-export function parseBefore(raw: string | string[] | undefined): Date | null {
-  if (typeof raw !== "string" || raw.length > 40) return null;
-  const date = new Date(raw);
-  return Number.isNaN(date.getTime()) ? null : date;
+/** A cursor from the address bar (`<instant>_<id>`), or null. */
+export function parseBefore(
+  raw: string | string[] | undefined,
+): SecurityEventsCursor | null {
+  return parseAuditCursor(raw);
 }
 
 export async function listSecurityEvents(
   tx: ContextTransaction,
-  options: Readonly<{ before?: Date | null; limit?: number }> = {},
+  options: Readonly<{
+    before?: SecurityEventsCursor | null;
+    limit?: number;
+  }> = {},
 ): Promise<SecurityEventsPage> {
   const limit = options.limit ?? SECURITY_EVENTS_PAGE;
+  const before = options.before ?? null;
   const rows = await tx.$queryRaw<Row[]>`
-    select id, occurred_at, action, result, origin, actor_user_id,
-           workspace_id, resource_type
-    from private.security_events(${options.before ?? null}::timestamptz, ${limit + 1}::integer)
+    select id, occurred_at,
+           to_char(occurred_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor_at,
+           action, result, origin, actor_user_id, workspace_id, resource_type
+    from private.security_events(
+      ${before?.at ?? null}::timestamptz,
+      ${before?.id ?? null}::uuid,
+      ${limit + 1}::integer
+    )
   `;
   const page = rows.slice(0, limit);
 
@@ -94,7 +115,10 @@ export async function listSecurityEvents(
     })),
     nextBefore:
       rows.length > limit && page.length > 0
-        ? page[page.length - 1]!.occurred_at.toISOString()
+        ? encodeAuditCursor({
+            at: page[page.length - 1]!.cursor_at,
+            id: page[page.length - 1]!.id,
+          })
         : null,
   };
 }

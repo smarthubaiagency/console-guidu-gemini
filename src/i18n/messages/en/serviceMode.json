@@ -1,0 +1,104 @@
+{
+  "errors": {
+    "forbidden": "You are not allowed to do this in the service mode.",
+    "notFound": "Company or request not found.",
+    "alreadyManaged": "The company is already in the managed mode.",
+    "pendingExists": "There is already a pending request for this company.",
+    "noOwner": "The company has no owner to approve the request yet.",
+    "noWorkspace": "The company has no active workspace.",
+    "invalid": "Invalid data.",
+    "reason": "Write the reason (10 to 500 characters).",
+    "notManaged": "The company is not in the managed mode."
+  },
+  "modes": {
+    "padrao": "Standard",
+    "gerenciado": "Managed"
+  },
+  "situation": {
+    "pending": "Pending request",
+    "approved": "Request approved",
+    "denied": "Request denied",
+    "expired": "Request expired",
+    "cancelled": "Request cancelled"
+  },
+  "sources": {
+    "registration": "In the contract",
+    "request": "By an approved request",
+    "customer": "By the company",
+    "partner": "By the partner"
+  },
+  "results": {
+    "requested": "Request sent to the company owner.",
+    "cancelled": "Request cancelled.",
+    "approved": "Managed mode approved.",
+    "denied": "Request denied.",
+    "reverted": "The company is back to the standard mode.",
+    "expired": "This request has expired.",
+    "alreadyDecided": "This request was already decided.",
+    "notFound": "Request not found.",
+    "revertedByPartner": "The company is back to the standard mode. The owner was notified."
+  },
+  "console": {
+    "column": "Service mode",
+    "request": "Request management",
+    "cancel": "Cancel request",
+    "pendingUntil": "Pending request until {date}",
+    "crmContacts": "{count, plural, =0 {No contacts in the CRM} one {# contact in the CRM} other {# contacts in the CRM}}",
+    "revert": "Return to standard",
+    "revertTitle": "Return {organization} to the standard mode?",
+    "revertDescription": "Your team loses access to the company data at once. The owner gets a bell notice and an e-mail with the reason. Going back to managed needs a new request approved by the owner.",
+    "revertReason": "Reason",
+    "revertReasonHint": "For example: end of the contract. The owner sees this text.",
+    "revertConfirm": "Return to standard",
+    "revertCancel": "Cancel"
+  },
+  "scope": {
+    "title": "What changes in the managed mode",
+    "guids": "AI agents (GUIDS), knowledge base and referrals",
+    "campaigns": "Campaigns",
+    "reviews": "Reviews and Google profiles",
+    "crm": "CRM and contacts",
+    "conversations": "Conversations and channels",
+    "settings": "Workspace settings",
+    "keyNote": "The company's AI key is never read or replaced by the managing team.",
+    "auditNote": "Every action of the managing team is recorded in the workspace audit."
+  },
+  "settings": {
+    "metaTitle": "Service mode",
+    "title": "Service mode",
+    "description": "Who operates the workspace: the company alone (standard) or the managing team (managed).",
+    "currentTitle": "Current mode",
+    "mode": "Mode",
+    "managedBy": "Managed by",
+    "since": "Since",
+    "how": "How it started",
+    "standardNote": "In the standard mode, the managing team only sees the status of the modules, without the data. Support only through the temporary access you approve.",
+    "pendingTitle": "Management request",
+    "pendingDescription": "{partner} asked to manage this company. The request is valid until {date}.",
+    "approve": "Approve",
+    "deny": "Deny",
+    "ownerOnly": "Only the company owner approves, denies or goes back to the standard mode.",
+    "backTitle": "Back to the standard mode",
+    "backDescription": "The company operates alone again and the access of the managing team ends at once. Going back to managed will need a new request.",
+    "back": "Back to the standard mode"
+  },
+  "link": {
+    "metaTitle": "Management request",
+    "title": "Management request",
+    "description": "{partner} asks to manage {organization}.",
+    "expires": "This link can be used once and is valid until {date}.",
+    "consent": "When you decide, we record the date, time and network address (IP) as proof of your consent.",
+    "approve": "Approve the managed mode",
+    "deny": "Deny",
+    "notFoundTitle": "Invalid link",
+    "notFound": "This link does not exist or does not belong to this address.",
+    "expiredTitle": "Link expired",
+    "expired": "The request has expired. Ask the managing team for a new request.",
+    "approvedTitle": "Management approved",
+    "approved": "{partner} can now manage {organization}. You can go back to the standard mode at any time in Settings › Service mode.",
+    "deniedTitle": "Request denied",
+    "denied": "Nothing changed: {organization} stays in the standard mode.",
+    "cancelledTitle": "Request cancelled",
+    "cancelled": "The request was cancelled by who made it. Nothing changed."
+  }
+}

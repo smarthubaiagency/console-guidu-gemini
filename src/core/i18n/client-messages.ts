@@ -33,6 +33,8 @@ export const CLIENT_NAMESPACES = [
   "events",
   "eventRules",
   "platformAudit",
+  // "Devolver ao padrão" in Clientes (AJ1).
+  "serviceMode",
 ] as const;
 
 export function clientMessages(
