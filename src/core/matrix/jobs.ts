@@ -5,6 +5,7 @@ import { SkipJobError } from "@/core/jobs/errors";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { syncAccount } from "./accounts";
+import { ensureWorkspaceAddress } from "./addresses";
 import { matrixConfig, matrixEnabled } from "./config";
 import { processPendingEvents } from "./events";
 import { cleanupRooms, syncWorkspaceRooms } from "./rooms";
@@ -126,14 +127,25 @@ export const matrixSyncWorkspaceJob = definePlatformJob<{
 }>({
   kind: "matrix.sync-workspace",
   description:
-    "Bloqueia ou devolve as salas de um workspace conforme a situação dele.",
+    "Bloqueia ou devolve as salas de um workspace conforme a situação dele e mantém o endereço da loja no chat.",
   payload: z.object({ workspaceId: uuid }).strict(),
   maxAttempts: 5,
   retryDelaySeconds: 30,
   async run(tx, payload) {
-    const result = await syncWorkspaceRooms(tx, client(), payload.workspaceId);
+    const synapse = client();
+    const result = await syncWorkspaceRooms(tx, synapse, payload.workspaceId);
     if (result.more) await requestWorkspaceSync(tx, payload.workspaceId);
-    return { action: result.action, rooms: result.rooms };
+    // The address of the store (IN4a), only while the workspace is active.
+    const address = await ensureWorkspaceAddress(
+      tx,
+      synapse,
+      payload.workspaceId,
+    );
+    return {
+      action: result.action,
+      rooms: result.rooms,
+      address: address !== null,
+    };
   },
 });
 

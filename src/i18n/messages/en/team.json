@@ -39,7 +39,8 @@
     "actions": "Actions",
     "invitedEmail": "Invited Email",
     "plannedRole": "Intended Role",
-    "expiresAt": "Expires on"
+    "expiresAt": "Expires on",
+    "inbox": "Inbox"
   },
   "roles": {
     "owner": "Owner",
@@ -64,5 +65,8 @@
     "invalidRoleInput": "Invalid data for the role change.",
     "invalidMemberId": "Invalid member identifier."
   },
-  "invitationEmailed": "Invitation e-mailed to {email}."
+  "invitationEmailed": "Invitation e-mailed to {email}.",
+  "attendantMark": "Inbox attendant: {name}",
+  "attendantMarked": "Attendant marked.",
+  "attendantUnmarked": "Attendant mark removed."
 }

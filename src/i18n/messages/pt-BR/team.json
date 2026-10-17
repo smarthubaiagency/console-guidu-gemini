@@ -39,7 +39,8 @@
     "actions": "Ações",
     "invitedEmail": "E-mail Convidado",
     "plannedRole": "Papel Previsto",
-    "expiresAt": "Expira em"
+    "expiresAt": "Expira em",
+    "inbox": "Inbox"
   },
   "roles": {
     "owner": "Proprietário",
@@ -64,5 +65,8 @@
     "invalidRoleInput": "Dados inválidos para alteração de papel.",
     "invalidMemberId": "Identificador de membro inválido."
   },
-  "invitationEmailed": "Convite enviado por e-mail para {email}."
+  "invitationEmailed": "Convite enviado por e-mail para {email}.",
+  "attendantMark": "Atendente do Inbox: {name}",
+  "attendantMarked": "Atendente marcado.",
+  "attendantUnmarked": "Marca de atendente removida."
 }

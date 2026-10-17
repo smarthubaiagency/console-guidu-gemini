@@ -290,10 +290,18 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
     exact: true,
   });
   // Without workspace.read (the Attendant, AT1) the menu is the dashboard
-  // only; the pages answer 404 on their own (requireWorkspaceAreaPage). The
-  // Inbox entry joins here with its module (IN4).
+  // and the modules this role opens by a permission of its own (the Inbox,
+  // IN4a); the pages answer 404 on their own (requireWorkspaceAreaPage).
   if (!input.grants("workspace.read")) {
-    return [{ id: "platform", label: "Plataforma", items: [overview] }];
+    const own = buildAppModuleItems({
+      ...input,
+      modules: input.modules.filter((mod) =>
+        mod.manifest.navigation.every(
+          (entry) => entry.requiredPermissions.length > 0,
+        ),
+      ),
+    });
+    return [{ id: "platform", label: "Plataforma", items: [overview, ...own] }];
   }
   return [
     {

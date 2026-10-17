@@ -22,5 +22,6 @@
   "modulesSubtitle": "Enabled and integrated modules",
   "access": "Open",
   "attendantTitle": "Your access is the Inbox",
-  "attendantDescription": "As an Attendant, you see this dashboard and the Inbox, which is coming soon. Settings, modules and records stay with the team that runs the workspace."
+  "attendantDescription": "As an Attendant, you see this dashboard and the Inbox. Settings, modules and records stay with the team that runs the workspace.",
+  "openInbox": "Open the Inbox"
 }

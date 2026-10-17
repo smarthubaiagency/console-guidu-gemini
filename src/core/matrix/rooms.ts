@@ -3,7 +3,7 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 import {
   displayName,
   ensureAccountRow,
-  holdsInboxView,
+  isInboxAccess,
   joinAttendant,
   removeAttendant,
   upsertMember,
@@ -11,9 +11,12 @@ import {
 import { coreUserId } from "./config";
 import {
   createRoom,
+  deactivateUser,
   deleteRoom,
   invite,
   listRooms,
+  powerOf,
+  REPLY_POWER,
   roomCreatedAt,
   type SynapseClient,
   upsertUser,
@@ -29,21 +32,36 @@ import {
  * transaction is found and deleted by `cleanupRooms`.
  */
 
-type PersonRow = { user_id: string; role: string; full_name: string | null };
+type PersonRow = {
+  user_id: string;
+  role: string;
+  access: string | null;
+  full_name: string | null;
+};
 
-/** Attendants of an active workspace, each with an account row. */
+export type RoomAttendant = Readonly<{
+  mxid: string;
+  name: string;
+  power: number;
+}>;
+
+/**
+ * People with a level in the Inbox of an active workspace, each with an
+ * account row and the power of their level (IN4a).
+ */
 export async function workspaceAttendants(
   tx: ContextTransaction,
   client: SynapseClient,
   workspaceId: string,
-): Promise<{ mxid: string; name: string }[]> {
+): Promise<RoomAttendant[]> {
   const people = await tx.$queryRaw<PersonRow[]>`
-    select user_id, role, full_name from private.matrix_workspace_people(${workspaceId}::uuid)
+    select user_id, role, access, full_name
+    from private.matrix_workspace_access(${workspaceId}::uuid)
   `;
   const seen = new Set<string>();
-  const out: { mxid: string; name: string }[] = [];
+  const out: RoomAttendant[] = [];
   for (const person of people) {
-    if (!holdsInboxView(person.role) || seen.has(person.user_id)) continue;
+    if (!isInboxAccess(person.access) || seen.has(person.user_id)) continue;
     seen.add(person.user_id);
     const account = await ensureAccountRow(tx, client.config, person.user_id);
     const name = displayName(person.full_name);
@@ -56,7 +74,7 @@ export async function workspaceAttendants(
         });
       }
     }
-    out.push({ mxid: account.mxid, name });
+    out.push({ mxid: account.mxid, name, power: powerOf(person.access) });
   }
   return out;
 }
@@ -90,6 +108,8 @@ export async function createConversationRoom(
     origin?: "matrix" | "meta";
     /** The consumer (guidu.chat) or the contact's virtual user (Meta). */
     consumerMxid?: string | null;
+    /** The consumer's display name, kept for the search of the Inbox. */
+    consumerName?: string | null;
     name?: string | null;
   }>,
 ): Promise<CreatedRoom> {
@@ -109,23 +129,38 @@ export async function createConversationRoom(
     select: { id: true },
   });
   const attendants = await workspaceAttendants(tx, client, input.workspaceId);
+  // The consumer sends at 10 like the attendants who answer.
+  const powers: Record<string, number> = {};
+  for (const attendant of attendants) powers[attendant.mxid] = attendant.power;
+  if (input.consumerMxid) powers[input.consumerMxid] = REPLY_POWER;
   const roomId = await createRoom(client, {
     name: input.name ?? null,
-    attendants: attendants.map((a) => a.mxid),
+    powers,
   });
   await tx.matrixRoom.update({ where: { id: row.id }, data: { roomId } });
   const ref = { roomId, workspaceId: input.workspaceId, organizationId };
   for (const attendant of attendants) {
     await joinAttendant(client, roomId, attendant);
-    await upsertMember(tx, ref, attendant.mxid, "join");
+    await upsertMember(tx, ref, attendant.mxid, "join", null, attendant.power);
   }
   if (input.consumerMxid) {
     await invite(client, roomId, input.consumerMxid);
-    await upsertMember(tx, ref, input.consumerMxid, "invite");
+    await upsertMember(
+      tx,
+      ref,
+      input.consumerMxid,
+      "invite",
+      null,
+      REPLY_POWER,
+    );
   }
   await tx.matrixRoom.update({
     where: { id: row.id },
-    data: { state: "active", consumerMxid: input.consumerMxid ?? null },
+    data: {
+      state: "active",
+      consumerMxid: input.consumerMxid ?? null,
+      consumerName: input.consumerName?.trim().slice(0, 255) || null,
+    },
   });
   return { id: row.id, roomId, attendants: attendants.length };
 }
@@ -166,7 +201,14 @@ export async function syncWorkspaceRooms(
       };
       for (const attendant of attendants) {
         await joinAttendant(client, ref.roomId, attendant);
-        await upsertMember(tx, ref, attendant.mxid, "join");
+        await upsertMember(
+          tx,
+          ref,
+          attendant.mxid,
+          "join",
+          null,
+          attendant.power,
+        );
       }
       await tx.matrixRoom.update({
         where: { id: room.id },
@@ -235,6 +277,13 @@ export async function purgeWorkspaceRooms(
       data: { state: "closed", closedAt: new Date() },
     });
   }
+  // The address of the store (IN4a) stops answering; the row goes with the
+  // database purge.
+  const address = await tx.matrixWorkspaceAddress.findUnique({
+    where: { workspaceId },
+    select: { mxid: true },
+  });
+  if (address) await deactivateUser(client, address.mxid);
   return { deleted: rooms.length };
 }
 

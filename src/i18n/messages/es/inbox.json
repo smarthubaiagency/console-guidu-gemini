@@ -1,0 +1,86 @@
+{
+  "metaTitle": "Inbox",
+  "viewsLabel": "Vistas del Inbox",
+  "windowLabel": "Inbox de {workspace}",
+  "dashboard": "Dashboard",
+  "listLabel": "Conversaciones",
+  "searchPlaceholder": "Buscar por nombre",
+  "unknownContact": "Contacto sin nombre",
+  "you": "Tú",
+  "noMessages": "Aún sin mensajes",
+  "assignedTo": "Con {name}",
+  "assigned": "Con un agente",
+  "unassigned": "Sin responsable",
+  "copyAddress": "Copiar la dirección",
+  "addressHint": "Para probar, llama a esta dirección de la tienda desde Element:",
+  "views": {
+    "mine": "Mías",
+    "unassigned": "Sin asignar",
+    "all": "Todas",
+    "resolved": "Resueltas"
+  },
+  "empty": {
+    "mine": "Ninguna conversación contigo",
+    "unassigned": "Ninguna conversación sin responsable",
+    "all": "Ninguna conversación abierta",
+    "resolved": "Ninguna conversación resuelta",
+    "searchTitle": "Nada encontrado con ese nombre",
+    "description": "Las conversaciones nuevas aparecen aquí en cuanto el cliente escribe."
+  },
+  "status": {
+    "open": "Abierta",
+    "pending": "Pendiente",
+    "resolved": "Resuelta"
+  },
+  "noConversationTitle": "Elige una conversación",
+  "noConversationDescription": "La conversación abierta aparece aquí, con el contacto y el estado al lado.",
+  "sendFailed": "El mensaje no se envió. Inténtalo de nuevo.",
+  "conversationLabel": "Conversación con {name}",
+  "back": "Volver a la lista",
+  "typing": "{names} escribiendo…",
+  "presence": {
+    "online": "En línea",
+    "unavailable": "Ausente",
+    "offline": "Desconectado"
+  },
+  "chatUnavailable": "El chat no está disponible ahora. Recarga la página en un momento.",
+  "messagePlaceholder": "Escribe un mensaje",
+  "send": "Enviar",
+  "readOnly": "Ves esta conversación solo en lectura. Para responder, pide que te marquen como agente en Equipo.",
+  "context": {
+    "title": "Contexto de la conversación",
+    "empty": "Abre una conversación para ver el contacto y el estado.",
+    "contact": "Contacto",
+    "name": "Nombre",
+    "chatId": "Dirección en el chat",
+    "attendance": "Atención",
+    "status": "Estado",
+    "assignee": "Responsable"
+  },
+  "nobody": "Nadie",
+  "actions": {
+    "take": "Tomar",
+    "resolve": "Resolver",
+    "reopen": "Reabrir",
+    "assign": "Asignar a"
+  },
+  "done": {
+    "take": "Conversación tomada.",
+    "resolve": "Conversación resuelta.",
+    "reopen": "Conversación reabierta.",
+    "assign": "Responsable actualizado."
+  },
+  "blocked": {
+    "maintenance": "El Inbox está en mantenimiento",
+    "not_enabled": "El Inbox no está activado en este workspace",
+    "not_contracted": "El Inbox no forma parte del plan",
+    "description": "Vuelve al dashboard; quien administra el workspace puede resolverlo en la configuración."
+  },
+  "errors": {
+    "alreadyAssigned": "Esta conversación ya tiene un responsable.",
+    "notResolved": "La conversación no está resuelta.",
+    "conversationNotFound": "Conversación no encontrada.",
+    "assigneeNotAttendant": "Solo un agente de esta conversación puede ser el responsable.",
+    "notMarkable": "Solo propietarios, administradores y editores del workspace pueden ser marcados como agentes."
+  }
+}
