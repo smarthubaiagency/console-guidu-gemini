@@ -17,13 +17,15 @@ import {
  * What the core keeps of a transaction of the Application Service (IN3).
  * The route reduces each event to the few fields processing reads, and
  * drops every other type: the messages stay in Synapse (ADR 0023, rule 6).
+ * A message is kept only as a mark (IN4b): who sent it, when, and its
+ * kind, never the text.
  */
 
 export type ReducedEvent = Readonly<{
   event_id: string;
   room_id: string;
-  type: "m.room.member" | typeof CONVERSATION_STATE;
-  state_key: string;
+  type: "m.room.member" | typeof CONVERSATION_STATE | "m.room.message";
+  state_key: string | null;
   sender: string;
   origin_server_ts: number | null;
   content: Record<string, string | null>;
@@ -47,6 +49,27 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
     event.content && typeof event.content === "object"
       ? (event.content as Record<string, unknown>)
       : null;
+  const ts =
+    typeof event.origin_server_ts === "number"
+      ? Math.trunc(event.origin_server_ts)
+      : null;
+  if (
+    event.type === "m.room.message" &&
+    eventId &&
+    roomId &&
+    sender &&
+    content
+  ) {
+    return {
+      event_id: eventId,
+      room_id: roomId,
+      type: "m.room.message",
+      state_key: null,
+      sender,
+      origin_server_ts: ts,
+      content: { msgtype: text(content.msgtype, 40) },
+    };
+  }
   if (
     !eventId ||
     !roomId ||
@@ -55,10 +78,6 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
     typeof event.state_key !== "string"
   )
     return null;
-  const ts =
-    typeof event.origin_server_ts === "number"
-      ? Math.trunc(event.origin_server_ts)
-      : null;
   if (event.type === "m.room.member") {
     const stateKey = text(event.state_key);
     const membership = text(content.membership, 16);
@@ -103,6 +122,26 @@ function isConsumer(client: SynapseClient, mxid: string): boolean {
   return !(
     local[2] === client.config.serverName && ATTENDANT_LOCALPART.test(local[1])
   );
+}
+
+export type MessageSide = "consumer" | "team" | "agent";
+
+/**
+ * Who sent a message (IN4b): the room's consumer, a person of the team
+ * (an attendant's account) or an agent (a user of the namespace other than
+ * the core and the addresses). Anyone else is not counted.
+ */
+export function messageSide(
+  client: SynapseClient,
+  sender: string,
+  consumerMxid: string | null,
+): MessageSide | null {
+  if (consumerMxid && sender === consumerMxid) return "consumer";
+  const local = /^@([^:]+):(.+)$/.exec(sender);
+  if (!local?.[1] || local[2] !== client.config.serverName) return null;
+  if (ATTENDANT_LOCALPART.test(local[1])) return "team";
+  if (/^_guidu_a_/.test(local[1])) return "agent";
+  return null;
 }
 
 /** Events of an unknown room wait this long for its row (creation race). */
@@ -220,6 +259,7 @@ async function handleEvent(
       organizationId: true,
       statusEventTs: true,
       state: true,
+      consumerMxid: true,
     },
   });
 
@@ -279,6 +319,29 @@ async function handleEvent(
           and consumer_name is distinct from ${content.displayname.slice(0, 255)}
       `;
     }
+    return "processed";
+  }
+
+  if (event.type === "m.room.message") {
+    const side = messageSide(client, event.sender, room.consumerMxid);
+    if (!side) return "ignored";
+    const at = new Date(
+      event.originServerTs !== null
+        ? Number(event.originServerTs)
+        : now.getTime(),
+    );
+    // The newest mark wins; a retried or late event never moves it back.
+    const column = {
+      consumer: "last_consumer_message_at",
+      team: "last_team_message_at",
+      agent: "last_agent_message_at",
+    }[side];
+    await tx.$executeRawUnsafe(
+      `update public.matrix_rooms set ${column} = $1
+       where id = $2::uuid and (${column} is null or ${column} < $1)`,
+      at,
+      room.id,
+    );
     return "processed";
   }
 

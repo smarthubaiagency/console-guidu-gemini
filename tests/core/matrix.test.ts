@@ -496,11 +496,21 @@ describeDatabase(
         { prisma },
       );
       expect(replay.status).toBe(200);
-      expect(await admin.matrixEvent.count()).toBe(before);
-      // Messages are never stored.
-      expect(
-        await admin.matrixEvent.count({ where: { type: "m.room.message" } }),
-      ).toBe(0);
+      // The replayed event is not stored twice; the message is a new mark.
+      expect(await admin.matrixEvent.count()).toBe(before + 1);
+      // A message is only a mark (IN4b): who and when, never the text.
+      const marks = await admin.matrixEvent.findMany({
+        where: { type: "m.room.message" },
+        select: { content: true },
+      });
+      expect(JSON.stringify(marks)).not.toContain("oi");
+      expect(JSON.stringify(marks)).not.toContain("Olá");
+      const marked = await processUntil(async () => {
+        const row = await admin.matrixRoom.findUnique({
+          where: { roomId: room.roomId },
+        });
+        return row?.lastTeamMessageAt ? row : null;
+      }, "team message marked");
     });
 
     it("refuses a room created by a consumer that invites a namespace user", async () => {
