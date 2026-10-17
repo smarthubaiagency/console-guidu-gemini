@@ -336,9 +336,27 @@ jobs:
     if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    # A real Postgres for the suite instead of PGlite (e2e/support/rig.ts):
+    # PGlite runs every socket in one session, and under the web's and the
+    # worker's load their statements interleaved and jobs hung. Ephemeral;
+    # the rig drops and creates its database on every run.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 54398:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     env:
       APP_NAME: "GUIDU"
       APP_URL: "http://localhost:3000"
+      E2E_EXTERNAL_POSTGRES: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4

@@ -90,7 +90,8 @@ export type WorkerOptions = Readonly<{
   pollingIntervalSeconds?: number;
   /**
    * Connections of pg-boss's own pool (its default when unset). The e2e
-   * harness keeps it small: its PGlite serves every socket in one session.
+   * harness keeps it small: locally its PGlite serves every socket in one
+   * session.
    */
   bossMaxConnections?: number;
   definitions?: readonly JobDefinition<unknown>[];
