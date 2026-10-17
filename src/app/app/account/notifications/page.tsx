@@ -269,7 +269,9 @@ export default async function AccountNotificationsPage() {
                     data-event={definition.type}
                   >
                     <TableCell className="whitespace-normal">
-                      <span className="text-14 text-text font-medium">{name}</span>
+                      <span className="text-14 text-text font-medium">
+                        {name}
+                      </span>
                     </TableCell>
                     {NOTIFICATION_CHANNELS.map((channel) => (
                       <TableCell key={channel} className="text-center">

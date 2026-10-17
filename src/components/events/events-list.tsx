@@ -137,7 +137,9 @@ export async function EventFilters({
               defaultValue={filters.customer ?? ""}
               className="w-full"
             >
-              <NativeSelectOption value="">{t("filters.all")}</NativeSelectOption>
+              <NativeSelectOption value="">
+                {t("filters.all")}
+              </NativeSelectOption>
               {[...customers].map(([id, name]) => (
                 <NativeSelectOption key={id} value={id}>
                   {name}

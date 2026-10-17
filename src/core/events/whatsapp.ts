@@ -205,9 +205,9 @@ export async function postToPartnerWebhook(
     );
   } catch (error) {
     // A 2xx answer that is not JSON is still a delivery.
-    if (
-      !(error instanceof ChannelHttpError && error.code === "invalid_response")
-    ) {
+    if (!(
+      error instanceof ChannelHttpError && error.code === "invalid_response"
+    )) {
       return failureReason(error);
     }
   }
@@ -253,8 +253,10 @@ export async function deliverWhatsApp(
 
   const target = whatsAppTargetOf(event.data);
   if (!target) return finishRow(tx, key, row, "skipped", "no_target", false);
-  if (target.skip) return finishRow(tx, key, row, "skipped", target.skip, false);
-  if (!target.to) return finishRow(tx, key, row, "skipped", "no_recipient", false);
+  if (target.skip)
+    return finishRow(tx, key, row, "skipped", target.skip, false);
+  if (!target.to)
+    return finishRow(tx, key, row, "skipped", "no_recipient", false);
 
   const failure = await postToPartnerWebhook(
     tx,
@@ -308,7 +310,10 @@ export async function deliverPersonWhatsApp(
 ): Promise<PersonWhatsAppOutcome> {
   const now = deps.now ?? (() => new Date());
   const { event } = args;
-  const key = `${event.idempotencyKey}:whatsapp:user:${args.userId}`.slice(0, 200);
+  const key = `${event.idempotencyKey}:whatsapp:user:${args.userId}`.slice(
+    0,
+    200,
+  );
   const relatedId =
     event.subjectId && UUID.test(event.subjectId) ? event.subjectId : event.id;
   const row = await deliveryRow(tx, {
@@ -322,7 +327,8 @@ export async function deliverPersonWhatsApp(
   if (!row || !["pending", "queued", "failed"].includes(row.status)) {
     return { status: "done", reason: null };
   }
-  if (row.attempts >= WHATSAPP_MAX_ATTEMPTS) return { status: "done", reason: null };
+  if (row.attempts >= WHATSAPP_MAX_ATTEMPTS)
+    return { status: "done", reason: null };
   if (row.status === "queued" && row.hold_reason) {
     if (row.deliver_after && row.deliver_after.getTime() > now().getTime()) {
       return { status: "held", reason: row.hold_reason };

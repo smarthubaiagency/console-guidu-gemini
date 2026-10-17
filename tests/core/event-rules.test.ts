@@ -208,15 +208,22 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
   it("keeps the security notice off by default and follows the rule when on", async () => {
     const off = await emit("security.api_key_created", "sec-off");
     await expect(
-      asWorker((tx) => dispatchEvent(tx, off.id, { transport, fetch, now: () => DAY })),
+      asWorker((tx) =>
+        dispatchEvent(tx, off.id, { transport, fetch, now: () => DAY }),
+      ),
     ).resolves.toMatchObject({ status: "skipped" });
     expect(await deliveriesOf(off.id)).toHaveLength(0);
 
     await setRules({
-      "security.api_key_created": { enabled: true, channels: ["app", "whatsapp"] },
+      "security.api_key_created": {
+        enabled: true,
+        channels: ["app", "whatsapp"],
+      },
     });
     const on = await emit("security.api_key_created", "sec-on");
-    await asWorker((tx) => dispatchEvent(tx, on.id, { transport, fetch, now: () => DAY }));
+    await asWorker((tx) =>
+      dispatchEvent(tx, on.id, { transport, fetch, now: () => DAY }),
+    );
     const rows = await deliveriesOf(on.id);
     const byUser = Object.fromEntries(
       rows.map((d) => [`${d.channel}:${d.recipientUserId}`, d]),
@@ -237,7 +244,9 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
       to: "+5511912340000",
     });
     expect(String(posts[0]!.body.text)).toContain("Chave do ERP");
-    const bell = await admin.userNotification.findMany({ where: { eventId: on.id } });
+    const bell = await admin.userNotification.findMany({
+      where: { eventId: on.id },
+    });
     expect(bell.map((n) => n.userId).sort()).toEqual([adminS, ownerS].sort());
   });
 
@@ -247,23 +256,36 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
       "security.mfa_requirement_off": { enabled: true, channels: ["whatsapp"] },
     });
     const held = await emit("security.api_key_created", "quiet");
-    await asWorker((tx) => dispatchEvent(tx, held.id, { transport, fetch, now: () => NIGHT }));
+    await asWorker((tx) =>
+      dispatchEvent(tx, held.id, { transport, fetch, now: () => NIGHT }),
+    );
     const [queued] = (await deliveriesOf(held.id)).filter(
       (d) => d.recipientUserId === ownerS,
     );
-    expect(queued).toMatchObject({ status: "queued", holdReason: "quiet_hours" });
-    expect(queued?.deliverAfter?.toISOString()).toBe("2026-10-15T11:00:00.000Z");
+    expect(queued).toMatchObject({
+      status: "queued",
+      holdReason: "quiet_hours",
+    });
+    expect(queued?.deliverAfter?.toISOString()).toBe(
+      "2026-10-15T11:00:00.000Z",
+    );
     expect(posts).toHaveLength(0);
 
     const urgent = await emit("security.mfa_requirement_off", "urgent");
-    await asWorker((tx) => dispatchEvent(tx, urgent.id, { transport, fetch, now: () => NIGHT }));
-    expect(posts.map((p) => p.body.event)).toEqual(["security.mfa_requirement_off"]);
+    await asWorker((tx) =>
+      dispatchEvent(tx, urgent.id, { transport, fetch, now: () => NIGHT }),
+    );
+    expect(posts.map((p) => p.body.event)).toEqual([
+      "security.mfa_requirement_off",
+    ]);
 
     // The window ended long ago (in the database's clock): the tick sends it.
     await expect(
       asWorker((tx) => releaseQuietWhatsApp(tx, { fetch })),
     ).resolves.toBeGreaterThanOrEqual(1);
-    const mine = posts.filter((p) => [held.id, urgent.id].includes(String(p.body.event_id)));
+    const mine = posts.filter((p) =>
+      [held.id, urgent.id].includes(String(p.body.event_id)),
+    );
     expect(mine.map((p) => p.body.event)).toEqual([
       "security.mfa_requirement_off",
       "security.api_key_created",
@@ -285,12 +307,23 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
       data: { location: "Loja Sul" },
     });
     for (const event of [one, two]) {
-      await asWorker((tx) => dispatchEvent(tx, event.id, { transport, fetch, now: () => DAY }));
+      await asWorker((tx) =>
+        dispatchEvent(tx, event.id, { transport, fetch, now: () => DAY }),
+      );
     }
-    expect(await admin.userNotification.count({ where: { eventId: one.id } })).toBe(0);
-    const queued = [...(await deliveriesOf(one.id)), ...(await deliveriesOf(two.id))];
-    expect(queued.every((d) => d.channel === "app" && d.status === "queued")).toBe(true);
-    expect(queued[0]?.deliverAfter?.toISOString()).toBe("2026-10-15T11:00:00.000Z");
+    expect(
+      await admin.userNotification.count({ where: { eventId: one.id } }),
+    ).toBe(0);
+    const queued = [
+      ...(await deliveriesOf(one.id)),
+      ...(await deliveriesOf(two.id)),
+    ];
+    expect(
+      queued.every((d) => d.channel === "app" && d.status === "queued"),
+    ).toBe(true);
+    expect(queued[0]?.deliverAfter?.toISOString()).toBe(
+      "2026-10-15T11:00:00.000Z",
+    );
 
     await asWorker((tx) => sendDigests(tx, { transport, fetch }));
     const digest = await admin.userNotification.findMany({
@@ -298,13 +331,21 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
       orderBy: { createdAt: "desc" },
     });
     expect(digest[0]?.data).toMatchObject({ count: "2" });
-    const done = [...(await deliveriesOf(one.id)), ...(await deliveriesOf(two.id))];
-    expect(done.every((d) => d.status === "sent" && d.provider === "bell")).toBe(true);
+    const done = [
+      ...(await deliveriesOf(one.id)),
+      ...(await deliveriesOf(two.id)),
+    ];
+    expect(
+      done.every((d) => d.status === "sent" && d.provider === "bell"),
+    ).toBe(true);
   });
 
   it("reminds and escalates an approval nobody answered", async () => {
     await setRules({
-      "events.access_requested": { escalate_after_hours: 4, escalate_to: ["owner"] },
+      "events.access_requested": {
+        escalate_after_hours: 4,
+        escalate_to: ["owner"],
+      },
     });
     const pending = await emit("events.access_requested", "pending", {
       status: "pending",
@@ -313,21 +354,27 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
     await asWorker((tx) => dispatchEvent(tx, pending.id, { transport, fetch }));
     sent.length = 0;
     // Two hours later: nothing; ten hours later: reminder and escalation.
-    const later = (hours: number) => () => new Date(Date.now() + hours * 3_600_000);
+    const later = (hours: number) => () =>
+      new Date(Date.now() + hours * 3_600_000);
     await asWorker((tx) => escalatePending(tx, { transport, now: later(2) }));
     expect(
       await admin.userNotification.count({
-        where: { eventId: pending.id, eventType: { startsWith: "events." } , NOT: { eventType: "events.access_requested" } },
+        where: {
+          eventId: pending.id,
+          eventType: { startsWith: "events." },
+          NOT: { eventType: "events.access_requested" },
+        },
       }),
     ).toBe(0);
     await asWorker((tx) => escalatePending(tx, { transport, now: later(10) }));
     await asWorker((tx) => escalatePending(tx, { transport, now: later(10) }));
     const notices = await admin.userNotification.findMany({
-      where: { eventId: pending.id, eventType: { in: ["events.reminder", "events.escalation"] } },
+      where: {
+        eventId: pending.id,
+        eventType: { in: ["events.reminder", "events.escalation"] },
+      },
     });
-    expect(
-      notices.map((n) => `${n.eventType}:${n.userId}`).sort(),
-    ).toEqual(
+    expect(notices.map((n) => `${n.eventType}:${n.userId}`).sort()).toEqual(
       [
         `events.escalation:${ownerS}`,
         `events.reminder:${adminS}`,
@@ -360,15 +407,21 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
         durationHours: 48,
       }),
     );
-    expect(grant).toMatchObject({ status: "pending", workspaceName: "Loja H2" });
+    expect(grant).toMatchObject({
+      status: "pending",
+      workspaceName: "Loja H2",
+    });
     const job = await admin.jobRun.findFirst({
-      where: { kind: "events.access-request", idempotencyKey: `access:${grant.id}` },
+      where: {
+        kind: "events.access-request",
+        idempotencyKey: `access:${grant.id}`,
+      },
     });
     expect(job).not.toBeNull();
     const eventId = await asWorker((tx) => emitAccessRequest(tx, grant.id));
-    const [requestEvent] = await admin.$queryRawUnsafe<{ status: string; data: Record<string, unknown> }[]>(
-      `select status, data from public.events where id = '${eventId}'`,
-    );
+    const [requestEvent] = await admin.$queryRawUnsafe<
+      { status: string; data: Record<string, unknown> }[]
+    >(`select status, data from public.events where id = '${eventId}'`);
     expect(requestEvent).toMatchObject({
       status: "pending",
       data: { requester: expect.any(String), reference: "CH-991", hours: 48 },
@@ -381,7 +434,11 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
     ).rejects.toMatchObject({ code: "forbidden" });
 
     await withContext(prisma, ctxS, (tx) =>
-      decideEventAccess(tx, ctxS, { grantId: grant.id, decision: "approve", hours: 24 }),
+      decideEventAccess(tx, ctxS, {
+        grantId: grant.id,
+        decision: "approve",
+        hours: 24,
+      }),
     );
     const [synced] = await admin.$queryRawUnsafe<{ status: string }[]>(
       `select status from public.events where id = '${eventId}'`,
@@ -390,11 +447,16 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
 
     await expect(
       withIdentityContext(prisma, PLATFORM_OWNER, (tx) =>
-        readEventDataByGrant(tx, requester, { eventId: target.id, ip: "203.0.113.5" }),
+        readEventDataByGrant(tx, requester, {
+          eventId: target.id,
+          ip: "203.0.113.5",
+        }),
       ),
     ).resolves.toMatchObject({ keyName: "Segredo do cliente" });
 
-    const trace = await withContext(prisma, ctxS, (tx) => eventTrace(tx, target.id));
+    const trace = await withContext(prisma, ctxS, (tx) =>
+      eventTrace(tx, target.id),
+    );
     expect(trace.viewer).toBe("customer");
     expect(trace.views).toEqual([
       expect.objectContaining({ requesterKind: "platform", decidedBy: ownerS }),
@@ -405,7 +467,9 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
     await admin.$executeRawUnsafe(
       `update public.event_access_grants set expires_at = now() - interval '1 minute' where id = '${grant.id}'`,
     );
-    await expect(asWorker((tx) => expireAccessGrants(tx))).resolves.toBeGreaterThanOrEqual(1);
+    await expect(
+      asWorker((tx) => expireAccessGrants(tx)),
+    ).resolves.toBeGreaterThanOrEqual(1);
     await expect(
       withIdentityContext(prisma, PLATFORM_OWNER, (tx) =>
         readEventDataByGrant(tx, requester, { eventId: target.id, ip: null }),
@@ -425,7 +489,9 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
         saveTemplateVersion(tx, actor, { ...input, body }),
       );
     const first = await save("{{marca}}: chave {{chave}} revogada.");
-    const second = await save("{{marca}}: a chave {{chave}} foi revogada em {{workspace}}.");
+    const second = await save(
+      "{{marca}}: a chave {{chave}} foi revogada em {{workspace}}.",
+    );
     expect(second).toBe(first + 1);
     await expect(save("{{marca}} {{senha}}")).rejects.toMatchObject({
       code: "invalid_input",
@@ -440,8 +506,10 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
     await withIdentityContext(prisma, PLATFORM_OWNER, (tx) =>
       restoreTemplateDefault(tx, actor, input),
     );
-    const afterRestore = await withIdentityContext(prisma, PLATFORM_OWNER, (tx) =>
-      templateVersions(tx, actor, input.eventType, input.locale),
+    const afterRestore = await withIdentityContext(
+      prisma,
+      PLATFORM_OWNER,
+      (tx) => templateVersions(tx, actor, input.eventType, input.locale),
     );
     expect(afterRestore.every((v) => !v.isCurrent)).toBe(true);
     expect(afterRestore).toHaveLength(2);

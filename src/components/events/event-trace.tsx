@@ -77,63 +77,73 @@ export async function EventTraceCards({
   return (
     <>
       {deliveries ? (
-      <Card variant="surface" className="px-4" data-testid="event-trace-deliveries">
-        <CardHeader className="px-0">
-          <CardTitle>{t("deliveries")}</CardTitle>
-          <CardDescription>{t("deliveriesHint")}</CardDescription>
-        </CardHeader>
-        <CardContent className="px-0">
-          {trace.deliveries.length === 0 ? (
-            <p className="text-12 text-text-secondary">{t("noDeliveries")}</p>
-          ) : (
-            <ItemGroup className="gap-2">
-              {trace.deliveries.map((delivery) => (
-                <Item
-                  key={`${delivery.channel}-${delivery.id}`}
-                  variant="inset"
-                  size="sm"
-                  data-testid="event-trace-delivery"
-                  data-channel={delivery.channel}
-                  data-status={delivery.status}
-                >
-                  <ItemContent>
-                    <ItemTitle>
-                      {t(`channels.${delivery.channel as "email"}`)}
-                    </ItemTitle>
-                    <ItemDescription>
-                      {[
-                        person(delivery.recipientUserId),
-                        delivery.holdReason
-                          ? t(`hold.${delivery.holdReason as "digest"}`, {
-                              date: delivery.deliverAfter
-                                ? when(delivery.deliverAfter)
-                                : "-",
-                            })
-                          : null,
-                        delivery.reason && !delivery.holdReason
-                          ? delivery.reason
-                          : null,
-                        when(delivery.updatedAt),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </ItemDescription>
-                  </ItemContent>
-                  <ItemActions>
-                    <Badge variant={DELIVERY_BADGE[delivery.status] ?? "neutral"}>
-                      {statusOf(delivery.status)}
-                    </Badge>
-                  </ItemActions>
-                </Item>
-              ))}
-            </ItemGroup>
-          )}
-        </CardContent>
-      </Card>
+        <Card
+          variant="surface"
+          className="px-4"
+          data-testid="event-trace-deliveries"
+        >
+          <CardHeader className="px-0">
+            <CardTitle>{t("deliveries")}</CardTitle>
+            <CardDescription>{t("deliveriesHint")}</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            {trace.deliveries.length === 0 ? (
+              <p className="text-12 text-text-secondary">{t("noDeliveries")}</p>
+            ) : (
+              <ItemGroup className="gap-2">
+                {trace.deliveries.map((delivery) => (
+                  <Item
+                    key={`${delivery.channel}-${delivery.id}`}
+                    variant="inset"
+                    size="sm"
+                    data-testid="event-trace-delivery"
+                    data-channel={delivery.channel}
+                    data-status={delivery.status}
+                  >
+                    <ItemContent>
+                      <ItemTitle>
+                        {t(`channels.${delivery.channel as "email"}`)}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {[
+                          person(delivery.recipientUserId),
+                          delivery.holdReason
+                            ? t(`hold.${delivery.holdReason as "digest"}`, {
+                                date: delivery.deliverAfter
+                                  ? when(delivery.deliverAfter)
+                                  : "-",
+                              })
+                            : null,
+                          delivery.reason && !delivery.holdReason
+                            ? delivery.reason
+                            : null,
+                          when(delivery.updatedAt),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <Badge
+                        variant={DELIVERY_BADGE[delivery.status] ?? "neutral"}
+                      >
+                        {statusOf(delivery.status)}
+                      </Badge>
+                    </ItemActions>
+                  </Item>
+                ))}
+              </ItemGroup>
+            )}
+          </CardContent>
+        </Card>
       ) : null}
 
       {trace.viewer !== "partner_situation" ? (
-        <Card variant="surface" className="px-4" data-testid="event-trace-audit">
+        <Card
+          variant="surface"
+          className="px-4"
+          data-testid="event-trace-audit"
+        >
           <CardHeader className="px-0">
             <CardTitle>{t("audit")}</CardTitle>
           </CardHeader>
@@ -147,13 +157,21 @@ export async function EventTraceCards({
                     <ItemContent>
                       <ItemTitle className="font-mono">{row.action}</ItemTitle>
                       <ItemDescription>
-                        {[person(row.actorUserId), row.origin, when(row.occurredAt)]
+                        {[
+                          person(row.actorUserId),
+                          row.origin,
+                          when(row.occurredAt),
+                        ]
                           .filter(Boolean)
                           .join(" · ")}
                       </ItemDescription>
                     </ItemContent>
                     <ItemActions>
-                      <Badge variant={row.result === "success" ? "success" : "danger"}>
+                      <Badge
+                        variant={
+                          row.result === "success" ? "success" : "danger"
+                        }
+                      >
                         {row.result}
                       </Badge>
                     </ItemActions>
@@ -166,7 +184,11 @@ export async function EventTraceCards({
       ) : null}
 
       {trace.viewer !== "partner_situation" ? (
-        <Card variant="surface" className="px-4" data-testid="event-trace-views">
+        <Card
+          variant="surface"
+          className="px-4"
+          data-testid="event-trace-views"
+        >
           <CardHeader className="px-0">
             <CardTitle>{t("views")}</CardTitle>
           </CardHeader>

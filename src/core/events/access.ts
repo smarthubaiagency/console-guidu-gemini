@@ -77,7 +77,11 @@ function denied(): AppError {
   });
 }
 
-function invalid(key: string, message: string, values?: Record<string, number>) {
+function invalid(
+  key: string,
+  message: string,
+  values?: Record<string, number>,
+) {
   return new AppError({
     code: "invalid_input",
     safeMessage: message,
@@ -218,7 +222,9 @@ export async function requestEventAccess(
     origin: "admin",
     metadata: {
       requesterKind: requester.kind,
-      ...(requester.kind === "partner" ? { partnerId: requester.partnerId } : {}),
+      ...(requester.kind === "partner"
+        ? { partnerId: requester.partnerId }
+        : {}),
       workspaceId: input.workspaceId,
       count: eventIds.length,
       durationHours: hours,
@@ -278,7 +284,11 @@ export type AccessDecision = "approve" | "deny";
 export async function decideEventAccess(
   tx: ContextTransaction,
   ctx: RequestContext,
-  input: Readonly<{ grantId: string; decision: AccessDecision; hours?: number }>,
+  input: Readonly<{
+    grantId: string;
+    decision: AccessDecision;
+    hours?: number;
+  }>,
 ): Promise<AccessGrant> {
   if (!z.uuid().safeParse(input.grantId).success) throw notFoundGrant();
   const [current] = await tx.$queryRaw<GrantRow[]>`

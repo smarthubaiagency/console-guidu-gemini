@@ -40,7 +40,11 @@ export default async function WorkspaceNotificationSettingsPage({
     workspaceSlug,
   );
   const data = await withContext(prisma, ctx, (tx) =>
-    notificationSettingsView(tx, { level: "workspace", userId: identity.userId, ctx }),
+    notificationSettingsView(tx, {
+      level: "workspace",
+      userId: identity.userId,
+      ctx,
+    }),
   );
   const t = await getTranslations("eventRules.settings");
   return (

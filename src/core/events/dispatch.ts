@@ -43,7 +43,12 @@ import {
   nextDigestAt,
   quietWindowEnd,
 } from "./rules";
-import { defaultWhatsappText, fillTags, hubNoticeText, tagValues } from "./texts";
+import {
+  defaultWhatsappText,
+  fillTags,
+  hubNoticeText,
+  tagValues,
+} from "./texts";
 import { deliverPersonWhatsApp, deliverWhatsApp } from "./whatsapp";
 
 /**
@@ -309,7 +314,8 @@ async function queueDigest(
   if (!args.event.partner_id) return 0;
   const who = args.channel === "email" ? args.email : `user:${args.userId}`;
   if (!who) return 0;
-  const key = `${args.event.idempotency_key}:digest:${args.channel}:${who}`.slice(0, 200);
+  const key =
+    `${args.event.idempotency_key}:digest:${args.channel}:${who}`.slice(0, 200);
   const inserted = await tx.$executeRaw`
     insert into public.notification_deliveries
       (partner_id, event_type, idempotency_key, related_id, event_id, channel,
@@ -437,7 +443,12 @@ export async function dispatchEvent(
               until: digestAt,
             });
           }
-        } else if (wantsEmail && recipient.email && sender && event.partner_id) {
+        } else if (
+          wantsEmail &&
+          recipient.email &&
+          sender &&
+          event.partner_id
+        ) {
           const language = await languageOf(recipient.email);
           const generic = content
             ? null

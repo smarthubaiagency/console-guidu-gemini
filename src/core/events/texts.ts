@@ -1,7 +1,11 @@
 import type { Messages } from "@/core/i18n/locales";
 import { notificationTranslator } from "@/core/notifications/templates";
 
-import { EVENT_CATALOG, type EventDefinition, eventDefinition } from "./catalog";
+import {
+  EVENT_CATALOG,
+  type EventDefinition,
+  eventDefinition,
+} from "./catalog";
 import { availableChannels } from "./rules";
 
 /**
@@ -54,7 +58,9 @@ const str = (value: unknown): string =>
 function day(value: unknown, locale: string): string {
   const raw = str(value);
   if (!raw) return "";
-  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T12:00:00Z` : raw);
+  const date = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T12:00:00Z` : raw,
+  );
   if (Number.isNaN(date.getTime())) return "";
   try {
     return new Intl.DateTimeFormat(locale, {
@@ -124,9 +130,14 @@ export function unknownTags(type: string, body: string): string[] {
 export const WHATSAPP_TEXT_MAX = 1000;
 
 /** Fills the tags; a value never brings a new tag in. */
-export function fillTags(body: string, values: Readonly<Record<string, string>>): string {
+export function fillTags(
+  body: string,
+  values: Readonly<Record<string, string>>,
+): string {
   return body
-    .replace(TAG, (_, name: string) => (values[name] ?? "").replace(/[{}]/g, ""))
+    .replace(TAG, (_, name: string) =>
+      (values[name] ?? "").replace(/[{}]/g, ""),
+    )
     .trim();
 }
 

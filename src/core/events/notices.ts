@@ -162,7 +162,9 @@ export async function sendDigests(
   const languageOf = notificationLanguages(tx);
   let sent = 0;
   for (const group of groups) {
-    const first = group.event_ids[0] ? await eventRow(tx, group.event_ids[0]) : null;
+    const first = group.event_ids[0]
+      ? await eventRow(tx, group.event_ids[0])
+      : null;
     const definition = first ? eventDefinition(first.type) : null;
     const sender =
       first && definition ? await brandOf(tx, first, definition) : null;
@@ -192,7 +194,11 @@ export async function sendDigests(
         event: {
           type: "events.notice",
           recipientEmail: group.recipient_email,
-          idempotencyKey: `digest:email:${group.recipient_email}:${group.partner_id}:${stamp}`.slice(0, 200),
+          idempotencyKey:
+            `digest:email:${group.recipient_email}:${group.partner_id}:${stamp}`.slice(
+              0,
+              200,
+            ),
           data: {
             eventType: "events.digest",
             subject: t("digest.subject", {
@@ -200,7 +206,9 @@ export async function sendDigests(
             } as unknown as Record<string, string>),
             paragraphs: [
               t("digest.intro"),
-              ...group.subjects.filter(Boolean).map((subject) => `• ${subject}`),
+              ...group.subjects
+                .filter(Boolean)
+                .map((subject) => `• ${subject}`),
             ],
             actionLabel: t("hub.action"),
             url: new URL("/app", appConfig.url).toString(),
@@ -218,7 +226,11 @@ export async function sendDigests(
         idempotencyKey: `digest:app:${group.recipient_user_id}:${group.partner_id}:${stamp}`,
       });
       provider = "bell";
-    } else if (group.channel === "whatsapp" && group.recipient_user_id && first) {
+    } else if (
+      group.channel === "whatsapp" &&
+      group.recipient_user_id &&
+      first
+    ) {
       const [phone] = await tx.$queryRaw<{ phone: string | null }[]>`
         select private.delivery_whatsapp(${group.ids[0]}::uuid) as phone
       `;
@@ -318,7 +330,8 @@ export async function escalatePending(
     if (stages.length === 0) continue;
     const sender = await brandOf(tx, event, definition);
     const link =
-      typeof event.data.linkUrl === "string" && /^https?:\/\//.test(event.data.linkUrl)
+      typeof event.data.linkUrl === "string" &&
+      /^https?:\/\//.test(event.data.linkUrl)
         ? event.data.linkUrl
         : null;
     for (const { stage, roles } of stages) {
@@ -336,11 +349,16 @@ export async function escalatePending(
           told += await postNotice(tx, {
             userId: person.user_id,
             notice: {
-              eventType: stage === "reminder" ? "events.reminder" : "events.escalation",
+              eventType:
+                stage === "reminder" ? "events.reminder" : "events.escalation",
               data: values,
               linkUrl: link,
             },
-            idempotencyKey: `${event.idempotency_key}:${stage}:user:${person.user_id}`.slice(0, 200),
+            idempotencyKey:
+              `${event.idempotency_key}:${stage}:user:${person.user_id}`.slice(
+                0,
+                200,
+              ),
             eventId: event.id,
           });
         }
@@ -358,7 +376,11 @@ export async function escalatePending(
             event: {
               type: "events.notice",
               recipientEmail: person.email,
-              idempotencyKey: `${event.idempotency_key}:${stage}:${person.email}`.slice(0, 200),
+              idempotencyKey:
+                `${event.idempotency_key}:${stage}:${person.email}`.slice(
+                  0,
+                  200,
+                ),
               data: {
                 eventType: event.type,
                 subject: t(`hub.${stage}.subject`, values),
@@ -376,7 +398,9 @@ export async function escalatePending(
 }
 
 /** 4. Grants past their term and requests without an answer expire. */
-export async function expireAccessGrants(tx: ContextTransaction): Promise<number> {
+export async function expireAccessGrants(
+  tx: ContextTransaction,
+): Promise<number> {
   const expired = await tx.$queryRaw<{ id: string }[]>`
     update public.event_access_grants
     set status = 'expired'

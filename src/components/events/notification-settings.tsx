@@ -30,11 +30,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { EVENT_CHANNELS } from "@/core/events/catalog";
-import {
-  availableChannels,
-  presetOf,
-  presetsFor,
-} from "@/core/events/rules";
+import { availableChannels, presetOf, presetsFor } from "@/core/events/rules";
 import type { NotificationSettingsView } from "@/core/events/rules-service";
 import {
   textKeyOf,
@@ -461,12 +457,20 @@ export async function WhatsappTemplatesCard({
       description={t("description")}
       testId="whatsapp-templates"
     >
-      <form method="get" action={base} className="flex flex-wrap items-end gap-3">
+      <form
+        method="get"
+        action={base}
+        className="flex flex-wrap items-end gap-3"
+      >
         <div className="space-y-1">
           <Label htmlFor="template-type" className="text-12">
             {t("event")}
           </Label>
-          <NativeSelect id="template-type" name="template" defaultValue={eventType}>
+          <NativeSelect
+            id="template-type"
+            name="template"
+            defaultValue={eventType}
+          >
             {WHATSAPP_TEXT_TYPES.map((type) => (
               <NativeSelectOption key={type} value={type}>
                 {tn(textKeyOf(type))}
@@ -478,7 +482,11 @@ export async function WhatsappTemplatesCard({
           <Label htmlFor="template-locale" className="text-12">
             {t("language")}
           </Label>
-          <NativeSelect id="template-locale" name="locale" defaultValue={locale}>
+          <NativeSelect
+            id="template-locale"
+            name="locale"
+            defaultValue={locale}
+          >
             {TEMPLATE_LOCALES.map((code) => (
               <NativeSelectOption key={code} value={code}>
                 {code}
@@ -521,7 +529,11 @@ export async function WhatsappTemplatesCard({
             />
           </ActionForm>
           {current.source === "own" ? (
-            <ActionForm action={action} submitLabel={t("restore")} tone="neutral">
+            <ActionForm
+              action={action}
+              submitLabel={t("restore")}
+              tone="neutral"
+            >
               <input type="hidden" name="eventType" value={eventType} />
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="intent" value="restore" />

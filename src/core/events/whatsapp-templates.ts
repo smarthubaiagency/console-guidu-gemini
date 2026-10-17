@@ -60,7 +60,11 @@ function denied(): AppError {
   });
 }
 
-function invalid(key: string, message: string, values?: Record<string, string>) {
+function invalid(
+  key: string,
+  message: string,
+  values?: Record<string, string>,
+) {
   return new AppError({
     code: "invalid_input",
     safeMessage: message,
@@ -82,7 +86,10 @@ export function canEditTemplates(actor: TemplatesActor): boolean {
   return (
     actor.partnerRole !== null &&
     isPartnerRole(actor.partnerRole) &&
-    hasPartnerRolePermission(actor.partnerRole, Permissions.PARTNER_SETTINGS_MANAGE)
+    hasPartnerRolePermission(
+      actor.partnerRole,
+      Permissions.PARTNER_SETTINGS_MANAGE,
+    )
   );
 }
 
@@ -140,7 +147,8 @@ export async function effectiveTemplate(
     select scope, body from private.whatsapp_template(
       ${actor.level === "partner" ? actor.partnerId : null}::uuid, ${eventType}, ${locale})
   `;
-  if (row && row.scope === actor.level) return { body: row.body, source: "own" };
+  if (row && row.scope === actor.level)
+    return { body: row.body, source: "own" };
   if (row) return { body: row.body, source: "platform" };
   return {
     body: defaultWhatsappText(eventType, locale ?? SOURCE_LOCALE, messages),

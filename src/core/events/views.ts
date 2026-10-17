@@ -286,7 +286,8 @@ export async function setEventStatus(
       select private.set_event_status(${eventId}::uuid, ${status}) as changed
     `;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) throw notAllowed();
+    if (error instanceof Prisma.PrismaClientKnownRequestError)
+      throw notAllowed();
     throw error;
   }
   if (!rows[0]?.changed) throw notAllowed();

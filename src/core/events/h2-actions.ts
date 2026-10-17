@@ -7,7 +7,10 @@ import { z } from "zod";
 import { getPlatformAdminMember } from "@/core/admin/platform";
 import { requireMfa, requireUser } from "@/core/auth/identity";
 import { actionFailure } from "@/core/i18n/errors";
-import { removeMyWhatsapp, saveMyWhatsapp } from "@/core/notifications/whatsapp-number";
+import {
+  removeMyWhatsapp,
+  saveMyWhatsapp,
+} from "@/core/notifications/whatsapp-number";
 import type { PartnerActionState } from "@/core/partners/actions";
 import { partnerActor } from "@/core/partners/actors";
 import type { PlatformAdminRoleKey } from "@/core/permissions/matrix";
@@ -16,7 +19,10 @@ import { requestClientIp } from "@/core/security/ip-gate";
 import type { SettingLevel } from "@/core/settings/catalog";
 import type { SettingsActor } from "@/core/settings/service";
 import { prisma } from "@/lib/prisma/client";
-import { type ContextTransaction, withContext } from "@/lib/prisma/with-context";
+import {
+  type ContextTransaction,
+  withContext,
+} from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError } from "@/shared/errors";
 
@@ -58,7 +64,10 @@ import {
 
 type State = PartnerActionState & { data?: string };
 
-async function ok(key: string, values?: Record<string, string>): Promise<State> {
+async function ok(
+  key: string,
+  values?: Record<string, string>,
+): Promise<State> {
   const t = await getTranslations("eventRules.messages");
   return { success: true, message: t(key, values) };
 }
@@ -124,7 +133,12 @@ export async function setWorkspaceEventStatusAction(
     const { identity, ctx } = await workspaceCtx(input.workspaceSlug);
     const parsed = statusInput.parse(input);
     await withContext(prisma, ctx, (tx) =>
-      setEventStatus(tx, { userId: identity.userId, ctx }, parsed.eventId, parsed.status),
+      setEventStatus(
+        tx,
+        { userId: identity.userId, ctx },
+        parsed.eventId,
+        parsed.status,
+      ),
     );
     revalidatePath(`/app/${input.workspaceSlug}/events`);
     return ok(`status.${parsed.status}`);
@@ -134,16 +148,29 @@ export async function setWorkspaceEventStatusAction(
 }
 
 export async function setConsoleEventStatusAction(
-  input: Readonly<{ level: "platform" | "partner"; eventId: string; status: string }>,
+  input: Readonly<{
+    level: "platform" | "partner";
+    eventId: string;
+    status: string;
+  }>,
 ): Promise<State> {
   try {
     const requester =
-      input.level === "platform" ? await platformRequester() : await partnerRequester();
+      input.level === "platform"
+        ? await platformRequester()
+        : await partnerRequester();
     const parsed = statusInput.parse(input);
     await withRequester(requester, (tx) =>
-      setEventStatus(tx, { userId: requester.userId }, parsed.eventId, parsed.status),
+      setEventStatus(
+        tx,
+        { userId: requester.userId },
+        parsed.eventId,
+        parsed.status,
+      ),
     );
-    revalidatePath(input.level === "platform" ? "/platform/events" : "/admin/events");
+    revalidatePath(
+      input.level === "platform" ? "/platform/events" : "/admin/events",
+    );
     return ok(`status.${parsed.status}`);
   } catch (err) {
     return actionFailure(err);
@@ -175,7 +202,9 @@ export async function requestEventAccessAction(
   try {
     const parsed = requestInput.parse(input);
     const requester =
-      parsed.level === "platform" ? await platformRequester() : await partnerRequester();
+      parsed.level === "platform"
+        ? await platformRequester()
+        : await partnerRequester();
     await withRequester(requester, async (tx) => {
       let target: { workspaceId: string; organizationId: string } | null = null;
       if (requester.kind === "platform") {
@@ -194,7 +223,10 @@ export async function requestEventAccessAction(
         const rows = await listPartnerEvents(tx, requester.partnerId, {});
         const row = rows.find((r) => r.id === parsed.eventId);
         if (row?.workspaceId && row.organizationId) {
-          target = { workspaceId: row.workspaceId, organizationId: row.organizationId };
+          target = {
+            workspaceId: row.workspaceId,
+            organizationId: row.organizationId,
+          };
         }
       }
       if (!target) {
@@ -212,7 +244,9 @@ export async function requestEventAccessAction(
         ...(parsed.hours ? { durationHours: parsed.hours } : {}),
       });
     });
-    revalidatePath(parsed.level === "platform" ? "/platform/events" : "/admin/events");
+    revalidatePath(
+      parsed.level === "platform" ? "/platform/events" : "/admin/events",
+    );
     return ok("accessRequested");
   } catch (err) {
     return actionFailure(err);
@@ -225,7 +259,9 @@ export async function readEventDataByGrantAction(
 ): Promise<State> {
   try {
     const requester =
-      input.level === "platform" ? await platformRequester() : await partnerRequester();
+      input.level === "platform"
+        ? await platformRequester()
+        : await partnerRequester();
     const ip = await requestClientIp();
     const data = await withRequester(requester, (tx) =>
       readEventDataByGrant(tx, requester, { eventId: input.eventId, ip }),
@@ -243,11 +279,15 @@ export async function withdrawEventAccessAction(
 ): Promise<State> {
   try {
     const requester =
-      input.level === "platform" ? await platformRequester() : await partnerRequester();
+      input.level === "platform"
+        ? await platformRequester()
+        : await partnerRequester();
     await withRequester(requester, (tx) =>
       withdrawEventAccess(tx, requester.userId, input.grantId),
     );
-    revalidatePath(input.level === "platform" ? "/platform/events" : "/admin/events");
+    revalidatePath(
+      input.level === "platform" ? "/platform/events" : "/admin/events",
+    );
     return ok("accessWithdrawn");
   } catch (err) {
     return actionFailure(err);
@@ -280,7 +320,9 @@ export async function decideEventAccessAction(
       }),
     );
     revalidatePath(`/app/${input.workspaceSlug}/events`);
-    return ok(parsed.decision === "approve" ? "accessApproved" : "accessDenied");
+    return ok(
+      parsed.decision === "approve" ? "accessApproved" : "accessDenied",
+    );
   } catch (err) {
     return actionFailure(err);
   }
@@ -291,7 +333,9 @@ export async function revokeEventAccessAction(
 ): Promise<State> {
   try {
     const { ctx } = await workspaceCtx(input.workspaceSlug);
-    await withContext(prisma, ctx, (tx) => revokeEventAccess(tx, ctx, input.grantId));
+    await withContext(prisma, ctx, (tx) =>
+      revokeEventAccess(tx, ctx, input.grantId),
+    );
     revalidatePath(`/app/${input.workspaceSlug}/events`);
     return ok("accessRevoked");
   } catch (err) {
@@ -332,10 +376,14 @@ async function settingsActorFor(
         partnerRole: actor.partnerRole,
       },
       run: (fn) =>
-        withIdentityContext(prisma, actor.userId, fn, { partnerId: actor.partnerId }),
+        withIdentityContext(prisma, actor.userId, fn, {
+          partnerId: actor.partnerId,
+        }),
     };
   }
-  const { identity, ctx } = await workspaceCtx(String(formData.get("workspaceSlug") ?? ""));
+  const { identity, ctx } = await workspaceCtx(
+    String(formData.get("workspaceSlug") ?? ""),
+  );
   return {
     actor: { level: "workspace", userId: identity.userId, ctx },
     run: (fn) => withContext(prisma, ctx, fn),
@@ -343,7 +391,9 @@ async function settingsActorFor(
 }
 
 /** The rules of the form: `rule:<type>:<field>` for each type in `rules:types`. */
-export async function readRulesForm(formData: FormData): Promise<Record<string, Rule>> {
+export async function readRulesForm(
+  formData: FormData,
+): Promise<Record<string, Rule>> {
   const types = String(formData.get("rules:types") ?? "")
     .split(",")
     .filter((type) => (RULE_EVENT_TYPES as readonly string[]).includes(type));
@@ -360,7 +410,9 @@ export async function readRulesForm(formData: FormData): Promise<Record<string, 
     const escalateTo = RECIPIENT_PRESETS[escalatePreset];
     const rule: Rule = {
       enabled: field("enabled") === "on",
-      channels: EVENT_CHANNELS.filter((channel) => field(`channel:${channel}`) === "on"),
+      channels: EVENT_CHANNELS.filter(
+        (channel) => field(`channel:${channel}`) === "on",
+      ),
       recipients:
         recipients && recipients !== "route" ? [...recipients] : "route",
       delivery: (RULE_DELIVERIES as readonly string[]).includes(delivery)
@@ -368,7 +420,9 @@ export async function readRulesForm(formData: FormData): Promise<Record<string, 
         : "immediate",
       ...(definition.approval
         ? {
-            escalate_after_hours: hoursRaw ? Number.parseInt(hoursRaw, 10) || null : null,
+            escalate_after_hours: hoursRaw
+              ? Number.parseInt(hoursRaw, 10) || null
+              : null,
             escalate_to:
               escalateTo && escalateTo !== "route" ? [...escalateTo] : [],
           }
@@ -431,19 +485,34 @@ function scheduleAction(level: SettingLevel) {
   };
 }
 
-export async function savePlatformNotificationRulesAction(prev: State, formData: FormData) {
+export async function savePlatformNotificationRulesAction(
+  prev: State,
+  formData: FormData,
+) {
   return rulesAction("platform")(prev, formData);
 }
-export async function savePartnerNotificationRulesAction(prev: State, formData: FormData) {
+export async function savePartnerNotificationRulesAction(
+  prev: State,
+  formData: FormData,
+) {
   return rulesAction("partner")(prev, formData);
 }
-export async function saveWorkspaceNotificationRulesAction(prev: State, formData: FormData) {
+export async function saveWorkspaceNotificationRulesAction(
+  prev: State,
+  formData: FormData,
+) {
   return rulesAction("workspace")(prev, formData);
 }
-export async function savePlatformNotificationScheduleAction(prev: State, formData: FormData) {
+export async function savePlatformNotificationScheduleAction(
+  prev: State,
+  formData: FormData,
+) {
   return scheduleAction("platform")(prev, formData);
 }
-export async function savePartnerNotificationScheduleAction(prev: State, formData: FormData) {
+export async function savePartnerNotificationScheduleAction(
+  prev: State,
+  formData: FormData,
+) {
   return scheduleAction("partner")(prev, formData);
 }
 export async function saveWorkspaceNotificationScheduleAction(
@@ -489,7 +558,9 @@ function templateAction(level: "platform" | "partner") {
       const eventType = String(formData.get("eventType") ?? "");
       const locale = String(formData.get("locale") ?? "");
       if (formData.get("intent") === "restore") {
-        await run((tx) => restoreTemplateDefault(tx, actor, { eventType, locale }));
+        await run((tx) =>
+          restoreTemplateDefault(tx, actor, { eventType, locale }),
+        );
         revalidatePath("/", "layout");
         return ok("templateRestored");
       }
@@ -508,10 +579,16 @@ function templateAction(level: "platform" | "partner") {
   };
 }
 
-export async function savePlatformWhatsappTemplateAction(prev: State, formData: FormData) {
+export async function savePlatformWhatsappTemplateAction(
+  prev: State,
+  formData: FormData,
+) {
   return templateAction("platform")(prev, formData);
 }
-export async function savePartnerWhatsappTemplateAction(prev: State, formData: FormData) {
+export async function savePartnerWhatsappTemplateAction(
+  prev: State,
+  formData: FormData,
+) {
   return templateAction("partner")(prev, formData);
 }
 
@@ -519,7 +596,10 @@ export async function savePartnerWhatsappTemplateAction(prev: State, formData: F
 // Minha conta › Meu WhatsApp
 // ---------------------------------------------------------------------------
 
-export async function saveMyWhatsappAction(_prev: State, formData: FormData): Promise<State> {
+export async function saveMyWhatsappAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
   try {
     const identity = await requireUser();
     if (formData.get("intent") === "remove") {

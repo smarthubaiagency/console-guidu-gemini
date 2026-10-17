@@ -10,7 +10,11 @@ import {
   type SettingsView,
 } from "@/core/settings/service";
 
-import { EVENT_CATALOG, type EventDefinition, eventDefinition } from "./catalog";
+import {
+  EVENT_CATALOG,
+  type EventDefinition,
+  eventDefinition,
+} from "./catalog";
 import {
   checkRuleForLevel,
   type EffectiveRule,
@@ -64,7 +68,9 @@ export async function notificationSettingsView(
   const inheritedRules = view.inherited.values["notifications.rules"] as Rules;
   const effectiveRules = view.effective.values["notifications.rules"] as Rules;
   const ownRules = (view.own["notifications.rules"]?.value ?? {}) as Rules;
-  const keyLocked = Boolean(view.inherited.detail["notifications.rules"].lockedBy);
+  const keyLocked = Boolean(
+    view.inherited.detail["notifications.rules"].lockedBy,
+  );
   const lines = EVENT_CATALOG.filter(
     (definition) =>
       RULE_EVENT_TYPES.includes(definition.type) &&
@@ -103,7 +109,8 @@ function ruleError(error: RuleError): AppError {
 }
 
 const same = (a: EffectiveRule, b: EffectiveRule) =>
-  JSON.stringify({ ...a, locked: false }) === JSON.stringify({ ...b, locked: false });
+  JSON.stringify({ ...a, locked: false }) ===
+  JSON.stringify({ ...b, locked: false });
 
 /**
  * Saves the rules of the types in the form. A rule equal to what the level

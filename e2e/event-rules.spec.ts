@@ -72,7 +72,9 @@ test("a rule is saved, access to an event is asked, approved, used and traced", 
     page.getByRole("heading", { name: "Notificações", level: 1 }),
   ).toBeVisible();
   await page.waitForLoadState("networkidle");
-  const delivery = page.getByTestId("rule-google_business.analyses_done-delivery");
+  const delivery = page.getByTestId(
+    "rule-google_business.analyses_done-delivery",
+  );
   await delivery.selectOption("digest");
   await expect(delivery).toHaveValue("digest");
   await page.getByRole("button", { name: "Salvar regras" }).click();
@@ -100,7 +102,9 @@ test("a rule is saved, access to an event is asked, approved, used and traced", 
   await expect(access.getByTestId("access-reason-error")).toHaveText(
     "Escreva o motivo (de 10 a 500 caracteres).",
   );
-  await access.getByLabel("Motivo").fill("Chamado 4521 do cliente sobre o aviso");
+  await access
+    .getByLabel("Motivo")
+    .fill("Chamado 4521 do cliente sobre o aviso");
   await access.getByRole("button", { name: "Enviar pedido" }).click();
   await expect(statusBanner(page)).toContainText(
     "Pedido de acesso enviado ao cliente.",
@@ -112,9 +116,13 @@ test("a rule is saved, access to an event is asked, approved, used and traced", 
 
   // 3. The owner approves in Eventos.
   await page.goto(`/app/${wsSlug}/events`);
-  await expect(page.getByRole("heading", { name: "Eventos", level: 1 })).toBeVisible();
   await expect(
-    page.getByTestId("events-row").filter({ hasText: "Pedido de acesso aos dados" }),
+    page.getByRole("heading", { name: "Eventos", level: 1 }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByTestId("events-row")
+      .filter({ hasText: "Pedido de acesso aos dados" }),
   ).toHaveCount(1);
   const grant = page.getByTestId("access-grant");
   await expect(grant).toHaveCount(1);
@@ -145,7 +153,9 @@ test("a rule is saved, access to an event is asked, approved, used and traced", 
   await page.goto(`/app/${wsSlug}/events?event=${eventId}`);
   const own = page.getByTestId("event-panel");
   await expect(own).toBeVisible();
-  await expect(own.getByTestId("event-panel-data")).toContainText("Loja Regras E2E");
+  await expect(own.getByTestId("event-panel-data")).toContainText(
+    "Loja Regras E2E",
+  );
   await expect(own.getByTestId("event-trace-deliveries")).toBeVisible();
   await expect(own.getByTestId("event-data-view")).toHaveText(
     /Dados vistos por suporte da plataforma, autorizado por Você/,

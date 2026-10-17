@@ -687,7 +687,9 @@ async function EventPanel({
             <CardDescription>
               {accessGrant
                 ? ta("granted", {
-                    date: accessGrant.expiresAt ? when(accessGrant.expiresAt) : "-",
+                    date: accessGrant.expiresAt
+                      ? when(accessGrant.expiresAt)
+                      : "-",
                   })
                 : accessPending
                   ? ta("waiting")

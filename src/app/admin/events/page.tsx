@@ -59,7 +59,8 @@ type SearchParams = Partial<
 export default async function PartnerEventsPage({
   searchParams,
 }: Readonly<{ searchParams: Promise<SearchParams> }>) {
-  const { identity, partner, membership } = await requirePartnerConsolePage(BASE);
+  const { identity, partner, membership } =
+    await requirePartnerConsolePage(BASE);
   const grants = partnerGrants(membership.role);
   if (!grants("partner.events.read")) return <ModuleNotice variant="denied" />;
   const query = await searchParams;
@@ -76,13 +77,17 @@ export default async function PartnerEventsPage({
     async (tx) => {
       const all = await listPartnerEvents(tx, partner.partnerId, {});
       const rows = await listPartnerEvents(tx, partner.partnerId, filters);
-      const detail = editKey ? (all.find((row) => row.id === editKey) ?? null) : null;
+      const detail = editKey
+        ? (all.find((row) => row.id === editKey) ?? null)
+        : null;
       return {
         all,
         rows,
         detail,
         trace: detail ? await eventTrace(tx, detail.id) : null,
-        accessGrants: detail ? await myAccessGrants(tx, identity.userId, detail.id) : [],
+        accessGrants: detail
+          ? await myAccessGrants(tx, identity.userId, detail.id)
+          : [],
       };
     },
     { partnerId: partner.partnerId },
@@ -100,7 +105,10 @@ export default async function PartnerEventsPage({
   const customers = new Map<string, string>();
   for (const row of data.all) {
     if (row.organizationId) {
-      customers.set(row.organizationId, row.organizationName ?? row.organizationId);
+      customers.set(
+        row.organizationId,
+        row.organizationName ?? row.organizationId,
+      );
     }
   }
   const search = new URLSearchParams(
@@ -134,7 +142,10 @@ export default async function PartnerEventsPage({
   const panel = detail ? (
     <div className="flex flex-col gap-4 p-4 md:p-6" data-testid="event-panel">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-18 text-text font-semibold" data-testid="event-panel-type">
+        <h2
+          className="text-18 text-text font-semibold"
+          data-testid="event-panel-type"
+        >
           {tn(textKeyOf(detail.type))}
         </h2>
         <Badge variant={SEVERITY_BADGE[detail.severity] ?? "neutral"}>
@@ -163,7 +174,11 @@ export default async function PartnerEventsPage({
             items={[
               {
                 label: t("eventId"),
-                value: <span className="text-12 font-mono break-all">{detail.id}</span>,
+                value: (
+                  <span className="text-12 font-mono break-all">
+                    {detail.id}
+                  </span>
+                ),
               },
               { label: t("type"), value: detail.type },
               { label: t("customer"), value: detail.organizationName ?? "-" },
@@ -171,7 +186,9 @@ export default async function PartnerEventsPage({
               {
                 label: t("seal"),
                 value: (
-                  <span className="text-12 font-mono break-all">{detail.contentHash}</span>
+                  <span className="text-12 font-mono break-all">
+                    {detail.contentHash}
+                  </span>
                 ),
               },
             ]}
@@ -192,7 +209,9 @@ export default async function PartnerEventsPage({
             <CardTitle>{ta("title")}</CardTitle>
             <CardDescription>
               {grant
-                ? ta("granted", { date: grant.expiresAt ? when(grant.expiresAt) : "-" })
+                ? ta("granted", {
+                    date: grant.expiresAt ? when(grant.expiresAt) : "-",
+                  })
                 : pending
                   ? ta("waiting")
                   : ta("description")}
@@ -200,7 +219,11 @@ export default async function PartnerEventsPage({
           </CardHeader>
           <CardContent className="px-0">
             {grant ? (
-              <GrantDataViewer level="partner" eventId={detail.id} grantId={grant.id} />
+              <GrantDataViewer
+                level="partner"
+                eventId={detail.id}
+                grantId={grant.id}
+              />
             ) : pending ? null : (
               <AccessRequestForm level="partner" eventId={detail.id} />
             )}

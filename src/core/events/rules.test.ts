@@ -51,7 +51,9 @@ describe("notice rules in the cascade (H2)", () => {
       escalateAfterHours: null,
     });
     // Security events are recorded but their notice starts off.
-    expect(effectiveRule(def("security.api_key_created"), {}).enabled).toBe(false);
+    expect(effectiveRule(def("security.api_key_created"), {}).enabled).toBe(
+      false,
+    );
   });
 
   it("merges the levels type by type and honours a lock above", () => {
@@ -69,21 +71,23 @@ describe("notice rules in the cascade (H2)", () => {
       }),
     ];
     const { rules } = notificationSettingsOf(rows);
-    expect(effectiveRule(def("google_business.analyses_done"), rules).delivery).toBe(
-      "digest",
+    expect(
+      effectiveRule(def("google_business.analyses_done"), rules).delivery,
+    ).toBe("digest");
+    expect(effectiveRule(def("security.api_key_created"), rules)).toMatchObject(
+      {
+        enabled: true,
+        channels: ["app", "whatsapp"],
+        recipients: ["owner"],
+      },
     );
-    expect(effectiveRule(def("security.api_key_created"), rules)).toMatchObject({
-      enabled: true,
-      channels: ["app", "whatsapp"],
-      recipients: ["owner"],
-    });
     // Seen from the workspace (inheritance) the partner's choice applies.
     const above = resolveSettings(rows, { above: "workspace" }).values[
       "notifications.rules"
     ];
-    expect(effectiveRule(def("security.api_key_created"), above).recipients).toBe(
-      "route",
-    );
+    expect(
+      effectiveRule(def("security.api_key_created"), above).recipients,
+    ).toBe("route");
   });
 
   it("never turns an essential event off and keeps its channels", () => {
@@ -93,9 +97,9 @@ describe("notice rules in the cascade (H2)", () => {
     });
     expect(rule.enabled).toBe(true);
     expect(rule.channels).toEqual(["app", "email", "whatsapp"]);
-    expect(() => checkRuleForLevel(backup, { enabled: false }, "platform")).toThrow(
-      RuleError,
-    );
+    expect(() =>
+      checkRuleForLevel(backup, { enabled: false }, "platform"),
+    ).toThrow(RuleError);
   });
 
   it("refuses what a level or a type does not accept", () => {
@@ -103,7 +107,11 @@ describe("notice rules in the cascade (H2)", () => {
       checkRuleForLevel(def("platform.events.chain_broken"), {}, "partner"),
     ).toThrow(/level/);
     expect(() =>
-      checkRuleForLevel(def("security.api_key_created"), { locked: true }, "workspace"),
+      checkRuleForLevel(
+        def("security.api_key_created"),
+        { locked: true },
+        "workspace",
+      ),
     ).toThrow(/lock/);
     expect(() =>
       checkRuleForLevel(
@@ -139,11 +147,18 @@ describe("notice rules in the cascade (H2)", () => {
     const access = def("events.access_requested");
     expect(
       effectiveRule(access, {
-        "events.access_requested": { escalate_after_hours: 6, escalate_to: ["owner"] },
+        "events.access_requested": {
+          escalate_after_hours: 6,
+          escalate_to: ["owner"],
+        },
       }),
     ).toMatchObject({ escalateAfterHours: 6, escalateTo: ["owner"] });
-    expect(mergeRules({ a: { locked: true, enabled: false } }, { a: { enabled: true } }))
-      .toEqual({ a: { locked: true, enabled: false } });
+    expect(
+      mergeRules(
+        { a: { locked: true, enabled: false } },
+        { a: { enabled: true } },
+      ),
+    ).toEqual({ a: { locked: true, enabled: false } });
     expect(presetOf(["admin", "owner"])).toBe("owner_admin");
     expect(presetOf(["viewer"])).toBe("custom");
   });
@@ -165,14 +180,14 @@ describe("quiet window and digest in the workspace's time zone (H2)", () => {
     expect(quietWindowEnd(day, DEFAULT_QUIET_HOURS, SP)).toEqual(day);
     // Saturday 22:00 → Monday 08:00 (Sunday is quiet all day).
     const saturday = new Date("2026-10-18T01:00:00Z");
-    expect(quietWindowEnd(saturday, DEFAULT_QUIET_HOURS, SP).toISOString()).toBe(
-      "2026-10-19T11:00:00.000Z",
-    );
+    expect(
+      quietWindowEnd(saturday, DEFAULT_QUIET_HOURS, SP).toISOString(),
+    ).toBe("2026-10-19T11:00:00.000Z");
     // The same instant is daytime in Tokyo.
     expect(inQuietHours(night, DEFAULT_QUIET_HOURS, "Asia/Tokyo")).toBe(false);
-    expect(inQuietHours(night, { ...DEFAULT_QUIET_HOURS, enabled: false }, SP)).toBe(
-      false,
-    );
+    expect(
+      inQuietHours(night, { ...DEFAULT_QUIET_HOURS, enabled: false }, SP),
+    ).toBe(false);
   });
 
   it("puts an event in the next digest at the configured time", () => {
@@ -184,7 +199,11 @@ describe("quiet window and digest in the workspace's time zone (H2)", () => {
     ).toBe("2026-10-15T11:00:00.000Z");
     // Lisbon in summer time (UTC+1).
     expect(
-      nextDigestAt(new Date("2026-07-01T06:00:00Z"), "08:00", "Europe/Lisbon").toISOString(),
+      nextDigestAt(
+        new Date("2026-07-01T06:00:00Z"),
+        "08:00",
+        "Europe/Lisbon",
+      ).toISOString(),
     ).toBe("2026-07-01T07:00:00.000Z");
   });
 
@@ -207,9 +226,9 @@ describe("WhatsApp texts (H2)", () => {
   });
 
   it("validates and fills the tags of the event only", () => {
-    expect(unknownTags("security.api_key_created", "{{chave}} {{senha}}")).toEqual([
-      "senha",
-    ]);
+    expect(
+      unknownTags("security.api_key_created", "{{chave}} {{senha}}"),
+    ).toEqual(["senha"]);
     const values = tagValues(
       "events.access_requested",
       { requester: "GUIDU", reason: "Chamado", reference: "R-1", hours: 48 },
@@ -217,7 +236,10 @@ describe("WhatsApp texts (H2)", () => {
       "pt-BR",
     );
     expect(
-      fillTags("{{marca}}: {{solicitante}} {{horas}}h {{ desconhecida }}", values),
+      fillTags(
+        "{{marca}}: {{solicitante}} {{horas}}h {{ desconhecida }}",
+        values,
+      ),
     ).toBe("Marca: GUIDU 48h");
     // A value never brings a tag in.
     expect(fillTags("{{workspace}}", { workspace: "{{marca}}" })).toBe("marca");

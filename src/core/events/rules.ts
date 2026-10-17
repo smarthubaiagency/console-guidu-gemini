@@ -142,7 +142,9 @@ export function availableChannels(
 }
 
 /** Roles a rule may name for a type, by its level. */
-export function availableRoles(definition: EventDefinition): readonly RuleRole[] {
+export function availableRoles(
+  definition: EventDefinition,
+): readonly RuleRole[] {
   if (definition.route === "explicit" || definition.level === "platform") {
     return [];
   }
@@ -217,7 +219,10 @@ export function effectiveRule(
   };
 }
 
-export function effectiveRuleOf(type: string, rules: Rules): EffectiveRule | null {
+export function effectiveRuleOf(
+  type: string,
+  rules: Rules,
+): EffectiveRule | null {
   const definition = eventDefinition(type);
   return definition ? effectiveRule(definition, rules) : null;
 }

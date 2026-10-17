@@ -247,7 +247,9 @@ export function renderNotification(
           t,
           brand,
           data.paragraphs,
-          data.url ? { label: data.actionLabel, url: safeLink(data.url) } : null,
+          data.url
+            ? { label: data.actionLabel, url: safeLink(data.url) }
+            : null,
         ),
       };
     }

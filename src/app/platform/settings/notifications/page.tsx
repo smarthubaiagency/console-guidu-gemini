@@ -41,7 +41,9 @@ const BASE = "/platform/settings/notifications";
  */
 export default async function PlatformNotificationSettingsPage({
   searchParams,
-}: Readonly<{ searchParams: Promise<{ template?: string; locale?: string }> }>) {
+}: Readonly<{
+  searchParams: Promise<{ template?: string; locale?: string }>;
+}>) {
   const identity = await requirePlatformAdminPage(BASE);
   const admin = await getPlatformAdminMember(prisma, identity.userId);
   const platformRole = admin?.status === "active" ? admin.role : null;
@@ -49,7 +51,9 @@ export default async function PlatformNotificationSettingsPage({
   const eventType = WHATSAPP_TEXT_TYPES.includes(params.template ?? "")
     ? params.template!
     : WHATSAPP_TEXT_TYPES[0]!;
-  const locale = (TEMPLATE_LOCALES as readonly string[]).includes(params.locale ?? "")
+  const locale = (TEMPLATE_LOCALES as readonly string[]).includes(
+    params.locale ?? "",
+  )
     ? params.locale!
     : "pt-BR";
   const templatesActor: TemplatesActor = {
@@ -78,7 +82,10 @@ export default async function PlatformNotificationSettingsPage({
         description={t("description.platform")}
         icon={<BellRing className="h-5 w-5" />}
       />
-      <NotificationRulesCard data={data} action={savePlatformNotificationRulesAction} />
+      <NotificationRulesCard
+        data={data}
+        action={savePlatformNotificationRulesAction}
+      />
       <NotificationScheduleCard
         data={data}
         action={savePlatformNotificationScheduleAction}

@@ -40,13 +40,18 @@ const BASE = "/admin/settings/notifications";
  */
 export default async function PartnerNotificationSettingsPage({
   searchParams,
-}: Readonly<{ searchParams: Promise<{ template?: string; locale?: string }> }>) {
-  const { identity, partner, membership } = await requirePartnerConsolePage(BASE);
+}: Readonly<{
+  searchParams: Promise<{ template?: string; locale?: string }>;
+}>) {
+  const { identity, partner, membership } =
+    await requirePartnerConsolePage(BASE);
   const params = await searchParams;
   const eventType = WHATSAPP_TEXT_TYPES.includes(params.template ?? "")
     ? params.template!
     : WHATSAPP_TEXT_TYPES[0]!;
-  const locale = (TEMPLATE_LOCALES as readonly string[]).includes(params.locale ?? "")
+  const locale = (TEMPLATE_LOCALES as readonly string[]).includes(
+    params.locale ?? "",
+  )
     ? params.locale!
     : "pt-BR";
   const templatesActor: TemplatesActor = {
@@ -78,7 +83,10 @@ export default async function PartnerNotificationSettingsPage({
         description={t("description.partner")}
         icon={<BellRing className="h-5 w-5" />}
       />
-      <NotificationRulesCard data={data} action={savePartnerNotificationRulesAction} />
+      <NotificationRulesCard
+        data={data}
+        action={savePartnerNotificationRulesAction}
+      />
       <NotificationScheduleCard
         data={data}
         action={savePartnerNotificationScheduleAction}

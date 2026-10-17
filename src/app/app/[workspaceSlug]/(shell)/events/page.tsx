@@ -105,7 +105,11 @@ export default async function WorkspaceEventsPage({
       detail,
       trace: detail ? await eventTrace(tx, detail.id) : null,
       accessGrants: manage ? await workspaceAccessGrants(tx, ctx) : [],
-      members: await listWorkspaceMembers(tx, ctx.workspaceId, ctx.organizationId),
+      members: await listWorkspaceMembers(
+        tx,
+        ctx.workspaceId,
+        ctx.organizationId,
+      ),
     };
   });
   if (!data) return <ModuleNotice variant="denied" />;
@@ -151,7 +155,11 @@ export default async function WorkspaceEventsPage({
         description={t("description.workspace")}
       />
       {data.manage ? (
-        <Card variant="panel" className="px-4 sm:px-6" data-testid="access-requests">
+        <Card
+          variant="panel"
+          className="px-4 sm:px-6"
+          data-testid="access-requests"
+        >
           <CardHeader className="px-0">
             <CardTitle>{ta("requestsTitle")}</CardTitle>
             <CardDescription>{ta("requestsDescription")}</CardDescription>
@@ -177,7 +185,9 @@ export default async function WorkspaceEventsPage({
                               ? ta("platformSupport")
                               : (grant.requesterLabel ?? ta("partnerSupport")),
                         })}
-                        <Badge variant={STATUS_BADGE[grant.status] ?? "neutral"}>
+                        <Badge
+                          variant={STATUS_BADGE[grant.status] ?? "neutral"}
+                        >
                           {ta(`status.${grant.status}`)}
                         </Badge>
                       </ItemTitle>
@@ -218,7 +228,10 @@ export default async function WorkspaceEventsPage({
   const panel = detail ? (
     <div className="flex flex-col gap-4 p-4 md:p-6" data-testid="event-panel">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-18 text-text font-semibold" data-testid="event-panel-type">
+        <h2
+          className="text-18 text-text font-semibold"
+          data-testid="event-panel-type"
+        >
           {tn(textKeyOf(detail.type))}
         </h2>
         <Badge variant={SEVERITY_BADGE[detail.severity] ?? "neutral"}>
@@ -244,7 +257,11 @@ export default async function WorkspaceEventsPage({
             items={[
               {
                 label: t("eventId"),
-                value: <span className="text-12 font-mono break-all">{detail.id}</span>,
+                value: (
+                  <span className="text-12 font-mono break-all">
+                    {detail.id}
+                  </span>
+                ),
               },
               { label: t("type"), value: detail.type },
               { label: t("module"), value: detail.module },

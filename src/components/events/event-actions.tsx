@@ -194,7 +194,10 @@ export function AccessRequestForm({
         onChange={(e) => setReason(e.target.value)}
       />
       {errors.reason ? (
-        <p className="text-12 text-danger-text" data-testid="access-reason-error">
+        <p
+          className="text-12 text-danger-text"
+          data-testid="access-reason-error"
+        >
           {errors.reason}
         </p>
       ) : null}
@@ -258,7 +261,10 @@ export function GrantDataViewer({
           type="button"
           onClick={() =>
             startTransition(async () => {
-              const result = await readEventDataByGrantAction({ level, eventId });
+              const result = await readEventDataByGrantAction({
+                level,
+                eventId,
+              });
               if (announce(result, false)) setData(result.data ?? null);
             })
           }
@@ -326,7 +332,10 @@ export function AccessDecision({
   }
   if (status !== "pending") return null;
   return (
-    <div className="flex flex-wrap items-end gap-2" data-testid="access-decision">
+    <div
+      className="flex flex-wrap items-end gap-2"
+      data-testid="access-decision"
+    >
       <div className="space-y-1">
         <Label htmlFor={`grant-hours-${grantId}`} className="text-12">
           {t("duration")}

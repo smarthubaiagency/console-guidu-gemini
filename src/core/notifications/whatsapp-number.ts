@@ -27,7 +27,10 @@ export function normalizeE164(raw: string): string | null {
     digits = digits.slice(2);
   } else if (digits.length === 10 || digits.length === 11) {
     digits = `55${digits}`;
-  } else if (digits.startsWith("0") && (digits.length === 11 || digits.length === 12)) {
+  } else if (
+    digits.startsWith("0") &&
+    (digits.length === 11 || digits.length === 12)
+  ) {
     digits = `55${digits.slice(1)}`;
   }
   const phone = `+${digits}`;
@@ -64,7 +67,10 @@ export async function saveMyWhatsapp(
   const phone = normalizeE164(input.phone);
   if (!phone) throw invalid("phone", "Número de WhatsApp inválido.");
   if (!input.consent) {
-    throw invalid("consent", "Marque o aceite para receber avisos por WhatsApp.");
+    throw invalid(
+      "consent",
+      "Marque o aceite para receber avisos por WhatsApp.",
+    );
   }
   await tx.$executeRaw`
     insert into public.user_whatsapp_numbers (user_id, phone, consented_at)
