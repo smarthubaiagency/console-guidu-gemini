@@ -30,6 +30,11 @@ export const Permissions = {
   WORKSPACE_PROPOSALS_REVIEW: "workspace.proposals.review",
   /** Stores and properties of the business (UCP Location, F5a). */
   WORKSPACE_LOCATIONS_MANAGE: "workspace.locations.manage",
+  /**
+   * Approve or deny a request for the managed mode and go back to
+   * `padrao` (GB1c, ADR 0020): the company owner only.
+   */
+  WORKSPACE_SERVICE_MODE_MANAGE: "workspace.service_mode.manage",
   /** Eventos of the workspace and their trace (H2): every member reads. */
   WORKSPACE_EVENTS_READ: "workspace.events.read",
   /**
@@ -123,6 +128,10 @@ export const Permissions = {
   // Plataforma › Auditoria (AUD1): the whole audit trail; the database
   // narrows billing to the billing actions.
   PLATFORM_AUDIT_READ: "platform.audit.read",
+  // Ask a direct customer (partner zero) for the managed mode (GB1c).
+  PLATFORM_SERVICE_MODE_REQUEST: "platform.service_mode.request",
+  // Move a direct customer back to `padrao`, with a reason (AJ1).
+  PLATFORM_SERVICE_MODE_REVERT: "platform.service_mode.revert",
 
   // Partner console (/admin), granted only by partner roles (D-PA-02).
   PARTNER_READ: "partner.read",
@@ -150,6 +159,11 @@ export const Permissions = {
   // Operate the Google fichas of the companies the partner manages (GB1a,
   // ADR 0020): onboarding, automation page and the GMN agent.
   PARTNER_GOOGLE_BUSINESS_MANAGE: "partner.google_business.manage",
+  // Ask a customer for the managed mode and cancel the request (GB1c).
+  PARTNER_SERVICE_MODE_REQUEST: "partner.service_mode.request",
+  // Move a managed customer back to `padrao` (end of contract), with a
+  // reason (AJ1).
+  PARTNER_SERVICE_MODE_REVERT: "partner.service_mode.revert",
   // Eventos of the customers (H2): situation of all, data where the
   // partner manages; resolve or dismiss what it manages.
   PARTNER_EVENTS_READ: "partner.events.read",

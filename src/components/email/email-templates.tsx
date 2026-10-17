@@ -117,6 +117,19 @@ function sampleEvent(
           credentialsUrl: link("/app/exemplo/settings/credentials"),
         },
       };
+    // Not editable (GB1c); kept for the exhaustive switch.
+    case "service_mode.change_requested":
+      return {
+        ...base,
+        type,
+        data: {
+          organizationName: sample.organization,
+          partnerName: sample.partner,
+          expiresAt: new Date(now + 7 * day),
+          approveUrl: link("/service-mode/exemplo"),
+          settingsUrl: link("/app/exemplo/settings/service-mode"),
+        },
+      };
   }
 }
 

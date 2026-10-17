@@ -129,13 +129,26 @@ export function EventStatusButtons({
 
 const HOURS = [24, 48, 72, 96, 120, 144, 168] as const;
 
+/**
+ * The access request: reason, reference and term (24 h to 7 days, 72 h by
+ * default) for one event (the drawer) or several events of the same
+ * workspace (the list's selection, AJ1, `startOpen` inside its dialog).
+ */
 export function AccessRequestForm({
   level,
-  eventId,
-}: Readonly<{ level: "platform" | "partner"; eventId: string }>) {
+  eventIds,
+  startOpen = false,
+  onDone,
+}: Readonly<{
+  level: "platform" | "partner";
+  eventIds: readonly string[];
+  startOpen?: boolean;
+  /** After a sent request, or a cancel when it started open. */
+  onDone?: (sent: boolean) => void;
+}>) {
   const t = useTranslations("eventRules.access");
   const announce = useAnnounce();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [reason, setReason] = useState("");
   const [reference, setReference] = useState("");
   const [hours, setHours] = useState("72");
@@ -143,6 +156,13 @@ export function AccessRequestForm({
     {},
   );
   const [pending, startTransition] = useTransition();
+  const idBase = `${eventIds[0] ?? "events"}-${eventIds.length}`;
+  const many = eventIds.length > 1;
+
+  function close(sent: boolean) {
+    if (!startOpen) setOpen(false);
+    onDone?.(sent);
+  }
 
   function submit() {
     const next: { reason?: string; reference?: string } = {};
@@ -157,15 +177,15 @@ export function AccessRequestForm({
     startTransition(async () => {
       const result = await requestEventAccessAction({
         level,
-        eventId,
+        eventIds: [...eventIds],
         reason: reason.trim(),
         reference: reference.trim(),
         hours: Number(hours),
       });
       if (announce(result)) {
-        setOpen(false);
         setReason("");
         setReference("");
+        close(true);
       }
     });
   }
@@ -182,12 +202,14 @@ export function AccessRequestForm({
   }
   return (
     <div className="flex flex-col gap-2" data-testid="access-request">
-      <p className="text-12 text-text-secondary">{t("requestHint")}</p>
-      <Label htmlFor={`access-reason-${eventId}`} className="text-12">
+      <p className="text-12 text-text-secondary">
+        {many ? t("requestManyHint") : t("requestHint")}
+      </p>
+      <Label htmlFor={`access-reason-${idBase}`} className="text-12">
         {t("reason")}
       </Label>
       <Textarea
-        id={`access-reason-${eventId}`}
+        id={`access-reason-${idBase}`}
         value={reason}
         maxLength={500}
         aria-invalid={errors.reason ? true : undefined}
@@ -201,11 +223,11 @@ export function AccessRequestForm({
           {errors.reason}
         </p>
       ) : null}
-      <Label htmlFor={`access-reference-${eventId}`} className="text-12">
+      <Label htmlFor={`access-reference-${idBase}`} className="text-12">
         {t("reference")}
       </Label>
       <Input
-        id={`access-reference-${eventId}`}
+        id={`access-reference-${idBase}`}
         value={reference}
         maxLength={120}
         aria-invalid={errors.reference ? true : undefined}
@@ -214,11 +236,11 @@ export function AccessRequestForm({
       {errors.reference ? (
         <p className="text-12 text-danger-text">{errors.reference}</p>
       ) : null}
-      <Label htmlFor={`access-hours-${eventId}`} className="text-12">
+      <Label htmlFor={`access-hours-${idBase}`} className="text-12">
         {t("duration")}
       </Label>
       <NativeSelect
-        id={`access-hours-${eventId}`}
+        id={`access-hours-${idBase}`}
         value={hours}
         onChange={(e) => setHours(e.target.value)}
       >
@@ -233,7 +255,7 @@ export function AccessRequestForm({
           <Send />
           {t("send")}
         </Button>
-        <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+        <Button type="button" variant="outline" onClick={() => close(false)}>
           {t("cancel")}
         </Button>
       </div>

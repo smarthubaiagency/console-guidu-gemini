@@ -1,5 +1,5 @@
 -- ============================================================================
--- Migration: 20261212090000_in4b_inbox_context.sql
+-- Migration: 20261214090000_in4b_inbox_context.sql
 -- Module: IN4b — context, labels and notices of the Inbox
 --         (docs/modules/inbox/plano-in4b-in6.md)
 --

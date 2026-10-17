@@ -20,6 +20,10 @@ language sql as $$
   insert into public.partners (id, slug, name) values
     ('b0000000-0000-4000-8000-000000000001', 'agencia-b', 'Agência B'),
     ('b0000000-0000-4000-8000-000000000002', 'agencia-c', 'Agência C');
+  -- The management clause seeded for new partners (GB1c) stays out.
+  delete from public.partner_legal_document_translations t
+  using public.partner_legal_documents d
+  where d.id = t.document_id and d.kind = 'management';
   insert into public.partner_members (partner_id, user_id, email, role) values
     ('b0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000004', 'owner@b.test', 'partner_owner'),
     ('b0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000005', 'fin@b.test', 'partner_finance'),

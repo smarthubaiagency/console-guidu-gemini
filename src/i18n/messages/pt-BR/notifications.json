@@ -41,6 +41,14 @@
     "body": "Este é um e-mail de teste enviado pelas configurações de e-mail de {brand}. Se você recebeu, o envio está funcionando.",
     "action": "Abrir configurações de e-mail"
   },
+  "serviceModeRequest": {
+    "subject": "{partner} pede para gerenciar {organization}",
+    "body": "{partner} pediu para passar {organization} para o modo gerenciado. Só o owner da empresa pode aprovar.",
+    "scope": "No modo gerenciado, a equipe de quem gerencia passa a ver e operar o workspace inteiro: agentes de IA (GUIDS), campanhas, avaliações, CRM, conversas e configurações. A chave de IA da empresa continua só sua.",
+    "back": "Você pode voltar para o modo padrão a qualquer momento, em Configurações › Modo de serviço.",
+    "expires": "O link é de uso único e vale até {date}.",
+    "action": "Ver o pedido e decidir"
+  },
   "names": {
     "billing_subscription_past_due": "Assinatura em atraso",
     "billing_subscription_suspended": "Assinatura suspensa",
@@ -60,6 +68,8 @@
     "workspace_deletion_reminder": "Lembrete da exclusão de workspace",
     "workspace_deletion_canceled": "Exclusão de workspace cancelada",
     "workspace_deletion_completed": "Workspace excluído",
+    "service_mode_reverted_by_partner": "Gerenciamento encerrado pelo parceiro",
+    "security_ip_blocked": "Acesso recusado pela lista de IPs",
     "inbox_conversation_new": "Conversa nova no Inbox",
     "inbox_conversation_assigned": "Conversa atribuída a você",
     "inbox_conversation_unanswered": "Conversa sem resposta"
@@ -76,6 +86,7 @@
     "security_api_key_revoked": "{marca}: a chave de API {chave} foi revogada em {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: a exigência de verificação em duas etapas foi retirada em {workspace}. {link}",
     "digital_profile_lead_submitted": "{marca}: chegou um contato novo pelo perfil digital de {workspace}. {link}",
+    "security_ip_blocked": "{marca}: o endereço {ip} foi recusado em {area} pela lista de IPs. {link}",
     "inbox_conversation_new": "{marca}: conversa nova de {contato} no Inbox de {workspace}. {link}",
     "inbox_conversation_assigned": "{marca}: a conversa com {contato} foi atribuída a você. {link}",
     "inbox_conversation_unanswered": "{marca}: {contato} está sem resposta há 15 minutos. {link}"
@@ -137,6 +148,14 @@
     "escalation": {
       "subject": "Sem resposta: {event}",
       "body": "Este aviso espera uma decisão há {hours} horas e foi encaminhado a você."
+    },
+    "service_mode_reverted_by_partner": {
+      "subject": "{parceiro} encerrou o gerenciamento de {empresa}",
+      "body": "{empresa} voltou para o modo padrão e o acesso da equipe de {parceiro} terminou. Motivo: {motivo}"
+    },
+    "security_ip_blocked": {
+      "subject": "Acesso recusado em {area}",
+      "body": "O endereço {ip} tentou entrar em {area} e foi recusado pela lista de IPs permitidos."
     },
     "inbox_conversation_new": {
       "subject": "Conversa nova: {contato}",

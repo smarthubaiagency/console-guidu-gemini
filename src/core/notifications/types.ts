@@ -32,6 +32,18 @@ export type AgentKeyNoticeData = Readonly<{
   credentialsUrl: string;
 }>;
 
+/** Request to move the company to the managed mode (GB1c), to its owner. */
+export type ServiceModeRequestData = Readonly<{
+  organizationName: string;
+  /** Who manages: the partner, or GUIDU for its direct customers. */
+  partnerName: string;
+  expiresAt: Date;
+  /** The single-use link (never stored: built by the dispatch). */
+  approveUrl: string;
+  /** Configurações › Modo de serviço, for the bell. */
+  settingsUrl: string;
+}>;
+
 /** Notice to the owners and admins about a workspace's deletion (WS1). */
 export type WorkspaceDeletionNoticeData = Readonly<{
   workspaceName: string;
@@ -73,6 +85,10 @@ export type NotificationEvent = EventBase &
     | Readonly<{
         type: "ai.agent.key_paused";
         data: AgentKeyNoticeData;
+      }>
+    | Readonly<{
+        type: "service_mode.change_requested";
+        data: ServiceModeRequestData;
       }>
     | Readonly<{
         type: WorkspaceDeletionNoticeType;

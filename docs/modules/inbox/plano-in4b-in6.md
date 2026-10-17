@@ -2,7 +2,7 @@
 
 - **Data:** 17/10/2026. Base: `main` com IN3, WS1, IN4a ([janela-inbox.md](janela-inbox.md)), H1 e H2 (Central de Eventos, regras de aviso).
 - **Estado:** aprovado em 17/10/2026 com todas as sugestões da seção 5; IN4b em [contexto-inbox.md](contexto-inbox.md), IN6 em construção.
-- **Migrations reservadas:** IN4b `20261212090000_in4b_inbox_context`, IN6 `20261213090000_in6_guids_in_room`. A `20261211090000` já está com a GB1c (PR aberto).
+- **Migrations reservadas:** IN4b `20261214090000_in4b_inbox_context`, IN6 `20261215090000_in6_guids_in_room`, depois da `20261213090000` da AJ1 (que tomou o número antes reservado à IN6). A `20261211090000` é da GB1c.
 
 ## 1. O que você vai ver no fim
 

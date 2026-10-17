@@ -117,7 +117,7 @@ Os GUIDS atendem pela camada de canais do núcleo, com o Chatwoot via Agent Bot 
 
 ## 6. Gestão pelo parceiro no `/admin`
 
-**[Decidido]** O parceiro edita a **configuração** dos GUIDS dos seus clientes pelo `/admin`, sem concessão de suporte. **Conversas, leads, contatos e a base de conhecimento do cliente continuam exigindo a concessão temporária** aprovada pelo cliente (ADR 0012, revisão de 12/10/2026).
+**[Decidido]** O parceiro edita a **configuração** dos GUIDS dos seus clientes pelo `/admin`, sem concessão de suporte. **Conversas, leads, contatos e a base de conhecimento do cliente continuam exigindo a concessão temporária** aprovada pelo cliente (ADR 0012, revisão de 12/10/2026). **Exceção [Decidido, GB1c]:** na empresa em modo gerenciado (ADR 0020), a equipe do parceiro que gerencia lê e opera conversas, leads, contatos e a base de conhecimento sem concessão; a chave de IA do cliente continua fora.
 
 - Permissão de parceiro nova: `partner.ai_agents.manage` (editar o Assistente, os modelos do parceiro e a configuração dos GUIDS dos clientes) e `partner.ai_agents.read` (ver).
 - A RLS das tabelas de configuração aceita o membro de um parceiro com essa permissão quando o workspace pertence ao parceiro (`organizations.partner_id` da empresa do workspace). Só nas tabelas de configuração; as de conversa, lead e base não mudam.
@@ -220,7 +220,7 @@ Toda tabela tem RLS forçado ([ADR 0001](../../adr/0001-prisma-como-caminho-unic
 - **Configuração em JSON tipado por aba**, com um schema Zod por versão: clonar um modelo copia o documento inteiro, então um campo novo nunca fica para trás (no legado, um clone sem `tools` ou sem score ficava mudo, sem erro). Ficam como colunas só o que é filtrado ou tem restrição.
 - **Unicidade:** um `assistant` por parceiro (índice único parcial).
 - **Tabelas do protótipo** (`agent_configs`, `agent_sessions`, `agent_messages`): não tinham dados de produção e saíram na A2a, junto com o código do protótipo **[Decidido em 13/10/2026]**.
-- **Conversas:** as do GUIDS são do workspace e exigem `ai_agents.conversations.read`; as do Assistente são de quem conversa com ele. O parceiro não lê nenhuma das duas sem concessão (A2a).
+- **Conversas:** as do GUIDS são do workspace e exigem `ai_agents.conversations.read`; as do Assistente são de quem conversa com ele. O parceiro não lê nenhuma das duas sem concessão (A2a), exceto as dos GUIDS de uma empresa que ele gerencia (ADR 0020, GB1c).
 
 ## 13. Telas
 

@@ -1,7 +1,8 @@
 {
   "kinds": {
     "terms": "Términos de uso",
-    "privacy": "Política de privacidad"
+    "privacy": "Política de privacidad",
+    "management": "Cláusula de gestión"
   },
   "document": {
     "metadataTitle": "Documentos legales",

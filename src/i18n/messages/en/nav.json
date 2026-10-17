@@ -108,6 +108,7 @@
     "platform_billing_gateway": "Gateway",
     "platform_settings_analytics": "Analytics",
     "partner_settings_analytics": "Analytics",
+    "core_serviceMode": "Service mode",
     "core_events": "Events",
     "core_notifications": "Notifications",
     "platform_settings_notifications": "Notifications",

@@ -7,6 +7,7 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { Pool } from "pg";
 
 import { computeSeal } from "../../src/core/events/seal";
+import { FAKE_RESEND_KEY } from "./fake-resend";
 import { EXTERNAL_POSTGRES, RIG } from "./rig";
 
 /**
@@ -96,6 +97,11 @@ export type TestDatabase = Readonly<{
   maintenanceOff: () => Promise<void>;
   /** A sealed event of the Event Hub in a workspace, with one delivery (H1). */
   seedEvent: (params: SeedEventParams) => Promise<{ id: string }>;
+  /** A CRM contact in a workspace, as its owner would add it (GB1c). */
+  seedCrmContact: (params: {
+    workspaceSlug: string;
+    name: string;
+  }) => Promise<{ id: string }>;
   close: () => Promise<void>;
 }>;
 
@@ -389,6 +395,20 @@ export async function startTestDatabase(
       }
       return { partnerId };
     },
+    seedCrmContact: async (params) => {
+      const result = await pool.query<{ id: string }>(
+        `insert into public.crm_contacts (organization_id, workspace_id, name, created_by)
+         select w.organization_id, w.id, $2,
+                (select m.user_id from public.workspace_members m
+                 where m.workspace_id = w.id and m.role = 'owner' order by m.created_at limit 1)
+         from public.workspaces w where w.slug = $1
+         returning id`,
+        [params.workspaceSlug, params.name],
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error(`Workspace not found: ${params.workspaceSlug}`);
+      return { id: row.id };
+    },
     seedEvent: async (params) => {
       const ws = await pool.query<{
         id: string;
@@ -537,6 +557,11 @@ export async function startTestDatabase(
             // Agent GMN (GB1b): never the real maps provider or AI.
             MAPS_INTELLIGENCE_PROVIDER: "fake",
             GB_SUGGESTIONS_PROVIDER: "fake",
+            // E-mails of the dispatch (GB1c: the link of the service mode)
+            // go to the Resend double, as the web's do.
+            RESEND_API_KEY: FAKE_RESEND_KEY,
+            RESEND_API_BASE: `http://127.0.0.1:${RIG.resendPort}`,
+            EMAIL_FROM_ADDRESS: "avisos@guidu.test",
           },
           // Kept in memory and printed only when jobs stay stuck, so a CI
           // failure shows what the worker said.
