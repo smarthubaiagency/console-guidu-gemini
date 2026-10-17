@@ -104,6 +104,26 @@
     "workspaceDeletionCompleted": {
       "title": "Workspace {workspace} excluído",
       "body": "O workspace e os seus dados foram apagados de vez."
+    },
+    "proposalRequested": {
+      "title": "Proposta esperando decisão",
+      "body": "{operation} em {workspace}. Abra para aprovar ou rejeitar."
+    },
+    "proposalRejected": {
+      "title": "Proposta rejeitada",
+      "body": "{operation} em {workspace} foi rejeitada."
+    },
+    "proposalExecuted": {
+      "title": "Proposta executada",
+      "body": "{operation} em {workspace} foi executada."
+    },
+    "proposalFailed": {
+      "title": "Proposta não executada",
+      "body": "{operation} em {workspace} não foi executada."
+    },
+    "proposalExpired": {
+      "title": "Proposta vencida",
+      "body": "{operation} venceu sem decisão."
     }
   },
   "preferences": {

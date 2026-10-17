@@ -629,9 +629,10 @@ create policy execution_proposals_partner_update on public.execution_proposals
   );
 
 -- The hub's job closes the proposals past their validity.
+-- (`expired` too: the update returns the rows it closed.)
 create policy execution_proposals_worker_expiry_select on public.execution_proposals
   for select to app_worker
-  using (status = 'pending' and expires_at <= now());
+  using (status in ('pending', 'expired') and expires_at <= now());
 
 create policy execution_proposals_worker_expire on public.execution_proposals
   for update to app_worker

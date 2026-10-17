@@ -67,7 +67,13 @@
     "workspace_deletion_scheduled": "Workspace deletion scheduled",
     "workspace_deletion_reminder": "Workspace deletion reminder",
     "workspace_deletion_canceled": "Workspace deletion canceled",
-    "workspace_deletion_completed": "Workspace deleted"
+    "workspace_deletion_completed": "Workspace deleted",
+    "proposals_requested": "Proposal awaiting decision",
+    "proposals_approved": "Proposal approved",
+    "proposals_rejected": "Proposal rejected",
+    "proposals_executed": "Proposal executed",
+    "proposals_failed": "Proposal not executed",
+    "proposals_expired": "Proposal expired"
   },
   "whatsapp": {
     "generic": "{marca}: you have a new notice in {workspace}. {link}",
@@ -80,7 +86,9 @@
     "security_api_key_created": "{marca}: an API key ({chave}) was created in {workspace}. {link}",
     "security_api_key_revoked": "{marca}: the API key {chave} was revoked in {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: the two-step verification requirement was removed in {workspace}. {link}",
-    "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}"
+    "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}",
+    "proposals_requested": "{marca}: a proposal awaits your decision in {workspace}: {operacao}. Expires on {validade}. Decide at {link}",
+    "proposals_failed": "{marca}: the proposal {operacao} in {workspace} was not executed. {link}"
   },
   "hub": {
     "action": "Open in the dashboard",
@@ -139,6 +147,26 @@
     "escalation": {
       "subject": "No answer: {event}",
       "body": "This notice has been waiting for a decision for {hours} hours and was forwarded to you."
+    },
+    "proposals_requested": {
+      "subject": "Proposal awaiting decision in {workspace}",
+      "body": "{operacao}. Reason: {motivo}. Expires on {validade}. Sign in to approve or reject it."
+    },
+    "proposals_rejected": {
+      "subject": "Proposal rejected in {workspace}",
+      "body": "The proposal {operacao} was rejected."
+    },
+    "proposals_executed": {
+      "subject": "Proposal executed in {workspace}",
+      "body": "The proposal {operacao} was executed."
+    },
+    "proposals_failed": {
+      "subject": "Proposal not executed in {workspace}",
+      "body": "The proposal {operacao} was approved but not executed."
+    },
+    "proposals_expired": {
+      "subject": "Proposal expired in {workspace}",
+      "body": "The proposal {operacao} expired without a decision."
     }
   },
   "digest": {

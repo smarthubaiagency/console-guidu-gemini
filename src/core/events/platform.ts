@@ -114,6 +114,9 @@ export type PlatformEventRow = Readonly<{
   integrity: string | null;
   deliveries: number;
   failedDeliveries: number;
+  /** The event that caused it and its level in the chain of causes (H4). */
+  causedByEventId: string | null;
+  depth: number;
 }>;
 
 type RawRow = Readonly<{
@@ -145,6 +148,8 @@ type RawRow = Readonly<{
   integrity: string | null;
   deliveries: number;
   failed_deliveries: number;
+  caused_by_event_id: string | null;
+  depth: number | null;
 }>;
 
 function toRow(row: RawRow): PlatformEventRow {
@@ -177,6 +182,8 @@ function toRow(row: RawRow): PlatformEventRow {
     integrity: row.integrity,
     deliveries: Number(row.deliveries),
     failedDeliveries: Number(row.failed_deliveries),
+    causedByEventId: row.caused_by_event_id ?? null,
+    depth: Number(row.depth ?? 0),
   };
 }
 
@@ -388,6 +395,7 @@ export async function checkPresentedData(
       prev_hash: detail.prevHash,
       content_hash: detail.contentHash,
       key_version: detail.keyVersion,
+      caused_by_event_id: detail.causedByEventId,
     },
     presented,
     sealKeys(),

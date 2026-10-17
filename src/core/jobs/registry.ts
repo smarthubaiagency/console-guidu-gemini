@@ -4,6 +4,7 @@ import { guidTurnJob } from "@/core/ai/turn/guid";
 import { billingJobs, billingSchedules } from "@/core/billing/automation";
 import { channelDispatchJob } from "@/core/channels/registry";
 import { eventsDispatchJob } from "@/core/events/dispatch";
+import { eventsSubscriberJob } from "@/core/events/handoffs";
 import {
   accessRequestJob,
   noticesTickJob,
@@ -42,9 +43,12 @@ const DEFINITIONS = [
   // H2: quiet window, digest, escalation and grant expiry; access requests.
   noticesTickJob,
   accessRequestJob,
+  // H4: hand-off of an event to each of its subscribers.
+  eventsSubscriberJob,
   translateTextsJob,
   translateDocumentJob,
   workspaceExportJob,
+  // Runs queued before H4 only; approvals now go through the hub.
   proposalExecuteJob,
   guidTurnJob,
   keyWatchJob,

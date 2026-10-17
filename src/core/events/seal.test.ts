@@ -120,3 +120,49 @@ describe("event seal (H1)", () => {
     expect(chainKeyOf({ workspaceId: null, partnerId: null })).toBe("platform");
   });
 });
+
+describe("event seal with a cause (H4)", () => {
+  it("keeps the canonical text and the seals made before H4", () => {
+    // The exact text an event without a cause had in H1: the field is
+    // absent, not null, so every older seal still verifies.
+    const before = createHmac("sha256", KEY)
+      .update(
+        canonicalJson({
+          id: material.id,
+          type: material.type,
+          partner_id: material.partnerId,
+          organization_id: material.organizationId,
+          workspace_id: material.workspaceId,
+          subject_type: material.subjectType,
+          subject_id: material.subjectId,
+          created_by: material.createdBy,
+          occurred_at: material.occurredAt.toISOString(),
+          data: material.data,
+          prev_hash: material.prevHash,
+        }),
+      )
+      .digest("hex");
+    expect(computeSeal(material, KEY)).toBe(before);
+    expect(computeSeal({ ...material, causedBy: null }, KEY)).toBe(before);
+    const keys = new Map([["k1", KEY]]);
+    expect(checkSeal({ ...material, causedBy: null }, before, "k1", keys)).toBe(
+      "ok",
+    );
+  });
+
+  it("seals the cause when there is one", () => {
+    const caused = {
+      ...material,
+      causedBy: "33333333-3333-4333-8333-333333333333",
+    };
+    expect(sealedText(caused)).toContain(
+      '"caused_by":"33333333-3333-4333-8333-333333333333"',
+    );
+    const seal = computeSeal(caused, KEY);
+    expect(seal).not.toBe(computeSeal(material, KEY));
+    const keys = new Map([["k1", KEY]]);
+    expect(checkSeal(caused, seal, "k1", keys)).toBe("ok");
+    // Removing the cause breaks the seal.
+    expect(checkSeal(material, seal, "k1", keys)).toBe("mismatch");
+  });
+});

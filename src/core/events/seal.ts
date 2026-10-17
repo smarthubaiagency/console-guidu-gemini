@@ -12,6 +12,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * removed or reordered event breaks the next seal and not only a column
  * anyone with database access could rewrite.
  *
+ * H4: the cause (`caused_by_event_id`) is sealed too when the event has
+ * one; an event without a cause has the same canonical text as before.
+ *
  * Dependency-free (only `node:crypto`), so the e2e rig seeds sealed events
  * with the same code.
  */
@@ -28,6 +31,11 @@ export type SealMaterial = Readonly<{
   occurredAt: Date;
   data: unknown;
   prevHash: string | null;
+  /**
+   * The event that caused this one (H4). Sealed only when there is one,
+   * so the seals made before H4 (no cause) keep their canonical text.
+   */
+  causedBy?: string | null;
 }>;
 
 export type SealKey = Readonly<{ version: string; secret: string }>;
@@ -121,6 +129,7 @@ export function sealedText(material: SealMaterial): string {
     occurred_at: material.occurredAt.toISOString(),
     data: normalizeData(material.data),
     prev_hash: material.prevHash,
+    ...(material.causedBy ? { caused_by: material.causedBy } : {}),
   });
 }
 

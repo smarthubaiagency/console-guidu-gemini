@@ -67,7 +67,13 @@
     "workspace_deletion_scheduled": "Exclusão de workspace agendada",
     "workspace_deletion_reminder": "Lembrete da exclusão de workspace",
     "workspace_deletion_canceled": "Exclusão de workspace cancelada",
-    "workspace_deletion_completed": "Workspace excluído"
+    "workspace_deletion_completed": "Workspace excluído",
+    "proposals_requested": "Proposta esperando decisão",
+    "proposals_approved": "Proposta aprovada",
+    "proposals_rejected": "Proposta rejeitada",
+    "proposals_executed": "Proposta executada",
+    "proposals_failed": "Proposta não executada",
+    "proposals_expired": "Proposta vencida"
   },
   "whatsapp": {
     "generic": "{marca}: você tem um aviso novo em {workspace}. {link}",
@@ -80,7 +86,9 @@
     "security_api_key_created": "{marca}: uma chave de API ({chave}) foi criada em {workspace}. {link}",
     "security_api_key_revoked": "{marca}: a chave de API {chave} foi revogada em {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: a exigência de verificação em duas etapas foi retirada em {workspace}. {link}",
-    "digital_profile_lead_submitted": "{marca}: chegou um contato novo pelo perfil digital de {workspace}. {link}"
+    "digital_profile_lead_submitted": "{marca}: chegou um contato novo pelo perfil digital de {workspace}. {link}",
+    "proposals_requested": "{marca}: há uma proposta esperando sua decisão em {workspace}: {operacao}. Vence em {validade}. Decida em {link}",
+    "proposals_failed": "{marca}: a proposta {operacao} em {workspace} não foi executada. {link}"
   },
   "hub": {
     "action": "Abrir no painel",
@@ -139,6 +147,26 @@
     "escalation": {
       "subject": "Sem resposta: {event}",
       "body": "Este aviso espera uma decisão há {hours} horas e foi encaminhado a você."
+    },
+    "proposals_requested": {
+      "subject": "Proposta esperando decisão em {workspace}",
+      "body": "{operacao}. Motivo: {motivo}. Vence em {validade}. Entre no painel para aprovar ou rejeitar."
+    },
+    "proposals_rejected": {
+      "subject": "Proposta rejeitada em {workspace}",
+      "body": "A proposta {operacao} foi rejeitada."
+    },
+    "proposals_executed": {
+      "subject": "Proposta executada em {workspace}",
+      "body": "A proposta {operacao} foi executada."
+    },
+    "proposals_failed": {
+      "subject": "Proposta não executada em {workspace}",
+      "body": "A proposta {operacao} foi aprovada, mas não foi executada."
+    },
+    "proposals_expired": {
+      "subject": "Proposta vencida em {workspace}",
+      "body": "A proposta {operacao} venceu sem decisão."
     }
   },
   "digest": {

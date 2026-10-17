@@ -140,6 +140,12 @@ const EVENT_KEYS: Readonly<Record<string, string>> = {
   "events.reminder": "eventReminder",
   "events.escalation": "eventEscalation",
   "events.digest": "eventDigest",
+  // Proposals in the hub (H4).
+  "proposals.requested": "proposalRequested",
+  "proposals.rejected": "proposalRejected",
+  "proposals.executed": "proposalExecuted",
+  "proposals.failed": "proposalFailed",
+  "proposals.expired": "proposalExpired",
 };
 
 function text(data: unknown, name: string): string {
@@ -279,6 +285,20 @@ export function renderInboxNotice(
       const values = {
         event: text(data, "event"),
         hours: text(data, "hours") || "0",
+      };
+      return {
+        title: t(`${key}.title`, values),
+        body: t(`${key}.body`, values),
+      };
+    }
+    case "proposalRequested":
+    case "proposalRejected":
+    case "proposalExecuted":
+    case "proposalFailed":
+    case "proposalExpired": {
+      const values = {
+        operation: text(data, "operation"),
+        workspace: text(data, "workspace"),
       };
       return {
         title: t(`${key}.title`, values),

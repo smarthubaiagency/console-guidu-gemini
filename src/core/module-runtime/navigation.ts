@@ -1054,6 +1054,17 @@ export function buildPartnerNavigation(
               }),
             ]
           : []),
+        // Proposals of the managed companies (H4): the partner decides.
+        ...(grants("partner.proposals.review")
+          ? [
+              item({
+                id: "partner.proposals",
+                label: "Propostas",
+                href: "/admin/proposals",
+                iconKey: "inbox",
+              }),
+            ]
+          : []),
         ...(grants("partner.customers.manage")
           ? [
               item({

@@ -113,6 +113,7 @@
     "core_notifications": "Notificaciones",
     "platform_settings_notifications": "Notificaciones",
     "partner_settings_notifications": "Notificaciones",
-    "partner_events": "Eventos"
+    "partner_events": "Eventos",
+    "partner_proposals": "Propuestas"
   }
 }

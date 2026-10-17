@@ -130,7 +130,8 @@
     "recordChanged": "The record changed after the proposal; it cannot be approved. Reject it and ask the assistant for a new one.",
     "mfaNeeded": "Approving requires two-step verification in this session. Turn it on or confirm it in Account security.",
     "approve": "Approve and run",
-    "reject": "Reject"
+    "reject": "Reject",
+    "managedFollows": "This company is managed: the managing team approves. You follow the proposals here."
   },
   "actions": {
     "approved": "Proposal approved. The run is queued.",
@@ -151,6 +152,34 @@
     "contentMismatch": "The content is not what was on the screen. Open the proposal again.",
     "contentTampered": "The proposal content does not match what was recorded.",
     "unknownOperationVersion": "Unknown operation in this version.",
-    "recordChanged": "The record changed after the proposal. Ask the assistant for a new one."
+    "recordChanged": "The record changed after the proposal. Ask the assistant for a new one.",
+    "managedFollows": "This company is managed: the managing team decides the proposals."
+  },
+  "origin": {
+    "api_key": "API key",
+    "assistant": "Assistant",
+    "agent": "Module agent"
+  },
+  "admin": {
+    "metaTitle": "Customer proposals",
+    "title": "Proposals",
+    "description": "Writes asked for by assistants and agents in the companies you manage. Nothing happens without the approval of a person of your team.",
+    "awaiting": "Awaiting decision ({count})",
+    "history": "History ({count})",
+    "emptyTitle": "No proposals",
+    "empty": "When an assistant or agent asks for a write in a managed company, it shows up here.",
+    "noHistory": "No history yet.",
+    "panelLabel": "Proposal",
+    "customer": "Customer",
+    "workspace": "Workspace",
+    "operation": "Operation",
+    "origin": "Origin",
+    "status": "Status",
+    "createdAt": "Requested on",
+    "expiresAt": "Expires on",
+    "reason": "Reason",
+    "hash": "Content fingerprint",
+    "proposed": "What will be done",
+    "decided": "This proposal has already been decided."
   }
 }
