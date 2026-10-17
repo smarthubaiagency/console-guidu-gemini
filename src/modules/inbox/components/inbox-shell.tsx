@@ -321,7 +321,7 @@ function InboxWindow({
         ) : (
           <ResizablePanelGroup orientation="horizontal" className="min-h-0">
             <ResizablePanel
-              id="inbox-list"
+              id="inbox-panel-list"
               defaultSize="28"
               minSize="18"
               collapsible
@@ -335,14 +335,14 @@ function InboxWindow({
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel
-              id="inbox-conversation"
+              id="inbox-panel-conversation"
               defaultSize="48"
               minSize="30"
             >
               {conversation}
             </ResizablePanel>
             <ResizableHandle withHandle />
-            <ResizablePanel id="inbox-context" defaultSize="24" minSize="16">
+            <ResizablePanel id="inbox-panel-context" defaultSize="24" minSize="16">
               {context}
             </ResizablePanel>
           </ResizablePanelGroup>

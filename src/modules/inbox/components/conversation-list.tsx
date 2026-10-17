@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, Copy, Search } from "lucide-react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useNow, useTranslations } from "next-intl";
 import type { MatrixClient } from "matrix-js-sdk";
 
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,7 @@ export function ConversationList({
 }>) {
   const t = useTranslations("inbox");
   const format = useFormatter();
+  const now = useNow({ updateInterval: 30_000 });
 
   const rows = useMemo(() => {
     void revision;
@@ -142,7 +143,7 @@ export function ConversationList({
                       {row.name}
                     </span>
                     <span className="text-11 text-text-tertiary ml-auto shrink-0">
-                      {format.relativeTime(row.ts)}
+                      {format.relativeTime(row.ts, now)}
                     </span>
                   </span>
                   <span className="text-12 text-text-secondary line-clamp-1">
