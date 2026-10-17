@@ -6,7 +6,7 @@ import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import { encryptSecret } from "@/core/credentials/crypto";
-import { dispatchEvent } from "@/core/events/dispatch";
+import { dispatchEvent, runEventDispatch } from "@/core/events/dispatch";
 import {
   contextPartnerId,
   emitEvent,
@@ -358,8 +358,7 @@ describeDatabase("H1: Event Hub", requiredVars, () => {
       posts.push({ url: String(url), init });
       return new Response("{}", { status: 200 });
     }) as typeof globalThis.fetch;
-    const deliver = (id: string) =>
-      asWorker((tx) => dispatchEvent(tx, id, { fetch }));
+    const deliver = (id: string) => runEventDispatch(asWorker, id, { fetch });
     const stateOf = async (id: string) =>
       admin.notificationDelivery.findFirstOrThrow({
         where: { eventId: id, channel: "whatsapp" },
@@ -414,6 +413,9 @@ describeDatabase("H1: Event Hub", requiredVars, () => {
       attempts: 1,
       recipientEmail: null,
     });
+    // H4: the stable id of the delivery goes with the event's id.
+    expect(headers.get("x-guidu-event-id")).toBe(ok.id);
+    expect(headers.get("x-guidu-delivery-id")).toBe((await stateOf(ok.id)).id);
 
     const noNumber = await whatsapp("no-number", { to: null, message: {} });
     await deliver(noNumber.id);
