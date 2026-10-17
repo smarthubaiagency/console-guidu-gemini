@@ -354,13 +354,12 @@ alter table public.execution_proposals
     check (origin in ('api_key', 'assistant', 'agent')),
   add column source_event_id uuid references public.events(id) on delete set null;
 
--- The rows already there: the Assistant's have its turn. The owner is
+-- The rows already there: the Assistant's have its turn (the default,
+-- `api_key`, is the F4d origin; the services always name it). The owner is
 -- bound by FORCE RLS too; lifted only for this update.
 alter table public.execution_proposals no force row level security;
 update public.execution_proposals set origin = 'assistant' where ai_execution_id is not null;
 alter table public.execution_proposals force row level security;
-
-alter table public.execution_proposals alter column origin drop default;
 
 alter table public.execution_proposals add constraint execution_proposals_origin_source_check
   check (

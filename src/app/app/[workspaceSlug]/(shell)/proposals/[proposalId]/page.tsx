@@ -16,7 +16,11 @@ import {
   rejectProposalAction,
 } from "@/core/proposals/actions";
 import { displayValue } from "@/core/proposals/labels";
-import { getProposal, loadProposalTarget } from "@/core/proposals/service";
+import {
+  approverKind,
+  getProposal,
+  loadProposalTarget,
+} from "@/core/proposals/service";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import {
@@ -64,14 +68,16 @@ export default async function ProposalPage({ params }: PageProps) {
     try {
       const proposal = await getProposal(tx, context, proposalId);
       const target = await loadProposalTarget(tx, context, proposal);
-      return { kind: "ok" as const, proposal, ...target };
+      // A managed company follows; the managing partner decides (H4).
+      const decides = (await approverKind(tx, context)) === "member";
+      return { kind: "ok" as const, proposal, decides, ...target };
     } catch {
       return { kind: "missing" as const };
     }
   });
   if (view.kind === "denied") return <ModuleNotice variant="denied" />;
   if (view.kind === "missing") notFound();
-  const { proposal, operation, current, currentVersion } = view;
+  const { proposal, operation, current, currentVersion, decides } = view;
   const t = await getTranslations("proposals");
   const format = await getFormatter();
   const base = `/app/${workspaceSlug}`;
@@ -98,7 +104,8 @@ export default async function ProposalPage({ params }: PageProps) {
     proposal.targetId !== null &&
     currentVersion !== null &&
     currentVersion !== proposal.resourceVersion;
-  const decidable = proposal.status === "pending";
+  const decidable = proposal.status === "pending" && decides;
+  const follows = proposal.status === "pending" && !decides;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="proposal">
@@ -200,6 +207,14 @@ export default async function ProposalPage({ params }: PageProps) {
           </p>
         ) : null}
       </section>
+
+      {follows ? (
+        <section className={sectionClass} data-testid="proposal-follows">
+          <p className="text-12 text-text-secondary">
+            {t("detail.managedFollows")}
+          </p>
+        </section>
+      ) : null}
 
       {decidable ? (
         <section className={sectionClass} data-testid="proposal-decision">

@@ -1240,7 +1240,7 @@ model ExecutionProposal {
   /// Turn of the GUIDU Assistant that proposed it (A2b), without an API key.
   aiExecutionId   String?   @map("ai_execution_id") @db.Uuid
   /// Who proposed it (H4): `api_key`, `assistant` or `agent` (a module job).
-  origin          String
+  origin          String    @default("api_key")
   /// The event that led an agent to propose it (H4).
   sourceEventId   String?   @map("source_event_id") @db.Uuid
   operation       String
