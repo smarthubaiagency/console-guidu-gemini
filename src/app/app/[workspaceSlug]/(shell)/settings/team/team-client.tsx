@@ -16,8 +16,10 @@ import {
   revokeInvitationAction,
   updateMemberRoleAction,
   removeMemberAction,
+  setAttendantMarkAction,
   type ActionState,
 } from "@/core/workspaces/team-actions";
+import { Switch } from "@/components/ui/switch";
 import { useStatus } from "@/components/feedback/status-context";
 import { useActionStatus } from "@/components/feedback/use-action-status";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,11 @@ export type MemberDisplay = {
   status: string;
   joinedAt: string;
   isCurrentUser: boolean;
+  /**
+   * Attendant of the Inbox (IN4a), for who manages it: `fixed` for the
+   * Attendant role (always on), `markable` for owners, admins and editors.
+   */
+  inbox: { marked: boolean; markable: boolean; fixed: boolean } | null;
 };
 
 export type InvitationDisplay = {
@@ -68,6 +75,7 @@ export type TeamCapabilities = {
   canManage: boolean;
   canInvite: boolean;
   canManageMembers: boolean;
+  canManageInbox: boolean;
 };
 
 interface TeamClientProps {
@@ -167,6 +175,16 @@ export function TeamClient({
 
       const res = await updateMemberRoleAction({}, formData);
       setFeedback(res);
+    });
+  };
+
+  const handleAttendantMark = (targetUserId: string, marked: boolean) => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("workspaceSlug", workspaceSlug);
+      formData.append("targetUserId", targetUserId);
+      formData.append("marked", String(marked));
+      setFeedback(await setAttendantMarkAction({}, formData));
     });
   };
 
@@ -362,6 +380,9 @@ export function TeamClient({
                 <TableHead className="px-5">{t("columns.role")}</TableHead>
                 <TableHead className="px-5">{t("columns.status")}</TableHead>
                 <TableHead className="px-5">{t("columns.joinedAt")}</TableHead>
+                {capabilities.canManageInbox && (
+                  <TableHead className="px-5">{t("columns.inbox")}</TableHead>
+                )}
                 {capabilities.canManageMembers && (
                   <TableHead className="px-5 text-right">
                     {t("columns.actions")}
@@ -455,6 +476,24 @@ export function TeamClient({
                     <TableCell className="text-text-secondary px-5">
                       {member.joinedAt}
                     </TableCell>
+
+                    {capabilities.canManageInbox && (
+                      <TableCell className="px-5">
+                        {member.inbox &&
+                        (member.inbox.fixed || member.inbox.markable) ? (
+                          <Switch
+                            aria-label={t("attendantMark", {
+                              name: member.name,
+                            })}
+                            checked={member.inbox.marked}
+                            disabled={isPending || member.inbox.fixed}
+                            onCheckedChange={(checked) =>
+                              handleAttendantMark(member.userId, checked)
+                            }
+                          />
+                        ) : null}
+                      </TableCell>
+                    )}
 
                     {capabilities.canManageMembers && (
                       <TableCell className="px-5 text-right">

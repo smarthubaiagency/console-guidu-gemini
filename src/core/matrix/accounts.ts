@@ -1,34 +1,33 @@
-import { Permissions } from "@/core/permissions/catalog";
-import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
-import { isWorkspaceRole } from "@/core/permissions/roles";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { userId as mxidOf, type MatrixConfig } from "./config";
 import { newAttendantLocalpart } from "./jwt";
 import {
-  ATTENDANT_POWER,
   deactivateUser,
   forceJoin,
+  type InboxAccess,
   kick,
   MatrixHttpError,
+  powerOf,
   setUserPowers,
   type SynapseClient,
   upsertUser,
 } from "./synapse";
 
 /**
- * Accounts of the attendants (IN3, ADR 0023 rule 9). One Matrix account per
- * person, created when they hold `inbox.view` in an active workspace, put
- * in the rooms of those workspaces, taken out of the others and
- * deactivated when no workspace is left. The database says who is
- * eligible (`private.matrix_user_memberships`); the permission matrix says
- * which roles hold `inbox.view`.
+ * Accounts of the attendants (IN3, ADR 0023 rule 9; IN4a). One Matrix
+ * account per person with a level in the Inbox of an active workspace: put
+ * in the rooms of those workspaces with the power of the level (answer or
+ * only read), taken out of the others and deactivated when no workspace is
+ * left. The database says who has which level (`private.matrix_access`:
+ * the attendant mark, decision of 17/10/2026).
  */
 
 export type InboxMembership = Readonly<{
   workspaceId: string;
   organizationId: string;
   role: string;
+  access: InboxAccess;
   fullName: string | null;
 }>;
 
@@ -36,40 +35,39 @@ type MembershipRow = {
   workspace_id: string;
   organization_id: string;
   role: string;
+  access: string | null;
   full_name: string | null;
 };
 
-export function holdsInboxView(role: string): boolean {
-  return (
-    isWorkspaceRole(role) &&
-    hasWorkspaceRolePermission(role, Permissions.INBOX_VIEW)
-  );
+export function isInboxAccess(value: unknown): value is InboxAccess {
+  return value === "reply" || value === "read";
 }
 
 function toMemberships(rows: MembershipRow[]): InboxMembership[] {
   const seen = new Set<string>();
   const out: InboxMembership[] = [];
   for (const row of rows) {
-    if (!holdsInboxView(row.role) || seen.has(row.workspace_id)) continue;
+    if (!isInboxAccess(row.access) || seen.has(row.workspace_id)) continue;
     seen.add(row.workspace_id);
     out.push({
       workspaceId: row.workspace_id,
       organizationId: row.organization_id,
       role: row.role,
+      access: row.access,
       fullName: row.full_name,
     });
   }
   return out;
 }
 
-/** Workspaces where a person holds `inbox.view` (worker). */
+/** Workspaces where a person has a level in the Inbox (worker). */
 export async function inboxMemberships(
   tx: ContextTransaction,
   profileId: string,
 ): Promise<InboxMembership[]> {
   const rows = await tx.$queryRaw<MembershipRow[]>`
-    select workspace_id, organization_id, role, full_name
-    from private.matrix_user_memberships(${profileId}::uuid)
+    select workspace_id, organization_id, role, access, full_name
+    from private.matrix_user_access(${profileId}::uuid)
   `;
   return toMemberships(rows);
 }
@@ -79,8 +77,8 @@ export async function myInboxMemberships(
   tx: ContextTransaction,
 ): Promise<InboxMembership[]> {
   const rows = await tx.$queryRaw<MembershipRow[]>`
-    select workspace_id, organization_id, role, full_name
-    from private.matrix_my_memberships()
+    select workspace_id, organization_id, role, access, full_name
+    from private.matrix_my_access()
   `;
   return toMemberships(rows);
 }
@@ -128,15 +126,18 @@ export async function upsertMember(
   userMxid: string,
   membership: string,
   eventTs: bigint | null = null,
+  /** Power the core gave in the room; null keeps the one recorded. */
+  power: number | null = null,
 ): Promise<void> {
   await tx.$executeRaw`
     insert into public.matrix_room_members
-      (room_id, organization_id, workspace_id, user_mxid, membership, event_ts)
+      (room_id, organization_id, workspace_id, user_mxid, membership, event_ts, power)
     values (${room.roomId}, ${room.organizationId}::uuid, ${room.workspaceId}::uuid,
-            ${userMxid}, ${membership}, ${eventTs})
+            ${userMxid}, ${membership}, ${eventTs}, ${power}::smallint)
     on conflict (room_id, user_mxid) do update
       set membership = excluded.membership,
           event_ts = coalesce(excluded.event_ts, matrix_room_members.event_ts),
+          power = coalesce(excluded.power, matrix_room_members.power),
           updated_at = now()
       where excluded.event_ts is null
          or matrix_room_members.event_ts is null
@@ -145,16 +146,16 @@ export async function upsertMember(
 }
 
 /**
- * Puts an attendant in a room: power 50 (to change the conversation state)
- * and a join by the admin API. An account missing on Synapse (its creation
- * failed earlier) is created and the join tried again.
+ * Puts an attendant in a room: the power of their level (10 answers, 0
+ * only reads) and a join by the admin API. An account missing on Synapse
+ * (its creation failed earlier) is created and the join tried again.
  */
 export async function joinAttendant(
   client: SynapseClient,
   roomId: string,
-  account: Readonly<{ mxid: string; name: string }>,
+  account: Readonly<{ mxid: string; name: string; power: number }>,
 ): Promise<void> {
-  await setUserPowers(client, roomId, { [account.mxid]: ATTENDANT_POWER });
+  await setUserPowers(client, roomId, { [account.mxid]: account.power });
   try {
     await forceJoin(client, roomId, account.mxid);
   } catch (error) {
@@ -228,6 +229,9 @@ export async function syncAccount(
   }
 
   const workspaceIds = memberships.map((m) => m.workspaceId);
+  const powerByWorkspace = new Map(
+    memberships.map((m) => [m.workspaceId, powerOf(m.access)]),
+  );
   const toLeave = await tx.$queryRaw<
     { room_id: string; workspace_id: string; organization_id: string }[]
   >`
@@ -253,25 +257,44 @@ export async function syncAccount(
     );
   }
 
+  // Rooms to enter, and rooms where the level changed (marked or unmarked
+  // as attendant): the power is set again without leaving.
+  const powers = memberships.map((m) => powerOf(m.access));
   const toJoin = await tx.$queryRaw<
-    { room_id: string; workspace_id: string; organization_id: string }[]
+    {
+      room_id: string;
+      workspace_id: string;
+      organization_id: string;
+      joined: boolean;
+    }[]
   >`
-    select room.room_id, room.workspace_id, room.organization_id
+    select room.room_id, room.workspace_id, room.organization_id,
+           coalesce(member.membership = 'join', false) as joined
     from public.matrix_rooms room
-    where room.workspace_id = any(${workspaceIds}::uuid[])
-      and room.state = 'active'
+    join unnest(${workspaceIds}::uuid[], ${powers}::int[]) as wanted(workspace_id, power)
+      on wanted.workspace_id = room.workspace_id
+    left join public.matrix_room_members member
+      on member.room_id = room.room_id and member.user_mxid = ${row.mxid}
+    where room.state = 'active'
       and room.room_id is not null
-      and not exists (
-        select 1 from public.matrix_room_members member
-        where member.room_id = room.room_id
-          and member.user_mxid = ${row.mxid}
-          and member.membership = 'join'
+      and (
+        member.membership is distinct from 'join'
+        or member.power is distinct from wanted.power
       )
     order by room.created_at
     limit ${batch}
   `;
   for (const room of toJoin) {
-    await joinAttendant(client, room.room_id, { mxid: row.mxid, name });
+    const power = powerByWorkspace.get(room.workspace_id) ?? 0;
+    if (room.joined) {
+      await setUserPowers(client, room.room_id, { [row.mxid]: power });
+    } else {
+      await joinAttendant(client, room.room_id, {
+        mxid: row.mxid,
+        name,
+        power,
+      });
+    }
     await upsertMember(
       tx,
       {
@@ -281,6 +304,8 @@ export async function syncAccount(
       },
       row.mxid,
       "join",
+      null,
+      power,
     );
   }
 

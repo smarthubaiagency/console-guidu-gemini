@@ -31,6 +31,7 @@ import {
 import { recordAudit } from "../audit/record";
 import { requestAccountSync } from "../matrix";
 import { updateOrganizationMemberRole } from "../organizations/members";
+import { assertAttendantSeat } from "@/modules/inbox/quotas";
 
 export type WorkspaceMemberItem = {
   workspaceId: string;
@@ -400,6 +401,17 @@ export async function changeTeamMemberRole(
     where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
   });
   const wasAttendant = current?.role === WorkspaceRoles.ATTENDANT;
+  // A new Attendant takes a place in the Inbox quota (IN4a); a marked
+  // member already holds one.
+  if (choice === WorkspaceRoles.ATTENDANT && !wasAttendant) {
+    const marked = await tx.inboxAttendant.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+      select: { userId: true },
+    });
+    if (!marked) {
+      await assertAttendantSeat(tx, { organizationId, workspaceId });
+    }
+  }
 
   const organizationRole: OrganizationRole =
     choice === WorkspaceRoles.ATTENDANT ? OrganizationRoles.MEMBER : choice;

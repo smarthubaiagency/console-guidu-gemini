@@ -21,6 +21,7 @@ export const CLIENT_NAMESPACES = [
   "brand",
   "platformKeys",
   "crm",
+  "inbox",
   "helloWorld",
   "aiAgents",
   "aiConsole",

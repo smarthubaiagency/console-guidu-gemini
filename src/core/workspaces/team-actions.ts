@@ -31,6 +31,7 @@ import {
 } from "@/core/organizations/invitations";
 import { removeOrganizationMember } from "@/core/organizations/members";
 import { changeTeamMemberRole } from "@/core/workspaces/members";
+import { setAttendantMark } from "@/modules/inbox/server/attendants";
 
 export type ActionState = {
   success?: boolean;
@@ -282,6 +283,55 @@ export async function removeMemberAction(
     return {
       success: true,
       message: (await getTranslations("team"))("memberRemoved"),
+    };
+  } catch (err: unknown) {
+    return actionFailure(err);
+  }
+}
+
+const AttendantMarkInput = z.object({
+  workspaceSlug: z.string().min(1),
+  targetUserId: z.string().uuid(),
+  marked: z.enum(["true", "false"]),
+});
+
+/** Marks or unmarks a member as attendant of the Inbox (IN4a). */
+export async function setAttendantMarkAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = AttendantMarkInput.safeParse({
+    workspaceSlug: formData.get("workspaceSlug"),
+    targetUserId: formData.get("targetUserId"),
+    marked: formData.get("marked"),
+  });
+  if (!parsed.success) {
+    return actionFailure(
+      new AppError({
+        code: "invalid_input",
+        safeMessage: "Dados inválidos para alteração de papel.",
+        messageKey: "team.errors.invalidRoleInput",
+      }),
+    );
+  }
+  const { workspaceSlug, targetUserId } = parsed.data;
+  const marked = parsed.data.marked === "true";
+  try {
+    const identity = await requireUser();
+    const context = await resolveRequestWorkspaceContext(
+      prisma,
+      identity.userId,
+      workspaceSlug,
+    );
+    await withContext(prisma, context, (tx) =>
+      setAttendantMark(tx, context, { userId: targetUserId, marked }),
+    );
+    revalidatePath(`/app/${workspaceSlug}/settings/team`);
+    return {
+      success: true,
+      message: (await getTranslations("team"))(
+        marked ? "attendantMarked" : "attendantUnmarked",
+      ),
     };
   } catch (err: unknown) {
     return actionFailure(err);

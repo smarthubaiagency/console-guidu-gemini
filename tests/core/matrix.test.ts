@@ -22,6 +22,7 @@ import {
 } from "@/core/matrix/jobs";
 import { matrixWorkspaceLifecycle } from "@/core/matrix/lifecycle";
 import { createConversationRoom } from "@/core/matrix/rooms";
+import { changeConversation } from "@/core/matrix/conversation";
 import { createMatrixSession } from "@/core/matrix/session";
 import {
   CONVERSATION_STATE,
@@ -46,7 +47,9 @@ import { describeDatabase } from "../prisma-rls/describe-database.js";
  * the session and its JWT, the Application Service both ways (Synapse
  * pushes transactions to a local server running the route's handler),
  * rooms in the order of the proof, the mirrored conversation state, a
- * consumer's room refused, accounts following `inbox.view`, the workspace
+ * consumer's room refused (and, IN4a, a room opened when the consumer
+ * calls the address of the store), accounts following the attendant mark,
+ * changes of the conversation through the console, the workspace
  * lifecycle for the WS1, logout of the devices and the orphan cleanup.
  * The Matrix variables come from the file of the local Synapse, so no
  * other suite sees Matrix turned on.
@@ -190,7 +193,25 @@ describeDatabase(
       return { mxid, token: access_token };
     }
 
+    /** Marks (or unmarks) a person as attendant of workspace A (IN4a). */
+    async function mark(userId: string, on = true) {
+      if (on) {
+        await admin.$executeRawUnsafe(
+          `insert into public.inbox_attendants (workspace_id, organization_id, user_id)
+           values ('${ids.workspaceA}', '${ids.organizationA}', '${userId}') on conflict do nothing`,
+        );
+      } else {
+        await admin.$executeRawUnsafe(
+          `delete from public.inbox_attendants where workspace_id = '${ids.workspaceA}' and user_id = '${userId}'`,
+        );
+      }
+    }
+
     async function cleanup() {
+      await admin.$executeRawUnsafe(`delete from public.inbox_attendants`);
+      await admin.$executeRawUnsafe(
+        `delete from public.matrix_workspace_addresses`,
+      );
       await admin.$executeRawUnsafe(`delete from public.matrix_rooms`);
       await admin.$executeRawUnsafe(`delete from public.matrix_accounts`);
       await admin.$executeRawUnsafe(`delete from public.matrix_events`);
@@ -328,6 +349,8 @@ describeDatabase(
     });
 
     it("creates the room in order, with the power levels of the proof, and mirrors the state", async () => {
+      // The owner answers only when marked as attendant (IN4a).
+      await mark(ids.userA);
       const owner = await createMatrixSession(prisma, ids.userA);
       const ownerLogin = await login(owner.loginToken);
       const guest = await consumer();
@@ -359,7 +382,8 @@ describeDatabase(
         events: Record<string, number>;
       };
       expect(power.users[coreUserId(config)]).toBeUndefined();
-      expect(power.users[owner.userId]).toBe(50);
+      expect(power.users[owner.userId]).toBe(10);
+      expect(power.users[guest.mxid]).toBe(10);
       expect(power.events["m.room.encryption"]).toBe(100);
       expect(power.events["m.room.power_levels"]).toBe(100);
       expect(power.events[CONVERSATION_STATE]).toBe(50);
@@ -386,14 +410,37 @@ describeDatabase(
       );
       expect(encryption.status).toBe(403);
 
-      // The attendant takes the conversation from the browser side.
-      const take = await asUser(
+      // The attendant answers but cannot write the state from the browser
+      // (IN4a): the console checks the permission and writes it as the core.
+      const message = await asUser(
+        ownerLogin.access_token,
+        "PUT",
+        `/_matrix/client/v3/rooms/${enc(room.roomId)}/send/m.room.message/t${Date.now()}`,
+        { msgtype: "m.text", body: "Olá" },
+      );
+      expect(message.status).toBe(200);
+      const direct = await asUser(
         ownerLogin.access_token,
         "PUT",
         `/_matrix/client/v3/rooms/${enc(room.roomId)}/state/${CONVERSATION_STATE}/`,
         { version: 1, status: "open", assignee: owner.userId },
       );
-      expect(take.status).toBe(200);
+      expect(direct.status).toBe(403);
+      await processUntil(
+        () =>
+          admin.matrixRoomMember.findFirst({
+            where: { roomId: room.roomId, userMxid: owner.userId },
+          }),
+        "attendant membership recorded",
+      );
+      const taken = await withContext(prisma, contextA, (tx) =>
+        changeConversation(tx, client, {
+          roomId: room.roomId,
+          action: { kind: "take" },
+          actor: { mxid: owner.userId, level: "reply", manages: true },
+        }),
+      );
+      expect(taken).toEqual({ status: "open", assignee: owner.userId });
 
       const mirrored = await processUntil(async () => {
         const row = await admin.matrixRoom.findUnique({
@@ -527,14 +574,39 @@ describeDatabase(
       ]);
     });
 
-    it("follows inbox.view: joins the rooms on promotion, leaves and deactivates on demotion", async () => {
+    it("follows the level: an unmarked editor has no account, a marked one answers, the owner reads", async () => {
+      await mark(ids.userA, false);
       const room = await asWorker((tx) =>
         createConversationRoom(tx, client, { workspaceId: ids.workspaceA }),
       );
+      const ownerAccount = await asWorker(async (tx) => {
+        await matrixSyncAccountJob.run(tx, { userId: ids.userA });
+        return tx.matrixAccount.findUniqueOrThrow({
+          where: { profileId: ids.userA },
+        });
+      });
+      const powers = async () =>
+        (
+          await client.request<{ users: Record<string, number> }>(
+            "GET",
+            `/_matrix/client/v3/rooms/${enc(room.roomId)}/state/m.room.power_levels/`,
+          )
+        ).users;
+      // The owner, not marked, reads (power 0) and joins.
+      expect(await joinedMembers(room.roomId)).toContain(ownerAccount.mxid);
+      expect((await powers())[ownerAccount.mxid]).toBeUndefined();
+
+      // An unmarked editor does not open the Inbox.
       await admin.$executeRawUnsafe(
         `update public.workspace_members set role = 'editor'
        where workspace_id = '${ids.workspaceA}' and user_id = '${ids.userMultiOrg}'`,
       );
+      expect(
+        await run(matrixSyncAccountJob, { userId: ids.userMultiOrg }),
+      ).toMatchObject({ status: "none" });
+
+      // Marked: account, room and power 10.
+      await mark(ids.userMultiOrg);
       const promoted = await run(matrixSyncAccountJob, {
         userId: ids.userMultiOrg,
       });
@@ -543,11 +615,19 @@ describeDatabase(
         where: { profileId: ids.userMultiOrg },
       });
       expect(await joinedMembers(room.roomId)).toContain(account.mxid);
+      expect((await powers())[account.mxid]).toBe(10);
 
-      await admin.$executeRawUnsafe(
-        `update public.workspace_members set role = 'viewer'
-       where workspace_id = '${ids.workspaceA}' and user_id = '${ids.userMultiOrg}'`,
-      );
+      // Marking the owner raises the power without leaving the room.
+      await mark(ids.userA);
+      await run(matrixSyncAccountJob, { userId: ids.userA });
+      expect((await powers())[ownerAccount.mxid]).toBe(10);
+      await mark(ids.userA, false);
+      await run(matrixSyncAccountJob, { userId: ids.userA });
+      expect((await powers())[ownerAccount.mxid]).toBeUndefined();
+      expect(await joinedMembers(room.roomId)).toContain(ownerAccount.mxid);
+
+      // Unmarked: the account is deactivated.
+      await mark(ids.userMultiOrg, false);
       const demoted = await run(matrixSyncAccountJob, {
         userId: ids.userMultiOrg,
       });
@@ -578,7 +658,139 @@ describeDatabase(
       });
     });
 
+    it("opens a room for a consumer who calls the address of the store, and reuses it", async () => {
+      await mark(ids.userA);
+      await run(matrixSyncAccountJob, { userId: ids.userA });
+      const synced = await run(matrixSyncWorkspaceJob, {
+        workspaceId: ids.workspaceA,
+      });
+      expect(synced).toMatchObject({ address: true });
+      const address = await admin.matrixWorkspaceAddress.findUniqueOrThrow({
+        where: { workspaceId: ids.workspaceA },
+      });
+      expect(address.mxid).toMatch(/^@_guidu_w_[a-z2-7]{16}:/);
+      expect(address.state).toBe("active");
+      const profile = await client.request<{ displayname?: string }>(
+        "GET",
+        `/_matrix/client/v3/profile/${enc(address.mxid)}`,
+      );
+      expect(profile.displayname).toBeTruthy();
+
+      const guest = await consumer();
+      const call = async () => {
+        const created = await asUser(
+          guest.token,
+          "POST",
+          "/_matrix/client/v3/createRoom",
+          {
+            preset: "trusted_private_chat",
+            is_direct: true,
+            invite: [address.mxid],
+          },
+        );
+        expect(created.status).toBe(200);
+        return created.json.room_id as string;
+      };
+      const own = await call();
+      const opened = await processUntil(
+        () =>
+          admin.matrixRoom.findFirst({
+            where: {
+              workspaceId: ids.workspaceA,
+              consumerMxid: guest.mxid,
+              state: "active",
+            },
+          }),
+        "room opened for the consumer",
+      );
+      expect(opened.roomId).not.toBe(own);
+      expect(opened.consumerName).toBe("Cliente");
+      const invites = await asUser(
+        guest.token,
+        "GET",
+        "/_matrix/client/v3/sync?timeout=0",
+      );
+      const invited = (
+        invites.json.rooms as { invite?: Record<string, unknown> }
+      )?.invite;
+      expect(Object.keys(invited ?? {})).toContain(opened.roomId);
+
+      // Calling again reuses the open conversation.
+      await call();
+      await processUntil(
+        async () =>
+          (await admin.matrixEvent.count({
+            where: { stateKey: address.mxid, status: "processed" },
+          })) >= 2,
+        "second call processed",
+      );
+      expect(
+        await admin.matrixRoom.count({
+          where: { workspaceId: ids.workspaceA, consumerMxid: guest.mxid },
+        }),
+      ).toBe(1);
+    });
+
+    it("changes the conversation through the console: who answers takes and resolves, a manager assigns", async () => {
+      await mark(ids.userA);
+      const owner = await createMatrixSession(prisma, ids.userA);
+      await run(matrixSyncAccountJob, { userId: ids.userA });
+      const room = await asWorker((tx) =>
+        createConversationRoom(tx, client, { workspaceId: ids.workspaceA }),
+      );
+      const reader = {
+        mxid: owner.userId,
+        level: "read" as const,
+        manages: true,
+      };
+      const answering = {
+        mxid: owner.userId,
+        level: "reply" as const,
+        manages: false,
+      };
+      const change = (
+        action: Parameters<typeof changeConversation>[2]["action"],
+        actor: Parameters<typeof changeConversation>[2]["actor"],
+      ) =>
+        withContext(prisma, contextA, (tx) =>
+          changeConversation(tx, client, {
+            roomId: room.roomId,
+            action,
+            actor,
+          }),
+        );
+      // Who only reads takes nothing; a manager assigns.
+      await expect(change({ kind: "take" }, reader)).rejects.toMatchObject({
+        code: "forbidden",
+      });
+      await expect(change({ kind: "resolve" }, answering)).resolves.toEqual({
+        status: "resolved",
+        assignee: null,
+      });
+      await expect(change({ kind: "reopen" }, answering)).resolves.toEqual({
+        status: "open",
+        assignee: owner.userId,
+      });
+      await expect(
+        change({ kind: "assign", assignee: null }, answering),
+      ).rejects.toMatchObject({ code: "forbidden" });
+      await expect(
+        change({ kind: "assign", assignee: "@someone:else" }, reader),
+      ).rejects.toMatchObject({ code: "invalid_input" });
+      await expect(
+        change({ kind: "assign", assignee: null }, reader),
+      ).resolves.toEqual({ status: "pending", assignee: null });
+      const mirrored = await processUntil(async () => {
+        const row = await admin.matrixRoom.findUnique({
+          where: { roomId: room.roomId },
+        });
+        return row?.status === "pending" && row.statusEventId ? row : null;
+      }, "state mirrored");
+      expect(mirrored.assignee).toBeNull();
+    });
+
     it("blocks the rooms during the soft deletion, restores them on cancel and purges them", async () => {
+      await mark(ids.userA);
       const owner = await createMatrixSession(prisma, ids.userA);
       await run(matrixSyncAccountJob, { userId: ids.userA });
       const room = await asWorker((tx) =>

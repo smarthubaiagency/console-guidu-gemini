@@ -7,6 +7,7 @@ import type {
 } from "@/lib/prisma/with-context";
 import { aiAgentsQuotaUsage } from "@/modules/ai-agents/quotas";
 import { crmQuotaUsage } from "@/modules/crm/quotas";
+import { inboxQuotaUsage } from "@/modules/inbox/quotas";
 import { portfolioQuotaUsage } from "@/modules/portfolio/quotas";
 import { helloWorldQuotaUsage } from "@/modules/hello-world/quotas";
 
@@ -34,6 +35,7 @@ type UsageCounter = Readonly<{
 /** Usage counters of module quotas, by explicit import (like jobs). */
 const MODULE_USAGE: Readonly<Record<string, UsageCounter>> = {
   ...crmQuotaUsage,
+  ...inboxQuotaUsage,
   ...portfolioQuotaUsage,
   ...helloWorldQuotaUsage,
   ...aiAgentsQuotaUsage,

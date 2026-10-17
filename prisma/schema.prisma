@@ -1890,6 +1890,7 @@ model MatrixRoom {
   statusEventId  String?   @map("status_event_id")
   statusEventTs  BigInt?   @map("status_event_ts")
   consumerMxid   String?   @map("consumer_mxid")
+  consumerName   String?   @map("consumer_name")
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
   closedAt       DateTime? @map("closed_at") @db.Timestamptz()
@@ -1906,10 +1907,36 @@ model MatrixRoomMember {
   userMxid       String   @map("user_mxid")
   membership     String
   eventTs        BigInt?  @map("event_ts")
+  power          Int?     @db.SmallInt
   updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
 
   @@id([roomId, userMxid])
   @@map("matrix_room_members")
+}
+
+/// A person marked as attendant of a workspace's Inbox (IN4a).
+model InboxAttendant {
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@id([workspaceId, userId])
+  @@map("inbox_attendants")
+}
+
+/// The address of a workspace on the chat, a user of the namespace (IN4a).
+model MatrixWorkspaceAddress {
+  workspaceId    String   @id @map("workspace_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  localpart      String   @unique
+  mxid           String   @unique
+  state          String   @default("pending")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("matrix_workspace_addresses")
 }
 
 /// Transactions pushed by Synapse to the Application Service (IN3).
