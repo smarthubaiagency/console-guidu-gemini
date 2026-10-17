@@ -64,5 +64,5 @@ As mensagens não são copiadas para o Supabase.
 
 ## 8. Dúvidas em aberto
 
-1. Domínio do Synapse de dev: `dev.guidu.chat` (padrão adotado) ou `guidu.chat` já no primeiro servidor.
+1. ~~Domínio do Synapse de dev~~ **Resolvido (17/10/2026):** o Synapse de teste no EasyPanel fica com `server_name` `multica-synapse.dtjkix.easypanel.host`, só para testes e descartável. O de dev e o de produção nascem depois com `dev.guidu.chat` e `guidu.chat`. Por isso o código nunca fixa o `server_name`: ele vem de variável de ambiente.
 2. Tempo para o aviso de "conversa sem resposta".
