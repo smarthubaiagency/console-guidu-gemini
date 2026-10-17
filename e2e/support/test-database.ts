@@ -137,6 +137,24 @@ export type SeedGuidParams = {
   ready?: boolean | undefined;
 };
 
+/**
+ * The socket server frees a connection slot only when the socket closes
+ * cleanly: one that ends with an error (a worker killed or crashed mid-query
+ * resets its sockets) keeps its slot forever, and once all of them are taken
+ * every new connection is refused ("Can't reach database server"). Slots of
+ * detached handlers are given back here.
+ */
+function releaseResetConnections(server: PGLiteSocketServer): void {
+  const handlers = (
+    server as unknown as { handlers: Set<{ isAttached: boolean }> }
+  ).handlers;
+  setInterval(() => {
+    for (const handler of handlers) {
+      if (!handler.isAttached) handlers.delete(handler);
+    }
+  }, 500).unref();
+}
+
 export async function startTestDatabase(
   port: number,
   repoRoot: string,
@@ -151,6 +169,7 @@ export async function startTestDatabase(
     maxConnections: 10,
   });
   await server.start();
+  releaseResetConnections(server);
 
   const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`;
   const pool = new Pool({ connectionString: url, max: 10 });

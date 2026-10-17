@@ -35,6 +35,7 @@ import {
   requireWorkspacePermission,
 } from "../permissions/guard";
 import { recordAudit } from "../audit/record";
+import { requestAccountSync } from "../matrix";
 import { appConfig } from "../config/app";
 import type { Identity } from "../auth/identity";
 import {
@@ -468,6 +469,9 @@ export async function acceptInvitation(
         });
         workspaceSlug = ws?.slug ?? null;
       }
+
+      // The Inbox account follows `inbox.view` (IN3).
+      await requestAccountSync(tx, identity.userId);
 
       // 9. Mark invitation as accepted
       const acceptedInvitation = await tx.invitation.update({

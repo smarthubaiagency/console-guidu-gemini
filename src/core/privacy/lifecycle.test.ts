@@ -116,12 +116,13 @@ describe("lifecycle hooks of a workspace deletion (WS1)", () => {
   it("lists the core resources after the modules, with unique keys", () => {
     const keys = listLifecycleHooks().map((hook) => hook.key);
     expect(new Set(keys).size).toBe(keys.length);
-    expect(keys.slice(-2)).toEqual([
+    expect(keys.slice(-3)).toEqual([
       "core.google_connection",
       "core.workspace_domains",
+      "core.matrix",
     ]);
     expect(keys.filter((key) => !key.startsWith("core."))).toEqual(
-      keys.slice(0, keys.length - 2),
+      keys.slice(0, keys.length - 3),
     );
   });
 });

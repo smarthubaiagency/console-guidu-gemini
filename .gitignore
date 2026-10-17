@@ -21,3 +21,4 @@ yarn.lock
 
 # Supabase CLI ephemeral artifacts (supabase link is prohibited without approval)
 supabase/.temp/
+/.matrix-setup/

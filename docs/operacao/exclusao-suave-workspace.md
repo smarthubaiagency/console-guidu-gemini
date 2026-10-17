@@ -83,7 +83,7 @@ Tentativas: o job de ciclo de vida tenta 5 vezes (30 s entre elas); o de limpeza
 É uma linha:
 
 - Módulo: declare os ganchos no contrato de dados do módulo (`src/core/privacy/registry.ts`). A chave fica `module.<moduleKey>`.
-- Recurso do núcleo: acrescente a fábrica em `CORE_RESOURCES` de `src/core/privacy/lifecycle-registry.ts` (chave `core.<nome>`). As salas Matrix da IN3 entram assim.
+- Recurso do núcleo: acrescente a fábrica em `CORE_RESOURCES` de `src/core/privacy/lifecycle-registry.ts` (chave `core.<nome>`). As salas Matrix da IN3 entram assim (`core.matrix`: ao agendar e ao cancelar pede ao worker que tire ou devolva os atendentes das salas; ao apagar de vez apaga as salas no Synapse).
 
 Os módulos rodam antes dos recursos do núcleo.
 
@@ -113,7 +113,6 @@ A chave de idempotência do evento é `workspace-deletion:<id do registro>:<tipo
 - As políticas do banco baseadas em `partner_manages_organization` são por organização e não olham o status do workspace; as entradas da aplicação olham.
 - Sem o Cloudflare configurado, os hostnames existentes ficam lá.
 - Jobs pulados durante a carência não são refeitos depois do cancelamento.
-- Os ganchos das salas Matrix chegam com a IN3.
 
 ## Testes
 
