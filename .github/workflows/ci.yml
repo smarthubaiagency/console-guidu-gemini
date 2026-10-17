@@ -500,9 +500,11 @@ jobs:
           bash scripts/local/synapse.sh setup
           bash scripts/local/synapse.sh start
       - name: Run Inbox E2E tests with the local Synapse
-        run: pnpm test:e2e e2e/inbox.spec.ts
+        run: pnpm test:e2e e2e/inbox.spec.ts e2e/inbox-guids.spec.ts
         env:
           MATRIX_E2E_ENV_FILE: ${{ runner.temp }}/synapse/setup/console.env
+          # IN6: the GUIDS of the Inbox needs the AI agents module.
+          GUIDU_MODULE_AI_AGENTS_ENABLED: "true"
       - name: Synapse log on failure
         if: failure()
         run: tail -n 200 "${{ runner.temp }}/synapse/data/homeserver.log" || true
