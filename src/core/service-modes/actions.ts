@@ -278,8 +278,12 @@ export async function decideServiceModeAppAction(
     const outcome = await withContext(prisma, ctx, (tx) =>
       decideInApp(tx, ctx, requestId, decision, meta, origin),
     );
-    revalidatePath(`/app/${workspaceSlug}/settings/service-mode`);
-    return outcomeState(outcome);
+    // A fresh visit, not a revalidation: the cards of the form change with
+    // the decision, and the banner must outlive them (ADR 0016).
+    const state = await outcomeState(outcome);
+    return state.success
+      ? { ...state, redirectTo: `/app/${workspaceSlug}/settings/service-mode` }
+      : state;
   } catch (err) {
     return actionFailure(err);
   }
@@ -295,8 +299,11 @@ export async function revertServiceModeAction(
     await withContext(prisma, ctx, (tx) =>
       revertToStandard(tx, ctx, workspaceSlug, origin),
     );
-    revalidatePath(`/app/${workspaceSlug}/settings/service-mode`);
-    return { success: true, message: (await t())("results.reverted") };
+    return {
+      success: true,
+      message: (await t())("results.reverted"),
+      redirectTo: `/app/${workspaceSlug}/settings/service-mode`,
+    };
   } catch (err) {
     return actionFailure(err);
   }

@@ -7,6 +7,7 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { Pool } from "pg";
 
 import { computeSeal } from "../../src/core/events/seal";
+import { FAKE_RESEND_KEY } from "./fake-resend";
 import { RIG } from "./rig";
 
 /**
@@ -503,6 +504,11 @@ export async function startTestDatabase(
             // Agent GMN (GB1b): never the real maps provider or AI.
             MAPS_INTELLIGENCE_PROVIDER: "fake",
             GB_SUGGESTIONS_PROVIDER: "fake",
+            // E-mails of the dispatch (GB1c: the link of the service mode)
+            // go to the Resend double, as the web's do.
+            RESEND_API_KEY: FAKE_RESEND_KEY,
+            RESEND_API_BASE: `http://127.0.0.1:${RIG.resendPort}`,
+            EMAIL_FROM_ADDRESS: "avisos@guidu.test",
           },
           stdio: "ignore",
         },
