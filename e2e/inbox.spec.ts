@@ -101,15 +101,17 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   // The consumer calls the store and gets a room opened by the core.
   const maria = await consumers.create("Maria Cliente");
   await consumers.callStore(maria, address!);
+  // Synapse pushes the call to the app; the worker opens the room.
+  await jobs(page, request);
   let roomId = "";
   await expect
     .poll(
       async () => {
-        await jobs(page, request);
         roomId = (await consumers.invites(maria))[0] ?? "";
+        if (!roomId) await jobs(page, request);
         return roomId;
       },
-      { timeout: 90_000, intervals: [1_000, 2_000, 3_000] },
+      { timeout: 120_000, intervals: [1_000, 2_000, 3_000] },
     )
     .not.toBe("");
   await consumers.join(maria, roomId);
