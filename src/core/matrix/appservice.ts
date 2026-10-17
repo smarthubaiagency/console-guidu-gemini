@@ -4,6 +4,7 @@ import type { PrismaClient } from "@prisma/client";
 
 import { matrixConfig, type MatrixConfig } from "./config";
 import { reduceEvent } from "./events";
+import { appLog } from "@/lib/telemetry/log";
 
 /**
  * Entry of the Application Service (IN3, ADR 0023 rule 8). The registration
@@ -92,7 +93,7 @@ export async function handleAppServiceRequest(
         select private.matrix_as_ingest(${txnId}, ${events.length}::integer, ${JSON.stringify(reduced)}::jsonb)
       `;
     } catch (error) {
-      console.error("[matrix] transaction not recorded", {
+      appLog.error("matrix.as.transaction_not_recorded", {
         txnId,
         error: String(error).slice(0, 200),
       });

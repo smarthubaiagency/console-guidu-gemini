@@ -8,6 +8,7 @@ import { matrixConfig, type MatrixConfig } from "./config";
 import { requestAccountSync } from "./jobs";
 import { signLoginToken } from "./jwt";
 import { createSynapseClient, type MatrixFetch, upsertUser } from "./synapse";
+import { appLog } from "@/lib/telemetry/log";
 
 /**
  * Matrix session of the browser (IN3, ADR 0023 rule 9). The console, with
@@ -73,10 +74,9 @@ export async function createMatrixSession(
       name,
     );
   } catch (error) {
-    console.error(
-      "[matrix] account not provisioned",
-      String(error).slice(0, 200),
-    );
+    appLog.error("matrix.account.not_provisioned", {
+      error: String(error).slice(0, 200),
+    });
     throw new AppError({
       code: "unavailable",
       safeMessage: "O chat está indisponível no momento.",

@@ -1,4 +1,5 @@
 import { createPrivateKey, type KeyObject } from "node:crypto";
+import { appLog } from "@/lib/telemetry/log";
 
 /**
  * Configuration of the Matrix core (IN3, ADR 0023). Read from the
@@ -85,25 +86,21 @@ function readConfig(env: Env): MatrixConfig | null {
   const server = homeserver(env.MATRIX_HOMESERVER_URL!.trim());
   const serverName = env.MATRIX_SERVER_NAME!.trim();
   if (!server || !/^[a-z0-9.-]+(:\d+)?$/i.test(serverName)) {
-    console.error(
-      "[matrix] MATRIX_HOMESERVER_URL or MATRIX_SERVER_NAME is invalid; Matrix stays off.",
-    );
+    appLog.error("matrix.config.invalid", {
+      field: "homeserver_or_server_name",
+    });
     return null;
   }
   let jwtPrivateKey: KeyObject;
   try {
     jwtPrivateKey = parsePrivateKey(env.MATRIX_JWT_PRIVATE_KEY!);
   } catch {
-    console.error(
-      "[matrix] MATRIX_JWT_PRIVATE_KEY is not an RSA private key; Matrix stays off.",
-    );
+    appLog.error("matrix.config.invalid", { field: "jwt_private_key" });
     return null;
   }
   const asSender = env.MATRIX_AS_SENDER?.trim() || "_guidu_core";
   if (!/^_guidu_[a-z0-9._=-]+$/.test(asSender)) {
-    console.error(
-      "[matrix] MATRIX_AS_SENDER must be in the _guidu_ namespace; Matrix stays off.",
-    );
+    appLog.error("matrix.config.invalid", { field: "as_sender" });
     return null;
   }
   return Object.freeze({

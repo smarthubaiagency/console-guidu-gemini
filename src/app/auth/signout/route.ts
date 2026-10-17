@@ -6,6 +6,7 @@ import { getRequestOrigin } from "@/core/partners/resolve";
 import { prisma } from "@/lib/prisma/client";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { appLog } from "@/lib/telemetry/log";
 
 /**
  * Logout.
@@ -50,6 +51,8 @@ async function endMatrixSessions(): Promise<void> {
       requestDeviceLogout(tx, userId),
     );
   } catch (error) {
-    console.error("[matrix] logout of the Matrix sessions not queued", String(error).slice(0, 200));
+    appLog.error("matrix.logout.not_queued", {
+      error: String(error).slice(0, 200),
+    });
   }
 }
