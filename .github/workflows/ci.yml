@@ -395,9 +395,74 @@ jobs:
         run: pnpm test:e2e e2e/ai-agents.spec.ts e2e/platform-ai.spec.ts e2e/partner-ai.spec.ts
         env:
           GUIDU_MODULE_AI_AGENTS_ENABLED: "true"
-      # IN4a: the Inbox window against a disposable Synapse (pip) on the
-      # runner's own Postgres, its Application Service pointing at the app
-      # of the rig. Only this step sees Matrix turned on.
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # IN4a: the Inbox window against a disposable Synapse (pip) on the
+  # runner's own Postgres, in a job of its own so the main suite keeps its
+  # time. Only this job sees Matrix turned on.
+  e2e-inbox:
+    name: e2e-inbox
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      APP_NAME: "GUIDU"
+      APP_URL: "http://localhost:3000"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.10.1
+          run_install: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Generate ephemeral encryption key
+        shell: bash
+        run: |
+          enc_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$enc_key"
+          echo "ENCRYPTION_KEY=$enc_key" >> "$GITHUB_ENV"
+          echo "ENCRYPTION_KEY_ID=k1" >> "$GITHUB_ENV"
+          events_key="$(openssl rand -hex 32)"
+          echo "::add-mask::$events_key"
+          echo "EVENTS_HMAC_KEY=$events_key" >> "$GITHUB_ENV"
+          echo "EVENTS_HMAC_KEY_ID=k1" >> "$GITHUB_ENV"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm generate
+      # Chromium cached by the @playwright/test version of the lockfile; on
+      # a hit only the system packages (not cacheable) are installed.
+      - name: Read the Playwright version from the lockfile
+        id: playwright
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -nE "s/^  '@playwright\/test@([0-9][^']*)':.*/\1/p" pnpm-lock.yaml | head -n 1)"
+          if [[ -z "$version" ]]; then
+            echo "::error::@playwright/test not found in pnpm-lock.yaml"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright Chromium
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Playwright Chromium with system dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Playwright system dependencies (Chromium from cache)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -425,6 +490,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-inbox
           path: playwright-report/
           retention-days: 7
