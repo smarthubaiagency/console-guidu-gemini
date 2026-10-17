@@ -10,6 +10,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { FAKE_CHATWOOT_TOKEN } from "./support/fake-chatwoot";
 import {
   createIdentity,
+  runJobs,
   seedWorkspace,
   signIn,
   uniqueEmail,
@@ -107,4 +108,7 @@ test("a workspace scheduled for deletion refuses its channel webhook until the c
   await expect(page.getByTestId("channel-connection")).toContainText(
     "2 eventos sem agente",
   );
+
+  // The lifecycle runs of the schedule and the cancel finish here.
+  expect(await runJobs(request)).toBe(0);
 });

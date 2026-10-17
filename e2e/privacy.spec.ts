@@ -99,4 +99,8 @@ test("the owner exports the workspace, schedules its deletion and cancels it", a
   await expect(page.getByTestId("scheduled-deletions")).toBeHidden();
   const back = await page.goto(`/app/${wsSlug}`);
   expect(back?.status()).toBe(200);
+
+  // The lifecycle runs of the schedule and the cancel (WS1) finish here,
+  // not in the next spec's worker.
+  expect(await runJobs(request)).toBe(0);
 });
