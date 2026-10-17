@@ -1,0 +1,45 @@
+{
+  "settings": {
+    "title": "GUIDS in the Inbox",
+    "description": "The chosen GUIDS answers pending conversations (with no attendant) on its own and hands them to the team when needed.",
+    "agent": "GUIDS that answers",
+    "none": "None: only the team answers",
+    "off": "{name} (off)",
+    "gone": "Removed GUIDS",
+    "agentHint": "Only a GUIDS that is on can be chosen. In the conversation, the customer sees the agent's name.",
+    "fields": {
+      "grouping_seconds": "Wait to group messages (seconds)",
+      "max_messages": "Messages per answer",
+      "max_chars": "Characters per message",
+      "interval_ms": "Interval between messages (milliseconds)"
+    },
+    "hints": {
+      "grouping_seconds": "Consecutive messages from the customer get a single answer. From 0 to 30.",
+      "max_messages": "Longer answers are joined into the last message. From 1 to 5.",
+      "max_chars": "Guidance for the agent to keep texts short. From 100 to 1,000.",
+      "interval_ms": "Pause between the messages of one answer. Up to 5,000."
+    },
+    "backToBot": "After a handoff, the conversation goes back to the GUIDS with \"Return to GUIDS\" in the conversation panel. A resolved conversation in which the customer writes again reopens as pending, with the GUIDS.",
+    "save": "Save",
+    "viewOnly": "Only Inbox managers can change these settings.",
+    "saved": "Inbox settings saved."
+  },
+  "panel": {
+    "title": "GUIDS",
+    "agent": "Agent",
+    "none": "None",
+    "now": "Now",
+    "withGuids": "With the GUIDS",
+    "withTeam": "With the team",
+    "summary": "GUIDS summary",
+    "reason": "Handoff reason: {reason}",
+    "return": "Return to GUIDS",
+    "returned": "Conversation returned to the GUIDS."
+  },
+  "errors": {
+    "invalidService": "Check the service rules.",
+    "guidsNotActive": "Choose a GUIDS of this workspace that is on.",
+    "noGuids": "No GUIDS answers the Inbox of this workspace.",
+    "alreadyWithGuids": "The conversation is already with the GUIDS."
+  }
+}

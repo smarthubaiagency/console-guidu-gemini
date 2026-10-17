@@ -44,7 +44,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { changeConversationAction, listConversationsAction } from "../actions";
-import { getRoom } from "../client/room-data";
+import { getRoom, unreadCount } from "../client/room-data";
 import { useInboxMatrix } from "../client/use-inbox-matrix";
 import {
   type ConversationPage,
@@ -116,6 +116,7 @@ function InboxWindow({
   const { open: listOpen, setOpen: setListOpen } = useSidebar();
   const [view, setView] = useState<InboxView>(initialView);
   const [search, setSearch] = useState("");
+  const [labelId, setLabelId] = useState<string | null>(null);
   const [page, setPage] = useState<ConversationPage | null>(null);
   const [selected, setSelected] = useState<string | null>(initialRoomId);
   const [contextOpen, setContextOpen] = useState(false);
@@ -130,9 +131,10 @@ function InboxWindow({
       workspaceSlug,
       view,
       ...(search.trim() ? { search: search.trim() } : {}),
+      ...(labelId ? { labelId } : {}),
     });
     if ("page" in result) setPage(result.page);
-  }, [workspaceSlug, view, search]);
+  }, [workspaceSlug, view, search, labelId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void refresh(), search ? 250 : 0);
@@ -171,6 +173,29 @@ function InboxWindow({
     [page, selected],
   );
   const room = getRoom(matrix.client, selected);
+
+  // Unread messages of the attendant (Matrix receipts, IN4b), in the tab.
+  const unread = useMemo(() => {
+    void matrix.revision;
+    if (!matrix.client) return 0;
+    let total = 0;
+    for (const room of matrix.client.getRooms()) {
+      if (room.getMyMembership() === "join") total += unreadCount(room, me);
+    }
+    return total;
+  }, [matrix.client, matrix.revision, me]);
+  const baseTitle = useRef<string | null>(null);
+  useEffect(() => {
+    baseTitle.current ??= document.title;
+    document.title =
+      unread > 0 ? `(${unread}) ${baseTitle.current}` : baseTitle.current;
+  }, [unread]);
+  useEffect(
+    () => () => {
+      if (baseTitle.current) document.title = baseTitle.current;
+    },
+    [],
+  );
 
   const run = useCallback(
     async (command: ConversationCommand) => {
@@ -213,6 +238,11 @@ function InboxWindow({
       revision={matrix.revision}
       me={me}
       address={address}
+      labelId={labelId}
+      onLabel={(next) => {
+        setLabelId(next);
+        setPage(null);
+      }}
     />
   );
   const conversation = (
@@ -231,6 +261,7 @@ function InboxWindow({
   );
   const context = (
     <ContextPanel
+      workspaceSlug={workspaceSlug}
       roomId={selected}
       room={room}
       summary={summary}
@@ -239,6 +270,8 @@ function InboxWindow({
       busy={busy}
       revision={matrix.revision}
       onCommand={run}
+      labels={page?.labels ?? []}
+      onChanged={refresh}
     />
   );
 
@@ -342,7 +375,11 @@ function InboxWindow({
               {conversation}
             </ResizablePanel>
             <ResizableHandle withHandle />
-            <ResizablePanel id="inbox-panel-context" defaultSize="24" minSize="16">
+            <ResizablePanel
+              id="inbox-panel-context"
+              defaultSize="24"
+              minSize="16"
+            >
               {context}
             </ResizablePanel>
           </ResizablePanelGroup>

@@ -32,14 +32,15 @@ import {
   decideByToken,
   decideInApp,
   requestManagedMode,
+  revertByPartner,
   revertToStandard,
 } from "./service";
 
 /**
  * Server actions of the service modes (GB1c): the partner console and the
- * platform ask and cancel; the owner decides by the secure link or in
- * /app and goes back to `padrao`. Each one checks again who acts; the
- * database functions and RLS repeat it.
+ * platform ask, cancel and (AJ1) give the company back to `padrao`; the
+ * owner decides by the secure link or in /app and goes back to `padrao`.
+ * Each one checks again who acts; the database functions and RLS repeat it.
  */
 
 export type ServiceModeActionState = PartnerActionState;
@@ -155,6 +156,59 @@ export async function cancelManagedModePartnerAction(
   }
 }
 
+async function revertingPartner() {
+  const actor = await partnerActor();
+  if (
+    !actor.partnerRole ||
+    !hasPartnerRolePermission(
+      actor.partnerRole,
+      Permissions.PARTNER_SERVICE_MODE_REVERT,
+    )
+  ) {
+    throw serviceModeFailure("forbidden");
+  }
+  return actor;
+}
+
+const revertInput = z.object({
+  organizationId: uuid,
+  reason: z.string().max(2000),
+});
+
+/**
+ * "Devolver ao padrão" (AJ1): the partner ends the managed mode of a
+ * customer, with a reason; called by the confirmation dialog.
+ */
+export async function revertManagedModePartnerAction(
+  input: Readonly<{ organizationId: string; reason: string }>,
+): Promise<ServiceModeActionState> {
+  try {
+    const actor = await revertingPartner();
+    const parsed = revertInput.parse(input);
+    const origin = (await getRequestOrigin()) ?? "";
+    await withIdentityContext(
+      prisma,
+      actor.userId,
+      (tx) =>
+        revertByPartner(
+          tx,
+          { userId: actor.userId, via: "partner" },
+          parsed.organizationId,
+          parsed.reason,
+          origin,
+        ),
+      { partnerId: actor.partnerId },
+    );
+    revalidatePath("/admin/customers");
+    return {
+      success: true,
+      message: (await t())("results.revertedByPartner"),
+    };
+  } catch (err) {
+    return actionFailure(err);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Platform console (/platform › Clientes): direct customers (partner zero)
 // ---------------------------------------------------------------------------
@@ -220,6 +274,46 @@ export async function cancelManagedModePlatformAction(
     );
     revalidatePath("/platform/customers");
     return { success: true, message: (await t())("results.cancelled") };
+  } catch (err) {
+    return actionFailure(err);
+  }
+}
+
+/** "Devolver ao padrão" for a direct customer (owner, operations; AJ1). */
+export async function revertManagedModePlatformAction(
+  input: Readonly<{ organizationId: string; reason: string }>,
+): Promise<ServiceModeActionState> {
+  try {
+    const actor = await platformActor();
+    if (
+      !actor.role ||
+      !hasPlatformRolePermission(
+        actor.role,
+        Permissions.PLATFORM_SERVICE_MODE_REVERT,
+      )
+    ) {
+      throw serviceModeFailure("forbidden");
+    }
+    const parsed = revertInput.parse(input);
+    const origin = (await getRequestOrigin()) ?? "";
+    await withIdentityContext(
+      prisma,
+      actor.userId,
+      (tx) =>
+        revertByPartner(
+          tx,
+          { userId: actor.userId, via: "platform" },
+          parsed.organizationId,
+          parsed.reason,
+          origin,
+        ),
+      { partnerId: actor.partnerId },
+    );
+    revalidatePath("/platform/customers");
+    return {
+      success: true,
+      message: (await t())("results.revertedByPartner"),
+    };
   } catch (err) {
     return actionFailure(err);
   }

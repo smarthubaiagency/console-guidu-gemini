@@ -91,4 +91,35 @@ describe("changes of the conversation (IN4a)", () => {
       ),
     ).toThrow(expect.objectContaining({ code: "forbidden" }));
   });
+
+  it("lets who answers give the conversation back to the GUIDS (IN6)", () => {
+    expect(
+      nextConversationState(
+        { status: "open", assignee: bia },
+        { kind: "return" },
+        answers,
+      ),
+    ).toEqual({ status: "pending", assignee: null });
+    expect(
+      nextConversationState(
+        { status: "resolved", assignee: null },
+        { kind: "return" },
+        answers,
+      ),
+    ).toEqual({ status: "pending", assignee: null });
+    expect(() =>
+      nextConversationState(
+        { status: "pending", assignee: null },
+        { kind: "return" },
+        answers,
+      ),
+    ).toThrow(expect.objectContaining({ code: "conflict" }));
+    expect(() =>
+      nextConversationState(
+        { status: "open", assignee: null },
+        { kind: "return" },
+        reader,
+      ),
+    ).toThrow(expect.objectContaining({ code: "forbidden" }));
+  });
 });

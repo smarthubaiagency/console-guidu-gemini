@@ -1,0 +1,45 @@
+{
+  "settings": {
+    "title": "GUIDS no Inbox",
+    "description": "O GUIDS escolhido responde sozinho as conversas pendentes (sem atendente) e transfere para a equipe quando precisa.",
+    "agent": "GUIDS que atende",
+    "none": "Nenhum: só a equipe atende",
+    "off": "{name} (desligado)",
+    "gone": "GUIDS removido",
+    "agentHint": "Só um GUIDS ligado pode ser escolhido. Na conversa, o cliente vê o nome do agente.",
+    "fields": {
+      "grouping_seconds": "Espera para juntar mensagens (segundos)",
+      "max_messages": "Mensagens por resposta",
+      "max_chars": "Caracteres por mensagem",
+      "interval_ms": "Intervalo entre mensagens (milissegundos)"
+    },
+    "hints": {
+      "grouping_seconds": "Mensagens seguidas do cliente viram uma só resposta. De 0 a 30.",
+      "max_messages": "Respostas maiores são juntadas na última mensagem. De 1 a 5.",
+      "max_chars": "Orientação ao agente para textos curtos. De 100 a 1.000.",
+      "interval_ms": "Pausa entre uma mensagem e outra da mesma resposta. Até 5.000."
+    },
+    "backToBot": "Depois de uma transferência, a conversa volta para o GUIDS com \"Devolver ao GUIDS\" no painel da conversa. Uma conversa resolvida em que o cliente volta a escrever reabre como pendente, com o GUIDS.",
+    "save": "Salvar",
+    "viewOnly": "Só quem gerencia o Inbox altera estas configurações.",
+    "saved": "Configurações do Inbox salvas."
+  },
+  "panel": {
+    "title": "GUIDS",
+    "agent": "Agente",
+    "none": "Nenhum",
+    "now": "Agora",
+    "withGuids": "Com o GUIDS",
+    "withTeam": "Com a equipe",
+    "summary": "Resumo do GUIDS",
+    "reason": "Motivo da transferência: {reason}",
+    "return": "Devolver ao GUIDS",
+    "returned": "Conversa devolvida ao GUIDS."
+  },
+  "errors": {
+    "invalidService": "Confira as regras de atendimento.",
+    "guidsNotActive": "Escolha um GUIDS ligado deste workspace.",
+    "noGuids": "Nenhum GUIDS atende o Inbox deste workspace.",
+    "alreadyWithGuids": "A conversa já está com o GUIDS."
+  }
+}

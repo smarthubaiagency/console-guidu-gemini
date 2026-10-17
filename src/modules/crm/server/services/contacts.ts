@@ -6,7 +6,12 @@ import { decodeCursor, pageOf } from "@/core/api/pagination";
 import { recordAudit } from "@/core/audit/record";
 import { assertWithinQuota, resolveQuota } from "@/core/entitlements/quotas";
 import { assertModuleOperational } from "@/core/module-runtime/state";
-import { requireWorkspacePermission } from "@/core/permissions/guard";
+import { Permissions } from "@/core/permissions/catalog";
+import {
+  getEffectiveWorkspaceRole,
+  requireWorkspacePermission,
+  workspaceRoleGrants,
+} from "@/core/permissions/guard";
 import type {
   ContextTransaction,
   RequestContext,
@@ -210,6 +215,47 @@ export async function getContact(
     : null;
   if (!row) throw notFound();
   return toDto(row);
+}
+
+/** The card of a contact shown beside a conversation (IN4b). */
+export type ContactCard = Readonly<{
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  companyName: string | null;
+}>;
+
+/**
+ * The card of the contact linked to a conversation of the Inbox (IN4b):
+ * read by who reads the CRM, or by who reads the Inbox (the Attendant has
+ * no CRM, but sees who they are talking to). Only these fields leave.
+ */
+export async function getContactCard(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  contactId: string,
+): Promise<ContactCard | null> {
+  await assertModuleOperational(tx, ctx, MODULE_KEY, "read");
+  const role = await getEffectiveWorkspaceRole(tx, ctx);
+  const allowed =
+    role !== null &&
+    (workspaceRoleGrants(role, CrmPermissions.CONTACTS_READ) ||
+      workspaceRoleGrants(role, Permissions.INBOX_VIEW));
+  if (!allowed) throw notFound();
+  const id = z.string().uuid().safeParse(contactId);
+  if (!id.success) return null;
+  const row = await tx.crmContact.findFirst({
+    where: { id: id.data, workspaceId: ctx.workspaceId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      companyName: true,
+    },
+  });
+  return row ?? null;
 }
 
 /** Creates a contact under the workspace quota (serialized per workspace). */

@@ -8,7 +8,9 @@ import {
   removeAttendant,
   upsertMember,
 } from "./accounts";
+import { agentForNewRoom, joinAgent } from "./agent";
 import { coreUserId } from "./config";
+import { runRoomOpened } from "./room-hooks";
 import {
   createRoom,
   deactivateUser,
@@ -129,9 +131,15 @@ export async function createConversationRoom(
     select: { id: true },
   });
   const attendants = await workspaceAttendants(tx, client, input.workspaceId);
+  // The Inbox GUIDS (IN6) sends at 10, like the attendants who answer.
+  const agent = await agentForNewRoom(tx, client, {
+    workspaceId: input.workspaceId,
+    organizationId,
+  });
   // The consumer sends at 10 like the attendants who answer.
   const powers: Record<string, number> = {};
   for (const attendant of attendants) powers[attendant.mxid] = attendant.power;
+  if (agent) powers[agent] = REPLY_POWER;
   if (input.consumerMxid) powers[input.consumerMxid] = REPLY_POWER;
   const roomId = await createRoom(client, {
     name: input.name ?? null,
@@ -142,6 +150,10 @@ export async function createConversationRoom(
   for (const attendant of attendants) {
     await joinAttendant(client, roomId, attendant);
     await upsertMember(tx, ref, attendant.mxid, "join", null, attendant.power);
+  }
+  if (agent) {
+    await joinAgent(client, roomId, agent);
+    await upsertMember(tx, ref, agent, "join", null, REPLY_POWER);
   }
   if (input.consumerMxid) {
     await invite(client, roomId, input.consumerMxid);
@@ -161,6 +173,13 @@ export async function createConversationRoom(
       consumerMxid: input.consumerMxid ?? null,
       consumerName: input.consumerName?.trim().slice(0, 255) || null,
     },
+  });
+  // CRM contact and the notice of a new conversation (IN4b).
+  await runRoomOpened(tx, {
+    roomId,
+    workspaceId: input.workspaceId,
+    organizationId,
+    consumerName: input.consumerName?.trim().slice(0, 255) || null,
   });
   return { id: row.id, roomId, attendants: attendants.length };
 }

@@ -673,8 +673,27 @@ export async function startTestDatabase(
         console.error("run-jobs: still waiting", stuck.rows);
         console.error(`run-jobs: worker output\n${output.join("\n")}`);
       }
+      // A worker stuck in a job never exits on SIGTERM and keeps PGlite's
+      // single session: every request of the web then times out. After a
+      // grace period it is killed, which closes its connection.
+      const exited =
+        child.exitCode !== null || child.signalCode !== null
+          ? Promise.resolve()
+          : new Promise((resolve) => child.once("exit", resolve));
       child.kill("SIGTERM");
-      await new Promise((resolve) => child.once("exit", resolve));
+      const stopped = await Promise.race([
+        exited.then(() => true),
+        new Promise<boolean>((resolve) =>
+          setTimeout(() => resolve(false), 10_000),
+        ),
+      ]);
+      if (!stopped) {
+        console.error(
+          `run-jobs: worker did not stop, killed\n${output.join("\n")}`,
+        );
+        child.kill("SIGKILL");
+        await exited;
+      }
       return { remaining };
     },
     close: async () => {

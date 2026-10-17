@@ -288,8 +288,11 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/event-handoffs-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/platform-audit-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/service-modes-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/aj1-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/matrix-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/inbox-attendants-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/inbox-context-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/inbox-guids-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/workspace-soft-delete-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/security-catalog.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/attendant-rls.sql
@@ -432,7 +435,8 @@ jobs:
     needs: changes
     if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # Two specs of up to 5 min each, retried in CI.
+    timeout-minutes: 25
     env:
       APP_NAME: "GUIDU"
       APP_URL: "http://localhost:3000"
@@ -501,9 +505,12 @@ jobs:
           bash scripts/local/synapse.sh setup
           bash scripts/local/synapse.sh start
       - name: Run Inbox E2E tests with the local Synapse
-        run: pnpm test:e2e e2e/inbox.spec.ts
+        # `list` prints each failure as it happens, before a retry.
+        run: pnpm test:e2e --reporter=list,html e2e/inbox.spec.ts e2e/inbox-guids.spec.ts
         env:
           MATRIX_E2E_ENV_FILE: ${{ runner.temp }}/synapse/setup/console.env
+          # IN6: the GUIDS of the Inbox needs the AI agents module.
+          GUIDU_MODULE_AI_AGENTS_ENABLED: "true"
       - name: Synapse log on failure
         if: failure()
         run: tail -n 200 "${{ runner.temp }}/synapse/data/homeserver.log" || true

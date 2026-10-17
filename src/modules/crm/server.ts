@@ -8,9 +8,11 @@ export {
   ContactCreateInput,
   ContactUpdateInput,
   createContact,
+  getContactCard,
   getContact,
   listContacts,
   ListContactsQuery,
   updateContact,
+  type ContactCard,
   type ContactDto,
 } from "./server/services/contacts";

@@ -19,10 +19,22 @@ export type ConversationSummary = Readonly<{
   consumerMxid: string | null;
   consumerName: string | null;
   updatedAt: string;
+  /** Labels on the conversation (IN4b). */
+  labelIds: readonly string[];
+}>;
+
+export type LabelColor = "neutral" | "info" | "success" | "warning" | "danger";
+
+export type LabelView = Readonly<{
+  id: string;
+  name: string;
+  color: LabelColor;
 }>;
 
 export type ConversationPage = Readonly<{
   items: ConversationSummary[];
+  /** The label catalog of the workspace (IN4b). */
+  labels: readonly LabelView[];
   counts: Readonly<Record<InboxView, number>>;
 }>;
 

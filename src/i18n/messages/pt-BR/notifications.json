@@ -73,7 +73,12 @@
     "proposals_rejected": "Proposta rejeitada",
     "proposals_executed": "Proposta executada",
     "proposals_failed": "Proposta não executada",
-    "proposals_expired": "Proposta vencida"
+    "proposals_expired": "Proposta vencida",
+    "service_mode_reverted_by_partner": "Gerenciamento encerrado pelo parceiro",
+    "security_ip_blocked": "Acesso recusado pela lista de IPs",
+    "inbox_conversation_new": "Conversa nova no Inbox",
+    "inbox_conversation_assigned": "Conversa atribuída a você",
+    "inbox_conversation_unanswered": "Conversa sem resposta"
   },
   "whatsapp": {
     "generic": "{marca}: você tem um aviso novo em {workspace}. {link}",
@@ -88,7 +93,11 @@
     "security_mfa_requirement_off": "{marca}: a exigência de verificação em duas etapas foi retirada em {workspace}. {link}",
     "digital_profile_lead_submitted": "{marca}: chegou um contato novo pelo perfil digital de {workspace}. {link}",
     "proposals_requested": "{marca}: há uma proposta esperando sua decisão em {workspace}: {operacao}. Vence em {validade}. Decida em {link}",
-    "proposals_failed": "{marca}: a proposta {operacao} em {workspace} não foi executada. {link}"
+    "proposals_failed": "{marca}: a proposta {operacao} em {workspace} não foi executada. {link}",
+    "security_ip_blocked": "{marca}: o endereço {ip} foi recusado em {area} pela lista de IPs. {link}",
+    "inbox_conversation_new": "{marca}: conversa nova de {contato} no Inbox de {workspace}. {link}",
+    "inbox_conversation_assigned": "{marca}: a conversa com {contato} foi atribuída a você. {link}",
+    "inbox_conversation_unanswered": "{marca}: {contato} está sem resposta há 15 minutos. {link}"
   },
   "hub": {
     "action": "Abrir no painel",
@@ -167,6 +176,26 @@
     "proposals_expired": {
       "subject": "Proposta vencida em {workspace}",
       "body": "A proposta {operacao} venceu sem decisão."
+    },
+    "service_mode_reverted_by_partner": {
+      "subject": "{parceiro} encerrou o gerenciamento de {empresa}",
+      "body": "{empresa} voltou para o modo padrão e o acesso da equipe de {parceiro} terminou. Motivo: {motivo}"
+    },
+    "security_ip_blocked": {
+      "subject": "Acesso recusado em {area}",
+      "body": "O endereço {ip} tentou entrar em {area} e foi recusado pela lista de IPs permitidos."
+    },
+    "inbox_conversation_new": {
+      "subject": "Conversa nova: {contato}",
+      "body": "{contato} começou uma conversa no Inbox."
+    },
+    "inbox_conversation_assigned": {
+      "subject": "Conversa atribuída: {contato}",
+      "body": "A conversa com {contato} agora é sua."
+    },
+    "inbox_conversation_unanswered": {
+      "subject": "Sem resposta: {contato}",
+      "body": "{contato} está esperando resposta há 15 minutos."
     }
   },
   "digest": {

@@ -87,7 +87,15 @@
     },
     "reasonLine": "Reason: {reason} (ref. {reference})",
     "eventsCount": "{count, plural, one {# event} other {# events}}",
-    "until": "until {date}"
+    "until": "until {date}",
+    "selectEvent": "Select for the access request",
+    "selectOtherWorkspace": "Only events of the same customer and workspace go in one request.",
+    "selected": "{count, plural, one {# event selected} other {# events selected}} of {workspace}",
+    "selectHint": "Tick events of one customer to ask for the data of all of them at once (up to {max}).",
+    "requestSelected": "Ask access to the selected",
+    "clearSelection": "Clear selection",
+    "requestManyTitle": "Ask access to {count, plural, one {# event} other {# events}}",
+    "requestManyHint": "The owner or an admin of the workspace approves. Only you will see, only these events, for the approved term."
   },
   "trace": {
     "deliveries": "Who was told",
@@ -284,6 +292,7 @@
       "channel": "Channel unavailable for this notice.",
       "role": "Recipient unavailable for this notice.",
       "escalation": "Only approval notices have escalation."
-    }
+    },
+    "mixedWorkspaces": "One request covers events of a single customer and workspace."
   }
 }

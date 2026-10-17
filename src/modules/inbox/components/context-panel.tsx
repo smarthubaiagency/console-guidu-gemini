@@ -19,6 +19,10 @@ import {
   roomConversation,
 } from "../client/room-data";
 import type { ConversationSummary } from "../views";
+import type { LabelView } from "../views";
+import { ContactCard } from "./contact-card";
+import { GuidsCard } from "./guids-card";
+import { LabelsCard } from "./labels-card";
 import { StatusBadge } from "./status-badge";
 import type { ConversationCommand, InboxViewer } from "./types";
 
@@ -30,6 +34,7 @@ import type { ConversationCommand, InboxViewer } from "./types";
  * room holds wins over the mirror, which follows a moment later.
  */
 export function ContextPanel({
+  workspaceSlug,
   roomId,
   room,
   summary,
@@ -38,7 +43,10 @@ export function ContextPanel({
   busy,
   revision,
   onCommand,
+  labels,
+  onChanged,
 }: Readonly<{
+  workspaceSlug: string;
   roomId: string | null;
   room: Room | null;
   summary: ConversationSummary | null;
@@ -47,6 +55,9 @@ export function ContextPanel({
   busy: boolean;
   revision: number;
   onCommand: (command: ConversationCommand) => void;
+  labels: readonly LabelView[];
+  /** Something changed from a card of its own: refresh the list. */
+  onChanged: () => Promise<void>;
 }>) {
   const t = useTranslations("inbox");
   const state = useMemo(() => {
@@ -85,32 +96,16 @@ export function ContextPanel({
     <aside className="h-full min-h-0" aria-label={t("context.title")}>
       <ScrollArea className="h-full">
         <div className="space-y-4 p-4" data-testid="inbox-context">
-          <Card variant="surface">
-            <CardHeader>
-              <CardTitle className="text-14">{t("context.contact")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <KeyValueList
-                items={[
-                  {
-                    label: t("context.name"),
-                    value:
-                      summary?.consumerName ??
-                      memberName(room, consumer) ??
-                      t("unknownContact"),
-                  },
-                  {
-                    label: t("context.chatId"),
-                    value: (
-                      <span className="text-11 font-mono break-all">
-                        {consumer ?? "—"}
-                      </span>
-                    ),
-                  },
-                ]}
-              />
-            </CardContent>
-          </Card>
+          <ContactCard
+            workspaceSlug={workspaceSlug}
+            roomId={roomId}
+            fallbackName={
+              summary?.consumerName ??
+              memberName(room, consumer) ??
+              t("unknownContact")
+            }
+            chatId={consumer}
+          />
 
           <Card variant="surface">
             <CardHeader>
@@ -206,6 +201,24 @@ export function ContextPanel({
               ) : null}
             </CardContent>
           </Card>
+
+          <GuidsCard
+            workspaceSlug={workspaceSlug}
+            roomId={roomId}
+            status={state.status}
+            assignee={state.assignee}
+            answers={answers}
+            onChanged={onChanged}
+          />
+
+          <LabelsCard
+            workspaceSlug={workspaceSlug}
+            roomId={roomId}
+            viewer={viewer}
+            labels={labels}
+            active={summary?.labelIds ?? []}
+            onChanged={onChanged}
+          />
         </div>
       </ScrollArea>
     </aside>

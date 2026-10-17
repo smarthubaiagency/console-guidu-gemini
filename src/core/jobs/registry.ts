@@ -14,6 +14,7 @@ import { verifyChainsJob, verifyChainsSchedule } from "@/core/events/verify";
 import { translateTextsJob } from "@/core/i18n/machine/texts-job";
 import { translateDocumentJob } from "@/core/legal/machine-job";
 import { matrixCleanupSchedule, matrixJobs } from "@/core/matrix/jobs";
+import { inboxJobs, unansweredSchedule } from "@/modules/inbox/server/jobs";
 import { workspaceExportJob } from "@/core/privacy/export";
 import {
   workspaceLifecycleJob,
@@ -21,8 +22,10 @@ import {
 } from "@/core/privacy/lifecycle-jobs";
 import { privacyJobs, privacySchedules } from "@/core/privacy/maintenance";
 import { proposalExecuteJob } from "@/core/proposals/service";
+import { ipBlockedJob } from "@/core/security/ip-blocked-job";
 import { backgroundAnalysesJob } from "@/modules/google-business/server/jobs";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
+import { guidsTurnJob } from "@/modules/inbox/server/guids-turn";
 
 import type { JobDefinition, JobSchedule } from "./definition";
 
@@ -45,6 +48,8 @@ const DEFINITIONS = [
   accessRequestJob,
   // H4: hand-off of an event to each of its subscribers.
   eventsSubscriberJob,
+  // AJ1: an address refused by the IP gate of /platform or /admin.
+  ipBlockedJob,
   translateTextsJob,
   translateDocumentJob,
   workspaceExportJob,
@@ -56,6 +61,10 @@ const DEFINITIONS = [
   channelDispatchJob,
   // Matrix core of the Inbox (IN3).
   ...matrixJobs,
+  // Inbox (IN4b): the CRM contact of a conversation and the notices.
+  ...inboxJobs,
+  // The GUIDS answering in the rooms of the Inbox (IN6).
+  guidsTurnJob,
   backgroundAnalysesJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];
@@ -85,5 +94,6 @@ export function listJobSchedules(): readonly JobSchedule[] {
     verifyChainsSchedule,
     noticesTickSchedule,
     matrixCleanupSchedule,
+    unansweredSchedule,
   ];
 }

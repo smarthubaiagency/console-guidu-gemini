@@ -27,7 +27,10 @@ import { withIdentityContext } from "@/lib/prisma/with-identity-context";
 import { AppError } from "@/shared/errors";
 
 import {
+  ACCESS_MAX_EVENTS,
   type AccessRequester,
+  type AccessTarget,
+  commonTarget,
   decideEventAccess,
   readEventDataByGrant,
   requestEventAccess,
@@ -177,17 +180,57 @@ export async function setConsoleEventStatusAction(
 
 const requestInput = z.object({
   level: z.enum(["platform", "partner"]),
-  eventId: uuid,
+  eventIds: z.array(uuid).min(1).max(ACCESS_MAX_EVENTS),
   reason: z.string().max(2000),
   reference: z.string().max(500),
   hours: z.number().int().min(1).max(1000).optional(),
 });
 
-/** Asks the customer for the data of an event (from the event's drawer). */
+/** The workspace of each asked event as the requester reads it. */
+async function requestTarget(
+  tx: ContextTransaction,
+  requester: AccessRequester,
+  eventIds: readonly string[],
+): Promise<AccessTarget | "mixed" | null> {
+  const targets: (AccessTarget | null)[] = [];
+  if (requester.kind === "platform") {
+    for (const eventId of eventIds) {
+      const detail = await platformEventDetail(
+        tx,
+        { userId: requester.userId, platformRole: requester.platformRole },
+        eventId,
+      );
+      targets.push(
+        detail?.workspaceId && detail.organizationId
+          ? {
+              workspaceId: detail.workspaceId,
+              organizationId: detail.organizationId,
+            }
+          : null,
+      );
+    }
+  } else {
+    const rows = await listPartnerEvents(tx, requester.partnerId, {});
+    for (const eventId of eventIds) {
+      const row = rows.find((r) => r.id === eventId);
+      targets.push(
+        row?.workspaceId && row.organizationId
+          ? { workspaceId: row.workspaceId, organizationId: row.organizationId }
+          : null,
+      );
+    }
+  }
+  return commonTarget(targets);
+}
+
+/**
+ * Asks the customer for the data of one event (from the event's drawer) or
+ * of several events of the same workspace at once (the list, AJ1).
+ */
 export async function requestEventAccessAction(
   input: Readonly<{
     level: "platform" | "partner";
-    eventId: string;
+    eventIds: readonly string[];
     reason: string;
     reference: string;
     hours?: number;
@@ -199,29 +242,16 @@ export async function requestEventAccessAction(
       parsed.level === "platform"
         ? await platformRequester()
         : await partnerRequester();
+    const eventIds = [...new Set(parsed.eventIds)];
     await withRequester(requester, async (tx) => {
-      let target: { workspaceId: string; organizationId: string } | null = null;
-      if (requester.kind === "platform") {
-        const detail = await platformEventDetail(
-          tx,
-          { userId: requester.userId, platformRole: requester.platformRole },
-          parsed.eventId,
-        );
-        if (detail?.workspaceId && detail.organizationId) {
-          target = {
-            workspaceId: detail.workspaceId,
-            organizationId: detail.organizationId,
-          };
-        }
-      } else {
-        const rows = await listPartnerEvents(tx, requester.partnerId, {});
-        const row = rows.find((r) => r.id === parsed.eventId);
-        if (row?.workspaceId && row.organizationId) {
-          target = {
-            workspaceId: row.workspaceId,
-            organizationId: row.organizationId,
-          };
-        }
+      const target = await requestTarget(tx, requester, eventIds);
+      if (target === "mixed") {
+        throw new AppError({
+          code: "invalid_input",
+          safeMessage:
+            "Um pedido vale para eventos de um mesmo cliente e workspace.",
+          messageKey: "eventRules.errors.mixedWorkspaces",
+        });
       }
       if (!target) {
         throw new AppError({
@@ -232,7 +262,7 @@ export async function requestEventAccessAction(
       }
       return requestEventAccess(tx, requester, {
         ...target,
-        eventIds: [parsed.eventId],
+        eventIds,
         reason: parsed.reason,
         reference: parsed.reference,
         ...(parsed.hours ? { durationHours: parsed.hours } : {}),

@@ -1,6 +1,5 @@
 import "server-only";
 
-import { recordAudit } from "@/core/audit/record";
 import { type EventActor, emitEvent } from "@/core/events/emit";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
 import type {
@@ -32,7 +31,9 @@ export { consoleUrlOf, linkUrlOf, settingsUrlOf } from "./requests";
  *   `events.dispatch` of `service_mode.change_requested` writes the token)
  *   and approves or denies on a public page, or inside /app;
  * - the owner goes back to `padrao` alone, at any time, in Configurações ›
- *   Modo de serviço; the managing team loses access on the next query.
+ *   Modo de serviço; the managing team loses access on the next query;
+ * - the partner (or GUIDU) also ends the managed mode, with a reason, in
+ *   Clientes (AJ1); the owner hears by bell and e-mail.
  * The database functions (`private.service_mode_request_*`) check who may
  * do what and keep the proof (who, when, how, IP, user agent); every step
  * is audited and leaves an event of the Central de Eventos.
@@ -281,7 +282,7 @@ export async function decideInApp(
 }
 
 // ---------------------------------------------------------------------------
-// Back to `padrao` (the company owner)
+// Back to `padrao` (the company owner, the partner or GUIDU)
 // ---------------------------------------------------------------------------
 
 async function isCompanyOwner(
@@ -300,6 +301,38 @@ async function isCompanyOwner(
   return member?.role === "owner" && member.status === "active";
 }
 
+type RevertRow = {
+  workspace_id: string | null;
+  workspace_slug: string | null;
+  workspace_name: string | null;
+  organization_name: string | null;
+  partner_id: string;
+  partner_name: string | null;
+};
+
+/** Who moves a company back to `padrao` (AJ1: one database path). */
+export type RevertVia = "customer" | ServiceModeRequester;
+
+/**
+ * `private.service_mode_revert`: checks who acts, moves the mode row back
+ * to `padrao` and writes the audit in the same call. The managing team
+ * loses access with this transaction (every policy reads the row).
+ */
+async function revertInDatabase(
+  tx: ContextTransaction,
+  organizationId: string,
+  via: RevertVia,
+  reason: string | null,
+): Promise<RevertRow> {
+  const [row] = await rethrow(
+    tx.$queryRaw<RevertRow[]>`
+      select * from private.service_mode_revert(${organizationId}::uuid, ${via}, ${reason})
+    `,
+  );
+  if (!row) throw serviceModeFailure("not_found");
+  return row;
+}
+
 /**
  * The owner moves the company back to `padrao`. The access of the managing
  * team ends with this transaction; the partner hears through the event.
@@ -311,41 +344,13 @@ export async function revertToStandard(
   origin: string,
 ): Promise<void> {
   if (!(await isCompanyOwner(tx, ctx))) throw serviceModeFailure("forbidden");
-  const current = await tx.organizationServiceMode.findUnique({
-    where: { organizationId: ctx.organizationId },
-    select: { mode: true, partnerId: true },
-  });
-  if (current?.mode !== "gerenciado") {
-    throw serviceModeFailure("not_found");
-  }
-  const updated = await tx.organizationServiceMode.updateMany({
-    where: { organizationId: ctx.organizationId, mode: "gerenciado" },
-    data: {
-      mode: "padrao",
-      source: "customer",
-      requestId: null,
-      setBy: ctx.userId,
-    },
-  });
-  if (updated.count === 0) throw serviceModeFailure("not_found");
-  await recordAudit(tx, ctx, {
-    action: "service_mode.reverted",
-    resourceType: "organization",
-    resourceId: ctx.organizationId,
-    result: "success",
-    origin: "app",
-    metadata: {
-      from: "gerenciado",
-      to: "padrao",
-      partnerId: current.partnerId,
-    },
-  });
+  const row = await revertInDatabase(tx, ctx.organizationId, "customer", null);
   const via: ServiceModeRequester =
-    current.partnerId === HOUSE_PARTNER_ID ? "platform" : "partner";
+    row.partner_id === HOUSE_PARTNER_ID ? "platform" : "partner";
   await emitEvent(tx, {
     type: "service_mode.changed",
     actor: eventActor(ctx.userId, "app"),
-    partnerId: current.partnerId,
+    partnerId: row.partner_id,
     organizationId: ctx.organizationId,
     workspaceId: ctx.workspaceId,
     subject: { type: "organization_service_mode", id: ctx.organizationId },
@@ -357,6 +362,56 @@ export async function revertToStandard(
       consoleUrl: consoleUrlOf(origin, via),
     },
     idempotencyKey: `service_mode.revert:${ctx.organizationId}:${Date.now()}`,
+  });
+}
+
+export const REVERT_REASON_MIN = 10;
+export const REVERT_REASON_MAX = 500;
+
+/**
+ * The partner (partner_owner, partner_admin) or GUIDU for its direct
+ * customers (platform owner, operations) moves a company back to `padrao`
+ * (end of the contract), with a written reason. Runs in the identity
+ * context of the console; the company owners hear through the event
+ * `service_mode.reverted_by_partner` (bell and e-mail).
+ */
+export async function revertByPartner(
+  tx: ContextTransaction,
+  actor: ServiceModeActor,
+  organizationId: string,
+  reason: string,
+  origin: string,
+): Promise<void> {
+  const text = reason.trim();
+  if (text.length < REVERT_REASON_MIN || text.length > REVERT_REASON_MAX) {
+    throw serviceModeFailure("reason");
+  }
+  const row = await revertInDatabase(tx, organizationId, actor.via, text);
+  if (!row.workspace_id || !row.workspace_slug) {
+    throw serviceModeFailure("no_workspace");
+  }
+  const settingsUrl = settingsUrlOf(origin, row.workspace_slug);
+  await emitEvent(tx, {
+    type: "service_mode.reverted_by_partner",
+    actor: eventActor(actor.userId, actor.via === "platform" ? "admin" : "app"),
+    partnerId: row.partner_id,
+    organizationId,
+    workspaceId: row.workspace_id,
+    subject: { type: "organization_service_mode", id: organizationId },
+    data: {
+      from: "gerenciado",
+      to: "padrao",
+      revertedVia: actor.via,
+      reason: text,
+      organizationName: row.organization_name ?? "",
+      partnerName: row.partner_name ?? "",
+      workspaceName: row.workspace_name ?? "",
+      settingsUrl,
+      // The generic e-mail of the hub opens this link.
+      linkUrl: settingsUrl,
+      consoleUrl: consoleUrlOf(origin, actor.via),
+    },
+    idempotencyKey: `service_mode.revert_by_partner:${organizationId}:${Date.now()}`,
   });
 }
 

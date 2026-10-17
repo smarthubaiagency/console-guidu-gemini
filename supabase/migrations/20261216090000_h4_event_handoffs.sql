@@ -1,5 +1,5 @@
 -- ============================================================================
--- Migration: 20261212090000_h4_event_handoffs.sql
+-- Migration: 20261216090000_h4_event_handoffs.sql
 -- Module: H4 — Central de Eventos: passagem de trabalho e aprovações
 --         (ADR 0022, docs/architecture/central-de-eventos.md §4 and §11)
 --

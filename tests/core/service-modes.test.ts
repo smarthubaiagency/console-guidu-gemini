@@ -16,6 +16,7 @@ import {
   readRequestByToken,
   readWorkspaceServiceMode,
   requestManagedMode,
+  revertByPartner,
   revertToStandard,
 } from "@/core/service-modes/service";
 import {
@@ -308,5 +309,116 @@ describeDatabase("GB1c: service modes", requiredVars, () => {
        where organization_id = '${orgId}'`,
     );
     expect(await pendingKinds()).not.toContain("management");
+  });
+
+  it("goes back to padrao by the partner with a reason; the owner hears by bell and e-mail (AJ1)", async () => {
+    // Managed again (the previous test left it so).
+    expect(await crmCount()).toBe(1);
+    const asSupport = <T>(fn: (tx: ContextTransaction) => Promise<T>) =>
+      withIdentityContext(prisma, partnerSupport, fn, { partnerId });
+    // partner_support may not; a short reason is refused.
+    await expect(
+      asSupport((tx) =>
+        revertByPartner(
+          tx,
+          { userId: partnerSupport, via: "partner" },
+          orgId,
+          "Fim do contrato com a agência",
+          ORIGIN,
+        ),
+      ),
+    ).rejects.toMatchObject({ code: "forbidden" });
+    await expect(
+      asPartner((tx) =>
+        revertByPartner(
+          tx,
+          { userId: partnerOwner, via: "partner" },
+          orgId,
+          "curto",
+          ORIGIN,
+        ),
+      ),
+    ).rejects.toMatchObject({ code: "invalid_input" });
+    // The partner cannot use the platform path.
+    await expect(
+      asPartner((tx) =>
+        revertByPartner(
+          tx,
+          { userId: partnerOwner, via: "platform" },
+          orgId,
+          "Fim do contrato com a agência",
+          ORIGIN,
+        ),
+      ),
+    ).rejects.toMatchObject({ code: "forbidden" });
+
+    await asPartner((tx) =>
+      revertByPartner(
+        tx,
+        { userId: partnerOwner, via: "partner" },
+        orgId,
+        "Fim do contrato com a agência",
+        ORIGIN,
+      ),
+    );
+    // Access falls in the same transaction.
+    expect(await crmCount()).toBe(0);
+    const [mode] = await admin.$queryRawUnsafe<
+      { mode: string; source: string; set_by: string }[]
+    >(
+      `select mode, source, set_by::text from public.organization_service_modes
+       where organization_id = '${orgId}'`,
+    );
+    expect(mode).toEqual({
+      mode: "padrao",
+      source: "partner",
+      set_by: partnerOwner,
+    });
+    const audit = await admin.$queryRawUnsafe<
+      { origin: string; reason: string }[]
+    >(
+      `select origin, metadata ->> 'reason' as reason from public.audit_events
+       where organization_id = '${orgId}' and action = 'service_mode.reverted_by_partner'`,
+    );
+    expect(audit).toEqual([
+      { origin: "partner", reason: "Fim do contrato com a agência" },
+    ]);
+    // Twice: the company is no longer managed.
+    await expect(
+      asPartner((tx) =>
+        revertByPartner(
+          tx,
+          { userId: partnerOwner, via: "partner" },
+          orgId,
+          "Fim do contrato com a agência",
+          ORIGIN,
+        ),
+      ),
+    ).rejects.toMatchObject({ code: "conflict" });
+
+    sent.length = 0;
+    await dispatchAll();
+    // (The request left pending by the previous test goes out too.)
+    const mail = sent.find(
+      (m) => m.to === ownerEmail && m.subject.includes("encerrou"),
+    );
+    expect(mail).toBeDefined();
+    expect(mail!.subject).toContain("Agência GB1c");
+    expect(mail!.text).toContain("Fim do contrato com a agência");
+    expect(mail!.text).toContain(`${ORIGIN}/app/${slug}/settings/service-mode`);
+    const bells = await admin.$queryRawUnsafe<
+      { user_id: string; link_url: string | null }[]
+    >(
+      `select user_id::text, link_url from public.user_notifications
+       where event_type = 'service_mode.reverted_by_partner'
+         and user_id in ('${owner}', '${partnerOwner}')
+         and data ->> 'organization' = 'Padaria ${run}'`,
+    );
+    expect(bells.find((b) => b.user_id === owner)?.link_url).toBe(
+      `${ORIGIN}/app/${slug}/settings/service-mode`,
+    );
+    expect(bells.find((b) => b.user_id === partnerOwner)?.link_url).toBe(
+      `${ORIGIN}/admin/customers`,
+    );
   });
 });

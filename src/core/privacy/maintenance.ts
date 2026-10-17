@@ -69,8 +69,15 @@ export async function purgeWorkspace(
     ],
     ["channel_routes", () => tx.channelRoute.deleteMany({ where })],
     ["channel_connections", () => tx.channelConnection.deleteMany({ where })],
+    // Inbox (IN4b): labels on rooms and the CRM links before the rooms.
+    ["inbox_room_labels", () => tx.inboxRoomLabel.deleteMany({ where })],
+    ["inbox_conversations", () => tx.inboxConversation.deleteMany({ where })],
+    ["inbox_labels", () => tx.inboxLabel.deleteMany({ where })],
     // Matrix rooms (IN3): members before their room; the rooms on Synapse
     // are deleted by the Matrix lifecycle (`purgeExternal`), not here.
+    // The GUIDS in the rooms (IN6): what it kept per room and its users.
+    ["inbox_guids_rooms", () => tx.inboxGuidsRoom.deleteMany({ where })],
+    ["matrix_agent_users", () => tx.matrixAgentUser.deleteMany({ where })],
     ["matrix_room_members", () => tx.matrixRoomMember.deleteMany({ where })],
     ["matrix_rooms", () => tx.matrixRoom.deleteMany({ where })],
     // Inbox (IN4a): attendant marks and the address of the store.

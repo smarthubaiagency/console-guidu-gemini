@@ -1,6 +1,8 @@
 import { generateKeyPairSync } from "node:crypto";
 
-import { describe, expect, it } from "vitest";
+import { vi, describe, expect, it } from "vitest";
+
+vi.mock("server-only", () => ({}));
 
 import { handleAppServiceRequest } from "./appservice";
 import { matrixConfig } from "./config";
@@ -214,6 +216,27 @@ describe("Synapse calls", () => {
 });
 
 describe("events of the Application Service", () => {
+  it("keeps a message only as a mark, without its text (IN4b)", () => {
+    expect(
+      reduceEvent({
+        event_id: "$m",
+        room_id: "!r",
+        type: "m.room.message",
+        sender: "@c:hs.test",
+        origin_server_ts: 42,
+        content: { msgtype: "m.text", body: "segredo" },
+      }),
+    ).toEqual({
+      event_id: "$m",
+      room_id: "!r",
+      type: "m.room.message",
+      state_key: null,
+      sender: "@c:hs.test",
+      origin_server_ts: 42,
+      content: { msgtype: "m.text" },
+    });
+  });
+
   it("keeps only membership (with the display name) and the conversation state, never a message body", () => {
     expect(
       reduceEvent({
@@ -252,7 +275,7 @@ describe("events of the Application Service", () => {
           note: "x",
         },
       })?.content,
-    ).toEqual({ status: "open", assignee: "@a:hs.test" });
+    ).toEqual({ status: "open", assignee: "@a:hs.test", by: null });
     expect(
       reduceEvent({
         event_id: "$3",
@@ -260,8 +283,8 @@ describe("events of the Application Service", () => {
         type: "m.room.message",
         sender: "@a:hs.test",
         content: { body: "oi" },
-      }),
-    ).toBeNull();
+      })?.content,
+    ).toEqual({ msgtype: null });
     expect(
       reduceEvent({
         event_id: "$4",
@@ -376,8 +399,9 @@ describe("route of the Application Service", () => {
     const [txnId, count, events] = recorded[0] as [string, number, string];
     expect(txnId).toBe("42");
     expect(count).toBe(2);
+    // The message is a mark (IN4b): recorded, without its text.
     expect(events).not.toContain("segredo");
-    expect(JSON.parse(events)).toHaveLength(1);
+    expect(JSON.parse(events)).toHaveLength(2);
   });
 
   it("refuses a body that is not JSON and asks Synapse to retry when the database fails", async () => {

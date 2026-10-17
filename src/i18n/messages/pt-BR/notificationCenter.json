@@ -124,6 +124,27 @@
     "proposalExpired": {
       "title": "Proposta vencida",
       "body": "{operation} venceu sem decisão."
+    },
+    "serviceModeRevertedByPartner": {
+      "title": "{organization} voltou para o modo padrão",
+      "body": "{partner} encerrou o gerenciamento. Motivo: {reason}"
+    },
+    "ipBlocked": {
+      "title": "Acesso recusado pela lista de IPs",
+      "body": "O endereço {ip} tentou entrar em {area} e foi recusado.",
+      "generic": "Um endereço fora da lista de IPs permitidos foi recusado."
+    },
+    "inboxNew": {
+      "title": "Conversa nova",
+      "body": "{contact} começou uma conversa no Inbox."
+    },
+    "inboxAssigned": {
+      "title": "Conversa atribuída a você",
+      "body": "A conversa com {contact} agora é sua."
+    },
+    "inboxUnanswered": {
+      "title": "Conversa sem resposta",
+      "body": "{contact} está esperando resposta há 15 minutos."
     }
   },
   "preferences": {

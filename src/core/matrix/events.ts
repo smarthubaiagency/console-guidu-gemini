@@ -2,8 +2,10 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { upsertMember } from "./accounts";
 import { openConsumerRoom, workspaceOfAddress } from "./addresses";
+import { onConsumerMessage } from "./agent";
 import { coreUserId, isNamespaceUser } from "./config";
 import { ATTENDANT_LOCALPART } from "./jwt";
+import { runRoomAssigned, runRoomHandedOff } from "./room-hooks";
 import {
   CONVERSATION_STATE,
   CONVERSATION_STATUSES,
@@ -17,13 +19,15 @@ import {
  * What the core keeps of a transaction of the Application Service (IN3).
  * The route reduces each event to the few fields processing reads, and
  * drops every other type: the messages stay in Synapse (ADR 0023, rule 6).
+ * A message is kept only as a mark (IN4b): who sent it, when, and its
+ * kind, never the text.
  */
 
 export type ReducedEvent = Readonly<{
   event_id: string;
   room_id: string;
-  type: "m.room.member" | typeof CONVERSATION_STATE;
-  state_key: string;
+  type: "m.room.member" | typeof CONVERSATION_STATE | "m.room.message";
+  state_key: string | null;
   sender: string;
   origin_server_ts: number | null;
   content: Record<string, string | null>;
@@ -47,6 +51,27 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
     event.content && typeof event.content === "object"
       ? (event.content as Record<string, unknown>)
       : null;
+  const ts =
+    typeof event.origin_server_ts === "number"
+      ? Math.trunc(event.origin_server_ts)
+      : null;
+  if (
+    event.type === "m.room.message" &&
+    eventId &&
+    roomId &&
+    sender &&
+    content
+  ) {
+    return {
+      event_id: eventId,
+      room_id: roomId,
+      type: "m.room.message",
+      state_key: null,
+      sender,
+      origin_server_ts: ts,
+      content: { msgtype: text(content.msgtype, 40) },
+    };
+  }
   if (
     !eventId ||
     !roomId ||
@@ -55,10 +80,6 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
     typeof event.state_key !== "string"
   )
     return null;
-  const ts =
-    typeof event.origin_server_ts === "number"
-      ? Math.trunc(event.origin_server_ts)
-      : null;
   if (event.type === "m.room.member") {
     const stateKey = text(event.state_key);
     const membership = text(content.membership, 16);
@@ -86,6 +107,9 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
       content: {
         status: text(content.status, 20),
         assignee: content.assignee === null ? null : text(content.assignee),
+        // Who made the change through the console (IN4b): an assignment by
+        // someone else tells the assignee.
+        by: text(content.by),
       },
     };
   }
@@ -103,6 +127,26 @@ function isConsumer(client: SynapseClient, mxid: string): boolean {
   return !(
     local[2] === client.config.serverName && ATTENDANT_LOCALPART.test(local[1])
   );
+}
+
+export type MessageSide = "consumer" | "team" | "agent";
+
+/**
+ * Who sent a message (IN4b): the room's consumer, a person of the team
+ * (an attendant's account) or an agent (a user of the namespace other than
+ * the core and the addresses). Anyone else is not counted.
+ */
+export function messageSide(
+  client: SynapseClient,
+  sender: string,
+  consumerMxid: string | null,
+): MessageSide | null {
+  if (consumerMxid && sender === consumerMxid) return "consumer";
+  const local = /^@([^:]+):(.+)$/.exec(sender);
+  if (!local?.[1] || local[2] !== client.config.serverName) return null;
+  if (ATTENDANT_LOCALPART.test(local[1])) return "team";
+  if (/^_guidu_a_/.test(local[1])) return "agent";
+  return null;
 }
 
 /** Events of an unknown room wait this long for its row (creation race). */
@@ -220,6 +264,10 @@ async function handleEvent(
       organizationId: true,
       statusEventTs: true,
       state: true,
+      status: true,
+      consumerMxid: true,
+      consumerName: true,
+      assignee: true,
     },
   });
 
@@ -282,6 +330,38 @@ async function handleEvent(
     return "processed";
   }
 
+  if (event.type === "m.room.message") {
+    const side = messageSide(client, event.sender, room.consumerMxid);
+    if (!side) return "ignored";
+    const at = new Date(
+      event.originServerTs !== null
+        ? Number(event.originServerTs)
+        : now.getTime(),
+    );
+    // The newest mark wins; a retried or late event never moves it back.
+    const column = {
+      consumer: "last_consumer_message_at",
+      team: "last_team_message_at",
+      agent: "last_agent_message_at",
+    }[side];
+    await tx.$executeRawUnsafe(
+      `update public.matrix_rooms set ${column} = $1
+       where id = $2::uuid and (${column} is null or ${column} < $1)`,
+      at,
+      room.id,
+    );
+    // IN6: the GUIDS's turn, and a resolved conversation back to pending.
+    if (side === "consumer" && room.state === "active") {
+      await onConsumerMessage(
+        tx,
+        client,
+        { ...room, roomId: event.roomId },
+        event.originServerTs,
+      );
+    }
+    return "processed";
+  }
+
   if (event.type === CONVERSATION_STATE) {
     const assignee = content.assignee;
     if (!isConversationStatus(content.status)) return "ignored";
@@ -299,7 +379,44 @@ async function handleEvent(
       where id = ${room.id}::uuid
         and (status_event_ts is null or ${ts}::bigint is null or status_event_ts <= ${ts}::bigint)
     `;
-    return updated > 0 ? "processed" : "ignored";
+    if (updated === 0) return "ignored";
+    const by = typeof content.by === "string" ? content.by : null;
+    if (
+      typeof assignee === "string" &&
+      assignee !== room.assignee &&
+      by !== null &&
+      by !== assignee
+    ) {
+      await runRoomAssigned(
+        tx,
+        {
+          roomId: event.roomId,
+          workspaceId: room.workspaceId,
+          consumerName: room.consumerName,
+        },
+        assignee,
+        event.eventId,
+      );
+    }
+    // Only the GUIDS's handoff takes a pending room to open without an
+    // assignee, written by the core (no `by`): the team hears of it now.
+    if (
+      room.status === "pending" &&
+      content.status === "open" &&
+      assignee === null &&
+      by === null
+    ) {
+      await runRoomHandedOff(
+        tx,
+        {
+          roomId: event.roomId,
+          workspaceId: room.workspaceId,
+          consumerName: room.consumerName,
+        },
+        event.eventId,
+      );
+    }
+    return "processed";
   }
   return "ignored";
 }

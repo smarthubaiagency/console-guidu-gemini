@@ -73,7 +73,12 @@
     "proposals_rejected": "Proposal rejected",
     "proposals_executed": "Proposal executed",
     "proposals_failed": "Proposal not executed",
-    "proposals_expired": "Proposal expired"
+    "proposals_expired": "Proposal expired",
+    "service_mode_reverted_by_partner": "Management ended by the partner",
+    "security_ip_blocked": "Access refused by the IP list",
+    "inbox_conversation_new": "New Inbox conversation",
+    "inbox_conversation_assigned": "Conversation assigned to you",
+    "inbox_conversation_unanswered": "Unanswered conversation"
   },
   "whatsapp": {
     "generic": "{marca}: you have a new notice in {workspace}. {link}",
@@ -88,7 +93,11 @@
     "security_mfa_requirement_off": "{marca}: the two-step verification requirement was removed in {workspace}. {link}",
     "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}",
     "proposals_requested": "{marca}: a proposal awaits your decision in {workspace}: {operacao}. Expires on {validade}. Decide at {link}",
-    "proposals_failed": "{marca}: the proposal {operacao} in {workspace} was not executed. {link}"
+    "proposals_failed": "{marca}: the proposal {operacao} in {workspace} was not executed. {link}",
+    "security_ip_blocked": "{marca}: the address {ip} was refused in {area} by the IP list. {link}",
+    "inbox_conversation_new": "{marca}: new conversation from {contato} in the Inbox of {workspace}. {link}",
+    "inbox_conversation_assigned": "{marca}: the conversation with {contato} was assigned to you. {link}",
+    "inbox_conversation_unanswered": "{marca}: {contato} has had no answer for 15 minutes. {link}"
   },
   "hub": {
     "action": "Open in the dashboard",
@@ -167,6 +176,26 @@
     "proposals_expired": {
       "subject": "Proposal expired in {workspace}",
       "body": "The proposal {operacao} expired without a decision."
+    },
+    "service_mode_reverted_by_partner": {
+      "subject": "{parceiro} ended the management of {empresa}",
+      "body": "{empresa} is back to the standard mode and the access of the {parceiro} team has ended. Reason: {motivo}"
+    },
+    "security_ip_blocked": {
+      "subject": "Access refused in {area}",
+      "body": "The address {ip} tried to enter {area} and was refused by the allowed IP list."
+    },
+    "inbox_conversation_new": {
+      "subject": "New conversation: {contato}",
+      "body": "{contato} started a conversation in the Inbox."
+    },
+    "inbox_conversation_assigned": {
+      "subject": "Conversation assigned: {contato}",
+      "body": "The conversation with {contato} is now yours."
+    },
+    "inbox_conversation_unanswered": {
+      "subject": "No answer: {contato}",
+      "body": "{contato} has been waiting for an answer for 15 minutes."
     }
   },
   "digest": {

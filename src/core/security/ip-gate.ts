@@ -4,6 +4,7 @@ import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
 
 import { clientIp, trustedProxyHops } from "./client-ip";
+import { recordIpBlocked } from "./ip-blocked";
 
 /**
  * IP allow lists at the door of /platform and /admin (CF5a). The role
@@ -18,6 +19,8 @@ import { clientIp, trustedProxyHops } from "./client-ip";
  *   check: nothing a visitor controls runs there.
  * - `SECURITY_IP_ALLOWLIST=off` turns the check off in an emergency
  *   (docs/operacao/seguranca.md).
+ * - A refusal is recorded as `security.ip_blocked` (AJ1, `ip-blocked.ts`),
+ *   at most once per address, area and hour; once per request here.
  */
 
 export type AllowlistArea = "platform" | "admin";
@@ -57,7 +60,9 @@ const allowedInRequest = cache(
     const rows = await prisma.$queryRaw<Array<{ allowed: boolean }>>`
       select private.ip_allowed(${area}, ${partnerId}::uuid, ${ip}::inet) as allowed
     `;
-    return rows[0]?.allowed === true;
+    const allowed = rows[0]?.allowed === true;
+    if (!allowed) await recordIpBlocked(prisma, area, partnerId, ip);
+    return allowed;
   },
 );
 
