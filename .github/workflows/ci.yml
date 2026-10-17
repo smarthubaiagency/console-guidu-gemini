@@ -285,7 +285,27 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/google-business-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/events-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/platform-audit-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/matrix-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/security-catalog.sql
+
+      # IN3: a disposable Synapse (pip, no Docker image) on the Postgres of
+      # the local Supabase, for tests/core/matrix.test.ts. Only its variables
+      # file reaches the suite, so no other test sees Matrix turned on.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Start a local Synapse for the Matrix core
+        env:
+          SYNAPSE_DIR: ${{ runner.temp }}/synapse
+          SYNAPSE_PG_HOST: 127.0.0.1
+          SYNAPSE_PG_PORT: "54322"
+          SYNAPSE_PG_USER: postgres
+          SYNAPSE_PG_PASSWORD: postgres
+        run: |
+          bash scripts/local/synapse.sh setup
+          bash scripts/local/synapse.sh start
+          bash scripts/local/synapse.sh env | sed 's/^export //' >> "$GITHUB_ENV"
 
       - name: Prisma and Data API isolation suite
         run: npx vitest run --project integration --reporter=default --reporter=json --outputFile=/tmp/db-tests.json
@@ -302,6 +322,10 @@ jobs:
       - name: Supabase logs on failure
         if: failure()
         run: supabase status && docker ps --all
+
+      - name: Synapse log on failure
+        if: failure()
+        run: tail -n 200 "${{ runner.temp }}/synapse/data/homeserver.log" || true
 
   e2e:
     name: e2e
