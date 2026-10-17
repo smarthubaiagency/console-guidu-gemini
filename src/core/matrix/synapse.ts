@@ -427,6 +427,23 @@ export async function listRooms(
   };
 }
 
+/** Who created a room (admin API), or null when Synapse does not know it. */
+export async function roomCreator(
+  client: SynapseClient,
+  roomId: string,
+): Promise<string | null> {
+  try {
+    const room = await client.request<{ creator?: unknown }>(
+      "GET",
+      `/_synapse/admin/v1/rooms/${enc(roomId)}`,
+    );
+    return typeof room.creator === "string" ? room.creator : null;
+  } catch (error) {
+    if (isError(error, 404) || isError(error, 400)) return null;
+    throw error;
+  }
+}
+
 /** When the room was created (its `m.room.create`), or null. */
 export async function roomCreatedAt(
   client: SynapseClient,

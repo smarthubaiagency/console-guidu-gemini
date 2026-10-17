@@ -1,0 +1,86 @@
+{
+  "metaTitle": "Inbox",
+  "viewsLabel": "Inbox views",
+  "windowLabel": "Inbox of {workspace}",
+  "dashboard": "Dashboard",
+  "listLabel": "Conversations",
+  "searchPlaceholder": "Search by name",
+  "unknownContact": "Unnamed contact",
+  "you": "You",
+  "noMessages": "No messages yet",
+  "assignedTo": "With {name}",
+  "assigned": "With an attendant",
+  "unassigned": "Unassigned",
+  "copyAddress": "Copy the address",
+  "addressHint": "To test, call this store address from Element:",
+  "views": {
+    "mine": "Mine",
+    "unassigned": "Unassigned",
+    "all": "All",
+    "resolved": "Resolved"
+  },
+  "empty": {
+    "mine": "No conversation with you",
+    "unassigned": "No unassigned conversation",
+    "all": "No open conversation",
+    "resolved": "No resolved conversation",
+    "searchTitle": "Nothing found with that name",
+    "description": "New conversations show up here as soon as the customer writes."
+  },
+  "status": {
+    "open": "Open",
+    "pending": "Pending",
+    "resolved": "Resolved"
+  },
+  "noConversationTitle": "Choose a conversation",
+  "noConversationDescription": "The open conversation shows here, with the contact and the status beside it.",
+  "sendFailed": "The message was not sent. Try again.",
+  "conversationLabel": "Conversation with {name}",
+  "back": "Back to the list",
+  "typing": "{names} typing…",
+  "presence": {
+    "online": "Online",
+    "unavailable": "Away",
+    "offline": "Offline"
+  },
+  "chatUnavailable": "The chat is unavailable right now. Reload the page in a moment.",
+  "messagePlaceholder": "Write a message",
+  "send": "Send",
+  "readOnly": "You see this conversation read only. To answer, ask to be marked as attendant in Team.",
+  "context": {
+    "title": "Conversation context",
+    "empty": "Open a conversation to see the contact and the status.",
+    "contact": "Contact",
+    "name": "Name",
+    "chatId": "Chat address",
+    "attendance": "Attendance",
+    "status": "Status",
+    "assignee": "Assignee"
+  },
+  "nobody": "Nobody",
+  "actions": {
+    "take": "Take",
+    "resolve": "Resolve",
+    "reopen": "Reopen",
+    "assign": "Assign to"
+  },
+  "done": {
+    "take": "Conversation taken.",
+    "resolve": "Conversation resolved.",
+    "reopen": "Conversation reopened.",
+    "assign": "Assignee updated."
+  },
+  "blocked": {
+    "maintenance": "The Inbox is under maintenance",
+    "not_enabled": "The Inbox is not turned on in this workspace",
+    "not_contracted": "The Inbox is not part of the plan",
+    "description": "Go back to the dashboard; whoever manages the workspace can sort this out in the settings."
+  },
+  "errors": {
+    "alreadyAssigned": "This conversation already has an assignee.",
+    "notResolved": "The conversation is not resolved.",
+    "conversationNotFound": "Conversation not found.",
+    "assigneeNotAttendant": "Only an attendant of this conversation can be the assignee.",
+    "notMarkable": "Only owners, admins and editors of the workspace can be marked as attendants."
+  }
+}

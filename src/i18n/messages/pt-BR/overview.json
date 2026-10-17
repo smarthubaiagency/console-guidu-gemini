@@ -22,5 +22,6 @@
   "modulesSubtitle": "Módulos habilitados e integrados",
   "access": "Acessar",
   "attendantTitle": "Seu acesso é o Inbox",
-  "attendantDescription": "Como Atendente, você vê este painel e o Inbox, que chega em breve. Configurações, módulos e cadastros ficam com a equipe que administra o workspace."
+  "attendantDescription": "Como Atendente, você vê este painel e o Inbox. Configurações, módulos e cadastros ficam com a equipe que administra o workspace.",
+  "openInbox": "Abrir o Inbox"
 }

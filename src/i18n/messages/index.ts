@@ -26,6 +26,7 @@ import ptBR_gbIntelligence from "./pt-BR/gbIntelligence.json";
 import ptBR_googleBusiness from "./pt-BR/googleBusiness.json";
 import ptBR_helloWorld from "./pt-BR/helloWorld.json";
 import ptBR_home from "./pt-BR/home.json";
+import ptBR_inbox from "./pt-BR/inbox.json";
 import ptBR_integrations from "./pt-BR/integrations.json";
 import ptBR_invite from "./pt-BR/invite.json";
 import ptBR_languages from "./pt-BR/languages.json";
@@ -84,6 +85,7 @@ import en_gbIntelligence from "./en/gbIntelligence.json";
 import en_googleBusiness from "./en/googleBusiness.json";
 import en_helloWorld from "./en/helloWorld.json";
 import en_home from "./en/home.json";
+import en_inbox from "./en/inbox.json";
 import en_integrations from "./en/integrations.json";
 import en_invite from "./en/invite.json";
 import en_languages from "./en/languages.json";
@@ -142,6 +144,7 @@ import es_gbIntelligence from "./es/gbIntelligence.json";
 import es_googleBusiness from "./es/googleBusiness.json";
 import es_helloWorld from "./es/helloWorld.json";
 import es_home from "./es/home.json";
+import es_inbox from "./es/inbox.json";
 import es_integrations from "./es/integrations.json";
 import es_invite from "./es/invite.json";
 import es_languages from "./es/languages.json";
@@ -204,6 +207,7 @@ export const MESSAGE_FILES = {
     googleBusiness: ptBR_googleBusiness,
     helloWorld: ptBR_helloWorld,
     home: ptBR_home,
+    inbox: ptBR_inbox,
     integrations: ptBR_integrations,
     invite: ptBR_invite,
     languages: ptBR_languages,
@@ -264,6 +268,7 @@ export const MESSAGE_FILES = {
     googleBusiness: en_googleBusiness,
     helloWorld: en_helloWorld,
     home: en_home,
+    inbox: en_inbox,
     integrations: en_integrations,
     invite: en_invite,
     languages: en_languages,
@@ -324,6 +329,7 @@ export const MESSAGE_FILES = {
     googleBusiness: es_googleBusiness,
     helloWorld: es_helloWorld,
     home: es_home,
+    inbox: es_inbox,
     integrations: es_integrations,
     invite: es_invite,
     languages: es_languages,
@@ -386,6 +392,7 @@ export const NAMESPACES = [
   "googleBusiness",
   "helloWorld",
   "home",
+  "inbox",
   "integrations",
   "invite",
   "languages",

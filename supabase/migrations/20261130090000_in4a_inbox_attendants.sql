@@ -281,6 +281,38 @@ alter function private.inbox_my_level() owner to app_rls_helper;
 alter function private.inbox_my_manages() owner to app_rls_helper;
 alter function private.inbox_markable(uuid, uuid) owner to app_rls_helper;
 
+-- Attendants of the context workspace (who answers: the Attendant role and
+-- the marked owners, admins and editors), for the quota of the plan. Only
+-- for an active member of that workspace.
+create function private.inbox_attendant_count()
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_workspace uuid := private.context_uuid('app.workspace_id');
+begin
+  if v_workspace is null or not exists (
+    select 1 from private.matrix_my_memberships() m
+    where m.workspace_id = v_workspace
+      and m.organization_id = private.context_uuid('app.organization_id')
+  ) then
+    return 0;
+  end if;
+  return (
+    select count(distinct a.user_id)::integer
+    from private.matrix_workspace_access(v_workspace) a
+    where a.access = 'reply'
+  );
+end;
+$$;
+
+revoke execute on function private.inbox_attendant_count() from public, anon, authenticated;
+grant execute on function private.inbox_attendant_count() to app_runtime;
+alter function private.inbox_attendant_count() owner to app_rls_helper;
+
 -- An account is open to whoever has a level somewhere (IN3 asked for
 -- `inbox.view` by role). Replaced as its owner: app_migrations is NOINHERIT.
 set local role app_rls_helper;

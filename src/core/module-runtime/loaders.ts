@@ -14,7 +14,7 @@ import "server-only";
 
 import type { PrismaClient } from "@prisma/client";
 
-import type { PermissionKey } from "@/core/permissions/catalog";
+import { Permissions, type PermissionKey } from "@/core/permissions/catalog";
 import { loadCompanyContract } from "@/core/entitlements/contract";
 import {
   getEffectiveWorkspaceRole,
@@ -28,7 +28,11 @@ import {
 } from "@/core/permissions/matrix";
 import type { Permission } from "@/core/permissions/catalog";
 import type { WorkspaceRole } from "@/core/permissions/roles";
-import { type RequestContext, withContext } from "@/lib/prisma/with-context";
+import {
+  type ContextTransaction,
+  type RequestContext,
+  withContext,
+} from "@/lib/prisma/with-context";
 import {
   listRegisteredModules,
   type RegisteredModule,
@@ -66,6 +70,14 @@ export function partnerGrants(role: PartnerRoleKey | null) {
     role !== null && hasPartnerRolePermission(role, permission as Permission);
 }
 
+/** Level of the context person in the Inbox (IN4a), or null. */
+async function inboxLevel(tx: ContextTransaction): Promise<string | null> {
+  const rows = await tx.$queryRaw<{ level: string | null }[]>`
+    select private.inbox_my_level() as level
+  `;
+  return rows[0]?.level ?? null;
+}
+
 async function loadAppInput(
   prisma: PrismaClient,
   context: RequestContext,
@@ -80,12 +92,20 @@ async function loadAppInput(
         loadCompanyContract(tx, context.organizationId),
       ],
     );
+    const byRole = workspaceGrants(role);
+    // The Inbox opens by the attendant mark, not by the role alone (IN4a):
+    // an unmarked editor does not see its entry.
+    const inboxOpen =
+      byRole(Permissions.INBOX_VIEW) &&
+      workspaceStates.get("inbox")?.status === "enabled" &&
+      (await inboxLevel(tx)) !== null;
     return {
       workspaceSlug,
       modules: listRegisteredModules(),
       platformStates,
       workspaceStates,
-      grants: workspaceGrants(role),
+      grants: (permission: PermissionKey) =>
+        permission === Permissions.INBOX_VIEW ? inboxOpen : byRole(permission),
       contract,
     };
   });

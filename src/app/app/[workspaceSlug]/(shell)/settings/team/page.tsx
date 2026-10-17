@@ -20,6 +20,9 @@ import {
   type TeamCapabilities,
 } from "./team-client";
 import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
+import { matrixEnabled } from "@/core/matrix/config";
+import { loadInboxViewer } from "@/modules/inbox/server/access";
+import { listAttendantMarks } from "@/modules/inbox/server/attendants";
 
 export async function generateMetadata() {
   const t = await getTranslations("team");
@@ -48,6 +51,8 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
     seatLimit,
     members,
     attendantIds,
+    workspaceRoles,
+    marks,
     invitations,
     profiles,
     capabilities,
@@ -80,21 +85,37 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
         )
       : false;
 
-    const [org, orgMembers, orgInvites, attendants] = await Promise.all([
-      tx.organization.findUnique({
-        where: { id: context.organizationId },
-      }),
-      listOrganizationMembers(tx, context.organizationId),
-      canInvite ? listInvitations(tx, context) : [],
-      // Attendants of this workspace (AT1) show as such in the company list.
-      tx.workspaceMember.findMany({
-        where: {
-          workspaceId: context.workspaceId,
-          role: WorkspaceRoles.ATTENDANT,
-        },
-        select: { userId: true },
-      }),
-    ]);
+    // The attendant mark of the Inbox (IN4a), for whoever manages it.
+    const canManageInbox =
+      matrixEnabled() && (await loadInboxViewer(tx, context.userId)).manages;
+
+    const [org, orgMembers, orgInvites, attendants, wsMembers, marks] =
+      await Promise.all([
+        tx.organization.findUnique({
+          where: { id: context.organizationId },
+        }),
+        listOrganizationMembers(tx, context.organizationId),
+        canInvite ? listInvitations(tx, context) : [],
+        // Attendants of this workspace (AT1) show as such in the company list.
+        tx.workspaceMember.findMany({
+          where: {
+            workspaceId: context.workspaceId,
+            role: WorkspaceRoles.ATTENDANT,
+          },
+          select: { userId: true },
+        }),
+        canManageInbox
+          ? tx.workspaceMember.findMany({
+              where: {
+                workspaceId: context.workspaceId,
+                status: "active",
+                supportGrantId: null,
+              },
+              select: { userId: true, role: true },
+            })
+          : [],
+        canManageInbox ? listAttendantMarks(tx, context) : new Set<string>(),
+      ]);
 
     const userIds = orgMembers.map((m) => m.userId);
     const userProfiles = await tx.profile.findMany({
@@ -111,12 +132,15 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
       ),
       members: orgMembers,
       attendantIds: new Set(attendants.map((a) => a.userId)),
+      workspaceRoles: new Map(wsMembers.map((m) => [m.userId, m.role])),
+      marks,
       invitations: orgInvites,
       profiles: userProfiles,
       capabilities: {
         canManage: canManageMembers,
         canInvite,
         canManageMembers,
+        canManageInbox,
       } satisfies TeamCapabilities,
     };
   });
@@ -130,6 +154,10 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
 
   const memberDisplays: MemberDisplay[] = members.map((m) => {
     const prof = profileMap.get(m.userId);
+    // Role in this workspace: the company owner stands in as owner.
+    const workspaceRole =
+      workspaceRoles.get(m.userId) ??
+      (m.role === "owner" && m.status === "active" ? "owner" : null);
     return {
       userId: m.userId,
       name:
@@ -141,6 +169,21 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
       status: m.status,
       joinedAt: format.dateTime(new Date(m.createdAt), { dateStyle: "short" }),
       isCurrentUser: m.userId === identity.userId,
+      inbox: capabilities.canManageInbox
+        ? {
+            fixed: workspaceRole === WorkspaceRoles.ATTENDANT,
+            markable:
+              workspaceRole === "owner" ||
+              workspaceRole === "admin" ||
+              workspaceRole === "editor",
+            marked:
+              workspaceRole === WorkspaceRoles.ATTENDANT ||
+              ((workspaceRole === "owner" ||
+                workspaceRole === "admin" ||
+                workspaceRole === "editor") &&
+                marks.has(m.userId)),
+          }
+        : null,
     };
   });
 

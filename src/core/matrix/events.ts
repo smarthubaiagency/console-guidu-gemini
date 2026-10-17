@@ -2,13 +2,14 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { upsertMember } from "./accounts";
 import { openConsumerRoom, workspaceOfAddress } from "./addresses";
-import { isNamespaceUser } from "./config";
+import { coreUserId, isNamespaceUser } from "./config";
 import { ATTENDANT_LOCALPART } from "./jwt";
 import {
   CONVERSATION_STATE,
   CONVERSATION_STATUSES,
   type ConversationStatus,
   leaveAs,
+  roomCreator,
   type SynapseClient,
 } from "./synapse";
 
@@ -244,6 +245,13 @@ async function handleEvent(
         });
       }
       return "refused";
+    }
+    // Only a room the core created can still get its row (creation race);
+    // any other (a consumer's own room) is ignored at once (IN4a).
+    if (
+      (await roomCreator(client, event.roomId)) !== coreUserId(client.config)
+    ) {
+      return "ignored";
     }
     return now.getTime() - event.receivedAt.getTime() < UNKNOWN_ROOM_WAIT_MS
       ? "waiting"

@@ -12,7 +12,14 @@
 
 import { defineConfig, devices } from "@playwright/test";
 import { FAKE_RESEND_KEY } from "./e2e/support/fake-resend";
+import { matrixE2eEnv } from "./e2e/support/matrix";
 import { AUTH_BASE_URL, DATABASE_URL, RIG } from "./e2e/support/rig";
+
+// The Inbox suite (IN4a) runs only against a local Synapse; its variables
+// reach the web server and, through the runner's environment, the worker
+// of the rig. Without them Matrix stays off for every suite.
+const matrixEnv = matrixE2eEnv() ?? {};
+Object.assign(process.env, matrixEnv);
 
 export default defineConfig({
   testMatch: ["e2e/**/*.spec.ts", "tests/e2e/**/*.spec.ts"],
@@ -78,6 +85,7 @@ export default defineConfig({
       // as off, so e2e/auth-settings.spec.ts covers both halves of the rule.
       // Neither button shows until the platform offers it.
       AUTH_GOOGLE_ENABLED: "true",
+      ...matrixEnv,
       APP_NAME: process.env.APP_NAME || "GUIDU",
       APP_URL: process.env.APP_URL || RIG.appUrl,
     },

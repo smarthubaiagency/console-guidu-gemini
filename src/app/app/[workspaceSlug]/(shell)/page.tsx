@@ -11,9 +11,15 @@ import { getTranslations } from "next-intl/server";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
-import { canOpenWorkspaceAreas } from "@/core/module-runtime/page-access";
+import {
+  canOpenWorkspaceAreas,
+  resolveModulePageAccess,
+} from "@/core/module-runtime/page-access";
+import { Permissions } from "@/core/permissions/catalog";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
@@ -47,15 +53,16 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
   );
 
   // The Attendant (AT1) has no workspace.read: its dashboard shows the
-  // workspace and its own access, never the company's seats, modules or
-  // links to areas it cannot open. The Inbox shortcut joins it in IN4.
+  // workspace, its own access and the way into the Inbox (IN4a), never the
+  // company's seats, modules or links to areas it cannot open.
   const limited = await withContext(prisma, context, async (tx) => {
     if (await canOpenWorkspaceAreas(tx, context)) return null;
-    const [ws, org] = await Promise.all([
+    const [ws, org, inbox] = await Promise.all([
       tx.workspace.findUnique({ where: { id: context.workspaceId } }),
       tx.organization.findUnique({ where: { id: context.organizationId } }),
+      resolveModulePageAccess(tx, context, "inbox", Permissions.INBOX_VIEW),
     ]);
-    return { workspace: ws, organization: org };
+    return { workspace: ws, organization: org, inbox: inbox.kind === "ok" };
   });
   if (limited) {
     return (
@@ -78,6 +85,15 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
             <EmptyTitle>{t("attendantTitle")}</EmptyTitle>
             <EmptyDescription>{t("attendantDescription")}</EmptyDescription>
           </EmptyHeader>
+          {limited.inbox ? (
+            <EmptyContent>
+              <Button asChild>
+                <Link href={`/app/${workspaceSlug}/inbox`}>
+                  {t("openInbox")}
+                </Link>
+              </Button>
+            </EmptyContent>
+          ) : null}
         </Empty>
       </div>
     );
