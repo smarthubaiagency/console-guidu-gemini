@@ -83,6 +83,20 @@ export type NotificationEvent = EventBase &
         type: "email.test";
         data: Readonly<{ settingsUrl: string }>;
       }>
+    | Readonly<{
+        /**
+         * A notice of the Event Hub without a template of its own (H2): the
+         * texts come written in the recipient's language (`core/events/texts.ts`).
+         */
+        type: "events.notice";
+        data: Readonly<{
+          eventType: string;
+          subject: string;
+          paragraphs: readonly string[];
+          actionLabel: string;
+          url: string | null;
+        }>;
+      }>
   );
 
 /** Brand fields a template may use. */

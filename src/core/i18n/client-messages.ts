@@ -30,6 +30,7 @@ export const CLIENT_NAMESPACES = [
   "gbIntelligence",
   "googleBusiness",
   "events",
+  "eventRules",
   "platformAudit",
 ] as const;
 

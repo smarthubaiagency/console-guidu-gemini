@@ -38,6 +38,7 @@ import {
 export type NavIconKey =
   | ModuleIconKey
   | "activity"
+  | "bell"
   | "code"
   | "credit-card"
   | "gauge"
@@ -316,6 +317,17 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
           href: `${base}/executions`,
           iconKey: "play-circle",
         }),
+        // Eventos of the workspace and their trace (H2): every member.
+        ...(input.grants("workspace.events.read")
+          ? [
+              item({
+                id: "core.events",
+                label: "Eventos",
+                href: `${base}/events`,
+                iconKey: "activity",
+              }),
+            ]
+          : []),
         // Proposals of the assistants waiting for a person (F4d): owner/admin.
         ...(input.grants("workspace.proposals.review")
           ? [
@@ -467,6 +479,13 @@ export function buildAppSettingsNavigation(
           label: "Segurança",
           href: `${base}/security`,
           iconKey: "shield",
+        }),
+        // Notice rules, quiet window and digest (H2): every member reads.
+        item({
+          id: "core.notifications",
+          label: "Notificações",
+          href: `${base}/notifications`,
+          iconKey: "bell",
         }),
         // Export and deletion of the workspace (F3e): owner/admin.
         ...(input.grants("workspace.data.export") ||
@@ -803,6 +822,18 @@ export function buildPlatformSettingsNavigation(
           href: "/platform/settings/general",
           iconKey: "settings",
         }),
+        // Notice rules, quiet window, digest and WhatsApp texts (H2).
+        ...(input.grants("platform.settings.manage") ||
+        input.grants("platform.events.read")
+          ? [
+              item({
+                id: "platform.settings.notifications",
+                label: "Notificações",
+                href: "/platform/settings/notifications",
+                iconKey: "bell",
+              }),
+            ]
+          : []),
         ...(input.grants("platform.brand.manage")
           ? [
               item({
@@ -1004,6 +1035,17 @@ export function buildPartnerNavigation(
               }),
             ]
           : []),
+        // Eventos of the customers (H2): situation, data where it manages.
+        ...(grants("partner.events.read")
+          ? [
+              item({
+                id: "partner.events",
+                label: "Eventos",
+                href: "/admin/events",
+                iconKey: "activity",
+              }),
+            ]
+          : []),
         ...(grants("partner.customers.manage")
           ? [
               item({
@@ -1098,6 +1140,17 @@ export function buildPartnerSettingsNavigation(grants: Grants): NavSection[] {
                 label: "Geral e região",
                 href: "/admin/settings/general",
                 iconKey: "settings",
+              }),
+            ]
+          : []),
+        // Notice rules for the customers and WhatsApp texts (H2).
+        ...(grants("partner.settings.manage") || grants("partner.events.read")
+          ? [
+              item({
+                id: "partner.settings.notifications",
+                label: "Notificações",
+                href: "/admin/settings/notifications",
+                iconKey: "bell",
               }),
             ]
           : []),

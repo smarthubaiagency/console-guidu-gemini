@@ -14,7 +14,11 @@
     "from": "Desde",
     "to": "Hasta",
     "apply": "Filtrar",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "severity": "Gravedad",
+    "allSeverities": "Todas las gravedades",
+    "status": "Situación",
+    "allStatuses": "Todas las situaciones"
   },
   "list": {
     "title": "{count, plural, =0 {Ningún evento} one {# evento} other {# eventos}}",

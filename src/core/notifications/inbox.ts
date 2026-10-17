@@ -4,10 +4,8 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
 import {
-  canChangeChannel,
-  isNotificationChannel,
+  canChangePersonChannel,
   notificationEventDefinition,
-  PREFERENCE_EVENTS,
   resolveChannels,
   type ChannelPreference,
   type NotificationChannel,
@@ -83,14 +81,16 @@ export async function postNotice(
     userId: string;
     notice: InboxNotice;
     idempotencyKey: string;
+    /** The Event Hub event of the notice (H2), for its trace. */
+    eventId?: string | null;
   }>,
 ): Promise<number> {
   return tx.$executeRaw`
     insert into public.user_notifications
-      (user_id, event_type, data, link_url, idempotency_key)
+      (user_id, event_type, data, link_url, idempotency_key, event_id)
     values (${args.userId}::uuid, ${args.notice.eventType},
             ${JSON.stringify(args.notice.data)}::jsonb, ${args.notice.linkUrl},
-            ${args.idempotencyKey})
+            ${args.idempotencyKey}, ${args.eventId ?? null}::uuid)
     on conflict (idempotency_key) do nothing
   `;
 }
@@ -207,12 +207,11 @@ export async function saveMyPreference(
   userId: string,
   input: Readonly<{ eventType: string; channel: string; enabled: boolean }>,
 ): Promise<void> {
-  const definition = PREFERENCE_EVENTS.find((e) => e.type === input.eventType);
-  if (
-    !definition ||
-    !isNotificationChannel(input.channel) ||
-    !canChangeChannel(definition, input.channel as NotificationChannel)
-  ) {
+  // H2: the WhatsApp column and the hub's other notices.
+  const definition = canChangePersonChannel(input.eventType, input.channel)
+    ? { type: input.eventType }
+    : null;
+  if (!definition) {
     throw new AppError({
       code: "invalid_input",
       safeMessage: "Este aviso é obrigatório e não pode ser desligado.",

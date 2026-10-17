@@ -131,13 +131,12 @@ function layout(
   t: NotificationTranslator,
   brand: NotificationBrand,
   paragraphs: readonly string[],
-  action: Readonly<{ label: string; url: string }>,
+  action: Readonly<{ label: string; url: string }> | null,
 ): Pick<RenderedMessage, "text" | "html"> {
   const support = supportLines(t, brand);
   const text = [
     ...paragraphs,
-    "",
-    `${action.label}: ${action.url}`,
+    ...(action ? ["", `${action.label}: ${action.url}`] : []),
     "",
     ...support,
     `— ${brand.name}`,
@@ -146,7 +145,11 @@ function layout(
   const html = [
     brandHeader(brand),
     ...paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`),
-    `<p><a href="${escapeHtml(action.url)}">${escapeHtml(action.label)}</a></p>`,
+    ...(action
+      ? [
+          `<p><a href="${escapeHtml(action.url)}">${escapeHtml(action.label)}</a></p>`,
+        ]
+      : []),
     ...support.map((line) => `<p><small>${escapeHtml(line)}</small></p>`),
   ].join("\n");
 
@@ -244,6 +247,20 @@ export function renderNotification(
         }),
       };
     }
+    case "events.notice": {
+      const { data } = event;
+      return {
+        subject: data.subject.replace(/[\r\n]+/g, " ").slice(0, 200),
+        ...layout(
+          t,
+          brand,
+          data.paragraphs,
+          data.url
+            ? { label: data.actionLabel, url: safeLink(data.url) }
+            : null,
+        ),
+      };
+    }
     case "workspace.deletion.scheduled":
     case "workspace.deletion.reminder":
     case "workspace.deletion.canceled":
@@ -320,6 +337,8 @@ export function templateValues(
       };
     case "email.test":
       return { link: safeLink(event.data.settingsUrl), marca };
+    case "events.notice":
+      return { link: event.data.url ? safeLink(event.data.url) : "", marca };
     case "billing.subscription.past_due":
     case "billing.subscription.suspended": {
       const { data } = event;
@@ -428,6 +447,11 @@ export function defaultEmailTemplate(
         action(t("invitation.action")),
       ]);
     }
+    case "events.notice":
+      return build(t("hub.generic.subject", {}), [
+        paragraph(t("hub.generic.body", {})),
+        action(t("hub.action")),
+      ]);
     case "email.test": {
       const names = { brand: tag("marca") };
       return build(t("emailTest.subject", names), [
