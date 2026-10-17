@@ -39,6 +39,15 @@ async function main(): Promise<void> {
   const worker = createJobWorker({
     databaseUrl,
     concurrency: positiveInt(process.env.WORKER_CONCURRENCY, 4),
+    // Optional: pg-boss keeps its own default pool size when unset.
+    ...(process.env.WORKER_BOSS_MAX_CONNECTIONS
+      ? {
+          bossMaxConnections: positiveInt(
+            process.env.WORKER_BOSS_MAX_CONNECTIONS,
+            10,
+          ),
+        }
+      : {}),
     ...(process.env.WORKER_INSTANCE_NAME
       ? { instanceName: process.env.WORKER_INSTANCE_NAME }
       : {}),
