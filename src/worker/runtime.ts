@@ -88,6 +88,12 @@ export type WorkerOptions = Readonly<{
   concurrency?: number;
   dispatchIntervalMs?: number;
   pollingIntervalSeconds?: number;
+  /**
+   * Connections of pg-boss's own pool (its default when unset). The e2e
+   * harness keeps it small: locally its PGlite serves every socket in one
+   * session.
+   */
+  bossMaxConnections?: number;
   definitions?: readonly JobDefinition<unknown>[];
   /** Recurring platform jobs; defaults to the registry's. */
   schedules?: readonly JobSchedule[];
@@ -236,6 +242,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     createSchema: false,
     application_name: "guidu-worker",
     instanceName,
+    ...(options.bossMaxConnections ? { max: options.bossMaxConnections } : {}),
   });
   boss.on("error", (error: Error) =>
     log({ level: "error", event: "pgboss.error", message: error.message }),

@@ -49,6 +49,103 @@
     "expires": "The link can be used once and is valid until {date}.",
     "action": "See the request and decide"
   },
+  "names": {
+    "billing_subscription_past_due": "Subscription past due",
+    "billing_subscription_suspended": "Subscription suspended",
+    "ai_agent_key_backup": "AI key on backup",
+    "ai_agent_key_paused": "AI agent paused",
+    "ai_agent_lead_hot": "Hot lead (GUIDS)",
+    "ai_agent_referral_recommended": "Recommended referral (GUIDS)",
+    "google_business_analyses_done": "Profile analyses done",
+    "platform_events_chain_broken": "Broken event seal",
+    "events_access_requested": "Data access request",
+    "security_api_key_created": "API key created",
+    "security_api_key_revoked": "API key revoked",
+    "security_mfa_requirement_off": "Two-step verification requirement removed",
+    "digital_profile_lead_submitted": "Contact from the digital profile",
+    "digital_profile_vcard_downloaded": "Contact card downloaded",
+    "workspace_deletion_scheduled": "Workspace deletion scheduled",
+    "workspace_deletion_reminder": "Workspace deletion reminder",
+    "workspace_deletion_canceled": "Workspace deletion canceled",
+    "workspace_deletion_completed": "Workspace deleted"
+  },
+  "whatsapp": {
+    "generic": "{marca}: you have a new notice in {workspace}. {link}",
+    "billing_subscription_past_due": "{marca}: the subscription of {organizacao} was due on {vencimento} and is past due. {link}",
+    "billing_subscription_suspended": "{marca}: the subscription of {organizacao} was suspended for non-payment. {link}",
+    "ai_agent_key_backup": "{marca}: the AI key of the agent {agente} in {workspace} failed; it uses the backup until {data}. {link}",
+    "ai_agent_key_paused": "{marca}: the agent {agente} in {workspace} was paused because the AI key was not fixed. {link}",
+    "google_business_analyses_done": "{marca}: the analyses of the profile {local} are done. {link}",
+    "events_access_requested": "{marca}: {solicitante} asked for access to the event data of {workspace} for {horas} hours. Reason: {motivo} (ref. {referencia}). Decide at {link}",
+    "security_api_key_created": "{marca}: an API key ({chave}) was created in {workspace}. {link}",
+    "security_api_key_revoked": "{marca}: the API key {chave} was revoked in {workspace}. {link}",
+    "security_mfa_requirement_off": "{marca}: the two-step verification requirement was removed in {workspace}. {link}",
+    "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}"
+  },
+  "hub": {
+    "action": "Open in the dashboard",
+    "generic": {
+      "subject": "You have a new notice",
+      "body": "Open the dashboard to see the details."
+    },
+    "billing_subscription_past_due": {
+      "subject": "Subscription past due: {organizacao}",
+      "body": "The subscription of {organizacao} was due on {vencimento} and is past due."
+    },
+    "billing_subscription_suspended": {
+      "subject": "Subscription suspended: {organizacao}",
+      "body": "The subscription of {organizacao} was suspended for non-payment."
+    },
+    "ai_agent_key_backup": {
+      "subject": "The AI key of {workspace} failed",
+      "body": "The agent {agente} is using the backup key until {data}."
+    },
+    "ai_agent_key_paused": {
+      "subject": "AI agent paused in {workspace}",
+      "body": "The agent {agente} was paused because the AI key was not fixed."
+    },
+    "google_business_analyses_done": {
+      "subject": "Analyses done: {local}",
+      "body": "The background analyses of the profile {local} are done."
+    },
+    "platform_events_chain_broken": {
+      "subject": "Event seal does not match",
+      "body": "The Event Hub check found events with a broken seal or chain."
+    },
+    "events_access_requested": {
+      "subject": "Data access request for {workspace}",
+      "body": "{solicitante} asked for access to the event data for {horas} hours. Reason: {motivo} (ref. {referencia}). Approve or deny it in the dashboard."
+    },
+    "security_api_key_created": {
+      "subject": "API key created in {workspace}",
+      "body": "The API key {chave} was created."
+    },
+    "security_api_key_revoked": {
+      "subject": "API key revoked in {workspace}",
+      "body": "The API key {chave} was revoked."
+    },
+    "security_mfa_requirement_off": {
+      "subject": "Two-step verification no longer required in {workspace}",
+      "body": "The team's two-step verification requirement was removed."
+    },
+    "digital_profile_lead_submitted": {
+      "subject": "New contact in {workspace}",
+      "body": "A new contact arrived through the digital profile."
+    },
+    "reminder": {
+      "subject": "Reminder: {event}",
+      "body": "This notice has been waiting for a decision for {hours} hours."
+    },
+    "escalation": {
+      "subject": "No answer: {event}",
+      "body": "This notice has been waiting for a decision for {hours} hours and was forwarded to you."
+    }
+  },
+  "digest": {
+    "subject": "Daily digest: {count, plural, one {# notice} other {# notices}}",
+    "intro": "These are the notices kept for today's digest:",
+    "whatsapp": "{marca}: daily digest with {count, plural, one {# notice} other {# notices}}: {items}"
+  },
   "workspaceDeletion": {
     "action": "Open the console"
   },

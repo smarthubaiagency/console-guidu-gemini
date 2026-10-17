@@ -69,6 +69,16 @@ export async function purgeWorkspace(
     ],
     ["channel_routes", () => tx.channelRoute.deleteMany({ where })],
     ["channel_connections", () => tx.channelConnection.deleteMany({ where })],
+    // Matrix rooms (IN3): members before their room; the rooms on Synapse
+    // are deleted by the Matrix lifecycle (`purgeExternal`), not here.
+    ["matrix_room_members", () => tx.matrixRoomMember.deleteMany({ where })],
+    ["matrix_rooms", () => tx.matrixRoom.deleteMany({ where })],
+    // Inbox (IN4a): attendant marks and the address of the store.
+    ["inbox_attendants", () => tx.inboxAttendant.deleteMany({ where })],
+    [
+      "matrix_workspace_addresses",
+      () => tx.matrixWorkspaceAddress.deleteMany({ where }),
+    ],
     // The Google account (CF6b); the usage per key goes with its key.
     [
       "workspace_google_connections",

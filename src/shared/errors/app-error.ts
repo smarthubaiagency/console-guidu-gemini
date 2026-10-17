@@ -170,6 +170,10 @@ export function toSafeError(
     code = "conflict";
     safeMessage = "Este convite foi revogado por um administrador.";
     messageKey = "errors.invitationRevoked";
+  } else if (isSpecificError(err, "InvitationWorkspaceClosedError")) {
+    code = "conflict";
+    safeMessage = "Este workspace não está disponível.";
+    messageKey = "errors.invitationWorkspaceClosed";
   } else if (isSpecificError(err, "InvitationAlreadyAcceptedError")) {
     code = "conflict";
     safeMessage = "Este convite já foi aceito.";

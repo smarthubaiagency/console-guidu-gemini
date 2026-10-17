@@ -1,5 +1,6 @@
 import { workspaceDomainsLifecycle } from "@/core/domains/lifecycle";
 import { googleConnectionLifecycle } from "@/core/integrations/google/lifecycle";
+import { matrixWorkspaceLifecycle } from "@/core/matrix/lifecycle";
 
 import type {
   CoreLifecycleResource,
@@ -16,6 +17,7 @@ import { listModuleDataContracts } from "./registry";
 const CORE_RESOURCES: readonly CoreLifecycleResource[] = [
   googleConnectionLifecycle(),
   workspaceDomainsLifecycle(),
+  matrixWorkspaceLifecycle,
 ];
 
 export type NamedLifecycleHooks = Readonly<{ key: string }> &

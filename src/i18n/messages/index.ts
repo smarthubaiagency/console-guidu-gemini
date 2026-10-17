@@ -19,6 +19,7 @@ import ptBR_designLab from "./pt-BR/designLab.json";
 import ptBR_domains from "./pt-BR/domains.json";
 import ptBR_email from "./pt-BR/email.json";
 import ptBR_errors from "./pt-BR/errors.json";
+import ptBR_eventRules from "./pt-BR/eventRules.json";
 import ptBR_events from "./pt-BR/events.json";
 import ptBR_executions from "./pt-BR/executions.json";
 import ptBR_gateway from "./pt-BR/gateway.json";
@@ -26,6 +27,7 @@ import ptBR_gbIntelligence from "./pt-BR/gbIntelligence.json";
 import ptBR_googleBusiness from "./pt-BR/googleBusiness.json";
 import ptBR_helloWorld from "./pt-BR/helloWorld.json";
 import ptBR_home from "./pt-BR/home.json";
+import ptBR_inbox from "./pt-BR/inbox.json";
 import ptBR_integrations from "./pt-BR/integrations.json";
 import ptBR_invite from "./pt-BR/invite.json";
 import ptBR_languages from "./pt-BR/languages.json";
@@ -78,6 +80,7 @@ import en_designLab from "./en/designLab.json";
 import en_domains from "./en/domains.json";
 import en_email from "./en/email.json";
 import en_errors from "./en/errors.json";
+import en_eventRules from "./en/eventRules.json";
 import en_events from "./en/events.json";
 import en_executions from "./en/executions.json";
 import en_gateway from "./en/gateway.json";
@@ -85,6 +88,7 @@ import en_gbIntelligence from "./en/gbIntelligence.json";
 import en_googleBusiness from "./en/googleBusiness.json";
 import en_helloWorld from "./en/helloWorld.json";
 import en_home from "./en/home.json";
+import en_inbox from "./en/inbox.json";
 import en_integrations from "./en/integrations.json";
 import en_invite from "./en/invite.json";
 import en_languages from "./en/languages.json";
@@ -137,6 +141,7 @@ import es_designLab from "./es/designLab.json";
 import es_domains from "./es/domains.json";
 import es_email from "./es/email.json";
 import es_errors from "./es/errors.json";
+import es_eventRules from "./es/eventRules.json";
 import es_events from "./es/events.json";
 import es_executions from "./es/executions.json";
 import es_gateway from "./es/gateway.json";
@@ -144,6 +149,7 @@ import es_gbIntelligence from "./es/gbIntelligence.json";
 import es_googleBusiness from "./es/googleBusiness.json";
 import es_helloWorld from "./es/helloWorld.json";
 import es_home from "./es/home.json";
+import es_inbox from "./es/inbox.json";
 import es_integrations from "./es/integrations.json";
 import es_invite from "./es/invite.json";
 import es_languages from "./es/languages.json";
@@ -200,6 +206,7 @@ export const MESSAGE_FILES = {
     domains: ptBR_domains,
     email: ptBR_email,
     errors: ptBR_errors,
+    eventRules: ptBR_eventRules,
     events: ptBR_events,
     executions: ptBR_executions,
     gateway: ptBR_gateway,
@@ -207,6 +214,7 @@ export const MESSAGE_FILES = {
     googleBusiness: ptBR_googleBusiness,
     helloWorld: ptBR_helloWorld,
     home: ptBR_home,
+    inbox: ptBR_inbox,
     integrations: ptBR_integrations,
     invite: ptBR_invite,
     languages: ptBR_languages,
@@ -261,6 +269,7 @@ export const MESSAGE_FILES = {
     domains: en_domains,
     email: en_email,
     errors: en_errors,
+    eventRules: en_eventRules,
     events: en_events,
     executions: en_executions,
     gateway: en_gateway,
@@ -268,6 +277,7 @@ export const MESSAGE_FILES = {
     googleBusiness: en_googleBusiness,
     helloWorld: en_helloWorld,
     home: en_home,
+    inbox: en_inbox,
     integrations: en_integrations,
     invite: en_invite,
     languages: en_languages,
@@ -322,6 +332,7 @@ export const MESSAGE_FILES = {
     domains: es_domains,
     email: es_email,
     errors: es_errors,
+    eventRules: es_eventRules,
     events: es_events,
     executions: es_executions,
     gateway: es_gateway,
@@ -329,6 +340,7 @@ export const MESSAGE_FILES = {
     googleBusiness: es_googleBusiness,
     helloWorld: es_helloWorld,
     home: es_home,
+    inbox: es_inbox,
     integrations: es_integrations,
     invite: es_invite,
     languages: es_languages,
@@ -385,6 +397,7 @@ export const NAMESPACES = [
   "domains",
   "email",
   "errors",
+  "eventRules",
   "events",
   "executions",
   "gateway",
@@ -392,6 +405,7 @@ export const NAMESPACES = [
   "googleBusiness",
   "helloWorld",
   "home",
+  "inbox",
   "integrations",
   "invite",
   "languages",

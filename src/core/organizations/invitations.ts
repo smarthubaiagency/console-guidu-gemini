@@ -28,6 +28,7 @@ import {
   OrganizationRole,
   OrganizationRoles,
   WorkspaceRole,
+  WorkspaceRoles,
 } from "../permissions/roles";
 import { Permissions } from "../permissions/catalog";
 import {
@@ -35,7 +36,10 @@ import {
   requireWorkspacePermission,
 } from "../permissions/guard";
 import { recordAudit } from "../audit/record";
+import { requestAccountSync } from "../matrix";
+import { assertAttendantSeat } from "@/modules/inbox/quotas";
 import { appConfig } from "../config/app";
+import { isWorkspaceActive } from "../workspaces/active";
 import type { Identity } from "../auth/identity";
 import {
   InsufficientRoleError,
@@ -45,6 +49,7 @@ import {
   InvitationNotFoundError,
   InvitationRecipientMismatchError,
   InvitationRevokedError,
+  InvitationWorkspaceClosedError,
   SeatLimitExceededError,
 } from "./errors";
 
@@ -175,6 +180,11 @@ export async function createInvitation(
   const totalCommittedSeats = activeMembersCount + pendingInvitesCount;
   if (totalCommittedSeats >= maxSeats) {
     throw new SeatLimitExceededError(organizationId, maxSeats, totalCommittedSeats);
+  }
+
+  // 4b. An Attendant takes a place in the Inbox quota (IN4a).
+  if (role === WorkspaceRoles.ATTENDANT && workspaceId) {
+    await assertAttendantSeat(tx, { organizationId, workspaceId });
   }
 
   // 5. Expire or revoke any previous pending invitation for this exact email & target
@@ -389,6 +399,13 @@ export async function acceptInvitation(
         throw new InvitationExpiredError();
       }
 
+      // A workspace scheduled for deletion (or otherwise closed) takes no
+      // new members (WS1); the invitation stays pending and works again if
+      // the owner cancels the deletion within the grace period.
+      if (workspaceId && !(await isWorkspaceActive(tx, workspaceId))) {
+        throw new InvitationWorkspaceClosedError();
+      }
+
       // 6. Serialize seat capacity using Postgres transaction advisory lock (AC06)
       await tx.$executeRaw`
         select pg_advisory_xact_lock(hashtext('org_seats:' || ${organizationId}::text))
@@ -468,6 +485,9 @@ export async function acceptInvitation(
         });
         workspaceSlug = ws?.slug ?? null;
       }
+
+      // The Inbox account follows `inbox.view` (IN3).
+      await requestAccountSync(tx, identity.userId);
 
       // 9. Mark invitation as accepted
       const acceptedInvitation = await tx.invitation.update({

@@ -9,9 +9,18 @@
 const OFFSET = Number(process.env.E2E_PORT_OFFSET ?? 0) || 0;
 const APP_PORT = 3000 + OFFSET;
 
+/**
+ * `E2E_EXTERNAL_POSTGRES=1` (the CI e2e job): a real Postgres 16 listens on
+ * the database port, with user and password `postgres`, instead of PGlite.
+ */
+export const EXTERNAL_POSTGRES = process.env.E2E_EXTERNAL_POSTGRES === "1";
+
 export const RIG = {
   authPort: 54399 + OFFSET,
   databasePort: 54398 + OFFSET,
+  // A real Postgres (CI) gets a database of its own, dropped and created on
+  // every run; PGlite (local) starts empty and serves only `postgres`.
+  databaseName: EXTERNAL_POSTGRES ? "guidu_e2e" : "postgres",
   chatwootPort: 54397 + OFFSET,
   resendPort: 54396 + OFFSET,
   appPort: APP_PORT,
@@ -30,4 +39,4 @@ export const AUTH_BASE_URL = `http://127.0.0.1:${RIG.authPort}`;
 // pgbouncer=true: no named prepared statements. PGlite serves a single
 // session shared by the web server and the job worker (F3a), where named
 // statements of two Prisma clients would collide.
-export const DATABASE_URL = `postgresql://postgres:postgres@127.0.0.1:${RIG.databasePort}/postgres?connection_limit=5&pgbouncer=true`;
+export const DATABASE_URL = `postgresql://postgres:postgres@127.0.0.1:${RIG.databasePort}/${RIG.databaseName}?connection_limit=5&pgbouncer=true`;

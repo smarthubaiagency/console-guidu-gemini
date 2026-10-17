@@ -17,6 +17,7 @@ describe("module registry", () => {
     expect(listRegisteredModules().map((m) => m.manifest.moduleKey)).toEqual([
       "portfolio",
       "crm",
+      "inbox",
       "google-business",
       "ai-agents",
       "hello-world",
@@ -34,6 +35,9 @@ describe("module registry", () => {
     vi.stubEnv("GUIDU_MODULE_HELLO_WORLD_ENABLED", "true");
     expect(helloWorld?.technicalGate()).toBe(true);
     expect(getRegisteredModule("portfolio")?.technicalGate()).toBe(true);
+    // The Inbox follows the Matrix core (IN4a): off without its variables.
+    vi.stubEnv("MATRIX_HOMESERVER_URL", "");
+    expect(getRegisteredModule("inbox")?.technicalGate()).toBe(false);
   });
 
   it("resolves module permission defaults and denies unknown ones", () => {

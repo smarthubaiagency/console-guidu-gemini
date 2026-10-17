@@ -49,6 +49,103 @@
     "expires": "El enlace es de un solo uso y vale hasta el {date}.",
     "action": "Ver la solicitud y decidir"
   },
+  "names": {
+    "billing_subscription_past_due": "Suscripción atrasada",
+    "billing_subscription_suspended": "Suscripción suspendida",
+    "ai_agent_key_backup": "Clave de IA en reserva",
+    "ai_agent_key_paused": "Agente de IA pausado",
+    "ai_agent_lead_hot": "Lead caliente (GUIDS)",
+    "ai_agent_referral_recommended": "Recomendación sugerida (GUIDS)",
+    "google_business_analyses_done": "Análisis de la ficha concluidos",
+    "platform_events_chain_broken": "Sello de evento roto",
+    "events_access_requested": "Solicitud de acceso a los datos",
+    "security_api_key_created": "Clave de API creada",
+    "security_api_key_revoked": "Clave de API revocada",
+    "security_mfa_requirement_off": "Se retiró la exigencia de verificación en dos pasos",
+    "digital_profile_lead_submitted": "Contacto desde el perfil digital",
+    "digital_profile_vcard_downloaded": "Tarjeta de contacto descargada",
+    "workspace_deletion_scheduled": "Eliminación de workspace programada",
+    "workspace_deletion_reminder": "Recordatorio de la eliminación de workspace",
+    "workspace_deletion_canceled": "Eliminación de workspace cancelada",
+    "workspace_deletion_completed": "Workspace eliminado"
+  },
+  "whatsapp": {
+    "generic": "{marca}: tienes un aviso nuevo en {workspace}. {link}",
+    "billing_subscription_past_due": "{marca}: la suscripción de {organizacao} venció el {vencimento} y está atrasada. {link}",
+    "billing_subscription_suspended": "{marca}: la suscripción de {organizacao} fue suspendida por falta de pago. {link}",
+    "ai_agent_key_backup": "{marca}: la clave de IA del agente {agente} en {workspace} falló; usa la reserva hasta {data}. {link}",
+    "ai_agent_key_paused": "{marca}: el agente {agente} en {workspace} fue pausado porque la clave de IA no se corrigió. {link}",
+    "google_business_analyses_done": "{marca}: los análisis de la ficha {local} terminaron. {link}",
+    "events_access_requested": "{marca}: {solicitante} pidió acceso a los datos de eventos de {workspace} por {horas} horas. Motivo: {motivo} (ref. {referencia}). Decide en {link}",
+    "security_api_key_created": "{marca}: se creó una clave de API ({chave}) en {workspace}. {link}",
+    "security_api_key_revoked": "{marca}: se revocó la clave de API {chave} en {workspace}. {link}",
+    "security_mfa_requirement_off": "{marca}: se retiró la exigencia de verificación en dos pasos en {workspace}. {link}",
+    "digital_profile_lead_submitted": "{marca}: llegó un contacto nuevo por el perfil digital de {workspace}. {link}"
+  },
+  "hub": {
+    "action": "Abrir en el panel",
+    "generic": {
+      "subject": "Tienes un aviso nuevo",
+      "body": "Abre el panel para ver los detalles."
+    },
+    "billing_subscription_past_due": {
+      "subject": "Suscripción atrasada: {organizacao}",
+      "body": "La suscripción de {organizacao} venció el {vencimento} y está atrasada."
+    },
+    "billing_subscription_suspended": {
+      "subject": "Suscripción suspendida: {organizacao}",
+      "body": "La suscripción de {organizacao} fue suspendida por falta de pago."
+    },
+    "ai_agent_key_backup": {
+      "subject": "La clave de IA de {workspace} falló",
+      "body": "El agente {agente} usa la clave de reserva hasta {data}."
+    },
+    "ai_agent_key_paused": {
+      "subject": "Agente de IA pausado en {workspace}",
+      "body": "El agente {agente} fue pausado porque la clave de IA no se corrigió."
+    },
+    "google_business_analyses_done": {
+      "subject": "Análisis concluidos: {local}",
+      "body": "Los análisis en segundo plano de la ficha {local} terminaron."
+    },
+    "platform_events_chain_broken": {
+      "subject": "El sello de un evento no coincide",
+      "body": "La verificación de la Central de Eventos encontró eventos con el sello o la cadena rotos."
+    },
+    "events_access_requested": {
+      "subject": "Solicitud de acceso a los datos de {workspace}",
+      "body": "{solicitante} pidió acceso a los datos de eventos por {horas} horas. Motivo: {motivo} (ref. {referencia}). Aprueba o rechaza en el panel."
+    },
+    "security_api_key_created": {
+      "subject": "Clave de API creada en {workspace}",
+      "body": "Se creó la clave de API {chave}."
+    },
+    "security_api_key_revoked": {
+      "subject": "Clave de API revocada en {workspace}",
+      "body": "Se revocó la clave de API {chave}."
+    },
+    "security_mfa_requirement_off": {
+      "subject": "La verificación en dos pasos dejó de exigirse en {workspace}",
+      "body": "Se retiró la exigencia de verificación en dos pasos del equipo."
+    },
+    "digital_profile_lead_submitted": {
+      "subject": "Contacto nuevo en {workspace}",
+      "body": "Llegó un contacto nuevo por el perfil digital."
+    },
+    "reminder": {
+      "subject": "Recordatorio: {event}",
+      "body": "Este aviso espera una decisión desde hace {hours} horas."
+    },
+    "escalation": {
+      "subject": "Sin respuesta: {event}",
+      "body": "Este aviso espera una decisión desde hace {hours} horas y se te reenvió."
+    }
+  },
+  "digest": {
+    "subject": "Resumen del día: {count, plural, one {# aviso} other {# avisos}}",
+    "intro": "Estos son los avisos guardados para el resumen de hoy:",
+    "whatsapp": "{marca}: resumen del día con {count, plural, one {# aviso} other {# avisos}}: {items}"
+  },
   "workspaceDeletion": {
     "action": "Abrir el panel"
   },

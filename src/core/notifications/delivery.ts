@@ -40,6 +40,8 @@ export async function deliverNotification(
     recipientUserId?: string | null;
     /** The Event Hub event of the delivery (H1), kept with it. */
     eventId?: string | null;
+    /** False keeps the bell out (a rule without the bell, H2). */
+    bell?: boolean;
   }>,
 ): Promise<number> {
   const { event } = args;
@@ -75,12 +77,14 @@ export async function deliverNotification(
   if (inserted === 0) return 0;
 
   const channels = await channelsFor(tx, userId, event.type);
-  const notice = channels.has("app") ? inboxNotice(event) : null;
+  const notice =
+    channels.has("app") && args.bell !== false ? inboxNotice(event) : null;
   if (userId && notice) {
     await postNotice(tx, {
       userId,
       notice,
       idempotencyKey: event.idempotencyKey,
+      eventId,
     });
   }
 

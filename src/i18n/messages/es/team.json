@@ -39,7 +39,8 @@
     "actions": "Acciones",
     "invitedEmail": "Correo Invitado",
     "plannedRole": "Rol Previsto",
-    "expiresAt": "Vence el"
+    "expiresAt": "Vence el",
+    "inbox": "Inbox"
   },
   "roles": {
     "owner": "Propietario",
@@ -64,5 +65,8 @@
     "invalidRoleInput": "Datos no válidos para el cambio de rol.",
     "invalidMemberId": "Identificador de miembro no válido."
   },
-  "invitationEmailed": "Invitación enviada por correo a {email}."
+  "invitationEmailed": "Invitación enviada por correo a {email}.",
+  "attendantMark": "Agente del Inbox: {name}",
+  "attendantMarked": "Agente marcado.",
+  "attendantUnmarked": "Marca de agente quitada."
 }

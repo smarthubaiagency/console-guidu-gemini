@@ -14,6 +14,11 @@ import {
   type JobDefinition,
   type PlatformJobSession,
 } from "@/core/jobs/definition";
+import { InvitationWorkspaceClosedError } from "@/core/organizations/errors";
+import {
+  acceptInvitation,
+  hashInvitationToken,
+} from "@/core/organizations/invitations";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
 import {
   cancelWorkspaceDeletion,
@@ -201,6 +206,57 @@ describeDatabase(
         status: "succeeded",
       });
       expect(detachedSessions).toBe(1);
+    });
+
+    it("refuses an invitation to a closed workspace and keeps it pending", async () => {
+      const invitee = "d0000000-0000-4000-8000-000000000010";
+      const email = "ws1-invite@test.guidu.co";
+      const rawToken = randomUUID();
+      const invitation = await db.invitation.create({
+        data: {
+          organizationId,
+          workspaceId,
+          email,
+          role: "member",
+          tokenHash: hashInvitationToken(rawToken),
+          invitedByUserId: owner,
+          expiresAt: new Date(Date.now() + 86_400_000),
+        },
+      });
+      await setStatus("deletion_scheduled");
+      try {
+        await expect(
+          acceptInvitation(prisma, {
+            rawToken,
+            identity: {
+              userId: invitee,
+              email,
+              emailConfirmedAt: new Date().toISOString(),
+              mfaSatisfied: false,
+              profile: {
+                id: invitee,
+                fullName: null,
+                status: "active",
+                statusReason: null,
+                lastSignInAt: null,
+              },
+            },
+          }),
+        ).rejects.toThrow(InvitationWorkspaceClosedError);
+        expect(
+          await db.invitation.findUniqueOrThrow({
+            where: { id: invitation.id },
+          }),
+        ).toMatchObject({ status: "pending" });
+        expect(
+          await db.workspaceMember.count({
+            where: { workspaceId, userId: invitee },
+          }),
+        ).toBe(0);
+      } finally {
+        await db.invitation.delete({ where: { id: invitation.id } });
+        await setStatus("active");
+      }
     });
 
     it("tells nobody about a closed workspace, except about its deletion", async () => {

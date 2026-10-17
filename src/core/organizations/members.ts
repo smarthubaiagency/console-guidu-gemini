@@ -28,6 +28,7 @@ import {
   MemberNotFoundError,
 } from "./errors";
 import { recordAudit } from "../audit/record";
+import { requestAccountSync } from "../matrix";
 
 export type OrganizationMemberItem = {
   userId: string;
@@ -138,6 +139,8 @@ export async function updateOrganizationMemberRole(
       role: newRole,
     },
   });
+  // An organization owner stands in as owner of its workspaces (Inbox, IN3).
+  await requestAccountSync(tx, targetUserId);
 
   await recordAudit(
     tx,
@@ -248,6 +251,7 @@ export async function removeOrganizationMember(
       },
     },
   });
+  await requestAccountSync(tx, targetUserId);
 
   await recordAudit(
     tx,

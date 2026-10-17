@@ -21,6 +21,7 @@ export const CLIENT_NAMESPACES = [
   "brand",
   "platformKeys",
   "crm",
+  "inbox",
   "helloWorld",
   "aiAgents",
   "aiConsole",
@@ -29,6 +30,7 @@ export const CLIENT_NAMESPACES = [
   "gbIntelligence",
   "googleBusiness",
   "events",
+  "eventRules",
   "platformAudit",
 ] as const;
 

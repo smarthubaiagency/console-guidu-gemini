@@ -108,6 +108,11 @@ export const ALLOWED_METADATA_KEYS: ReadonlySet<string> = new Set([
   "eventType",
   "chainKey",
   "capability",
+  // Access to the data of events (H2): who asked, where, for how long.
+  "requesterKind",
+  "workspaceId",
+  "durationHours",
+  "accessGrantId",
 ]);
 
 /**

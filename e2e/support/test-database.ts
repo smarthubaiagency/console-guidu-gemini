@@ -8,7 +8,7 @@ import { Pool } from "pg";
 
 import { computeSeal } from "../../src/core/events/seal";
 import { FAKE_RESEND_KEY } from "./fake-resend";
-import { RIG } from "./rig";
+import { EXTERNAL_POSTGRES, RIG } from "./rig";
 
 /**
  * Postgres for the end-to-end suite, served by PGlite over the wire protocol
@@ -143,24 +143,62 @@ export type SeedGuidParams = {
   ready?: boolean | undefined;
 };
 
+/**
+ * The socket server frees a connection slot only when the socket closes
+ * cleanly: one that ends with an error (a worker killed or crashed mid-query
+ * resets its sockets) keeps its slot forever, and once all of them are taken
+ * every new connection is refused ("Can't reach database server"). Slots of
+ * detached handlers are given back here.
+ */
+function releaseResetConnections(server: PGLiteSocketServer): void {
+  const handlers = (
+    server as unknown as { handlers: Set<{ isAttached: boolean }> }
+  ).handlers;
+  setInterval(() => {
+    for (const handler of handlers) {
+      if (!handler.isAttached) handlers.delete(handler);
+    }
+  }, 500).unref();
+}
+
 export async function startTestDatabase(
   port: number,
   repoRoot: string,
 ): Promise<TestDatabase> {
-  const db = await PGlite.create();
-  // The default is a single connection; Prisma's pool and this harness's own
-  // client both need one.
-  const server = new PGLiteSocketServer({
-    db,
-    port,
-    host: "127.0.0.1",
-    maxConnections: 10,
-  });
-  await server.start();
+  let db: PGlite | null = null;
+  let server: PGLiteSocketServer | null = null;
+  if (EXTERNAL_POSTGRES) {
+    // A fresh database on every run (the AI agents run reuses the service).
+    const admin = new Pool({
+      connectionString: `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`,
+      max: 1,
+    });
+    await admin.query(
+      `drop database if exists ${RIG.databaseName} with (force)`,
+    );
+    await admin.query(`create database ${RIG.databaseName}`);
+    await admin.end();
+  } else {
+    db = await PGlite.create();
+    // The default is a single connection. Every client needs its own: this
+    // harness's pool, the web's Prisma (5), and while jobs run the worker's
+    // Prisma (2) and pg-boss pool. Queries still run one at a time, so the
+    // cap only has to stay above that sum; at 10 the worker's connections
+    // were refused ("Can't reach database server", ECONNRESET) and its jobs
+    // stayed queued.
+    server = new PGLiteSocketServer({
+      db,
+      port,
+      host: "127.0.0.1",
+      maxConnections: 40,
+    });
+    await server.start();
+    releaseResetConnections(server);
+  }
 
-  const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`;
-  const pool = new Pool({ connectionString: url, max: 10 });
-
+  const url = `postgresql://postgres:postgres@127.0.0.1:${port}/${RIG.databaseName}`;
+  // Few connections of its own: its queries are short and mostly in turn.
+  const pool = new Pool({ connectionString: url, max: 3 });
   await pool.query(BOOTSTRAP);
 
   const { readdir } = await import("node:fs/promises");
@@ -505,6 +543,10 @@ export async function startTestDatabase(
             // Prisma clients (web and worker) would collide there.
             WORKER_DATABASE_URL: `${url}?pgbouncer=true&connection_limit=2`,
             WORKER_CONCURRENCY: "1",
+            // pg-boss polls every queue (two dozen) through its own pool; a
+            // small one keeps PGlite's single session from interleaving
+            // statements and is plenty for a real Postgres too.
+            WORKER_BOSS_MAX_CONNECTIONS: "2",
             GUIDU_MODULE_HELLO_WORLD_ENABLED: "true",
             // Seal of the Event Hub (H1), the same as the web's.
             EVENTS_HMAC_KEY: RIG.eventsHmacKey,
@@ -565,8 +607,8 @@ export async function startTestDatabase(
     },
     close: async () => {
       await pool.end();
-      await server.stop();
-      await db.close();
+      await server?.stop();
+      await db?.close();
     },
   };
 }

@@ -2,7 +2,7 @@
 
 - **Data:** 16/10/2026
 - **Base:** ADR "Chat interno como cliente Matrix" (no repositório, [ADR 0023](../../adr/0023-chat-interno-como-cliente-matrix.md)) e a revisão de 16/10/2026 da ADR 0014 "Inbox em tela cheia (sidebar-09)", enviadas pelo Marcelo, conferidas contra a `main` (b521a24).
-- **Estado:** respostas do Marcelo de 16/10/2026 na seção 0. IN0 (este documento, a [ADR 0023](../../adr/0023-chat-interno-como-cliente-matrix.md) e a [especificação](especificacao.md)) e IN2 em andamento.
+- **Estado:** respostas do Marcelo de 16/10/2026 na seção 0. IN0 (este documento, a [ADR 0023](../../adr/0023-chat-interno-como-cliente-matrix.md) e a [especificação](especificacao.md)) e IN2 em andamento. IN3 (núcleo Matrix) e WS1 na `main` ([nucleo-matrix.md](nucleo-matrix.md)). IN4 dividida em IN4a e IN4b ([plano da IN4](plano-in4.md)); IN4a (janela e conversa) entregue, esperando PR: [janela-inbox.md](janela-inbox.md).
 
 ## 0. Decisões do Marcelo (16/10/2026)
 

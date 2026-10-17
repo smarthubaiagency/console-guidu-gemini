@@ -1,7 +1,7 @@
 # Inbox — especificação v0.1
 
 - **Data:** 16/10/2026
-- **Estado:** proposta da etapa IN0, para aprovação no PR. Decisões do Marcelo de 16/10/2026 marcadas **[Decidido]**; o resto é **[Proposta]**.
+- **Estado:** proposta da etapa IN0, para aprovação no PR. Decisões do Marcelo de 16/10/2026 marcadas **[Decidido]**; o resto é **[Proposta]**. As tabelas do núcleo da §5 (contas e salas) nasceram na IN3 ([nucleo-matrix.md](nucleo-matrix.md)).
 - **Base:** [ADR 0023](../../adr/0023-chat-interno-como-cliente-matrix.md) (chat interno como cliente Matrix) e a revisão de 16/10/2026 da [ADR 0014](../../adr/0014-shell-padrao-sidebar-08.md) (Inbox em tela cheia). Plano de etapas em [plano.md](plano.md).
 
 ## 1. O que é
@@ -40,7 +40,7 @@ O Atendente não vê configurações, módulos, cobrança nem outras telas. O da
 
 **[Decidido]** O Inbox é um módulo de plano (chave `inbox`), com **cota de atendentes**.
 
-**[Proposta]** Conta como atendente todo membro do workspace com `inbox.reply`. Ao atingir a cota, o convite de um novo membro com essa permissão é recusado com aviso; quem já está continua atendendo.
+**[Decidido em 17/10/2026]** Só atende quem for marcado como atendente na Equipe, mesmo sendo Dono ou Admin; a função Atendente já vem marcada. A cota conta os marcados (5 por workspace quando o plano não define). Ao atingir a cota, marcar, convidar ou trocar alguém para Atendente é recusado com aviso; quem já está continua atendendo. Dono e Admin sem marca abrem o Inbox só para ler e atribuir; Editor sem marca não abre. Detalhes em [janela-inbox.md](janela-inbox.md).
 
 ## 5. Dados
 

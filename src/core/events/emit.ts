@@ -60,6 +60,8 @@ export type EmitEventInput = Readonly<{
   /** Stable key: the same key never records a second event. */
   idempotencyKey: string;
   occurredAt?: Date;
+  /** `pending` for a type that waits for a decision (`approval`, H2). */
+  status?: "open" | "pending";
 }>;
 
 export type EmittedEvent = Readonly<{ id: string; created: boolean }>;
@@ -129,6 +131,10 @@ export async function emitEvent(
   if (definition.route === "subject_person" && !input.recipientUserId) {
     throw invalid(`O evento ${definition.type} precisa da pessoa a avisar.`);
   }
+  const status = input.status ?? "open";
+  if (status === "pending" && !definition.approval) {
+    throw invalid(`O evento ${definition.type} não espera decisão.`);
+  }
   const data = normalizeData(input.data) as Record<string, unknown>;
   const json = JSON.stringify(data);
   if (Buffer.byteLength(json, "utf8") > MAX_EVENT_DATA_BYTES) {
@@ -170,7 +176,7 @@ export async function emitEvent(
       id, type, module, level, partner_id, organization_id, workspace_id,
       subject_type, subject_id, severity, audiences, route, recipient_user_id,
       data, idempotency_key, created_by, occurred_at, chain_key, seq,
-      content_hash, prev_hash, key_version
+      content_hash, prev_hash, key_version, status
     ) values (
       ${id}::uuid, ${definition.type}, ${definition.module}, ${definition.level},
       ${uuidOrNull(scope.partnerId)}, ${uuidOrNull(scope.organizationId)},
@@ -178,7 +184,7 @@ export async function emitEvent(
       ${definition.severity}, ${[...definition.audiences]}::text[], ${definition.route},
       ${uuidOrNull(input.recipientUserId ?? null)}, ${json}::jsonb, ${idempotencyKey},
       ${uuidOrNull(createdBy)}, ${occurredAt}, ${chainKey}, ${seq},
-      ${contentHash}, ${prevHash}, ${key.version}
+      ${contentHash}, ${prevHash}, ${key.version}, ${status}
     )
   `;
 

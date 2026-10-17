@@ -20,16 +20,19 @@ A thread nova precisa ser aberta **depois** de 17/10/2026 00:17 UTC, quando o Ma
 
 ## 3. Estado
 
-| Etapa                                      | Branch ou PR                  | Situação                                        | Migration        |
-| ------------------------------------------ | ----------------------------- | ----------------------------------------------- | ---------------- |
-| Regras de paralelo e testes no `AGENTS.md` | #104                          | Na `main`                                       | —                |
-| IN0 Documentos (ADR 0023, especificação)   | #102                          | Na `main`                                       | —                |
-| IN2 Rotas em `(shell)/`                    | #103                          | Na `main`                                       | —                |
-| IN1 Relatório da prova e este handoff      | `claude/in1-relatorio`        | Esperando PR                                    | —                |
-| IN1 Código da prova                        | `claude/in1-prova-matrix`     | Só referência para a IN3; não vai para a `main` | —                |
-| AT1 Função Atendente                       | `claude/at1-funcao-atendente` | Esperando PR; testes verdes                     | `20261127090000` |
+| Etapa                                      | Branch ou PR                       | Situação                                                          | Migration        |
+| ------------------------------------------ | ---------------------------------- | ----------------------------------------------------------------- | ---------------- |
+| Regras de paralelo e testes no `AGENTS.md` | #104                               | Na `main`                                                         | —                |
+| IN0 Documentos (ADR 0023, especificação)   | #102                               | Na `main`                                                         | —                |
+| IN2 Rotas em `(shell)/`                    | #103                               | Na `main`                                                         | —                |
+| IN1 Relatório da prova e este handoff      | #108                               | Na `main`                                                         | —                |
+| IN1 Código da prova                        | `claude/in1-prova-matrix`          | Só referência para a IN3; não vai para a `main`                   | —                |
+| AT1 Função Atendente                       | #109                               | Na `main`                                                         | `20261127090000` |
+| WS1 Exclusão suave do workspace            | #110                               | Na `main`                                                         | `20261129090000` |
+| IN3 Núcleo Matrix (e decisões, #114)       | #112                               | Na `main`                                                         | `20261128090000` |
+| IN4a Janela e conversa do Inbox            | `claude/optimistic-lamport-rjehmm` | Esperando PR; [janela-inbox.md](../modules/inbox/janela-inbox.md) | `20261130090000` |
 
-As próximas migrations do Inbox começam em `20261128090000`.
+As próximas migrations do Inbox começam em `20261201090000` (IN4b).
 
 ## 4. Synapse de teste
 

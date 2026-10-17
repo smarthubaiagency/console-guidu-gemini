@@ -188,11 +188,13 @@ _\* AUD1: o `billing` abre Plataforma › Auditoria, mas o banco (`private.platf
 
 ### 4.4 Central de Eventos na plataforma (H1, ADR 0022)
 
-| Permissão                                                               | `owner` | `operations` | `support` | `billing` | capacidade `keychain` |
-| ----------------------------------------------------------------------- | :-----: | :----------: | :-------: | :-------: | :-------------------: |
-| `platform.events.read` (situação dos eventos e das entregas, sem dados) |   ✅    |      ✅      |    ✅     |    ✅*    |           —           |
-| `platform.events.read_all_data` (dados completos de qualquer evento)    |   ❌    |      ❌      |    ❌     |    ❌     |         ✅**          |
-| `platform.capabilities.manage` (conceder e retirar `keychain`)          |   ✅    |      ❌      |    ❌     |    ❌     |           —           |
+| Permissão                                                                   | `owner` | `operations` | `support` | `billing` | capacidade `keychain` |
+| --------------------------------------------------------------------------- | :-----: | :----------: | :-------: | :-------: | :-------------------: |
+| `platform.events.read` (situação dos eventos e das entregas, sem dados)     |   ✅    |      ✅      |    ✅     |    ✅*    |           —           |
+| `platform.events.read_all_data` (dados completos de qualquer evento)        |   ❌    |      ❌      |    ❌     |    ❌     |         ✅**          |
+| `platform.capabilities.manage` (conceder e retirar `keychain`)              |   ✅    |      ❌      |    ❌     |    ❌     |           —           |
+| `platform.events.request_access` (pedir ao cliente os dados de eventos, H2) |   ✅    |      ✅      |    ✅     |    ❌     |           —           |
+| `platform.events.manage` (resolver ou ignorar os eventos da plataforma, H2) |   ✅    |      ✅      |    ❌     |    ❌     |           —           |
 
 _\* `billing` vê só os eventos do módulo `billing`; o banco corta o resto (`private.platform_events`)._
 _\*\* `keychain` é uma capacidade somada ao papel principal (tabela `platform_admin_capabilities`), não um papel; dá só essa permissão. O `owner` não a tem por padrão e pode concedê-la a si mesmo (auditado em `platform.capability.grant`/`.revoke`). Cada abertura exige MFA (AAL2), motivo de 10 a 500 caracteres e grava `platform.event.view_data` (event_id, tipo, motivo, IP) na auditoria da plataforma, sem empresa nem workspace: o cliente não é avisado. A leitura e o registro acontecem na mesma chamada (`private.read_event_data`)._
@@ -211,6 +213,17 @@ _\*\* `keychain` é uma capacidade somada ao papel principal (tabela `platform_a
 O acesso do gerenciado não passa pela matriz: as políticas RLS de CRM, GUIDS (escrita), conversas, leads, avisos, canais, portfólio e configurações do workspace aceitam `private.partner_manages_organization(org)`. A chave de IA (`credentials`) nunca. Toda escrita de quem gerencia vira `audit_events` com origem `partner`.
 
 No parceiro, `partner_owner`, `partner_admin` e `partner_support` leem a situação dos eventos dos seus clientes (`private.partner_events`); os dados só das empresas que gerenciam (`private.partner_manages_organization`) e dos eventos endereçados ao próprio parceiro. Os membros do workspace leem os eventos com audiência cliente, com os dados (RLS da tabela `events`).
+
+**H2 (Central de Eventos: regras, telas e acesso por evento):**
+
+| Permissão                                                               | Quem                                                |
+| ----------------------------------------------------------------------- | --------------------------------------------------- |
+| `workspace.events.read` (Eventos do workspace e o rastro)               | `owner`, `admin`, `editor`, `viewer`                |
+| `workspace.events.manage` (resolver/ignorar, decidir pedidos de acesso) | `owner`, `admin`                                    |
+| `partner.events.read` (Eventos dos clientes no `/admin`)                | `partner_owner`, `partner_admin`, `partner_support` |
+| `partner.events.request_access` (pedir ao cliente os dados de eventos)  | `partner_owner`, `partner_admin`, `partner_support` |
+
+As regras de aviso, a janela de silêncio e o horário do resumo usam as permissões das configurações de cada nível (`platform.settings.manage`, `partner.settings.manage`, `workspace.settings.update`); os modelos de WhatsApp, `platform.settings.manage` e `partner.settings.manage`. O acesso por evento (`event_access_grants`) só deixa ler quem pediu, só os eventos do pedido, com o papel ainda ativo e dentro do prazo aprovado; cada leitura grava `event.data.viewed` com a empresa e o workspace (o cliente vê no próprio evento) na mesma chamada (`private.read_event_data_by_grant`). O número de WhatsApp de Minha conta é só da própria pessoa.
 
 ---
 

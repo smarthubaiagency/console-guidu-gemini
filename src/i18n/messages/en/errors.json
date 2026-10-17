@@ -17,8 +17,10 @@
   "lastOwner": "The last owner cannot be changed or removed.",
   "invitationExpired": "This invitation has expired.",
   "invitationRevoked": "This invitation was revoked by an administrator.",
+  "invitationWorkspaceClosed": "This workspace is not available.",
   "invitationAccepted": "This invitation has already been accepted.",
   "moduleUnavailable": "Module temporarily unavailable.",
   "providerError": "Failed to reach the AI provider.",
-  "invalidInput": "Invalid input."
+  "invalidInput": "Invalid input.",
+  "chatUnavailable": "The chat is unavailable right now."
 }

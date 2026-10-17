@@ -2,8 +2,12 @@
   "portfolio": {
     "name": "Portfólio",
     "description": "Produtos, serviços, imóveis, hospedagem e eventos no formato do protocolo UCP.",
-    "nav": { "portfolio": "Portfólio" },
-    "settings": { "portfolio_admin": "Portfólio" },
+    "nav": {
+      "portfolio": "Portfólio"
+    },
+    "settings": {
+      "portfolio_admin": "Portfólio"
+    },
     "permissions": {
       "portfolio_items_read": "Ver os itens do portfólio.",
       "portfolio_items_write": "Criar e editar itens e variantes do portfólio."
@@ -16,17 +20,34 @@
   "crm": {
     "name": "CRM",
     "description": "Contatos do workspace; leads, empresas, negócios e tarefas virão depois.",
-    "nav": { "crm": "CRM", "crm_contacts": "Contatos" },
+    "nav": {
+      "crm": "CRM",
+      "crm_contacts": "Contatos"
+    },
     "permissions": {
       "crm_contacts_read": "Ver os contatos do workspace.",
       "crm_contacts_write": "Criar e editar contatos."
     },
-    "quotas": { "crm_contacts": "Contatos por workspace." }
+    "quotas": {
+      "crm_contacts": "Contatos por workspace."
+    }
+  },
+  "inbox": {
+    "name": "Inbox",
+    "description": "Atendimento das conversas do workspace, com visões, responsável e status.",
+    "nav": {
+      "inbox": "Inbox"
+    },
+    "quotas": {
+      "inbox_attendants": "Atendentes marcados por workspace."
+    }
   },
   "google_business": {
     "name": "Google Meu Negócio",
     "description": "Integração e sincronização de perfis comerciais (especificação em aberto).",
-    "nav": { "google_business": "Google Meu Negócio" },
+    "nav": {
+      "google_business": "Google Meu Negócio"
+    },
     "quotas": {
       "google_business_maps_keywords": "Palavras-chave monitoradas no mapa por unidade.",
       "google_business_maps_grid_size": "Pontos por lado da grade do mapa (7 = 7x7).",
@@ -36,8 +57,12 @@
   "ai_agents": {
     "name": "Agentes de IA",
     "description": "GUIDS: agentes de IA que atendem os contatos do workspace.",
-    "nav": { "ai_agents": "Agentes de IA" },
-    "quotas": { "ai_agents_max": "Agentes de IA (GUIDS) por workspace." }
+    "nav": {
+      "ai_agents": "Agentes de IA"
+    },
+    "quotas": {
+      "ai_agents_max": "Agentes de IA (GUIDS) por workspace."
+    }
   },
   "hello_world": {
     "name": "Hello World",

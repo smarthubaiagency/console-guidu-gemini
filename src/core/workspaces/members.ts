@@ -29,7 +29,9 @@ import {
   MemberNotFoundError,
 } from "../organizations/errors";
 import { recordAudit } from "../audit/record";
+import { requestAccountSync } from "../matrix";
 import { updateOrganizationMemberRole } from "../organizations/members";
+import { assertAttendantSeat } from "@/modules/inbox/quotas";
 
 export type WorkspaceMemberItem = {
   workspaceId: string;
@@ -97,7 +99,7 @@ export async function addWorkspaceMember(
   }
 
   // 4. Upsert workspace member
-  return tx.workspaceMember.upsert({
+  const member = await tx.workspaceMember.upsert({
     where: {
       workspaceId_userId: {
         workspaceId,
@@ -116,6 +118,9 @@ export async function addWorkspaceMember(
       status: "active",
     },
   });
+  // The Inbox account follows `inbox.view` (IN3).
+  await requestAccountSync(tx, targetUserId);
+  return member;
 }
 
 /**
@@ -205,6 +210,7 @@ export async function updateWorkspaceMemberRole(
       },
       data: { role: newRole },
     });
+    await requestAccountSync(tx, targetUserId);
 
     await recordAudit(
       tx,
@@ -325,6 +331,7 @@ export async function removeWorkspaceMember(
         },
       },
     });
+    await requestAccountSync(tx, targetUserId);
 
     await recordAudit(
       tx,
@@ -394,6 +401,17 @@ export async function changeTeamMemberRole(
     where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
   });
   const wasAttendant = current?.role === WorkspaceRoles.ATTENDANT;
+  // A new Attendant takes a place in the Inbox quota (IN4a); a marked
+  // member already holds one.
+  if (choice === WorkspaceRoles.ATTENDANT && !wasAttendant) {
+    const marked = await tx.inboxAttendant.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+      select: { userId: true },
+    });
+    if (!marked) {
+      await assertAttendantSeat(tx, { organizationId, workspaceId });
+    }
+  }
 
   const organizationRole: OrganizationRole =
     choice === WorkspaceRoles.ATTENDANT ? OrganizationRoles.MEMBER : choice;

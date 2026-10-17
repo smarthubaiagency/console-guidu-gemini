@@ -1,0 +1,86 @@
+{
+  "metaTitle": "Inbox",
+  "viewsLabel": "Visões do Inbox",
+  "windowLabel": "Inbox de {workspace}",
+  "dashboard": "Dashboard",
+  "listLabel": "Conversas",
+  "searchPlaceholder": "Buscar pelo nome",
+  "unknownContact": "Contato sem nome",
+  "you": "Você",
+  "noMessages": "Sem mensagens ainda",
+  "assignedTo": "Com {name}",
+  "assigned": "Com um atendente",
+  "unassigned": "Sem responsável",
+  "copyAddress": "Copiar o endereço",
+  "addressHint": "Para testar, chame este endereço da loja no Element:",
+  "views": {
+    "mine": "Minhas",
+    "unassigned": "Não atribuídas",
+    "all": "Todas",
+    "resolved": "Resolvidas"
+  },
+  "empty": {
+    "mine": "Nenhuma conversa com você",
+    "unassigned": "Nenhuma conversa sem responsável",
+    "all": "Nenhuma conversa aberta",
+    "resolved": "Nenhuma conversa resolvida",
+    "searchTitle": "Nada encontrado com esse nome",
+    "description": "As conversas novas aparecem aqui assim que o cliente escreve."
+  },
+  "status": {
+    "open": "Aberta",
+    "pending": "Pendente",
+    "resolved": "Resolvida"
+  },
+  "noConversationTitle": "Escolha uma conversa",
+  "noConversationDescription": "A conversa aberta aparece aqui, com o contato e o status ao lado.",
+  "sendFailed": "A mensagem não foi enviada. Tente de novo.",
+  "conversationLabel": "Conversa com {name}",
+  "back": "Voltar para a lista",
+  "typing": "{names} digitando…",
+  "presence": {
+    "online": "Online",
+    "unavailable": "Ausente",
+    "offline": "Offline"
+  },
+  "chatUnavailable": "O chat está indisponível no momento. Recarregue a página em instantes.",
+  "messagePlaceholder": "Escreva uma mensagem",
+  "send": "Enviar",
+  "readOnly": "Você vê esta conversa só para leitura. Para responder, peça para ser marcado como atendente na Equipe.",
+  "context": {
+    "title": "Contexto da conversa",
+    "empty": "Abra uma conversa para ver o contato e o status.",
+    "contact": "Contato",
+    "name": "Nome",
+    "chatId": "Endereço no chat",
+    "attendance": "Atendimento",
+    "status": "Status",
+    "assignee": "Responsável"
+  },
+  "nobody": "Ninguém",
+  "actions": {
+    "take": "Assumir",
+    "resolve": "Resolver",
+    "reopen": "Reabrir",
+    "assign": "Atribuir a"
+  },
+  "done": {
+    "take": "Conversa assumida.",
+    "resolve": "Conversa resolvida.",
+    "reopen": "Conversa reaberta.",
+    "assign": "Responsável atualizado."
+  },
+  "blocked": {
+    "maintenance": "O Inbox está em manutenção",
+    "not_enabled": "O Inbox não está ligado neste workspace",
+    "not_contracted": "O Inbox não faz parte do plano",
+    "description": "Volte ao dashboard; quem administra o workspace pode resolver isso nas configurações."
+  },
+  "errors": {
+    "alreadyAssigned": "Esta conversa já tem um responsável.",
+    "notResolved": "A conversa não está resolvida.",
+    "conversationNotFound": "Conversa não encontrada.",
+    "assigneeNotAttendant": "Só um atendente desta conversa pode ser o responsável.",
+    "notMarkable": "Só donos, administradores e editores do workspace podem ser marcados como atendentes."
+  }
+}

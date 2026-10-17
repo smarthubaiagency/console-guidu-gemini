@@ -116,6 +116,17 @@ type Definition<T extends string> = Readonly<{
   inline?: boolean;
   /** The e-mail template (`email.templates.events.<key>`), when it has one. */
   template?: Readonly<{ group: EmailTemplateGroup; key: string }>;
+  /**
+   * The rule of `notifications.rules` starts off (H2: security events):
+   * the event is recorded and shown, nobody is told until a level turns
+   * it on.
+   */
+  notifyByDefault?: boolean;
+  /**
+   * The event waits for a decision (`pending`): a reminder and the
+   * escalation of its rule apply while nobody answers (H2).
+   */
+  approval?: boolean;
 }>;
 
 const CATALOG = [
@@ -344,6 +355,63 @@ const CATALOG = [
     destinations: ["audit", "notify"],
     channels: ["app"],
     level: "platform",
+  },
+  // -- Access to the data of events (H2, ADR 0022 item 7): the customer
+  //    decides; emitted by the worker when the request is made.
+  {
+    type: "events.access_requested",
+    module: "events",
+    severity: "attention",
+    essential: true,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "customer",
+    destinations: ["notify"],
+    channels: ["app", "email"],
+    level: "workspace",
+    approval: true,
+  },
+  // -- Security (CF5a) in the hub (H2): recorded and shown, notice off by
+  //    default. The audit keeps its own records (`api_keys.*`,
+  //    `workspace.settings.save`).
+  {
+    type: "security.api_key_created",
+    module: "security",
+    severity: "attention",
+    essential: false,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "customer",
+    destinations: ["notify"],
+    channels: ["app", "email"],
+    level: "workspace",
+    notifyByDefault: false,
+  },
+  {
+    type: "security.api_key_revoked",
+    module: "security",
+    severity: "info",
+    essential: false,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "customer",
+    destinations: ["notify"],
+    channels: ["app", "email"],
+    level: "workspace",
+    notifyByDefault: false,
+  },
+  {
+    type: "security.mfa_requirement_off",
+    module: "security",
+    severity: "urgent",
+    essential: false,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "customer",
+    destinations: ["notify"],
+    channels: ["app", "email"],
+    level: "workspace",
+    notifyByDefault: false,
   },
   // -- Digital profile (DP2): catalogued now, emitted when analytics (H3)
   //    exists; `emitEvent` refuses them until then.
