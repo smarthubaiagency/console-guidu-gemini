@@ -485,9 +485,18 @@ export async function startTestDatabase(
             MAPS_INTELLIGENCE_PROVIDER: "fake",
             GB_SUGGESTIONS_PROVIDER: "fake",
           },
-          stdio: "ignore",
+          // Kept in memory and printed only when jobs stay stuck, so a CI
+          // failure shows what the worker said.
+          stdio: ["ignore", "pipe", "pipe"],
         },
       );
+      const output: string[] = [];
+      const keep = (chunk: Buffer) => {
+        output.push(...chunk.toString("utf8").split("\n").filter(Boolean));
+        if (output.length > 80) output.splice(0, output.length - 80);
+      };
+      child.stdout?.on("data", keep);
+      child.stderr?.on("data", keep);
       const waiting = async () =>
         Number(
           (
@@ -504,14 +513,15 @@ export async function startTestDatabase(
         remaining = await waiting();
       }
       if (remaining > 0) {
-        // The worker's output is ignored; name what is stuck so a CI failure
-        // says which job kind to look at.
+        // Name what is stuck and what the worker said, so a CI failure says
+        // which job kind to look at.
         const stuck = await pool.query(
           `select kind, status, attempts, run_after, last_error
              from public.job_runs
             where status in ('pending', 'queued', 'running')`,
         );
         console.error("run-jobs: still waiting", stuck.rows);
+        console.error(`run-jobs: worker output\n${output.join("\n")}`);
       }
       child.kill("SIGTERM");
       await new Promise((resolve) => child.once("exit", resolve));
