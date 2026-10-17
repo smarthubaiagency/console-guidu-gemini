@@ -71,6 +71,18 @@ export function inboxNotice(content: NotificationContent): InboxNotice | null {
         linkUrl: link(data.credentialsUrl),
       };
     }
+    case "service_mode.change_requested": {
+      const { data } = content;
+      // The bell links to the settings, never to the single-use link.
+      return {
+        eventType: content.type,
+        data: {
+          organization: clip(data.organizationName),
+          partner: clip(data.partnerName),
+        },
+        linkUrl: link(data.settingsUrl),
+      };
+    }
     case "workspace.deletion.scheduled":
     case "workspace.deletion.reminder":
     case "workspace.deletion.canceled":
@@ -116,6 +128,10 @@ const EVENT_KEYS: Readonly<Record<string, string>> = {
   "google_business.analyses_done": "gbAnalysesDone",
   // The seal check of the Event Hub found a broken chain (H1).
   "platform.events.chain_broken": "eventsChainBroken",
+  // Service modes (GB1c).
+  "service_mode.change_requested": "serviceModeRequested",
+  "service_mode.changed": "serviceModeChanged",
+  "service_mode.change_denied": "serviceModeDenied",
   // Event Hub (H2): access to the data, security, reminders and digest.
   "events.access_requested": "accessRequested",
   "security.api_key_created": "apiKeyCreated",
@@ -201,6 +217,31 @@ export function renderInboxNotice(
       return {
         title: t("gbAnalysesDone.title", values),
         body: t("gbAnalysesDone.body", values),
+      };
+    }
+    case "serviceModeRequested": {
+      const values = {
+        organization: text(data, "organization"),
+        partner: text(data, "partner"),
+      };
+      return {
+        title: t("serviceModeRequested.title", values),
+        body: t("serviceModeRequested.body", values),
+      };
+    }
+    case "serviceModeChanged": {
+      const to = text(data, "to") === "padrao" ? "padrao" : "gerenciado";
+      const values = { organization: text(data, "organization") };
+      return {
+        title: t(`serviceModeChanged.${to}.title`, values),
+        body: t(`serviceModeChanged.${to}.body`, values),
+      };
+    }
+    case "serviceModeDenied": {
+      const values = { organization: text(data, "organization") };
+      return {
+        title: t("serviceModeDenied.title", values),
+        body: t("serviceModeDenied.body", values),
       };
     }
     case "eventsChainBroken": {

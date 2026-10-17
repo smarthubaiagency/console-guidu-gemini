@@ -57,7 +57,8 @@
     "api": "API",
     "mcp": "MCP",
     "worker": "Rotina",
-    "admin": "Administração"
+    "admin": "Administração",
+    "partner": "Parceiro (gerenciado)"
   },
   "principal": {
     "user": "Usuário",

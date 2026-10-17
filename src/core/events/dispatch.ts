@@ -27,6 +27,7 @@ import type {
   NotificationTransport,
 } from "@/core/notifications/types";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
+import { serviceModeRecipients } from "@/core/service-modes/notices";
 import { isWorkspaceActive } from "@/core/workspaces/active";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
@@ -404,16 +405,25 @@ export async function dispatchEvent(
   let notices = 0;
   let bell = 0;
   let whatsapp: string | null = null;
+  // Types with their own recipients (route `explicit`, GB1c) answer them,
+  // each with an e-mail and a bell of their own; the others follow the
+  // rule's audience (H2).
+  const ownRecipients = await serviceModeRecipients(tx, event);
   const needsAudience =
     (!event.dispatched_at &&
       (rule.channels.includes("email") || rule.channels.includes("app"))) ||
     personWhatsApp;
   if (needsAudience) {
-    const recipients = await eventAudience(
-      tx,
-      event.id,
-      rule.recipients === "route" ? null : rule.recipients,
-    );
+    const recipients: readonly (AudienceMember & {
+      content?: NotificationContent | null;
+      notice?: InboxNotice | null;
+    })[] = ownRecipients
+      ? ownRecipients.map((r) => ({ ...r, role: null, whatsapp: null }))
+      : await eventAudience(
+          tx,
+          event.id,
+          rule.recipients === "route" ? null : rule.recipients,
+        );
     const content = notificationContentOf(event.type, event.data);
     const notice =
       bellNoticeOf(event.type, event.data) ??
@@ -429,6 +439,11 @@ export async function dispatchEvent(
         rule.channels,
         recipient.user_id,
       );
+      const ownContent = recipient.content ?? content;
+      const ownNotice =
+        recipient.notice ??
+        (recipient.content ? inboxNotice(recipient.content) : null) ??
+        notice;
       if (!event.dispatched_at) {
         const wantsEmail =
           on.has("email") &&
@@ -473,7 +488,7 @@ export async function dispatchEvent(
           event.partner_id
         ) {
           const language = await languageOf(recipient.email);
-          const generic = content
+          const generic = ownContent
             ? null
             : hubNoticeText(
                 definition,
@@ -483,7 +498,7 @@ export async function dispatchEvent(
                 language.messages,
               );
           const link = str(event.data.linkUrl);
-          const emailContent: NotificationContent = content ?? {
+          const emailContent: NotificationContent = ownContent ?? {
             type: "events.notice",
             data: {
               eventType: event.type,
@@ -511,10 +526,10 @@ export async function dispatchEvent(
             } as NotificationEvent,
           });
           // A generic e-mail has no bell of its own: post it here.
-          if (!content && wantsBell && recipient.user_id) {
+          if (!ownContent && wantsBell && recipient.user_id) {
             bell += await postNotice(tx, {
               userId: recipient.user_id,
-              notice,
+              notice: ownNotice,
               idempotencyKey: `${event.idempotency_key}:user:${recipient.user_id}`,
               eventId: event.id,
             });
@@ -522,7 +537,7 @@ export async function dispatchEvent(
         } else if (wantsBell && recipient.user_id) {
           bell += await postNotice(tx, {
             userId: recipient.user_id,
-            notice,
+            notice: ownNotice,
             idempotencyKey: `${event.idempotency_key}:user:${recipient.user_id}`,
             eventId: event.id,
           });

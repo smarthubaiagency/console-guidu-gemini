@@ -41,6 +41,14 @@
     "body": "Este é um e-mail de teste enviado pelas configurações de e-mail de {brand}. Se você recebeu, o envio está funcionando.",
     "action": "Abrir configurações de e-mail"
   },
+  "serviceModeRequest": {
+    "subject": "{partner} pede para gerenciar {organization}",
+    "body": "{partner} pediu para passar {organization} para o modo gerenciado. Só o owner da empresa pode aprovar.",
+    "scope": "No modo gerenciado, a equipe de quem gerencia passa a ver e operar o workspace inteiro: agentes de IA (GUIDS), campanhas, avaliações, CRM, conversas e configurações. A chave de IA da empresa continua só sua.",
+    "back": "Você pode voltar para o modo padrão a qualquer momento, em Configurações › Modo de serviço.",
+    "expires": "O link é de uso único e vale até {date}.",
+    "action": "Ver o pedido e decidir"
+  },
   "names": {
     "billing_subscription_past_due": "Assinatura em atraso",
     "billing_subscription_suspended": "Assinatura suspensa",

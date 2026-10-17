@@ -71,6 +71,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: true,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
@@ -139,6 +142,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: true,
@@ -207,6 +213,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: true,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -275,6 +284,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -297,6 +309,9 @@ describe("Permissions Matrix", () => {
       },
       [WorkspaceRoles.ATTENDANT]: {
         [Permissions.WORKSPACE_READ]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
         [Permissions.WORKSPACE_EVENTS_READ]: false,
         [Permissions.WORKSPACE_EVENTS_MANAGE]: false,
         [Permissions.PLATFORM_EVENTS_REQUEST_ACCESS]: false,
@@ -384,9 +399,9 @@ describe("Permissions Matrix", () => {
     );
 
     it("matches exact count of permissions declared in WORKSPACE_ROLE_PERMISSIONS", () => {
-      // Inbox (IN) and Central de Eventos (H2: events read, owner and admin
-      // also manage) on top of the base matrix.
-      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(26);
+      // Inbox (IN), Central de Eventos (H2: events read, owner and admin
+      // also manage) and service modes (GB1c: owner) on top of the base matrix.
+      expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.OWNER].size).toBe(27);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.ADMIN].size).toBe(25);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.EDITOR].size).toBe(11);
       expect(WORKSPACE_ROLE_PERMISSIONS[WorkspaceRoles.VIEWER].size).toBe(5);
@@ -450,6 +465,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -518,6 +536,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
@@ -586,6 +607,9 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
         [Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE]: false,
+        [Permissions.WORKSPACE_SERVICE_MODE_MANAGE]: false,
+        [Permissions.PARTNER_SERVICE_MODE_REQUEST]: false,
+        [Permissions.PLATFORM_SERVICE_MODE_REQUEST]: false,
         [Permissions.PLATFORM_AI_MANAGE]: false,
         [Permissions.CREDENTIALS_READ]: false,
         [Permissions.CREDENTIALS_MANAGE]: false,
