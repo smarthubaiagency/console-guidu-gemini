@@ -50,7 +50,9 @@ export async function listConversations(
     labelId?: string | null;
   }>,
 ): Promise<ConversationPage> {
+  // RLS scopes the rooms too; the filter keeps the query honest without it.
   const base: Prisma.MatrixRoomWhereInput = {
+    workspaceId: ctx.workspaceId,
     state: "active",
     roomId: { not: null },
   };
