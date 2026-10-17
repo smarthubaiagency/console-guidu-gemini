@@ -76,11 +76,25 @@ export class MatrixConsumers {
     return room_id;
   }
 
-  /** Rooms the consumer was invited to. */
+  private syncs = 0;
+
+  /**
+   * Rooms the consumer was invited to. Synapse keeps the answer of an
+   * identical initial sync for a while, so each call asks with a filter of
+   * its own.
+   */
   async invites(consumer: Consumer): Promise<string[]> {
+    this.syncs += 1;
+    const filter = JSON.stringify({
+      room: { timeline: { limit: this.syncs } },
+    });
     const sync = await this.call<{
       rooms?: { invite?: Record<string, unknown> };
-    }>("GET", "/_matrix/client/v3/sync?timeout=0", consumer.token);
+    }>(
+      "GET",
+      `/_matrix/client/v3/sync?timeout=0&filter=${enc(filter)}`,
+      consumer.token,
+    );
     return Object.keys(sync.rooms?.invite ?? {});
   }
 
