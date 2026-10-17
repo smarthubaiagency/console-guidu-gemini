@@ -20,6 +20,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata() {
   const t = await getTranslations("workspace");
@@ -42,6 +43,8 @@ export default async function GeneralSettingsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
 
   const { workspace, organization, role, view } = await withContext(
     prisma,

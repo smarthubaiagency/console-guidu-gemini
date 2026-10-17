@@ -40,5 +40,28 @@
     "subject": "Test e-mail from {brand}",
     "body": "This is a test e-mail sent from the e-mail settings of {brand}. If you got it, sending works.",
     "action": "Open e-mail settings"
+  },
+  "workspaceDeletion": {
+    "action": "Open the console"
+  },
+  "workspaceDeletionScheduled": {
+    "subject": "Deletion of the workspace {workspace} scheduled",
+    "body": "The deletion of the workspace {workspace} was requested. From now on none of its services work: channels, AI agents, jobs, API, MCP, public pages and notices.",
+    "nextStep": "The data will be erased for good on {date}. Until then, the owner can cancel the deletion in the console."
+  },
+  "workspaceDeletionReminder": {
+    "subject": "7 days left before {workspace} is deleted",
+    "body": "The workspace {workspace} will be deleted for good on {date}, with all its data.",
+    "nextStep": "To keep the workspace, the owner can cancel the deletion in the console until that date."
+  },
+  "workspaceDeletionCanceled": {
+    "subject": "Deletion of {workspace} canceled",
+    "body": "The deletion of the workspace {workspace} was canceled and its services work again.",
+    "nextStep": "Check the channels and AI agents of the workspace in the console."
+  },
+  "workspaceDeletionCompleted": {
+    "subject": "Workspace {workspace} deleted",
+    "body": "The workspace {workspace} was deleted for good, with its data, as requested.",
+    "nextStep": "This is the last notice about it. The deletion was due on {date}."
   }
 }

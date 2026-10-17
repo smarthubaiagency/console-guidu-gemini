@@ -41,7 +41,9 @@
     "modes": {
       "gerenciado": "Gestionado",
       "padrao": "Estándar"
-    }
+    },
+    "deletionScheduled": "Eliminación programada para el {date}",
+    "deletionScheduledTitle": "Workspace {workspace}"
   },
   "members": {
     "metaTitle": "Miembros (Socio)",

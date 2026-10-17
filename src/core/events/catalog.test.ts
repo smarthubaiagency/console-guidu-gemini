@@ -68,6 +68,8 @@ describe("Event Hub catalog (H1)", () => {
 
   it("keeps the routes of today's notices", () => {
     const route = (type: string) => eventDefinition(type)?.route;
+    expect(route("workspace.deletion.scheduled")).toBe("customer");
+    expect(route("workspace.deletion.completed")).toBe("customer");
     expect(route("billing.subscription.past_due")).toBe("partner");
     expect(route("billing.subscription.suspended")).toBe("partner");
     expect(route("ai.agent.key_backup")).toBe("service_mode");
@@ -87,6 +89,10 @@ describe("Event Hub catalog (H1)", () => {
     expect(EMAIL_TEMPLATE_EVENTS.map((e) => [e.type, e.group, e.key])).toEqual([
       ["invitation.created", "account", "invitation"],
       ["email.test", "account", "emailTest"],
+      ["workspace.deletion.scheduled", "account", "workspaceDeletionScheduled"],
+      ["workspace.deletion.reminder", "account", "workspaceDeletionReminder"],
+      ["workspace.deletion.canceled", "account", "workspaceDeletionCanceled"],
+      ["workspace.deletion.completed", "account", "workspaceDeletionCompleted"],
       ["billing.subscription.past_due", "billing", "pastDue"],
       ["billing.subscription.suspended", "billing", "suspended"],
       ["ai.agent.key_backup", "ai", "aiKeyBackup"],
@@ -98,13 +104,22 @@ describe("Event Hub catalog (H1)", () => {
     ).toEqual({
       "invitation.created": ["email"],
       "email.test": ["email"],
+      "workspace.deletion.scheduled": ["email", "app"],
+      "workspace.deletion.reminder": ["email", "app"],
+      "workspace.deletion.canceled": ["email", "app"],
+      "workspace.deletion.completed": ["email", "app"],
       "billing.subscription.past_due": ["email", "app"],
       "billing.subscription.suspended": ["email", "app"],
       "ai.agent.key_backup": ["email", "app"],
       "ai.agent.key_paused": ["email", "app"],
     });
-    // The matrix of Minha conta keeps its four rows.
+    // The matrix of Minha conta: the deletion notices (WS1), locked, and
+    // the four rows it had.
     expect(PREFERENCE_EVENTS.map((e) => e.type)).toEqual([
+      "workspace.deletion.scheduled",
+      "workspace.deletion.reminder",
+      "workspace.deletion.canceled",
+      "workspace.deletion.completed",
       "billing.subscription.past_due",
       "billing.subscription.suspended",
       "ai.agent.key_backup",

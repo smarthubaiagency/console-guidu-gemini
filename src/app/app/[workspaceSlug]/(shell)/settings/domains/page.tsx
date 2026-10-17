@@ -21,6 +21,7 @@ import {
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("domains");
@@ -45,6 +46,8 @@ export default async function WorkspaceDomainsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(ctx);
   const { addresses, domains, quota, canManage } = await withContext(
     prisma,
     ctx,

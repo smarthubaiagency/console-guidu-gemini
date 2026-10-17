@@ -3,7 +3,10 @@ import "server-only";
 import { getModuleAccessState } from "@/core/module-runtime/state";
 import { isModuleTechnicallyAvailable } from "@/core/modules/availability";
 import { Permissions } from "@/core/permissions/catalog";
-import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
+import {
+  getEffectiveWorkspaceRole,
+  workspaceRoleGrants,
+} from "@/core/permissions/guard";
 import {
   hasPartnerRolePermission,
   type PartnerRoleKey,
@@ -12,6 +15,7 @@ import { resolveRequestWorkspaceContext } from "@/core/partners/request-context"
 import { prisma } from "@/lib/prisma/client";
 import { type RequestContext, withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
+import { GoogleBusinessPermissions } from "../manifest";
 import { gbNotFound } from "./errors";
 import {
   readServiceMode,
@@ -79,7 +83,10 @@ export async function resolveAppAccess(
         select: { name: true },
       }),
     ]);
-    if (!role) throw gbNotFound();
+    // Members that read the module (the Attendant, AT1, does not).
+    if (!role || !workspaceRoleGrants(role, GoogleBusinessPermissions.READ)) {
+      throw gbNotFound();
+    }
     return {
       target: { scope: "app", workspaceSlug },
       ctx,

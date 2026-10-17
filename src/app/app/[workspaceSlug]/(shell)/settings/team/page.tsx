@@ -9,13 +9,17 @@ import { listOrganizationMembers } from "@/core/organizations/members";
 import { listInvitations } from "@/core/organizations/invitations";
 import { Permissions } from "@/core/permissions/catalog";
 import { hasOrganizationRolePermission } from "@/core/permissions/matrix";
-import type { OrganizationRole } from "@/core/permissions/roles";
+import {
+  WorkspaceRoles,
+  type OrganizationRole,
+} from "@/core/permissions/roles";
 import {
   TeamClient,
   type MemberDisplay,
   type InvitationDisplay,
   type TeamCapabilities,
 } from "./team-client";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata() {
   const t = await getTranslations("team");
@@ -36,11 +40,14 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
 
   const {
     organization,
     seatLimit,
     members,
+    attendantIds,
     invitations,
     profiles,
     capabilities,
@@ -73,12 +80,20 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
         )
       : false;
 
-    const [org, orgMembers, orgInvites] = await Promise.all([
+    const [org, orgMembers, orgInvites, attendants] = await Promise.all([
       tx.organization.findUnique({
         where: { id: context.organizationId },
       }),
       listOrganizationMembers(tx, context.organizationId),
       canInvite ? listInvitations(tx, context) : [],
+      // Attendants of this workspace (AT1) show as such in the company list.
+      tx.workspaceMember.findMany({
+        where: {
+          workspaceId: context.workspaceId,
+          role: WorkspaceRoles.ATTENDANT,
+        },
+        select: { userId: true },
+      }),
     ]);
 
     const userIds = orgMembers.map((m) => m.userId);
@@ -95,6 +110,7 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
         org?.maxSeats ?? 5,
       ),
       members: orgMembers,
+      attendantIds: new Set(attendants.map((a) => a.userId)),
       invitations: orgInvites,
       profiles: userProfiles,
       capabilities: {
@@ -121,7 +137,7 @@ export default async function TeamSettingsPage({ params }: TeamPageProps) {
         (m.userId === identity.userId
           ? (identity.email ?? t("you"))
           : t("memberFallback")),
-      role: m.role,
+      role: attendantIds.has(m.userId) ? WorkspaceRoles.ATTENDANT : m.role,
       status: m.status,
       joinedAt: format.dateTime(new Date(m.createdAt), { dateStyle: "short" }),
       isCurrentUser: m.userId === identity.userId,

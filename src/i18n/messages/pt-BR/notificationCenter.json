@@ -42,6 +42,22 @@
     "eventsChainBroken": {
       "title": "Selo de evento não confere",
       "body": "A verificação da Central de Eventos encontrou {count} evento(s) com o selo ou a corrente quebrados."
+    },
+    "workspaceDeletionScheduled": {
+      "title": "Exclusão de {workspace} agendada",
+      "body": "Nenhum serviço do workspace funciona até a exclusão, em {date}. O dono pode cancelar até lá."
+    },
+    "workspaceDeletionReminder": {
+      "title": "Faltam 7 dias para excluir {workspace}",
+      "body": "O workspace será excluído de vez em {date}. O dono ainda pode cancelar."
+    },
+    "workspaceDeletionCanceled": {
+      "title": "Exclusão de {workspace} cancelada",
+      "body": "Os serviços do workspace voltaram a funcionar."
+    },
+    "workspaceDeletionCompleted": {
+      "title": "Workspace {workspace} excluído",
+      "body": "O workspace e os seus dados foram apagados de vez."
     }
   },
   "preferences": {

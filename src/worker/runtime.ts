@@ -8,10 +8,15 @@ import {
   type JobDefinition,
   type JobSession,
   type JobResult,
+  type PlatformJobSession,
   type JobSchedule,
   queueName,
 } from "@/core/jobs/definition";
-import { classifyJobFailure, SkipJobError } from "@/core/jobs/errors";
+import {
+  classifyJobFailure,
+  SkipJobError,
+  WorkspaceClosedError,
+} from "@/core/jobs/errors";
 import { listJobDefinitions, listJobSchedules } from "@/core/jobs/registry";
 import {
   createMaintenanceReader,
@@ -19,6 +24,7 @@ import {
 } from "@/core/maintenance/read";
 import { activeMode } from "@/core/maintenance/state";
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
+import { isWorkspaceActive } from "@/core/workspaces/active";
 import type {
   ContextTransaction,
   RequestContext,
@@ -49,8 +55,16 @@ import { createLogger, type LogLevel } from "@/lib/telemetry/log";
  * each set the context and re-check access, so a model call never holds a
  * transaction or the workspace lock.
  *
+ * Workspace closed (WS1): a run of a workspace that is not active
+ * (deletion scheduled, suspended, inactive) never runs. The check comes
+ * first in every transaction that enters the requester's context, so a
+ * detached job also stops at its next short transaction; the run ends as
+ * `skipped` with no error.
+ *
  * Platform jobs (F3c) have no requester: they run as app_worker through
- * their own narrow policies, one run per kind at a time. The scheduler
+ * their own narrow policies, one run per kind at a time. A detached
+ * platform job (WS1) is marked running in the first transaction and works
+ * through short app_worker transactions of its own. The scheduler
  * inserts their runs with a key per period (`on conflict do nothing`), so
  * repeated ticks and several workers start each period once.
  *
@@ -126,11 +140,24 @@ type RunRow = {
 
 const FINISHED = new Set(["succeeded", "skipped", "canceled", "failed"]);
 
-type DetachedRun = {
-  definition: Extract<JobDefinition<unknown>, { detached: true }>;
-  ctx: RequestContext;
-  payload: unknown;
-};
+type DetachedRun =
+  | {
+      scope: "workspace";
+      definition: Extract<
+        JobDefinition<unknown>,
+        { scope: "workspace"; detached: true }
+      >;
+      ctx: RequestContext;
+      payload: unknown;
+    }
+  | {
+      scope: "platform";
+      definition: Extract<
+        JobDefinition<unknown>,
+        { scope: "platform"; detached: true }
+      >;
+      payload: unknown;
+    };
 
 /** Each short transaction of a detached job (A2b). */
 const DETACHED_TRANSACTION_MS = 30_000;
@@ -417,7 +444,19 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     action: "skip" | "fail" | "retry",
     message: string,
     lastAttempt: boolean,
+    quietReason?: string,
   ): Promise<void> {
+    if (quietReason) {
+      // Not an error (WS1): skipped, with the reason in the result.
+      await prisma.$executeRaw`
+        update public.job_runs
+        set status = 'skipped', attempts = attempts + 1, last_error = null,
+            result = ${JSON.stringify({ skipped: quietReason })}::jsonb,
+            finished_at = now()
+        where id = ${run.id}::uuid and status not in ('succeeded', 'skipped', 'canceled')
+      `;
+      return;
+    }
     const status =
       action === "skip"
         ? "skipped"
@@ -471,11 +510,25 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     return row?.ok === true;
   }
 
+  /**
+   * The workspace of a run must be active (WS1). Asked as app_worker of
+   * the database's own helper, which reads the status of any workspace.
+   */
+  async function requireActiveWorkspace(
+    tx: ContextTransaction,
+    workspaceId: string,
+  ): Promise<void> {
+    if (!(await isWorkspaceActive(tx, workspaceId))) {
+      throw new WorkspaceClosedError();
+    }
+  }
+
   /** Sets the requester's context and switches to app_runtime. */
   async function enterContext(
     tx: ContextTransaction,
     ctx: RequestContext,
   ): Promise<void> {
+    await requireActiveWorkspace(tx, ctx.workspaceId);
     await tx.$executeRaw`
       select
         set_config('app.user_id', ${ctx.userId}, true),
@@ -515,6 +568,21 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
     };
   }
 
+  /** Short app_worker transactions of a detached platform job (WS1). */
+  function platformSession(jobRunId: string): PlatformJobSession {
+    return {
+      jobRunId,
+      transaction: (operation, transactionOptions) =>
+        prisma.$transaction(operation, {
+          timeout: Math.min(
+            transactionOptions?.timeoutMs ?? DETACHED_TRANSACTION_MS,
+            maxRunMs,
+          ),
+          maxWait: 30_000,
+        }),
+    };
+  }
+
   async function execute(job: Job<{ jobRunId: string }>): Promise<void> {
     const jobRunId = job.data?.jobRunId;
     if (!jobRunId) return;
@@ -548,6 +616,21 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
           if (!definition)
             throw new SkipJobError("Tipo de job desconhecido nesta versão.");
           if (run.scope === "platform" && definition.scope === "platform") {
+            if (definition.detached) {
+              const payload = definition.payload.safeParse(run.payload);
+              if (!payload.success) {
+                throw new SkipJobError(
+                  "Dados do job inválidos para esta versão.",
+                );
+              }
+              await markRunning(tx, run.id);
+              detached = {
+                scope: "platform",
+                definition,
+                payload: payload.data,
+              };
+              return;
+            }
             // One run of each platform job at a time, across processes.
             await tx.$executeRaw`
               select pg_advisory_xact_lock(hashtext('job_platform:' || ${run.kind}))
@@ -588,7 +671,12 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
             // transaction, in its own short ones.
             await markRunning(tx, run.id);
             await enterContext(tx, ctx);
-            detached = { definition, ctx, payload: payload.data };
+            detached = {
+              scope: "workspace",
+              definition,
+              ctx,
+              payload: payload.data,
+            };
             return;
           }
           // One job per workspace at a time, across processes; waits for the
@@ -608,10 +696,17 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
       // Assigned inside the transaction callback, which TypeScript cannot see.
       const pending = detached as DetachedRun | null;
       if (pending) {
-        const { definition, ctx, payload } = pending;
         const result =
-          (await definition.run(jobSession(jobRunId, ctx), ctx, payload)) ??
-          null;
+          pending.scope === "platform"
+            ? ((await pending.definition.run(
+                platformSession(jobRunId),
+                pending.payload,
+              )) ?? null)
+            : ((await pending.definition.run(
+                jobSession(jobRunId, pending.ctx),
+                pending.ctx,
+                pending.payload,
+              )) ?? null);
         await prisma.$transaction((tx) => markSucceeded(tx, jobRunId, result));
       }
       if (run) {
@@ -631,6 +726,7 @@ export function createJobWorker(options: WorkerOptions): JobWorker {
         outcome.action,
         outcome.message,
         lastAttempt,
+        outcome.quietReason,
       );
       log({
         level: outcome.action === "retry" ? "warn" : "info",

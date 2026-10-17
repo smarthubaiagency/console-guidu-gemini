@@ -33,6 +33,10 @@ describe("notification channels (CF3c)", () => {
     }
     // Invitations and the test e-mail never reach a bell or the matrix.
     expect(PREFERENCE_EVENTS.map((e) => e.type)).toEqual([
+      "workspace.deletion.scheduled",
+      "workspace.deletion.reminder",
+      "workspace.deletion.canceled",
+      "workspace.deletion.completed",
       "billing.subscription.past_due",
       "billing.subscription.suspended",
       "ai.agent.key_backup",

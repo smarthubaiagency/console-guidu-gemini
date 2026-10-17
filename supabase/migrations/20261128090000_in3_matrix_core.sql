@@ -20,7 +20,7 @@
 --    Members with `inbox.view` read the rooms of their workspace; a person
 --    reads (and, when eligible, creates or reactivates) only their own
 --    account. The roles that hold `inbox.view` are listed once, in
---    `private.matrix_inbox_roles()`; the AT1 Attendant joins that list.
+--    `private.matrix_inbox_roles()`, the AT1 Attendant included.
 -- 4. Who may have an account is computed by the database, not the caller:
 --    `private.matrix_user_memberships` and `private.matrix_workspace_people`
 --    (owner app_rls_helper, flag `app.matrix_lookup`) return the active,
@@ -200,7 +200,7 @@ language sql
 immutable
 set search_path = ''
 as $$
-  select array['owner', 'admin', 'editor']::text[];
+  select array['owner', 'admin', 'editor', 'attendant']::text[];
 $$;
 
 alter function private.matrix_inbox_roles() owner to app_migrations;

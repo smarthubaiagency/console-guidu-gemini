@@ -7,6 +7,7 @@
       "admin": "Administrador",
       "editor": "Editor",
       "viewer": "Visualizador",
+      "attendant": "Atendente",
       "member": "Membro"
     },
     "notFound": {

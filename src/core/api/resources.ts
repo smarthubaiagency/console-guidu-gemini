@@ -131,6 +131,10 @@ export async function listWorkspaceModules(
   call: ApiCall,
 ) {
   const ctx = ctxOf(call);
+  // Same rule as the other workspace reads (the Attendant, AT1, has none).
+  await withContext(prisma, ctx, (tx) =>
+    requireWorkspacePermission(tx, ctx, Permissions.WORKSPACE_READ),
+  );
   const views = await loadWorkspaceModuleViews(prisma, ctx, "");
   const catalog = englishCatalog();
   return {

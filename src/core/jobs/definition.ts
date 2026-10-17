@@ -73,12 +73,41 @@ export type WorkspaceJobDefinition<P = unknown> = JobCommon<P> &
       }>
   );
 
-export type PlatformJobDefinition<P = unknown> = JobCommon<P> &
+/**
+ * Short transactions of a detached platform job (WS1), each as app_worker.
+ * For work that calls the network (another provider's API) and must never
+ * hold a transaction open; its effects must be idempotent.
+ */
+export type PlatformJobSession = Readonly<{
+  /** The run of `job_runs`; stable across the attempts of one run. */
+  jobRunId: string;
+  transaction<T>(
+    operation: (tx: ContextTransaction) => Promise<T>,
+    options?: Readonly<{ timeoutMs?: number }>,
+  ): Promise<T>;
+}>;
+
+export type PlatformTxJobDefinition<P = unknown> = JobCommon<P> &
   Readonly<{
     scope: "platform";
+    detached?: false;
     /** Runs as app_worker; `tx` sees only what its policies allow. */
     run(tx: ContextTransaction, payload: P): Promise<JobResult | void>;
   }>;
+
+/**
+ * A platform job that opens its own short transactions (WS1). Without the
+ * per-kind lock of the single transaction, two runs of the kind may overlap.
+ */
+export type PlatformDetachedJobDefinition<P = unknown> = JobCommon<P> &
+  Readonly<{
+    scope: "platform";
+    detached: true;
+    run(session: PlatformJobSession, payload: P): Promise<JobResult | void>;
+  }>;
+
+export type PlatformJobDefinition<P = unknown> =
+  PlatformTxJobDefinition<P> | PlatformDetachedJobDefinition<P>;
 
 export type JobDefinition<P = unknown> =
   WorkspaceJobDefinition<P> | PlatformJobDefinition<P>;
@@ -139,10 +168,26 @@ export function defineDetachedJob<P>(
 }
 
 export function definePlatformJob<P>(
-  definition: Omit<PlatformJobDefinition<P>, "scope">,
-): PlatformJobDefinition<P> {
+  definition: Omit<PlatformTxJobDefinition<P>, "scope" | "detached">,
+): PlatformTxJobDefinition<P> {
   validate(definition as JobCommon<unknown>);
-  return Object.freeze({ ...definition, scope: "platform" as const });
+  return Object.freeze({
+    ...definition,
+    scope: "platform" as const,
+    detached: false as const,
+  });
+}
+
+/** A platform job with short transactions of its own (see above). */
+export function defineDetachedPlatformJob<P>(
+  definition: Omit<PlatformDetachedJobDefinition<P>, "scope" | "detached">,
+): PlatformDetachedJobDefinition<P> {
+  validate(definition as JobCommon<unknown>);
+  return Object.freeze({
+    ...definition,
+    scope: "platform" as const,
+    detached: true as const,
+  });
 }
 
 /** pg-boss queue of a job kind; one queue per kind. */

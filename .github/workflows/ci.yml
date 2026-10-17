@@ -286,7 +286,9 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/events-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/platform-audit-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/matrix-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/workspace-soft-delete-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/security-catalog.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/attendant-rls.sql
 
       # IN3: a disposable Synapse (pip, no Docker image) on the Postgres of
       # the local Supabase, for tests/core/matrix.test.ts. Only its variables

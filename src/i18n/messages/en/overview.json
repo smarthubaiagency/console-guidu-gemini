@@ -20,5 +20,7 @@
   "statusDescription": "Services comply with the observability standard and real metrics.",
   "modulesTitle": "Platform Modules",
   "modulesSubtitle": "Enabled and integrated modules",
-  "access": "Open"
+  "access": "Open",
+  "attendantTitle": "Your access is the Inbox",
+  "attendantDescription": "As an Attendant, you see this dashboard and the Inbox, which is coming soon. Settings, modules and records stay with the team that runs the workspace."
 }

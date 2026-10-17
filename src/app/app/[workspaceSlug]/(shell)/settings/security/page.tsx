@@ -9,6 +9,7 @@ import { saveWorkspaceSecurityAction } from "@/core/security/actions";
 import { settingsView } from "@/core/settings/service";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata() {
   const t = await getTranslations("security");
@@ -31,6 +32,8 @@ export default async function WorkspaceSecuritySettingsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const view = await withContext(prisma, context, (tx) =>
     settingsView(tx, {
       level: "workspace",

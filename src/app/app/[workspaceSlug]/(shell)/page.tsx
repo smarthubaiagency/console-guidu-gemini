@@ -11,6 +11,13 @@ import { getTranslations } from "next-intl/server";
 import { requireUserPage } from "@/core/auth/page-guard";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { loadWorkspaceModuleViews } from "@/core/module-runtime/loaders";
+import { canOpenWorkspaceAreas } from "@/core/module-runtime/page-access";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { navIcon } from "@/components/layout/nav-icons";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
@@ -38,6 +45,43 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
     identity.userId,
     workspaceSlug,
   );
+
+  // The Attendant (AT1) has no workspace.read: its dashboard shows the
+  // workspace and its own access, never the company's seats, modules or
+  // links to areas it cannot open. The Inbox shortcut joins it in IN4.
+  const limited = await withContext(prisma, context, async (tx) => {
+    if (await canOpenWorkspaceAreas(tx, context)) return null;
+    const [ws, org] = await Promise.all([
+      tx.workspace.findUnique({ where: { id: context.workspaceId } }),
+      tx.organization.findUnique({ where: { id: context.organizationId } }),
+    ]);
+    return { workspace: ws, organization: org };
+  });
+  if (limited) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-8">
+        <div className="border-border border-b pb-6">
+          <div className="text-12 text-text-secondary flex items-center gap-2 font-medium">
+            <span>{limited.organization?.name ?? t("organization")}</span>
+            <span>•</span>
+            <span className="text-success-solid flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {t("active")}
+            </span>
+          </div>
+          <h1 className="text-24 text-text mt-1 font-bold tracking-tight">
+            {limited.workspace?.name ?? workspaceSlug}
+          </h1>
+        </div>
+        <Empty data-testid="attendant-dashboard">
+          <EmptyHeader>
+            <EmptyTitle>{t("attendantTitle")}</EmptyTitle>
+            <EmptyDescription>{t("attendantDescription")}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
 
   const {
     workspace,

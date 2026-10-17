@@ -94,6 +94,14 @@ export const WORKSPACE_ROLE_PERMISSIONS: Record<
     Permissions.API_KEYS_CREATE_OWN,
     Permissions.API_KEYS_REVOKE_OWN,
   ]),
+
+  // Workspace Attendant (AT1): only the Inbox. No `workspace.read`, so every
+  // area other than the dashboard (settings, modules, executions, API, MCP and
+  // keys) answers 404 or 403; the dashboard needs only an active membership.
+  [WorkspaceRoles.ATTENDANT]: new Set([
+    Permissions.INBOX_VIEW,
+    Permissions.INBOX_REPLY,
+  ]),
 };
 
 /** All organization-scoped permissions. */

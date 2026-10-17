@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 
 import { ChannelsClient } from "./channels-client";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 /**
  * Configurações › Canais (A5a, ADR 0011): the workspace's connections to
@@ -54,6 +55,8 @@ export default async function ChannelsSettingsPage({
     unstable_rethrow(error);
     notFound();
   }
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
 
   const view = await withContext(prisma, context, async (tx) => {
     const member = await tx.workspaceMember.findUnique({

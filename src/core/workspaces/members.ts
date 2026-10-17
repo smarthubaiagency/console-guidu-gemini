@@ -7,7 +7,8 @@
  * - Manages membership assignment and role updates within workspaces.
  * - Adheres to AC05 composite key constraint: (workspace_id, organization_id)
  *   ensuring no foreign organization membership can cross boundaries.
- * - Enforces workspace RBAC hierarchy (owner > admin > editor > viewer).
+ * - Enforces workspace RBAC hierarchy (owner > admin > editor > viewer >
+ *   attendant).
  * ============================================================================
  */
 
@@ -16,6 +17,7 @@ import {
   canAssignWorkspaceRole,
   canManageWorkspaceMember,
   OrganizationRole,
+  OrganizationRoles,
   WorkspaceRole,
   WorkspaceRoles,
 } from "../permissions/roles";
@@ -28,6 +30,7 @@ import {
 } from "../organizations/errors";
 import { recordAudit } from "../audit/record";
 import { requestAccountSync } from "../matrix";
+import { updateOrganizationMemberRole } from "../organizations/members";
 
 export type WorkspaceMemberItem = {
   workspaceId: string;
@@ -79,7 +82,9 @@ export async function addWorkspaceMember(
   );
 
   // 2. Validate actor privilege boundary to assign this role (AC04)
-  if (!canAssignWorkspaceRole(organizationRole ?? undefined, workspaceRole, role)) {
+  if (
+    !canAssignWorkspaceRole(organizationRole ?? undefined, workspaceRole, role)
+  ) {
     throw new InsufficientRoleError("add_workspace_member", "workspace admin");
   }
 
@@ -130,7 +135,8 @@ export async function updateWorkspaceMemberRole(
     newRole: WorkspaceRole;
   },
 ): Promise<WorkspaceMemberItem> {
-  const { workspaceId, organizationId, actorId, targetUserId, newRole } = params;
+  const { workspaceId, organizationId, actorId, targetUserId, newRole } =
+    params;
 
   // 1. Validate actor workspace member management permission via guard
   const { workspaceRole, organizationRole } = await requireWorkspacePermission(
@@ -151,11 +157,26 @@ export async function updateWorkspaceMemberRole(
   const targetRole = target.role as WorkspaceRole;
 
   // 3. Verify actor can manage this member and assign the target role (AC04)
-  if (!canManageWorkspaceMember(organizationRole ?? undefined, workspaceRole, targetRole)) {
-    throw new InsufficientRoleError("manage_workspace_member", "workspace owner");
+  if (
+    !canManageWorkspaceMember(
+      organizationRole ?? undefined,
+      workspaceRole,
+      targetRole,
+    )
+  ) {
+    throw new InsufficientRoleError(
+      "manage_workspace_member",
+      "workspace owner",
+    );
   }
 
-  if (!canAssignWorkspaceRole(organizationRole ?? undefined, workspaceRole, newRole)) {
+  if (
+    !canAssignWorkspaceRole(
+      organizationRole ?? undefined,
+      workspaceRole,
+      newRole,
+    )
+  ) {
     throw new InsufficientRoleError("assign_workspace_role", newRole);
   }
 
@@ -217,7 +238,9 @@ export async function updateWorkspaceMemberRole(
       err instanceof Error &&
       (err.message.includes("last active owner") ||
         err.message.includes("P0001") ||
-        err.message.includes("Cannot remove, revoke or demote the last active owner"))
+        err.message.includes(
+          "Cannot remove, revoke or demote the last active owner",
+        ))
     ) {
       throw new LastOwnerCannotBeRemovedError(workspaceId);
     }
@@ -276,7 +299,10 @@ export async function removeWorkspaceMember(
       targetRole,
     )
   ) {
-    throw new InsufficientRoleError("remove_workspace_member", "workspace owner");
+    throw new InsufficientRoleError(
+      "remove_workspace_member",
+      "workspace owner",
+    );
   }
 
   // 4. Invariant AC04: Cannot remove the last active owner of a workspace (even if self-removing)
@@ -330,10 +356,83 @@ export async function removeWorkspaceMember(
       err instanceof Error &&
       (err.message.includes("last active owner") ||
         err.message.includes("P0001") ||
-        err.message.includes("Cannot remove, revoke or demote the last active owner"))
+        err.message.includes(
+          "Cannot remove, revoke or demote the last active owner",
+        ))
     ) {
       throw new LastOwnerCannotBeRemovedError(workspaceId);
     }
     throw err;
+  }
+}
+
+/** Role offered in Equipe & Membros: the company roles plus the Attendant. */
+export type TeamRoleChoice = OrganizationRole | typeof WorkspaceRoles.ATTENDANT;
+
+/** Workspace role that an invitation with each choice gives on acceptance. */
+const WORKSPACE_ROLE_OF_CHOICE: Record<TeamRoleChoice, WorkspaceRole> = {
+  [OrganizationRoles.OWNER]: WorkspaceRoles.OWNER,
+  [OrganizationRoles.ADMIN]: WorkspaceRoles.ADMIN,
+  [OrganizationRoles.MEMBER]: WorkspaceRoles.VIEWER,
+  [WorkspaceRoles.ATTENDANT]: WorkspaceRoles.ATTENDANT,
+};
+
+/**
+ * Role change chosen in Equipe & Membros (AT1). The list there is the
+ * company's, so a choice changes the company role, as before. The Attendant
+ * is a workspace role: choosing it makes the person a company member and the
+ * Attendant of this workspace; moving someone out of it gives the workspace
+ * role an invitation with that choice gives (owner, admin or viewer). Each
+ * step goes through its own guard and the escalation rules of roles.ts.
+ */
+export async function changeTeamMemberRole(
+  tx: ContextTransaction,
+  params: {
+    workspaceId: string;
+    organizationId: string;
+    actorId: string;
+    targetUserId: string;
+    choice: TeamRoleChoice;
+  },
+): Promise<void> {
+  const { workspaceId, organizationId, actorId, targetUserId, choice } = params;
+  const current = await tx.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+  });
+  const wasAttendant = current?.role === WorkspaceRoles.ATTENDANT;
+
+  const organizationRole: OrganizationRole =
+    choice === WorkspaceRoles.ATTENDANT ? OrganizationRoles.MEMBER : choice;
+  const target = await tx.organizationMember.findUnique({
+    where: { organizationId_userId: { organizationId, userId: targetUserId } },
+  });
+  if (!target) throw new MemberNotFoundError(targetUserId);
+  if (target.role !== organizationRole || choice !== WorkspaceRoles.ATTENDANT) {
+    await updateOrganizationMemberRole(tx, {
+      organizationId,
+      actorId,
+      targetUserId,
+      newRole: organizationRole,
+    });
+  }
+
+  if (choice !== WorkspaceRoles.ATTENDANT && !wasAttendant) return;
+  const workspaceRole = WORKSPACE_ROLE_OF_CHOICE[choice];
+  if (current) {
+    await updateWorkspaceMemberRole(tx, {
+      workspaceId,
+      organizationId,
+      actorId,
+      targetUserId,
+      newRole: workspaceRole,
+    });
+  } else {
+    await addWorkspaceMember(tx, {
+      workspaceId,
+      organizationId,
+      actorId,
+      targetUserId,
+      role: workspaceRole,
+    });
   }
 }

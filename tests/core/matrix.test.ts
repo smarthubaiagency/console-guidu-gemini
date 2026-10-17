@@ -6,7 +6,7 @@ import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import type { PlatformJobDefinition } from "@/core/jobs/definition";
+import type { PlatformTxJobDefinition } from "@/core/jobs/definition";
 import { handleAppServiceRequest } from "@/core/matrix/appservice";
 import {
   coreUserId,
@@ -113,7 +113,7 @@ describeDatabase(
 
     const asWorker = <T>(fn: (tx: ContextTransaction) => Promise<T>) =>
       workerDb.$transaction(fn, { timeout: 120_000, maxWait: 30_000 });
-    const run = <P>(job: PlatformJobDefinition<P>, payload: P) =>
+    const run = <P>(job: PlatformTxJobDefinition<P>, payload: P) =>
       asWorker((tx) => job.run(tx, payload));
 
     /** Runs the processing until the condition holds (events arrive async). */
@@ -589,11 +589,9 @@ describeDatabase(
         `update public.workspaces set status = 'deletion_scheduled', deletion_requested_at = now(),
          purge_after = now() + interval '30 days' where id = '${ids.workspaceA}'`,
       );
-      // The hook of the WS1 asks for the sync in the web transaction.
-      await admin.$transaction((tx) =>
-        matrixWorkspaceLifecycle.onDeletionScheduled(tx, {
-          id: ids.workspaceA,
-        }),
+      // The WS1 hook asks for the sync (the worker runs it, as app_worker).
+      await asWorker((tx) =>
+        matrixWorkspaceLifecycle.onDeletionScheduled!(tx, ids.workspaceA),
       );
       expect(
         await admin.jobRun.count({
@@ -631,10 +629,13 @@ describeDatabase(
       expect(restored).toMatchObject({ action: "restore" });
       expect(await joinedMembers(room.roomId)).toContain(owner.userId);
 
-      const purged = await asWorker((tx) =>
-        matrixWorkspaceLifecycle.purgeExternal(tx, { id: ids.workspaceA }),
+      const io = { transaction: asWorker };
+      const purged = await matrixWorkspaceLifecycle.purgeExternal!(
+        ids.workspaceA,
+        io,
       );
-      expect(purged.deleted).toBeGreaterThanOrEqual(1);
+      expect(purged).toMatchObject({ skipped: false });
+      expect((purged as { deleted: number }).deleted).toBeGreaterThanOrEqual(1);
       await eventually(async () => {
         const status = await client.request<{ results: { status: string }[] }>(
           "GET",
@@ -644,9 +645,7 @@ describeDatabase(
       }, "room purged on Synapse");
       // Idempotent: closed rows are skipped and an unknown room counts as gone.
       expect(
-        await asWorker((tx) =>
-          matrixWorkspaceLifecycle.purgeExternal(tx, { id: ids.workspaceA }),
-        ),
+        await matrixWorkspaceLifecycle.purgeExternal!(ids.workspaceA, io),
       ).toEqual({
         deleted: 0,
         skipped: false,

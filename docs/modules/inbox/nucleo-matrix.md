@@ -19,7 +19,7 @@ Só núcleo, sem tela (a janela é a IN4). Sem as variáveis `MATRIX_*` tudo fic
 | Sessão do navegador                     | `POST /api/matrix/session`              | JWT RS256 de 60 s, `sub` só de localpart `u_`, com `name`. Só para quem tem `inbox.view` num workspace ativo; garante a conta antes. Mesma origem.                                                                                                                                           |
 | Saída do console                        | `/auth/signout`                         | Enfileira a remoção dos dispositivos Matrix da pessoa (API admin). Nunca atrasa a saída.                                                                                                                                                                                                     |
 | CSP                                     | `src/core/security/headers.ts`, `proxy` | Origem do homeserver no `connect-src` quando configurado (só `https` em produção).                                                                                                                                                                                                           |
-| Ciclo de vida do workspace (para a WS1) | `src/core/matrix/lifecycle.ts`          | `matrixWorkspaceLifecycle`: `onDeletionScheduled`, `onDeletionCanceled` e `purgeExternal`. Ver a seção 3.                                                                                                                                                                                    |
+| Ciclo de vida do workspace (para a WS1) | `src/core/matrix/lifecycle.ts`          | `matrixWorkspaceLifecycle` (`core.matrix` no registro da WS1). Ver a seção 3.                                                                                                                                                                                            |
 | Permissões                              | `src/core/permissions/catalog.ts`       | `inbox.view`, `inbox.reply` e `inbox.manage`, iguais às da AT1 (dono, admin e editor; o Atendente entra com a AT1).                                                                                                                                                                          |
 
 A API admin do Synapse é chamada com o `as_token` (o remetente do AS é admin).
@@ -38,10 +38,10 @@ Todos reconciliam o Synapse com o banco, então rodar duas vezes não muda nada.
 
 ## 3. Ligação com a WS1
 
-A IN3 só exporta `matrixWorkspaceLifecycle` (de `src/core/matrix`). Quem fizer o merge por último liga no registro de ganchos da WS1:
+As salas entram no registro de ganchos da WS1 como `core.matrix` (`CORE_RESOURCES` em `src/core/privacy/lifecycle-registry.ts`):
 
-- `onDeletionScheduled(tx, { id })` e `onDeletionCanceled(tx, { id })`: rodam na transação do web que muda o workspace; só enfileiram `matrix.sync-workspace`. Fora de `active`, os atendentes saem de todas as salas (salas `blocked`); de volta a `active`, eles voltam. O consumidor continua na sala; quem impede o agente de responder é a WS1.
-- `purgeExternal(tx, { id })`: roda no worker antes da limpeza do banco, numa transação curta de `app_worker`. Apaga as salas no Synapse com purge e marca as linhas como `closed`. Idempotente; se falhar, basta rodar de novo. As linhas saem com a limpeza do banco (`purgeWorkspace` já apaga `matrix_room_members` e `matrix_rooms`).
+- `onDeletionScheduled` e `onDeletionCanceled`: rodam no worker, numa transação curta de `app_worker`; só enfileiram `matrix.sync-workspace` (job de plataforma, que o workspace fechado não pula). Fora de `active`, os atendentes saem de todas as salas (salas `blocked`); de volta a `active`, eles voltam. O consumidor continua na sala; quem impede o agente de responder é a WS1.
+- `purgeExternal`: roda no worker antes da limpeza do banco, numa transação curta de `app_worker`. Apaga as salas no Synapse com purge e marca as linhas como `closed`. Idempotente; se falhar, roda de novo. As linhas saem com a limpeza do banco (`purgeWorkspace` apaga `matrix_room_members` e `matrix_rooms`). Sem o Matrix configurado, registra `skipped: true`.
 
 ## 4. Como testar
 

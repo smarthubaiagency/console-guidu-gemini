@@ -21,6 +21,7 @@ import { googleWorkspaceView } from "@/core/integrations/google/connection";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("integrations");
@@ -52,6 +53,8 @@ export default async function WorkspaceIntegrationsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const view = await withContext(prisma, context, (tx) =>
     googleWorkspaceView(tx, context),
   );

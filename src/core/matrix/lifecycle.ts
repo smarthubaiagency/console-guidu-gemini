@@ -1,4 +1,4 @@
-import type { ContextTransaction } from "@/lib/prisma/with-context";
+import type { CoreLifecycleResource } from "@/core/privacy/contract";
 
 import { matrixConfig } from "./config";
 import { requestWorkspaceSync } from "./jobs";
@@ -7,47 +7,35 @@ import { createSynapseClient } from "./synapse";
 
 /**
  * What the Matrix core does over the life of a workspace (ADR 0023, rule
- * 12), for the hook registry of the soft deletion (WS1), which wires it in:
+ * 12), listed in the hook registry of the soft deletion (WS1):
  *
- * - `onDeletionScheduled` and `onDeletionCanceled` run in the transaction
- *   that changes the workspace (web, app_runtime). They only ask the worker
- *   to reconcile the rooms with the new status: the attendants leave every
- *   room (rooms `blocked`), or come back (rooms `active`).
- * - `purgeExternal` runs in the worker before the database purge, outside
- *   the purge transaction (pass a short app_worker transaction). It deletes
- *   the workspace's rooms on Synapse with purge; idempotent, so a failure
- *   is simply run again. The rows go with the database purge.
+ * - `onDeletionScheduled` and `onDeletionCanceled` only ask the worker to
+ *   reconcile the rooms with the new status: the attendants leave every
+ *   room (rooms `blocked`), or come back (rooms `active`). The Matrix jobs
+ *   are platform jobs, so the closed workspace does not skip them.
+ * - `purgeExternal` deletes the workspace's rooms on Synapse with purge,
+ *   before the database purge, in one short app_worker transaction.
+ *   Idempotent: a closed room is not deleted again, so a failure is simply
+ *   run again. The rows go with the database purge.
  */
-type Workspace = Readonly<{ id: string; organizationId?: string }>;
+export const matrixWorkspaceLifecycle: CoreLifecycleResource = {
+  key: "core.matrix",
 
-export const matrixWorkspaceLifecycle = {
-  key: "matrix",
-
-  async onDeletionScheduled(
-    tx: ContextTransaction,
-    workspace: Workspace,
-  ): Promise<void> {
-    await requestWorkspaceSync(tx, workspace.id);
+  async onDeletionScheduled(tx, workspaceId) {
+    await requestWorkspaceSync(tx, workspaceId);
   },
 
-  async onDeletionCanceled(
-    tx: ContextTransaction,
-    workspace: Workspace,
-  ): Promise<void> {
-    await requestWorkspaceSync(tx, workspace.id);
+  async onDeletionCanceled(tx, workspaceId) {
+    await requestWorkspaceSync(tx, workspaceId);
   },
 
-  async purgeExternal(
-    tx: ContextTransaction,
-    workspace: Workspace,
-  ): Promise<Readonly<{ deleted: number; skipped: boolean }>> {
+  async purgeExternal(workspaceId, io) {
     const config = matrixConfig();
     if (!config) return { deleted: 0, skipped: true };
-    const { deleted } = await purgeWorkspaceRooms(
-      tx,
-      createSynapseClient(config),
-      workspace.id,
+    const client = createSynapseClient(config);
+    const { deleted } = await io.transaction((tx) =>
+      purgeWorkspaceRooms(tx, client, workspaceId),
     );
     return { deleted, skipped: false };
   },
-} as const;
+};
