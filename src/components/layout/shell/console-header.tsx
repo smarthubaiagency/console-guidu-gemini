@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import {
@@ -7,7 +9,11 @@ import {
 } from "@/components/ui/sidebar";
 import { BrandMark } from "@/shared/ui/brand-mark";
 
-/** Top of the sidebar in /admin and /platform: brand and console name. */
+/**
+ * Top of the sidebar in /admin and /platform: brand and console name. A
+ * client component so the `Link` under `SidebarMenuButton asChild` is a real
+ * element, never a lazy server reference the Radix Slot cannot slot onto.
+ */
 export function ConsoleHeader({
   href,
   brandName,

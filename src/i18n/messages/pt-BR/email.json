@@ -81,6 +81,22 @@
       "aiKeyPaused": {
         "name": "Agente pausado",
         "description": "Avisa o cliente que o agente foi pausado porque a chave não foi corrigida."
+      },
+      "workspaceDeletionScheduled": {
+        "name": "Exclusão de workspace agendada",
+        "description": "Avisa o dono e os admins que a exclusão do workspace foi pedida e até quando pode ser cancelada."
+      },
+      "workspaceDeletionReminder": {
+        "name": "Lembrete de exclusão",
+        "description": "Avisa o dono e os admins 7 dias antes de o workspace ser excluído de vez."
+      },
+      "workspaceDeletionCanceled": {
+        "name": "Exclusão cancelada",
+        "description": "Avisa o dono e os admins que a exclusão do workspace foi cancelada."
+      },
+      "workspaceDeletionCompleted": {
+        "name": "Workspace excluído",
+        "description": "Avisa o dono e os admins que o workspace foi excluído de vez."
       }
     },
     "essential": "E-mail essencial: não pode ser desligado.",
@@ -100,7 +116,7 @@
     "variablesHint": "Clique para inserir no campo onde está o cursor. Só valem as variáveis deste evento, e todo valor é escapado.",
     "variableNames": {
       "organizacao": "Nome da organização do cliente",
-      "data": "Data e hora do prazo (validade do convite ou fim da reserva)",
+      "data": "Data e hora do prazo (validade do convite, fim da reserva ou exclusão do workspace)",
       "link": "Endereço do botão de ação (use como link)",
       "marca": "Nome da marca",
       "parceiro": "Nome do parceiro",

@@ -9,6 +9,7 @@ import { loadUsage, type UsageRow } from "@/core/entitlements/usage";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata() {
   const t = await getTranslations("usage");
@@ -82,6 +83,8 @@ export default async function UsagePage({ params }: UsagePageProps) {
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const usage = await withContext(prisma, context, (tx) =>
     loadUsage(tx, context),
   );

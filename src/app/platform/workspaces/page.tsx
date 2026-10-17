@@ -4,6 +4,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { requirePlatformAdminPage } from "@/core/auth/page-guard";
 import { prisma } from "@/lib/prisma/client";
 import { listAdminWorkspaces } from "@/core/admin/platform";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -74,10 +75,22 @@ export default async function AdminWorkspacesPage() {
                     {ws.organizationName}
                   </TableCell>
                   <TableCell className="px-5">
-                    <span className="bg-success-bg text-success-text border-success-border text-11 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
-                      <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
-                      {ws.status}
-                    </span>
+                    {ws.purgeAfter ? (
+                      <Badge variant="danger" data-testid="deletion-scheduled">
+                        {t("deletionScheduled", {
+                          date: format.dateTime(ws.purgeAfter, {
+                            day: "2-digit",
+                            month: "2-digit",
+                            timeZone: "America/Sao_Paulo",
+                          }),
+                        })}
+                      </Badge>
+                    ) : (
+                      <span className="bg-success-bg text-success-text border-success-border text-11 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
+                        <span className="bg-success-solid h-1.5 w-1.5 rounded-full" />
+                        {ws.status}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-text-secondary px-5">
                     {format.dateTime(ws.createdAt, { dateStyle: "short" })}

@@ -15,6 +15,7 @@ import {
 import { isPermissionDeniedError } from "@/core/permissions/guard";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("support");
@@ -41,6 +42,8 @@ export default async function WorkspaceSupportPage({ params }: PageProps) {
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
 
   let grants;
   try {

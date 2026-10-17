@@ -43,6 +43,7 @@ import {
   listWorkspaceEvents,
 } from "@/core/events/views";
 import { workspaceGrants } from "@/core/module-runtime/loaders";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
 import { listWorkspaceMembers } from "@/core/workspaces/members";
@@ -80,6 +81,8 @@ export default async function WorkspaceEventsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(ctx);
   const query = await searchParams;
   const filters = EventListFilters.parse({
     module: query.module || undefined,

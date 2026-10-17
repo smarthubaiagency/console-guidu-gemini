@@ -6,7 +6,7 @@ import { afterAll, beforeAll, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import { resolveWorkspaceContext } from "@/core/auth/context";
-import type { JobDefinition } from "@/core/jobs/definition";
+import type { JobDefinition, PlatformJobSession } from "@/core/jobs/definition";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
 import { PermissionDeniedError } from "@/core/permissions/guard";
 import {
@@ -20,6 +20,7 @@ import {
   requestWorkspaceExport,
   workspaceExportJob,
 } from "@/core/privacy/export";
+import { runWorkspacePurge } from "@/core/privacy/lifecycle-jobs";
 import { runPrivacyMaintenance } from "@/core/privacy/maintenance";
 import { withContext, type RequestContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
@@ -220,14 +221,22 @@ describeDatabase("F3e: workspace export and deletion", requiredVars, () => {
       (await db.workspace.findUniqueOrThrow({ where: { id: workspaceId } }))
         .status,
     ).toBe("deletion_scheduled");
-    expect(early.purged).toBeGreaterThanOrEqual(0);
+    expect(early.purgesQueued).toBe(0);
 
     await db.$executeRawUnsafe(
       `update public.workspaces set purge_after = now() - interval '1 minute' where id = '${workspaceId}'`,
     );
-    await workerDb.$transaction((tx) =>
+    const queued = await workerDb.$transaction((tx) =>
       runPrivacyMaintenance(tx, "2026-11-17"),
     );
+    expect(queued.purgesQueued).toBe(1);
+    // The queued purge (WS1): external hooks, then the database.
+    const session: Pick<PlatformJobSession, "transaction"> = {
+      transaction: (operation) => workerDb.$transaction(operation),
+    };
+    expect(await runWorkspacePurge(session, { workspaceId })).toMatchObject({
+      status: "purged",
+    });
 
     const tombstone = await db.workspace.findUniqueOrThrow({
       where: { id: workspaceId },
@@ -269,6 +278,9 @@ describeDatabase("F3e: workspace export and deletion", requiredVars, () => {
     const again = await workerDb.$transaction((tx) =>
       runPrivacyMaintenance(tx, "2026-11-17"),
     );
-    expect(again.purged).toBe(0);
+    expect(again.purgesQueued).toBe(0);
+    expect(await runWorkspacePurge(session, { workspaceId })).toEqual({
+      status: "not_due",
+    });
   });
 });

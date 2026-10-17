@@ -32,6 +32,21 @@ export type AgentKeyNoticeData = Readonly<{
   credentialsUrl: string;
 }>;
 
+/** Notice to the owners and admins about a workspace's deletion (WS1). */
+export type WorkspaceDeletionNoticeData = Readonly<{
+  workspaceName: string;
+  /** When the data is purged (or was, for the completed notice). */
+  purgeAfter: Date;
+  /** The console, where the owner cancels within the grace period. */
+  appUrl: string;
+}>;
+
+export type WorkspaceDeletionNoticeType =
+  | "workspace.deletion.scheduled"
+  | "workspace.deletion.reminder"
+  | "workspace.deletion.canceled"
+  | "workspace.deletion.completed";
+
 /** Events with a template. Add one template per new event. */
 export type NotificationEvent = EventBase &
   (
@@ -58,6 +73,10 @@ export type NotificationEvent = EventBase &
     | Readonly<{
         type: "ai.agent.key_paused";
         data: AgentKeyNoticeData;
+      }>
+    | Readonly<{
+        type: WorkspaceDeletionNoticeType;
+        data: WorkspaceDeletionNoticeData;
       }>
     | Readonly<{
         /** Test e-mail of Configurações › E-mail (CF3a). */

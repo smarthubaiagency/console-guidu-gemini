@@ -283,18 +283,25 @@ export function buildAppModuleSettingsItems(
 /** Full app sidebar: core entries around the module contributions. */
 export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
   const base = `/app/${input.workspaceSlug}`;
+  const overview = item({
+    id: "core.overview",
+    label: "Visão Geral",
+    href: base,
+    iconKey: "layout-dashboard",
+    exact: true,
+  });
+  // Without workspace.read (the Attendant, AT1) the menu is the dashboard
+  // only; the pages answer 404 on their own (requireWorkspaceAreaPage). The
+  // Inbox entry joins here with its module (IN4).
+  if (!input.grants("workspace.read")) {
+    return [{ id: "platform", label: "Plataforma", items: [overview] }];
+  }
   return [
     {
       id: "platform",
       label: "Plataforma",
       items: [
-        item({
-          id: "core.overview",
-          label: "Visão Geral",
-          href: base,
-          iconKey: "layout-dashboard",
-          exact: true,
-        }),
+        overview,
         ...buildAppModuleItems(input),
         item({
           id: "core.executions",
@@ -341,6 +348,8 @@ export function buildAppNavigation(input: AppNavigationInput): NavSection[] {
 export function buildAppSettingsNavigation(
   input: AppNavigationInput,
 ): NavSection[] {
+  // No settings without workspace.read (the Attendant, AT1).
+  if (!input.grants("workspace.read")) return [];
   const base = `/app/${input.workspaceSlug}/settings`;
   const sections: NavSection[] = [
     {

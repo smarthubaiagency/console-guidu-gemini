@@ -13,6 +13,7 @@ import {
   saveWorkspaceNotificationScheduleAction,
 } from "@/core/events/h2-actions";
 import { notificationSettingsView } from "@/core/events/rules-service";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
@@ -39,6 +40,8 @@ export default async function WorkspaceNotificationSettingsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(ctx);
   const data = await withContext(prisma, ctx, (tx) =>
     notificationSettingsView(tx, {
       level: "workspace",

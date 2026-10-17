@@ -92,6 +92,19 @@ function sampleEvent(
           billingUrl: link("/admin/billing"),
         },
       };
+    case "workspace.deletion.scheduled":
+    case "workspace.deletion.reminder":
+    case "workspace.deletion.canceled":
+    case "workspace.deletion.completed":
+      return {
+        ...base,
+        type,
+        data: {
+          workspaceName: sample.workspace,
+          purgeAfter: new Date(now + 30 * day),
+          appUrl: link("/app"),
+        },
+      };
     case "ai.agent.key_backup":
     case "ai.agent.key_paused":
       return {

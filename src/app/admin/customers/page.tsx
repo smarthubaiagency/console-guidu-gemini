@@ -39,6 +39,7 @@ import { readServiceModes } from "@/core/organizations/service-mode";
 import { createPartnerCustomerAction } from "@/core/partners/actions";
 import { listWorkspaceTemplates } from "@/core/partners/customers";
 import { listPartnerCustomers } from "@/core/partners/members";
+import { listPartnerScheduledDeletions } from "@/core/privacy/deletion";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { withIdentityContext } from "@/lib/prisma/with-identity-context";
@@ -104,36 +105,39 @@ export default async function PartnerCustomersPage({
     gbModuleAvailable() && partnerMayOperate(membership.role);
   const query = await searchParams;
 
-  const { customers, templates, modes, workspaces } = await withIdentityContext(
-    prisma,
-    identity.userId,
-    async (tx) => {
-      const customers = await listPartnerCustomers(tx, partner.partnerId);
-      const modes = await readServiceModes(
-        tx,
-        customers.map((c) => c.id),
-      );
-      const managed = customers
-        .filter((c) => modes.get(c.id) === "gerenciado")
-        .map((c) => c.id);
-      return {
-        customers,
-        modes,
-        templates: canManage
-          ? await listWorkspaceTemplates(tx, partner.partnerId)
-          : [],
-        workspaces:
-          operatesFichas && managed.length > 0
-            ? await tx.workspace.findMany({
-                where: { organizationId: { in: managed }, status: "active" },
-                orderBy: { name: "asc" },
-                select: { id: true, organizationId: true, name: true },
-              })
+  const { customers, templates, modes, workspaces, deletions } =
+    await withIdentityContext(
+      prisma,
+      identity.userId,
+      async (tx) => {
+        const customers = await listPartnerCustomers(tx, partner.partnerId);
+        const modes = await readServiceModes(
+          tx,
+          customers.map((c) => c.id),
+        );
+        const managed = customers
+          .filter((c) => modes.get(c.id) === "gerenciado")
+          .map((c) => c.id);
+        return {
+          customers,
+          modes,
+          // Scheduled deletions of the companies' workspaces (WS1).
+          deletions: await listPartnerScheduledDeletions(tx),
+          templates: canManage
+            ? await listWorkspaceTemplates(tx, partner.partnerId)
             : [],
-      };
-    },
-    { partnerId: partner.partnerId },
-  );
+          workspaces:
+            operatesFichas && managed.length > 0
+              ? await tx.workspace.findMany({
+                  where: { organizationId: { in: managed }, status: "active" },
+                  orderBy: { name: "asc" },
+                  select: { id: true, organizationId: true, name: true },
+                })
+              : [],
+        };
+      },
+      { partnerId: partner.partnerId },
+    );
 
   const managedWorkspaces: ManagedWorkspace[] = await Promise.all(
     workspaces.map(async (workspace) => {
@@ -278,7 +282,27 @@ export default async function PartnerCustomersPage({
                     })}
                   </ItemDescription>
                 </ItemContent>
-                <ItemActions>
+                <ItemActions className="flex-wrap">
+                  {deletions
+                    .filter((d) => d.organizationId === customer.id)
+                    .map((deletion) => (
+                      <Badge
+                        key={deletion.workspaceId}
+                        variant="danger"
+                        title={t("customers.deletionScheduledTitle", {
+                          workspace: deletion.workspaceName,
+                        })}
+                        data-testid="deletion-scheduled"
+                      >
+                        {t("customers.deletionScheduled", {
+                          date: format.dateTime(deletion.purgeAfter, {
+                            day: "2-digit",
+                            month: "2-digit",
+                            timeZone: "America/Sao_Paulo",
+                          }),
+                        })}
+                      </Badge>
+                    ))}
                   <Badge variant={mode === "gerenciado" ? "info" : "neutral"}>
                     {t(`customers.modes.${mode}`)}
                   </Badge>

@@ -7,6 +7,7 @@ import { translateNavigation } from "@/core/i18n/navigation";
 import { loadAppSettingsNavigation } from "@/core/module-runtime/loaders";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { prisma } from "@/lib/prisma/client";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 /** Workspace › Configurações (CF1): submenu card and content cards. */
 export default async function WorkspaceSettingsLayout({
@@ -23,6 +24,8 @@ export default async function WorkspaceSettingsLayout({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const t = await getTranslations("settings");
   const sections = translateNavigation(
     await loadAppSettingsNavigation(prisma, context, workspaceSlug),

@@ -24,6 +24,7 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("privacy");
@@ -57,6 +58,8 @@ export default async function WorkspaceDataPage({ params }: DataPageProps) {
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
   const { grants, exports } = await withContext(prisma, context, async (tx) => {
     const g = workspaceGrants(await getEffectiveWorkspaceRole(tx, context));
     return {

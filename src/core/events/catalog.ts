@@ -159,6 +159,59 @@ const CATALOG = [
     inline: true,
     template: { group: "account", key: "emailTest" },
   },
+  // -- Workspace deletion (WS1): owners and admins of the workspace ---------
+  {
+    type: "workspace.deletion.scheduled",
+    module: "core",
+    severity: "urgent",
+    essential: true,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "customer",
+    destinations: ["notify"],
+    channels: ["email", "app"],
+    level: "workspace",
+    template: { group: "account", key: "workspaceDeletionScheduled" },
+  },
+  {
+    type: "workspace.deletion.reminder",
+    module: "core",
+    severity: "urgent",
+    essential: true,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "customer",
+    destinations: ["notify"],
+    channels: ["email", "app"],
+    level: "workspace",
+    template: { group: "account", key: "workspaceDeletionReminder" },
+  },
+  {
+    type: "workspace.deletion.canceled",
+    module: "core",
+    severity: "info",
+    essential: true,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "customer",
+    destinations: ["notify"],
+    channels: ["email", "app"],
+    level: "workspace",
+    template: { group: "account", key: "workspaceDeletionCanceled" },
+  },
+  {
+    type: "workspace.deletion.completed",
+    module: "core",
+    severity: "info",
+    essential: true,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "customer",
+    destinations: ["notify"],
+    channels: ["email", "app"],
+    level: "workspace",
+    template: { group: "account", key: "workspaceDeletionCompleted" },
+  },
   // -- Billing (F3c): the partner hears about its customers ------------------
   {
     type: "billing.subscription.past_due",
@@ -365,6 +418,26 @@ export function eventDefinition(type: string): EventDefinition | null {
 
 export function isEventType(type: string): type is EventType {
   return BY_TYPE.has(type);
+}
+
+/**
+ * The notices of a workspace's own deletion (WS1): the only events of a
+ * closed workspace that still reach anyone.
+ */
+export const WORKSPACE_DELETION_EVENT_TYPES = [
+  "workspace.deletion.scheduled",
+  "workspace.deletion.reminder",
+  "workspace.deletion.canceled",
+  "workspace.deletion.completed",
+] as const satisfies readonly EventType[];
+
+export type WorkspaceDeletionEventType =
+  (typeof WORKSPACE_DELETION_EVENT_TYPES)[number];
+
+export function isWorkspaceDeletionEvent(
+  type: string,
+): type is WorkspaceDeletionEventType {
+  return (WORKSPACE_DELETION_EVENT_TYPES as readonly string[]).includes(type);
 }
 
 /** Modules with events, for the filters of the screens. */

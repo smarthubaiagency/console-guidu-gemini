@@ -27,12 +27,14 @@ import type {
   NotificationTransport,
 } from "@/core/notifications/types";
 import { HOUSE_PARTNER_ID } from "@/core/partners/constants";
+import { isWorkspaceActive } from "@/core/workspaces/active";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import {
   type EventChannel,
   type EventDefinition,
   eventDefinition,
+  isWorkspaceDeletionEvent,
 } from "./catalog";
 import { EVENTS_DISPATCH_JOB_KIND } from "./emit";
 import { eventNotificationSettings } from "./rule-settings";
@@ -133,6 +135,18 @@ export function notificationContentOf(
           periodEnd: day(data.periodEnd),
           nextStepOn: data.nextStepOn ? day(data.nextStepOn) : null,
           billingUrl: str(data.billingUrl),
+        },
+      };
+    case "workspace.deletion.scheduled":
+    case "workspace.deletion.reminder":
+    case "workspace.deletion.canceled":
+    case "workspace.deletion.completed":
+      return {
+        type,
+        data: {
+          workspaceName: str(data.workspaceName),
+          purgeAfter: day(data.purgeAfter),
+          appUrl: str(data.appUrl),
         },
       };
     case "ai.agent.key_backup":
@@ -355,6 +369,15 @@ export async function dispatchEvent(
       where id = ${event.id}::uuid and dispatched_at is null
     `;
   if (!definition || !definition.destinations.includes("notify")) {
+    await markDone();
+    return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
+  }
+  // A closed workspace (WS1) tells nobody, except about its own deletion.
+  if (
+    event.workspace_id &&
+    !isWorkspaceDeletionEvent(event.type) &&
+    !(await isWorkspaceActive(tx, event.workspace_id))
+  ) {
     await markDone();
     return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
   }

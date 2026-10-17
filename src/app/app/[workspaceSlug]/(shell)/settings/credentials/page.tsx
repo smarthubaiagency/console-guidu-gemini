@@ -14,6 +14,7 @@ import {
   CredentialsClient,
   type CredentialsCapabilities,
 } from "./credentials-client";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("credentials");
@@ -37,6 +38,8 @@ export default async function CredentialsSettingsPage({
     identity.userId,
     workspaceSlug,
   );
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
 
   const { credentials, capabilities, providers } = await withContext(
     prisma,

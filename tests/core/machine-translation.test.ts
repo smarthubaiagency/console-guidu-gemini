@@ -105,7 +105,9 @@ describeDatabase("I6: machine translation", requiredVars, () => {
           update public.job_runs set status = 'running', started_at = now()
           where id = ${runId}::uuid
         `;
-        if (definition.scope !== "platform") throw new Error("platform only");
+        if (definition.scope !== "platform" || definition.detached) {
+          throw new Error("platform only");
+        }
         const payload = definition.payload.parse(row!.payload);
         const result = (await definition.run(tx, payload)) ?? {};
         await tx.$executeRaw`

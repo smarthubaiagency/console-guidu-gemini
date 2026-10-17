@@ -74,13 +74,15 @@ export type TestDatabase = Readonly<{
     orgSlug: string;
     wsName: string;
     wsSlug: string;
-    role?: "owner" | "admin" | "member" | "viewer";
+    role?: "owner" | "admin" | "member" | "viewer" | "attendant";
+    /** Company role; owner unless given (the Attendant is a `member`). */
+    orgRole?: "owner" | "admin" | "member";
   }) => Promise<{ organizationId: string; workspaceId: string }>;
   seedInvitation: (params: {
     organizationId: string;
     workspaceId?: string | undefined;
     email: string;
-    role?: ("owner" | "admin" | "member" | "viewer") | undefined;
+    role?: ("owner" | "admin" | "member" | "viewer" | "attendant") | undefined;
     expiresInHours?: number | undefined;
   }) => Promise<{ id: string; rawToken: string }>;
   seedPartner: (params: SeedPartnerParams) => Promise<{ partnerId: string }>;
@@ -120,10 +122,7 @@ export type SeedPartnerParams = {
   host: string;
   memberEmail: string;
   role:
-    | "partner_owner"
-    | "partner_admin"
-    | "partner_finance"
-    | "partner_support";
+    "partner_owner" | "partner_admin" | "partner_finance" | "partner_support";
   organizationId?: string | undefined;
 };
 
@@ -240,9 +239,9 @@ export async function startTestDatabase(
 
       await pool.query(
         `insert into public.organization_members (organization_id, user_id, role, status)
-         values ($1, $2, 'owner', 'active')
-         on conflict (organization_id, user_id) do update set role = 'owner', status = 'active'`,
-        [orgId, userId],
+         values ($1, $2, $3, 'active')
+         on conflict (organization_id, user_id) do update set role = excluded.role, status = 'active'`,
+        [orgId, userId, params.orgRole ?? "owner"],
       );
 
       const existingWs = await pool.query<{ id: string }>(
@@ -281,11 +280,16 @@ export async function startTestDatabase(
       );
       const inviterId = inviterRes.rows[0]?.user_id;
       if (!inviterId) {
-        throw new Error(`No member found for organization ${params.organizationId}`);
+        throw new Error(
+          `No member found for organization ${params.organizationId}`,
+        );
       }
 
       const rawToken = crypto.randomBytes(32).toString("hex");
-      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+      const tokenHash = crypto
+        .createHash("sha256")
+        .update(rawToken)
+        .digest("hex");
       const hours = params.expiresInHours ?? 168;
 
       const res = await pool.query<{ id: string }>(
@@ -348,13 +352,18 @@ export async function startTestDatabase(
       return { partnerId };
     },
     seedEvent: async (params) => {
-      const ws = await pool.query<{ id: string; organization_id: string; partner_id: string }>(
+      const ws = await pool.query<{
+        id: string;
+        organization_id: string;
+        partner_id: string;
+      }>(
         `select w.id, w.organization_id, o.partner_id from public.workspaces w
          join public.organizations o on o.id = w.organization_id where w.slug = $1`,
         [params.workspaceSlug],
       );
       const target = ws.rows[0];
-      if (!target) throw new Error(`Workspace not found: ${params.workspaceSlug}`);
+      if (!target)
+        throw new Error(`Workspace not found: ${params.workspaceSlug}`);
       const chainKey = `ws:${target.id}`;
       const head = await pool.query<{ content_hash: string; seq: string }>(
         `select content_hash, seq from public.events where chain_key = $1 order by seq desc limit 1`,
@@ -411,7 +420,9 @@ export async function startTestDatabase(
       return { id };
     },
     maintenanceOff: async () => {
-      await pool.query(`update public.platform_maintenance set enabled = false`);
+      await pool.query(
+        `update public.platform_maintenance set enabled = false`,
+      );
     },
     seedNotification: async (params) => {
       const userRes = await pool.query<{ id: string }>(
@@ -485,9 +496,18 @@ export async function startTestDatabase(
             MAPS_INTELLIGENCE_PROVIDER: "fake",
             GB_SUGGESTIONS_PROVIDER: "fake",
           },
-          stdio: "ignore",
+          // Kept in memory and printed only when jobs stay stuck, so a CI
+          // failure shows what the worker said.
+          stdio: ["ignore", "pipe", "pipe"],
         },
       );
+      const output: string[] = [];
+      const keep = (chunk: Buffer) => {
+        output.push(...chunk.toString("utf8").split("\n").filter(Boolean));
+        if (output.length > 80) output.splice(0, output.length - 80);
+      };
+      child.stdout?.on("data", keep);
+      child.stderr?.on("data", keep);
       const waiting = async () =>
         Number(
           (
@@ -504,14 +524,15 @@ export async function startTestDatabase(
         remaining = await waiting();
       }
       if (remaining > 0) {
-        // The worker's output is ignored; name what is stuck so a CI failure
-        // says which job kind to look at.
+        // Name what is stuck and what the worker said, so a CI failure says
+        // which job kind to look at.
         const stuck = await pool.query(
           `select kind, status, attempts, run_after, last_error
              from public.job_runs
             where status in ('pending', 'queued', 'running')`,
         );
         console.error("run-jobs: still waiting", stuck.rows);
+        console.error(`run-jobs: worker output\n${output.join("\n")}`);
       }
       child.kill("SIGTERM");
       await new Promise((resolve) => child.once("exit", resolve));

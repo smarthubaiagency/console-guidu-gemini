@@ -46,7 +46,7 @@ As permissões possuem namespace estável declarado em [`src/core/permissions/ca
 
 | Permissão                      | Namespace          | Descrição                                                                     |
 | ------------------------------ | ------------------ | ----------------------------------------------------------------------------- |
-| `workspace.read`               | Workspace          | Visualizar metadados básicos e dashboard do workspace                         |
+| `workspace.read`               | Workspace          | Abrir as áreas do workspace além do dashboard (configurações, módulos, API)   |
 | `workspace.settings.update`    | Workspace          | Alterar configurações gerais do workspace                                     |
 | `workspace.members.read`       | Workspace          | Listar membros do workspace                                                   |
 | `workspace.members.invite`     | Workspace          | Adicionar ou convidar novos membros para o workspace                          |
@@ -62,6 +62,9 @@ As permissões possuem namespace estável declarado em [`src/core/permissions/ca
 | `ai_agents.use`                | Agentes de IA      | Executar prompts e interagir com sessões de agentes (módulo congelado na C04) |
 | `ai_agents.manage`             | Agentes de IA      | Criar, configurar e alterar agentes de IA (módulo congelado na C04)           |
 | `ai_agents.conversations.read` | Agentes de IA      | Ler conversas, transcrições e áudios dos GUIDS (A2a)                          |
+| `inbox.view`                   | Inbox              | Abrir o Inbox e ler as conversas (especificação do Inbox §3, AT1)             |
+| `inbox.reply`                  | Inbox              | Responder, assumir conversa não atribuída, mudar status e etiquetas           |
+| `inbox.manage`                 | Inbox              | Atribuir a outros, criar etiquetas e escolher a rota de cada número           |
 | `organization.read`            | Organização        | Visualizar dados institucionais da organização contratante                    |
 | `organization.members.invite`  | Organização        | Convidar novos membros para a organização                                     |
 | `organization.members.manage`  | Organização        | Atualizar papéis, transferir propriedade e remover membros da organização     |
@@ -75,27 +78,32 @@ _Nota: Permissões para módulos não especificados (Catálogo, Google Business)
 
 ### 4.1 Papéis de Workspace (`WorkspaceRole`)
 
-| Permissão                      | `owner` | `admin` | `editor` | `viewer` |
-| ------------------------------ | :-----: | :-----: | :------: | :------: |
-| `workspace.read`               |   ✅    |   ✅    |    ✅    |    ✅    |
-| `workspace.settings.update`    |   ✅    |   ✅    |    ❌    |    ❌    |
-| `workspace.members.read`       |   ✅    |   ✅    |    ✅    |    ✅    |
-| `workspace.members.invite`     |   ✅    |   ✅    |    ❌    |    ❌    |
-| `workspace.members.manage`     |   ✅    |   ✅*   |    ❌    |    ❌    |
-| `credentials.read`             |   ✅    |   ✅    |    ✅    |    ❌    |
-| `credentials.manage`           |   ✅    |   ✅    |    ❌    |    ❌    |
-| `channels.read`                |   ✅    |   ✅    |    ✅    |    ❌    |
-| `channels.manage`              |   ✅    |   ✅    |    ❌    |    ❌    |
-| `api_keys.create_own`          |   ✅    |   ✅    |    ✅    |   ✅**   |
-| `api_keys.revoke_own`          |   ✅    |   ✅    |    ✅    |    ✅    |
-| `api_keys.revoke_any`          |   ✅    |   ✅    |    ❌    |    ❌    |
-| `api_keys.read_all`            |   ✅    |   ✅    |    ❌    |    ❌    |
-| `ai_agents.use`                |   ✅    |   ✅    |    ✅    |    ❌    |
-| `ai_agents.manage`             |   ✅    |   ✅    |    ❌    |    ❌    |
-| `ai_agents.conversations.read` |   ✅    |   ✅    |    ✅    |    ❌    |
+| Permissão                      | `owner` | `admin` | `editor` | `viewer` | `attendant` |
+| ------------------------------ | :-----: | :-----: | :------: | :------: | :---------: |
+| `workspace.read`               |   ✅    |   ✅    |    ✅    |    ✅    |     ❌      |
+| `workspace.settings.update`    |   ✅    |   ✅    |    ❌    |    ❌    |     ❌      |
+| `workspace.members.read`       |   ✅    |   ✅    |    ✅    |    ✅    |     ❌      |
+| `workspace.members.invite`     |   ✅    |   ✅    |    ❌    |    ❌    |     ❌      |
+| `workspace.members.manage`     |   ✅    |   ✅*   |    ❌    |    ❌    |     ❌      |
+| `credentials.read`             |   ✅    |   ✅    |    ✅    |    ❌    |     ❌      |
+| `credentials.manage`           |   ✅    |   ✅    |    ❌    |    ❌    |     ❌      |
+| `channels.read`                |   ✅    |   ✅    |    ✅    |    ❌    |     ❌      |
+| `channels.manage`              |   ✅    |   ✅    |    ❌    |    ❌    |     ❌      |
+| `api_keys.create_own`          |   ✅    |   ✅    |    ✅    |   ✅**   |     ❌      |
+| `api_keys.revoke_own`          |   ✅    |   ✅    |    ✅    |    ✅    |     ❌      |
+| `api_keys.revoke_any`          |   ✅    |   ✅    |    ❌    |    ❌    |     ❌      |
+| `api_keys.read_all`            |   ✅    |   ✅    |    ❌    |    ❌    |     ❌      |
+| `ai_agents.use`                |   ✅    |   ✅    |    ✅    |    ❌    |     ❌      |
+| `ai_agents.manage`             |   ✅    |   ✅    |    ❌    |    ❌    |     ❌      |
+| `ai_agents.conversations.read` |   ✅    |   ✅    |    ✅    |    ❌    |     ❌      |
+| `inbox.view`                   |   ✅    |   ✅    |    ✅    |    ❌    |     ✅      |
+| `inbox.reply`                  |   ✅    |   ✅    |    ✅    |    ❌    |     ✅      |
+| `inbox.manage`                 |   ✅    |   ✅    |    ❌    |    ❌    |     ❌      |
 
 _\* Sujeito à verificação de escalonamento em `roles.ts` (admins não podem alterar ou remover owners)._
 _\*\* No viewer, criação de chaves de API é restrita a escopos puramente de leitura (restrição aplicada na C12)._
+
+**Atendente (`attendant`, AT1, decisão do Marcelo de 16/10/2026):** só entra no dashboard e no Inbox (o Inbox chega na IN4). Não tem `workspace.read`, então todas as outras áreas respondem como para quem não é membro: as páginas de configurações, execuções, propostas e módulos dão 404 (`requireWorkspaceAreaPage` em cada página e `resolveModulePageAccess`), a API v1 do workspace dá 403, o MCP recusa qualquer escopo e ele não cria chave de API. O menu do `/app` mostra só a Visão Geral, e o dashboard dele não mostra assentos, módulos nem atalhos de equipe e configurações. Nas permissões dos módulos (`defaultWorkspaceRoles` dos manifestos) ele não aparece. Owner e admin o convidam e trocam seu papel em Configurações › Equipe & Membros; ele não convida nem promove ninguém. No banco, `credentials` e a inserção em `api_keys` listam os quatro outros papéis (migration `20261127090000_at1_attendant_role.sql`); as políticas de escrita por lista de papéis seguem sem ele.
 
 ### 4.2 Papéis de Organização (`OrganizationRole`)
 

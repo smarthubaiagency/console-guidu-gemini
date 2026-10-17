@@ -57,6 +57,7 @@ import { GuidChannels } from "./guid-channels";
 import { GuidNotices } from "./guid-notices";
 import { CreateGuidForm, GuidPanel } from "./guid-forms";
 import { GuidTestPanel } from "./guid-test";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 const STATUSES = new Set(["draft", "active", "paused"]);
 const KEY_STATES = new Set(["ok", "backup", "failed"]);
@@ -95,6 +96,8 @@ export default async function AiAgentsPage({
     unstable_rethrow(error);
     notFound();
   }
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
 
   const header = (
     <ModulePageHeader

@@ -1,12 +1,16 @@
 import "server-only";
 
-import { getEffectiveWorkspaceRole } from "@/core/permissions/guard";
+import {
+  getEffectiveWorkspaceRole,
+  workspaceRoleGrants,
+} from "@/core/permissions/guard";
 import { readServiceMode } from "@/core/organizations/service-mode";
 import type {
   ContextTransaction,
   RequestContext,
 } from "@/lib/prisma/with-context";
 
+import { GoogleBusinessPermissions } from "../manifest";
 import { gbForbidden, gbNotFound } from "./errors";
 
 /**
@@ -61,7 +65,12 @@ export async function requireReader(
   tx: ContextTransaction,
   ctx: RequestContext,
 ): Promise<void> {
-  if (await getEffectiveWorkspaceRole(tx, ctx)) return;
+  const role = await getEffectiveWorkspaceRole(tx, ctx);
+  if (role) {
+    // Members that read the module; the Attendant (AT1) does not.
+    if (workspaceRoleGrants(role, GoogleBusinessPermissions.READ)) return;
+    throw gbNotFound();
+  }
   if (await partnerManages(tx, ctx)) return;
   throw gbNotFound();
 }

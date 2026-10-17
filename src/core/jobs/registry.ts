@@ -13,6 +13,10 @@ import { verifyChainsJob, verifyChainsSchedule } from "@/core/events/verify";
 import { translateTextsJob } from "@/core/i18n/machine/texts-job";
 import { translateDocumentJob } from "@/core/legal/machine-job";
 import { workspaceExportJob } from "@/core/privacy/export";
+import {
+  workspaceLifecycleJob,
+  workspacePurgeJob,
+} from "@/core/privacy/lifecycle-jobs";
 import { privacyJobs, privacySchedules } from "@/core/privacy/maintenance";
 import { proposalExecuteJob } from "@/core/proposals/service";
 import { backgroundAnalysesJob } from "@/modules/google-business/server/jobs";
@@ -28,6 +32,9 @@ import type { JobDefinition, JobSchedule } from "./definition";
 const DEFINITIONS = [
   ...billingJobs,
   ...privacyJobs,
+  // Workspace deletion (WS1): hooks, notices and the purge itself.
+  workspaceLifecycleJob,
+  workspacePurgeJob,
   // Event Hub (H1): dispatch of each event and the daily seal check.
   eventsDispatchJob,
   verifyChainsJob,

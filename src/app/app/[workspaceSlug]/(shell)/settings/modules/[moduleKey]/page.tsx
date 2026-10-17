@@ -22,6 +22,7 @@ import {
   hasSettingsComponent,
   renderSettingsComponent,
 } from "@/modules/settings-components";
+import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
 export async function generateMetadata() {
   const t = await getTranslations("modules");
@@ -62,6 +63,8 @@ export default async function WorkspaceModuleSettingsPage({
     unstable_rethrow(error);
     notFound();
   }
+  // Areas beyond the dashboard need workspace.read (AT1).
+  await requireWorkspaceAreaPage(context);
 
   const view = await withContext(prisma, context, async (tx) => {
     const [state, role] = await Promise.all([

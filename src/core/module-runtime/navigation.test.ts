@@ -172,9 +172,7 @@ describe("generated navigation", () => {
     const ids = app("owner", {
       "hello-world": enabled,
       "google-business": enabled,
-    })[0]?.items.map(
-      (i) => i.id,
-    );
+    })[0]?.items.map((i) => i.id);
     expect(ids).toEqual([
       "core.overview",
       "google-business",
@@ -194,6 +192,26 @@ describe("generated navigation", () => {
     });
     // Breadcrumb and search still find the pages under it.
     expect(settings?.children.map((c) => c.id)).toContain("core.team");
+  });
+
+  it("gives the Attendant the dashboard only (AT1)", () => {
+    vi.stubEnv("GUIDU_MODULE_GOOGLE_BUSINESS_ENABLED", "true");
+    vi.stubEnv("GUIDU_MODULE_AI_AGENTS_ENABLED", "true");
+    const states = {
+      "hello-world": enabled,
+      "google-business": enabled,
+      "ai-agents": enabled,
+      crm: enabled,
+      portfolio: enabled,
+    };
+    const sections = app("attendant", states);
+    expect(sections.flatMap((s) => s.items).map((i) => i.id)).toEqual([
+      "core.overview",
+    ]);
+    expect(find(sections, "core.overview")?.href).toBe("/app/acme");
+    // The viewer keeps its menu.
+    expect(find(app("viewer", states), "core.settings")).toBeDefined();
+    expect(find(app("viewer", states), "core.executions")).toBeDefined();
   });
 
   it("shows the proposals to owner and admin only (F4d)", () => {
