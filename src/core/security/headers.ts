@@ -27,7 +27,10 @@ export function createNonce(): string {
  * while it is on; scripts stay nonce-only (no third-party script is
  * loaded: the dashboard posts the events itself). The Matrix homeserver
  * (IN3) joins `connect-src` when configured: the Inbox talks to it from the
- * browser (ADR 0023).
+ * browser (ADR 0023). The Embedded Signup of Meta (IN7a), when the GUIDU
+ * app is configured, opens the login of Meta: its SDK (loaded by a nonced
+ * script, so `strict-dynamic` covers it) talks to Meta and uses frames of
+ * facebook.com.
  */
 export function contentSecurityPolicy(
   nonce: string,
@@ -35,11 +38,14 @@ export function contentSecurityPolicy(
     production,
     analyticsOrigin = null,
     matrixOrigin = null,
+    metaSignup = false,
   }: Readonly<{
     production: boolean;
     analyticsOrigin?: string | null;
     /** The Matrix homeserver (IN3), when configured; https in production. */
     matrixOrigin?: string | null;
+    /** The Embedded Signup of Meta is on (IN7a). */
+    metaSignup?: boolean;
   }>,
 ): string {
   const matrix =
@@ -50,13 +56,21 @@ export function contentSecurityPolicy(
     ).test(matrixOrigin)
       ? ` ${matrixOrigin}`
       : "";
+  const meta = metaSignup
+    ? " https://www.facebook.com https://web.facebook.com https://connect.facebook.net https://graph.facebook.com"
+    : "";
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${production ? "" : " 'unsafe-eval'"}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self'",
-    `connect-src 'self'${analyticsOrigin && /^https:\/\/[a-z0-9.-]+$/.test(analyticsOrigin) ? ` ${analyticsOrigin}` : ""}${matrix}`,
+    `connect-src 'self'${analyticsOrigin && /^https:\/\/[a-z0-9.-]+$/.test(analyticsOrigin) ? ` ${analyticsOrigin}` : ""}${matrix}${meta}`,
+    ...(metaSignup
+      ? [
+          "frame-src 'self' https://www.facebook.com https://web.facebook.com https://staticxx.facebook.com",
+        ]
+      : []),
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

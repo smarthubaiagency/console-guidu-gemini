@@ -72,6 +72,11 @@ export default async function proxy(request: NextRequest) {
     analyticsOrigin: await analyticsCspOrigin(),
     // The Inbox's browser client talks to the homeserver (IN3, ADR 0023).
     matrixOrigin: matrixCspOrigin(),
+    // The Embedded Signup of Meta, only with the GUIDU app configured (IN7a).
+    metaSignup: Boolean(
+      process.env.META_APP_ID?.trim() &&
+      process.env.META_EMBEDDED_SIGNUP_CONFIG_ID?.trim(),
+    ),
   });
   forwarded.set(NONCE_HEADER, nonce);
   forwarded.set("content-security-policy", csp);
