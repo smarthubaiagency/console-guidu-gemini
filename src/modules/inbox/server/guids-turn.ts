@@ -103,29 +103,42 @@ async function load(
   roomId: string,
 ): Promise<Loaded> {
   return session.transaction(async (tx) => {
-    try {
-      await assertModuleOperational(tx, ctx, "inbox", "write");
-    } catch (error) {
-      if (error instanceof ModuleUnavailableError) {
-        throw new SkipJobError("O Inbox não está disponível neste workspace.");
-      }
-      throw error;
-    }
     const room = await tx.matrixRoom.findFirst({
       where: { roomId, workspaceId: ctx.workspaceId, state: "active" },
-      select: { consumerMxid: true },
+      select: { consumerMxid: true, channelConversationId: true },
     });
     if (!room) throw new SkipJobError("Conversa não encontrada.");
+    // A room of a number answers with the GUIDS of the number's route, with
+    // or without the Inbox module on (IN7a); any other, the Inbox GUIDS.
+    if (!room.channelConversationId) {
+      try {
+        await assertModuleOperational(tx, ctx, "inbox", "write");
+      } catch (error) {
+        if (error instanceof ModuleUnavailableError) {
+          throw new SkipJobError(
+            "O Inbox não está disponível neste workspace.",
+          );
+        }
+        throw error;
+      }
+    }
     const inbox = await tx.workspaceModule.findFirst({
       where: { workspaceId: ctx.workspaceId, moduleKey: "inbox" },
       select: { config: true },
     });
     const config = inboxConfigOf(inbox?.config);
-    if (!config.guids_agent_id) {
-      throw new SkipJobError("Nenhum GUIDS atende o Inbox.");
+    const agentId = room.channelConversationId
+      ? ((
+          await tx.$queryRaw<{ agent_id: string }[]>`
+            select agent_id from private.channel_route_guids(${roomId})
+          `
+        )[0]?.agent_id ?? null)
+      : config.guids_agent_id;
+    if (!agentId) {
+      throw new SkipJobError("Nenhum GUIDS atende esta conversa.");
     }
     const agent = await tx.matrixAgentUser.findUnique({
-      where: { agentId: config.guids_agent_id },
+      where: { agentId },
       select: { mxid: true, state: true, workspaceId: true },
     });
     const usable =
@@ -141,7 +154,7 @@ async function load(
       select: { lastAnsweredTs: true, lastAnsweredEventId: true },
     });
     return {
-      agentId: config.guids_agent_id,
+      agentId,
       agentMxid: usable ? agent.mxid : null,
       joined: member?.membership === "join",
       consumerMxid: room.consumerMxid,

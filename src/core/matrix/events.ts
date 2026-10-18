@@ -3,6 +3,7 @@ import type { ContextTransaction } from "@/lib/prisma/with-context";
 import { upsertMember } from "./accounts";
 import { openConsumerRoom, workspaceOfAddress } from "./addresses";
 import { onConsumerMessage } from "./agent";
+import { enqueueMetaSend } from "./meta";
 import { coreUserId, isNamespaceUser } from "./config";
 import { ATTENDANT_LOCALPART } from "./jwt";
 import { runRoomAssigned, runRoomHandedOff } from "./room-hooks";
@@ -268,6 +269,7 @@ async function handleEvent(
       consumerMxid: true,
       consumerName: true,
       assignee: true,
+      channelConversationId: true,
     },
   });
 
@@ -358,6 +360,15 @@ async function handleEvent(
         { ...room, roomId: event.roomId },
         event.originServerTs,
       );
+    }
+    // IN7a: what the team or the GUIDS says in a room of a number goes out.
+    if (
+      (side === "team" || side === "agent") &&
+      room.state === "active" &&
+      room.channelConversationId &&
+      ["m.text", "m.notice", "m.emote"].includes(String(content.msgtype))
+    ) {
+      await enqueueMetaSend(tx, event.roomId, event.eventId);
     }
     return "processed";
   }

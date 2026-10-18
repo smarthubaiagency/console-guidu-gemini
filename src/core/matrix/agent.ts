@@ -175,6 +175,13 @@ export async function syncWorkspaceAgent(
 
   let joined = 0;
   let removed = 0;
+  // The rooms of a number have the GUIDS of the number's route (IN7a).
+  const numberRooms = (
+    await tx.matrixRoom.findMany({
+      where: { workspaceId, channelConversationId: { not: null } },
+      select: { roomId: true },
+    })
+  ).flatMap((room) => (room.roomId ? [room.roomId] : []));
   // Users of other agents of this workspace leave the rooms.
   const others = await tx.matrixAgentUser.findMany({
     where: {
@@ -189,6 +196,7 @@ export async function syncWorkspaceAgent(
         workspaceId,
         userMxid: { in: others.map((o) => o.mxid) },
         membership: { in: ["join", "invite"] },
+        roomId: { notIn: numberRooms },
       },
       take: batch,
       select: { roomId: true, userMxid: true },
@@ -222,6 +230,7 @@ export async function syncWorkspaceAgent(
       workspaceId,
       state: "active",
       roomId: { not: null },
+      channelConversationId: null,
       NOT: {
         roomId: {
           in: (

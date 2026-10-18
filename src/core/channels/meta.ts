@@ -529,6 +529,9 @@ export async function downloadMetaMedia(
   return authorizedDownload(
     link,
     { authorization: `Bearer ${token}` },
-    { fetch: deps.fetch, maxBytes: deps.maxBytes ?? MAX_META_MEDIA_BYTES },
+    {
+      ...(deps.fetch ? { fetch: deps.fetch } : {}),
+      maxBytes: deps.maxBytes ?? MAX_META_MEDIA_BYTES,
+    },
   );
 }

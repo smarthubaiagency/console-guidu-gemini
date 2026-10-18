@@ -34,7 +34,10 @@ export const LINK_CONTACT_JOB_KIND = "inbox.link-contact";
 /** The name of a contact made from a chat, without one of its own. */
 export const FALLBACK_CONTACT_NAME = "Contato do chat";
 
-export const linkContactJob = defineJob<{ roomId: string; phone?: string }>({
+export const linkContactJob = defineJob<{
+  roomId: string;
+  phone?: string | undefined;
+}>({
   kind: LINK_CONTACT_JOB_KIND,
   description: "Cria o contato do CRM de uma conversa nova do Inbox.",
   payload: z

@@ -340,15 +340,14 @@ create policy channel_conversations_inbox_guids on public.channel_conversations
   for select to app_rls_helper
   using (current_setting('app.inbox_guids', true) = 'on');
 
-grant select (consumer_module, consumer_ref) on public.channel_routes to app_rls_helper;
+grant select (workspace_id, consumer_module, consumer_ref) on public.channel_routes to app_rls_helper;
 grant select (id, connection_id, scope) on public.channel_conversations to app_rls_helper;
 grant select (channel_conversation_id) on public.matrix_rooms to app_rls_helper;
 grant select (id, status, kind, workspace_id, config) on public.ai_agents to app_rls_helper;
 
--- The GUIDS named by the active route of the number a room talks by, its
--- name and status, and the person who turned the route on (the turn runs
--- as them). Nothing for a room that is not of a number.
-create function private.channel_route_guids(p_room_id text)
+-- The GUIDS named by the active route of a number, its name and status,
+-- and the person who turned the route on (the turn runs as them).
+create function private.channel_route_agent(p_connection_id uuid, p_scope text)
 returns table(agent_id uuid, agent_name text, agent_status text, actor uuid, grouping_seconds integer)
 language plpgsql
 volatile
@@ -365,19 +364,47 @@ begin
            agent.status,
            coalesce(route.updated_by, route.created_by),
            5
-    from public.matrix_rooms room
-    join public.channel_conversations conversation on conversation.id = room.channel_conversation_id
-    join public.channel_routes route
-      on route.connection_id = conversation.connection_id
-     and route.scope = conversation.scope
-     and route.status = 'active'
-     and route.consumer_module = 'inbox'
+    from public.channel_routes route
     join public.ai_agents agent
       on agent.id = route.consumer_ref
-     and agent.workspace_id = room.workspace_id
+     and agent.workspace_id = route.workspace_id
      and agent.kind = 'guid'
-    where room.room_id = p_room_id;
+    where route.connection_id = p_connection_id
+      and route.scope = p_scope
+      and route.status = 'active'
+      and route.consumer_module = 'inbox';
   perform set_config('app.inbox_guids', coalesce(v_previous, ''), true);
+end;
+$$;
+
+revoke execute on function private.channel_route_agent(uuid, text) from public, anon, authenticated;
+grant execute on function private.channel_route_agent(uuid, text) to app_worker, app_runtime;
+alter function private.channel_route_agent(uuid, text) owner to app_rls_helper;
+
+-- The same for a room: the route of the number the room talks by. Nothing
+-- for a room that is not of a number.
+create function private.channel_route_guids(p_room_id text)
+returns table(agent_id uuid, agent_name text, agent_status text, actor uuid, grouping_seconds integer)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_previous text := current_setting('app.inbox_guids', true);
+  v_connection uuid;
+  v_scope text;
+begin
+  perform set_config('app.inbox_guids', 'on', true);
+  select conversation.connection_id, conversation.scope into v_connection, v_scope
+  from public.matrix_rooms room
+  join public.channel_conversations conversation on conversation.id = room.channel_conversation_id
+  where room.room_id = p_room_id;
+  perform set_config('app.inbox_guids', coalesce(v_previous, ''), true);
+  if v_connection is null then
+    return;
+  end if;
+  return query select * from private.channel_route_agent(v_connection, v_scope);
 end;
 $$;
 

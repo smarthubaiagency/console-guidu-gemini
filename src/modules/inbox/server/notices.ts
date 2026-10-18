@@ -188,12 +188,15 @@ export async function noticeUnanswered(
       room_id: string;
       workspace_id: string;
       status: string;
+      number_room: boolean;
       assignee: string | null;
       consumer_name: string | null;
       last_consumer_message_at: Date;
     }[]
   >`
-    select room.room_id, room.workspace_id, room.status, room.assignee, room.consumer_name,
+    select room.room_id, room.workspace_id, room.status,
+           room.channel_conversation_id is not null as number_room,
+           room.assignee, room.consumer_name,
            room.last_consumer_message_at
     from public.matrix_rooms room
     where room.state = 'active'
@@ -211,6 +214,8 @@ export async function noticeUnanswered(
   const agents = new Map<string, boolean>();
   let notices = 0;
   for (const room of rooms) {
+    // A pending room of a number is its GUIDS's (IN7a).
+    if (room.status === "pending" && room.number_room) continue;
     if (room.status === "pending") {
       if (!agents.has(room.workspace_id)) {
         agents.set(
