@@ -215,6 +215,8 @@ model NotificationDelivery {
   /// Event Hub (H2): a WhatsApp in the quiet window or a digest notice waits.
   deliverAfter    DateTime? @map("deliver_after") @db.Timestamptz()
   holdReason      String?   @map("hold_reason")
+  /// Event Hub (H4): a WhatsApp marked `sending` before the HTTP call.
+  sendingAt       DateTime? @map("sending_at") @db.Timestamptz()
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -1239,6 +1241,10 @@ model ExecutionProposal {
   apiKeyId        String?   @map("api_key_id") @db.Uuid
   /// Turn of the GUIDU Assistant that proposed it (A2b), without an API key.
   aiExecutionId   String?   @map("ai_execution_id") @db.Uuid
+  /// Who proposed it (H4): `api_key`, `assistant` or `agent` (a module job).
+  origin          String    @default("api_key")
+  /// The event that led an agent to propose it (H4).
+  sourceEventId   String?   @map("source_event_id") @db.Uuid
   operation       String
   targetId        String?   @map("target_id") @db.Uuid
   payload         Json

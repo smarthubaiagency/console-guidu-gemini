@@ -1,17 +1,22 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
-import { recordAudit } from "@/core/audit/record";
+import { type AuditOrigin, recordAudit } from "@/core/audit/record";
 import { defineJob } from "@/core/jobs/definition";
 import { QuotaExceededError } from "@/core/entitlements/quotas";
-import { enqueueJob } from "@/core/jobs/service";
 import { assertModuleOperational } from "@/core/module-runtime/state";
+import { readServiceMode } from "@/core/organizations/service-mode";
 import { Permissions } from "@/core/permissions/catalog";
 import {
   getEffectiveWorkspaceRole,
+  PermissionDeniedError,
   requireWorkspacePermission,
   workspaceRoleGrants,
 } from "@/core/permissions/guard";
+import {
+  hasPartnerRolePermission,
+  isPartnerRole,
+} from "@/core/permissions/matrix";
 import { type Assurance, requireMfa } from "@/core/privacy/export";
 import type {
   ContextTransaction,
@@ -19,6 +24,7 @@ import type {
 } from "@/lib/prisma/with-context";
 import { AppError, toSafeError } from "@/shared/errors";
 
+import { emitProposalEvent, syncProposalEvent } from "./events";
 import { proposalHash, type ProposalOperation } from "./operation";
 import { getProposalOperation } from "./registry";
 
@@ -37,14 +43,34 @@ import { getProposalOperation } from "./registry";
  *   version of the target, module state, permission and quota. The status
  *   moves to `executed` in the same transaction as the effect, so running
  *   the job again does nothing.
+ *
+ * H4 (Central de Eventos):
+ * - a third origin, the module's agent (`createAgentProposal`): a job
+ *   that runs for a person of the workspace (or for the managing
+ *   partner), with neither API key nor Assistant turn, tied to the event
+ *   that led to it (`source_event_id`) and valid up to 7 days (per
+ *   operation, `agentTtlHours`);
+ * - who decides follows the service mode (`requireApprover`): owner and
+ *   admin in `padrao`; the managing partner's owner, admin and support in
+ *   `gerenciado` (permission `partner.proposals.review`, from /admin),
+ *   where the customer only follows;
+ * - each step is an event (`events.ts`); the approval no longer queues the
+ *   job itself: `proposals.approved` hands the execution to the
+ *   subscriber `proposals.execute` (`subscriber.ts`), which runs it in the
+ *   approver's context. `core.proposal-execute` stays for the runs
+ *   already queued.
  */
 
 export const PROPOSAL_TTL_MS = 24 * 60 * 60_000;
+/** The longest validity of an agent's proposal (H4). */
+export const AGENT_PROPOSAL_MAX_TTL_HOURS = 7 * 24;
 /** Pending proposals per workspace; more wait for decisions. */
 export const MAX_PENDING_PROPOSALS = 50;
 
 export type ProposalStatus =
   "pending" | "approved" | "rejected" | "executed" | "failed" | "expired";
+
+export type ProposalOrigin = "api_key" | "assistant" | "agent";
 
 export type ProposalView = Readonly<{
   id: string;
@@ -56,6 +82,10 @@ export type ProposalView = Readonly<{
   resourceVersion: string | null;
   reason: string | null;
   status: ProposalStatus;
+  origin: ProposalOrigin;
+  sourceEventId: string | null;
+  workspaceId: string;
+  organizationId: string;
   expiresAt: Date;
   createdAt: Date;
   requestedBy: string;
@@ -138,6 +168,10 @@ export function toView(row: ProposalRow, ctx: RequestContext): ProposalView {
       open && row.expiresAt.getTime() <= Date.now()
         ? "expired"
         : (row.status as ProposalStatus),
+    origin: row.origin as ProposalOrigin,
+    sourceEventId: row.sourceEventId,
+    workspaceId: row.workspaceId,
+    organizationId: row.organizationId,
     expiresAt: row.expiresAt,
     createdAt: row.createdAt,
     requestedBy: row.requestedBy,
@@ -189,6 +223,67 @@ function requirePerson(ctx: RequestContext): void {
   }
 }
 
+export type ApproverKind = "member" | "partner";
+
+function managedFollows(): AppError {
+  return new AppError({
+    code: "forbidden",
+    safeMessage:
+      "Esta empresa é gerenciada: quem decide as propostas é a equipe de quem gerencia.",
+    messageKey: "proposals.errors.managedFollows",
+  });
+}
+
+/**
+ * Who decides in this context, by the service mode (H4): owner and admin
+ * of a standard company; the managing partner's owner, admin and support
+ * of a managed one. Null: nobody here (the managed customer follows).
+ */
+export async function approverKind(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+): Promise<ApproverKind | null> {
+  const [mode, role] = await Promise.all([
+    readServiceMode(tx, ctx.organizationId),
+    getEffectiveWorkspaceRole(tx, ctx),
+  ]);
+  if (role) {
+    return mode === "padrao" &&
+      workspaceRoleGrants(role, Permissions.WORKSPACE_PROPOSALS_REVIEW)
+      ? "member"
+      : null;
+  }
+  if (mode !== "gerenciado" || !ctx.partnerId) return null;
+  const [row] = await tx.$queryRaw<{ manages: boolean; role: string | null }[]>`
+    select private.partner_manages_organization(${ctx.organizationId}::uuid) as manages,
+           private.current_partner_role() as role
+  `;
+  return row?.manages &&
+    row.role &&
+    isPartnerRole(row.role) &&
+    hasPartnerRolePermission(row.role, Permissions.PARTNER_PROPOSALS_REVIEW)
+    ? "partner"
+    : null;
+}
+
+/** The approver of this context, or the refusal that explains why not. */
+export async function requireApprover(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+): Promise<ApproverKind> {
+  const kind = await approverKind(tx, ctx);
+  if (kind) return kind;
+  const role = await getEffectiveWorkspaceRole(tx, ctx);
+  if (
+    role &&
+    workspaceRoleGrants(role, Permissions.WORKSPACE_PROPOSALS_REVIEW) &&
+    (await readServiceMode(tx, ctx.organizationId)) === "gerenciado"
+  ) {
+    throw managedFollows();
+  }
+  throw new PermissionDeniedError();
+}
+
 /** Creates a proposal for an assistant's key; never runs the effect. */
 export async function createProposal(
   tx: ContextTransaction,
@@ -206,6 +301,8 @@ export async function createProposal(
     apiKeyId: ctx.grantId,
     aiExecutionId: null,
     origin: "mcp",
+    proposalOrigin: "api_key",
+    sourceEventId: null,
   });
 }
 
@@ -231,7 +328,55 @@ export async function createAssistantProposal(
     apiKeyId: null,
     aiExecutionId: executionId,
     origin: "app",
+    proposalOrigin: "assistant",
+    sourceEventId: null,
   });
+}
+
+/**
+ * Creates a proposal for a module's agent (H4): a job that runs for a
+ * person of the workspace, or for the managing partner (ADR 0020), with
+ * neither API key nor Assistant turn. `sourceEventId` is the event of the
+ * workspace that led to it (a hand-off); the proposal waits up to the
+ * operation's `agentTtlHours` (7 days at most). Same checks and hash.
+ */
+export async function createAgentProposal(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  sourceEventId: string,
+  input: unknown,
+): Promise<{ proposal: ProposalView; created: boolean }> {
+  if ((ctx.principalType ?? "user") !== "user") {
+    throw new AppError({
+      code: "forbidden",
+      safeMessage:
+        "Só o agente de um módulo, por uma pessoa, usa esta entrada.",
+      messageKey: "proposals.errors.createdByAssistants",
+    });
+  }
+  if (!z.uuid().safeParse(sourceEventId).success) {
+    throw invalid("Evento de origem inválido.", "invalidProposal");
+  }
+  return insertProposal(tx, ctx, input, {
+    apiKeyId: null,
+    aiExecutionId: null,
+    origin: "worker",
+    proposalOrigin: "agent",
+    sourceEventId,
+  });
+}
+
+/** Validity of a new proposal: 24 hours, or the agent's (H4). */
+export function proposalTtlMs(
+  origin: ProposalOrigin,
+  op: Pick<ProposalOperation, "agentTtlHours">,
+): number {
+  if (origin !== "agent") return PROPOSAL_TTL_MS;
+  const hours = Math.min(
+    Math.max(op.agentTtlHours ?? AGENT_PROPOSAL_MAX_TTL_HOURS, 1),
+    AGENT_PROPOSAL_MAX_TTL_HOURS,
+  );
+  return hours * 60 * 60_000;
 }
 
 async function insertProposal(
@@ -241,7 +386,9 @@ async function insertProposal(
   source: Readonly<{
     apiKeyId: string | null;
     aiExecutionId: string | null;
-    origin: "mcp" | "app";
+    origin: AuditOrigin;
+    proposalOrigin: ProposalOrigin;
+    sourceEventId: string | null;
   }>,
 ): Promise<{ proposal: ProposalView; created: boolean }> {
   const parsed = ProposeInput.safeParse(input);
@@ -322,6 +469,8 @@ async function insertProposal(
       requestedBy: ctx.userId,
       apiKeyId: source.apiKeyId,
       aiExecutionId: source.aiExecutionId,
+      origin: source.proposalOrigin,
+      sourceEventId: source.sourceEventId,
       operation,
       targetId: targetId ?? null,
       payload: payload as Prisma.InputJsonObject,
@@ -329,7 +478,9 @@ async function insertProposal(
       resourceVersion,
       reason: reason ?? null,
       idempotencyKey,
-      expiresAt: new Date(Date.now() + PROPOSAL_TTL_MS),
+      expiresAt: new Date(
+        Date.now() + proposalTtlMs(source.proposalOrigin, op),
+      ),
     },
   });
   await recordAudit(tx, ctx, {
@@ -339,6 +490,11 @@ async function insertProposal(
     result: "success",
     origin: source.origin,
     metadata: { action: operation, target: targetId ?? null },
+  });
+  // The request is an event of the hub that waits for a decision (H4).
+  await emitProposalEvent(tx, ctx, row, "requested", {
+    origin: source.origin,
+    causedBy: source.sourceEventId,
   });
   return { proposal: toView(row, ctx), created: true };
 }
@@ -366,7 +522,10 @@ export async function listProposals(
   return rows.map((row) => toView(row, ctx));
 }
 
-/** Owner and admin see any proposal; the member who asked sees their own. */
+/**
+ * Owner and admin see any proposal; the member who asked sees their own;
+ * the managing partner sees those of the companies it manages (H4).
+ */
 export async function getProposal(
   tx: ContextTransaction,
   ctx: RequestContext,
@@ -374,11 +533,10 @@ export async function getProposal(
 ): Promise<ProposalView> {
   if (!z.string().uuid().safeParse(proposalId).success) throw notFound();
   const role = await getEffectiveWorkspaceRole(tx, ctx);
-  if (!role) throw notFound();
-  const reviewer = workspaceRoleGrants(
-    role,
-    Permissions.WORKSPACE_PROPOSALS_REVIEW,
-  );
+  const reviewer = role
+    ? workspaceRoleGrants(role, Permissions.WORKSPACE_PROPOSALS_REVIEW)
+    : (await approverKind(tx, ctx)) === "partner";
+  if (!role && !reviewer) throw notFound();
   const row = await tx.executionProposal.findFirst({
     where: {
       id: proposalId,
@@ -437,11 +595,7 @@ export async function approveProposal(
   assurance: Assurance,
 ): Promise<ProposalView> {
   requirePerson(ctx);
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_PROPOSALS_REVIEW,
-  );
+  const approver = await requireApprover(tx, ctx);
   requireMfa(assurance);
   const row = await lockProposal(tx, ctx, proposalId);
   if (!row) throw notFound();
@@ -493,20 +647,19 @@ export async function approveProposal(
       approvedHash: row.payloadHash,
     },
   });
-  await enqueueJob(
-    tx,
-    ctx,
-    proposalExecuteJob,
-    { proposalId: row.id },
-    { idempotencyKey: `proposal:${row.id}` },
-  );
+  const origin: AuditOrigin = approver === "partner" ? "partner" : "app";
   await recordAudit(tx, ctx, {
     action: "proposal.approve",
     resourceType: "execution_proposal",
     resourceId: row.id,
     result: "success",
+    origin,
     metadata: { action: row.operation, target: row.targetId },
   });
+  // The hub hands the execution to `proposals.execute` (H4), which runs
+  // it in this approver's context.
+  await emitProposalEvent(tx, ctx, updated, "approved", { origin });
+  await syncProposalEvent(tx, row.id);
   return toView(updated, ctx);
 }
 
@@ -516,11 +669,7 @@ export async function rejectProposal(
   proposalId: string,
 ): Promise<ProposalView> {
   requirePerson(ctx);
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_PROPOSALS_REVIEW,
-  );
+  const approver = await requireApprover(tx, ctx);
   const row = await lockProposal(tx, ctx, proposalId);
   if (!row) throw notFound();
   if (row.status !== "pending")
@@ -529,13 +678,17 @@ export async function rejectProposal(
     where: { id: row.id },
     data: { status: "rejected", decidedBy: ctx.userId, decidedAt: new Date() },
   });
+  const origin: AuditOrigin = approver === "partner" ? "partner" : "app";
   await recordAudit(tx, ctx, {
     action: "proposal.reject",
     resourceType: "execution_proposal",
     resourceId: row.id,
     result: "success",
+    origin,
     metadata: { action: row.operation, target: row.targetId },
   });
+  await emitProposalEvent(tx, ctx, updated, "rejected", { origin });
+  await syncProposalEvent(tx, row.id);
   return toView(updated, ctx);
 }
 
@@ -554,14 +707,12 @@ export async function executeProposal(
   tx: ContextTransaction,
   ctx: RequestContext,
   proposalId: string,
+  options: Readonly<{ causedBy?: string | null }> = {},
 ): Promise<ExecuteSummary> {
   // Without the permission the row cannot be updated either: the job fails
-  // and the proposal stays approved until it expires.
-  await requireWorkspacePermission(
-    tx,
-    ctx,
-    Permissions.WORKSPACE_PROPOSALS_REVIEW,
-  );
+  // and the proposal stays approved until it expires. The approver is
+  // checked again by the service mode (H4).
+  await requireApprover(tx, ctx);
   const row = await lockProposal(tx, ctx, proposalId);
   if (!row) return { proposalId, status: "missing", error: null };
   if (row.status !== "approved") {
@@ -573,7 +724,7 @@ export async function executeProposal(
     error: string | null,
     resourceId: string | null,
   ): Promise<ExecuteSummary> => {
-    await tx.executionProposal.update({
+    const updated = await tx.executionProposal.update({
       where: { id: row.id },
       data: {
         status,
@@ -581,6 +732,11 @@ export async function executeProposal(
         errorCode: error,
         result: resourceId ? { resourceId } : Prisma.DbNull,
       },
+    });
+    await emitProposalEvent(tx, ctx, updated, status, {
+      origin: "worker",
+      causedBy: options.causedBy ?? null,
+      error,
     });
     await recordAudit(tx, ctx, {
       action: "proposal.execute",

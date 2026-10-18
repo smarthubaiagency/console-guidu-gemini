@@ -8,7 +8,10 @@ import {
 } from "@/core/ai/notices/hub";
 import type { ChannelFetch } from "@/core/channels/http";
 import { appConfig } from "@/core/config/app";
-import { definePlatformJob } from "@/core/jobs/definition";
+import {
+  defineDetachedPlatformJob,
+  type PlatformJobSession,
+} from "@/core/jobs/definition";
 import { SOURCE_LOCALE, type Messages } from "@/core/i18n/locales";
 import { deliverNotification } from "@/core/notifications/delivery";
 import { postNotice, preferencesOf } from "@/core/notifications/inbox";
@@ -38,6 +41,7 @@ import {
   isWorkspaceDeletionEvent,
 } from "./catalog";
 import { EVENTS_DISPATCH_JOB_KIND } from "./emit";
+import { type HandoffDeps, queueHandoffs } from "./handoffs";
 import { eventNotificationSettings } from "./rule-settings";
 import {
   bypassesQuietHours,
@@ -52,7 +56,13 @@ import {
   hubNoticeText,
   tagValues,
 } from "./texts";
-import { deliverPersonWhatsApp, deliverWhatsApp } from "./whatsapp";
+import {
+  deliverPersonWhatsApp,
+  deliverWhatsApp,
+  sendClaimedWhatsApp,
+  type WhatsAppMode,
+  type WhatsAppSend,
+} from "./whatsapp";
 
 /**
  * Destination `notify` of the Event Hub (H1, rules in H2): the job `events.dispatch`
@@ -74,12 +84,23 @@ import { deliverPersonWhatsApp, deliverWhatsApp } from "./whatsapp";
  * a person needs their accepted number and respects the quiet window
  * (urgent security events go through); a digest queues the delivery for
  * `events.notices-tick`. With no rule anywhere the H1 behaviour holds.
+ *
+ * H4: the dispatch also hands the event to its subscribers (destination
+ * `subscribers`, `handoffs.ts`), and the WhatsApp leaves the transaction:
+ * `dispatchEvent` only claims the deliveries (`sending`) and returns them;
+ * the job `events.dispatch` is detached and posts them after the commit,
+ * recording each result in a short transaction of its own
+ * (`runEventDispatch`). A caller inside its own transaction leaves the
+ * WhatsApp to a follow-up run (`whatsapp: "defer"`, the default).
  */
 
 export type DispatchDeps = Readonly<{
   transport?: NotificationTransport;
   fetch?: ChannelFetch;
   now?: () => Date;
+  /** `claim` only inside `runEventDispatch`; `defer` by default. */
+  whatsapp?: WhatsAppMode;
+  handoffs?: HandoffDeps;
 }>;
 
 export type DispatchResult = Readonly<{
@@ -89,6 +110,10 @@ export type DispatchResult = Readonly<{
   /** New bell notices without an e-mail. */
   bell: number;
   whatsapp: string | null;
+  /** New hand-offs to subscribers (H4). */
+  handoffs: number;
+  /** WhatsApp deliveries claimed for the POST after the commit (H4). */
+  sends: readonly WhatsAppSend[];
 }>;
 
 export type EventRow = Readonly<{
@@ -104,6 +129,7 @@ export type EventRow = Readonly<{
   idempotency_key: string;
   dispatched_at: Date | null;
   occurred_at: Date;
+  depth?: number;
 }>;
 
 const str = (value: unknown): string =>
@@ -208,6 +234,19 @@ export function bellNoticeOf(
           requester: str(data.requester).slice(0, MAX_VALUE),
           workspace: str(data.workspaceName).slice(0, MAX_VALUE),
           hours: String(Number(data.hours) || 72),
+        },
+        linkUrl,
+      };
+    case "proposals.requested":
+    case "proposals.rejected":
+    case "proposals.executed":
+    case "proposals.failed":
+    case "proposals.expired":
+      return {
+        eventType: type,
+        data: {
+          operation: str(data.operationLabel).slice(0, MAX_VALUE),
+          workspace: str(data.workspaceName).slice(0, MAX_VALUE),
         },
         linkUrl,
       };
@@ -367,19 +406,52 @@ export async function dispatchEvent(
   const now = deps.now ?? (() => new Date());
   const [event] = await tx.$queryRaw<EventRow[]>`
     select id, type, route, severity, partner_id, organization_id, workspace_id, subject_id,
-           data, idempotency_key, dispatched_at, occurred_at
+           data, idempotency_key, dispatched_at, occurred_at, depth
     from public.events where id = ${eventId}::uuid
   `;
-  if (!event) return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
+  const skipped = (handoffs = 0): DispatchResult => ({
+    status: "skipped",
+    notices: 0,
+    bell: 0,
+    whatsapp: null,
+    handoffs,
+    sends: [],
+  });
+  if (!event) return skipped();
   const definition = eventDefinition(event.type);
   const markDone = () =>
     tx.$executeRaw`
       update public.events set dispatched_at = now()
       where id = ${event.id}::uuid and dispatched_at is null
     `;
+  // Destination `subscribers` (H4): the hand-offs are queued once; each
+  // job decides on its own (module off, closed workspace, chain limit).
+  const handoffs = definition?.destinations.includes("subscribers")
+    ? await queueHandoffs(
+        tx,
+        {
+          id: event.id,
+          type: event.type,
+          depth: Number(event.depth ?? 0),
+          partner_id: event.partner_id,
+          organization_id: event.organization_id,
+          workspace_id: event.workspace_id,
+        },
+        deps.handoffs,
+      )
+    : 0;
   if (!definition || !definition.destinations.includes("notify")) {
     await markDone();
-    return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
+    return handoffs > 0 || definition?.destinations.includes("subscribers")
+      ? {
+          status: "dispatched",
+          notices: 0,
+          bell: 0,
+          whatsapp: null,
+          handoffs,
+          sends: [],
+        }
+      : skipped();
   }
   // A closed workspace (WS1) tells nobody, except about its own deletion.
   if (
@@ -388,19 +460,26 @@ export async function dispatchEvent(
     !(await isWorkspaceActive(tx, event.workspace_id))
   ) {
     await markDone();
-    return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
+    return skipped(handoffs);
   }
   const settings = await eventNotificationSettings(tx, event.id);
   const rule = effectiveRule(definition, settings.rules);
   if (!rule.enabled) {
     await markDone();
-    return { status: "skipped", notices: 0, bell: 0, whatsapp: null };
+    return skipped(handoffs);
   }
   const explicit = definition.route === "explicit";
   const personWhatsApp = !explicit && rule.channels.includes("whatsapp");
   // E-mail and the bell are done once; only a failed WhatsApp comes back.
   if (event.dispatched_at && !rule.channels.includes("whatsapp")) {
-    return { status: "done", notices: 0, bell: 0, whatsapp: null };
+    return {
+      status: "done",
+      notices: 0,
+      bell: 0,
+      whatsapp: null,
+      handoffs,
+      sends: [],
+    };
   }
 
   const relatedId =
@@ -413,6 +492,7 @@ export async function dispatchEvent(
   let notices = 0;
   let bell = 0;
   let whatsapp: string | null = null;
+  const sends: WhatsAppSend[] = [];
   // Types with their own recipients (route `explicit`, GB1c) answer them,
   // each with an e-mail and a bell of their own; the others follow the
   // rule's audience (H2).
@@ -594,6 +674,7 @@ export async function dispatchEvent(
           deps,
         );
         whatsapp = outcome.status;
+        if (outcome.send) sends.push(outcome.send);
       }
     }
   }
@@ -612,7 +693,12 @@ export async function dispatchEvent(
       deps,
     );
     whatsapp = outcome.status;
-    if (outcome.status !== "done" && LEAD_NOTICE_EVENT_TYPES.has(event.type)) {
+    if (outcome.send) sends.push(outcome.send);
+    // A claimed delivery records its state after the POST.
+    if (
+      outcome.status === "skipped" &&
+      LEAD_NOTICE_EVENT_TYPES.has(event.type)
+    ) {
       await recordLeadNoticeOutcome(tx, event.data, {
         status: outcome.status,
         reason: outcome.reason,
@@ -623,7 +709,34 @@ export async function dispatchEvent(
   }
 
   await markDone();
-  return { status: "dispatched", notices, bell, whatsapp };
+  return { status: "dispatched", notices, bell, whatsapp, handoffs, sends };
+}
+
+/**
+ * The whole dispatch of an event (H4): the transaction that tells e-mail
+ * and the bell, queues the hand-offs and claims the WhatsApp; then each
+ * POST with no transaction open and its result in a transaction of its
+ * own. `whatsapp` answers the last WhatsApp outcome.
+ */
+export async function runEventDispatch(
+  transaction: PlatformJobSession["transaction"],
+  eventId: string,
+  deps: DispatchDeps = {},
+): Promise<DispatchResult> {
+  const result = await transaction((tx) =>
+    dispatchEvent(tx, eventId, { ...deps, whatsapp: "claim" }),
+  );
+  if (result.sends.length === 0) return result;
+  const outcomes = await sendClaimedWhatsApp(
+    (operation) => transaction(operation),
+    result.sends,
+    deps,
+  );
+  return {
+    ...result,
+    whatsapp: outcomes.at(-1)?.status ?? result.whatsapp,
+    sends: [],
+  };
 }
 
 /** Every event not dispatched yet, oldest first (tests and recovery). */
@@ -643,20 +756,26 @@ export async function dispatchPendingEvents(
 export const EventsDispatchPayload = z.strictObject({ eventId: z.uuid() });
 
 export function createEventsDispatchJob(deps: DispatchDeps = {}) {
-  return definePlatformJob<z.infer<typeof EventsDispatchPayload>>({
+  // Detached (H4): the POST of the WhatsApp never holds a transaction.
+  return defineDetachedPlatformJob<z.infer<typeof EventsDispatchPayload>>({
     kind: EVENTS_DISPATCH_JOB_KIND,
     description:
-      "Avisa os destinatários de um evento da Central de Eventos (sino, e-mail e WhatsApp).",
+      "Avisa os destinatários de um evento da Central de Eventos (sino, e-mail e WhatsApp) e passa o evento aos assinantes.",
     payload: EventsDispatchPayload,
     maxAttempts: 3,
     retryDelaySeconds: 30,
-    async run(tx, payload) {
-      const result = await dispatchEvent(tx, payload.eventId, deps);
+    async run(session, payload) {
+      const result = await runEventDispatch(
+        session.transaction,
+        payload.eventId,
+        deps,
+      );
       return {
         status: result.status,
         notices: result.notices,
         bell: result.bell,
         whatsapp: result.whatsapp,
+        handoffs: result.handoffs,
       };
     },
   });

@@ -49,8 +49,16 @@ describe("Event Hub catalog (H1)", () => {
     }
   });
 
-  it("builds only notify and audit; the rest are refused with their stage", () => {
-    expect([...IMPLEMENTED_DESTINATIONS].sort()).toEqual(["audit", "notify"]);
+  it("builds notify, audit and subscribers; the rest are refused with their stage", () => {
+    expect([...IMPLEMENTED_DESTINATIONS].sort()).toEqual([
+      "audit",
+      "notify",
+      "subscribers",
+    ]);
+    // H4: a type with subscribers is emittable.
+    expect(requireEmittable("proposals.approved").destinations).toEqual([
+      "subscribers",
+    ]);
     const lead = eventDefinition("digital_profile.lead.submitted");
     expect(lead && missingDestinations(lead)).toEqual(["analytics"]);
     expect(() => requireEmittable("digital_profile.lead.submitted")).toThrow(

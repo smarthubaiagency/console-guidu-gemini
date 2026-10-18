@@ -41,6 +41,11 @@ const TYPE_TAGS: Readonly<Record<string, readonly string[]>> = {
   "security.mfa_requirement_off": [],
   "security.ip_blocked": ["ip", "area"],
   "digital_profile.lead.submitted": [],
+  "proposals.requested": ["operacao", "motivo", "validade"],
+  "proposals.rejected": ["operacao"],
+  "proposals.executed": ["operacao"],
+  "proposals.failed": ["operacao"],
+  "proposals.expired": ["operacao"],
 };
 
 export function whatsappTags(type: string): readonly string[] {
@@ -123,6 +128,16 @@ export function tagValues(
     case "security.api_key_revoked":
       values.chave = str(data.keyName) || str(data.prefix);
       break;
+    case "proposals.requested":
+      values.operacao = str(data.operationLabel);
+      values.motivo = str(data.reason);
+      values.validade = day(data.expiresAt, locale);
+      break;
+    case "proposals.rejected":
+    case "proposals.executed":
+    case "proposals.failed":
+    case "proposals.expired":
+      values.operacao = str(data.operationLabel);
     case "security.ip_blocked":
       values.ip = str(data.ip);
       values.area = str(data.area) === "admin" ? "/admin" : "/platform";

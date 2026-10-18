@@ -68,6 +68,12 @@
     "workspace_deletion_reminder": "Workspace deletion reminder",
     "workspace_deletion_canceled": "Workspace deletion canceled",
     "workspace_deletion_completed": "Workspace deleted",
+    "proposals_requested": "Proposal awaiting decision",
+    "proposals_approved": "Proposal approved",
+    "proposals_rejected": "Proposal rejected",
+    "proposals_executed": "Proposal executed",
+    "proposals_failed": "Proposal not executed",
+    "proposals_expired": "Proposal expired",
     "service_mode_reverted_by_partner": "Management ended by the partner",
     "security_ip_blocked": "Access refused by the IP list",
     "inbox_conversation_new": "New Inbox conversation",
@@ -86,6 +92,8 @@
     "security_api_key_revoked": "{marca}: the API key {chave} was revoked in {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: the two-step verification requirement was removed in {workspace}. {link}",
     "digital_profile_lead_submitted": "{marca}: a new contact arrived through the digital profile of {workspace}. {link}",
+    "proposals_requested": "{marca}: a proposal awaits your decision in {workspace}: {operacao}. Expires on {validade}. Decide at {link}",
+    "proposals_failed": "{marca}: the proposal {operacao} in {workspace} was not executed. {link}",
     "security_ip_blocked": "{marca}: the address {ip} was refused in {area} by the IP list. {link}",
     "inbox_conversation_new": "{marca}: new conversation from {contato} in the Inbox of {workspace}. {link}",
     "inbox_conversation_assigned": "{marca}: the conversation with {contato} was assigned to you. {link}",
@@ -148,6 +156,26 @@
     "escalation": {
       "subject": "No answer: {event}",
       "body": "This notice has been waiting for a decision for {hours} hours and was forwarded to you."
+    },
+    "proposals_requested": {
+      "subject": "Proposal awaiting decision in {workspace}",
+      "body": "{operacao}. Reason: {motivo}. Expires on {validade}. Sign in to approve or reject it."
+    },
+    "proposals_rejected": {
+      "subject": "Proposal rejected in {workspace}",
+      "body": "The proposal {operacao} was rejected."
+    },
+    "proposals_executed": {
+      "subject": "Proposal executed in {workspace}",
+      "body": "The proposal {operacao} was executed."
+    },
+    "proposals_failed": {
+      "subject": "Proposal not executed in {workspace}",
+      "body": "The proposal {operacao} was approved but not executed."
+    },
+    "proposals_expired": {
+      "subject": "Proposal expired in {workspace}",
+      "body": "The proposal {operacao} expired without a decision."
     },
     "service_mode_reverted_by_partner": {
       "subject": "{parceiro} ended the management of {empresa}",

@@ -13,6 +13,7 @@ import {
   type EventLevel,
   type EventRoute,
   type EventType,
+  MAX_EVENT_DEPTH,
   missingDestinations,
   placementOf,
 } from "./catalog";
@@ -29,6 +30,12 @@ import { chainKeyOf, computeSeal, currentSealKey, normalizeData } from "./seal";
  * Runs as app_runtime (a request or a workspace job, for the workspace of
  * its context) or as app_worker (platform jobs). Without the seal key it
  * throws: an event is never recorded unsealed.
+ *
+ * H4: an event may name its cause (`causedBy`), the event that led to it
+ * (a hand-off, a step of a proposal). Its depth is the cause's plus one,
+ * computed by the database; past `MAX_EVENT_DEPTH` the emission is
+ * refused (`EventChainLimitError`). The dispatch is queued for the types
+ * with `notify` or `subscribers`.
  */
 
 export const EVENTS_DISPATCH_JOB_KIND = "events.dispatch";
@@ -65,12 +72,25 @@ export type EmitEventInput = Readonly<{
   occurredAt?: Date;
   /** `pending` for a type that waits for a decision (`approval`, H2). */
   status?: "open" | "pending";
+  /** The event that caused this one (H4), in the same workspace. */
+  causedBy?: string | null;
 }>;
 
 export type EmittedEvent = Readonly<{ id: string; created: boolean }>;
 
 function invalid(message: string): AppError {
   return new AppError({ code: "invalid_input", safeMessage: message });
+}
+
+/** The cause is already at the last level of the chain (H4). */
+export class EventChainLimitError extends AppError {
+  constructor(type: string) {
+    super({
+      code: "conflict",
+      safeMessage: `O evento ${type} passaria do limite de ${MAX_EVENT_DEPTH} níveis da corrente de causas.`,
+    });
+    this.name = "EventChainLimitError";
+  }
 }
 
 /** The definition of an emittable type, or an explicit refusal. */
@@ -149,6 +169,19 @@ export async function emitEvent(
     throw invalid(`Os dados do evento ${definition.type} são grandes demais.`);
   }
 
+  const causedBy = input.causedBy ?? null;
+  if (causedBy) {
+    const [cause] = await tx.$queryRaw<{ depth: number | null }[]>`
+      select private.event_depth(${causedBy}::uuid) as depth
+    `;
+    if (cause?.depth === null || cause?.depth === undefined) {
+      throw invalid(`A causa do evento ${definition.type} não existe.`);
+    }
+    if (Number(cause.depth) >= MAX_EVENT_DEPTH) {
+      throw new EventChainLimitError(definition.type);
+    }
+  }
+
   const chainKey = chainKeyOf(scope);
   const [head] = await tx.$queryRaw<
     { existing_id: string | null; prev_hash: string | null; next_seq: bigint }[]
@@ -173,6 +206,7 @@ export async function emitEvent(
       occurredAt,
       data,
       prevHash,
+      causedBy,
     },
     key.secret,
   );
@@ -184,7 +218,7 @@ export async function emitEvent(
       id, type, module, level, partner_id, organization_id, workspace_id,
       subject_type, subject_id, severity, audiences, route, recipient_user_id,
       data, idempotency_key, created_by, occurred_at, chain_key, seq,
-      content_hash, prev_hash, key_version, status
+      content_hash, prev_hash, key_version, status, caused_by_event_id
     ) values (
       ${id}::uuid, ${definition.type}, ${definition.module}, ${level},
       ${uuidOrNull(scope.partnerId)}, ${uuidOrNull(scope.organizationId)},
@@ -192,11 +226,14 @@ export async function emitEvent(
       ${definition.severity}, ${[...definition.audiences]}::text[], ${route},
       ${uuidOrNull(input.recipientUserId ?? null)}, ${json}::jsonb, ${idempotencyKey},
       ${uuidOrNull(createdBy)}, ${occurredAt}, ${chainKey}, ${seq},
-      ${contentHash}, ${prevHash}, ${key.version}, ${status}
+      ${contentHash}, ${prevHash}, ${key.version}, ${status}, ${uuidOrNull(causedBy)}
     )
   `;
 
-  if (definition.destinations.includes("notify")) {
+  if (
+    definition.destinations.includes("notify") ||
+    definition.destinations.includes("subscribers")
+  ) {
     await tx.$executeRaw`
       insert into public.job_runs (kind, scope, requested_by, payload, idempotency_key, max_attempts)
       values (${EVENTS_DISPATCH_JOB_KIND}, 'platform', ${uuidOrNull(createdBy)},

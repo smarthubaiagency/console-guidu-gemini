@@ -43,6 +43,8 @@ export type EventSealRow = Readonly<{
   prev_hash: string | null;
   content_hash: string;
   key_version: string;
+  /** The cause (H4); sealed only when there is one. */
+  caused_by_event_id?: string | null;
 }>;
 
 export function materialOf(row: EventSealRow): SealMaterial {
@@ -58,6 +60,7 @@ export function materialOf(row: EventSealRow): SealMaterial {
     occurredAt: row.occurred_at,
     data: row.data,
     prevHash: row.prev_hash,
+    causedBy: row.caused_by_event_id ?? null,
   };
 }
 
@@ -134,7 +137,7 @@ export async function verifyEventChains(
       const rows = await tx.$queryRaw<Row[]>`
         select id, type, partner_id, organization_id, workspace_id, subject_type,
                subject_id, created_by, occurred_at, data, prev_hash, content_hash,
-               key_version, seq, integrity
+               key_version, seq, integrity, caused_by_event_id
         from public.events
         where chain_key = ${chainKey} and seq > ${after}
         order by seq

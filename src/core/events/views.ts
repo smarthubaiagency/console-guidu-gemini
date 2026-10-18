@@ -23,7 +23,8 @@ import {
  * Eventos of the workspace (/app), of the partner (/admin) and the trace of
  * an event for every level (H2, gap "Rastro completo de um evento"): what
  * happened, who was told, on which channel and with which outcome (the
- * bell included), what was audited and who saw the data with a grant. The
+ * bell included), to which subscribers it was handed over (H4), what was
+ * audited and who saw the data with a grant. The
  * workspace reads `public.events` (members, customer events); the partner
  * reads `private.partner_events`; the trace comes from security definer
  * functions that cut by level (the platform never sees the people, the
@@ -173,9 +174,23 @@ export type TraceView = Readonly<{
   accessGrantId: string;
 }>;
 
+/** A hand-off of the event to a subscriber (H4): situation only. */
+export type TraceHandoff = Readonly<{
+  id: string;
+  subscriber: string;
+  module: string;
+  status: "queued" | "done" | "failed" | "skipped";
+  reason: string | null;
+  attempts: number;
+  createdAt: Date;
+  updatedAt: Date;
+  finishedAt: Date | null;
+}>;
+
 export type EventTrace = Readonly<{
   viewer: "customer" | "partner" | "partner_situation" | "platform" | null;
   deliveries: TraceDelivery[];
+  handoffs: TraceHandoff[];
   audit: TraceAudit[];
   views: TraceView[];
 }>;
@@ -185,15 +200,18 @@ export async function eventTrace(
   tx: ContextTransaction,
   eventId: string,
 ): Promise<EventTrace> {
-  if (!z.uuid().safeParse(eventId).success) {
-    return { viewer: null, deliveries: [], audit: [], views: [] };
-  }
+  const none: EventTrace = {
+    viewer: null,
+    deliveries: [],
+    handoffs: [],
+    audit: [],
+    views: [],
+  };
+  if (!z.uuid().safeParse(eventId).success) return none;
   const [viewer] = await tx.$queryRaw<{ viewer: EventTrace["viewer"] }[]>`
     select private.event_trace_viewer(${eventId}::uuid) as viewer
   `;
-  if (!viewer?.viewer) {
-    return { viewer: null, deliveries: [], audit: [], views: [] };
-  }
+  if (!viewer?.viewer) return none;
   const deliveries = await tx.$queryRaw<
     {
       id: string;
@@ -209,6 +227,19 @@ export async function eventTrace(
       updated_at: Date;
     }[]
   >`select * from private.event_trace_deliveries(${eventId}::uuid)`;
+  const handoffs = await tx.$queryRaw<
+    {
+      id: string;
+      subscriber: string;
+      module: string;
+      status: TraceHandoff["status"];
+      reason: string | null;
+      attempts: number;
+      created_at: Date;
+      updated_at: Date;
+      finished_at: Date | null;
+    }[]
+  >`select * from private.event_trace_handoffs(${eventId}::uuid)`;
   const audit = await tx.$queryRaw<
     {
       id: string;
@@ -244,6 +275,17 @@ export async function eventTrace(
       recipientUserId: d.recipient_user_id,
       createdAt: d.created_at,
       updatedAt: d.updated_at,
+    })),
+    handoffs: handoffs.map((h) => ({
+      id: h.id,
+      subscriber: h.subscriber,
+      module: h.module,
+      status: h.status,
+      reason: h.reason,
+      attempts: Number(h.attempts),
+      createdAt: h.created_at,
+      updatedAt: h.updated_at,
+      finishedAt: h.finished_at,
     })),
     audit: audit.map((a) => ({
       id: a.id,

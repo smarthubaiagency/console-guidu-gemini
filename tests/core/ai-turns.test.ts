@@ -9,7 +9,7 @@ import { parseAgentConfig } from "@/core/ai/config/schema";
 import { promptLocale } from "@/core/ai/prompt/texts";
 import { buildTools, type ToolEnv } from "@/core/ai/tools/catalog";
 import { deliverLeadNotice, signNotice } from "@/core/ai/notices/lead";
-import { dispatchEvent } from "@/core/events/dispatch";
+import { runEventDispatch } from "@/core/events/dispatch";
 import { createGuidTurnJob, runGuidTurn } from "@/core/ai/turn/guid";
 import { startAssistantTurn } from "@/core/ai/turn/assistant";
 import { encryptSecret } from "@/core/credentials/crypto";
@@ -785,11 +785,13 @@ describeDatabase("A2b: turns of the engine", requiredVars, () => {
       }) as typeof globalThis.fetch;
       // The dispatch of the hub, as the worker (app_worker).
       const dispatch = () =>
-        workerDb.$transaction((tx) =>
-          dispatchEvent(tx as unknown as ContextTransaction, hubEvent!.id, {
-            fetch,
-            now: () => new Date("2026-10-14T12:00:00Z"),
-          }),
+        runEventDispatch(
+          (operation) =>
+            workerDb.$transaction((tx) =>
+              operation(tx as unknown as ContextTransaction),
+            ),
+          hubEvent!.id,
+          { fetch, now: () => new Date("2026-10-14T12:00:00Z") },
         );
 
       // A failure stays visible and a follow-up run is queued.

@@ -122,6 +122,12 @@ export type FakeGoTrueOptions = Readonly<{
     workspaceSlug: string;
     name: string;
   }) => Promise<{ id: string }>;
+  /** Seeds a managed company with a pending proposal (H4). */
+  onSeedProposal?: (params: {
+    workspaceSlug: string;
+    partnerId: string;
+    name: string;
+  }) => Promise<{ id: string }>;
 }>;
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -417,6 +423,21 @@ export async function startFakeGoTrue(
         response,
         200,
         await options.onSeedCrmContact({ workspaceSlug, name }),
+      );
+    }
+
+    if (path === "/__control/seed-proposal" && method === "POST") {
+      const body = await readBody(request);
+      const workspaceSlug = asString(body.workspaceSlug);
+      const partnerId = asString(body.partnerId);
+      const name = asString(body.name);
+      if (!workspaceSlug || !partnerId || !name || !options.onSeedProposal) {
+        return json(response, 400, { msg: "invalid parameters" });
+      }
+      return json(
+        response,
+        200,
+        await options.onSeedProposal({ workspaceSlug, partnerId, name }),
       );
     }
 

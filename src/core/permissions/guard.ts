@@ -198,9 +198,43 @@ export async function requireWorkspacePermission(
     };
   }
 
+  // The team of the partner that manages the company (ADR 0020, H4)
+  // operates the modules as the workspace's admins do; the core
+  // permissions (team, credentials, keys, proposals) stay the customer's.
+  if (!wsMember && (await managingPartnerGrants(tx, ctx, permission))) {
+    return {
+      workspaceRole: WorkspaceRoles.ADMIN,
+      organizationRole: orgRole,
+    };
+  }
+
   // Otherwise, user lacks active membership in this workspace
   await handleCriticalPermissionDenial(ctx, permission);
   throw new PermissionDeniedError();
+}
+
+/**
+ * Managed mode (ADR 0020, H4): a module permission that the module grants
+ * to the workspace admin, asked by a member of the partner that manages
+ * the context's company (`private.partner_manages_organization`, the
+ * helper the module tables' RLS already asks since the GB1c). The service
+ * of an approved proposal runs for that partner like this.
+ */
+async function managingPartnerGrants(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  permission: PermissionKey,
+): Promise<boolean> {
+  if (!ctx.partnerId || ALL_PERMISSIONS.has(permission as Permission)) {
+    return false;
+  }
+  if (!getModulePermissionRoles(permission)?.includes(WorkspaceRoles.ADMIN)) {
+    return false;
+  }
+  const rows = await tx.$queryRaw<Array<{ manages: boolean }>>`
+    select private.partner_manages_organization(${ctx.organizationId}::uuid) as manages
+  `;
+  return rows[0]?.manages === true;
 }
 
 /**
