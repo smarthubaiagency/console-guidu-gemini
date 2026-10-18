@@ -33,10 +33,10 @@ A thread nova precisa ser aberta **depois** de 17/10/2026 00:17 UTC, quando o Ma
 | IN4a Janela e conversa do Inbox                            | #115                               | Na `main`; [janela-inbox.md](../modules/inbox/janela-inbox.md)      | `20261130090000`             |
 | IN4b Contexto, etiquetas e avisos                          | #120                               | Na `main`; [contexto-inbox.md](../modules/inbox/contexto-inbox.md)  | `20261214090000`             |
 | IN6 GUIDS na sala                                          | #121                               | Na `main`; [guids-na-sala.md](../modules/inbox/guids-na-sala.md)    | `20261215090000`             |
-| IN7a WhatsApp da Meta: número, sala por pessoa, só o GUIDS | `claude/optimistic-lamport-rjehmm` | Esperando PR; [whatsapp-meta.md](../modules/inbox/whatsapp-meta.md) | `20261216090000`             |
-| IN7b A equipe na conversa da Meta                          | —                                  | Depois da IN7a; [plano-in7.md](../modules/inbox/plano-in7.md)       | `20261217090000` (reservada) |
+| IN7a WhatsApp da Meta: número, sala por pessoa, só o GUIDS | `claude/optimistic-lamport-rjehmm` | Esperando PR; [whatsapp-meta.md](../modules/inbox/whatsapp-meta.md) | `20261217090000`             |
+| IN7b A equipe na conversa da Meta                          | —                                  | Depois da IN7a; [plano-in7.md](../modules/inbox/plano-in7.md)       | `20261218090000` (reservada) |
 
-As próximas migrations do Inbox começam depois de `20261217090000` (reservadas para a IN7).
+As próximas migrations do Inbox começam depois de `20261218090000` (reservadas para a IN7).
 
 ## 4. Synapse de teste
 

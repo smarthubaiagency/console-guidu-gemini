@@ -1,7 +1,7 @@
 # Inbox — WhatsApp da Meta (IN7a)
 
 - **Data:** 18/10/2026
-- **Branch:** `claude/optimistic-lamport-rjehmm`. Migration `20261216090000_in7a_meta_channel.sql`.
+- **Branch:** `claude/optimistic-lamport-rjehmm`. Migration `20261217090000_in7a_meta_channel.sql`.
 - **Base:** [plano da IN7](plano-in7.md), com as respostas do Marcelo de 17/10/2026 (seção 6), incluindo a conversa contínua (seção 0).
 
 ## 1. O que entrou

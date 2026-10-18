@@ -1,5 +1,5 @@
 -- ============================================================================
--- Migration: 20261216090000_in7a_meta_channel.sql
+-- Migration: 20261217090000_in7a_meta_channel.sql
 -- Module: IN7a — WhatsApp of Meta in the core (ADR 0023 rules 8 and 11;
 --         canais.md, Meta row; docs/modules/inbox/plano-in7.md)
 --

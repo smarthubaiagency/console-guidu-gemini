@@ -3,7 +3,7 @@
 - **Data:** 17/10/2026. Base: `main` com IN3, IN4a, IN4b e IN6 ([guids-na-sala.md](guids-na-sala.md)), canais da A5a e da A5b ([canais.md](../ai-agents/canais.md)).
 - **Estado:** aprovado em 17/10/2026 (seção 6, perguntas 1 a 16). IN7a feita em `claude/optimistic-lamport-rjehmm` ([whatsapp-meta.md](whatsapp-meta.md)); IN7b em seguida.
 - **Fontes:** [plano do Inbox](plano.md) (resposta 3 e linha IN7), [especificação](especificacao.md), ADR 0023 (regras 8 e 11), [canais.md](../ai-agents/canais.md) (§2 contrato, linha Meta, §3 rotas, §3.5 hubs, cenários).
-- **Migrations reservadas:** IN7a `20261216090000_in7a_meta_channel`, IN7b `20261217090000_in7b_inbox_meta_rooms`.
+- **Migrations reservadas:** IN7a `20261217090000_in7a_meta_channel`, IN7b `20261218090000_in7b_inbox_meta_rooms`.
 
 ## 0. Princípio: a conversa não se interrompe
 
