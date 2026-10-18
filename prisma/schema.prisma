@@ -1973,7 +1973,7 @@ model InboxAttendant {
   organizationId String   @map("organization_id") @db.Uuid
   userId         String   @map("user_id") @db.Uuid
   createdBy      String?  @map("created_by") @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  createdAt      DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
 
   @@id([workspaceId, userId])
   @@map("inbox_attendants")
@@ -2000,8 +2000,8 @@ model InboxLabel {
   name           String
   color          String   @default("neutral")
   createdBy      String?  @map("created_by") @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+  createdAt      DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
 
   @@unique([id, workspaceId])
   @@map("inbox_labels")
@@ -2014,7 +2014,7 @@ model InboxRoomLabel {
   organizationId String   @map("organization_id") @db.Uuid
   workspaceId    String   @map("workspace_id") @db.Uuid
   createdBy      String?  @map("created_by") @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  createdAt      DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
 
   @@id([roomId, labelId])
   @@map("inbox_room_labels")
@@ -2028,8 +2028,8 @@ model InboxConversation {
   contactId      String?  @map("contact_id") @db.Uuid
   contactState   String   @default("pending") @map("contact_state")
   updatedBy      String?  @map("updated_by") @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+  createdAt      DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
 
   @@map("inbox_conversations")
 }
@@ -2093,8 +2093,8 @@ model InboxGuidsRoom {
   handoffSummary      String?   @map("handoff_summary")
   handoffReason       String?   @map("handoff_reason")
   handoffAt           DateTime? @map("handoff_at") @db.Timestamptz()
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+  createdAt           DateTime  @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime  @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
 
   @@map("inbox_guids_rooms")
 }
