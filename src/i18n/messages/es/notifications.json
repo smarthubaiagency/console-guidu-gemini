@@ -68,6 +68,12 @@
     "workspace_deletion_reminder": "Recordatorio de la eliminación de workspace",
     "workspace_deletion_canceled": "Eliminación de workspace cancelada",
     "workspace_deletion_completed": "Workspace eliminado",
+    "proposals_requested": "Propuesta esperando decisión",
+    "proposals_approved": "Propuesta aprobada",
+    "proposals_rejected": "Propuesta rechazada",
+    "proposals_executed": "Propuesta ejecutada",
+    "proposals_failed": "Propuesta no ejecutada",
+    "proposals_expired": "Propuesta vencida",
     "service_mode_reverted_by_partner": "Gestión terminada por el socio",
     "security_ip_blocked": "Acceso rechazado por la lista de IP",
     "inbox_conversation_new": "Conversación nueva en el Inbox",
@@ -86,6 +92,8 @@
     "security_api_key_revoked": "{marca}: se revocó la clave de API {chave} en {workspace}. {link}",
     "security_mfa_requirement_off": "{marca}: se retiró la exigencia de verificación en dos pasos en {workspace}. {link}",
     "digital_profile_lead_submitted": "{marca}: llegó un contacto nuevo por el perfil digital de {workspace}. {link}",
+    "proposals_requested": "{marca}: hay una propuesta esperando su decisión en {workspace}: {operacao}. Vence el {validade}. Decida en {link}",
+    "proposals_failed": "{marca}: la propuesta {operacao} en {workspace} no se ejecutó. {link}",
     "security_ip_blocked": "{marca}: la dirección {ip} fue rechazada en {area} por la lista de IP. {link}",
     "inbox_conversation_new": "{marca}: conversación nueva de {contato} en el Inbox de {workspace}. {link}",
     "inbox_conversation_assigned": "{marca}: la conversación con {contato} fue asignada a ti. {link}",
@@ -148,6 +156,26 @@
     "escalation": {
       "subject": "Sin respuesta: {event}",
       "body": "Este aviso espera una decisión desde hace {hours} horas y se te reenvió."
+    },
+    "proposals_requested": {
+      "subject": "Propuesta esperando decisión en {workspace}",
+      "body": "{operacao}. Motivo: {motivo}. Vence el {validade}. Entre al panel para aprobarla o rechazarla."
+    },
+    "proposals_rejected": {
+      "subject": "Propuesta rechazada en {workspace}",
+      "body": "La propuesta {operacao} fue rechazada."
+    },
+    "proposals_executed": {
+      "subject": "Propuesta ejecutada en {workspace}",
+      "body": "La propuesta {operacao} fue ejecutada."
+    },
+    "proposals_failed": {
+      "subject": "Propuesta no ejecutada en {workspace}",
+      "body": "La propuesta {operacao} fue aprobada, pero no se ejecutó."
+    },
+    "proposals_expired": {
+      "subject": "Propuesta vencida en {workspace}",
+      "body": "La propuesta {operacao} venció sin decisión."
     },
     "service_mode_reverted_by_partner": {
       "subject": "{parceiro} terminó la gestión de {empresa}",

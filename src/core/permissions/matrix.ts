@@ -310,6 +310,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_SERVICE_MODE_REVERT,
     Permissions.PARTNER_EVENTS_READ,
     Permissions.PARTNER_EVENTS_REQUEST_ACCESS,
+    Permissions.PARTNER_PROPOSALS_REVIEW,
   ]),
   partner_admin: new Set([
     Permissions.PARTNER_READ,
@@ -328,6 +329,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_SERVICE_MODE_REVERT,
     Permissions.PARTNER_EVENTS_READ,
     Permissions.PARTNER_EVENTS_REQUEST_ACCESS,
+    Permissions.PARTNER_PROPOSALS_REVIEW,
   ]),
   partner_finance: new Set([
     Permissions.PARTNER_READ,
@@ -343,6 +345,7 @@ export const PARTNER_ROLE_PERMISSIONS: Record<
     Permissions.PARTNER_GOOGLE_BUSINESS_MANAGE,
     Permissions.PARTNER_EVENTS_READ,
     Permissions.PARTNER_EVENTS_REQUEST_ACCESS,
+    Permissions.PARTNER_PROPOSALS_REVIEW,
   ]),
 };
 

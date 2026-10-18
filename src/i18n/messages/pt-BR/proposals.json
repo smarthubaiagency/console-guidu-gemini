@@ -130,7 +130,8 @@
     "recordChanged": "O registro mudou depois da proposta; ela não pode ser aprovada. Rejeite e peça ao assistente uma nova.",
     "mfaNeeded": "Aprovar pede a verificação em duas etapas nesta sessão. Ative ou confirme em Segurança da conta.",
     "approve": "Aprovar e executar",
-    "reject": "Rejeitar"
+    "reject": "Rejeitar",
+    "managedFollows": "Esta empresa é gerenciada: quem aprova é a equipe de quem gerencia. Você acompanha as propostas aqui."
   },
   "actions": {
     "approved": "Proposta aprovada. A execução entrou na fila.",
@@ -151,6 +152,34 @@
     "contentMismatch": "O conteúdo não é o que estava na tela. Abra a proposta de novo.",
     "contentTampered": "O conteúdo da proposta não confere com o registrado.",
     "unknownOperationVersion": "Operação desconhecida nesta versão.",
-    "recordChanged": "O registro mudou depois da proposta. Peça ao assistente uma nova."
+    "recordChanged": "O registro mudou depois da proposta. Peça ao assistente uma nova.",
+    "managedFollows": "Esta empresa é gerenciada: quem decide as propostas é a equipe de quem gerencia."
+  },
+  "origin": {
+    "api_key": "Chave de API",
+    "assistant": "Assistente",
+    "agent": "Agente do módulo"
+  },
+  "admin": {
+    "metaTitle": "Propostas dos clientes",
+    "title": "Propostas",
+    "description": "Escritas pedidas por assistentes e agentes nas empresas que você gerencia. Nada acontece sem a aprovação de uma pessoa da sua equipe.",
+    "awaiting": "Aguardando decisão ({count})",
+    "history": "Histórico ({count})",
+    "emptyTitle": "Nenhuma proposta",
+    "empty": "Quando um assistente ou agente pedir uma escrita numa empresa gerenciada, ela aparece aqui.",
+    "noHistory": "Sem histórico ainda.",
+    "panelLabel": "Proposta",
+    "customer": "Cliente",
+    "workspace": "Workspace",
+    "operation": "Operação",
+    "origin": "Origem",
+    "status": "Situação",
+    "createdAt": "Pedida em",
+    "expiresAt": "Vence em",
+    "reason": "Motivo",
+    "hash": "Impressão do conteúdo",
+    "proposed": "O que será feito",
+    "decided": "Esta proposta já foi decidida."
   }
 }

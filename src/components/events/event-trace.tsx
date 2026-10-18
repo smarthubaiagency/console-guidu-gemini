@@ -30,6 +30,7 @@ const DELIVERY_BADGE: Record<
   skipped: "warning",
   pending: "neutral",
   queued: "info",
+  sending: "info",
 };
 
 const KNOWN_STATUSES = [
@@ -41,12 +42,29 @@ const KNOWN_STATUSES = [
   "skipped",
   "pending",
   "queued",
+  "sending",
+] as const;
+
+const HANDOFF_BADGE: Record<
+  string,
+  "success" | "danger" | "warning" | "neutral" | "info"
+> = {
+  done: "success",
+  failed: "danger",
+  skipped: "warning",
+  queued: "info",
+};
+
+const HANDOFF_REASONS = [
+  "module_disabled",
+  "chain_limit",
+  "workspace_closed",
 ] as const;
 
 /**
  * The trace of an event (H2, gap "Rastro completo de um evento"): who was
- * told, on which channel and with which outcome (the bell included), what
- * was audited and who saw the data, as the reader's level may see it.
+ * told, on which channel and with which outcome (the bell included), to
+ * which subscribers it was handed over (H4), what was audited and who saw the data, as the reader's level may see it.
  * `names` resolves people the reader may know (the customer's team).
  */
 export async function EventTraceCards({
@@ -134,6 +152,62 @@ export async function EventTraceCards({
                 ))}
               </ItemGroup>
             )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {trace.handoffs.length > 0 ? (
+        <Card
+          variant="surface"
+          className="px-4"
+          data-testid="event-trace-handoffs"
+        >
+          <CardHeader className="px-0">
+            <CardTitle>{t("handoffs")}</CardTitle>
+            <CardDescription>{t("handoffsHint")}</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            <ItemGroup className="gap-2">
+              {trace.handoffs.map((handoff) => (
+                <Item
+                  key={handoff.id}
+                  variant="inset"
+                  size="sm"
+                  data-testid="event-trace-handoff"
+                  data-subscriber={handoff.subscriber}
+                  data-status={handoff.status}
+                >
+                  <ItemContent>
+                    <ItemTitle className="font-mono">
+                      {handoff.subscriber}
+                    </ItemTitle>
+                    <ItemDescription>
+                      {[
+                        handoff.module,
+                        handoff.reason
+                          ? (HANDOFF_REASONS as readonly string[]).includes(
+                              handoff.reason,
+                            )
+                            ? t(
+                                `handoffReason.${handoff.reason as (typeof HANDOFF_REASONS)[number]}`,
+                              )
+                            : handoff.reason
+                          : null,
+                        t("attempts", { count: handoff.attempts }),
+                        when(handoff.finishedAt ?? handoff.updatedAt),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <Badge variant={HANDOFF_BADGE[handoff.status] ?? "neutral"}>
+                      {t(`handoffStatus.${handoff.status}`)}
+                    </Badge>
+                  </ItemActions>
+                </Item>
+              ))}
+            </ItemGroup>
           </CardContent>
         </Card>
       ) : null}

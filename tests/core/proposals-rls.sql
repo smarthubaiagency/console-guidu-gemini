@@ -82,12 +82,13 @@ begin
   end;
 
   -- The GUIDU Assistant (A2b) proposes in the name of the session, with the
-  -- execution id of its turn and no key; a key cannot claim a turn.
+  -- execution id of its turn and no key; a key cannot claim a turn. (H4:
+  -- the origin is named, `assistant`.)
   insert into public.execution_proposals
-    (organization_id, workspace_id, requested_by, ai_execution_id, operation, payload, payload_hash,
+    (organization_id, workspace_id, requested_by, origin, ai_execution_id, operation, payload, payload_hash,
      idempotency_key, expires_at)
   values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
-          'a0000000-0000-4000-8000-000000000031', 'a2b00000-0000-4000-8000-0000000000e1',
+          'a0000000-0000-4000-8000-000000000031', 'assistant', 'a2b00000-0000-4000-8000-0000000000e1',
           'crm.contacts.create', '{"name":"Do Assistente"}', v_hash, 'k-ai', now() + interval '1 hour');
   begin
     insert into public.execution_proposals

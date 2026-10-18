@@ -6,7 +6,10 @@ import type { ChannelFetch } from "@/core/channels/http";
 import { appConfig } from "@/core/config/app";
 import { SOURCE_LOCALE } from "@/core/i18n/locales";
 import type { JobSchedule } from "@/core/jobs/definition";
-import { definePlatformJob } from "@/core/jobs/definition";
+import {
+  defineDetachedPlatformJob,
+  definePlatformJob,
+} from "@/core/jobs/definition";
 import { deliverNotification } from "@/core/notifications/delivery";
 import { postNotice } from "@/core/notifications/inbox";
 import type { NotificationLanguage } from "@/core/notifications/notify";
@@ -14,6 +17,7 @@ import { notificationLanguages } from "@/core/notifications/language";
 import { notificationTranslator } from "@/core/notifications/templates";
 import { getNotificationTransport } from "@/core/notifications/transport";
 import type { NotificationTransport } from "@/core/notifications/types";
+import { expireProposals } from "@/core/proposals/expiry";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
 import { EVENT_CATALOG, eventDefinition } from "./catalog";
@@ -27,7 +31,16 @@ import { emitEvent, WORKER_ACTOR } from "./emit";
 import { eventNotificationSettings } from "./rule-settings";
 import { effectiveRule } from "./rules";
 import { textKeyOf } from "./texts";
-import { deliverPersonWhatsApp, postToPartnerWebhook } from "./whatsapp";
+import {
+  claimDeliveries,
+  deliverPersonWhatsApp,
+  eventWebhook,
+  scheduleDispatch,
+  sendClaimedWhatsApp,
+  WHATSAPP_MAX_ATTEMPTS,
+  WHATSAPP_SENDING_TIMEOUT_MINUTES,
+  type WhatsAppSend,
+} from "./whatsapp";
 
 /**
  * The hub's clock (H2), job `events.notices-tick` every 15 minutes:
@@ -38,7 +51,16 @@ import { deliverPersonWhatsApp, postToPartnerWebhook } from "./whatsapp";
  * 3. an approval nobody answered gets a reminder after the rule's hours
  *    and, after twice as long, goes to the audience of `escalate_to`;
  * 4. access grants past their term, and requests left 7 days without an
- *    answer, expire (the request's event follows).
+ *    answer, expire (the request's event follows);
+ * 5. (H4) a WhatsApp left `sending` past the timeout (the process died
+ *    between the claim and the result) goes back to the queue with the
+ *    same delivery id: a digest waits for the next tick, any other gets a
+ *    follow-up `events.dispatch` run;
+ * 6. (H4) pending proposals past their validity expire and emit
+ *    `proposals.expired` (`proposals/expiry.ts`).
+ * The job is detached (H4): steps 1 and 2 only claim their WhatsApp in
+ * the tick's transaction; the POSTs go after the commit, each result in a
+ * transaction of its own.
  * And the job `events.access-request`: emits the event of a new access
  * request (queued by the requester; the worker has the seal's key).
  */
@@ -73,7 +95,7 @@ async function eventRow(
 export async function releaseQuietWhatsApp(
   tx: ContextTransaction,
   deps: NoticesDeps = {},
-): Promise<number> {
+): Promise<WhatsAppSend[]> {
   const rows = await tx.$queryRaw<
     { id: string; event_id: string; recipient_user_id: string }[]
   >`
@@ -83,7 +105,7 @@ export async function releaseQuietWhatsApp(
     order by deliver_after, id
     limit 200
   `;
-  let sent = 0;
+  const sends: WhatsAppSend[] = [];
   const languageOf = notificationLanguages(tx);
   for (const row of rows) {
     const event = await eventRow(tx, row.event_id);
@@ -123,11 +145,11 @@ export async function releaseQuietWhatsApp(
         ),
         hold: null,
       },
-      deps,
+      { ...deps, whatsapp: "claim" },
     );
-    if (outcome.status === "sent") sent += 1;
+    if (outcome.send) sends.push(outcome.send);
   }
-  return sent;
+  return sends;
 }
 
 type DigestGroup = Readonly<{
@@ -145,7 +167,7 @@ type DigestGroup = Readonly<{
 export async function sendDigests(
   tx: ContextTransaction,
   deps: NoticesDeps = {},
-): Promise<number> {
+): Promise<{ sent: number; sends: WhatsAppSend[] }> {
   const groups = await tx.$queryRaw<DigestGroup[]>`
     select channel, partner_id, recipient_user_id, recipient_email,
            min(deliver_after) as due,
@@ -161,6 +183,7 @@ export async function sendDigests(
   const transport = deps.transport ?? getNotificationTransport();
   const languageOf = notificationLanguages(tx);
   let sent = 0;
+  const sends: WhatsAppSend[] = [];
   for (const group of groups) {
     const first = group.event_ids[0]
       ? await eventRow(tx, group.event_ids[0])
@@ -245,29 +268,37 @@ export async function sendDigests(
           const row = id ? await eventRow(tx, id) : null;
           if (row) names.push(t(`names.${textKeyOf(row.type)}`));
         }
-        const failure = await postToPartnerWebhook(
-          tx,
-          {
-            webhookEventId: first.id,
-            eventId: null,
-            wireName: "events.digest",
-            to: phone.phone,
-            message: {
-              text: t("digest.whatsapp", {
-                marca: brand.name,
-                count,
-                items: [...new Set(names)].join("; "),
-              } as unknown as Record<string, string>),
-            },
-          },
-          deps,
-        );
-        if (failure) {
-          status = failure === "no_webhook" ? "skipped" : "failed";
-          reason = failure;
-          provider = failure === "no_webhook" ? null : "partner_webhook";
+        const webhook = await eventWebhook(tx, first.id);
+        if (!webhook) {
+          status = "skipped";
+          reason = "no_webhook";
+          provider = null;
         } else {
-          provider = "partner_webhook";
+          // Claimed here, posted after the commit (H4); the first row's id
+          // is the delivery id of the whole digest.
+          const attempts = await claimDeliveries(tx, group.ids);
+          if (attempts !== null) {
+            sends.push({
+              deliveryId: group.ids[0]!,
+              deliveryIds: group.ids,
+              retryEventId: null,
+              url: webhook.url,
+              encryptedSecret: webhook.encrypted_secret,
+              eventId: null,
+              wireName: "events.digest",
+              to: phone.phone,
+              message: {
+                text: t("digest.whatsapp", {
+                  marca: brand.name,
+                  count,
+                  items: [...new Set(names)].join("; "),
+                } as unknown as Record<string, string>),
+              },
+              attempts,
+              leadNotice: null,
+            });
+          }
+          continue;
         }
       }
     } else {
@@ -283,7 +314,7 @@ export async function sendDigests(
     `;
     if (status === "sent") sent += 1;
   }
-  return sent;
+  return { sent, sends };
 }
 
 /** 3. Reminders and escalation of approvals nobody answered. */
@@ -419,21 +450,109 @@ export async function expireAccessGrants(
   return expired.length;
 }
 
+/**
+ * 5. WhatsApp left `sending` past the timeout (H4): the process died
+ * between the claim and the result. The delivery goes back with the same
+ * id, so the partner drops a repeat by `x-guidu-delivery-id`.
+ */
+export async function recoverStuckWhatsApp(
+  tx: ContextTransaction,
+  timeoutMinutes = WHATSAPP_SENDING_TIMEOUT_MINUTES,
+): Promise<number> {
+  const rows = await tx.$queryRaw<
+    {
+      id: string;
+      event_id: string | null;
+      hold_reason: string | null;
+      attempts: number;
+    }[]
+  >`
+    select id, event_id, hold_reason, attempts from public.notification_deliveries
+    where status = 'sending' and channel = 'whatsapp'
+      and sending_at < now() - make_interval(mins => ${timeoutMinutes}::int)
+    order by sending_at, id
+    limit 200
+  `;
+  for (const row of rows) {
+    if (row.hold_reason === "digest") {
+      // The next tick groups and sends it again.
+      await tx.$executeRaw`
+        update public.notification_deliveries
+        set status = 'queued', reason = 'interrupted'
+        where id = ${row.id}::uuid and status = 'sending'
+      `;
+      continue;
+    }
+    await tx.$executeRaw`
+      update public.notification_deliveries
+      set status = 'failed', reason = 'interrupted'
+      where id = ${row.id}::uuid and status = 'sending'
+    `;
+    if (row.event_id && Number(row.attempts) < WHATSAPP_MAX_ATTEMPTS) {
+      await scheduleDispatch(
+        tx,
+        row.event_id,
+        `event:${row.event_id}:resend:${row.id}:${row.attempts}`,
+        0,
+      );
+    }
+  }
+  return rows.length;
+}
+
+/** One tick: the work in one transaction, then the claimed WhatsApp. */
+export async function runNoticesTick(
+  transaction: <T>(
+    operation: (tx: ContextTransaction) => Promise<T>,
+  ) => Promise<T>,
+  deps: NoticesDeps = {},
+) {
+  const work = await transaction(async (tx) => {
+    const recovered = await recoverStuckWhatsApp(tx);
+    const released = await releaseQuietWhatsApp(tx, deps);
+    const digests = await sendDigests(tx, deps);
+    return {
+      recovered,
+      released,
+      digests,
+      escalated: await escalatePending(tx, deps),
+      expired: await expireAccessGrants(tx),
+      proposalsExpired: await expireProposals(tx),
+    };
+  });
+  const outcomes = await sendClaimedWhatsApp(
+    (operation) => transaction(operation),
+    [...work.released, ...work.digests.sends],
+    deps,
+  );
+  return {
+    recovered: work.recovered,
+    released: outcomes.filter(
+      (outcome, index) =>
+        index < work.released.length && outcome.status === "sent",
+    ).length,
+    digests:
+      work.digests.sent +
+      outcomes
+        .slice(work.released.length)
+        .filter((outcome) => outcome.status === "sent").length,
+    escalated: work.escalated,
+    expired: work.expired,
+    proposalsExpired: work.proposalsExpired,
+  };
+}
+
 export function createNoticesTickJob(deps: NoticesDeps = {}) {
-  return definePlatformJob<{ slot: string }>({
+  // Detached (H4): the WhatsApp POSTs never hold a transaction.
+  return defineDetachedPlatformJob<{ slot: string }>({
     kind: NOTICES_TICK_JOB_KIND,
     description:
-      "Envia o WhatsApp guardado pela janela de silêncio, os resumos do dia, os lembretes de aprovação e expira os acessos por evento.",
+      "Envia o WhatsApp guardado pela janela de silêncio, os resumos do dia, os lembretes de aprovação, expira os acessos por evento e as propostas vencidas e retoma o WhatsApp interrompido.",
     payload: z.object({ slot: z.string().max(32) }),
     maxAttempts: 2,
     retryDelaySeconds: 120,
-    async run(tx) {
-      return {
-        released: await releaseQuietWhatsApp(tx, deps),
-        digests: await sendDigests(tx, deps),
-        escalated: await escalatePending(tx, deps),
-        expired: await expireAccessGrants(tx),
-      };
+    async run(session) {
+      return runNoticesTick(session.transaction, deps);
     },
   });
 }

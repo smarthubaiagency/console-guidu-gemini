@@ -130,7 +130,8 @@
     "recordChanged": "El registro cambió después de la propuesta; no se puede aprobar. Recházala y pide al asistente una nueva.",
     "mfaNeeded": "Aprobar requiere la verificación en dos pasos en esta sesión. Actívala o confírmala en Seguridad de la cuenta.",
     "approve": "Aprobar y ejecutar",
-    "reject": "Rechazar"
+    "reject": "Rechazar",
+    "managedFollows": "Esta empresa es gestionada: aprueba el equipo de quien la gestiona. Usted sigue las propuestas aquí."
   },
   "actions": {
     "approved": "Propuesta aprobada. La ejecución entró en la cola.",
@@ -151,6 +152,34 @@
     "contentMismatch": "El contenido no es el que estaba en pantalla. Abre la propuesta de nuevo.",
     "contentTampered": "El contenido de la propuesta no coincide con lo registrado.",
     "unknownOperationVersion": "Operación desconocida en esta versión.",
-    "recordChanged": "El registro cambió después de la propuesta. Pide al asistente una nueva."
+    "recordChanged": "El registro cambió después de la propuesta. Pide al asistente una nueva.",
+    "managedFollows": "Esta empresa es gestionada: las propuestas las decide el equipo de quien la gestiona."
+  },
+  "origin": {
+    "api_key": "Clave de API",
+    "assistant": "Asistente",
+    "agent": "Agente del módulo"
+  },
+  "admin": {
+    "metaTitle": "Propuestas de los clientes",
+    "title": "Propuestas",
+    "description": "Escrituras pedidas por asistentes y agentes en las empresas que usted gestiona. Nada sucede sin la aprobación de una persona de su equipo.",
+    "awaiting": "Esperando decisión ({count})",
+    "history": "Historial ({count})",
+    "emptyTitle": "Ninguna propuesta",
+    "empty": "Cuando un asistente o agente pida una escritura en una empresa gestionada, aparecerá aquí.",
+    "noHistory": "Sin historial todavía.",
+    "panelLabel": "Propuesta",
+    "customer": "Cliente",
+    "workspace": "Workspace",
+    "operation": "Operación",
+    "origin": "Origen",
+    "status": "Situación",
+    "createdAt": "Pedida el",
+    "expiresAt": "Vence el",
+    "reason": "Motivo",
+    "hash": "Huella del contenido",
+    "proposed": "Lo que se hará",
+    "decided": "Esta propuesta ya fue decidida."
   }
 }

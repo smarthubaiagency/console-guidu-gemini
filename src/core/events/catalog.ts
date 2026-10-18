@@ -42,10 +42,10 @@ export const EVENT_ROUTES = [
 export type EventRoute = (typeof EVENT_ROUTES)[number];
 
 /**
- * Where an event goes. Only `notify` and `audit` are built (H1); the
- * others are refused by `emitEvent` until their stage:
+ * Where an event goes. `notify` and `audit` were built in H1 and
+ * `subscribers` (hand-off to another agent's job, `subscribers.ts`) in H4;
+ * the others are refused by `emitEvent` until their stage:
  * - analytics: H3 (with the digital profile, DP2);
- * - subscribers (hand-off to another agent's job): H4 (with the GB2);
  * - webhook (the customer's): H5.
  */
 export const EVENT_DESTINATIONS = [
@@ -60,6 +60,7 @@ export type EventDestination = (typeof EVENT_DESTINATIONS)[number];
 export const IMPLEMENTED_DESTINATIONS: readonly EventDestination[] = [
   "notify",
   "audit",
+  "subscribers",
 ];
 
 /** The stage that builds each destination not built yet. */
@@ -67,9 +68,16 @@ export const DESTINATION_STAGE: Readonly<
   Partial<Record<EventDestination, string>>
 > = {
   analytics: "H3",
-  subscribers: "H4",
   webhook: "H5",
 };
+
+/**
+ * Levels of the chain of causes (H4): an event caused by another is one
+ * level below it; a root is 0. The database refuses a sixth level, and a
+ * subscriber of an event at the last level is skipped (`chain_limit`), so
+ * two subscribers can never feed each other forever.
+ */
+export const MAX_EVENT_DEPTH = 5;
 
 export const EVENT_CHANNELS = ["app", "email", "whatsapp"] as const;
 export type EventChannel = (typeof EVENT_CHANNELS)[number];
@@ -85,7 +93,7 @@ export const EVENT_STATUSES = [
   "open",
   "resolved",
   "dismissed",
-  // Approvals (H4); the database already accepts them.
+  // Approvals (H2 access requests, H4 proposals).
   "pending",
   "approved",
   "denied",
@@ -428,6 +436,86 @@ const CATALOG = [
     channels: ["app", "email"],
     level: "workspace",
     approval: true,
+  },
+  // -- Proposals with human approval (F4d) in the hub (H4): each step is an
+  //    event. The request waits for a decision (`pending`) and follows the
+  //    proposal; the route follows the service mode (owner and admin in
+  //    `padrao`, the managing partner's team in `gerenciado`). The approval
+  //    hands the execution to the subscriber `proposals.execute`.
+  {
+    type: "proposals.requested",
+    module: "proposals",
+    severity: "attention",
+    essential: true,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "service_mode",
+    destinations: ["notify"],
+    channels: ["app", "email", "whatsapp"],
+    level: "workspace",
+    approval: true,
+  },
+  {
+    type: "proposals.approved",
+    module: "proposals",
+    severity: "info",
+    essential: false,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "service_mode",
+    destinations: ["subscribers"],
+    channels: [],
+    level: "workspace",
+  },
+  {
+    type: "proposals.rejected",
+    module: "proposals",
+    severity: "info",
+    essential: false,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "service_mode",
+    destinations: ["notify"],
+    channels: ["app"],
+    level: "workspace",
+    notifyByDefault: false,
+  },
+  {
+    type: "proposals.executed",
+    module: "proposals",
+    severity: "info",
+    essential: false,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "service_mode",
+    destinations: ["notify"],
+    channels: ["app"],
+    level: "workspace",
+    notifyByDefault: false,
+  },
+  {
+    type: "proposals.failed",
+    module: "proposals",
+    severity: "attention",
+    essential: false,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "service_mode",
+    destinations: ["notify"],
+    channels: ["app", "email"],
+    level: "workspace",
+  },
+  {
+    type: "proposals.expired",
+    module: "proposals",
+    severity: "info",
+    essential: false,
+    audiences: ["customer"],
+    purpose: "transactional",
+    route: "service_mode",
+    destinations: ["notify"],
+    channels: ["app"],
+    level: "workspace",
   },
   // -- Security (CF5a) in the hub (H2): recorded and shown, notice off by
   //    default. The audit keeps its own records (`api_keys.*`,

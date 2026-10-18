@@ -379,6 +379,7 @@ describe("generated navigation", () => {
       "/admin",
       "/admin/customers",
       "/admin/events",
+      "/admin/proposals",
       "/admin/modules",
       "/admin/templates",
       "/admin/billing",
@@ -395,6 +396,9 @@ describe("generated navigation", () => {
     const support = buildPartnerNavigation(partnerGrants("partner_support"));
     expect(find(support, "partner.support")?.href).toBe("/admin/support");
     expect(find(support, "partner.legal")).toBeUndefined();
+    // H4: the proposals of the managed companies; never finance.
+    expect(find(support, "partner.proposals")?.href).toBe("/admin/proposals");
+    expect(find(finance, "partner.proposals")).toBeUndefined();
     expect(find(finance, "partner.customers")?.href).toBe("/admin/customers");
     // P5m: money is for owner, admin and finance; never partner_support.
     expect(find(finance, "partner.billing")?.href).toBe("/admin/billing");

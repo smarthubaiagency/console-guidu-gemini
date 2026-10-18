@@ -3,6 +3,10 @@ import "server-only";
 import { createHmac } from "node:crypto";
 
 import {
+  LEAD_NOTICE_EVENT_TYPES,
+  recordLeadNoticeOutcome,
+} from "@/core/ai/notices/hub";
+import {
   ChannelHttpError,
   type ChannelFetch,
   providerJson,
@@ -21,10 +25,29 @@ import { EVENTS_DISPATCH_JOB_KIND } from "./emit";
  * `event_id`. No webhook, no number or a reason written by the module →
  * the delivery is kept as `skipped` with the reason. A failure is kept as
  * `failed` and tried again by a follow-up run, up to 3 attempts.
+ *
+ * H4: the HTTP call never runs inside a database transaction. Sending
+ * has three steps:
+ * 1. the claim (in the dispatch's transaction): the delivery becomes
+ *    `sending`, with `sending_at` and one more attempt, and commits;
+ * 2. the POST to the partner (`postWhatsApp`), with no transaction open;
+ * 3. the result (`recordWhatsAppResult`), in a transaction of its own:
+ *    `sent`, or `failed` with the next run scheduled.
+ * A process that dies between 1 and 3 leaves the delivery in `sending`;
+ * `events.notices-tick` takes it back after a timeout and it goes again
+ * with the same delivery id, sent in `x-guidu-delivery-id` (next to
+ * `x-guidu-event-id`) so the partner can drop a repeat. The A6 contract
+ * (`lead.hot`, `referral.recommended`) keeps its body and headers.
+ *
+ * A caller that holds a transaction it cannot leave (a job that dispatches
+ * in its own run) uses `whatsapp: "defer"`: the delivery stays pending and
+ * a follow-up `events.dispatch` run sends it.
  */
 
 export const WHATSAPP_MAX_ATTEMPTS = 3;
 const RETRY_DELAY_SECONDS = 60;
+/** A delivery left `sending` longer than this is taken back by the tick. */
+export const WHATSAPP_SENDING_TIMEOUT_MINUTES = 10;
 
 const WIRE_NAME = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
 
@@ -44,10 +67,34 @@ export type WhatsAppTarget = Readonly<{
   name?: string | null;
 }>;
 
+/** How a caller sends: claim and return the send, or leave it pending. */
+export type WhatsAppMode = "claim" | "defer";
+
+/** A claimed delivery, ready for the POST outside the transaction. */
+export type WhatsAppSend = Readonly<{
+  /** Stable across retries: `x-guidu-delivery-id`. */
+  deliveryId: string;
+  /** The rows of the delivery (several for a digest). */
+  deliveryIds: readonly string[];
+  /** The event to dispatch again after a failure (none for a digest). */
+  retryEventId: string | null;
+  url: string;
+  encryptedSecret: string;
+  /** `event_id` of the body and header (none for a digest). */
+  eventId: string | null;
+  wireName: string;
+  to: string;
+  message: Readonly<Record<string, unknown>>;
+  attempts: number;
+  /** The data of an A6 notice, whose state goes back to `ai_lead_notices`. */
+  leadNotice: Readonly<Record<string, unknown>> | null;
+}>;
+
 export type WhatsAppOutcome = Readonly<{
-  status: "sent" | "skipped" | "failed" | "done";
+  status: "sent" | "skipped" | "failed" | "done" | "sending" | "deferred";
   reason: string | null;
   attempts: number;
+  send?: WhatsAppSend;
 }>;
 
 export type WhatsAppEvent = Readonly<{
@@ -57,6 +104,12 @@ export type WhatsAppEvent = Readonly<{
   subjectId: string | null;
   idempotencyKey: string;
   data: Readonly<Record<string, unknown>>;
+}>;
+
+type Deps = Readonly<{
+  fetch?: ChannelFetch;
+  now?: () => Date;
+  whatsapp?: WhatsAppMode;
 }>;
 
 /** `sha256=<hex>` of `<timestamp>.<body>` with the partner's secret (A6). */
@@ -138,63 +191,139 @@ async function deliveryRow(
 
 async function finishRow(
   tx: ContextTransaction,
-  key: string,
   row: DeliveryRow,
-  status: "sent" | "skipped" | "failed",
+  status: "skipped",
   reason: string | null,
-  attempted: boolean,
 ): Promise<WhatsAppOutcome> {
-  const attempts = row.attempts + (attempted ? 1 : 0);
   await tx.$executeRaw`
     update public.notification_deliveries
-    set status = ${status}, reason = ${reason}, attempts = ${attempts},
-        provider = ${attempted ? "partner_webhook" : null}
-    where idempotency_key = ${key}
+    set status = ${status}, reason = ${reason}, provider = null
+    where id = ${row.id}::uuid
   `;
-  return { status, reason, attempts };
+  return { status, reason, attempts: row.attempts };
+}
+
+/** The partner's webhook of an event, when it has one switched on. */
+export async function eventWebhook(
+  tx: ContextTransaction,
+  eventId: string,
+): Promise<{ url: string; encrypted_secret: string } | null> {
+  const [webhook] = await tx.$queryRaw<
+    { url: string; encrypted_secret: string }[]
+  >`select url, encrypted_secret from private.event_notice_webhook(${eventId}::uuid)`;
+  return webhook ?? null;
 }
 
 /**
- * The signed POST to the webhook of the partner of `webhookEventId` (A6
- * format); the failure reason, or null when delivered.
+ * Step 1: the delivery rows become `sending` with one more attempt; only
+ * rows still waiting are claimed, so two runs never claim the same row.
+ * Returns the attempts after the claim, or null when nothing was claimed.
  */
-export async function postToPartnerWebhook(
+export async function claimDeliveries(
+  tx: ContextTransaction,
+  ids: readonly string[],
+): Promise<number | null> {
+  const rows = await tx.$queryRaw<{ attempts: number }[]>`
+    update public.notification_deliveries
+    set status = 'sending', sending_at = now(), attempts = attempts + 1,
+        provider = 'partner_webhook', reason = null
+    where id = any(${[...ids]}::uuid[])
+      and status in ('pending', 'queued', 'failed')
+    returning attempts
+  `;
+  if (rows.length === 0) return null;
+  return Math.max(...rows.map((row) => Number(row.attempts)));
+}
+
+/** A follow-up `events.dispatch` run of the event. */
+export async function scheduleDispatch(
+  tx: ContextTransaction,
+  eventId: string,
+  key: string,
+  delaySeconds: number,
+): Promise<void> {
+  await tx.$executeRaw`
+    insert into public.job_runs (kind, scope, payload, idempotency_key, max_attempts, run_after)
+    values (${EVENTS_DISPATCH_JOB_KIND}, 'platform', ${JSON.stringify({ eventId })}::jsonb,
+            ${key.slice(0, 200)}, 3, now() + make_interval(secs => ${delaySeconds}))
+    on conflict (kind, idempotency_key) do nothing
+  `;
+}
+
+/** Claims a delivery of an event, or leaves it pending (`defer`). */
+async function claimOrDefer(
   tx: ContextTransaction,
   args: Readonly<{
-    webhookEventId: string;
-    eventId: string | null;
+    row: DeliveryRow;
+    event: WhatsAppEvent;
     wireName: string;
     to: string;
     message: Readonly<Record<string, unknown>>;
   }>,
+  deps: Deps,
+): Promise<WhatsAppOutcome> {
+  const { row, event } = args;
+  const webhook = await eventWebhook(tx, event.id);
+  if (!webhook) return finishRow(tx, row, "skipped", "no_webhook");
+  if ((deps.whatsapp ?? "defer") === "defer") {
+    await scheduleDispatch(tx, event.id, `event:${event.id}:whatsapp`, 0);
+    return { status: "deferred", reason: null, attempts: row.attempts };
+  }
+  const attempts = await claimDeliveries(tx, [row.id]);
+  if (attempts === null) {
+    return { status: "done", reason: null, attempts: row.attempts };
+  }
+  return {
+    status: "sending",
+    reason: null,
+    attempts,
+    send: {
+      deliveryId: row.id,
+      deliveryIds: [row.id],
+      retryEventId: event.id,
+      url: webhook.url,
+      encryptedSecret: webhook.encrypted_secret,
+      eventId: event.id,
+      wireName: args.wireName,
+      to: args.to,
+      message: args.message,
+      attempts,
+      leadNotice: LEAD_NOTICE_EVENT_TYPES.has(event.type) ? event.data : null,
+    },
+  };
+}
+
+/**
+ * Step 2: the signed POST (A6 format), with no transaction open. The
+ * failure reason, or null when delivered.
+ */
+export async function postWhatsApp(
+  send: WhatsAppSend,
   deps: Readonly<{ fetch?: ChannelFetch; now?: () => Date }> = {},
 ): Promise<string | null> {
   const now = deps.now ?? (() => new Date());
-  const [webhook] = await tx.$queryRaw<
-    { url: string; encrypted_secret: string }[]
-  >`select url, encrypted_secret from private.event_notice_webhook(${args.webhookEventId}::uuid)`;
-  if (!webhook) return "no_webhook";
   const sentAt = now();
   const timestamp = String(Math.floor(sentAt.getTime() / 1000));
   const body = JSON.stringify({
-    ...args.message,
-    event: args.wireName,
-    ...(args.eventId ? { event_id: args.eventId } : {}),
-    to: args.to,
+    ...send.message,
+    event: send.wireName,
+    ...(send.eventId ? { event_id: send.eventId } : {}),
+    to: send.to,
     sent_at: sentAt.toISOString(),
   });
   try {
     await providerJson(
-      webhook.url,
+      send.url,
       {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-guidu-event": args.wireName,
-          ...(args.eventId ? { "x-guidu-event-id": args.eventId } : {}),
+          "x-guidu-event": send.wireName,
+          ...(send.eventId ? { "x-guidu-event-id": send.eventId } : {}),
+          "x-guidu-delivery-id": send.deliveryId,
           "x-guidu-timestamp": timestamp,
           "x-guidu-signature": signWebhookBody(
-            decryptSecret(webhook.encrypted_secret),
+            decryptSecret(send.encryptedSecret),
             timestamp,
             body,
           ),
@@ -214,25 +343,65 @@ export async function postToPartnerWebhook(
   return null;
 }
 
-async function scheduleRetry(
+/**
+ * Step 3: the result of the POST, in a transaction of its own. Only rows
+ * still `sending` change (the tick may have taken them back meanwhile).
+ */
+export async function recordWhatsAppResult(
   tx: ContextTransaction,
-  eventId: string,
-  attempts: number,
-): Promise<void> {
-  // A follow-up run tries again; the panel shows the failure meanwhile.
+  send: WhatsAppSend,
+  failure: string | null,
+  deps: Readonly<{ now?: () => Date }> = {},
+): Promise<WhatsAppOutcome> {
+  const now = deps.now ?? (() => new Date());
+  const status = failure ? "failed" : "sent";
   await tx.$executeRaw`
-    insert into public.job_runs (kind, scope, payload, idempotency_key, max_attempts, run_after)
-    values (${EVENTS_DISPATCH_JOB_KIND}, 'platform', ${JSON.stringify({ eventId })}::jsonb,
-            ${`event:${eventId}:retry:${attempts}`}, 3,
-            now() + make_interval(secs => ${RETRY_DELAY_SECONDS * attempts}))
-    on conflict (kind, idempotency_key) do nothing
+    update public.notification_deliveries
+    set status = ${status}, reason = ${failure}, provider = 'partner_webhook'
+    where id = any(${[...send.deliveryIds]}::uuid[]) and status = 'sending'
   `;
+  if (failure && send.retryEventId && send.attempts < WHATSAPP_MAX_ATTEMPTS) {
+    // A follow-up run tries again; the panel shows the failure meanwhile.
+    await scheduleDispatch(
+      tx,
+      send.retryEventId,
+      `event:${send.retryEventId}:retry:${send.attempts}`,
+      RETRY_DELAY_SECONDS * send.attempts,
+    );
+  }
+  if (send.leadNotice) {
+    await recordLeadNoticeOutcome(tx, send.leadNotice, {
+      status,
+      reason: failure,
+      attempts: send.attempts,
+      at: now(),
+    });
+  }
+  return { status, reason: failure, attempts: send.attempts };
+}
+
+/** Steps 2 and 3 for every claimed delivery, each result on its own. */
+export async function sendClaimedWhatsApp(
+  transaction: <T>(
+    operation: (tx: ContextTransaction) => Promise<T>,
+  ) => Promise<T>,
+  sends: readonly WhatsAppSend[],
+  deps: Readonly<{ fetch?: ChannelFetch; now?: () => Date }> = {},
+): Promise<WhatsAppOutcome[]> {
+  const outcomes: WhatsAppOutcome[] = [];
+  for (const send of sends) {
+    const failure = await postWhatsApp(send, deps);
+    outcomes.push(
+      await transaction((tx) => recordWhatsAppResult(tx, send, failure, deps)),
+    );
+  }
+  return outcomes;
 }
 
 export async function deliverWhatsApp(
   tx: ContextTransaction,
   event: WhatsAppEvent,
-  deps: Readonly<{ fetch?: ChannelFetch; now?: () => Date }> = {},
+  deps: Deps = {},
 ): Promise<WhatsAppOutcome> {
   const key = `${event.idempotencyKey}:whatsapp`.slice(0, 200);
   const relatedId =
@@ -252,32 +421,21 @@ export async function deliverWhatsApp(
   }
 
   const target = whatsAppTargetOf(event.data);
-  if (!target) return finishRow(tx, key, row, "skipped", "no_target", false);
-  if (target.skip)
-    return finishRow(tx, key, row, "skipped", target.skip, false);
-  if (!target.to)
-    return finishRow(tx, key, row, "skipped", "no_recipient", false);
+  if (!target) return finishRow(tx, row, "skipped", "no_target");
+  if (target.skip) return finishRow(tx, row, "skipped", target.skip);
+  if (!target.to) return finishRow(tx, row, "skipped", "no_recipient");
 
-  const failure = await postToPartnerWebhook(
+  return claimOrDefer(
     tx,
     {
-      webhookEventId: event.id,
-      eventId: event.id,
+      row,
+      event,
       wireName: target.name ?? event.type,
       to: target.to,
       message: target.message,
     },
     deps,
   );
-  if (failure === "no_webhook") {
-    return finishRow(tx, key, row, "skipped", "no_webhook", false);
-  }
-  if (!failure) return finishRow(tx, key, row, "sent", null, true);
-  const outcome = await finishRow(tx, key, row, "failed", failure, true);
-  if (outcome.attempts < WHATSAPP_MAX_ATTEMPTS) {
-    await scheduleRetry(tx, event.id, outcome.attempts);
-  }
-  return outcome;
 }
 
 /** A WhatsApp to a person of the audience (H2). */
@@ -294,19 +452,20 @@ export type PersonWhatsApp = Readonly<{
 export type PersonWhatsAppOutcome = Readonly<{
   status: WhatsAppOutcome["status"] | "held";
   reason: string | null;
+  send?: WhatsAppSend;
 }>;
 
 /**
  * The WhatsApp of one person (H2): skipped without an accepted number,
- * held (queued) inside the quiet window or for the digest, else sent by
- * the partner's webhook with `event` = the catalog type and the rendered
- * `text`. Each person has one delivery per event; a failure comes back
- * with the event's follow-up run.
+ * held (queued) inside the quiet window or for the digest, else claimed
+ * for the partner's webhook with `event` = the catalog type and the
+ * rendered `text`. Each person has one delivery per event; a failure
+ * comes back with the event's follow-up run.
  */
 export async function deliverPersonWhatsApp(
   tx: ContextTransaction,
   args: PersonWhatsApp,
-  deps: Readonly<{ fetch?: ChannelFetch; now?: () => Date }> = {},
+  deps: Deps = {},
 ): Promise<PersonWhatsAppOutcome> {
   const now = deps.now ?? (() => new Date());
   const { event } = args;
@@ -335,35 +494,26 @@ export async function deliverPersonWhatsApp(
     }
   }
   if (!args.phone) {
-    return finishRow(tx, key, row, "skipped", "no_whatsapp_consent", false);
+    return finishRow(tx, row, "skipped", "no_whatsapp_consent");
   }
   if (args.hold && row.status === "pending") {
     await tx.$executeRaw`
       update public.notification_deliveries
       set status = 'queued', hold_reason = ${args.hold.reason},
           deliver_after = ${args.hold.until}, reason = ${args.hold.reason}
-      where idempotency_key = ${key}
+      where id = ${row.id}::uuid
     `;
     return { status: "held", reason: args.hold.reason };
   }
-  const failure = await postToPartnerWebhook(
+  return claimOrDefer(
     tx,
     {
-      webhookEventId: event.id,
-      eventId: event.id,
+      row,
+      event,
       wireName: event.type,
       to: args.phone,
       message: { text: args.text },
     },
     deps,
   );
-  if (failure === "no_webhook") {
-    return finishRow(tx, key, row, "skipped", "no_webhook", false);
-  }
-  if (!failure) return finishRow(tx, key, row, "sent", null, true);
-  const outcome = await finishRow(tx, key, row, "failed", failure, true);
-  if (outcome.attempts < WHATSAPP_MAX_ATTEMPTS) {
-    await scheduleRetry(tx, event.id, outcome.attempts);
-  }
-  return outcome;
 }

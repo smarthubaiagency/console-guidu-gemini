@@ -285,6 +285,7 @@ jobs:
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/google-business-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/events-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/event-rules-rls.sql
+          psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/event-handoffs-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/platform-audit-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/service-modes-rls.sql
           psql "$ADMIN_URL" --set=ON_ERROR_STOP=1 --file tests/core/aj1-rls.sql
@@ -436,9 +437,28 @@ jobs:
     runs-on: ubuntu-24.04
     # Two specs of up to 5 min each, retried in CI.
     timeout-minutes: 25
+    # A real Postgres for the app, as in the e2e job: on PGlite (one session
+    # for every socket) the worker's pg-boss and Prisma statements
+    # interleaved, a job lost its answer and stayed running (H4: the detached
+    # events.dispatch and the events.subscriber queue made it routine).
+    # Synapse keeps the runner's own Postgres on 5432.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 54398:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     env:
       APP_NAME: "GUIDU"
       APP_URL: "http://localhost:3000"
+      E2E_EXTERNAL_POSTGRES: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4

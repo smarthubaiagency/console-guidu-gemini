@@ -7,6 +7,8 @@ vi.mock("server-only", () => ({}));
 
 import type { ApiDeps } from "@/core/api/handler";
 import { API_KEY_PREFIX, hashApiKey } from "@/core/credentials/api-keys";
+import { eventsDispatchJob } from "@/core/events/dispatch";
+import { eventsSubscriberJob } from "@/core/events/handoffs";
 import type { JobDefinition } from "@/core/jobs/definition";
 import { handleMcpWorkspaceRequest } from "@/core/mcp/server";
 import { PermissionDeniedError } from "@/core/permissions/guard";
@@ -319,8 +321,11 @@ describeDatabase("F4d: proposals with human approval", requiredVars, () => {
 
     const worker = createJobWorker({
       databaseUrl: workerUrl ?? "",
+      // H4: the approval goes through the hub (dispatch → subscriber).
       definitions: [
         proposalExecuteJob,
+        eventsDispatchJob,
+        eventsSubscriberJob,
       ] as unknown as readonly JobDefinition<unknown>[],
       schedules: [],
       dispatchIntervalMs: 200,

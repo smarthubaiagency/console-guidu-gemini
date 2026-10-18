@@ -119,7 +119,8 @@
       "blocked_policy": "Blocked",
       "skipped": "Not sent",
       "pending": "Pending",
-      "queued": "Queued"
+      "queued": "Queued",
+      "sending": "Sending"
     },
     "audit": "What was audited",
     "noAudit": "Nothing audited about this event.",
@@ -127,7 +128,21 @@
     "noViews": "Nobody outside saw this event's data.",
     "viewedBy": "Data seen by {who}, authorized by {by}",
     "platformSupport": "platform support",
-    "partnerSupport": "partner support"
+    "partnerSupport": "partner support",
+    "handoffs": "Hand-off of work",
+    "handoffsHint": "Each subscriber that received the event, with its status.",
+    "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+    "handoffStatus": {
+      "queued": "Queued",
+      "done": "Done",
+      "failed": "Failed",
+      "skipped": "Skipped"
+    },
+    "handoffReason": {
+      "module_disabled": "module off in the workspace",
+      "chain_limit": "event chain limit",
+      "workspace_closed": "workspace inactive"
+    }
   },
   "settings": {
     "metaTitle": "Notifications",

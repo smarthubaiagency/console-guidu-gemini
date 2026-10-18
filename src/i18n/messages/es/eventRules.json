@@ -119,7 +119,8 @@
       "blocked_policy": "Bloqueado",
       "skipped": "No enviado",
       "pending": "Pendiente",
-      "queued": "En cola"
+      "queued": "En cola",
+      "sending": "Enviando"
     },
     "audit": "Qué se auditó",
     "noAudit": "Nada auditado sobre este evento.",
@@ -127,7 +128,21 @@
     "noViews": "Nadie de fuera vio los datos de este evento.",
     "viewedBy": "Datos vistos por {who}, autorizado por {by}",
     "platformSupport": "soporte de la plataforma",
-    "partnerSupport": "soporte del socio"
+    "partnerSupport": "soporte del socio",
+    "handoffs": "Traspaso de trabajo",
+    "handoffsHint": "Cada suscriptor que recibió el evento, con su situación.",
+    "attempts": "{count, plural, one {# intento} other {# intentos}}",
+    "handoffStatus": {
+      "queued": "En cola",
+      "done": "Hecho",
+      "failed": "Falló",
+      "skipped": "Omitido"
+    },
+    "handoffReason": {
+      "module_disabled": "módulo apagado en el workspace",
+      "chain_limit": "límite de la cadena de eventos",
+      "workspace_closed": "workspace inactivo"
+    }
   },
   "settings": {
     "metaTitle": "Notificaciones",

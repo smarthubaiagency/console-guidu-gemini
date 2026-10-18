@@ -11,7 +11,7 @@ import {
   readEventDataByGrant,
   requestEventAccess,
 } from "@/core/events/access";
-import { dispatchEvent } from "@/core/events/dispatch";
+import { runEventDispatch } from "@/core/events/dispatch";
 import { emitEvent, WORKER_ACTOR } from "@/core/events/emit";
 import {
   emitAccessRequest,
@@ -21,6 +21,7 @@ import {
   sendDigests,
 } from "@/core/events/notices";
 import { eventTrace } from "@/core/events/views";
+import { sendClaimedWhatsApp } from "@/core/events/whatsapp";
 import {
   restoreTemplateDefault,
   saveTemplateVersion,
@@ -210,9 +211,7 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
   it("keeps the security notice off by default and follows the rule when on", async () => {
     const off = await emit("security.api_key_created", "sec-off");
     await expect(
-      asWorker((tx) =>
-        dispatchEvent(tx, off.id, { transport, fetch, now: () => DAY }),
-      ),
+      runEventDispatch(asWorker, off.id, { transport, fetch, now: () => DAY }),
     ).resolves.toMatchObject({ status: "skipped" });
     expect(await deliveriesOf(off.id)).toHaveLength(0);
 
@@ -223,9 +222,11 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
       },
     });
     const on = await emit("security.api_key_created", "sec-on");
-    await asWorker((tx) =>
-      dispatchEvent(tx, on.id, { transport, fetch, now: () => DAY }),
-    );
+    await runEventDispatch(asWorker, on.id, {
+      transport,
+      fetch,
+      now: () => DAY,
+    });
     const rows = await deliveriesOf(on.id);
     const byUser = Object.fromEntries(
       rows.map((d) => [`${d.channel}:${d.recipientUserId}`, d]),
@@ -258,9 +259,11 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
       "security.mfa_requirement_off": { enabled: true, channels: ["whatsapp"] },
     });
     const held = await emit("security.api_key_created", "quiet");
-    await asWorker((tx) =>
-      dispatchEvent(tx, held.id, { transport, fetch, now: () => NIGHT }),
-    );
+    await runEventDispatch(asWorker, held.id, {
+      transport,
+      fetch,
+      now: () => NIGHT,
+    });
     const [queued] = (await deliveriesOf(held.id)).filter(
       (d) => d.recipientUserId === ownerS,
     );
@@ -274,17 +277,21 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
     expect(posts).toHaveLength(0);
 
     const urgent = await emit("security.mfa_requirement_off", "urgent");
-    await asWorker((tx) =>
-      dispatchEvent(tx, urgent.id, { transport, fetch, now: () => NIGHT }),
-    );
+    await runEventDispatch(asWorker, urgent.id, {
+      transport,
+      fetch,
+      now: () => NIGHT,
+    });
     expect(posts.map((p) => p.body.event)).toEqual([
       "security.mfa_requirement_off",
     ]);
 
     // The window ended long ago (in the database's clock): the tick sends it.
-    await expect(
-      asWorker((tx) => releaseQuietWhatsApp(tx, { fetch })),
-    ).resolves.toBeGreaterThanOrEqual(1);
+    const released = await asWorker((tx) =>
+      releaseQuietWhatsApp(tx, { fetch }),
+    );
+    expect(released.length).toBeGreaterThanOrEqual(1);
+    await sendClaimedWhatsApp(asWorker, released, { fetch });
     const mine = posts.filter((p) =>
       [held.id, urgent.id].includes(String(p.body.event_id)),
     );
@@ -309,9 +316,11 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
       data: { location: "Loja Sul" },
     });
     for (const event of [one, two]) {
-      await asWorker((tx) =>
-        dispatchEvent(tx, event.id, { transport, fetch, now: () => DAY }),
-      );
+      await runEventDispatch(asWorker, event.id, {
+        transport,
+        fetch,
+        now: () => DAY,
+      });
     }
     expect(
       await admin.userNotification.count({ where: { eventId: one.id } }),
@@ -353,7 +362,7 @@ describeDatabase("H2: event rules and access", requiredVars, () => {
       status: "pending",
       data: { requester: "GUIDU", workspaceName: "Loja H2", hours: 72 },
     });
-    await asWorker((tx) => dispatchEvent(tx, pending.id, { transport, fetch }));
+    await runEventDispatch(asWorker, pending.id, { transport, fetch });
     sent.length = 0;
     // Two hours later: nothing; ten hours later: reminder and escalation.
     const later = (hours: number) => () =>

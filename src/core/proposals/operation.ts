@@ -23,6 +23,12 @@ export type ProposalOperation = Readonly<{
   permission: PermissionKey;
   /** Operations on an existing record take its id and its version. */
   needsTarget: boolean;
+  /**
+   * Validity of a proposal made by a module's agent (H4), in hours, up to
+   * 7 days (`AGENT_PROPOSAL_MAX_TTL_HOURS`, the default). API keys and the
+   * Assistant keep 24 hours.
+   */
+  agentTtlHours?: number;
   /** Fields of the payload, in display order, with their labels. */
   fields: readonly Readonly<{ key: string; label: string }>[];
   /** Workspace-relative path of the resulting record, for the screens. */

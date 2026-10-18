@@ -105,6 +105,26 @@
       "title": "Workspace {workspace} deleted",
       "body": "The workspace and its data were erased for good."
     },
+    "proposalRequested": {
+      "title": "Proposal awaiting decision",
+      "body": "{operation} in {workspace}. Open it to approve or reject."
+    },
+    "proposalRejected": {
+      "title": "Proposal rejected",
+      "body": "{operation} in {workspace} was rejected."
+    },
+    "proposalExecuted": {
+      "title": "Proposal executed",
+      "body": "{operation} in {workspace} was executed."
+    },
+    "proposalFailed": {
+      "title": "Proposal not executed",
+      "body": "{operation} in {workspace} was not executed."
+    },
+    "proposalExpired": {
+      "title": "Proposal expired",
+      "body": "{operation} expired without a decision."
+    },
     "serviceModeRevertedByPartner": {
       "title": "{organization} is back to the standard mode",
       "body": "{partner} ended the management. Reason: {reason}"

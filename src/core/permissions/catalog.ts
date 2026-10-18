@@ -169,6 +169,9 @@ export const Permissions = {
   PARTNER_EVENTS_READ: "partner.events.read",
   // Ask a customer for the data of events (H2, ADR 0022 item 7).
   PARTNER_EVENTS_REQUEST_ACCESS: "partner.events.request_access",
+  // Decide the proposals of the companies the partner manages (H4,
+  // ADR 0020): the /admin queue; the managed customer only follows.
+  PARTNER_PROPOSALS_REVIEW: "partner.proposals.review",
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];

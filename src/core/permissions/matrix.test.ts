@@ -71,6 +71,7 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_EVENTS_MANAGE]: false,
         [Permissions.PARTNER_EVENTS_READ]: false,
         [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PARTNER_PROPOSALS_REVIEW]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -144,6 +145,7 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_EVENTS_MANAGE]: false,
         [Permissions.PARTNER_EVENTS_READ]: false,
         [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PARTNER_PROPOSALS_REVIEW]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -217,6 +219,7 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_EVENTS_MANAGE]: false,
         [Permissions.PARTNER_EVENTS_READ]: false,
         [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PARTNER_PROPOSALS_REVIEW]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -290,6 +293,7 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_EVENTS_MANAGE]: false,
         [Permissions.PARTNER_EVENTS_READ]: false,
         [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PARTNER_PROPOSALS_REVIEW]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -332,6 +336,7 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_EVENTS_MANAGE]: false,
         [Permissions.PARTNER_EVENTS_READ]: false,
         [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PARTNER_PROPOSALS_REVIEW]: false,
         [Permissions.WORKSPACE_SETTINGS_UPDATE]: false,
         [Permissions.WORKSPACE_MEMBERS_READ]: false,
         [Permissions.WORKSPACE_MEMBERS_INVITE]: false,
@@ -475,6 +480,7 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_EVENTS_MANAGE]: false,
         [Permissions.PARTNER_EVENTS_READ]: false,
         [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PARTNER_PROPOSALS_REVIEW]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -548,6 +554,7 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_EVENTS_MANAGE]: false,
         [Permissions.PARTNER_EVENTS_READ]: false,
         [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PARTNER_PROPOSALS_REVIEW]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -621,6 +628,7 @@ describe("Permissions Matrix", () => {
         [Permissions.PLATFORM_EVENTS_MANAGE]: false,
         [Permissions.PARTNER_EVENTS_READ]: false,
         [Permissions.PARTNER_EVENTS_REQUEST_ACCESS]: false,
+        [Permissions.PARTNER_PROPOSALS_REVIEW]: false,
         [Permissions.PLATFORM_CAPABILITIES_MANAGE]: false,
         [Permissions.PLATFORM_AUDIT_READ]: false,
         [Permissions.PARTNER_SECURITY_READ]: false,
@@ -701,10 +709,10 @@ describe("Permissions Matrix", () => {
     });
 
     it("matches exact count of permissions of the console roles", () => {
-      expect(PARTNER_ROLE_PERMISSIONS.partner_owner.size).toBe(18);
-      expect(PARTNER_ROLE_PERMISSIONS.partner_admin.size).toBe(16);
+      expect(PARTNER_ROLE_PERMISSIONS.partner_owner.size).toBe(19);
+      expect(PARTNER_ROLE_PERMISSIONS.partner_admin.size).toBe(17);
       expect(PARTNER_ROLE_PERMISSIONS.partner_finance.size).toBe(4);
-      expect(PARTNER_ROLE_PERMISSIONS.partner_support.size).toBe(7);
+      expect(PARTNER_ROLE_PERMISSIONS.partner_support.size).toBe(8);
       expect(PLATFORM_ROLE_PERMISSIONS.owner.size).toBe(21);
       expect(PLATFORM_ROLE_PERMISSIONS.operations.size).toBe(19);
       expect(PLATFORM_ROLE_PERMISSIONS.billing.size).toBe(7);
