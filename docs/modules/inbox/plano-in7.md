@@ -1,7 +1,7 @@
 # Plano da IN7: WhatsApp da Meta
 
 - **Data:** 17/10/2026. Base: `main` com IN3, IN4a, IN4b e IN6 ([guids-na-sala.md](guids-na-sala.md)), canais da A5a e da A5b ([canais.md](../ai-agents/canais.md)).
-- **Estado:** respostas do Marcelo em 17/10/2026 na seção 6. A pedido dele, a conversa passa a ser **contínua** (seção 0), o que muda a IN7a e a IN7b; as perguntas 13 a 16 esperam resposta, depois o "pode começar" da IN7a.
+- **Estado:** aprovado em 17/10/2026 (seção 6, perguntas 1 a 16). IN7a feita em `claude/optimistic-lamport-rjehmm` ([whatsapp-meta.md](whatsapp-meta.md)); IN7b em seguida.
 - **Fontes:** [plano do Inbox](plano.md) (resposta 3 e linha IN7), [especificação](especificacao.md), ADR 0023 (regras 8 e 11), [canais.md](../ai-agents/canais.md) (§2 contrato, linha Meta, §3 rotas, §3.5 hubs, cenários).
 - **Migrations reservadas:** IN7a `20261216090000_in7a_meta_channel`, IN7b `20261217090000_in7b_inbox_meta_rooms`.
 

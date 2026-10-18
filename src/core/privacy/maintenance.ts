@@ -75,6 +75,9 @@ export async function purgeWorkspace(
     ["inbox_labels", () => tx.inboxLabel.deleteMany({ where })],
     // Matrix rooms (IN3): members before their room; the rooms on Synapse
     // are deleted by the Matrix lifecycle (`purgeExternal`), not here.
+    // WhatsApp of Meta (IN7a): what went out and the people by phone.
+    ["matrix_outbound", () => tx.matrixOutbound.deleteMany({ where })],
+    ["matrix_contacts", () => tx.matrixContact.deleteMany({ where })],
     // The GUIDS in the rooms (IN6): what it kept per room and its users.
     ["inbox_guids_rooms", () => tx.inboxGuidsRoom.deleteMany({ where })],
     ["matrix_agent_users", () => tx.matrixAgentUser.deleteMany({ where })],
