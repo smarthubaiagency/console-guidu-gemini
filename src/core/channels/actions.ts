@@ -18,6 +18,11 @@ import {
   deleteChannelConnection,
   updateServiceSettings,
 } from "./connections";
+import {
+  completeMetaEmbeddedSignup,
+  createMetaConnection,
+  setMetaRoute,
+} from "./meta-connections";
 
 /**
  * Server actions of Configurações › Canais (A5a). The services check the
@@ -114,7 +119,9 @@ export async function checkChannelConnectionAction(
     return checked.healthStatus === "ok"
       ? {
           success: true,
-          message: t("checkOk", { count: checked.inboxes.length }),
+          message: checked.meta
+            ? t("meta.checkOk")
+            : t("checkOk", { count: checked.inboxes.length }),
         }
       : {
           error: t("checkFailed", {
@@ -178,6 +185,75 @@ export async function updateServiceSettingsAction(
     return {
       success: true,
       message: reset ? t("service.reset") : t("service.saved"),
+    };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** A number of Meta linked by hand (IN7a). */
+export async function createMetaConnectionAction(
+  _prev: ChannelActionState,
+  formData: FormData,
+): Promise<ChannelActionState> {
+  try {
+    const { context, path } = await contextFor(formData);
+    await createMetaConnection(prisma, context, {
+      name: text(formData, "name"),
+      phoneNumberId: text(formData, "phoneNumberId"),
+      wabaId: text(formData, "wabaId"),
+      accessToken: text(formData, "accessToken"),
+    });
+    revalidatePath(path);
+    const t = await getTranslations("channels");
+    return { success: true, message: t("meta.created") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** A number of Meta linked by the Embedded Signup (IN7a). */
+export async function completeMetaEmbeddedSignupAction(
+  _prev: ChannelActionState,
+  formData: FormData,
+): Promise<ChannelActionState> {
+  try {
+    const { context, path } = await contextFor(formData);
+    const pin = text(formData, "pin");
+    await completeMetaEmbeddedSignup(prisma, context, {
+      name: text(formData, "name"),
+      code: text(formData, "code"),
+      phoneNumberId: text(formData, "phoneNumberId"),
+      wabaId: text(formData, "wabaId"),
+      ...(pin ? { pin } : {}),
+    });
+    revalidatePath(path);
+    const t = await getTranslations("channels");
+    return { success: true, message: t("meta.created") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** Which GUIDS answers a number of Meta, or nobody (IN7a). */
+export async function setMetaRouteAction(
+  _prev: ChannelActionState,
+  formData: FormData,
+): Promise<ChannelActionState> {
+  try {
+    const { context, path } = await contextFor(formData);
+    const agentId = text(formData, "agentId");
+    await withContext(prisma, context, (tx) =>
+      setMetaRoute(tx, context, {
+        connectionId: text(formData, "connectionId"),
+        agentId: agentId || null,
+      }),
+    );
+    revalidatePath(path);
+    const t = await getTranslations("channels");
+    return {
+      success: true,
+      message: agentId ? t("meta.routeSaved") : t("meta.routeCleared"),
     };
   } catch (err) {
     return failure(err);

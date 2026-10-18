@@ -52,6 +52,8 @@ const PUBLIC: Record<string, string> = {
   "api/v1/openapi.json/route.ts": "contrato público da API",
   "api/channels/[connectionId]/[token]/route.ts":
     "webhook de um canal; confere o hash do token da conexão (A5a)",
+  "api/channels/meta/route.ts":
+    "webhook do app da Meta; confere a assinatura com o app secret (IN7a)",
   "brand/[asset]/[version]/route.ts": "imagens da marca do host",
   "api/domains/check/route.ts":
     "ForwardAuth do Traefik; confere o segredo compartilhado (CF2b)",

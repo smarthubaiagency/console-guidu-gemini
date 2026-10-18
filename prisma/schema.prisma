@@ -1690,16 +1690,18 @@ model ChannelRoute {
 
 /// A conversation of the provider, per connection (A5a).
 model ChannelConversation {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId    String   @map("organization_id") @db.Uuid
-  workspaceId       String   @map("workspace_id") @db.Uuid
-  connectionId      String   @map("connection_id") @db.Uuid
-  scope             String
-  externalId        String   @map("external_id")
-  externalContactId String?  @map("external_contact_id")
-  externalStatus    String?  @map("external_status")
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  lastEventAt       DateTime @default(now()) @map("last_event_at") @db.Timestamptz()
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId       String    @map("organization_id") @db.Uuid
+  workspaceId          String    @map("workspace_id") @db.Uuid
+  connectionId         String    @map("connection_id") @db.Uuid
+  scope                String
+  externalId           String    @map("external_id")
+  externalContactId    String?   @map("external_contact_id")
+  externalStatus       String?   @map("external_status")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  lastEventAt          DateTime  @default(now()) @map("last_event_at") @db.Timestamptz()
+  /// When the contact last wrote (Meta: the 24-hour window, IN7a).
+  lastContactMessageAt DateTime? @map("last_contact_message_at") @db.Timestamptz()
 
   @@unique([id, workspaceId])
   @@unique([connectionId, externalId])
@@ -1940,6 +1942,8 @@ model MatrixRoom {
   lastConsumerMessageAt DateTime? @map("last_consumer_message_at") @db.Timestamptz()
   lastTeamMessageAt     DateTime? @map("last_team_message_at") @db.Timestamptz()
   lastAgentMessageAt    DateTime? @map("last_agent_message_at") @db.Timestamptz()
+  /// The number the room talks by (IN7a).
+  channelConversationId String?   @map("channel_conversation_id") @db.Uuid
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
   closedAt              DateTime? @map("closed_at") @db.Timestamptz()
@@ -2031,6 +2035,39 @@ model InboxConversation {
 }
 
 /// Virtual user of a GUIDS in the rooms of the Inbox (IN6).
+/// The person behind a WhatsApp conversation, by phone, in a workspace (IN7a).
+model MatrixContact {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  phone          String
+  localpart      String   @unique
+  mxid           String   @unique
+  displayName    String?  @map("display_name")
+  state          String   @default("pending")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@unique([workspaceId, phone])
+  @@map("matrix_contacts")
+}
+
+/// A Matrix event sent out by a channel (IN7a), never its text.
+model MatrixOutbound {
+  eventId        String    @id @map("event_id")
+  roomId         String    @map("room_id")
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  connectionId   String    @map("connection_id") @db.Uuid
+  status         String    @default("pending")
+  externalId     String?   @map("external_id")
+  error          String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz()
+
+  @@map("matrix_outbound")
+}
+
 model MatrixAgentUser {
   agentId        String   @id @map("agent_id") @db.Uuid
   workspaceId    String   @map("workspace_id") @db.Uuid

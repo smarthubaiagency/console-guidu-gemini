@@ -48,6 +48,9 @@ function normalize(kind: ChannelKind, body: unknown) {
   switch (kind) {
     case "chatwoot":
       return normalizeChatwoot(body);
+    // Meta posts to its own webhook (meta-webhook.ts), never by a token.
+    case "meta_whatsapp":
+      return [];
   }
 }
 

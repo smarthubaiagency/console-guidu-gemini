@@ -10,7 +10,7 @@ import { z } from "zod";
 
 export const CHANNEL_CONTRACT_VERSION = 1;
 
-export const CHANNEL_KINDS = ["chatwoot"] as const;
+export const CHANNEL_KINDS = ["chatwoot", "meta_whatsapp"] as const;
 export type ChannelKind = (typeof CHANNEL_KINDS)[number];
 
 /** Longest text of one inbound message kept by the core. */
@@ -38,7 +38,10 @@ export const InboundEvent = z.strictObject({
   kind: z.enum(["message", "conversation_status"]),
   /** Who sent it; only `contact` messages may start a consumer's turn. */
   sender: z.enum(["contact", "agent", "bot", "system"]),
-  /** Chatwoot: the inbox. The route of (connection, scope) owns it. */
+  /**
+   * Chatwoot: the inbox; Meta: the number (`phone_number_id`). The route of
+   * (connection, scope) owns it.
+   */
   scope: id,
   occurredAt: z.iso.datetime({ offset: true }).nullable(),
   conversation: z.strictObject({
@@ -86,6 +89,8 @@ export type ChannelCapabilities = Readonly<{
     json: boolean;
   }>;
   typingIndicator: boolean;
+  /** Meta: free text only within 24 hours of the contact's last message. */
+  messagingWindow?: "meta_24h";
 }>;
 
 /** A health check of a connection; `code` never carries a secret. */

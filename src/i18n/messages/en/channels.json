@@ -8,7 +8,8 @@
   "emptyManage": "No channel connected. Connect Chatwoot below.",
   "never": "never",
   "kinds": {
-    "chatwoot": "Chatwoot"
+    "chatwoot": "Chatwoot",
+    "meta_whatsapp": "WhatsApp (Meta)"
   },
   "healthStatus": {
     "ok": "Working",
@@ -57,7 +58,9 @@
       "invalid_response": "Chatwoot answered in an unexpected format.",
       "unknown": "Unknown failure talking to Chatwoot."
     },
-    "inboxTaken": "Another agent already answers this inbox."
+    "inboxTaken": "Another agent already answers this inbox.",
+    "numberTaken": "This number is already linked to GUIDU.",
+    "metaAppMissing": "The Meta app is not configured."
   },
   "health": {
     "invalid_url": "The Chatwoot address is invalid.",
@@ -115,5 +118,27 @@
     "none": "no agent",
     "unnamed": "unnamed agent",
     "paused": "{name}, paused: messages in this inbox go unanswered"
+  },
+  "meta": {
+    "title": "Link a WhatsApp number (Meta)",
+    "description": "Each conversation of the number becomes a room, one per person. The chosen GUIDS answers, and the history stays in the room even if you change who answers.",
+    "embedded": "Connect with Meta",
+    "embeddedHint": "Sign in with the company's Facebook account, pick (or create) the WhatsApp Business account and the number, and come back with the number linked.",
+    "embeddedUnavailable": "Available once the GUIDU app on Meta is configured. For now, link the number manually.",
+    "manual": "Or link it manually",
+    "namePlaceholder": "Store WhatsApp",
+    "phoneNumberId": "Number id (phone number id)",
+    "wabaId": "WhatsApp Business account (WABA id)",
+    "accessToken": "Permanent access token",
+    "manualHint": "In Meta's Business Manager, create a system user with access to the WhatsApp account and generate a permanent token with whatsapp_business_messaging and whatsapp_business_management. The token is encrypted and never shown again.",
+    "submit": "Link the number",
+    "created": "Number linked. Choose the GUIDS that answers it.",
+    "checkOk": "The number is working.",
+    "route": "Who answers this number",
+    "routeHint": "Changing it does not move the conversations: they stay in the same rooms.",
+    "nobody": "Nobody (messages are kept)",
+    "answeredBy": "Answered by {name}",
+    "routeSaved": "GUIDS of the number saved.",
+    "routeCleared": "The number has nobody to answer it."
   }
 }

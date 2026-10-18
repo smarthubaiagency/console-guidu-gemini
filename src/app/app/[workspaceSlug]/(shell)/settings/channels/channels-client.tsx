@@ -26,6 +26,12 @@ import {
 import type { ChannelConnectionDto } from "@/core/channels/connections";
 import type { InboxOwner } from "@/core/channels/registry";
 
+import {
+  type EmbeddedSignup,
+  type GuidsChoice,
+  MetaForm,
+  MetaRouteForm,
+} from "./meta-client";
 import { ServiceSettingsForm } from "./service-form";
 
 type FormState = ChannelActionState & { formKey?: number };
@@ -54,12 +60,20 @@ export function ChannelsClient({
   connections,
   owners,
   canManage,
+  guids,
+  metaRoutes,
+  embedded,
 }: Readonly<{
   workspaceSlug: string;
   connections: readonly ChannelConnectionDto[];
   /** Who answers each inbox, by `connectionId:inboxId` (A5c). */
   owners: Readonly<Record<string, InboxOwner>>;
   canManage: boolean;
+  /** The GUIDS of the workspace, for the numbers of Meta (IN7a). */
+  guids: readonly GuidsChoice[];
+  /** The GUIDS of each number of Meta, by connection. */
+  metaRoutes: Readonly<Record<string, string | null>>;
+  embedded: EmbeddedSignup;
 }>) {
   const t = useTranslations("channels");
   return (
@@ -78,10 +92,15 @@ export function ChannelsClient({
               connection={connection}
               owners={owners}
               canManage={canManage}
+              guids={guids}
+              metaAgentId={metaRoutes[connection.id] ?? null}
             />
           ))}
         </div>
       )}
+      {canManage ? (
+        <MetaForm workspaceSlug={workspaceSlug} embedded={embedded} />
+      ) : null}
       {canManage ? <ChatwootForm workspaceSlug={workspaceSlug} /> : null}
     </div>
   );
@@ -92,11 +111,15 @@ function ConnectionCard({
   connection,
   owners,
   canManage,
+  guids,
+  metaAgentId,
 }: Readonly<{
   workspaceSlug: string;
   connection: ChannelConnectionDto;
   owners: Readonly<Record<string, InboxOwner>>;
   canManage: boolean;
+  guids: readonly GuidsChoice[];
+  metaAgentId: string | null;
 }>) {
   const t = useTranslations("channels");
   const format = useFormatter();
@@ -122,6 +145,14 @@ function ConnectionCard({
         </CardTitle>
         <CardDescription>
           {[
+            connection.meta
+              ? [
+                  connection.meta.displayPhoneNumber,
+                  connection.meta.verifiedName,
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || connection.meta.phoneNumberId
+              : null,
             connection.baseUrl,
             connection.accountId !== null
               ? t("account", { id: connection.accountId })
@@ -138,37 +169,48 @@ function ConnectionCard({
             {t(`health.${connection.healthError ?? "unknown"}`)}
           </p>
         ) : null}
-        <div className="space-y-1">
-          <p className="text-12 text-text font-medium">{t("inboxes")}</p>
-          {connection.inboxes.length === 0 ? (
-            <p className="text-12 text-text-secondary">{t("noInboxes")}</p>
-          ) : (
-            <ul
-              className="text-12 text-text-secondary"
-              data-testid="channel-inboxes"
-            >
-              {connection.inboxes.map((inbox) => {
-                const owner = owners[`${connection.id}:${inbox.id}`];
-                const name = owner?.name ?? t("owner.unnamed");
-                return (
-                  <li key={inbox.id}>
-                    {[
-                      inbox.name,
-                      inbox.channel_type,
-                      owner
-                        ? owner.active
-                          ? name
-                          : t("owner.paused", { name })
-                        : t("owner.none"),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+        {connection.meta ? (
+          <MetaRouteForm
+            workspaceSlug={workspaceSlug}
+            connection={connection}
+            guids={guids}
+            agentId={metaAgentId}
+            canManage={canManage}
+          />
+        ) : null}
+        {connection.meta ? null : (
+          <div className="space-y-1">
+            <p className="text-12 text-text font-medium">{t("inboxes")}</p>
+            {connection.inboxes.length === 0 ? (
+              <p className="text-12 text-text-secondary">{t("noInboxes")}</p>
+            ) : (
+              <ul
+                className="text-12 text-text-secondary"
+                data-testid="channel-inboxes"
+              >
+                {connection.inboxes.map((inbox) => {
+                  const owner = owners[`${connection.id}:${inbox.id}`];
+                  const name = owner?.name ?? t("owner.unnamed");
+                  return (
+                    <li key={inbox.id}>
+                      {[
+                        inbox.name,
+                        inbox.channel_type,
+                        owner
+                          ? owner.active
+                            ? name
+                            : t("owner.paused", { name })
+                          : t("owner.none"),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
         <p className="text-12 text-text-secondary">
           {[
             t("lastEvent", { date: when(connection.lastEventAt) }),

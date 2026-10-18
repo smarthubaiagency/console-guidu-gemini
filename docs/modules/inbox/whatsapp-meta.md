@@ -1,0 +1,43 @@
+# Inbox — WhatsApp da Meta (IN7a)
+
+- **Data:** 18/10/2026
+- **Branch:** `claude/optimistic-lamport-rjehmm`. Migration `20261217090000_in7a_meta_channel.sql`.
+- **Base:** [plano da IN7](plano-in7.md), com as respostas do Marcelo de 17/10/2026 (seção 6), incluindo a conversa contínua (seção 0).
+
+## 1. O que entrou
+
+| Peça                    | Onde                                                                                          | O que faz                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Conexão `meta_whatsapp` | migration (seção 1), `src/core/channels/meta-connections.ts`                                  | Um número da Cloud API (`phone_number_id`), no máximo uma vez na plataforma (índice único). Ligado manualmente (número, conta do WhatsApp Business e token permanente de usuário do sistema) ou pelo Embedded Signup (código trocado com o app secret e, se o número for novo na Cloud API, registro com o PIN). Nos dois, o console confere o número com a Meta, assina o app da GUIDU na conta (`subscribed_apps`) e guarda o token cifrado.   |
+| Adaptador               | `src/core/channels/meta.ts`                                                                   | Assinatura `X-Hub-Signature-256` (HMAC do corpo cru, em tempo constante), normalização para o contrato da A5a (texto, imagem, documento, áudio, vídeo, figurinha, respostas de botão e lista), status das mensagens enviadas, chamadas à Graph API (conferir o número, enviar texto e modelo, listar modelos aprovados, baixar mídia) e a capacidade `messagingWindow: "meta_24h"`.                                                              |
+| Webhook do app          | `src/app/api/channels/meta/route.ts`, `src/core/channels/meta-webhook.ts`                     | Um endereço para todos os números: `GET` responde o desafio do cadastro com o verify token; `POST` confere a assinatura e grava por `private.channel_meta_ingest`, que acha a conexão pelo número, guarda quando o contato escreveu (janela de 24 horas), marca as entregas que a Meta disse que falharam e enfileira `channels.meta-inbound`.                                                                                                   |
+| Pessoa e sala           | `matrix_contacts`, `matrix_rooms.channel_conversation_id`, `src/core/matrix/meta.ts`          | A pessoa é um contato do workspace pelo telefone, com o usuário `@_guidu_c_<16 base32>` (nome do perfil do WhatsApp). Uma sala por pessoa e loja: a mais recente é reaproveitada em qualquer status (resolvida reabre como pendente, IN6) e fala pelo número a que a pessoa escreveu por último. A mensagem entra como o contato; os arquivos vão para o repositório de mídia do Synapse. Depois disso o texto sai do banco (ADR 0023, regra 6). |
+| Quem atende             | `channel_routes` (`consumer_module = 'inbox'`), `setMetaRoute`, `private.channel_route_guids` | Cada número tem o GUIDS que o atende (ou ninguém: as mensagens ficam guardadas, sem sala). O turno da IN6 usa esse GUIDS, como quem ligou a rota, **com ou sem o módulo Inbox ligado** (resposta 15). Trocar não move nada: o histórico já está na sala.                                                                                                                                                                                         |
+| Saída                   | `channels.meta-send`, `matrix_outbound`                                                       | O que a equipe ou o GUIDS escrevem numa sala de número sai pela Meta, uma vez por evento (a linha guarda o estado e o id da Meta, nunca o texto). Fora das 24 horas, o texto livre é recusado (`window_closed`).                                                                                                                                                                                                                                 |
+| CRM                     | `findContactByPhone` no CRM, `inbox.link-contact`                                             | O contato da conversa é o que já tem o mesmo telefone (o mais antigo); sem ele, é criado com nome e telefone.                                                                                                                                                                                                                                                                                                                                    |
+| Tela                    | Configurações › Canais (`meta-client.tsx`)                                                    | Card "Ligar um número do WhatsApp (Meta)" com "Conectar com a Meta" e o formulário manual; em cada número, "Quem atende este número".                                                                                                                                                                                                                                                                                                            |
+| CSP                     | `src/core/security/headers.ts`                                                                | Com `META_APP_ID` e `META_EMBEDDED_SIGNUP_CONFIG_ID`, o `connect-src` e o `frame-src` abrem para a Meta (o SDK carrega por um script com nonce).                                                                                                                                                                                                                                                                                                 |
+
+Variáveis da plataforma (web e worker): `META_APP_SECRET` e `META_WEBHOOK_VERIFY_TOKEN` (webhook); `META_APP_ID` e `META_EMBEDDED_SIGNUP_CONFIG_ID` (Embedded Signup). O webhook do app aponta para `https://<console>/api/channels/meta`.
+
+## 2. Como testar
+
+```sh
+export LOCAL_DB_NAME=guidu_in7
+LOCAL_DB_NAME=guidu_in7 AS_MIGRATIONS=1 bash scripts/local/rebuild-db.sh   # inclui tests/core/meta-channel-rls.sql
+bash scripts/local/synapse.sh setup && bash scripts/local/synapse.sh start
+eval "$(bash scripts/local/synapse.sh env)"
+pnpm vitest run --project integration tests/core/meta-channel.test.ts
+pnpm vitest run --project unit src/core/channels/meta.test.ts
+```
+
+O teste de integração usa uma Graph API falsa e o Synapse local: liga um número manualmente e outro pelo Embedded Signup, recusa o número repetido e a assinatura errada, ignora a repetição da Meta, leva a mensagem para a sala da pessoa, faz o GUIDS do número responder com o módulo Inbox desligado, envia a resposta pela Meta uma vez, marca a falha que a Meta informa, traz uma imagem para a mesma sala e recusa texto fora da janela.
+
+## 3. Decisões adotadas por padrão
+
+1. **Sem rota, sem sala.** Um número sem GUIDS guarda as mensagens (`no_route`), mas não abre sala. Ao escolher o GUIDS, as mensagens seguintes entram; as guardadas não são levadas depois.
+2. **Transferência na rota "só o GUIDS"** segue a IN6: a conversa fica aberta e sem responsável, e quem responde no Inbox é avisado. O modo "GUIDS com a equipe" e o que muda nele são da IN7b.
+3. **A resposta da equipe já sai pela Meta** na IN7a (o mesmo caminho do GUIDS). Modelos na janela fechada, falhas visíveis na conversa e a troca de modo ficam na IN7b.
+4. **Mídia do cliente até 16 MB.** Se o arquivo não vier, a sala mostra "[Imagem não recebida]" (ou arquivo, áudio, vídeo), para a equipe saber que algo foi enviado.
+5. **Embedded Signup simulado** (resposta 12): o botão e o fluxo estão prontos e testados com a Graph API falsa; sem as duas variáveis do app ele aparece desligado, com a explicação.
+6. **Sincronização do GUIDS do Inbox** (`matrix.sync-agent`) não mexe nas salas de número, que têm o GUIDS da rota.

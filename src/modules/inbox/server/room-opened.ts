@@ -21,6 +21,10 @@ export type OpenedRoom = Readonly<{
   workspaceId: string;
   organizationId: string;
   consumerName: string | null;
+  /** The contact's phone (a room of a number, IN7a), for the CRM contact. */
+  consumerPhone?: string | null;
+  /** A GUIDS of the number answers the room (IN7a): nobody is told yet. */
+  agentAnswers?: boolean;
 }>;
 
 async function managerOf(
@@ -60,14 +64,18 @@ export async function inboxRoomOpened(
       values
         (${LINK_CONTACT_JOB_KIND}, 'workspace', ${organization?.partnerId ?? null}::uuid,
          ${room.organizationId}::uuid, ${room.workspaceId}::uuid, ${manager}::uuid,
-         ${JSON.stringify({ roomId: room.roomId })}::jsonb,
+         ${JSON.stringify(
+           room.consumerPhone
+             ? { roomId: room.roomId, phone: room.consumerPhone }
+             : { roomId: room.roomId },
+         )}::jsonb,
          ${`inbox-link-contact:${room.roomId}`.slice(0, 200)}, 3)
       on conflict do nothing
     `;
   }
   // While the GUIDS answers, the team hears of the conversation only when
   // it is handed over (IN6).
-  if (!(await inboxAgentActive(tx, room.workspaceId))) {
+  if (!room.agentAnswers && !(await inboxAgentActive(tx, room.workspaceId))) {
     await noticeNewConversation(tx, room);
   }
 }

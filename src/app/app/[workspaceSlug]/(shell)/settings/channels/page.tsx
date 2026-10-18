@@ -8,6 +8,8 @@ import {
   type ChannelConnectionDto,
   listChannelConnections,
 } from "@/core/channels/connections";
+import { metaApp } from "@/core/channels/meta";
+import { listMetaRoutes } from "@/core/channels/meta-connections";
 import { describeInboxOwners, type InboxOwner } from "@/core/channels/registry";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { Permissions } from "@/core/permissions/catalog";
@@ -15,6 +17,7 @@ import { hasWorkspaceRolePermission } from "@/core/permissions/matrix";
 import type { WorkspaceRole } from "@/core/permissions/roles";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
+import { listHubGuids } from "@/modules/ai-agents/server";
 
 import { ChannelsClient } from "./channels-client";
 import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
@@ -81,8 +84,23 @@ export default async function ChannelsSettingsPage({
     const owners: Record<string, InboxOwner> = canRead
       ? await describeInboxOwners(tx, context)
       : {};
-    return { canRead, canManage, connections, owners };
+    const metaRoutes = canRead
+      ? Object.fromEntries(
+          (await listMetaRoutes(tx, context)).map((r) => [
+            r.connectionId,
+            r.agentId,
+          ]),
+        )
+      : {};
+    const guids = canRead ? await listHubGuids(tx, context) : [];
+    return { canRead, canManage, connections, owners, metaRoutes, guids };
   });
+  // Only the public ids of the GUIDU app go to the browser (IN7a).
+  const app = metaApp();
+  const embedded =
+    app.appId && app.embeddedConfigId && app.appSecret
+      ? { appId: app.appId, configId: app.embeddedConfigId }
+      : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -105,6 +123,9 @@ export default async function ChannelsSettingsPage({
           connections={view.connections}
           owners={view.owners}
           canManage={view.canManage}
+          guids={view.guids}
+          metaRoutes={view.metaRoutes}
+          embedded={embedded}
         />
       ) : (
         <p className="text-12 text-text-secondary">{t("noAccess")}</p>

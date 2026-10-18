@@ -317,6 +317,18 @@ export async function publicDownload(
   return checkedDownload(new URL(url), deps);
 }
 
+/**
+ * Downloads a file of a provider that asks for its token (Meta, IN7a):
+ * the same checks at every hop, with the header on the first one only.
+ */
+export async function authorizedDownload(
+  url: string,
+  headers: Record<string, string>,
+  deps: DownloadDeps,
+): Promise<Readonly<{ data: Buffer; mediaType: string | null }>> {
+  return checkedDownload(new URL(url), deps, headers);
+}
+
 type DownloadDeps = Readonly<{
   fetch?: ChannelFetch;
   timeoutMs?: number;
@@ -326,6 +338,7 @@ type DownloadDeps = Readonly<{
 async function checkedDownload(
   first: URL,
   deps: DownloadDeps,
+  firstHeaders?: Record<string, string>,
 ): Promise<Readonly<{ data: Buffer; mediaType: string | null }>> {
   let target = first;
   const signal = AbortSignal.timeout(deps.timeoutMs ?? 30_000);
@@ -338,6 +351,7 @@ async function checkedDownload(
         method: "GET",
         redirect: "manual",
         signal,
+        ...(hop === 0 && firstHeaders ? { headers: firstHeaders } : {}),
       });
     } catch (error) {
       throw transportError(error);
