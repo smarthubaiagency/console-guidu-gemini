@@ -8,6 +8,7 @@ export {
   ContactCreateInput,
   ContactUpdateInput,
   createContact,
+  findContactByPhone,
   getContactCard,
   getContact,
   listContacts,

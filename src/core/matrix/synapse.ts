@@ -55,6 +55,8 @@ export type SynapseClient = Readonly<{
       body?: unknown;
       asUser?: string;
       query?: Record<string, string>;
+      /** Bytes instead of JSON (the media repository, IN7a). */
+      raw?: Readonly<{ data: Uint8Array; contentType: string }>;
     }>,
   ): Promise<T>;
 }>;
@@ -75,6 +77,7 @@ export function createSynapseClient(
         body?: unknown;
         asUser?: string;
         query?: Record<string, string>;
+        raw?: Readonly<{ data: Uint8Array; contentType: string }>;
       }> = {},
     ): Promise<T> {
       const url = new URL(config.homeserverUrl + path);
@@ -86,11 +89,17 @@ export function createSynapseClient(
         method,
         headers: {
           authorization: `Bearer ${config.asToken}`,
-          ...(options.body !== undefined
-            ? { "content-type": "application/json" }
-            : {}),
+          ...(options.raw
+            ? { "content-type": options.raw.contentType }
+            : options.body !== undefined
+              ? { "content-type": "application/json" }
+              : {}),
         },
-        body: options.body !== undefined ? JSON.stringify(options.body) : null,
+        body: options.raw
+          ? Buffer.from(options.raw.data)
+          : options.body !== undefined
+            ? JSON.stringify(options.body)
+            : null,
         cache: "no-store",
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });

@@ -8,11 +8,12 @@ import {
   removeAttendant,
   upsertMember,
 } from "./accounts";
-import { agentForNewRoom, joinAgent } from "./agent";
+import { agentForNewRoom, ensureAgentUser, joinAgent } from "./agent";
 import { coreUserId } from "./config";
 import { runRoomOpened } from "./room-hooks";
 import {
   createRoom,
+  forceJoin,
   deactivateUser,
   deleteRoom,
   invite,
@@ -113,6 +114,20 @@ export async function createConversationRoom(
     /** The consumer's display name, kept for the search of the Inbox. */
     consumerName?: string | null;
     name?: string | null;
+    /**
+     * A user of the reserved namespace (the contact of a number, IN7a): it
+     * joins at once instead of being invited.
+     */
+    consumerIsVirtual?: boolean;
+    /** The contact's phone, for the CRM contact (IN7a). */
+    consumerPhone?: string | null;
+    /** The number the room talks by (IN7a). */
+    channelConversationId?: string | null;
+    /**
+     * The GUIDS of the room: the one of the number's route (IN7a); absent,
+     * the Inbox GUIDS (IN6); null, none.
+     */
+    agent?: Readonly<{ agentId: string; name: string }> | null;
   }>,
 ): Promise<CreatedRoom> {
   const workspace = await workspaceInfo(tx, input.workspaceId);
@@ -132,10 +147,13 @@ export async function createConversationRoom(
   });
   const attendants = await workspaceAttendants(tx, client, input.workspaceId);
   // The Inbox GUIDS (IN6) sends at 10, like the attendants who answer.
-  const agent = await agentForNewRoom(tx, client, {
-    workspaceId: input.workspaceId,
-    organizationId,
-  });
+  const workspaceRef = { workspaceId: input.workspaceId, organizationId };
+  const agent =
+    input.agent === undefined
+      ? await agentForNewRoom(tx, client, workspaceRef)
+      : input.agent
+        ? await ensureAgentUser(tx, client, workspaceRef, input.agent)
+        : null;
   // The consumer sends at 10 like the attendants who answer.
   const powers: Record<string, number> = {};
   for (const attendant of attendants) powers[attendant.mxid] = attendant.power;
@@ -155,7 +173,10 @@ export async function createConversationRoom(
     await joinAgent(client, roomId, agent);
     await upsertMember(tx, ref, agent, "join", null, REPLY_POWER);
   }
-  if (input.consumerMxid) {
+  if (input.consumerMxid && input.consumerIsVirtual) {
+    await forceJoin(client, roomId, input.consumerMxid);
+    await upsertMember(tx, ref, input.consumerMxid, "join", null, REPLY_POWER);
+  } else if (input.consumerMxid) {
     await invite(client, roomId, input.consumerMxid);
     await upsertMember(
       tx,
@@ -172,6 +193,7 @@ export async function createConversationRoom(
       state: "active",
       consumerMxid: input.consumerMxid ?? null,
       consumerName: input.consumerName?.trim().slice(0, 255) || null,
+      channelConversationId: input.channelConversationId ?? null,
     },
   });
   // CRM contact and the notice of a new conversation (IN4b).
@@ -180,6 +202,8 @@ export async function createConversationRoom(
     workspaceId: input.workspaceId,
     organizationId,
     consumerName: input.consumerName?.trim().slice(0, 255) || null,
+    consumerPhone: input.consumerPhone ?? null,
+    agentAnswers: Boolean(input.agent),
   });
   return { id: row.id, roomId, attendants: attendants.length };
 }

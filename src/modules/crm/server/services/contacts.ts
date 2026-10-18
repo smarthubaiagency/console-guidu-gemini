@@ -258,6 +258,31 @@ export async function getContactCard(
   return row ?? null;
 }
 
+/**
+ * The oldest contact with this phone, compared by digits (a conversation
+ * of WhatsApp, IN7a: the person is linked to the contact the store already
+ * has). Read by who reads the CRM.
+ */
+export async function findContactByPhone(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  phone: string,
+): Promise<{ id: string } | null> {
+  await assertModuleOperational(tx, ctx, MODULE_KEY, "read");
+  await requireWorkspacePermission(tx, ctx, CrmPermissions.CONTACTS_READ);
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 6) return null;
+  const rows = await tx.$queryRaw<{ id: string }[]>`
+    select id from public.crm_contacts
+    where workspace_id = ${ctx.workspaceId}::uuid
+      and phone is not null
+      and regexp_replace(phone, '\\D', '', 'g') = ${digits}
+    order by created_at, id
+    limit 1
+  `;
+  return rows[0] ?? null;
+}
+
 /** Creates a contact under the workspace quota (serialized per workspace). */
 export async function createContact(
   tx: ContextTransaction,

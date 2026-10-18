@@ -11,7 +11,7 @@ import {
 import { SkipJobError } from "@/core/jobs/errors";
 import { ModuleUnavailableError } from "@/core/modules/availability";
 import type { ContextTransaction } from "@/lib/prisma/with-context";
-import { createContact } from "@/modules/crm/server";
+import { createContact, findContactByPhone } from "@/modules/crm/server";
 import { AppError } from "@/shared/errors";
 
 import { noticeUnanswered } from "./notices";
@@ -34,10 +34,19 @@ export const LINK_CONTACT_JOB_KIND = "inbox.link-contact";
 /** The name of a contact made from a chat, without one of its own. */
 export const FALLBACK_CONTACT_NAME = "Contato do chat";
 
-export const linkContactJob = defineJob<{ roomId: string }>({
+export const linkContactJob = defineJob<{ roomId: string; phone?: string }>({
   kind: LINK_CONTACT_JOB_KIND,
   description: "Cria o contato do CRM de uma conversa nova do Inbox.",
-  payload: z.object({ roomId: z.string().min(2).max(255) }).strict(),
+  payload: z
+    .object({
+      roomId: z.string().min(2).max(255),
+      // A conversation of WhatsApp (IN7a): linked by phone when it exists.
+      phone: z
+        .string()
+        .regex(/^[0-9]{6,20}$/)
+        .optional(),
+    })
+    .strict(),
   maxAttempts: 3,
   retryDelaySeconds: 30,
   async run(tx, ctx, payload) {
@@ -58,6 +67,7 @@ export const linkContactJob = defineJob<{ roomId: string }>({
       ctx,
       payload.roomId,
       room?.consumerName?.trim() || FALLBACK_CONTACT_NAME,
+      payload.phone ?? null,
     );
     return { state };
   },
@@ -68,9 +78,15 @@ async function makeContact(
   ctx: Parameters<typeof createContact>[1],
   roomId: string,
   name: string,
+  phone: string | null,
 ): Promise<"linked" | "quota" | "none"> {
   try {
-    const contact = await createContact(tx, ctx, { name: name.slice(0, 160) });
+    const contact =
+      (phone ? await findContactByPhone(tx, ctx, phone) : null) ??
+      (await createContact(tx, ctx, {
+        name: name.slice(0, 160),
+        ...(phone ? { phone: `+${phone}` } : {}),
+      }));
     await tx.inboxConversation.update({
       where: { roomId },
       data: {
