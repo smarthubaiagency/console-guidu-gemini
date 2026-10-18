@@ -8,7 +8,8 @@
   "emptyManage": "Ningún canal conectado. Conecte Chatwoot abajo.",
   "never": "nunca",
   "kinds": {
-    "chatwoot": "Chatwoot"
+    "chatwoot": "Chatwoot",
+    "meta_whatsapp": "WhatsApp (Meta)"
   },
   "healthStatus": {
     "ok": "Funcionando",
@@ -57,7 +58,9 @@
       "invalid_response": "Chatwoot respondió en un formato inesperado.",
       "unknown": "Falla desconocida al hablar con Chatwoot."
     },
-    "inboxTaken": "Otro agente ya atiende esta bandeja."
+    "inboxTaken": "Otro agente ya atiende esta bandeja.",
+    "numberTaken": "Este número ya está conectado a GUIDU.",
+    "metaAppMissing": "La app de Meta no está configurada."
   },
   "health": {
     "invalid_url": "La dirección de Chatwoot no es válida.",
@@ -115,5 +118,27 @@
     "none": "sin agente",
     "unnamed": "agente sin nombre",
     "paused": "{name}, en pausa: los mensajes de esta bandeja quedan sin respuesta"
+  },
+  "meta": {
+    "title": "Conectar un número de WhatsApp (Meta)",
+    "description": "Cada conversación del número se convierte en una sala, una por persona. El GUIDS elegido responde, y el historial queda en la sala aunque cambies quién atiende.",
+    "embedded": "Conectar con Meta",
+    "embeddedHint": "Inicia sesión con la cuenta de Facebook de la empresa, elige (o crea) la cuenta de WhatsApp Business y el número, y vuelve con el número conectado.",
+    "embeddedUnavailable": "Disponible cuando la app de GUIDU en Meta esté configurada. Por ahora, conecta el número manualmente.",
+    "manual": "O conéctalo manualmente",
+    "namePlaceholder": "WhatsApp de la tienda",
+    "phoneNumberId": "Identificador del número (phone number id)",
+    "wabaId": "Cuenta de WhatsApp Business (WABA id)",
+    "accessToken": "Token de acceso permanente",
+    "manualHint": "En el Administrador comercial de Meta, crea un usuario del sistema con acceso a la cuenta de WhatsApp y genera un token permanente con whatsapp_business_messaging y whatsapp_business_management. El token se cifra y no se vuelve a mostrar.",
+    "submit": "Conectar el número",
+    "created": "Número conectado. Elige el GUIDS que lo atiende.",
+    "checkOk": "El número funciona.",
+    "route": "Quién atiende este número",
+    "routeHint": "Cambiarlo no mueve las conversaciones: siguen en las mismas salas.",
+    "nobody": "Nadie (los mensajes se guardan)",
+    "answeredBy": "Atendido por {name}",
+    "routeSaved": "GUIDS del número guardado.",
+    "routeCleared": "El número quedó sin quien lo atienda."
   }
 }

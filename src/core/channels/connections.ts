@@ -32,6 +32,8 @@ import {
   setInboxAgentBot,
 } from "./chatwoot";
 import type { ChannelKind } from "./contract";
+import { checkMetaConnection } from "./meta-connections";
+import { MetaConfig } from "./meta";
 import { type ChannelFetch, ChannelHttpError, providerOrigin } from "./http";
 import {
   type ServiceConfig,
@@ -77,6 +79,14 @@ export type ChannelConnectionDto = Readonly<{
   unroutedEvents: number;
   /** Service of the last 7 days (A5c, health of the connection). */
   activity: ChannelActivity;
+  /** A number of Meta (IN7a); null for Chatwoot. */
+  meta: Readonly<{
+    phoneNumberId: string;
+    wabaId: string;
+    displayPhoneNumber: string | null;
+    verifiedName: string | null;
+    linkedVia: "manual" | "embedded";
+  }> | null;
   createdAt: string;
 }>;
 
@@ -133,7 +143,7 @@ export class ChannelInputError extends AppError {
   }
 }
 
-function notFound(): AppError {
+export function notFound(): AppError {
   return new AppError({
     code: "not_found",
     safeMessage: "Conexão não encontrada.",
@@ -152,7 +162,7 @@ export class ChannelProviderError extends AppError {
   }
 }
 
-function origin(ctx: RequestContext): "api" | "app" {
+export function origin(ctx: RequestContext): "api" | "app" {
   return ctx.principalType === "api_key" ? "api" : "app";
 }
 
@@ -180,12 +190,14 @@ type Row = Awaited<
   ReturnType<ContextTransaction["channelConnection"]["findFirst"]>
 > & {};
 
-function toDto(
+export function toDto(
   row: Row,
   unroutedEvents: number,
   activity: ChannelActivity = NO_ACTIVITY,
 ): ChannelConnectionDto {
   const config = ChatwootConfig.safeParse(row.config);
+  const meta =
+    row.kind === "meta_whatsapp" ? MetaConfig.safeParse(row.config) : null;
   return {
     id: row.id,
     kind: row.kind as ChannelKind,
@@ -202,11 +214,20 @@ function toDto(
     lastEventAt: row.lastEventAt?.toISOString() ?? null,
     unroutedEvents,
     activity,
+    meta: meta?.success
+      ? {
+          phoneNumberId: meta.data.phone_number_id,
+          wabaId: meta.data.waba_id,
+          displayPhoneNumber: meta.data.display_phone_number,
+          verifiedName: meta.data.verified_name,
+          linkedVia: meta.data.linked_via,
+        }
+      : null,
     createdAt: row.createdAt.toISOString(),
   };
 }
 
-async function loadRow(
+export async function loadRow(
   tx: ContextTransaction,
   ctx: RequestContext,
   connectionId: string,
@@ -412,6 +433,9 @@ export async function checkChannelConnection(
     await requireWorkspacePermission(tx, ctx, Permissions.CHANNELS_MANAGE);
     return loadRow(tx, ctx, connectionId);
   });
+  if (row.kind === "meta_whatsapp") {
+    return checkMetaConnection(prisma, ctx, row, deps);
+  }
   const config = ChatwootConfig.parse(row.config);
   const health = await checkChatwoot(
     accountOf(config),
@@ -469,7 +493,8 @@ export async function deleteChannelConnection(
   });
   const config = ChatwootConfig.safeParse(row.config);
   let botRemoved = false;
-  if (config.success) {
+  // A number of Meta has no bot to remove (IN7a).
+  if (row.kind === "chatwoot" && config.success) {
     try {
       await deleteAgentBot(
         accountOf(config.data),

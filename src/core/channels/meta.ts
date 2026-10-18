@@ -131,8 +131,7 @@ const record = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
-const list = (value: unknown): unknown[] =>
-  Array.isArray(value) ? value : [];
+const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 const str = (value: unknown): string | null =>
   typeof value === "string" && value.length > 0 ? value : null;
 
@@ -188,7 +187,10 @@ export function normalizeMeta(
 ): MetaBatch[] {
   const root = record(body);
   if (root.object !== "whatsapp_business_account") return [];
-  const batches = new Map<string, { events: InboundEvent[]; statuses: MetaStatus[] }>();
+  const batches = new Map<
+    string,
+    { events: InboundEvent[]; statuses: MetaStatus[] }
+  >();
   let count = 0;
   for (const entry of list(root.entry)) {
     for (const change of list(record(entry).changes)) {
@@ -494,11 +496,8 @@ export async function listMetaTemplates(
     if (!name || !language) continue;
     const body =
       str(
-        record(
-          list(template.components).find(
-            (c) => record(c).type === "BODY",
-          ),
-        ).text,
+        record(list(template.components).find((c) => record(c).type === "BODY"))
+          .text,
       ) ?? "";
     out.push({
       name: name.slice(0, 512),
