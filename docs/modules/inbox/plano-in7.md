@@ -1,9 +1,24 @@
 # Plano da IN7: WhatsApp da Meta
 
 - **Data:** 17/10/2026. Base: `main` com IN3, IN4a, IN4b e IN6 ([guids-na-sala.md](guids-na-sala.md)), canais da A5a e da A5b ([canais.md](../ai-agents/canais.md)).
-- **Estado:** respostas do Marcelo em 17/10/2026 na seção 6. A pergunta 6 foi reescrita e espera resposta, com a 12 (nova); depois, o "pode começar" da IN7a.
+- **Estado:** respostas do Marcelo em 17/10/2026 na seção 6. A pedido dele, a conversa passa a ser **contínua** (seção 0), o que muda a IN7a e a IN7b; as perguntas 13 a 16 esperam resposta, depois o "pode começar" da IN7a.
 - **Fontes:** [plano do Inbox](plano.md) (resposta 3 e linha IN7), [especificação](especificacao.md), ADR 0023 (regras 8 e 11), [canais.md](../ai-agents/canais.md) (§2 contrato, linha Meta, §3 rotas, §3.5 hubs, cenários).
 - **Migrations reservadas:** IN7a `20261216090000_in7a_meta_channel`, IN7b `20261217090000_in7b_inbox_meta_rooms`.
+
+## 0. Princípio: a conversa não se interrompe
+
+Pedido do Marcelo (17/10/2026): o GUIDS manda pelo WhatsApp um checkout que abre o mini app do guidu.chat; o cliente paga, e a confirmação aparece no chat. Pode ser a primeira experiência dele no guidu.chat: ele vê que a conversa continua, tem o histórico da compra e pode instalar o app (ou PWA), tudo a partir de uma conversa, sem interrupção.
+
+Para isso a IN7 adota três regras:
+
+1. **Toda conversa do WhatsApp mora numa sala do núcleo Matrix**, qualquer que seja a rota. A rota só decide **quem responde**:
+   - **Só o GUIDS** (o antigo "agente direto"): o GUIDS responde e a equipe não é chamada; transferir pausa o GUIDS.
+   - **GUIDS com a equipe** (o antigo "Inbox com agente"): como na IN6, com a equipe no Inbox.
+   - Trocar a rota não move nada: o histórico já está na sala. Isso responde a pergunta 6.
+2. **Um fio por pessoa e loja.** O contato é a pessoa (pelo telefone) no workspace, e não o par contato e número. Se a loja tiver dois números, ou a pessoa chegar depois pelo guidu.chat, a conversa é a mesma sala.
+3. **A conversa pode sair e voltar.** Um link assinado e curto, gerado pelo núcleo para aquela pessoa e sala, abre o guidu.chat. Lá, a pessoa vê a mesma sala, e o que acontece fora (pagamento confirmado) volta para a sala como mensagem. No WhatsApp, a mesma mensagem sai como texto, ou como botão com link quando a janela está aberta.
+
+O checkout e o mini app do guidu.chat são uma etapa própria, a **IN8**, com plano à parte. Ela depende do guidu.chat, do Portfólio e pedidos e do gateway (CF7 e P6). A IN7 só deixa o caminho pronto: a sala única, o contato por telefone e o formato das mensagens que saem e voltam.
 
 ## 1. O que você vai ver no fim
 
@@ -13,12 +28,10 @@
   - **Conectar com a Meta (Embedded Signup):** o dono ou admin clica, entra com a conta do Facebook da empresa, escolhe ou cria a conta do WhatsApp Business e o número, e volta para o console com o número ligado.
   - **Manual:** informa o número (o `phone_number_id` e a conta do WhatsApp Business) e o token permanente de usuário do sistema.
   - Nos dois, o console confere com a Meta e mostra o número e o nome verificado.
-- Para cada número, **onde ele atende**:
-  - **Agente direto:** o GUIDS responde sozinho, como no Chatwoot hoje, sem atendentes. Transferir só pausa o bot naquela conversa.
-  - **Inbox com agente:** cada conversa do WhatsApp vira uma conversa do Inbox. O GUIDS do Inbox responde enquanto ela está pendente, e a equipe assume, como na IN6.
-- **Trocar de lugar** é uma ação explícita e auditada. O histórico fica onde estava.
+- Para cada número, **quem responde**: **só o GUIDS** ou **o GUIDS com a equipe** (seção 0). As duas usam a sala do núcleo.
+- **Trocar** é uma ação explícita e auditada, e o histórico continua na sala.
 
-**No Inbox (rota "Inbox com agente")**
+**No Inbox (rota "GUIDS com a equipe")**
 
 - A conversa chega com o nome do perfil do WhatsApp e o telefone, ganha o contato do CRM (ligado pelo telefone quando ele já existe) e segue as regras da IN4b e da IN6: avisos, etiquetas, não lidas, GUIDS e transferência.
 - O que o atendente ou o GUIDS escrevem na sala **sai pelo WhatsApp**. Imagem, documento e áudio do cliente aparecem na conversa.
@@ -43,18 +56,20 @@
   - nome do perfil e `wa_id` como contato;
   - os status de entrega (`sent`, `delivered`, `read`, `failed`) viram eventos de entrega, sem acordar o agente.
 - **Envio (`ChannelOutbound`):** texto, modelo aprovado e marcar como lida. A capacidade `messagingWindow: "meta_24h"` entra no contrato. O núcleo guarda a última mensagem do cliente por conversa e recusa texto livre fora da janela, com erro explícito (canais.md, linha Meta).
-- **Despacho:** hoje o `channels.dispatch` está preso ao Chatwoot. A IN7a separa o que é do provedor (enviar, transferir) num adaptador, para a rota **agente direto** da Meta usar o mesmo turno da A5b.
+- **Sala para toda conversa:** a mensagem que chega vira mensagem na sala da pessoa (a parte de "contato como usuário virtual" e "uma sala por pessoa", descrita na IN7b abaixo, sobe para a IN7a). O GUIDS responde pelo turno da IN6 (`inbox.guids-turn`), e o que ele escreve sai pela Meta. Assim a rota "só o GUIDS" já funciona na IN7a, sem a equipe. O `channels.dispatch` do Chatwoot não muda.
 - **Modelos:** a lista dos modelos aprovados é lida da Graph API e guardada por pouco tempo (cache curto), para a tela.
 - **Testes:** uma Graph API falsa no rig (`MetaDouble`), a suíte de conformidade dos adaptadores (canais.md §2) e casos de assinatura, desafio, mensagem repetida e janela fechada.
 
-**IN7b: Inbox com a Meta (`src/core/matrix/`, módulo `inbox`)**
+**IN7b: a equipe na conversa da Meta (`src/core/matrix/`, módulo `inbox`)**
+
+Com a regra da seção 0, a sala e o contato passam para a IN7a. Ficam na IN7b: a rota "GUIDS com a equipe", a resposta do atendente pela Meta, os modelos na janela fechada, as falhas na conversa e a troca de rota. A descrição abaixo vale para as duas, cada peça na sua etapa.
 
 - **Rota do Inbox:** `channel_routes` com `consumer_module = 'inbox'`. O consumidor do Inbox não chama o agente: ele leva a mensagem para a sala.
 - **Contato como usuário virtual:**
-  - `@_guidu_c_<16 base32>` por contato e número, registrado pelo Application Service com o nome do perfil, como o endereço da loja e o usuário do agente.
-  - A tabela nova `matrix_channel_contacts` liga contato, conexão e usuário virtual.
+  - `@_guidu_c_<16 base32>` por pessoa e workspace (seção 0, regra 2), registrado pelo Application Service com o nome do perfil, como o endereço da loja e o usuário do agente.
+  - A tabela nova `matrix_contacts` liga a pessoa (telefone no workspace), o usuário virtual e os canais por onde ela fala (`channel_conversations` de cada número). O guidu.chat usará a mesma linha na IN8.
   - O namespace `@_guidu_.*` já é do Application Service.
-- **Uma sala por contato e número:**
+- **Uma sala por pessoa e loja:**
   - Reaproveita a sala aberta ou pendente (como o `openConsumerRoom`); conversa resolvida reabre como pendente (IN6).
   - Sala nova com `origin = 'meta'`, já permitido desde a IN3, ligada à `channel_conversations` por uma coluna nova em `matrix_rooms`.
   - O núcleo entra com o usuário do contato na sala (`forceJoin`) e publica a mensagem como ele.
@@ -65,7 +80,8 @@
   - Envio recusado (janela fechada, número inválido) vira um aviso na sala, visível só para a equipe.
   - A IN7b não envia mídia para a Meta.
 - **Modelos na janela fechada:** a caixa de mensagem pergunta ao servidor se a janela está aberta (última mensagem do cliente). Fechada, mostra só a escolha do modelo, com os campos de variável em texto. O envio vai pelo mesmo job.
-- **Troca de rota:** uma ação nova `switchChannelRoute`, com a permissão `channels.manage` e auditoria `channels.route.switch`, fecha a rota antiga e abre a nova na mesma transação. As conversas abertas seguem a regra da pergunta 6.
+- **Troca de rota:** uma ação nova `switchChannelRoute`, com a permissão `channels.manage` e auditoria `channels.route.switch`, troca "só o GUIDS" por "GUIDS com a equipe" e vice-versa. Nada sai da sala. Na volta para "só o GUIDS", as conversas abertas com a equipe voltam para o GUIDS (pendentes), com um aviso para quem estava nelas.
+- **Mensagem com link (preparação da IN8):** uma mensagem estruturada do núcleo (`chat.guidu.card`, com título, texto e link) que o Inbox mostra como cartão e que sai no WhatsApp como botão com link (mensagem interativa `cta_url`) quando a janela está aberta, ou como texto com o link. A IN7b só cria o formato e o envio; quem gera o checkout é a IN8.
 - **Testes:**
   - integração com o Synapse local e a Graph API falsa: entra mensagem, a sala nasce, o GUIDS responde e sai pela Meta, o atendente responde e sai, janela fechada recusa texto e aceita modelo, troca de rota;
   - e2e no `e2e-inbox`: conexão Meta (com a Graph API falsa), conversa chegando e resposta do atendente.
@@ -80,7 +96,7 @@ A IN7b depende da IN7a (o adaptador e o envio). Proposta: **IN7a primeiro, sozin
 
 ## 5. Fora da IN7 (vira dívida técnica em `docs/pendencias.md`)
 
-- Envio de mídia para o WhatsApp, reações, respostas citadas e botões interativos.
+- Envio de mídia para o WhatsApp, reações, respostas citadas e botões interativos (fora o botão com link da mensagem estruturada).
 - Criar ou editar modelos pelo console: são criados no WhatsApp Manager e só listados aqui.
 - GUIDS diferente por número: na v1 o GUIDS do Inbox atende todas as conversas do Inbox (IN6).
 - Áudio respondido em áudio pelo GUIDS.
@@ -93,9 +109,9 @@ A IN7b depende da IN7a (o adaptador e o envio). Proposta: **IN7a primeiro, sozin
 1. **Dividir em IN7a (adaptador e agente direto) e IN7b (Inbox com a Meta), nessa ordem?** Sim.
 2. **Como o número é ligado na v1?** Os dois: Embedded Signup e manual, na IN7a. Já há um número verificado para teste.
 3. **App secret e verify token da plataforma, em variáveis de ambiente?** Sim.
-4. **A rota "agente direto" da Meta entra na IN7a?** Sim.
+4. **A rota "agente direto" da Meta entra na IN7a?** Sim. Com a seção 0, ela vira "só o GUIDS", na sala (pergunta 13).
 5. **Mídia:** imagem, documento e áudio do cliente aparecem no Inbox; a equipe envia só texto e modelos. Sim.
-6. **Conversas em andamento quando o número muda de lugar** (reescrita, espera resposta). Um número atende num lugar de cada vez. Quando o dono troca o lugar, algumas conversas podem estar no meio:
+6. **Conversas em andamento quando o número muda de lugar.** Respondida pela seção 0: a conversa fica na sala, e a troca só muda quem responde. O texto abaixo era a pergunta original. Um número atende num lugar de cada vez. Quando o dono troca o lugar, algumas conversas podem estar no meio:
    - **Do "agente direto" para o Inbox.** Exemplo: a Maria está conversando com o GUIDS direto pelo WhatsApp e o dono muda o número para o Inbox. Proposta: a conversa dela com o agente direto termina ali, e a próxima mensagem da Maria já abre uma conversa no Inbox, onde o GUIDS do Inbox continua e a equipe pode assumir. O que foi dito antes fica no histórico do agente, não é copiado para o Inbox.
    - **Do Inbox para o "agente direto".** Exemplo: um atendente está no meio de uma conversa com a Maria no Inbox e o dono volta o número para o agente direto. Proposta: as conversas abertas no Inbox são marcadas como resolvidas, com um aviso para a equipe ("o número saiu do Inbox"), e a próxima mensagem da Maria vai para o agente direto.
    - Alternativa: não deixar trocar enquanto houver conversa aberta, e o dono resolve antes.
@@ -105,4 +121,8 @@ A IN7b depende da IN7a (o adaptador e o envio). Proposta: **IN7a primeiro, sozin
 9. **Marcar como lida na Meta?** Não na v1 (dívida).
 10. **Janela fechada: modelo aprovado com variáveis em texto?** Sim.
 11. **Variáveis no dev:** Sim.
-12. **Embedded Signup** (nova): o app da GUIDU já está como Tech Provider (ou parceiro de soluções) na Meta, com uma configuração do Login do Facebook para empresas do tipo "WhatsApp Embedded Signup"? Sem isso, o botão abre mas a Meta recusa. (Se ainda não estiver, a IN7a entrega o botão pronto e testado com a Graph API falsa, e o manual funciona já com o número de teste.)
+12. **Embedded Signup:** fica simulado por enquanto. A IN7a entrega o botão e o fluxo testados com a Graph API falsa; o ligar manual funciona com o número de teste.
+13. **A sala como casa de toda conversa do WhatsApp**, e a rota decidindo só quem responde ("só o GUIDS" ou "GUIDS com a equipe"), no lugar do "agente direto" pelo despacho do Chatwoot? Isso substitui as respostas 4 e 6. (Sim.)
+14. **Um fio por pessoa e loja**, pelo telefone, mesmo com dois números ou vindo depois pelo guidu.chat? (Sim.)
+15. **A rota "só o GUIDS" funciona sem o módulo Inbox ligado?** A sala existe no núcleo e o GUIDS responde, mas ninguém vê a conversa no console até ligar o Inbox; ao ligar, o histórico já está lá. (Sim. Sem o Inbox, o GUIDS do número é escolhido na tela do canal.)
+16. **Checkout e guidu.chat como etapa própria (IN8)**, com plano à parte, depois da IN7, e a IN7b entregando só a mensagem com link? (Sim.)
