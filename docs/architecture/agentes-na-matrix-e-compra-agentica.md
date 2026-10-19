@@ -88,17 +88,20 @@ Uma loja, um item com preço fixo, retirada na loja, sem desconto. O GUIDS só c
 
 ### 4.1 Tipos de sala
 
-| Tipo                                   | Membros                                                                                    | Para quê                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------- |
-| **Atendimento** (já existe, IN4 a IN7) | Consumidor, atendentes, o GUIDS do Inbox                                                   | Conversa da loja com o consumidor         |
-| **Operação** (nova, uma por workspace) | Dono, admins, atendentes, Assistente, especialistas e, no gerenciado, a equipe do parceiro | Trabalho interno da equipe com os agentes |
-| **Negócio** (nova, uma por negociação) | botmercado, GUIDS da loja, equipe da loja (assiste)                                        | Compra agêntica                           |
+| Tipo                                   | Membros                                                                                           | Para quê                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Atendimento** (já existe, IN4 a IN7) | Consumidor, atendentes, o GUIDS do Inbox                                                          | Conversa da loja com o consumidor         |
+| **Operação** (nova, uma por workspace) | Dono, admins, atendentes, Assistente, especialistas, GUIDS e, no gerenciado, a equipe do parceiro | Trabalho interno da equipe com os agentes |
+| **Negócio** (nova, uma por negociação) | botmercado, GUIDS da loja, equipe da loja (assiste)                                               | Compra agêntica                           |
 
 O tipo vai no `m.room.create` (campo `type`, por exemplo `chat.guidu.ops` e `chat.guidu.deal`) e no espelho do Supabase. As salas de operação e de negócio ficam fora das visões e dos avisos do Inbox.
 
 ### 4.2 Sala de operação
 
+Detalhada em [sala-de-operacao.md](sala-de-operacao.md). Decisão do Marcelo (19/10/2026): agentes e humanos juntos na sala, com os GUIDS incluídos, e todo agente só age quando é mencionado com @.
+
 - **Delegação em thread.** O Assistente delega (`delegate_to_specialist`, ADR 0019) e cada delegação abre uma thread (`m.thread`). O especialista mostra o andamento ali, e a linha principal recebe só o resumo e o resultado.
+- **Só com @.** Nenhum agente responde sem ser mencionado. O Assistente aciona um especialista mencionando-o na thread.
 - **Regra de roteamento.** Antes de agir, o Assistente verifica se algum especialista é dono da tarefa, pela descrição de uma linha de cada um. Se for, delega; senão, faz ele mesmo.
 - **Aprovação na sala.** O resultado chega como evento próprio com "Aprovar / Recusar". A proposta fica no Supabase (F4d) e o evento leva o id.
 - **Avisos.** Lead quente, transferência de GUIDS, pedido novo e rotina concluída chegam na sala, como novo destino da Central de Eventos (seção 9).
@@ -122,7 +125,7 @@ Hoje o Inbox aceita um GUIDS por workspace e o Chatwoot um agente por inbox. Par
 2. **Roteamento por regra.** Canal, horário ou um classificador de intenção, e uma ferramenta "passar para o agendador" entre GUIDS. Previsível, mas rígido.
 3. **GUIDS principal com sub-GUIDS.** A recepção delega e os outros trabalham por trás, sem falar com o consumidor. Vale quando um papel precisa de ferramentas, permissões ou modelos diferentes.
 
-Recomendação: começar pelo 1 e ir para o 3 quando um papel pedir ferramentas próprias. Os GUIDS reportam ao Assistente pela sala de operação. O Assistente supervisiona e sugere ajustes, mas nunca responde o consumidor.
+Recomendação: começar pelo 1 e ir para o 3 quando um papel pedir ferramentas próprias. Os GUIDS ficam na sala de operação com a equipe e o Assistente e respondem quando são mencionados. O Assistente supervisiona e sugere ajustes, mas nunca responde o consumidor.
 
 ## 5. Matrix nas janelas do painel
 
