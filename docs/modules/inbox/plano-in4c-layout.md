@@ -27,14 +27,14 @@ Deixar a janela com a estrutura em que as features do P1 vão entrar: as abas Co
 - **Esquerda:** botão que recolhe e abre a lista de conversas. Hoje isso é feito pelo `SidebarTrigger` e pelo Ctrl/⌘+B, com o cookie `inbox_sidebar_state`, e continua assim.
 - **Centro:** a busca global do painel (`ShellSearch`), a mesma do `AppShell`.
 - **Direita, nesta ordem:**
-  - **+ Novo:** menu com "Nova conversa", desligado com "em breve";
+  - **+ Novo:** menu com "Nova conversa", "Nova thread" e "Nova nota", os três desligados com "em breve";
   - **modo de cor:** o mesmo alternador do `ShellMain`;
   - **notificações:** o `NotificationBell`, com os dados de `loadNotificationBell`;
   - **quem atende:** avatar, nome e e-mail, com o menu do `NavUser` (perfil, idioma, sair).
 
 ### 3.2 Cabeçalho secundário (60 px, largura toda)
 
-- **Esquerda:** título "Inbox" e o subtítulo "Conversas da equipe" (ou o nome do workspace).
+- **Esquerda:** título "Inbox" e o subtítulo "Central de Atendimento - {nome do workspace}".
 - **Direita, ícones com dica:**
   - **IA:** situação do GUIDS da conversa aberta (ligado, com a equipe, sem GUIDS). Nesta etapa só mostra, com o mesmo dado do cartão do GUIDS;
   - **Pagamento:** espaço reservado da mensagem com link e do checkout (IN7b e IN8), desligado com "em breve";
@@ -76,7 +76,7 @@ Deixar a janela com a estrutura em que as features do P1 vão entrar: as abas Co
    - monta os dois cabeçalhos acima do `ResizablePanelGroup`;
    - o "Recolher" usa uma `panelRef` no painel de contexto, como a lista já usa;
    - a visão passa a ser controlada também pelo seletor de tipo.
-3. **Barra estreita (`sidebar-09`):** com as visões no seletor, ela fica sem função. Proposta: **sair**, e a volta ao dashboard ir para o menu ⋯ e para o "Voltar" do celular. Ver a pergunta 1.
+3. **Barra estreita (`sidebar-09`): sai** (decisão de 19/10/2026). As visões vão para o seletor e a volta ao dashboard vai para o menu ⋯ e para o "Voltar" do celular. O botão de recolher do cabeçalho primário e o Ctrl/⌘+B continuam recolhendo a lista, com o mesmo cookie.
 4. **Componentes novos** em `src/modules/inbox/components/`:
    - `inbox-header.tsx` (primário e secundário);
    - `list-filters.tsx` (os dois seletores);
@@ -106,8 +106,8 @@ Deixar a janela com a estrutura em que as features do P1 vão entrar: as abas Co
 - `e2e-inbox` verde no CI.
 - Capturas de tela em desktop, com o painel aberto e recolhido, e no celular, anexadas ao PR para o Marcelo aprovar o visual.
 
-## 7. Perguntas
+## 7. Respostas do Marcelo (19/10/2026)
 
-1. **Barra estreita da esquerda:** sai, com as visões no seletor e o dashboard no menu ⋯ (proposta), ou fica só com a volta ao dashboard?
-2. **"+ Novo":** só "Nova conversa" (em breve) ou mais itens, como "Nova thread" e "Nova nota"?
-3. **Subtítulo do cabeçalho secundário:** "Conversas da equipe" ou o nome do workspace?
+1. **Barra estreita da esquerda:** sai.
+2. **+ Novo:** "Nova conversa", "Nova thread" e "Nova nota", os três como espaço reservado por enquanto.
+3. **Subtítulo do cabeçalho secundário:** "Central de Atendimento - {nome do workspace}".
