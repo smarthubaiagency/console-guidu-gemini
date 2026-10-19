@@ -122,5 +122,41 @@
       "none": "Esta conversa não tem contato no CRM.",
       "linked": "Ligada a um contato do CRM."
     }
+  },
+  "header": {
+    "toggleList": "Recolher ou abrir a lista de conversas",
+    "new": "Novo",
+    "newConversation": "Nova conversa",
+    "newThread": "Nova thread",
+    "newNote": "Nova nota",
+    "soon": "Em breve",
+    "title": "Inbox",
+    "subtitle": "Central de Atendimento - {workspace}",
+    "ai": "GUIDS da conversa",
+    "payment": "Pagamento (em breve)",
+    "toggleContext": "Recolher ou abrir o painel de contexto",
+    "options": "Opções do Inbox",
+    "settings": "Configurações do Inbox",
+    "attendant": "Atendente",
+    "reader": "Só leitura"
+  },
+  "filters": {
+    "type": "Tipo de conversa",
+    "channels": "Canais",
+    "allChannels": "Todos os canais",
+    "channelsSoon": "O filtro por canal chega em breve"
+  },
+  "tabs": {
+    "label": "Painel de contexto",
+    "contact": "Contato",
+    "threads": "Threads",
+    "threadsTitle": "Nenhuma thread ainda",
+    "threadsDescription": "As threads da equipe sobre esta conversa aparecem aqui."
+  },
+  "composer": {
+    "hint": "Escreva uma mensagem. Enter envia, Shift+Enter quebra a linha.",
+    "attach": "Anexar arquivo (em breve)",
+    "emoji": "Emoji (em breve)",
+    "more": "Mais opções (em breve)"
   }
 }

@@ -1,19 +1,12 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Bot, Handshake, Moon, ShieldCheck, Sun } from "lucide-react";
+import { Bot, Handshake, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   WorkbenchDrawer,
   WorkbenchPanel,
@@ -27,40 +20,10 @@ import type { NavSection } from "@/core/module-runtime/navigation";
 import type { NotificationBellData } from "@/core/notifications/bell";
 import { cn } from "@/lib/utils";
 
+import { HeaderAction, ThemeToggle } from "./header-action";
 import { NotificationBell } from "./notification-bell";
 import { ShellBreadcrumb } from "./shell-breadcrumb";
 import { ShellSearch } from "./shell-search";
-
-const subscribe = () => () => {};
-
-function HeaderAction({
-  label,
-  testId,
-  children,
-  ...props
-}: Readonly<{
-  label: string;
-  testId: string;
-  children: React.ReactNode;
-}> &
-  Omit<React.ComponentProps<typeof Button>, "children">) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={label}
-          data-testid={testId}
-          {...props}
-        >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
 
 /**
  * Content side of the shell (ADR 0014): the 60px header (trigger and
@@ -83,15 +46,6 @@ export function ShellMain({
   children: React.ReactNode;
 }>) {
   const t = useTranslations("shell");
-  const tu = useTranslations("ui");
-  const { resolvedTheme, setTheme } = useTheme();
-  // The stored theme is only known in the browser: false while hydrating.
-  const mounted = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false,
-  );
-  const isDark = mounted && resolvedTheme === "dark";
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantSize, setAssistantSize] =
     useState<WorkbenchPanelSize>("default");
@@ -129,13 +83,7 @@ export function ShellMain({
           </div>
           <div className="flex items-center justify-end gap-1 md:flex-1">
             <NotificationBell data={bell} />
-            <HeaderAction
-              label={isDark ? tu("themeLight") : tu("themeDark")}
-              testId="theme-toggle"
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-            >
-              {isDark ? <Sun /> : <Moon />}
-            </HeaderAction>
+            <ThemeToggle />
             <HeaderAction
               label={t("assistant")}
               testId="assistant-toggle"

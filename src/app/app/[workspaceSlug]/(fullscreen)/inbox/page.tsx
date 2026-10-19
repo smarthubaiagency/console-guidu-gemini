@@ -12,15 +12,23 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { requireUserPage } from "@/core/auth/page-guard";
+import { getModuleCatalog } from "@/core/i18n/modules";
+import { translateNavigation } from "@/core/i18n/navigation";
 import { requestWorkspaceSync } from "@/core/matrix";
+import { loadAppNavigation } from "@/core/module-runtime/loaders";
 import { resolveModulePageAccess } from "@/core/module-runtime/page-access";
+import { loadNotificationBell } from "@/core/notifications/bell";
 import { resolveRequestWorkspaceContext } from "@/core/partners/request-context";
 import { Permissions } from "@/core/permissions/catalog";
 import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { InboxShell } from "@/modules/inbox/components/inbox-shell";
 import { loadInboxViewer } from "@/modules/inbox/server/access";
-import { INBOX_SIDEBAR_COOKIE, isInboxView } from "@/modules/inbox/views";
+import {
+  INBOX_SIDEBAR_COOKIE,
+  isContextTab,
+  isInboxView,
+} from "@/modules/inbox/views";
 
 export async function generateMetadata() {
   const t = await getTranslations("inbox");
@@ -29,7 +37,7 @@ export async function generateMetadata() {
 
 interface InboxPageProps {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ view?: string; room?: string }>;
+  searchParams: Promise<{ view?: string; room?: string; tab?: string }>;
 }
 
 /**
@@ -103,6 +111,21 @@ export default async function InboxPage({
     );
   }
 
+  // What the two headers need (IN4c): the panel's navigation for the
+  // search, the notices and the account, as the AppShell loads them.
+  const [navigation, bell, tInbox] = await Promise.all([
+    loadAppNavigation(prisma, context, workspaceSlug).then(async (items) =>
+      translateNavigation(
+        items,
+        "app",
+        await getTranslations("nav"),
+        (await getModuleCatalog()).entryLabel,
+      ),
+    ),
+    loadNotificationBell(identity.userId),
+    getTranslations("inbox.header"),
+  ]);
+
   const cookieStore = await cookies();
   // Who only reads has nothing of their own: they start on "Todas".
   const view = isInboxView(query.view)
@@ -123,6 +146,16 @@ export default async function InboxPage({
       defaultOpen={cookieStore.get(INBOX_SIDEBAR_COOKIE)?.value !== "false"}
       initialView={view}
       initialRoomId={room}
+      initialTab={isContextTab(query.tab) ? query.tab : "contact"}
+      sections={navigation}
+      bell={bell}
+      user={{
+        email: identity.email,
+        role:
+          data.viewer.level === "reply"
+            ? tInbox("attendant")
+            : tInbox("reader"),
+      }}
     />
   );
 }

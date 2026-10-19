@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, PanelRight, SendHorizontal } from "lucide-react";
+import { ArrowLeft, PanelRight } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import type { MatrixClient, Room } from "matrix-js-sdk";
 
@@ -15,17 +15,18 @@ import {
 } from "@/components/ui/empty";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 import { memberName, timeline, typingNames } from "../client/room-data";
 import type { MatrixPhase } from "../client/use-inbox-matrix";
 import type { ConversationSummary } from "../views";
+import { Composer } from "./composer";
 import type { InboxViewer } from "./types";
 
 /**
  * The open conversation (IN4a): the timeline of the room, who is typing,
- * the consumer's presence and the message box. Who only reads (an owner
+ * the consumer's presence and the message box (IN4c: in the shape of the
+ * AI agent chats). Who only reads (an owner
  * or admin who is not an attendant) sees no box: the room does not let
  * them send either (power 0).
  */
@@ -248,37 +249,13 @@ export function ConversationView({
       </ScrollArea>
 
       {viewer.level === "reply" ? (
-        <form
-          className="border-border flex items-end gap-2 border-t p-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void send();
-          }}
-        >
-          <Textarea
-            value={draft}
-            onChange={(event) => onDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                void send();
-              }
-            }}
-            rows={2}
-            placeholder={t("messagePlaceholder")}
-            aria-label={t("messagePlaceholder")}
-            disabled={!canSend}
-            className="max-h-40 min-h-10 resize-none"
-          />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!canSend || sending || !draft.trim()}
-            aria-label={t("send")}
-          >
-            <SendHorizontal />
-          </Button>
-        </form>
+        <Composer
+          value={draft}
+          onChange={onDraft}
+          onSend={() => void send()}
+          disabled={!canSend}
+          sending={sending}
+        />
       ) : (
         <p
           className="border-border text-12 text-text-secondary border-t p-3"

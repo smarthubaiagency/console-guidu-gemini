@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/native-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 import {
@@ -35,15 +34,18 @@ import {
   unreadCount,
 } from "../client/room-data";
 import type { ConversationPage, InboxView } from "../views";
+import { ListFilters } from "./list-filters";
 import { StatusBadge } from "./status-badge";
 
 /**
  * The list of a view (IN4a): the conversations come from the mirror in the
  * database; the last message and the names come from the attendant's
- * Matrix client, and the list is ordered by the last message.
+ * Matrix client, and the list is ordered by the last message. Since the
+ * IN4c the view is chosen in the selectors above the search.
  */
 export function ConversationList({
   view,
+  onView,
   page,
   search,
   onSearch,
@@ -57,6 +59,7 @@ export function ConversationList({
   onLabel,
 }: Readonly<{
   view: InboxView;
+  onView: (view: InboxView) => void;
   page: ConversationPage | null;
   search: string;
   onSearch: (value: string) => void;
@@ -108,18 +111,12 @@ export function ConversationList({
       aria-label={t("listLabel")}
       data-testid="inbox-list"
     >
-      <header className="border-border flex h-15 shrink-0 items-center gap-2 border-b px-3">
-        <SidebarTrigger className="hidden md:inline-flex" />
-        <h1 className="text-14 text-text font-semibold">
-          {t(`views.${view}`)}
-        </h1>
-        {page ? (
-          <Badge variant="neutral" data-testid="inbox-count">
-            {page.counts[view]}
-          </Badge>
-        ) : null}
-      </header>
       <div className="border-border space-y-2 border-b p-3">
+        <ListFilters
+          view={view}
+          counts={page?.counts ?? null}
+          onView={onView}
+        />
         <InputGroup>
           <InputGroupAddon>
             <Search />
