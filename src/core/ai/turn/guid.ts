@@ -15,6 +15,7 @@ import type { AIProvider } from "@/core/credentials/vault";
 import { resolveQuota } from "@/core/entitlements/quotas";
 import { defineDetachedJob, type JobSession } from "@/core/jobs/definition";
 import { SkipJobError } from "@/core/jobs/errors";
+import type { ContactLocale } from "@/core/matrix/locale";
 import { assertModuleOperational } from "@/core/module-runtime/state";
 import { ModuleUnavailableError } from "@/core/modules/availability";
 import { Permissions } from "@/core/permissions/catalog";
@@ -52,6 +53,7 @@ import {
   recordRefusedCall,
   type ToolEnv,
 } from "../tools/catalog";
+import { contactLocaleInstruction } from "./contact-locale";
 import { contextValues, turnTimeZone } from "./context";
 import { withRegionTimeZone } from "./region";
 import {
@@ -121,6 +123,8 @@ export type GuidTurnDeps = Readonly<{
   now?: () => Date;
   /** Shape of the answer on a channel (A5b, the integration's settings). */
   answerLimits?: Readonly<{ maxMessages: number; maxChars: number }>;
+  /** The contact's language, known by the room (TR1); null: unknown. */
+  contactLocale?: ContactLocale | null;
   /** Files the contact sent with the message (A5c, channels). */
   media?: readonly TurnAttachment[];
   createTranscription?: TranscriptionFactory;
@@ -692,6 +696,9 @@ export async function runGuidTurnWithState(
     ...(deps.answerLimits
       ? [limitsInstruction(env.locale, deps.answerLimits)]
       : []),
+    ...[contactLocaleInstruction(env.locale, deps.contactLocale)].filter(
+      (note): note is string => note !== null,
+    ),
   ].join("\n\n");
   const answerOnce = async (key: TurnKey, messages: ModelMessage[]) => {
     const result = await generateText({

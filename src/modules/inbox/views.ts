@@ -19,6 +19,10 @@ export type ConversationSummary = Readonly<{
   assignee: string | null;
   consumerMxid: string | null;
   consumerName: string | null;
+  /** The contact's language (TR1): pt-BR, en or es; null while unknown. */
+  contactLocale: "pt-BR" | "en" | "es" | null;
+  /** Set by the team: the detection no longer changes it. */
+  contactLocaleManual: boolean;
   updatedAt: string;
   /** Labels on the conversation (IN4b). */
   labelIds: readonly string[];

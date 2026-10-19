@@ -166,5 +166,23 @@
     "attach": "Adjuntar archivo (próximamente)",
     "emoji": "Emoji (próximamente)",
     "more": "Más opciones (próximamente)"
+  },
+  "locale": {
+    "change": "Idioma del contacto",
+    "unknown": "Idioma",
+    "saved": "Idioma del contacto: {language}. El GUIDS responde en él desde el próximo mensaje.",
+    "sourceDetected": "Detectado por los mensajes del contacto",
+    "sourceManual": "Definido por el equipo",
+    "sourceUnknown": "Aún no detectado",
+    "names": {
+      "pt-BR": "Portugués",
+      "en": "Inglés",
+      "es": "Español"
+    },
+    "short": {
+      "pt-BR": "PT",
+      "en": "EN",
+      "es": "ES"
+    }
   }
 }

@@ -3,6 +3,7 @@ import "server-only";
 import type { GuidTurnDeps } from "@/core/ai/turn/guid";
 import { TURN_LIMITS } from "@/core/ai/turn/types";
 import type { JobSession } from "@/core/jobs/definition";
+import type { ContactLocale } from "@/core/matrix/locale";
 import { assertModuleOperational } from "@/core/module-runtime/state";
 import { ModuleUnavailableError } from "@/core/modules/availability";
 import type {
@@ -40,6 +41,8 @@ export type HubTurnInput = Readonly<{
   context: readonly TurnContextLine[];
   /** Shape of the answer (the hub's service rules). */
   limits: Readonly<{ maxMessages: number; maxChars: number }>;
+  /** The contact's language, known by the room (TR1); null: unknown. */
+  contactLocale?: ContactLocale | null;
 }>;
 
 export type HubTurnPlan = Readonly<{
@@ -74,6 +77,7 @@ export async function runTurn(
       contactEvents: [],
       limits: input.limits,
       voiceReply: false,
+      contactLocale: input.contactLocale ?? null,
     },
     deps,
   );

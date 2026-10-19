@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/native-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { ContactLocale } from "@/core/matrix/locale";
 import { cn } from "@/lib/utils";
 
 import {
@@ -55,6 +56,7 @@ export function ConversationList({
   revision,
   me,
   address,
+  workspaceLocale,
   labelId,
   onLabel,
 }: Readonly<{
@@ -69,6 +71,8 @@ export function ConversationList({
   revision: number;
   me: string | null;
   address: string | null;
+  /** A contact in another language gets a mark (TR1). */
+  workspaceLocale: ContactLocale;
   /** Only conversations with this label (IN4b). */
   labelId: string | null;
   onLabel: (labelId: string | null) => void;
@@ -192,6 +196,16 @@ export function ConversationList({
                   </span>
                   <span className="flex items-center gap-2">
                     <StatusBadge status={row.status} />
+                    {row.contactLocale &&
+                    row.contactLocale !== workspaceLocale ? (
+                      <Badge
+                        variant="neutral"
+                        title={t(`locale.names.${row.contactLocale}`)}
+                        data-testid="inbox-row-locale"
+                      >
+                        {t(`locale.short.${row.contactLocale}`)}
+                      </Badge>
+                    ) : null}
                     <span className="text-11 text-text-tertiary truncate">
                       {row.assigneeName
                         ? t("assignedTo", { name: row.assigneeName })

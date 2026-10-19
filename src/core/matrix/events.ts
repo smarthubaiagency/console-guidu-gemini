@@ -6,6 +6,7 @@ import { onConsumerMessage } from "./agent";
 import { enqueueMetaSend } from "./meta";
 import { coreUserId, isNamespaceUser } from "./config";
 import { ATTENDANT_LOCALPART } from "./jwt";
+import { detectContactLocale, isContactLocale } from "./locale";
 import { runRoomAssigned, runRoomHandedOff } from "./room-hooks";
 import {
   CONVERSATION_STATE,
@@ -21,7 +22,7 @@ import {
  * The route reduces each event to the few fields processing reads, and
  * drops every other type: the messages stay in Synapse (ADR 0023, rule 6).
  * A message is kept only as a mark (IN4b): who sent it, when, and its
- * kind, never the text.
+ * kind, never the text; with TR1, also the language guessed from it.
  */
 
 export type ReducedEvent = Readonly<{
@@ -40,6 +41,26 @@ function text(value: unknown, max = 255): string | null {
   return typeof value === "string" && value.length > 0 && value.length <= max
     ? value
     : null;
+}
+
+const TEXT_TYPES = ["m.text", "m.notice", "m.emote"];
+
+/**
+ * TR1: the language of a text message, guessed here, in memory, as the
+ * event arrives; only the guess is kept (`locale`, `locale_confidence`),
+ * never the text.
+ */
+function localeOf(content: Record<string, unknown>): Record<string, string> {
+  if (
+    typeof content.body !== "string" ||
+    !TEXT_TYPES.includes(String(content.msgtype))
+  ) {
+    return {};
+  }
+  const guess = detectContactLocale(content.body.slice(0, 4000));
+  return guess
+    ? { locale: guess.locale, locale_confidence: String(guess.confidence) }
+    : {};
 }
 
 export function reduceEvent(raw: unknown): ReducedEvent | null {
@@ -70,7 +91,7 @@ export function reduceEvent(raw: unknown): ReducedEvent | null {
       state_key: null,
       sender,
       origin_server_ts: ts,
-      content: { msgtype: text(content.msgtype, 40) },
+      content: { msgtype: text(content.msgtype, 40), ...localeOf(content) },
     };
   }
   if (
@@ -352,6 +373,28 @@ async function handleEvent(
       at,
       room.id,
     );
+    // TR1: the contact's language, guessed as the event arrived (the text
+    // never reaches the database). A language set by the team stays.
+    const locale = isContactLocale(content.locale) ? content.locale : null;
+    const confidence = Number(content.locale_confidence);
+    if (
+      side === "consumer" &&
+      locale &&
+      Number.isFinite(confidence) &&
+      confidence >= 0 &&
+      confidence <= 1
+    ) {
+      await tx.$executeRaw`
+        update public.matrix_rooms
+        set contact_locale = ${locale},
+            contact_locale_source = 'detected',
+            contact_locale_confidence = ${confidence}::real
+        where id = ${room.id}::uuid
+          and contact_locale_source is distinct from 'manual'
+          and (contact_locale is distinct from ${locale}
+            or contact_locale_confidence is distinct from ${confidence}::real)
+      `;
+    }
     // IN6: the GUIDS's turn, and a resolved conversation back to pending.
     if (side === "consumer" && room.state === "active") {
       await onConsumerMessage(
@@ -366,7 +409,7 @@ async function handleEvent(
       (side === "team" || side === "agent") &&
       room.state === "active" &&
       room.channelConversationId &&
-      ["m.text", "m.notice", "m.emote"].includes(String(content.msgtype))
+      TEXT_TYPES.includes(String(content.msgtype))
     ) {
       await enqueueMetaSend(tx, event.roomId, event.eventId);
     }

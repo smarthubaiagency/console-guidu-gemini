@@ -1,6 +1,6 @@
 # Plano da dupla GF1 e TR1
 
-- **Estado:** perguntas respondidas em 19/10/2026. Começa depois do "pode começar" do Marcelo.
+- **Estado:** GF1 e TR1 implementadas em 19/10/2026, no branch `ccr-ed3546ff-aihxh0`, esperando o PR. Os ajustes feitos na implementação estão em "Como ficou" de cada etapa.
 - **Data:** 19/10/2026
 - **Origem:** [prioridades](prioridades-agentes-e-inbox.md), P1: a dupla da vez.
 - **Trabalho em paralelo:** duas etapas, cada uma com branch, PR, banco local e portas próprios (`AGENTS.md`). As duas não mexem nos mesmos arquivos.
@@ -125,6 +125,14 @@ Cada conversa sabe o idioma do contato (pt-BR, en ou es), detectado sozinho e co
   - o texto não aparece em nenhuma tabela;
   - o GUIDS recebe a linha do idioma.
 - **e2e** (`e2e/inbox.spec.ts`): o consumidor escreve em espanhol, o chip mostra Espanhol, e o atendente corrige para português.
+
+### Como ficou (TR1)
+
+- **Detecção na entrada do evento:** o texto da mensagem já é descartado na rota do Application Service (`reduceEvent`), antes do banco. Por isso o idioma é detectado ali, em memória, e o evento guarda só `locale` e `locale_confidence`. O worker grava o idioma em `matrix_rooms` ao processar o evento, sem mexer no idioma manual.
+- **Banco:** o check de `matrix_events` passou a aceitar, numa mensagem, só `msgtype`, `locale` e `locale_confidence`. Qualquer outra chave é recusada, não só `body`. A correção do console tem uma política própria (`matrix_rooms_contact_locale`): só quem responde, só no workspace do contexto, só as três colunas e só como `manual`.
+- **GUIDS:** a nota vai para as instruções do turno, no idioma do agente, por exemplo "O contato escreve em espanhol. Responda ao contato em espanhol; notas, resumos e mensagens à equipe continuam em português." (`src/core/ai/turn/contact-locale.ts`).
+- **Interface:** o chip usa o ícone de idiomas em vez da bandeira, que não aparece igual em todos os sistemas. O selo da lista mostra a sigla (ES, EN, PT).
+- **Testes:** o teste de integração ficou na suíte do IN6 (`tests/core/inbox-guids.test.ts`), que já tem o Synapse e o turno do GUIDS. As regras do banco estão em `tests/core/inbox-context-rls.sql`. No e2e, o atendente corrige para inglês.
 
 ## Aceite das duas
 
