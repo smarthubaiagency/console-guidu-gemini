@@ -93,14 +93,17 @@ Pagamento, carrinho e pedido não começam antes da decisão jurídica e comerci
 
 ## 6. Respostas que fecharam perguntas
 
-| Pergunta                                      | Resposta                                     |
-| --------------------------------------------- | -------------------------------------------- |
-| Os GUIDS de fábrica contam no limite?         | Sim. Limite inicial de 4 GUIDS por workspace |
-| Idioma da equipe por workspace ou por pessoa? | Por workspace                                |
-| Google Translate Basic ou Advanced?           | Basic (v2, chave de API)                     |
+| Pergunta                                      | Resposta                                                        |
+| --------------------------------------------- | --------------------------------------------------------------- |
+| Os GUIDS de fábrica contam no limite?         | Sim. Limite inicial de 4 GUIDS por workspace                    |
+| Idioma da equipe por workspace ou por pessoa? | Por workspace                                                   |
+| Google Translate Basic ou Advanced?           | Basic (v2, chave de API)                                        |
+| Quem entra na sala de bastidor?               | Todos os GUIDS do workspace, além da equipe com acesso ao Inbox |
+| Idiomas do piloto                             | Português, inglês e espanhol                                    |
+| Limite de tradução                            | Nenhum limite nosso: vale o limite da chave do cliente          |
 
 ## 7. Perguntas que continuam abertas
 
-1. **Na P1:** na sala de bastidor entram todos os atendentes do workspace ou só quem participa da conversa? Quais idiomas no piloto, além de espanhol e inglês? O limite diário de tradução é do cliente ou do plano?
+1. **Na P1:** nenhuma; as três foram respondidas em 19/10/2026 (seção 6).
 2. **Na P2:** editor e leitor entram na sala de operação? Histórico desde a entrada ou desde a criação? GUIDS pausado continua na sala? Quanto o @ops lê das conversas dos GUIDS?
 3. **Em espera:** as perguntas da compra agêntica (seção 11 do [documento principal](agentes-na-matrix-e-compra-agentica.md)).

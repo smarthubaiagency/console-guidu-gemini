@@ -9,6 +9,8 @@
   - ao ativar, o cliente escolhe o **modelo de IA** ou o **Google Translate**, informando as credenciais do Google se ainda não estiverem cadastradas;
   - o **Google Translate entra como fallback**, na versão **Basic** (v2, só com chave de API);
   - **um idioma por workspace** para a equipe;
+  - idiomas do piloto: **português, inglês e espanhol**;
+  - **sem limite nosso** de tradução: vale o limite da chave do cliente;
   - prioridade **P1** ([prioridades](../../architecture/prioridades-agentes-e-inbox.md)).
 - **Relaciona-se com:** [ADR 0013](../../adr/0013-idiomas-do-painel.md) (idiomas do painel), [ADR 0017](../../adr/0017-sdk-dos-agentes-de-ia.md) (motor), [ADR 0023](../../adr/0023-chat-interno-como-cliente-matrix.md) (Inbox na Matrix), [plano de idiomas](../../operacao/plano-i18n.md) (I6), [agentes na Matrix](../../architecture/agentes-na-matrix-e-compra-agentica.md).
 
@@ -120,7 +122,7 @@ Políticas iguais às do Inbox: quem tem `inbox.view` lê, e só o worker grava.
 3. **O texto traduzido é dado.** Uma instrução escrita pelo lead ("ignore as instruções…") não muda nada no tradutor nem no GUIDS.
 4. **Privacidade:** as mensagens passam pelo provedor escolhido pelo cliente, com a chave dele. A política de privacidade e os termos do cliente precisam informar isso.
 5. **Credenciais:** a chave do Google fica no cofre, nunca em log, prompt, auditoria ou tela sem máscara. Gravar exige `inbox.manage`.
-6. **Custo:** limite diário de caracteres e tokens por workspace, com aviso ao se aproximar.
+6. **Custo:** sem limite nosso (decisão de 19/10/2026). Vale o limite da chave do cliente no provedor; quando a chave recusa por cota, entra o fallback e o Inbox avisa.
 
 ## 10. Etapas
 
@@ -138,6 +140,6 @@ Com TR1 a TR3, o piloto de Búzios já funciona com texto.
 ## 11. Perguntas
 
 1. ~~O idioma da equipe é por workspace ou por pessoa?~~ **Respondida (19/10/2026):** por workspace.
-2. Quais idiomas no piloto: espanhol e inglês, ou também outros?
-3. O limite diário de tradução é configurado pelo cliente ou definido pelo plano?
+2. ~~Quais idiomas no piloto?~~ **Respondida (19/10/2026):** português, inglês e espanhol.
+3. ~~Limite diário de tradução?~~ **Respondida (19/10/2026):** sem limite nosso; vale o da chave do cliente.
 4. ~~Google Translate Basic ou Advanced?~~ **Respondida (19/10/2026):** Basic (v2, chave de API).

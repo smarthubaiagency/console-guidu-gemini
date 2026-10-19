@@ -147,7 +147,7 @@ Numa sala de atendimento, o consumidor é membro e recebe todos os eventos, thre
 **Sala de bastidor:**
 
 - Criada pelo núcleo na primeira vez que alguém abre uma thread interna naquela conversa. Fica ligada à sala de atendimento no espelho do Supabase (`backstage_room_id`).
-- **Membros:** a equipe com acesso ao Inbox daquele workspace, o @ops e os GUIDS. O consumidor nunca.
+- **Membros:** a equipe com acesso ao Inbox daquele workspace e **todos os GUIDS** do workspace (decisão de 19/10/2026), incluindo o @ops. O consumidor nunca.
 - **Na interface,** aparece no Inbox ao lado da timeline como **"Threads desta conversa (n)"**. Cada demanda vira uma thread ("orçamento de 30 peças").
 - **O resultado volta à conversa só por um humano:** uma mensagem sugerida é inserida e enviada pelo atendente, e uma cotação passa por proposta.
 - **Aparece na operação:** cada thread do bastidor vira uma tarefa visível na sala de operação, com a origem "conversa X", e o @ops enxerga tudo.
@@ -285,4 +285,4 @@ CA e AM podem andar em paralelo até a CA4, que precisa da AM1. A tradução é 
 6. No gerenciado, a equipe do parceiro entra nas salas internas de todos os workspaces da empresa?
 7. Quanto o @ops pode ler das conversas dos GUIDS: só resumos e eventos, ou o histórico inteiro?
 8. ~~Os quatro GUIDS de fábrica contam no limite do plano?~~ **Respondida (19/10/2026):** sim, com limite inicial de 4 GUIDS por workspace.
-9. Na sala de bastidor entram todos os atendentes do workspace ou só quem participa daquela conversa?
+9. ~~Quem entra na sala de bastidor?~~ **Respondida (19/10/2026):** todos os GUIDS do workspace, além da equipe com acesso ao Inbox.
