@@ -7,7 +7,9 @@
   - a tradução usa a **chave do cliente**;
   - nas configurações do chat há a opção **"Ativar tradução do chat em tempo real"**;
   - ao ativar, o cliente escolhe o **modelo de IA** ou o **Google Translate**, informando as credenciais do Google se ainda não estiverem cadastradas;
-  - o **Google Translate entra como fallback**.
+  - o **Google Translate entra como fallback**, na versão **Basic** (v2, só com chave de API);
+  - **um idioma por workspace** para a equipe;
+  - prioridade **P1** ([prioridades](../../architecture/prioridades-agentes-e-inbox.md)).
 - **Relaciona-se com:** [ADR 0013](../../adr/0013-idiomas-do-painel.md) (idiomas do painel), [ADR 0017](../../adr/0017-sdk-dos-agentes-de-ia.md) (motor), [ADR 0023](../../adr/0023-chat-interno-como-cliente-matrix.md) (Inbox na Matrix), [plano de idiomas](../../operacao/plano-i18n.md) (I6), [agentes na Matrix](../../architecture/agentes-na-matrix-e-compra-agentica.md).
 
 ## 1. O que resolve
@@ -31,7 +33,7 @@ Em **Configurações › Módulos › Inbox**, um bloco **Tradução**:
    - **Modelo de IA (sua chave):** o cliente escolhe uma das chaves de IA do cofre do workspace e o modelo. A tela sugere um modelo rápido e barato do provedor.
    - **Google Translate:** se não houver credencial cadastrada, a tela pede a **chave de API do Google Cloud Translation**, que vai para o cofre do workspace, cifrada e mostrada mascarada, com "Testar" como nas chaves de IA.
 3. **Fallback:** o outro motor, opcional. Com os dois configurados, a combinação recomendada é **modelo de IA como principal e Google Translate como fallback**.
-4. **Idioma da equipe:** o padrão do workspace (`workspaces.default_locale`). Depois, por pessoa (`profiles.locale`).
+4. **Idioma da equipe:** um por workspace, o padrão do workspace (`workspaces.default_locale`). Decisão de 19/10/2026.
 5. **Glossário:** termos que não são traduzidos (Geribá, Ferradura, Rua das Pedras, nome da loja e dos produtos) e termos com tradução fixa.
 
 Sem nenhum motor válido, o interruptor não liga. Se a chave falhar depois de ligado, a tela e o Inbox avisam, como no backup da A2c.
@@ -135,7 +137,7 @@ Com TR1 a TR3, o piloto de Búzios já funciona com texto.
 
 ## 11. Perguntas
 
-1. O idioma da equipe é por workspace ou por pessoa desde o início?
+1. ~~O idioma da equipe é por workspace ou por pessoa?~~ **Respondida (19/10/2026):** por workspace.
 2. Quais idiomas no piloto: espanhol e inglês, ou também outros?
 3. O limite diário de tradução é configurado pelo cliente ou definido pelo plano?
-4. Google Translate Basic (só chave de API) basta, ou já vale o Advanced com glossário?
+4. ~~Google Translate Basic ou Advanced?~~ **Respondida (19/10/2026):** Basic (v2, chave de API).

@@ -251,7 +251,7 @@ ADRs novas propostas:
 
 ## 10. Roadmap
 
-Os nomes das etapas são provisórios.
+Os nomes das etapas são provisórios. A ordem de execução está em [prioridades-agentes-e-inbox.md](prioridades-agentes-e-inbox.md): P1 é o Inbox e os GUIDS de fábrica, P2 a sala de operação e P3 as janelas. O guidu.chat com modo loja e a compra agêntica ficam em espera, com a tomada pronta. A AM4 virou a SB1, no P1.
 
 | Etapa         | Entrega                                                                                                                      | Depende de                         |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
@@ -284,5 +284,5 @@ CA e AM podem andar em paralelo até a CA4, que precisa da AM1. A tradução é 
 5. A sala de operação é uma por workspace ou uma por empresa?
 6. No gerenciado, a equipe do parceiro entra nas salas internas de todos os workspaces da empresa?
 7. Quanto o @ops pode ler das conversas dos GUIDS: só resumos e eventos, ou o histórico inteiro?
-8. Os quatro GUIDS de fábrica contam como quatro no limite do plano, ou o pacote de fábrica fica fora do limite?
+8. ~~Os quatro GUIDS de fábrica contam no limite do plano?~~ **Respondida (19/10/2026):** sim, com limite inicial de 4 GUIDS por workspace.
 9. Na sala de bastidor entram todos os atendentes do workspace ou só quem participa daquela conversa?

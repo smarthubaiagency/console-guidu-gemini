@@ -1,6 +1,6 @@
 # Sala de operação
 
-- **Status:** Proposta para discussão. Nada aqui foi implementado.
+- **Status:** Proposta para discussão. Nada aqui foi implementado. Prioridade **P2**; a fundação (tipos de sala, regra do @, threads) chega antes, na SB1 do P1 ([prioridades](prioridades-agentes-e-inbox.md)).
 - **Data:** 19/10/2026
 - **Origem:** conversa de Marcelo com o Claude em 19/10/2026. Detalha a seção 4.3 de [agentes-na-matrix-e-compra-agentica.md](agentes-na-matrix-e-compra-agentica.md).
 - **Decisões do Marcelo (19/10/2026):**
