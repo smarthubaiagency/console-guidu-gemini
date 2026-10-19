@@ -62,7 +62,15 @@
     "take": "Tomar",
     "resolve": "Resolver",
     "reopen": "Reabrir",
-    "assign": "Asignar a"
+    "assign": "Asignar a",
+    "title": "Acciones de la conversación",
+    "assignee": "Agente asignado",
+    "assignToMe": "Asignarme",
+    "team": "Equipo asignado",
+    "noTeam": "Ninguno",
+    "priority": "Prioridad",
+    "noPriority": "Ninguna",
+    "soon": "Próximamente"
   },
   "done": {
     "take": "Conversación tomada.",

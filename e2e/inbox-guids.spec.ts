@@ -20,6 +20,7 @@
 import {
   type APIRequestContext,
   expect,
+  type Locator,
   type Page,
   test,
 } from "@playwright/test";
@@ -36,6 +37,14 @@ import { matrixE2eEnv, MatrixConsumers } from "./support/matrix";
 import { statusBanner } from "./support/status";
 
 const env = matrixE2eEnv();
+
+/** Opens a closed section of the "Contato" tab (accordion, IN4c). */
+async function openSection(section: Locator): Promise<void> {
+  const trigger = section.locator('[data-slot="accordion-trigger"]');
+  if ((await trigger.getAttribute("aria-expanded")) !== "true") {
+    await trigger.click();
+  }
+}
 
 test.skip(!env, "sem Synapse local (MATRIX_E2E_ENV_FILE)");
 test.skip(
@@ -129,13 +138,14 @@ test("the owner chooses the GUIDS; the Attendant sees it, takes the conversation
   const list = page.getByTestId("inbox-list");
   await list.getByRole("button", { name: /Maria Cliente/ }).click();
   const card = page.getByTestId("inbox-guids");
+  await openSection(card);
   await expect(card).toContainText("Lia", { timeout: 30_000 });
   await expect(card).toContainText("Com o GUIDS");
   await expect(card.getByTestId("inbox-guids-return")).toHaveCount(0);
 
   // Takes it: with the team; then gives it back to the GUIDS.
   const context = page.getByTestId("inbox-context");
-  await context.getByRole("button", { name: "Assumir" }).click();
+  await context.getByRole("button", { name: "Atribuir a mim" }).click();
   await expect(
     statusBanner(page).filter({ hasText: "Conversa assumida." }),
   ).toBeVisible();

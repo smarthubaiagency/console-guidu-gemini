@@ -62,7 +62,15 @@
     "take": "Take",
     "resolve": "Resolve",
     "reopen": "Reopen",
-    "assign": "Assign to"
+    "assign": "Assign to",
+    "title": "Conversation actions",
+    "assignee": "Assigned agent",
+    "assignToMe": "Assign to me",
+    "team": "Assigned team",
+    "noTeam": "None",
+    "priority": "Priority",
+    "noPriority": "None",
+    "soon": "Coming soon"
   },
   "done": {
     "take": "Conversation taken.",

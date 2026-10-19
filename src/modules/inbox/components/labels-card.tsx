@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl";
 import { useStatus } from "@/components/feedback/status-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import {
   NativeSelect,
@@ -21,6 +20,7 @@ import {
   setRoomLabelAction,
 } from "../actions";
 import type { LabelColor, LabelView } from "../views";
+import { PanelSection } from "./panel-section";
 import type { InboxViewer } from "./types";
 
 const COLORS: readonly LabelColor[] = [
@@ -92,112 +92,108 @@ export function LabelsCard({
   };
 
   return (
-    <Card variant="surface" data-testid="inbox-labels">
-      <CardHeader>
-        <CardTitle className="text-14">{t("labels.title")}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {labels.length === 0 ? (
-          <p className="text-12 text-text-secondary">{t("labels.empty")}</p>
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {labels.map((label) => {
-              const on = active.includes(label.id);
-              return answers ? (
-                <span
-                  key={label.id}
-                  className="inline-flex items-center gap-0.5"
+    <PanelSection
+      value="labels"
+      title={t("labels.title")}
+      testId="inbox-labels"
+    >
+      {labels.length === 0 ? (
+        <p className="text-12 text-text-secondary">{t("labels.empty")}</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {labels.map((label) => {
+            const on = active.includes(label.id);
+            return answers ? (
+              <span key={label.id} className="inline-flex items-center gap-0.5">
+                <Toggle
+                  size="sm"
+                  variant="outline"
+                  pressed={on}
+                  disabled={busy}
+                  aria-label={label.name}
+                  onPressedChange={(pressed) =>
+                    void run(
+                      () =>
+                        setRoomLabelAction({
+                          workspaceSlug,
+                          roomId,
+                          labelId: label.id,
+                          on: pressed,
+                        }),
+                      null,
+                    )
+                  }
                 >
-                  <Toggle
-                    size="sm"
-                    variant="outline"
-                    pressed={on}
+                  <Badge variant={on ? label.color : "neutral"}>
+                    {label.name}
+                  </Badge>
+                </Toggle>
+                {viewer.manages ? (
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
                     disabled={busy}
-                    aria-label={label.name}
-                    onPressedChange={(pressed) =>
-                      void run(
-                        () =>
-                          setRoomLabelAction({
-                            workspaceSlug,
-                            roomId,
-                            labelId: label.id,
-                            on: pressed,
-                          }),
-                        null,
-                      )
-                    }
+                    aria-label={t("labels.deleteNamed", { name: label.name })}
+                    onClick={() => void remove(label)}
                   >
-                    <Badge variant={on ? label.color : "neutral"}>
-                      {label.name}
-                    </Badge>
-                  </Toggle>
-                  {viewer.manages ? (
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      disabled={busy}
-                      aria-label={t("labels.deleteNamed", { name: label.name })}
-                      onClick={() => void remove(label)}
-                    >
-                      <X />
-                    </Button>
-                  ) : null}
-                </span>
-              ) : on ? (
-                <Badge key={label.id} variant={label.color}>
-                  {label.name}
-                </Badge>
-              ) : null;
-            })}
-          </div>
-        )}
-        {viewer.manages ? (
-          <form
-            className="flex items-center gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!name.trim()) return;
-              void run(
-                () => saveLabelAction({ workspaceSlug, name, color }),
-                t("labels.created"),
-              ).then((ok) => {
-                if (ok) setName("");
-              });
-            }}
+                    <X />
+                  </Button>
+                ) : null}
+              </span>
+            ) : on ? (
+              <Badge key={label.id} variant={label.color}>
+                {label.name}
+              </Badge>
+            ) : null;
+          })}
+        </div>
+      )}
+      {viewer.manages ? (
+        <form
+          className="flex items-center gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!name.trim()) return;
+            void run(
+              () => saveLabelAction({ workspaceSlug, name, color }),
+              t("labels.created"),
+            ).then((ok) => {
+              if (ok) setName("");
+            });
+          }}
+        >
+          <InputGroup className="flex-1">
+            <InputGroupInput
+              value={name}
+              maxLength={40}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t("labels.newPlaceholder")}
+              aria-label={t("labels.newPlaceholder")}
+            />
+          </InputGroup>
+          <NativeSelect
+            size="sm"
+            aria-label={t("labels.color")}
+            value={color}
+            onChange={(event) => setColor(event.target.value as LabelColor)}
           >
-            <InputGroup className="flex-1">
-              <InputGroupInput
-                value={name}
-                maxLength={40}
-                onChange={(event) => setName(event.target.value)}
-                placeholder={t("labels.newPlaceholder")}
-                aria-label={t("labels.newPlaceholder")}
-              />
-            </InputGroup>
-            <NativeSelect
-              size="sm"
-              aria-label={t("labels.color")}
-              value={color}
-              onChange={(event) => setColor(event.target.value as LabelColor)}
-            >
-              {COLORS.map((value) => (
-                <NativeSelectOption key={value} value={value}>
-                  {t(`labels.colors.${value}`)}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <Button
-              type="submit"
-              size="icon-sm"
-              disabled={busy || !name.trim()}
-              aria-label={t("labels.add")}
-            >
-              <Plus />
-            </Button>
-          </form>
-        ) : null}
-      </CardContent>
-    </Card>
+            {COLORS.map((value) => (
+              <NativeSelectOption key={value} value={value}>
+                {t(`labels.colors.${value}`)}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+          <Button
+            type="submit"
+            size="icon-sm"
+            disabled={busy || !name.trim()}
+            aria-label={t("labels.add")}
+          >
+            <Plus />
+          </Button>
+        </form>
+      ) : null}
+    </PanelSection>
   );
 }

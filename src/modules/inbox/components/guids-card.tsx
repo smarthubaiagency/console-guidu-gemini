@@ -7,10 +7,10 @@ import { useStatus } from "@/components/feedback/status-context";
 import { KeyValueList } from "@/components/patterns/key-value-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { loadGuidsPanelAction, returnToGuidsAction } from "../guids-actions";
 import type { GuidsPanel } from "../server/guids";
+import { PanelSection } from "./panel-section";
 
 /**
  * The GUIDS in the context panel (IN6): who answers the pending
@@ -71,59 +71,59 @@ export function GuidsCard({
     panel.agent !== null && status === "pending" && assignee === null;
 
   return (
-    <Card variant="surface" data-testid="inbox-guids">
-      <CardHeader>
-        <CardTitle className="text-14">{t("title")}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <KeyValueList
-          items={[
-            {
-              label: t("agent"),
-              value: panel.agent ? panel.agent.name : t("none"),
-            },
-            {
-              label: t("now"),
-              value: withGuids ? (
-                <Badge variant="info">{t("withGuids")}</Badge>
-              ) : (
-                <Badge variant="neutral">{t("withTeam")}</Badge>
-              ),
-            },
-          ]}
-        />
-        {panel.handoff ? (
-          <div className="space-y-1" data-testid="inbox-guids-summary">
-            <p className="text-12 text-text font-medium">{t("summary")}</p>
-            <p className="text-12 text-text-secondary whitespace-pre-wrap">
-              {panel.handoff.summary}
-            </p>
-            {panel.handoff.reason ? (
-              <p className="text-11 text-text-tertiary">
-                {t("reason", { reason: panel.handoff.reason })}
-              </p>
-            ) : null}
+    <PanelSection
+      value="guids"
+      title={t("title")}
+      testId="inbox-guids"
+      className="space-y-4"
+    >
+      <KeyValueList
+        items={[
+          {
+            label: t("agent"),
+            value: panel.agent ? panel.agent.name : t("none"),
+          },
+          {
+            label: t("now"),
+            value: withGuids ? (
+              <Badge variant="info">{t("withGuids")}</Badge>
+            ) : (
+              <Badge variant="neutral">{t("withTeam")}</Badge>
+            ),
+          },
+        ]}
+      />
+      {panel.handoff ? (
+        <div className="space-y-1" data-testid="inbox-guids-summary">
+          <p className="text-12 text-text font-medium">{t("summary")}</p>
+          <p className="text-12 text-text-secondary whitespace-pre-wrap">
+            {panel.handoff.summary}
+          </p>
+          {panel.handoff.reason ? (
             <p className="text-11 text-text-tertiary">
-              {format.dateTime(new Date(panel.handoff.at), {
-                dateStyle: "short",
-                timeStyle: "short",
-              })}
+              {t("reason", { reason: panel.handoff.reason })}
             </p>
-          </div>
-        ) : null}
-        {answers && panel.agent && !withGuids ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={busy}
-            onClick={() => void giveBack()}
-            data-testid="inbox-guids-return"
-          >
-            {t("return")}
-          </Button>
-        ) : null}
-      </CardContent>
-    </Card>
+          ) : null}
+          <p className="text-11 text-text-tertiary">
+            {format.dateTime(new Date(panel.handoff.at), {
+              dateStyle: "short",
+              timeStyle: "short",
+            })}
+          </p>
+        </div>
+      ) : null}
+      {answers && panel.agent && !withGuids ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => void giveBack()}
+          data-testid="inbox-guids-return"
+        >
+          {t("return")}
+        </Button>
+      ) : null}
+    </PanelSection>
   );
 }
