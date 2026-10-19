@@ -1,6 +1,6 @@
 # Plano da dupla GF1 e TR1
 
-- **Estado:** proposta para aprovação. Começa depois do "pode começar" do Marcelo.
+- **Estado:** perguntas respondidas em 19/10/2026. Começa depois do "pode começar" do Marcelo.
 - **Data:** 19/10/2026
 - **Origem:** [prioridades](prioridades-agentes-e-inbox.md), P1: a dupla da vez.
 - **Trabalho em paralelo:** duas etapas, cada uma com branch, PR, banco local e portas próprios (`AGENTS.md`). As duas não mexem nos mesmos arquivos.
@@ -41,10 +41,12 @@ Todo workspace com o módulo Agentes de IA ligado tem os quatro GUIDS de fábric
 3. **Semeadura idempotente:** a função `ensureFactoryGuids(tx, ctx)` cria só os papéis que faltam, como rascunho, pelo mesmo caminho do `createGuid` (cópia do modelo, cota com o lock do workspace, auditoria `ai_agents.guid.create` com `factory: true`).
    - É chamada quando o módulo Agentes de IA passa a ligado (`setWorkspaceModuleStatus` e `createPartnerCustomer`).
    - Também ao abrir a página Agentes de IA, para os workspaces que já tinham o módulo ligado.
-4. **Semeia uma vez só por workspace:** o workspace guarda que já recebeu os GUIDS de fábrica. Um GUIDS de fábrica apagado pelo cliente não volta sozinho. Ver a pergunta 1.
+4. **Os quatro sempre existem** (resposta 1): um GUIDS de fábrica não sai de vez. Se o cliente o exclui, ele volta **desligado** (rascunho, com a configuração do modelo) na próxima semeadura. Na tela, a ação dele é **Desativar**, e não Excluir.
 5. **Cota:** o padrão de `ai-agents.max` passa de 1 para **4**. Se a cota do plano não comportar os quatro, cria os que couberem, na ordem orquestrador, atendente, vendedor e ops, e a página avisa quantos faltaram.
 6. **Tela Agentes de IA:**
-   - um selo "De fábrica" nos quatro;
+   - abas segmentadas **GUIDS ativos | GUIDS inativos**: ativos são os ligados; inativos, os desligados (rascunho ou pausados);
+   - um selo "De fábrica" nos quatro, com o papel fixo (Ops, Recepção, Atendente, Vendedor);
+   - **nome e avatar editáveis** em qualquer GUIDS de fábrica, mesmo sem personalizar; o papel não muda. O avatar vem de uma galeria fixa (ícone e cor) até existir o upload de imagens (a escolha do Storage, F5e);
    - o aviso "Cadastre a chave e teste para ligar" enquanto não houver chave;
    - o botão **Restaurar prompt de fábrica** na gaveta do GUIDS: recopia o prompt do modelo e pede um teste de novo, porque a configuração mudou (A4b).
 7. **Modelos editáveis na plataforma** (`/platform`, A3a), como os outros modelos da casa. Uma versão nova do modelo não muda os GUIDS que já existem: "Restaurar" traz a versão atual.
@@ -131,9 +133,9 @@ Cada conversa sabe o idioma do contato (pt-BR, en ou es), detectado sozinho e co
 - Migrations aplicadas no dev depois do PR aprovado, com `scripts/migrate.ts`.
 - Capturas no PR: a tela de Agentes de IA com os quatro GUIDS, e o chip de idioma na conversa.
 
-## Perguntas
+## Respostas do Marcelo (19/10/2026)
 
-1. **GUIDS de fábrica apagado:** fica apagado (proposta), ou volta quando a página abrir de novo?
-2. **Nomes padrão:** Ops, Recepção, Atendente e Vendedor?
-3. **Workspaces que já existem com o módulo ligado:** recebem os quatro ao abrir a página Agentes de IA (proposta), ou só os novos?
-4. **Idioma fora das três línguas** (francês, por exemplo): fica "desconhecido" e o GUIDS segue no idioma dele (proposta)?
+1. **GUIDS de fábrica excluído:** volta desligado. A tela ganha as abas GUIDS ativos e GUIDS inativos.
+2. **Nomes padrão:** Ops, Recepção, Atendente e Vendedor, com opção de trocar o nome e o avatar. O papel fica fixo.
+3. **Workspaces que já existem com o módulo ligado:** recebem os quatro.
+4. **Idioma fora das três línguas:** fica desconhecido e o GUIDS segue no idioma dele.
