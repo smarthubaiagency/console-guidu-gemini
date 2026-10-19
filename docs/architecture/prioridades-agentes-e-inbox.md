@@ -17,23 +17,25 @@
 
 ## 2. P1: ajustes no Inbox e GUIDS de fábrica
 
-| Etapa    | Entrega                                                                                                                                                                                                    | Depende de |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| **GF1**  | Modelos de fábrica dos quatro GUIDS (prompts, campos editáveis e travados) e criação automática no onboarding de cada workspace, desligados até haver chave e teste (A4b). Cota padrão `ai-agents.max` = 4 | —          |
-| **TR1**  | Idioma do contato: detecção, gravação no contato e no espelho da sala, indicação no Inbox                                                                                                                  | —          |
-| **TR2**  | Configuração da tradução no Inbox (interruptor, motor principal, fallback, credencial do Google Basic no cofre, glossário) e tradução das mensagens que chegam, com "ver original"                         | TR1        |
-| **TR3**  | Resposta da equipe com prévia traduzida e fallback                                                                                                                                                         | TR2        |
-| **IN5a** | Notas internas no Supabase por `room_id`, no painel de contexto (parte da IN5 já prevista)                                                                                                                 | —          |
-| **SB1**  | Fundação das salas internas e sala de bastidor: tipo de sala no núcleo Matrix, regra do @, componente de thread e "Threads desta conversa" no Inbox, com o @ops e os GUIDS como membros                    | GF1        |
-| **GF2**  | Orquestrador encaminhando ao atendente e ao vendedor (delegação estruturada, uma persona)                                                                                                                  | GF1        |
-| **TR4**  | Áudio: transcrição e tradução                                                                                                                                                                              | TR2        |
+| Etapa    | Entrega                                                                                                                                                                                                                      | Depende de |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| **IN4c** | Novo layout da janela do Inbox: dois cabeçalhos de 60 px, seletores de tipo e canal na lista, abas Contato e Threads no painel, caixa de mensagem no padrão do agente de IA ([plano](../modules/inbox/plano-in4c-layout.md)) | —          |
+| **GF1**  | Modelos de fábrica dos quatro GUIDS (prompts, campos editáveis e travados) e criação automática no onboarding de cada workspace, desligados até haver chave e teste (A4b). Cota padrão `ai-agents.max` = 4                   | —          |
+| **TR1**  | Idioma do contato: detecção, gravação no contato e no espelho da sala, indicação no Inbox                                                                                                                                    | —          |
+| **TR2**  | Configuração da tradução no Inbox (interruptor, motor principal, fallback, credencial do Google Basic no cofre, glossário) e tradução das mensagens que chegam, com "ver original"                                           | TR1        |
+| **TR3**  | Resposta da equipe com prévia traduzida e fallback                                                                                                                                                                           | TR2        |
+| **IN5a** | Notas internas no Supabase por `room_id`, no painel de contexto (parte da IN5 já prevista)                                                                                                                                   | —          |
+| **SB1**  | Fundação das salas internas e sala de bastidor: tipo de sala no núcleo Matrix, regra do @, componente de thread e "Threads desta conversa" no Inbox, com o @ops e os GUIDS como membros                                      | GF1        |
+| **GF2**  | Orquestrador encaminhando ao atendente e ao vendedor (delegação estruturada, uma persona)                                                                                                                                    | GF1        |
+| **TR4**  | Áudio: transcrição e tradução                                                                                                                                                                                                | TR2        |
 
 **Pares sugeridos** (duas etapas por vez, `AGENTS.md`):
 
-1. GF1 e TR1;
-2. TR2 e IN5a;
-3. TR3 e SB1;
-4. GF2 e TR4.
+1. IN4c e GF1 (a IN4c vem antes das outras etapas do Inbox, que entram no layout novo);
+2. TR1 e IN5a;
+3. TR2 e SB1;
+4. TR3 e GF2;
+5. TR4.
 
 TR1 a TR3 fecham a tradução de texto para o piloto de Búzios. Antes de começar, confirmar que a IN7 (WhatsApp da Meta) foi para a `main`, porque a TR1 detecta o idioma das mensagens do WhatsApp.
 
