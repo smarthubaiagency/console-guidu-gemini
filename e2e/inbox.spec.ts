@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * File: e2e/inbox.spec.ts
- * Module: End-to-End Tests for the Inbox window (IN4a)
+ * Module: End-to-End Tests for the Inbox window (IN4a, layout of the IN4c)
  *
  * Maintenance Rationale:
  * - Runs only with a local Synapse (MATRIX_E2E_ENV_FILE, CI step of its
@@ -9,9 +9,11 @@
  *   room, the Attendant takes the conversation, answers and resolves it,
  *   and the consumer gets the answer. The owner, not marked, reads only
  *   until the Team marks them as attendant (decision of 17/10/2026).
- * - The window has its own bar (sidebar-09, ADR 0014 revision of
- *   16/10/2026): views and one way back to the dashboard; helpers of
- *   e2e/support/sidebar.ts do not apply here.
+ * - The window has its own two headers (IN4c): the primary one folds the
+ *   list and has the search, "Novo", colour mode, notices and the account;
+ *   the secondary one folds the context panel and has the options menu
+ *   with the way back to the dashboard. The views are a selector of the
+ *   list; helpers of e2e/support/sidebar.ts do not apply here.
  * - Synapse pushes the events to the app of the rig; the worker of the rig
  *   (runJobs) processes them and makes the rooms and the address.
  * ============================================================================
@@ -36,8 +38,14 @@ import { statusBanner } from "./support/status";
 
 const env = matrixE2eEnv();
 
-/** The narrow bar of the Inbox (views and the dashboard). */
-const bar = (page: Page) => page.getByTestId("inbox-views");
+/** The selector of the type of conversation (the view), IN4c. */
+const viewSelect = (page: Page) => page.getByTestId("inbox-view-select");
+
+async function chooseView(page: Page, name: string): Promise<void> {
+  await viewSelect(page).click();
+  await page.getByRole("option", { name: new RegExp(`^${name}`) }).click();
+  await expect(viewSelect(page)).toContainText(name);
+}
 
 test.skip(!env, "sem Synapse local (MATRIX_E2E_ENV_FILE)");
 
@@ -90,10 +98,11 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
     await page.reload();
   }
   await page.goto(`/app/${wsSlug}/inbox`);
-  await expect(bar(page)).toBeVisible();
-  await expect(
-    bar(page).getByRole("button", { name: "Todas" }),
-  ).toHaveAttribute("data-active", "true");
+  await expect(page.getByTestId("inbox-top-bar")).toBeVisible();
+  await expect(page.getByTestId("inbox-title-bar")).toContainText(
+    `Central de Atendimento - Loja IN4 ${stamp}`,
+  );
+  await expect(viewSelect(page)).toContainText("Todas");
   // The worker registers the address of the store on the chat.
   await jobs(page, request);
   await page.goto(`/app/${wsSlug}/inbox`);
@@ -164,8 +173,8 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await signIn(page, attendant);
   await page.goto(`/app/${wsSlug}`);
   await page.getByRole("link", { name: "Abrir o Inbox" }).click();
-  await expect(bar(page)).toBeVisible();
-  await bar(page).getByRole("button", { name: "Não atribuídas" }).click();
+  await expect(viewSelect(page)).toBeVisible();
+  await chooseView(page, "Não atribuídas");
   // IN4b: the message is unread for the Attendant, in the list and the tab.
   const row = list.getByRole("button", { name: /Maria Cliente/ });
   await expect(row.getByTestId("inbox-unread")).toHaveText("1", {
@@ -223,6 +232,38 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
     statusBanner(page).filter({ hasText: "Conversa resolvida." }),
   ).toBeVisible();
   await expect(context).toContainText("Resolvida", { timeout: 30_000 });
+
+  // IN4c: the layout of the window. The context panel has two tabs, the
+  // secondary header folds it, the primary one folds the list, and the
+  // menus hold what comes later.
+  const tabs = page.getByTestId("inbox-context-tabs");
+  await tabs.getByRole("tab", { name: "Threads" }).click();
+  await expect(page.getByTestId("inbox-threads")).toBeVisible();
+  await expect(page).toHaveURL(/[?&]tab=threads/);
+  await tabs.getByRole("tab", { name: "Contato" }).click();
+  await expect(context).toBeVisible();
+  await page.getByTestId("inbox-context-toggle").click();
+  await expect(page.getByTestId("inbox-context-toggle")).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await expect(context).toBeHidden();
+  await page.getByTestId("inbox-context-toggle").click();
+  await expect(context).toBeVisible();
+  await page.getByTestId("inbox-list-toggle").click();
+  await expect(list).toBeHidden();
+  await page.getByTestId("inbox-list-toggle").click();
+  await expect(list).toBeVisible();
+  await page.getByTestId("inbox-new").click();
+  await expect(
+    page.getByRole("menuitem", { name: "Nova thread" }),
+  ).toHaveAttribute("data-disabled", "");
+  await page.keyboard.press("Escape");
+  await page.getByTestId("inbox-options").click();
+  await expect(
+    page.getByRole("menuitem", { name: "Dashboard" }),
+  ).toHaveAttribute("href", `/app/${wsSlug}`);
+  await page.keyboard.press("Escape");
 
   // On a phone: the list fills the screen, the conversation stacks over it
   // and the context opens in a sheet.

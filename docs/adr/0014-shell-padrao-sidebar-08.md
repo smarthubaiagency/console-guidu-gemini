@@ -100,3 +100,16 @@ Marcelo definiu que o Inbox do chat interno ([ADR 0023](0023-chat-interno-como-c
 - Mover as rotas atuais para `(shell)/` é uma mudança só de pastas, mas toca todos os arquivos de página. É um PR separado (IN2), sem outras alterações, para revisão fácil.
 - Os e2e do Inbox não usam `e2e/support/sidebar.ts`; ganham um helper próprio para a barra de ícones e o painel de contexto.
 - Uma ferramenta que hoje só existe como tela do dashboard precisa ganhar versão de painel ou gaveta antes de entrar no Inbox. Essa é a regra que mantém o atendente dentro da conversa.
+
+## Revisão de 19/10/2026 — novo layout do Inbox (IN4c)
+
+Marcelo pediu um novo layout da janela do Inbox antes das features do P1 ([plano da IN4c](../modules/inbox/plano-in4c-layout.md)). Muda o item 3 da revisão de 16/10/2026; os demais continuam valendo.
+
+1. **A barra estreita do `sidebar-09` sai.** As visões (Minhas, Não atribuídas, Todas, Resolvidas) passam para um seletor acima da busca da lista, ao lado de um seletor de canais, e o Dashboard vai para o menu ⋯ do cabeçalho secundário.
+2. **Dois cabeçalhos de 60 px** em toda a largura:
+   - **primário:** botão que recolhe a lista (o mesmo cookie `inbox_sidebar_state` e Ctrl/⌘+B), a busca ⌘K do console, "+ Novo", modo de cor, notificações e o menu da conta;
+   - **secundário:** título "Inbox" com "Central de Atendimento - {workspace}", e as ações IA, Pagamento, Recolher (o painel de contexto) e ⋯.
+3. **A busca ⌘K e o menu da conta passam a aparecer no Inbox.** São os mesmos componentes do `AppShell` (`ShellSearch`, `NotificationBell`, `HeaderUserMenu`, `ThemeToggle`). O seletor de workspace continua só no dashboard.
+4. **Painel de contexto com abas** segmentadas Contato e Threads (ADR 0021), com a aba na URL (`?tab=threads`).
+5. **Caixa de mensagem no padrão dos chats de agente de IA** (`InputGroup`).
+6. Uma coluna recolhida não renderiza o conteúdo, para o teclado não alcançar o que está fora da vista.

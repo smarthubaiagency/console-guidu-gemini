@@ -122,5 +122,41 @@
       "none": "This conversation has no CRM contact.",
       "linked": "Linked to a CRM contact."
     }
+  },
+  "header": {
+    "toggleList": "Collapse or open the conversation list",
+    "new": "New",
+    "newConversation": "New conversation",
+    "newThread": "New thread",
+    "newNote": "New note",
+    "soon": "Coming soon",
+    "title": "Inbox",
+    "subtitle": "Service Center - {workspace}",
+    "ai": "GUIDS of the conversation",
+    "payment": "Payment (coming soon)",
+    "toggleContext": "Collapse or open the context panel",
+    "options": "Inbox options",
+    "settings": "Inbox settings",
+    "attendant": "Attendant",
+    "reader": "Read only"
+  },
+  "filters": {
+    "type": "Conversation type",
+    "channels": "Channels",
+    "allChannels": "All channels",
+    "channelsSoon": "The channel filter is coming soon"
+  },
+  "tabs": {
+    "label": "Context panel",
+    "contact": "Contact",
+    "threads": "Threads",
+    "threadsTitle": "No threads yet",
+    "threadsDescription": "The team's threads about this conversation show up here."
+  },
+  "composer": {
+    "hint": "Write a message. Enter sends, Shift+Enter adds a line.",
+    "attach": "Attach a file (coming soon)",
+    "emoji": "Emoji (coming soon)",
+    "more": "More options (coming soon)"
   }
 }

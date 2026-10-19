@@ -11,15 +11,21 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import {
   memberName,
   replyAttendants,
   roomConversation,
 } from "../client/room-data";
-import type { ConversationSummary } from "../views";
-import type { LabelView } from "../views";
+import type { ContextTab, ConversationSummary, LabelView } from "../views";
 import { ContactCard } from "./contact-card";
 import { GuidsCard } from "./guids-card";
 import { LabelsCard } from "./labels-card";
@@ -32,6 +38,8 @@ import type { ConversationCommand, InboxViewer } from "./types";
  * resolves and reopens; who manages the Inbox assigns. Labels, the CRM
  * contact and the tools of the panel come later (IN4b, IN5). The state the
  * room holds wins over the mirror, which follows a moment later.
+ * IN4c: the panel has two tabs, "Contato" (all of the above, open first)
+ * and "Threads", empty until the backstage threads (SB1).
  */
 export function ContextPanel({
   workspaceSlug,
@@ -45,6 +53,8 @@ export function ContextPanel({
   onCommand,
   labels,
   onChanged,
+  tab,
+  onTab,
 }: Readonly<{
   workspaceSlug: string;
   roomId: string | null;
@@ -58,6 +68,8 @@ export function ContextPanel({
   labels: readonly LabelView[];
   /** Something changed from a card of its own: refresh the list. */
   onChanged: () => Promise<void>;
+  tab: ContextTab;
+  onTab: (tab: ContextTab) => void;
 }>) {
   const t = useTranslations("inbox");
   const state = useMemo(() => {
@@ -72,14 +84,46 @@ export function ContextPanel({
     return replyAttendants(room);
   }, [room, revision]);
 
-  if (!roomId || !state) {
-    return (
-      <aside
-        className="text-12 text-text-tertiary h-full p-4"
-        aria-label={t("context.title")}
+  const shell = (content: React.ReactNode) => (
+    <aside
+      className="flex h-full min-h-0 flex-col"
+      aria-label={t("context.title")}
+    >
+      <Tabs
+        value={tab}
+        onValueChange={(value) => onTab(value as ContextTab)}
+        className="flex min-h-0 flex-1 flex-col gap-0"
       >
-        {t("context.empty")}
-      </aside>
+        <div className="border-border flex h-15 shrink-0 items-center border-b px-3">
+          <TabsList
+            variant="segmented"
+            className="w-full"
+            aria-label={t("tabs.label")}
+            data-testid="inbox-context-tabs"
+          >
+            <TabsTrigger value="contact">{t("tabs.contact")}</TabsTrigger>
+            <TabsTrigger value="threads">{t("tabs.threads")}</TabsTrigger>
+          </TabsList>
+        </div>
+        {content}
+      </Tabs>
+    </aside>
+  );
+
+  if (!roomId || !state) {
+    return shell(
+      <p className="text-12 text-text-tertiary p-4">{t("context.empty")}</p>,
+    );
+  }
+
+  if (tab === "threads") {
+    return shell(
+      <Empty className="flex-1 p-6" data-testid="inbox-threads">
+        <EmptyHeader>
+          <EmptyTitle>{t("tabs.threadsTitle")}</EmptyTitle>
+          <EmptyDescription>{t("tabs.threadsDescription")}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>,
     );
   }
 
@@ -92,135 +136,131 @@ export function ContextPanel({
         ? t("you")
         : (memberName(room, state.assignee) ?? state.assignee);
 
-  return (
-    <aside className="h-full min-h-0" aria-label={t("context.title")}>
-      <ScrollArea className="h-full">
-        <div className="space-y-4 p-4" data-testid="inbox-context">
-          <ContactCard
-            workspaceSlug={workspaceSlug}
-            roomId={roomId}
-            fallbackName={
-              summary?.consumerName ??
-              memberName(room, consumer) ??
-              t("unknownContact")
-            }
-            chatId={consumer}
-          />
+  return shell(
+    <ScrollArea className="min-h-0 flex-1">
+      <div className="space-y-4 p-4" data-testid="inbox-context">
+        <ContactCard
+          workspaceSlug={workspaceSlug}
+          roomId={roomId}
+          fallbackName={
+            summary?.consumerName ??
+            memberName(room, consumer) ??
+            t("unknownContact")
+          }
+          chatId={consumer}
+        />
 
-          <Card variant="surface">
-            <CardHeader>
-              <CardTitle className="text-14">
-                {t("context.attendance")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <KeyValueList
-                items={[
-                  {
-                    label: t("context.status"),
-                    value: <StatusBadge status={state.status} />,
-                  },
-                  {
-                    label: t("context.assignee"),
-                    value: (
-                      <span data-testid="inbox-assignee">{assigneeName}</span>
-                    ),
-                  },
-                ]}
-              />
-              {answers ? (
-                <div className="flex flex-wrap gap-2">
-                  {state.status !== "resolved" && state.assignee !== me ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => onCommand({ kind: "take" })}
-                    >
-                      {t("actions.take")}
-                    </Button>
-                  ) : null}
-                  {state.status !== "resolved" ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => onCommand({ kind: "resolve" })}
-                    >
-                      {t("actions.resolve")}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => onCommand({ kind: "reopen" })}
-                    >
-                      {t("actions.reopen")}
-                    </Button>
-                  )}
-                </div>
-              ) : null}
-              {viewer.manages ? (
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-12 text-text-secondary">
-                    {t("actions.assign")}
-                  </span>
-                  <NativeSelect
+        <Card variant="surface">
+          <CardHeader>
+            <CardTitle className="text-14">{t("context.attendance")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <KeyValueList
+              items={[
+                {
+                  label: t("context.status"),
+                  value: <StatusBadge status={state.status} />,
+                },
+                {
+                  label: t("context.assignee"),
+                  value: (
+                    <span data-testid="inbox-assignee">{assigneeName}</span>
+                  ),
+                },
+              ]}
+            />
+            {answers ? (
+              <div className="flex flex-wrap gap-2">
+                {state.status !== "resolved" && state.assignee !== me ? (
+                  <Button
+                    type="button"
                     size="sm"
-                    value={state.assignee ?? ""}
                     disabled={busy}
-                    onChange={(event) =>
-                      onCommand({
-                        kind: "assign",
-                        assignee: event.target.value || null,
-                      })
-                    }
+                    onClick={() => onCommand({ kind: "take" })}
                   >
-                    <NativeSelectOption value="">
-                      {t("nobody")}
+                    {t("actions.take")}
+                  </Button>
+                ) : null}
+                {state.status !== "resolved" ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => onCommand({ kind: "resolve" })}
+                  >
+                    {t("actions.resolve")}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => onCommand({ kind: "reopen" })}
+                  >
+                    {t("actions.reopen")}
+                  </Button>
+                )}
+              </div>
+            ) : null}
+            {viewer.manages ? (
+              <label className="flex flex-col gap-1.5">
+                <span className="text-12 text-text-secondary">
+                  {t("actions.assign")}
+                </span>
+                <NativeSelect
+                  size="sm"
+                  value={state.assignee ?? ""}
+                  disabled={busy}
+                  onChange={(event) =>
+                    onCommand({
+                      kind: "assign",
+                      assignee: event.target.value || null,
+                    })
+                  }
+                >
+                  <NativeSelectOption value="">
+                    {t("nobody")}
+                  </NativeSelectOption>
+                  {candidates.map((candidate) => (
+                    <NativeSelectOption
+                      key={candidate.mxid}
+                      value={candidate.mxid}
+                    >
+                      {candidate.mxid === me ? t("you") : candidate.name}
                     </NativeSelectOption>
-                    {candidates.map((candidate) => (
-                      <NativeSelectOption
-                        key={candidate.mxid}
-                        value={candidate.mxid}
-                      >
-                        {candidate.mxid === me ? t("you") : candidate.name}
-                      </NativeSelectOption>
-                    ))}
-                    {state.assignee &&
-                    !candidates.some((c) => c.mxid === state.assignee) ? (
-                      <NativeSelectOption value={state.assignee} disabled>
-                        {assigneeName}
-                      </NativeSelectOption>
-                    ) : null}
-                  </NativeSelect>
-                </label>
-              ) : null}
-            </CardContent>
-          </Card>
+                  ))}
+                  {state.assignee &&
+                  !candidates.some((c) => c.mxid === state.assignee) ? (
+                    <NativeSelectOption value={state.assignee} disabled>
+                      {assigneeName}
+                    </NativeSelectOption>
+                  ) : null}
+                </NativeSelect>
+              </label>
+            ) : null}
+          </CardContent>
+        </Card>
 
-          <GuidsCard
-            workspaceSlug={workspaceSlug}
-            roomId={roomId}
-            status={state.status}
-            assignee={state.assignee}
-            answers={answers}
-            onChanged={onChanged}
-          />
+        <GuidsCard
+          workspaceSlug={workspaceSlug}
+          roomId={roomId}
+          status={state.status}
+          assignee={state.assignee}
+          answers={answers}
+          onChanged={onChanged}
+        />
 
-          <LabelsCard
-            workspaceSlug={workspaceSlug}
-            roomId={roomId}
-            viewer={viewer}
-            labels={labels}
-            active={summary?.labelIds ?? []}
-            onChanged={onChanged}
-          />
-        </div>
-      </ScrollArea>
-    </aside>
+        <LabelsCard
+          workspaceSlug={workspaceSlug}
+          roomId={roomId}
+          viewer={viewer}
+          labels={labels}
+          active={summary?.labelIds ?? []}
+          onChanged={onChanged}
+        />
+      </div>
+    </ScrollArea>,
   );
 }

@@ -1,6 +1,6 @@
 # Plano da IN4c — novo layout da janela do Inbox
 
-- **Estado:** proposta para aprovação. Começa depois do "pode começar" do Marcelo.
+- **Estado:** feita em 19/10/2026 (aprovada pelo Marcelo no mesmo dia). Revisão de 19/10/2026 da [ADR 0014](../../adr/0014-shell-padrao-sidebar-08.md).
 - **Data:** 19/10/2026
 - **Origem:** pedido do Marcelo em 19/10/2026: ajustar o layout do Inbox antes das features do P1 ([prioridades](../../architecture/prioridades-agentes-e-inbox.md)), com uma referência visual de inbox em três colunas.
 - **Sem migration.** Só interface, textos e testes.
@@ -111,3 +111,10 @@ Deixar a janela com a estrutura em que as features do P1 vão entrar: as abas Co
 1. **Barra estreita da esquerda:** sai.
 2. **+ Novo:** "Nova conversa", "Nova thread" e "Nova nota", os três como espaço reservado por enquanto.
 3. **Subtítulo do cabeçalho secundário:** "Central de Atendimento - {nome do workspace}".
+
+## 8. Como ficou
+
+- **Botão IA:** nesta etapa abre o painel na aba Contato e leva ao cartão do GUIDS, que já mostra quem atende. O estado do GUIDS no próprio ícone fica para quando o cabeçalho tiver esse dado sem uma consulta a mais.
+- **Seletor de canais:** desligado, com "Todos os canais".
+- **Peças compartilhadas:** `HeaderAction` e `ThemeToggle` saíram do `ShellMain` para `src/components/layout/shell/header-action.tsx`, e o menu da conta ganhou a versão de cabeçalho (`HeaderUserMenu`, em `nav-user.tsx`), com os mesmos itens do `NavUser`.
+- **Testes:** `src/modules/inbox/views.test.ts` (aba e visões na URL) e os e2e `e2e/inbox.spec.ts` (seletor de tipo, abas, recolher a lista e o painel, menus "+ Novo" e ⋯) e `e2e/inbox-guids.spec.ts`, rodados com Postgres e Synapse locais, como no job `e2e-inbox`.
