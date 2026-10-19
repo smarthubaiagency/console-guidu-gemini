@@ -2,6 +2,7 @@ import "server-only";
 
 import type { Prisma } from "@prisma/client";
 
+import { isContactLocale } from "@/core/matrix/locale";
 import type {
   ContextTransaction,
   RequestContext,
@@ -83,6 +84,8 @@ export async function listConversations(
         assignee: true,
         consumerMxid: true,
         consumerName: true,
+        contactLocale: true,
+        contactLocaleSource: true,
         updatedAt: true,
       },
     }),
@@ -110,6 +113,10 @@ export async function listConversations(
       assignee: row.assignee,
       consumerMxid: row.consumerMxid,
       consumerName: row.consumerName,
+      contactLocale: isContactLocale(row.contactLocale)
+        ? row.contactLocale
+        : null,
+      contactLocaleManual: row.contactLocaleSource === "manual",
       updatedAt: row.updatedAt.toISOString(),
       labelIds: byRoom.get(row.roomId!) ?? [],
     })),

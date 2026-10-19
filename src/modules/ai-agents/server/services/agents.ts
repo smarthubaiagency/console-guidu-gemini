@@ -37,6 +37,10 @@ export type GuidDto = Readonly<{
   templateVersion: number | null;
   customized: boolean;
   keyState: string;
+  /** The role of a factory GUIDS (GF1); null for the others. */
+  factoryRole: string | null;
+  /** `icon:colour` of the gallery (GF1). */
+  avatar: string | null;
   /** Set when the partner made the last change ("Alterado por …"). */
   updatedByPartnerId: string | null;
   /** The partner's name, when it is the workspace's partner (A3c). */
@@ -62,6 +66,8 @@ type AgentRow = {
   templateVersion: number | null;
   customized: boolean;
   keyState: string;
+  factoryRole: string | null;
+  avatar: string | null;
   updatedByPartnerId: string | null;
   updatedAt: Date;
 };
@@ -84,6 +90,8 @@ function toDto(
     templateVersion: row.templateVersion,
     customized: row.customized,
     keyState: row.keyState,
+    factoryRole: row.factoryRole,
+    avatar: row.avatar,
     updatedByPartnerId: row.updatedByPartnerId,
     updatedByPartnerName: row.updatedByPartnerId
       ? (partnerNames.get(row.updatedByPartnerId) ?? null)
@@ -112,7 +120,11 @@ export const GuidCreateInput = z.strictObject({
   templateId: z.uuid().nullable(),
 });
 
-/** Published GUIDS templates of the house and of the workspace's partner. */
+/**
+ * Published GUIDS templates of the house and of the workspace's partner.
+ * The four factory templates (GF1) are not offered: each workspace already
+ * has its factory GUIDS.
+ */
 export async function listGuidTemplates(
   tx: ContextTransaction,
   ctx: RequestContext,
@@ -120,7 +132,7 @@ export async function listGuidTemplates(
   await assertModuleOperational(tx, ctx, MODULE_KEY, "read");
   await requireWorkspacePermission(tx, ctx, Permissions.AI_AGENTS_USE);
   const rows = await tx.aiAgentTemplate.findMany({
-    where: { kind: "guid", published: true },
+    where: { kind: "guid", published: true, factoryRole: null },
     orderBy: [{ name: "asc" }, { id: "asc" }],
     select: {
       id: true,

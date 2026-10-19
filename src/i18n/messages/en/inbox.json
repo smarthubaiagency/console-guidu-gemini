@@ -166,5 +166,23 @@
     "attach": "Attach a file (coming soon)",
     "emoji": "Emoji (coming soon)",
     "more": "More options (coming soon)"
+  },
+  "locale": {
+    "change": "Contact's language",
+    "unknown": "Language",
+    "saved": "Contact's language: {language}. The GUIDS answers in it from the next message.",
+    "sourceDetected": "Detected from the contact's messages",
+    "sourceManual": "Set by the team",
+    "sourceUnknown": "Not detected yet",
+    "names": {
+      "pt-BR": "Portuguese",
+      "en": "English",
+      "es": "Spanish"
+    },
+    "short": {
+      "pt-BR": "PT",
+      "en": "EN",
+      "es": "ES"
+    }
   }
 }

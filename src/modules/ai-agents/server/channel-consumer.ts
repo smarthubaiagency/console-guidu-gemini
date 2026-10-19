@@ -15,6 +15,7 @@ import type {
 import type { InboundEvent } from "@/core/channels/contract";
 import type { JobSession } from "@/core/jobs/definition";
 import { SkipJobError } from "@/core/jobs/errors";
+import type { ContactLocale } from "@/core/matrix/locale";
 import type {
   ContextTransaction,
   RequestContext,
@@ -121,6 +122,8 @@ export type AnswerTurnInput = Readonly<{
   contactEvents: readonly InboundEvent[];
   limits: Readonly<{ maxMessages: number; maxChars: number }>;
   voiceReply: boolean;
+  /** The contact's language, when the hub knows it (TR1). */
+  contactLocale?: ContactLocale | null;
 }>;
 
 export type AnswerTurnOutput = Readonly<{
@@ -252,7 +255,13 @@ export async function answerTurn(
     session,
     ctx,
     { conversationId: prepared.conversationId, messageId: prepared.messageId },
-    { ...deps, answerLimits: input.limits, media, speak: input.voiceReply },
+    {
+      ...deps,
+      answerLimits: input.limits,
+      media,
+      speak: input.voiceReply,
+      contactLocale: input.contactLocale ?? null,
+    },
   );
   const answers = await session.transaction((tx) =>
     tx.aiMessage.findMany({

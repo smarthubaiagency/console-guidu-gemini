@@ -15,6 +15,7 @@ import { requireUserPage } from "@/core/auth/page-guard";
 import { getModuleCatalog } from "@/core/i18n/modules";
 import { translateNavigation } from "@/core/i18n/navigation";
 import { requestWorkspaceSync } from "@/core/matrix";
+import { contactLocaleOf } from "@/core/matrix/locale";
 import { loadAppNavigation } from "@/core/module-runtime/loaders";
 import { resolveModulePageAccess } from "@/core/module-runtime/page-access";
 import { loadNotificationBell } from "@/core/notifications/bell";
@@ -72,7 +73,7 @@ export default async function InboxPage({
     const [workspace, address] = await Promise.all([
       tx.workspace.findUnique({
         where: { id: context.workspaceId },
-        select: { name: true },
+        select: { name: true, defaultLocale: true },
       }),
       tx.matrixWorkspaceAddress.findUnique({
         where: { workspaceId: context.workspaceId },
@@ -87,6 +88,7 @@ export default async function InboxPage({
       blocked: null,
       viewer: { ...viewer, level: viewer.level },
       workspaceName: workspace?.name ?? workspaceSlug,
+      workspaceLocale: contactLocaleOf(workspace?.defaultLocale),
       address: address?.state === "active" ? address.mxid : null,
     } as const;
   });
@@ -141,6 +143,7 @@ export default async function InboxPage({
     <InboxShell
       workspaceSlug={workspaceSlug}
       workspaceName={data.workspaceName}
+      workspaceLocale={data.workspaceLocale}
       viewer={data.viewer}
       address={data.address}
       defaultOpen={cookieStore.get(INBOX_SIDEBAR_COOKIE)?.value !== "false"}

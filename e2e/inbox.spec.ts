@@ -237,6 +237,33 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
     .poll(() => consumers.messages(maria, roomId), { timeout: 30_000 })
     .toContain("Bom dia, Maria! Já te mando o orçamento.");
 
+  // TR1: the consumer writes in Spanish; the conversation knows it (a mark
+  // in the list, the chip in the header) and the Attendant corrects it.
+  await consumers.send(
+    maria,
+    roomId,
+    "¡Hola! ¿Tienen paseo en barco para mañana? Somos 6 personas.",
+  );
+  const chip = conversation.getByTestId("inbox-contact-locale");
+  await expect(async () => {
+    await jobs(page, request);
+    await page.goto(
+      `/app/${wsSlug}/inbox?view=mine&room=${encodeURIComponent(roomId)}`,
+    );
+    await expect(chip).toContainText("Espanhol", { timeout: 10_000 });
+  }).toPass({ timeout: 120_000 });
+  await expect(row.getByTestId("inbox-row-locale")).toHaveText("ES");
+  await chip.click();
+  await expect(
+    page.getByText("Detectado pelas mensagens do contato"),
+  ).toBeVisible();
+  await page.getByRole("menuitemradio", { name: "Inglês" }).click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Idioma do contato: Inglês." }),
+  ).toBeVisible();
+  await expect(chip).toContainText("Inglês");
+  await expect(row.getByTestId("inbox-row-locale")).toHaveText("EN");
+
   // Resolves it.
   await context.getByRole("button", { name: "Resolver" }).click();
   await expect(

@@ -237,6 +237,33 @@ describe("events of the Application Service", () => {
     });
   });
 
+  it("keeps the language guessed from a message, never its text (TR1)", () => {
+    const reduced = reduceEvent({
+      event_id: "$m",
+      room_id: "!r",
+      type: "m.room.message",
+      sender: "@c:hs.test",
+      origin_server_ts: 42,
+      content: {
+        msgtype: "m.text",
+        body: "¡Hola! ¿Tienen paseo en barco para mañana?",
+      },
+    });
+    expect(reduced?.content).toMatchObject({ msgtype: "m.text", locale: "es" });
+    expect(Number(reduced?.content.locale_confidence)).toBeGreaterThan(0.6);
+    expect(JSON.stringify(reduced)).not.toContain("barco");
+    // A file's name is not a message to read the language from.
+    expect(
+      reduceEvent({
+        event_id: "$f",
+        room_id: "!r",
+        type: "m.room.message",
+        sender: "@c:hs.test",
+        content: { msgtype: "m.file", body: "¿Tienen paseo mañana?.pdf" },
+      })?.content,
+    ).toEqual({ msgtype: "m.file" });
+  });
+
   it("keeps only membership (with the display name) and the conversation state, never a message body", () => {
     expect(
       reduceEvent({

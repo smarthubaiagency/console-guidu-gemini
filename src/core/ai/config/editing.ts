@@ -17,8 +17,9 @@ import type { AgentConfig } from "./schema";
  *   instructions and the model connection; the tools and the rest stay as
  *   the house's admin template defines them;
  * - `customer`: the customer with a GUIDS that follows its template: the
- *   model connection and the two fields of its business (summary, products
- *   and services), which the house's templates leave empty;
+ *   model connection, the agent's name and the two fields of its business
+ *   (summary, products and services), which the house's templates leave
+ *   empty;
  * - `customer_custom`: the customer with a customized GUIDS: everything but
  *   the tools, the expected output and the leads' destination.
  *
@@ -120,8 +121,12 @@ const KEY_FIELDS = new Set([
   "model.audio_credential_id",
   "model.embedding_credential_id",
 ]);
-/** The customer's business, theirs even while following a template. */
+/**
+ * The customer's business, theirs even while following a template, and the
+ * agent's name (GF1: the factory GUIDS keep their role, not their name).
+ */
 const CUSTOMER_BUSINESS = new Set([
+  "overview.agent_name",
   "overview.business_summary",
   "overview.products_services",
 ]);

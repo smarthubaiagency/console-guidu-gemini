@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireUser } from "@/core/auth/identity";
 import { actionFailure } from "@/core/i18n/errors";
 import { matrixConfig } from "@/core/matrix/config";
+import { CONTACT_LOCALES } from "@/core/matrix/locale";
 import {
   changeConversation,
   type ConversationAction,
@@ -37,6 +38,7 @@ import {
   setRoomLabel,
   updateLabel,
 } from "./server/labels";
+import { setContactLocale } from "./server/locale";
 import { type ConversationPage, INBOX_VIEWS } from "./views";
 
 /**
@@ -266,6 +268,30 @@ export async function linkContactAction(
     const { workspaceSlug, ...rest } = LinkInput.parse(input);
     await inInbox(workspaceSlug, (tx, ctx, viewer) =>
       linkContact(tx, ctx, viewer, rest),
+    );
+    return { ok: true };
+  } catch (error) {
+    return actionFailure(error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The contact's language (TR1)
+// ---------------------------------------------------------------------------
+
+const LocaleInput = z.object({
+  workspaceSlug: Slug,
+  roomId: RoomId,
+  locale: z.enum(CONTACT_LOCALES),
+});
+
+export async function setContactLocaleAction(
+  input: z.input<typeof LocaleInput>,
+): Promise<{ ok: true } | Failure> {
+  try {
+    const { workspaceSlug, ...rest } = LocaleInput.parse(input);
+    await inInbox(workspaceSlug, (tx, ctx, viewer) =>
+      setContactLocale(tx, ctx, viewer, rest),
     );
     return { ok: true };
   } catch (error) {

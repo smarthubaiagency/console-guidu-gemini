@@ -165,19 +165,20 @@ describeDatabase("A4a: GUIDS of the workspace in /app", requiredVars, () => {
     });
     expect(before.missing).toEqual(["model.credential_id", "model.model_name"]);
 
-    // Following the template, the overview is not the customer's.
+    // Following the template, the prompt is not the customer's (the name
+    // is, since the GF1).
     const prompt = await run(contextA, (tx) =>
       updateGuid(tx, contextA, guid.id, {
         status: "paused",
         config: {
           ...before.config,
-          overview: { ...before.config.overview, agent_name: "Outra" },
+          overview: { ...before.config.overview, system_prompt: "Outro" },
         },
       }),
     ).catch((err: unknown) => err);
     expect(prompt).toBeInstanceOf(ConfigValidationError);
     expect(
-      (prompt as ConfigValidationError).fieldErrors["overview.agent_name"],
+      (prompt as ConfigValidationError).fieldErrors["overview.system_prompt"],
     ).toBeDefined();
 
     const draft = await run(contextA, (tx) =>

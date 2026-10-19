@@ -23,6 +23,7 @@ import { matrixConfig } from "@/core/matrix/config";
 import { readConversationState } from "@/core/matrix/conversation";
 import { messageSide } from "@/core/matrix/events";
 import { requestAgentSync } from "@/core/matrix/jobs";
+import { type ContactLocale, isContactLocale } from "@/core/matrix/locale";
 import {
   createSynapseClient,
   setConversationState,
@@ -95,6 +96,8 @@ type Loaded = Readonly<{
   lastAnsweredTs: number | null;
   lastAnsweredEventId: string | null;
   service: ReturnType<typeof resolveInboxService>;
+  /** The contact's language, detected or set by the team (TR1). */
+  contactLocale: ContactLocale | null;
 }>;
 
 async function load(
@@ -105,7 +108,11 @@ async function load(
   return session.transaction(async (tx) => {
     const room = await tx.matrixRoom.findFirst({
       where: { roomId, workspaceId: ctx.workspaceId, state: "active" },
-      select: { consumerMxid: true, channelConversationId: true },
+      select: {
+        consumerMxid: true,
+        channelConversationId: true,
+        contactLocale: true,
+      },
     });
     if (!room) throw new SkipJobError("Conversa não encontrada.");
     // A room of a number answers with the GUIDS of the number's route, with
@@ -164,6 +171,9 @@ async function load(
           : null,
       lastAnsweredEventId: cursor?.lastAnsweredEventId ?? null,
       service: resolveInboxService(config),
+      contactLocale: isContactLocale(room.contactLocale)
+        ? room.contactLocale
+        : null,
     };
   });
 }
@@ -302,6 +312,7 @@ export async function runGuidsTurn(
           maxMessages: loaded.service.max_messages,
           maxChars: loaded.service.max_chars,
         },
+        contactLocale: loaded.contactLocale,
       },
       deps.turnDeps,
     );

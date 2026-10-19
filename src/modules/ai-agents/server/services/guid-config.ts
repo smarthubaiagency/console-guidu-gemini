@@ -28,7 +28,9 @@ import type {
 } from "@/lib/prisma/with-context";
 import { AppError } from "@/shared/errors";
 
+import { formatAvatar, parseAvatar } from "../../avatars";
 import { type GuidDto, listGuids } from "./agents";
+import { factoryPrompt, isFactoryRole } from "./factory";
 
 /**
  * A GUIDS in the workspace's own screens (A4a, especificação §5.1 and §5.2):
@@ -353,6 +355,24 @@ export async function customizeGuid(
   return getGuid(tx, ctx, row.id);
 }
 
+/** Refuses the deletion of a factory GUIDS before anything else runs. */
+export async function assertGuidDeletable(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  agentId: string,
+): Promise<void> {
+  const row = await loadAgent(tx, ctx, agentId);
+  if (row.factoryRole) throw factoryNotDeleted();
+}
+
+function factoryNotDeleted(): AppError {
+  return new AppError({
+    code: "conflict",
+    safeMessage: "Os GUIDS de fábrica não são excluídos: desative o agente.",
+    messageKey: "aiAgents.errors.factoryNotDeleted",
+  });
+}
+
 /** Deletes a GUIDS; its conversations go with it, the usage stays. */
 export async function deleteGuid(
   tx: ContextTransaction,
@@ -362,6 +382,8 @@ export async function deleteGuid(
   await assertModuleOperational(tx, ctx, MODULE_KEY, "write");
   await requireWorkspacePermission(tx, ctx, Permissions.AI_AGENTS_MANAGE);
   const row = await loadAgent(tx, ctx, agentId);
+  // A factory GUIDS is deactivated, never deleted (GF1).
+  if (row.factoryRole) throw factoryNotDeleted();
   const { config } = parsedConfig(row);
   await tx.aiAgent.delete({ where: { id: row.id } });
   await recordAudit(tx, ctx, {
@@ -376,6 +398,86 @@ export async function deleteGuid(
       status: row.status,
     },
   });
+}
+
+/** The avatar of a GUIDS, from the fixed gallery (GF1). */
+export async function setGuidAvatar(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  agentId: string,
+  input: unknown,
+): Promise<GuidDetailDto> {
+  await assertModuleOperational(tx, ctx, MODULE_KEY, "write");
+  await requireWorkspacePermission(tx, ctx, Permissions.AI_AGENTS_MANAGE);
+  const avatar = parseAvatar(input);
+  if (!avatar) {
+    throw new ConfigValidationError({
+      avatar: "Escolha um avatar da galeria.",
+    });
+  }
+  const row = await loadAgent(tx, ctx, agentId);
+  const value = formatAvatar(avatar);
+  if (row.avatar !== value) {
+    await tx.aiAgent.update({
+      where: { id: row.id },
+      data: { avatar: value, updatedBy: ctx.userId, updatedByPartnerId: null },
+      select: { id: true },
+    });
+    await recordAudit(tx, ctx, {
+      action: "ai_agents.guid.update",
+      resourceType: "ai_agent",
+      resourceId: row.id,
+      result: "success",
+      origin: origin(ctx),
+      metadata: { agentId: row.id, fields: ["avatar"], to: { avatar: value } },
+    });
+  }
+  return getGuid(tx, ctx, row.id);
+}
+
+/**
+ * "Restaurar prompt de fábrica" (GF1): the prompt of the current factory
+ * template comes back; the configuration changed, so the agent needs a new
+ * test before it is turned on again (A4b).
+ */
+export async function restoreFactoryPrompt(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  agentId: string,
+): Promise<GuidDetailDto> {
+  await assertModuleOperational(tx, ctx, MODULE_KEY, "write");
+  await requireWorkspacePermission(tx, ctx, Permissions.AI_AGENTS_MANAGE);
+  const row = await loadAgent(tx, ctx, agentId);
+  if (!isFactoryRole(row.factoryRole)) throw notFound();
+  const prompt = await factoryPrompt(tx, row.factoryRole);
+  if (prompt === null) throw notFound();
+  const { config } = parsedConfig(row);
+  if (config.overview.system_prompt !== prompt) {
+    config.overview.system_prompt = prompt;
+    await tx.aiAgent.update({
+      where: { id: row.id },
+      data: {
+        config,
+        configVersion: CURRENT_CONFIG_VERSION,
+        updatedBy: ctx.userId,
+        updatedByPartnerId: null,
+      },
+      select: { id: true },
+    });
+    await recordAudit(tx, ctx, {
+      action: "ai_agents.guid.update",
+      resourceType: "ai_agent",
+      resourceId: row.id,
+      result: "success",
+      origin: origin(ctx),
+      metadata: {
+        agentId: row.id,
+        fields: ["overview.system_prompt"],
+        restored: true,
+      },
+    });
+  }
+  return getGuid(tx, ctx, row.id);
 }
 
 // ----------------------------------------------------------------------------

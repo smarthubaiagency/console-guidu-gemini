@@ -26,8 +26,10 @@ import {
   withContext,
 } from "@/lib/prisma/with-context";
 import { runTurn } from "@/modules/ai-agents/server/hub-turn";
+import { loadInboxViewer } from "@/modules/inbox/server/access";
 import { inboxAgentActive } from "@/modules/inbox/server/guids-settings";
 import { runGuidsTurn } from "@/modules/inbox/server/guids-turn";
+import { setContactLocale } from "@/modules/inbox/server/locale";
 
 import { contextA, ids } from "./fixtures";
 import { describeDatabase } from "../prisma-rls/describe-database.js";
@@ -358,6 +360,7 @@ describeDatabase("IN6: the GUIDS in the room", requiredVars, () => {
     }, "turn enqueued");
   }
 
+  let lastModel: MockLanguageModelV4 | null = null;
   async function runPending(roomId: string, steps: Step[]) {
     const run = await pendingTurn(roomId);
     expect(run.requestedBy).toBe(ids.userA);
@@ -368,6 +371,7 @@ describeDatabase("IN6: the GUIDS in the room", requiredVars, () => {
       data: { status: "succeeded" },
     });
     const model = new MockLanguageModelV4({ doGenerate: steps });
+    lastModel = model;
     return runGuidsTurn(
       session(run.id, contextA),
       contextA,
@@ -560,6 +564,89 @@ describeDatabase("IN6: the GUIDS in the room", requiredVars, () => {
     ]);
     expect(fourth).toMatchObject({ status: "answered", messages: 1 });
     expect((await mirror(room.roomId)).status).toBe("pending");
+  });
+
+  it("knows the contact's language, answers in it and keeps the team's choice (TR1)", async () => {
+    await asWorker((tx) =>
+      matrixSyncAgentJob.run(tx, { workspaceId: ids.workspaceA }),
+    );
+    await admin.$executeRawUnsafe(
+      `insert into public.inbox_attendants (workspace_id, organization_id, user_id)
+       values ('${ids.workspaceA}', '${ids.organizationA}', '${ids.userA}') on conflict do nothing`,
+    );
+    const lucia = await consumer();
+    const room = await asWorker((tx) =>
+      createConversationRoom(tx, client, {
+        workspaceId: ids.workspaceA,
+        consumerMxid: lucia.mxid,
+        consumerName: "Lucía",
+      }),
+    );
+    await fetch(
+      `${config.homeserverUrl}/_matrix/client/v3/join/${enc(room.roomId)}`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${lucia.token}`,
+          "content-type": "application/json",
+        },
+        body: "{}",
+      },
+    );
+    const language = () =>
+      admin.matrixRoom.findUniqueOrThrow({
+        where: { roomId: room.roomId },
+        select: {
+          contactLocale: true,
+          contactLocaleSource: true,
+          contactLocaleConfidence: true,
+        },
+      });
+
+    // 1. Spanish: detected as the event is processed; the text stays out.
+    await say(
+      lucia.token,
+      room.roomId,
+      "¡Hola! ¿Tienen paseo en barco para mañana? Somos 6 personas.",
+    );
+    const first = await runPending(room.roomId, [planStep(["¡Hola, Lucía!"])]);
+    expect(first).toMatchObject({ status: "answered" });
+    expect(await language()).toMatchObject({
+      contactLocale: "es",
+      contactLocaleSource: "detected",
+    });
+    expect((await language()).contactLocaleConfidence).toBeGreaterThan(0.6);
+    const stored = await admin.$queryRawUnsafe<{ hits: number }[]>(
+      `select count(*)::int as hits from public.matrix_events
+       where room_id = $1 and content::text like '%barco%'`,
+      room.roomId,
+    );
+    expect(stored[0]?.hits).toBe(0);
+    // The GUIDS (in Portuguese) is told to answer in Spanish.
+    const system = JSON.stringify(lastModel?.doGenerateCalls[0]?.prompt[0]);
+    expect(system).toContain("Responda ao contato em espanhol");
+
+    // 2. The team corrects it; a later detection never changes it.
+    await withContext(prisma, contextA, async (tx) => {
+      const viewer = await loadInboxViewer(tx, contextA.userId);
+      expect(viewer.level).toBe("reply");
+      await setContactLocale(tx, contextA, viewer, {
+        roomId: room.roomId,
+        locale: "en",
+      });
+    });
+    expect(await language()).toEqual({
+      contactLocale: "en",
+      contactLocaleSource: "manual",
+      contactLocaleConfidence: null,
+    });
+    await say(lucia.token, room.roomId, "¿Y cuánto cuesta el paseo?");
+    const second = await runPending(room.roomId, [planStep(["Sure!"])]);
+    expect(second).toMatchObject({ status: "answered" });
+    expect((await language()).contactLocale).toBe("en");
+    expect(JSON.stringify(lastModel?.doGenerateCalls[0]?.prompt[0])).toContain(
+      "Responda ao contato em inglês",
+    );
   });
 
   it("runTurn answers one turn without sending anything", async () => {

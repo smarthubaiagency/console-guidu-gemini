@@ -21,6 +21,7 @@ import { memberName, timeline, typingNames } from "../client/room-data";
 import type { MatrixPhase } from "../client/use-inbox-matrix";
 import type { ConversationSummary } from "../views";
 import { Composer } from "./composer";
+import { ContactLocaleChip } from "./contact-locale";
 import type { InboxViewer } from "./types";
 
 /**
@@ -35,6 +36,7 @@ const PRESENCE_MS = 30_000;
 const TYPING_MS = 5_000;
 
 export function ConversationView({
+  workspaceSlug,
   roomId,
   room,
   client,
@@ -45,7 +47,9 @@ export function ConversationView({
   summary,
   onBack,
   onShowContext,
+  onChanged,
 }: Readonly<{
+  workspaceSlug: string;
   roomId: string | null;
   room: Room | null;
   client: MatrixClient | null;
@@ -56,6 +60,8 @@ export function ConversationView({
   summary: ConversationSummary | null;
   onBack: (() => void) | null;
   onShowContext: (() => void) | null;
+  /** The contact's language changed (TR1): refresh the list. */
+  onChanged: () => Promise<void>;
 }>) {
   const t = useTranslations("inbox");
   const format = useFormatter();
@@ -192,6 +198,15 @@ export function ConversationView({
                 : " "}
           </p>
         </div>
+        {roomId ? (
+          <ContactLocaleChip
+            workspaceSlug={workspaceSlug}
+            roomId={roomId}
+            viewer={viewer}
+            summary={summary}
+            onChanged={onChanged}
+          />
+        ) : null}
         {onShowContext ? (
           <Button
             type="button"

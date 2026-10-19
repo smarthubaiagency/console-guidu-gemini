@@ -166,5 +166,23 @@
     "attach": "Anexar arquivo (em breve)",
     "emoji": "Emoji (em breve)",
     "more": "Mais opções (em breve)"
+  },
+  "locale": {
+    "change": "Idioma do contato",
+    "unknown": "Idioma",
+    "saved": "Idioma do contato: {language}. O GUIDS responde nele a partir da próxima mensagem.",
+    "sourceDetected": "Detectado pelas mensagens do contato",
+    "sourceManual": "Definido pela equipe",
+    "sourceUnknown": "Ainda não detectado",
+    "names": {
+      "pt-BR": "Português",
+      "en": "Inglês",
+      "es": "Espanhol"
+    },
+    "short": {
+      "pt-BR": "PT",
+      "en": "EN",
+      "es": "ES"
+    }
   }
 }

@@ -22,6 +22,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import type { ContactLocale } from "@/core/matrix/locale";
 import type { NavSection } from "@/core/module-runtime/navigation";
 import type { NotificationBellData } from "@/core/notifications/bell";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -58,6 +59,8 @@ import type { ConversationCommand, InboxViewer } from "./types";
 export type InboxShellProps = Readonly<{
   workspaceSlug: string;
   workspaceName: string;
+  /** The workspace's language (TR1): the list marks a contact in another. */
+  workspaceLocale: ContactLocale;
   viewer: InboxViewer;
   address: string | null;
   defaultOpen: boolean;
@@ -90,6 +93,7 @@ const REFRESH_MS = 8_000;
 function InboxWindow({
   workspaceSlug,
   workspaceName,
+  workspaceLocale,
   viewer,
   address,
   initialView,
@@ -267,6 +271,7 @@ function InboxWindow({
       revision={matrix.revision}
       me={me}
       address={address}
+      workspaceLocale={workspaceLocale}
       labelId={labelId}
       onLabel={(next) => {
         setLabelId(next);
@@ -276,6 +281,7 @@ function InboxWindow({
   );
   const conversation = (
     <ConversationView
+      workspaceSlug={workspaceSlug}
       roomId={selected}
       room={room}
       client={matrix.client}
@@ -286,6 +292,7 @@ function InboxWindow({
       summary={summary}
       onBack={isMobile ? () => select(null) : null}
       onShowContext={isMobile ? () => setContextOpen(true) : null}
+      onChanged={refresh}
     />
   );
   const context = (

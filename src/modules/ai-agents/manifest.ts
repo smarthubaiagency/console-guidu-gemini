@@ -38,7 +38,8 @@ export const aiAgentsManifest = defineModuleManifest({
       key: AI_AGENTS_MAX_QUOTA,
       kind: "quota",
       description: "Agentes de IA (GUIDS) por workspace.",
-      defaultLimit: 1,
+      // The four factory GUIDS (GF1, decision of 19/10/2026).
+      defaultLimit: 4,
     },
   ],
   // Export and purge of its rows (F3e): src/modules/ai-agents/data.ts.

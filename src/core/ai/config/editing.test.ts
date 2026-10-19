@@ -40,13 +40,14 @@ describe("division of the configuration fields (especificação §5.2)", () => {
     expect(fields.has("model.model_provider")).toBe(false);
   });
 
-  it("limits the customer to the model connection and the business", () => {
+  it("limits the customer to the model connection, the name and the business", () => {
     expect(editableTabs("customer")).toEqual(["overview", "model"]);
     const fields = editableFields("customer");
     expect(fields.has("model.model_name")).toBe(true);
     expect(fields.has("overview.business_summary")).toBe(true);
     expect(fields.has("overview.products_services")).toBe(true);
-    expect(fields.has("overview.agent_name")).toBe(false);
+    // GF1: the customer renames any GUIDS; the prompt stays the template's.
+    expect(fields.has("overview.agent_name")).toBe(true);
     expect(fields.has("overview.system_prompt")).toBe(false);
   });
 
@@ -78,16 +79,19 @@ describe("applyConfigEdit", () => {
     const edit = applyConfigEdit(
       current,
       {
-        overview: { agent_name: "Bia" },
+        overview: { agent_name: "Bia", expected_output: "Outra coisa" },
         model: { model_name: "gpt-4.1" },
       },
       "customer",
     );
-    // The customer changes only the model; the rest stays as it was.
-    expect(edit.config.overview).toEqual(current.overview);
+    // The customer changes the name and the model; the rest stays as it was.
+    expect(edit.config.overview).toEqual({
+      ...current.overview,
+      agent_name: "Bia",
+    });
     expect(edit.config.model).toEqual({ model_name: "gpt-4.1" });
-    expect(edit.changed).toEqual(["model.model_name"]);
-    expect(edit.forbidden).toEqual(["overview.agent_name"]);
+    expect(edit.changed).toEqual(["overview.agent_name", "model.model_name"]);
+    expect(edit.forbidden).toEqual(["overview.expected_output"]);
   });
 
   it("does not count unchanged fields outside the division as forbidden", () => {

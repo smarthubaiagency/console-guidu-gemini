@@ -169,7 +169,8 @@ describeDatabase("A1: GUIDS of the workspace", requiredVars, () => {
   });
 
   it("refuses a GUIDS over the plan limit, even under concurrency", async () => {
-    // Default limit of the manifest: 1.
+    // A limit of 1 (the manifest's default is 4 since the GF1).
+    await limit(1);
     await run(contextA, (tx) => createGuid(tx, contextA, { templateId: ANNA }));
     await expect(
       run(contextA, (tx) =>

@@ -239,10 +239,52 @@
       },
       "referral": "referred to {name}",
       "unknownReferral": "referral removed"
-    }
+    },
+    "factory": {
+      "badge": "Factory",
+      "restore": "Restore factory prompt",
+      "skipped": "{count, plural, one {# factory GUIDS did not fit the plan limit.} other {# factory GUIDS did not fit the plan limit.}}",
+      "roles": {
+        "ops": "Ops · coordinates the business",
+        "orchestrator": "Front desk · front door",
+        "attendant": "Attendant · SDR, scheduling or support",
+        "seller": "Seller · Portfolio and sales"
+      }
+    },
+    "tabs": {
+      "active": "Active GUIDS ({count})",
+      "inactive": "Inactive GUIDS ({count})",
+      "emptyActive": "No active GUIDS. Add the key, test and turn an agent on.",
+      "emptyInactive": "No inactive GUIDS."
+    },
+    "avatar": {
+      "icon": "Avatar icon",
+      "color": "Avatar colour",
+      "save": "Save avatar",
+      "icons": {
+        "bot": "Robot",
+        "headset": "Headset",
+        "smile": "Smile",
+        "shopping-bag": "Bag",
+        "briefcase": "Briefcase",
+        "sparkles": "Sparkles",
+        "store": "Store",
+        "compass": "Compass"
+      },
+      "colors": {
+        "info": "Blue",
+        "success": "Green",
+        "warning": "Yellow",
+        "danger": "Red",
+        "neutral": "Grey"
+      }
+    },
+    "avatarSaved": "Avatar saved.",
+    "promptRestored": "Factory prompt restored. Test the agent before turning it on."
   },
   "errors": {
     "notCustomized": "Customize the agent to change the referrals.",
-    "keyFailed": "The agent's key failed. Test the key before chatting."
+    "keyFailed": "The agent's key failed. Test the key before chatting.",
+    "factoryNotDeleted": "Factory GUIDS are not deleted: turn the agent off."
   }
 }

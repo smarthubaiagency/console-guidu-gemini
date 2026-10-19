@@ -149,3 +149,85 @@ begin
 end
 $$;
 rollback;
+
+-- ----------------------------------------------------------------------------
+-- Test (TR1): the contact's language — a mark of the event, and the team's
+-- correction (manual only, who answers, the context workspace, three columns)
+-- ----------------------------------------------------------------------------
+begin;
+do $$
+begin
+  insert into public.matrix_events (event_id, txn_id, room_id, type, sender, content)
+  values ('$tr1-mark', 't', '!x', 'm.room.message', '@c:matrix.test',
+          '{"msgtype":"m.text","locale":"es","locale_confidence":"0.9"}');
+  begin
+    insert into public.matrix_events (event_id, txn_id, room_id, type, sender, content)
+    values ('$tr1-text', 't', '!x', 'm.room.message', '@c:matrix.test',
+            '{"msgtype":"m.text","text":"segredo"}');
+    raise exception 'tr1: a message kept a key other than its marks';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.matrix_events (event_id, txn_id, room_id, type, sender, content)
+    values ('$tr1-fr', 't', '!x', 'm.room.message', '@c:matrix.test',
+            '{"msgtype":"m.text","locale":"fr"}');
+    raise exception 'tr1: a language out of the three was kept';
+  exception when check_violation then null;
+  end;
+end
+$$;
+rollback;
+
+begin;
+select pg_temp.fixture();
+set local role app_runtime;
+do $$
+declare
+  v_count integer;
+begin
+  -- The Attendant of A corrects the language of a room of A.
+  perform pg_temp.ctx('1a4b0000-0000-4000-8000-0000000000e5', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  update public.matrix_rooms
+  set contact_locale = 'es', contact_locale_source = 'manual', contact_locale_confidence = null
+  where room_id = '!in4b-a';
+  get diagnostics v_count = row_count;
+  if v_count <> 1 then
+    raise exception 'tr1: the attendant could not set the language';
+  end if;
+  -- Only as manual: a detection is the worker's.
+  begin
+    update public.matrix_rooms
+    set contact_locale = 'en', contact_locale_source = 'detected', contact_locale_confidence = 0.9
+    where room_id = '!in4b-a';
+    raise exception 'tr1: the console wrote a detected language';
+  exception when insufficient_privilege then null;
+  end;
+  -- Only the three columns.
+  begin
+    update public.matrix_rooms set status = 'resolved' where room_id = '!in4b-a';
+    raise exception 'tr1: the console changed the status of a room';
+  exception when insufficient_privilege then null;
+  end;
+  -- Never a room of B.
+  update public.matrix_rooms
+  set contact_locale = 'es', contact_locale_source = 'manual'
+  where room_id = '!in4b-b';
+  get diagnostics v_count = row_count;
+  if v_count <> 0 then
+    raise exception 'tr1: a room of B was changed from A';
+  end if;
+
+  -- The owner of A is not an attendant: it does not answer, nor correct.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  update public.matrix_rooms
+  set contact_locale = 'pt-BR', contact_locale_source = 'manual'
+  where room_id = '!in4b-a';
+  get diagnostics v_count = row_count;
+  if v_count <> 0 then
+    raise exception 'tr1: who does not answer corrected the language';
+  end if;
+end
+$$;
+rollback;
