@@ -239,10 +239,52 @@
       },
       "referral": "indicado para {name}",
       "unknownReferral": "indicação removida"
-    }
+    },
+    "factory": {
+      "badge": "De fábrica",
+      "restore": "Restaurar prompt de fábrica",
+      "skipped": "{count, plural, one {# GUIDS de fábrica não coube no limite do plano.} other {# GUIDS de fábrica não couberam no limite do plano.}}",
+      "roles": {
+        "ops": "Ops · coordena a empresa",
+        "orchestrator": "Recepção · porta de entrada",
+        "attendant": "Atendente · SDR, agenda ou suporte",
+        "seller": "Vendedor · Portfólio e vendas"
+      }
+    },
+    "tabs": {
+      "active": "GUIDS ativos ({count})",
+      "inactive": "GUIDS inativos ({count})",
+      "emptyActive": "Nenhum GUIDS ativo. Cadastre a chave, teste e ligue um agente.",
+      "emptyInactive": "Nenhum GUIDS inativo."
+    },
+    "avatar": {
+      "icon": "Ícone do avatar",
+      "color": "Cor do avatar",
+      "save": "Salvar avatar",
+      "icons": {
+        "bot": "Robô",
+        "headset": "Fone",
+        "smile": "Sorriso",
+        "shopping-bag": "Sacola",
+        "briefcase": "Maleta",
+        "sparkles": "Brilho",
+        "store": "Loja",
+        "compass": "Bússola"
+      },
+      "colors": {
+        "info": "Azul",
+        "success": "Verde",
+        "warning": "Amarelo",
+        "danger": "Vermelho",
+        "neutral": "Cinza"
+      }
+    },
+    "avatarSaved": "Avatar salvo.",
+    "promptRestored": "Prompt de fábrica restaurado. Teste o agente antes de ligá-lo."
   },
   "errors": {
     "notCustomized": "Personalize o agente para alterar as indicações.",
-    "keyFailed": "A chave do agente falhou. Teste a chave antes de conversar."
+    "keyFailed": "A chave do agente falhou. Teste a chave antes de conversar.",
+    "factoryNotDeleted": "Os GUIDS de fábrica não são excluídos: desative o agente."
   }
 }

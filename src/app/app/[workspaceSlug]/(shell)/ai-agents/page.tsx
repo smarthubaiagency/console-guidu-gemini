@@ -3,7 +3,9 @@
  * within the plan limit, a new GUIDS from a published template or blank
  * ("Personalizado"), and the drawer (ADR 0015) at `?edit=<id>` with the
  * customer's division of fields, the key of the workspace's vault, the key
- * test, customization, deletion and the referrals. At
+ * test, customization, deletion and the referrals. GF1: whoever manages
+ * the module gets the four factory GUIDS here (created when missing, as
+ * drafts), and the list is split in "GUIDS ativos | GUIDS inativos". At
  * `?edit=<id>&view=test` the drawer holds "Testar agente" (A4b). Members
  * with `ai_agents.use` read and test; owner and admin change. With the
  * module flag off, the page says the module is unavailable.
@@ -17,6 +19,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { RecordWorkbench, WorkbenchPanel } from "@/components/layout/workbench";
 import { ModuleNotice } from "@/components/modules/module-notice";
 import { ModulePageHeader } from "@/components/modules/module-page-header";
+import { AgentAvatar } from "@/components/ai-agents/agent-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { requireUserPage } from "@/core/auth/page-guard";
@@ -44,6 +47,10 @@ import {
   listGuidChannels,
 } from "@/modules/ai-agents/server/services/channels";
 import {
+  type FactorySeed,
+  ensureFactoryGuids,
+} from "@/modules/ai-agents/server/services/factory";
+import {
   type GuidDetailDto,
   getGuid,
 } from "@/modules/ai-agents/server/services/guid-config";
@@ -56,6 +63,7 @@ import { AppError } from "@/shared/errors";
 import { GuidChannels } from "./guid-channels";
 import { GuidNotices } from "./guid-notices";
 import { CreateGuidForm, GuidPanel } from "./guid-forms";
+import { GuidTabs } from "./guid-tabs";
 import { GuidTestPanel } from "./guid-test";
 import { requireWorkspaceAreaPage } from "@/core/module-runtime/page-access";
 
@@ -138,6 +146,10 @@ export default async function AiAgentsPage({
     if (access.kind !== "ok") return access;
     const canManage =
       access.can(Permissions.AI_AGENTS_MANAGE) && !access.readOnly;
+    // The four factory GUIDS (GF1), created by whoever manages the module.
+    const seed: FactorySeed = canManage
+      ? await ensureFactoryGuids(tx, context)
+      : { created: [], skipped: [] };
     const [guids, templates, quota] = await Promise.all([
       listGuids(tx, context),
       listGuidTemplates(tx, context),
@@ -175,6 +187,7 @@ export default async function AiAgentsPage({
       policy: await aiPolicy(tx),
       guids,
       templates,
+      seed,
       limit: quota.limit,
       opened,
       test,
@@ -203,9 +216,12 @@ export default async function AiAgentsPage({
 
   const details = (guid: GuidDto) =>
     [
-      guid.customized
-        ? t("guids.customizedLabel")
-        : (templateName.get(guid.templateId ?? "") ?? t("guids.fromTemplate")),
+      guid.factoryRole
+        ? t("guids.factory.badge")
+        : guid.customized
+          ? t("guids.customizedLabel")
+          : (templateName.get(guid.templateId ?? "") ??
+            t("guids.fromTemplate")),
       KEY_STATES.has(guid.keyState)
         ? t(`guids.keyState.${guid.keyState}`)
         : null,
@@ -321,6 +337,59 @@ export default async function AiAgentsPage({
     );
   }
 
+  const activeGuids = view.guids.filter((guid) => guid.status === "active");
+  const inactiveGuids = view.guids.filter((guid) => guid.status !== "active");
+  const list = (guids: readonly GuidDto[], empty: string) => (
+    <ul className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs">
+      {guids.map((guid) => (
+        <li
+          key={guid.id}
+          className="flex flex-wrap items-center justify-between gap-2 p-4"
+          data-testid="workspace-guid"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <AgentAvatar value={guid.avatar} />
+            <div className="min-w-0 space-y-1">
+              <Link
+                href={`${base}?edit=${guid.id}`}
+                scroll={false}
+                aria-current={guid.id === editKey ? "true" : undefined}
+                className="text-14 text-text font-medium hover:underline"
+              >
+                {guid.name ?? t("guids.unnamed")}
+              </Link>
+              <p className="text-12 text-text-secondary">{details(guid)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {guid.factoryRole ? (
+              <Badge variant="info">
+                {t(`guids.factory.roles.${guid.factoryRole}`)}
+              </Badge>
+            ) : null}
+            <Badge
+              variant={
+                STATUS_BADGE[guid.status as keyof typeof STATUS_BADGE] ??
+                "secondary"
+              }
+            >
+              {statusLabel(guid.status)}
+            </Badge>
+          </div>
+        </li>
+      ))}
+      {guids.length === 0 ? (
+        <li className="text-12 text-text-secondary p-4">
+          {view.guids.length === 0
+            ? view.canManage
+              ? t("guids.emptyManage")
+              : t("guids.empty")
+            : empty}
+        </li>
+      ) : null}
+    </ul>
+  );
+
   const main = (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="workspace-guids">
       <ModulePageHeader
@@ -343,40 +412,20 @@ export default async function AiAgentsPage({
           ? t("guids.quotaUnlimited", { count: view.guids.length })
           : t("guids.quota", { count: view.guids.length, limit: view.limit })}
       </p>
-      <ul className="border-card-border bg-surface-card divide-border divide-y rounded-xl border shadow-xs">
-        {view.guids.map((guid) => (
-          <li
-            key={guid.id}
-            className="flex flex-wrap items-center justify-between gap-2 p-4"
-            data-testid="workspace-guid"
-          >
-            <div className="min-w-0 space-y-1">
-              <Link
-                href={`${base}?edit=${guid.id}`}
-                scroll={false}
-                aria-current={guid.id === editKey ? "true" : undefined}
-                className="text-14 text-text font-medium hover:underline"
-              >
-                {guid.name ?? t("guids.unnamed")}
-              </Link>
-              <p className="text-12 text-text-secondary">{details(guid)}</p>
-            </div>
-            <Badge
-              variant={
-                STATUS_BADGE[guid.status as keyof typeof STATUS_BADGE] ??
-                "secondary"
-              }
-            >
-              {statusLabel(guid.status)}
-            </Badge>
-          </li>
-        ))}
-        {view.guids.length === 0 ? (
-          <li className="text-12 text-text-secondary p-4">
-            {view.canManage ? t("guids.emptyManage") : t("guids.empty")}
-          </li>
-        ) : null}
-      </ul>
+      {view.seed.skipped.length > 0 ? (
+        <p
+          className="text-12 text-warning-text"
+          data-testid="guid-factory-skipped"
+        >
+          {t("guids.factory.skipped", { count: view.seed.skipped.length })}
+        </p>
+      ) : null}
+      <GuidTabs
+        activeCount={activeGuids.length}
+        inactiveCount={inactiveGuids.length}
+        active={list(activeGuids, t("guids.tabs.emptyActive"))}
+        inactive={list(inactiveGuids, t("guids.tabs.emptyInactive"))}
+      />
     </div>
   );
 

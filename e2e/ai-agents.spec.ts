@@ -64,7 +64,7 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       "Module is frozen by default (C04); runs only when GUIDU_MODULE_AI_AGENTS_ENABLED is true",
     );
 
-    test("the owner creates, customizes, tests and deletes a GUIDS", async ({
+    test("the owner gets the four factory GUIDS, renames, customizes and tests one", async ({
       page,
       request,
     }) => {
@@ -82,17 +82,27 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       });
       await seedGuid(request, workspace);
 
+      // GF1: the four factory GUIDS fill the default limit, as drafts.
       await signIn(page, email);
       await page.goto(`/app/${wsSlug}/ai-agents`);
-      await expect(page.getByTestId("guid-quota")).toContainText("0 de 1");
-      await page.getByRole("link", { name: "Novo agente" }).click();
-      const create = page.getByTestId("create-guid");
-      await create.getByRole("radio", { name: /Anna/ }).check();
-      await create.getByRole("button", { name: "Criar agente" }).click();
+      await expect(page.getByTestId("guid-quota")).toContainText("4 de 4");
+      const tabs = page.getByTestId("guid-tabs");
+      await expect(tabs.getByRole("tab")).toHaveText([
+        "GUIDS ativos (0)",
+        "GUIDS inativos (4)",
+      ]);
+      await expect(page.getByTestId("workspace-guid")).toHaveCount(4);
+      await expect(page.getByRole("link", { name: "Novo agente" })).toHaveCount(
+        0,
+      );
+      await page.getByRole("link", { name: "Recepção" }).click();
 
       const panel = page.getByTestId("guid-panel");
+      await expect(panel.getByTestId("guid-factory")).toHaveText("De fábrica");
       await expect(panel.getByTestId("guid-state")).toContainText("Rascunho");
       await expect(panel.getByTestId("guid-missing")).toBeVisible();
+      // Factory GUIDS are deactivated, never deleted.
+      await expect(page.getByTestId("delete-guid")).toHaveCount(0);
       // Following the template, the customer has the business and the model.
       await expect(page.getByTestId("guid-form").getByRole("tab")).toHaveText([
         "Visão geral",
@@ -117,8 +127,16 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       await expect(page.getByTestId("model-embeddings")).toContainText(
         "bases de conhecimento",
       );
-      await expect(page.getByRole("link", { name: "Novo agente" })).toHaveCount(
-        0,
+
+      // The name and the avatar are the customer's; the role stays.
+      const identity = page.getByTestId("guid-identity");
+      await identity.getByRole("radio", { name: "Loja" }).click();
+      await identity.getByRole("radio", { name: "Verde" }).click();
+      await page.getByTestId("save-guid-avatar").click();
+      await expect(statusBanner(page)).toContainText("Avatar salvo.");
+      await page.getByTestId("restore-factory-prompt").click();
+      await expect(statusBanner(page)).toContainText(
+        "Prompt de fábrica restaurado",
       );
 
       await page.getByTestId("customize-guid").click();
@@ -132,7 +150,9 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       await form.getByLabel("Nome do agente").fill("Clara");
       await page.getByTestId("save-guid").click();
       await expect(statusBanner(page)).toContainText("Agente salvo.");
-      await expect(page.getByTestId("workspace-guid")).toContainText("Clara");
+      await expect(
+        page.getByTestId("workspace-guid").filter({ hasText: "Clara" }),
+      ).toHaveCount(1);
 
       const referral = page.getByTestId("create-referral");
       await referral.getByLabel("Nome").fill("Dra. Ana");
@@ -161,12 +181,9 @@ test.describe("AI Agents Module (Freezing and Availability Controls)", () => {
       await chat.getByRole("link", { name: "Voltar à configuração" }).click();
       await expect(page.getByTestId("guid-panel")).toBeVisible();
 
-      await page.getByTestId("delete-guid").click();
-      const remove = statusBanner(page);
-      await remove.getByRole("checkbox").check();
-      await remove.getByTestId("smart-status-action").click();
-      await expect(page.getByTestId("workspace-guid")).toHaveCount(0);
-      await expect(page.getByTestId("guid-quota")).toContainText("0 de 1");
+      await expect(page.getByTestId("guid-identity")).toContainText(
+        "Recepção · porta de entrada",
+      );
     });
   });
 });

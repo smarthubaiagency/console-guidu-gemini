@@ -5,6 +5,11 @@ import { useTranslations } from "next-intl";
 import { useActionState, useState, useTransition } from "react";
 
 import {
+  AgentAvatar,
+  AVATAR_ICON,
+  AVATAR_TONE,
+} from "@/components/ai-agents/agent-avatar";
+import {
   AgentConfigEditor,
   type EditorCredential,
 } from "@/components/ai-agents/agent-config-editor";
@@ -12,6 +17,7 @@ import { Referrals } from "@/components/ai-agents/referrals";
 import { useActionStatus } from "@/components/feedback/use-action-status";
 import { useStatus } from "@/components/feedback/status-context";
 import { WorkbenchPanel } from "@/components/layout/workbench";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -23,10 +29,20 @@ import {
   deleteGuidAction,
   deleteReferralAction,
   type GuidActionState,
+  restoreFactoryPromptAction,
   saveGuidAction,
   saveReferralAction,
+  setGuidAvatarAction,
   testGuidKeyAction,
 } from "@/modules/ai-agents/server/actions";
+import {
+  AVATAR_COLORS,
+  AVATAR_ICONS,
+  DEFAULT_AVATAR,
+  formatAvatar,
+  parseAvatar,
+} from "@/modules/ai-agents/avatars";
+import { cn } from "@/lib/utils";
 import type { GuidDetailDto } from "@/modules/ai-agents/server/services/guid-config";
 
 /**
@@ -150,7 +166,9 @@ export function GuidPanel({
       footer={
         canManage ? (
           <>
-            <DeleteGuidButton workspaceSlug={workspaceSlug} guid={guid} />
+            {guid.factoryRole ? null : (
+              <DeleteGuidButton workspaceSlug={workspaceSlug} guid={guid} />
+            )}
             {testLink}
             <GuidButton
               action={testGuidKeyAction}
@@ -176,6 +194,11 @@ export function GuidPanel({
         {summary}
         {channels}
         {notices}
+        <FactoryIdentity
+          workspaceSlug={workspaceSlug}
+          guid={guid}
+          canManage={canManage}
+        />
         {canManage ? (
           <>
             {guid.customized ? null : (
@@ -244,6 +267,133 @@ export function GuidPanel({
         )}
       </div>
     </WorkbenchPanel>
+  );
+}
+
+/**
+ * Avatar and, for a factory GUIDS, its fixed role and "Restaurar prompt de
+ * fábrica" (GF1). The name is edited in the configuration (Visão geral).
+ */
+function FactoryIdentity({
+  workspaceSlug,
+  guid,
+  canManage,
+}: Readonly<{
+  workspaceSlug: string;
+  guid: GuidDetailDto;
+  canManage: boolean;
+}>) {
+  const t = useTranslations("aiAgents.guids");
+  const current = parseAvatar(guid.avatar) ?? DEFAULT_AVATAR;
+  const [icon, setIcon] = useState(current.icon);
+  const [color, setColor] = useState(current.color);
+  const [state, setState] = useState<GuidActionState>(INITIAL);
+  const [pending, startTransition] = useTransition();
+  useActionStatus(state);
+  const chosen = formatAvatar({ icon, color });
+
+  return (
+    <div
+      className="border-card-border space-y-3 rounded-xl border p-3"
+      data-testid="guid-identity"
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <AgentAvatar value={chosen} size="lg" />
+        <div className="min-w-0 flex-1">
+          <p className="text-14 text-text truncate font-medium">
+            {guid.name ?? t("unnamed")}
+          </p>
+          {guid.factoryRole ? (
+            <p className="text-12 text-text-secondary">
+              {t(`factory.roles.${guid.factoryRole}`)}
+            </p>
+          ) : null}
+        </div>
+        {guid.factoryRole ? (
+          <Badge variant="info" data-testid="guid-factory">
+            {t("factory.badge")}
+          </Badge>
+        ) : null}
+      </div>
+      {canManage ? (
+        <>
+          <div
+            className="flex flex-wrap gap-1.5"
+            role="radiogroup"
+            aria-label={t("avatar.icon")}
+          >
+            {AVATAR_ICONS.map((key) => {
+              const Icon = AVATAR_ICON[key];
+              return (
+                <Button
+                  key={key}
+                  type="button"
+                  size="icon-sm"
+                  variant={icon === key ? "default" : "outline"}
+                  role="radio"
+                  aria-checked={icon === key}
+                  aria-label={t(`avatar.icons.${key}`)}
+                  onClick={() => setIcon(key)}
+                >
+                  <Icon />
+                </Button>
+              );
+            })}
+          </div>
+          <div
+            className="flex flex-wrap gap-1.5"
+            role="radiogroup"
+            aria-label={t("avatar.color")}
+          >
+            {AVATAR_COLORS.map((key) => (
+              <Button
+                key={key}
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                role="radio"
+                aria-checked={color === key}
+                aria-label={t(`avatar.colors.${key}`)}
+                onClick={() => setColor(key)}
+                className={cn(
+                  "rounded-full border-2",
+                  AVATAR_TONE[key],
+                  color === key ? "border-primary" : "border-transparent",
+                )}
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={pending || chosen === (guid.avatar ?? "")}
+              data-testid="save-guid-avatar"
+              onClick={() =>
+                startTransition(async () => {
+                  const formData = new FormData();
+                  formData.append("workspaceSlug", workspaceSlug);
+                  formData.append("agentId", guid.id);
+                  formData.append("avatar", chosen);
+                  setState(await setGuidAvatarAction({}, formData));
+                })
+              }
+            >
+              {t("avatar.save")}
+            </Button>
+            {guid.factoryRole ? (
+              <GuidButton
+                action={restoreFactoryPromptAction}
+                fields={{ workspaceSlug, agentId: guid.id }}
+                label={t("factory.restore")}
+                testId="restore-factory-prompt"
+              />
+            ) : null}
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }
 

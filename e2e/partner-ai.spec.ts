@@ -249,8 +249,11 @@ test.describe("with GUIDU_MODULE_AI_AGENTS_ENABLED", () => {
     const customer = await context.newPage();
     await signIn(customer, customerEmail);
     await customer.goto(`/app/clinica-${stamp}/ai-agents`);
-    await expect(customer.getByTestId("workspace-guid")).toContainText(
-      `Alterado por Agência ${stamp} em`,
-    );
+    // GF1: the factory GUIDS show up beside the partner's.
+    await expect(
+      customer
+        .getByTestId("workspace-guid")
+        .filter({ hasText: `Alterado por Agência ${stamp} em` }),
+    ).toHaveCount(1);
   });
 });

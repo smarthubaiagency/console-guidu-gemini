@@ -60,7 +60,7 @@ describe("quota catalog (CF4)", () => {
     expect(findQuotaEntry("ai-agents.max")).toMatchObject({
       owner: "ai-agents",
       defaultSource: "module",
-      defaultLimit: 1,
+      defaultLimit: 4,
       unit: "count",
     });
     expect(findQuotaEntry("core.public_domains")).toMatchObject({

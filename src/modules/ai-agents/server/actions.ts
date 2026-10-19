@@ -27,10 +27,13 @@ import {
   sendGuidTestMessage,
 } from "./services/conversations";
 import {
+  assertGuidDeletable,
   createReferral,
   customizeGuid,
   deleteGuid,
   deleteReferral,
+  restoreFactoryPrompt,
+  setGuidAvatar,
   updateGuid,
   updateReferral,
 } from "./services/guid-config";
@@ -174,6 +177,10 @@ export async function deleteGuidAction(
     const resolved = await contextFor(formData);
     base = resolved.base;
     const agentId = text(formData, "agentId");
+    // A factory GUIDS is never deleted (GF1): refused before its inboxes go.
+    await withContext(prisma, resolved.context, (tx) =>
+      assertGuidDeletable(tx, resolved.context, agentId),
+    );
     // Its inboxes go back to nobody (and the bot leaves them) first.
     await releaseGuidInboxes(prisma, resolved.context, agentId);
     await withContext(prisma, resolved.context, (tx) =>
@@ -184,6 +191,47 @@ export async function deleteGuidAction(
   }
   revalidatePath(base);
   redirect(base);
+}
+
+/** The avatar of the gallery (GF1). */
+export async function setGuidAvatarAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    await withContext(prisma, context, (tx) =>
+      setGuidAvatar(
+        tx,
+        context,
+        text(formData, "agentId"),
+        text(formData, "avatar"),
+      ),
+    );
+    revalidatePath(base);
+    const t = await getTranslations("aiAgents.guids");
+    return { success: true, message: t("avatarSaved") };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** "Restaurar prompt de fábrica" (GF1). */
+export async function restoreFactoryPromptAction(
+  _prev: GuidActionState,
+  formData: FormData,
+): Promise<GuidActionState> {
+  try {
+    const { context, base } = await contextFor(formData);
+    await withContext(prisma, context, (tx) =>
+      restoreFactoryPrompt(tx, context, text(formData, "agentId")),
+    );
+    revalidatePath(base);
+    const t = await getTranslations("aiAgents.guids");
+    return { success: true, message: t("promptRestored") };
+  } catch (err) {
+    return failure(err);
+  }
 }
 
 export async function testGuidKeyAction(

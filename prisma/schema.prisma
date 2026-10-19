@@ -913,6 +913,9 @@ model AiAgentTemplate {
   configVersion  Int       @default(1) @map("config_version")
   version        Int       @default(1)
   published      Boolean   @default(false)
+  /// One of the four factory templates (GF1): ops, orchestrator,
+  /// attendant or seller; null for the others.
+  factoryRole    String?   @map("factory_role")
   approvedBy     String?   @map("approved_by") @db.Uuid
   approvedAt     DateTime? @map("approved_at") @db.Timestamptz()
   createdBy      String?   @map("created_by") @db.Uuid
@@ -936,6 +939,10 @@ model AiAgent {
   templateId         String?   @map("template_id") @db.Uuid
   templateVersion    Int?      @map("template_version")
   customized         Boolean   @default(false)
+  /// The role of a factory GUIDS (GF1), one per workspace; never deleted.
+  factoryRole        String?   @map("factory_role")
+  /// `icon:colour` of the fixed gallery (GF1).
+  avatar             String?
   config             Json      @default("{}")
   configVersion      Int       @default(1) @map("config_version")
   status             String    @default("draft")

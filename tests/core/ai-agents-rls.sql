@@ -425,10 +425,11 @@ set local role app_runtime;
 do $$
 begin
   -- A workspace of a house customer: the published GUIDS templates of the
-  -- house only (not the admin template, drafts or another partner's).
+  -- house only (not the admin template, drafts or another partner's): the
+  -- two of the A1 and the four factory templates of the GF1.
   perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
                       'a0000000-0000-4000-8000-000000000010', '00000000-0000-4000-8000-000000000000');
-  if (select count(*) from public.ai_agent_templates) <> 2
+  if (select count(*) from public.ai_agent_templates) <> 6
      or exists (select 1 from public.ai_agent_templates where kind = 'admin' or not published or partner_id is not null) then
     raise exception 'ai_agent_templates: house customer sees the wrong templates';
   end if;
@@ -442,7 +443,7 @@ begin
   -- A customer of P also sees P's published template; a non-member nothing.
   perform pg_temp.ctx('a0000000-0000-4000-8000-000000000032', 'c1000000-0000-4000-8000-000000000011',
                       'c1000000-0000-4000-8000-000000000010', 'b1000000-0000-4000-8000-000000000001');
-  if (select count(*) from public.ai_agent_templates) <> 3
+  if (select count(*) from public.ai_agent_templates) <> 7
      or not exists (select 1 from public.ai_agent_templates where id = 'a1e00000-0000-4000-8000-000000000002') then
     raise exception 'ai_agent_templates: customer of P does not see the templates of P';
   end if;
@@ -455,7 +456,7 @@ begin
   -- Partner owner: its own templates and the published house ones; edits
   -- only its own.
   perform pg_temp.ctx('d0000000-0000-4000-8000-000000000004', null, null, 'b1000000-0000-4000-8000-000000000001');
-  if (select count(*) from public.ai_agent_templates) <> 3 then
+  if (select count(*) from public.ai_agent_templates) <> 7 then
     raise exception 'ai_agent_templates: partner sees the wrong templates';
   end if;
   insert into public.ai_agent_templates (partner_id, kind, name, created_by)
