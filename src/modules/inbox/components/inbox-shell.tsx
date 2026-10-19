@@ -111,6 +111,12 @@ function InboxWindow({
   const [contextOpen, setContextOpen] = useState(false);
   const [contextShown, setContextShown] = useState(true);
   const [tab, setTab] = useState<ContextTab>(initialTab);
+  // Sections of "Contato" that start open (IN4c): the contact and the
+  // actions of the conversation.
+  const [openSections, setOpenSections] = useState<string[]>([
+    "contact",
+    "actions",
+  ]);
   const [busy, setBusy] = useState(false);
   const matrix = useInboxMatrix(viewer.mxid);
   const listPanel = useRef<PanelImperativeHandle | null>(null);
@@ -236,6 +242,9 @@ function InboxWindow({
   // "IA" of the secondary header: the GUIDS card, on "Contato".
   const showGuids = () => {
     setTab("contact");
+    setOpenSections((open) =>
+      open.includes("guids") ? open : [...open, "guids"],
+    );
     if (isMobile) setContextOpen(true);
     else if (contextPanel.current?.isCollapsed()) contextPanel.current.expand();
     window.setTimeout(() => {
@@ -294,6 +303,8 @@ function InboxWindow({
       onChanged={refresh}
       tab={tab}
       onTab={setTab}
+      sections={openSections}
+      onSections={setOpenSections}
     />
   );
 

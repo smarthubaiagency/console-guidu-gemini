@@ -22,6 +22,7 @@
 import {
   type APIRequestContext,
   expect,
+  type Locator,
   type Page,
   test,
 } from "@playwright/test";
@@ -48,6 +49,14 @@ async function chooseView(page: Page, name: string): Promise<void> {
 }
 
 test.skip(!env, "sem Synapse local (MATRIX_E2E_ENV_FILE)");
+
+/** Opens a closed section of the "Contato" tab (accordion, IN4c). */
+async function openSection(section: Locator): Promise<void> {
+  const trigger = section.locator('[data-slot="accordion-trigger"]');
+  if ((await trigger.getAttribute("aria-expanded")) !== "true") {
+    await trigger.click();
+  }
+}
 
 /**
  * Runs the worker of the rig with the window closed: the list of the Inbox
@@ -151,6 +160,7 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await page.goto(`/app/${wsSlug}/inbox?view=all`);
   await list.getByRole("button", { name: /Maria Cliente/ }).click();
   const labelsCard = page.getByTestId("inbox-labels");
+  await openSection(labelsCard);
   await labelsCard
     .getByRole("textbox", { name: "Nova etiqueta" })
     .fill("Orçamento");
@@ -190,6 +200,7 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   });
 
   // IN4b: the Attendant labels the conversation and filters by it.
+  await openSection(page.getByTestId("inbox-labels"));
   await page
     .getByTestId("inbox-labels")
     .getByRole("button", { name: "Orçamento" })
@@ -202,7 +213,7 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
 
   // Takes it.
   const context = page.getByTestId("inbox-context");
-  await context.getByRole("button", { name: "Assumir" }).click();
+  await context.getByRole("button", { name: "Atribuir a mim" }).click();
   await expect(
     statusBanner(page).filter({ hasText: "Conversa assumida." }),
   ).toBeVisible();

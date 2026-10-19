@@ -31,11 +31,13 @@
 
 **Pares sugeridos** (duas etapas por vez, `AGENTS.md`):
 
-1. IN4c e GF1 (a IN4c vem antes das outras etapas do Inbox, que entram no layout novo);
+1. ~~IN4c~~ (feita, PR #124; a aba Contato em acordeon e "Ações da conversa" vieram em seguida) e GF1;
 2. TR1 e IN5a;
 3. TR2 e SB1;
 4. TR3 e GF2;
 5. TR4.
+
+Como a GF1 ficou sem par, a dupla da vez é **GF1 e TR1**, e a IN5a passa a andar com a TR2.
 
 TR1 a TR3 fecham a tradução de texto para o piloto de Búzios. Antes de começar, confirmar que a IN7 (WhatsApp da Meta) foi para a `main`, porque a TR1 detecta o idioma das mensagens do WhatsApp.
 
@@ -93,7 +95,18 @@ Pagamento, carrinho e pedido não começam antes da decisão jurídica e comerci
 | Eventos `chat.guidu.task`, `chat.guidu.proposal` e `chat.guidu.decision` com schema e versão num lugar só, com propostas e decisões em nível 100 | SB1        |
 | Conversa do agente por thread em `ai_conversations` (id da raiz da thread)                                                                       | SB1        |
 
-## 6. Respostas que fecharam perguntas
+## 6. Propostas para uma tarefa futura
+
+Ainda sem etapa. Em "Ações da conversa" do Inbox, os dois seletores já estão no lugar, desligados.
+
+| Proposta                   | O que é                                                                                                                                                           | Onde mexe                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Prioridade da conversa** | Um campo por conversa no espelho do Supabase (Nenhuma, Baixa, Média, Alta, Urgente), com filtro e ordenação na lista. Não vai para a sala, para o cliente não ver | Espelho `matrix_rooms`, ação de mudar a conversa, seletor em "Ações da conversa", lista |
+| **Times de atendimento**   | Grupos de atendentes por workspace (por exemplo "Reservas" e "Passeios"), conversa atribuída a um time e a visão "Meu time" na lista                              | Equipe, permissões, visões do Inbox, espelho, seletor em "Ações da conversa"            |
+
+A prioridade é barata e pode entrar junto de uma etapa do Inbox. Os times pedem uma etapa própria, depois do P1.
+
+## 7. Respostas que fecharam perguntas
 
 | Pergunta                                      | Resposta                                                        |
 | --------------------------------------------- | --------------------------------------------------------------- |
@@ -104,7 +117,7 @@ Pagamento, carrinho e pedido não começam antes da decisão jurídica e comerci
 | Idiomas do piloto                             | Português, inglês e espanhol                                    |
 | Limite de tradução                            | Nenhum limite nosso: vale o limite da chave do cliente          |
 
-## 7. Perguntas que continuam abertas
+## 8. Perguntas que continuam abertas
 
 1. **Na P1:** nenhuma; as três foram respondidas em 19/10/2026 (seção 6).
 2. **Na P2:** editor e leitor entram na sala de operação? Histórico desde a entrada ou desde a criação? GUIDS pausado continua na sala? Quanto o @ops lê das conversas dos GUIDS?
