@@ -1,10 +1,18 @@
 # Perfil digital: planejamento do módulo
 
-- **Versão:** 0.4, 15/10/2026.
+- **Versão:** 0.5, 20/10/2026.
 
 Início do planejamento em 14/10/2026, a partir da [comparação dos relatórios](comparativo-relatorios.md). Base técnica: [relatório do Opus](analise-opus-legado.md), com os complementos indicados na comparação. Nada aqui foi implementado.
 
 Citações do legado se referem ao repositório `smarthubaiagency/cartaopro-linkko`, commit `d739429`.
+
+## Enquadramento da referência técnica — 20/10/2026
+
+O solicitante esclareceu que o projeto usado como referência deste plano tinha uma estrutura de perfil padrão, com ajustes de cores e dados do usuário. Ele não possuía editor de blocos nem editor de templates para montar estruturas diferentes. As menções abaixo a blocos, editor de design e editor completo planejado não significam que esse construtor existia no legado.
+
+O novo planejamento de [Templates Digitais](../digital-templates/README.md) adota o construtor de `linkkotech/nextcrm-primeiro` como base funcional: edição de blocos, árvore de elementos, biblioteca e montagem de templates com composições distintas. A autoria é proposta para `/platform`; admin e app recebem a composição publicada pronta. O modelo de estrutura fixa e seu motor de cores não limitam esse construtor e não são pré-requisitos da extração.
+
+Este documento continua registrando o planejamento anterior. Regras de negócio como unidade, perfis, endereços e leads serão revalidadas para o consumidor `digital-profile`. As seções de motor, editor e etapas abaixo precisam ser redesenhadas na revisão integrada ao novo módulo; não devem orientar uma implementação que reduza o construtor a ajustes de paleta. Esta nota não aprova automaticamente as demais decisões da nova proposta nem registra implementação.
 
 ## 1. O que o módulo entrega
 
@@ -135,3 +143,4 @@ A DP0, só documentação, com o "pode começar" do Marcelo: `MODULE_SPEC.md` do
 | 0.2    | 15/10/2026 | Decisão 4 refeita: endereço `{host}/{slug}` com cascata de domínios; subdomínio por workspace fora do MVP; regras de domínio movidas para o plano da CF2c (plataforma)                                                                                                                 |
 | 0.3    | 15/10/2026 | Unidade com finalidade em `workspace_locations`; campos pessoais; carência de 30 dias e 307 para o master; perfil master; modelos base; modos smart e gerenciado pelo plano; motor recuperado do legado; reaproveitamento autorizado; etapas reordenadas para o fluxo de ponta a ponta |
 | 0.4    | 15/10/2026 | Decisão 4 alinhada à CF2c construída (PR #89): host com subdomínio por workspace (`rodobens.mobio.pro`), slug único por workspace e carência dentro do workspace; o serviço de endereços passa a ser a CF2e; etapa 2 vira CF2e-1                                                       |
+| 0.5    | 20/10/2026 | Registrada a origem de estrutura fixa sem editores e o novo planejamento baseado no construtor NextCRM; preservado o histórico anterior.                                                                                                                                               |
