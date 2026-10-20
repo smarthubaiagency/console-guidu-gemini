@@ -1,6 +1,6 @@
 # Especificação candidata: Templates Digitais (`digital-templates`)
 
-- **Versão:** 0.1, 20/10/2026.
+- **Versão:** 0.2, 20/10/2026.
 - **Estado:** proposta, aguarda revisão; não registrada nem implementada.
 - **Modelo de referência:** `module-templates/standard` 1.0.0 e contrato de módulos da base `29e47607410b360a7b9e594682ac185cabf30323`.
 - **Origem:** solicitação de análise da migração do NextCRM para o GUIDU, com autoria exclusiva em plataforma.
@@ -8,6 +8,10 @@
 ## 1. Problema e limites
 
 A plataforma precisa criar designs reutilizáveis, publicar versões confiáveis e disponibilizá-las a parceiros/clientes sem distribuir a ferramenta de autoria. O usuário final precisa receber o resultado e preencher seus dados sem alterar a identidade visual ou a estrutura do modelo.
+
+O produto inclui dois níveis de autoria: editor de blocos, para construir sua árvore de elementos e campos; e editor de templates, para combinar blocos e montar a estrutura final. A plataforma pode criar composições diferentes, alterar hierarquia, ordem, layout e apresentação dentro do catálogo de elementos e das validações técnicas. Não existe uma composição obrigatória herdada do antigo perfil padrão. Hero, CTA, links, mapa, QR e rodapé são exemplos de biblioteca, não seções fixas impostas a todos os templates.
+
+Conforme esclarecimento do solicitante em 20/10/2026, o plano anterior de Perfil digital usava outro projeto, sem esses editores. Ele oferece contexto de regras de negócio a revalidar. O construtor NextCRM é a base funcional de autoria; recuperar o motor smart do outro projeto é opcional e não condiciona essa migração.
 
 `digital-templates` guarda catálogo, blocos, temas, documentos visuais, versões e regras de disponibilização. O módulo consumidor guarda os dados de negócio e o vínculo de uso. Inicialmente, `digital-profile` mantém unidades, perfis master/pessoais, dados pessoais e estado de publicação do perfil. Hosts, caminhos, mídia, auditoria e planos são serviços do núcleo.
 
@@ -97,7 +101,7 @@ O renderer é comum à prévia, ao resultado autenticado e ao público. Recebe a
 
 Bindings são IDs de campos de catálogo tipado, não expressões arbitrárias, caminhos livres de objeto ou código executável. Campos vazios usam regra de conteúdo aprovada, sem conceder ao app opção de ocultar estrutura. Coleções têm projeção e limite, não acesso genérico ao CRM/Portfólio/equipe. O catálogo antigo de redes pessoais não expande a lista de campos permitida no plano de Perfil digital.
 
-São dados editáveis pelo usuário somente os permitidos pelo consumidor. Para Perfil digital, preservar a proposta existente de foto, nome, cargo, telefone, e-mail e LinkedIn pessoal, sujeita à revisão da DP0. Nome/logo/endereço de negócio podem vir do cadastro da empresa/unidade por binding. Trocar imagem de conteúdo permitida não libera tamanho, fonte, cor, posição ou CSS.
+São dados editáveis pelo usuário somente os permitidos pelo consumidor. Para Perfil digital, a lista anterior de foto, nome, cargo, telefone, e-mail e LinkedIn pessoal é uma proposta de política de dados a revalidar na DP0; ela não define os tipos de bloco nem limita o que a plataforma pode montar. Campos de conteúdo adicionais precisam de catálogo, validação e autorização próprios. Nome/logo/endereço de negócio podem vir do cadastro da empresa/unidade por binding. Trocar imagem de conteúdo permitida não libera tamanho, fonte, cor, posição ou CSS.
 
 ### 4.3 Publicação e atualização
 
@@ -179,6 +183,7 @@ Os valores de quota, políticas de retenção, continuidade pública na suspens�
 
 ## 11. Histórico
 
-| Versão | Data       | Mudança                                                                   |
-| ------ | ---------- | ------------------------------------------------------------------------- |
-| 0.1    | 20/10/2026 | Especificação candidata para autoria em plataforma e consumo por versões. |
+| Versão | Data       | Mudança                                                                                                               |
+| ------ | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| 0.1    | 20/10/2026 | Especificação candidata para autoria em plataforma e consumo por versões.                                             |
+| 0.2    | 20/10/2026 | Explicitados editor de blocos e montagem de estruturas por template; plano antigo mantido como referência de domínio. |

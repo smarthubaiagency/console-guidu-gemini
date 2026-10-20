@@ -1,6 +1,6 @@
 # Viabilidade de Templates Digitais como módulo do GUIDU
 
-- **Versão:** 0.1, 20/10/2026.
+- **Versão:** 0.2, 20/10/2026.
 - **Estado:** análise e recomendações; não substitui decisões aceitas sem revisão.
 - **Base do GUIDU:** `29e47607410b360a7b9e594682ac185cabf30323`.
 - **Base da origem:** worktree local de `linkkotech/nextcrm-primeiro`, branch `develop`, HEAD `5875e03744a847ee73f9af01dcded46989fbdcc1`, com mudanças não commitadas.
@@ -8,6 +8,8 @@
 ## 1. Contexto, objetivo e método
 
 O objetivo é levar biblioteca de templates e blocos, editor visual, temas, campos dinâmicos, prévia e ciclo de uso para o GUIDU, mantendo o design sob autoria exclusiva da plataforma. `/admin` é o console do parceiro; `/app` é o produto do cliente. Esses nomes têm significado diferente do `/admin` do NextCRM, que hoje contém o editor.
+
+Esclarecimento do solicitante em 20/10/2026: `plano-perfil-digital.md` foi baseado em outro projeto com estrutura padrão e alteração de cores/dados, sem editor de blocos ou editor de templates. Portanto, seu desenho técnico não representa o ecossistema que está sendo migrado. O NextCRM é a base funcional do construtor; o documento anterior é referência de domínio e histórico a revalidar. Suas menções a blocos ou a editor completo planejado não comprovam que o projeto antigo possuía um construtor.
 
 A análise combina leitura estática de componentes, schemas, ações, modelos e testes da origem com o contrato de módulos, código de autorização, registro e planos do GUIDU. As referências do destino são da base indicada no topo. As linhas de origem citadas são do worktree observado, não uma garantia de que o HEAD remoto contém as alterações locais.
 
@@ -102,17 +104,21 @@ Esses achados são evidências estáticas. A fase de prova deve reproduzir os de
 
 O [plano atual de Perfil digital](../perfil-digital/plano-perfil-digital.md) prevê modelos criados pela plataforma ou parceiro, design smart no workspace e editor gerenciado no parceiro, com `/platform` depois. A proposta deste conjunto exige revisão explícita das decisões 8, 9, 10, 11 e 14 e da etapa DP3, além das seções de motor e cronograma.
 
-| Tema                       | Plano existente                               | Proposta desta análise                                                                                 |
-| -------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Autor dos modelos          | Plataforma e parceiro                         | Só plataforma.                                                                                         |
-| Controles de design no app | Cores-semente, fonte, logo/capa no modo smart | Sem controles de design; dados e mídias de conteúdo somente nos slots permitidos.                      |
-| Editor completo            | Parceiro, em DP3                              | Plataforma desde a primeira entrega de autoria.                                                        |
-| Relação modelo/unidade     | Cópia editável por unidade                    | Vínculo a versão imutável e dados separados; sem cópia de design editável pelo workspace.              |
-| Modelos do parceiro        | Parceiro pode criar                           | Plataforma pode preparar modelo exclusivo de um parceiro; ele recebe, sem autoria.                     |
-| Atualizações               | Modelo alterado não muda cópias               | Versão nova não muda vínculos; atualização explícita, com prévia e rollback.                           |
-| Motor de design            | Reaproveitamento do legado CartãoPRO          | Avaliar integração do motor de cores desse legado com o editor NextCRM, sem dois motores concorrentes. |
+Essas são previsões daquele documento, não funcionalidades existentes no projeto que o originou. A mudança é de categoria de produto: o novo módulo incorpora um construtor de blocos e templates, com árvore e composição de estruturas. O trabalho não deve ser organizado como ampliação do painel de cores do modelo antigo. Biblioteca de componentes, composição, documento, renderer e testes de paridade partem do inventário NextCRM; o padrão antigo não determina um conjunto fixo de seções.
+
+| Tema                       | Plano existente                                                                | Proposta desta análise                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Autor dos modelos          | Plataforma e parceiro                                                          | Só plataforma.                                                                            |
+| Controles de design no app | Cores-semente, fonte, logo/capa no modo smart                                  | Sem controles de design; dados e mídias de conteúdo somente nos slots permitidos.         |
+| Editor completo previsto   | Planejado para parceiro em DP3; sem construtor existente na origem desse plano | Construtor real do NextCRM adaptado para plataforma, com blocos e montagem de estruturas. |
+| Relação modelo/unidade     | Cópia editável por unidade                                                     | Vínculo a versão imutável e dados separados; sem cópia de design editável pelo workspace. |
+| Modelos do parceiro        | Parceiro pode criar                                                            | Plataforma pode preparar modelo exclusivo de um parceiro; ele recebe, sem autoria.        |
+| Atualizações               | Modelo alterado não muda cópias                                                | Versão nova não muda vínculos; atualização explícita, com prévia e rollback.              |
+| Motor de design            | Paletas e cores do modelo de estrutura fixa                                    | Contrato do construtor NextCRM; motor smart do outro projeto é integração opcional.       |
 
 As decisões de unidade, perfil master, campos pessoais, CRM e endereços podem ser preservadas. Sua implementação continua necessária. O modo de serviço gerenciado define quem pode operar dados do cliente; não desbloqueia o editor de design.
+
+Preservar aqui significa avaliar a utilidade da regra de negócio, não herdar automaticamente limites do layout antigo. A integração do motor de cores do outro projeto é opcional, avaliada separadamente depois de definido o motor do construtor. Ela não é dependência da extração nem define seu JSON. O aceite exige demonstrar dois templates com estruturas distintas, montados pela plataforma e servidos pelo mesmo renderer, sem criar uma página específica em código para cada composição.
 
 ## 7. Alternativas avaliadas
 
@@ -158,6 +164,7 @@ A busca na origem não localizou LICENSE/COPYING nem campo license no package.js
 
 ## 11. Histórico
 
-| Versão | Data       | Mudança                                                                            |
-| ------ | ---------- | ---------------------------------------------------------------------------------- |
-| 0.1    | 20/10/2026 | Auditoria inicial, autoria central, lacunas e dependências para migração completa. |
+| Versão | Data       | Mudança                                                                                                       |
+| ------ | ---------- | ------------------------------------------------------------------------------------------------------------- |
+| 0.1    | 20/10/2026 | Auditoria inicial, autoria central, lacunas e dependências para migração completa.                            |
+| 0.2    | 20/10/2026 | Corrigido o enquadramento do plano antigo: referência de domínio de estrutura fixa, sem construtor existente. |

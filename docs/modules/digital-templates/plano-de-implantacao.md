@@ -1,6 +1,6 @@
 # Plano completo: Templates Digitais com autoria na plataforma
 
-- **Versão:** 0.1, 20/10/2026.
+- **Versão:** 0.2, 20/10/2026.
 - **Estado:** proposta para revisão. Esta branch entrega planejamento; não inicia implementação, altera banco ou libera o módulo.
 - **Base auditada:** GUIDU `29e47607410b360a7b9e594682ac185cabf30323`; fonte e limites descritos na [análise](analise-viabilidade.md).
 - **Fluxo:** Contexto → Objetivo → Requisitos → Lógica → Plano → Testes → Aceite.
@@ -8,6 +8,8 @@
 ## 1. Objetivo e definição de conclusão
 
 Migrar o ecossistema completo de Templates Digitais para um módulo nativo do GUIDU, com criação e edição de design somente em `/platform`. Admin e app recebem versões publicadas prontas, sem editor visual ou mutação de estrutura. O consumidor Perfil digital continua responsável por unidade, pessoas e operação pública.
+
+O plano anterior de Perfil digital foi baseado, segundo esclarecimento do solicitante em 20/10/2026, em outro projeto de estrutura padrão e ajustes de cores/dados, sem editores de blocos e templates. O escopo desta migração parte do construtor NextCRM: a plataforma constrói blocos e monta templates com estruturas diferentes. O plano antigo orienta a revisão de regras de negócio, não a arquitetura do construtor. Recuperar seu motor smart é opção independente, não requisito para concluir a extração.
 
 Considerar concluído somente após demonstrar: autoria, biblioteca, temas, campos, os 16 tipos de elemento, mídia real, publicação/versionamento, distribuição, consumo com dados reais autorizados, página pública, integrações previstas no inventário, importação reconciliada, exclusão/exportação, segurança, operação, recuperação e piloto. Uma primeira entrega pode ser menor, mas não recebe o aceite de migração completa.
 
@@ -79,6 +81,7 @@ DT10 pode começar com dry run antes de DT8/DT9. Seu aceite final depende de par
 ### DT0 — Decisões, origem e baseline
 
 - Registrar a nova política de autoria como proposta e revisar as decisões 8, 9, 10, 11, 14 e DP3 do plano de Perfil digital. Preservar unidade/master e dados pessoais onde não houver mudança aprovada.
+- Separar no plano anterior regras de domínio úteis e premissas do modelo de estrutura fixa. Reescrever as seções técnicas e de editor a partir do inventário NextCRM; não converter referências a blocos fixos em limitação de composição.
 - Aprovar `MODULE_SPEC.md` e registrar a origem NextCRM e arquivos elegíveis conforme ADR 0007. A autorização anterior de reaproveitamento de `cartaopro-linkko` não documenta automaticamente esta outra origem.
 - Fechar a titularidade/autorização do código e dos ativos. A auditoria não localizou LICENSE/COPYING nem campo license da origem; isso não prova impedimento, mas exige rastreabilidade antes da extração.
 - Fixar snapshot de origem com commit e hashes dos arquivos selecionados. O worktree atual tem mudanças locais em componentes, ações e schema; não usar só o HEAD como se representasse todo o material.
@@ -136,7 +139,7 @@ DT10 pode começar com dry run antes de DT8/DT9. Seu aceite final depende de par
 - Criar registry dos 16 tipos do documento; usar componentes de runtime leves, desacoplados de seleção e formulários de inspector.
 - Compartilhar renderer entre prévia e público. O editor adiciona contornos/seleção em wrapper próprio, sem duplicar interpretação visual.
 - Resolver tema com tokens claros/escuros, defaults e regras versionadas; sobrescrita manual aprovada prevalece sobre derivação. Guardar resultado da resolução na publicação.
-- Integrar o motor smart do planejamento de Perfil digital como ferramenta interna da plataforma, se adotado. Não manter dois pipelines concorrentes que calculam cores diferentes para o mesmo template.
+- Definir primeiro o tema/documento do construtor NextCRM. Avaliar separadamente se o motor smart do outro projeto agrega uma ferramenta interna de geração de paletas; sua adoção é opcional e não bloqueia o renderer nem a migração. Se adotado, converte sua saída para o mesmo contrato de tema.
 - Implementar bindings reais de texto, imagem, link e coleção, com DTO público mínimo. Bloquear caminhos arbitrários e acesso implícito a objetos de usuário/CRM.
 - Definir comportamento para campo vazio, indisponibilidade de integração, imagem ausente e elemento desconhecido. Publicação incompatível é barrada; runtime tem fallback seguro observável.
 - Sanear rich text de forma consistente no servidor e navegador. Escopar estilos; `customCss` e `cssId` legados recebem política/conversão explícita.
@@ -149,6 +152,7 @@ DT10 pode começar com dry run antes de DT8/DT9. Seu aceite final depende de par
 
 - Integrar catálogo, busca/filtros, criação, descrição/categoria/finalidade, duplicação, arquivamento e visualização de usos.
 - Portar editor de blocos, árvore, DnD, nesting, inspector, formulários declarativos e controles. Manter as capacidades úteis do inventário; remover duplicações de implementações.
+- Portar também a montagem do template: criar combinações diferentes de blocos, alterar sequência e layout e configurar cada composição sem codificar um novo perfil por modelo. O consumidor recebe o resultado publicado dessa estrutura.
 - Adaptar shell padrão, `PageCanvas`, componentes modelo, `WorkbenchLayout` e `useStatus`. Canvas/estrutura/inspector precisam de layout utilizável dentro desses padrões; exceção exigiria decisão documentada, não shell próprio informal.
 - Integrar biblioteca de blocos, hero/rodapé e temas persistentes. Retirar presets de exemplo do fluxo real sem apagar defaults válidos.
 - Configurar slots de conteúdo e suas validações na plataforma; prevenir que um slot permita mutação de cor/CSS/estrutura por consumidores.
@@ -287,25 +291,32 @@ Não somar cegamente trabalho que já esteja sendo entregue no GUIDU: se CF2d, C
 
 A meta de performance é aprovada na DT0 e medida na DT11. Pode usar LCP até 2,5 s no percentil 75 como candidato de produto, mas esta análise não afirma resultado nem requisito já aprovado. O orçamento de JavaScript, tamanho/profundidade do documento e amostra de teste devem ser explícitos.
 
+Dois critérios complementares garantem a mudança de premissa:
+
+- **AC29 — Estruturas diferentes:** montar na plataforma dois templates com hierarquia, composição e quantidade de blocos distintas, salvar, reabrir, publicar e renderizar ambos pelo mesmo runtime, sem criar página específica em código para cada modelo.
+- **AC30 — Consumo preserva a composição:** atribuir cada template a um recurso de teste e demonstrar que admin/app recebem as respectivas estruturas prontas; preencher dados não altera a árvore, e nenhuma composição fixa do plano antigo é imposta aos dois modelos.
+
+Na decisão D13 abaixo, o contrato NextCRM é a base do editor e o motor smart permanece opcional. Essa decisão só condiciona a eventual integração de paletas do outro projeto; não é um bloqueio da DT1/DT4.
+
 ## 6. Registro de decisões pendentes e defaults propostos
 
-| ID  | Decisão                                                     | Recomendação para revisão                                                                                                                                                               | Necessária antes de |
-| --- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| D01 | Autoria exclusiva da plataforma                             | Sim; remove autoria smart/parceiro e revisa DP3.                                                                                                                                        | DT1/DT2             |
-| D02 | Quem escolhe o modelo no admin/app                          | Plataforma atribui inicialmente; delegação desligada até regra e RLS próprias.                                                                                                          | DT6                 |
-| D03 | Logo/capa e identidade de marca                             | Dados de origem autorizada em slots; tamanho/posição/design continuam bloqueados. Modelos exclusivos por parceiro/empresa quando preciso.                                               | DT1/DT4             |
-| D04 | Vínculo versus cópia editável                               | Versão imutável fixada por unidade; dados separados; atualização explícita.                                                                                                             | DT2                 |
-| D05 | Papéis que editam e publicam                                | Owner/operations como proposta; capacidades separadas. Confirmar necessidade de revisão por segunda pessoa.                                                                             | DT2                 |
-| D06 | Audiência e retirada                                        | Global ou restrita por parceiro/empresa/workspace; arquivar não quebra usos existentes. Bloqueio emergencial separado.                                                                  | DT2/DT6             |
-| D07 | Mídia e custo                                               | Escolher provedor na F5e; política comum do núcleo e backup de objetos.                                                                                                                 | DT3                 |
-| D08 | Estado editorial versus entrega pública                     | Preservar snapshots já publicados em manutenção editorial; bloquear novas escritas/atribuições. Suspensão/disabled e incidente precisam matriz aprovada e integração formal ao runtime. | DT2/DT8             |
-| D09 | Quotas/comercial                                            | Definir no plano do consumidor, sem cobrar acesso a editor ausente; números pelo Comercial.                                                                                             | DT6/DT8             |
-| D10 | Retenção e tratamento de dados                              | Definir prazos para formulários, métricas, importação, auditoria, versões e arquivos; validar papéis LGPD pelo processo do produto.                                                     | DT8/DT9/DT10        |
-| D11 | Recursos legados perigosos ou sem execução                  | CSS restrito e eventos de conversão aprovados; sem JS livre. Alertar incompatibilidades e aprovar equivalentes.                                                                         | DT1/DT9/DT10        |
-| D12 | Dados reais a migrar e direitos de uso                      | Inventário/export autorizado e manifesto; sem presumir banco/objetos disponíveis.                                                                                                       | DT10                |
-| D13 | Motor smart do CartãoPRO e editor NextCRM                   | Um documento/renderer e resolução de tema única; motor smart só ferramenta da plataforma.                                                                                               | DT1/DT4             |
-| D14 | Contrato público e navegação do parceiro                    | Público via ADR/versionamento; parceiro usa integração específica existente, salvo decisão de generalizar.                                                                              | DT7/DT6             |
-| D15 | Operação do próprio perfil por attendant e perfis sem conta | Decidir rota e permissões próprias; não liberar áreas de workspace por consequência.                                                                                                    | DT8                 |
+| ID  | Decisão                                                     | Recomendação para revisão                                                                                                                                                               | Necessária antes de                                |
+| --- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| D01 | Autoria exclusiva da plataforma                             | Sim; remove autoria smart/parceiro e revisa DP3.                                                                                                                                        | DT1/DT2                                            |
+| D02 | Quem escolhe o modelo no admin/app                          | Plataforma atribui inicialmente; delegação desligada até regra e RLS próprias.                                                                                                          | DT6                                                |
+| D03 | Logo/capa e identidade de marca                             | Dados de origem autorizada em slots; tamanho/posição/design continuam bloqueados. Modelos exclusivos por parceiro/empresa quando preciso.                                               | DT1/DT4                                            |
+| D04 | Vínculo versus cópia editável                               | Versão imutável fixada por unidade; dados separados; atualização explícita.                                                                                                             | DT2                                                |
+| D05 | Papéis que editam e publicam                                | Owner/operations como proposta; capacidades separadas. Confirmar necessidade de revisão por segunda pessoa.                                                                             | DT2                                                |
+| D06 | Audiência e retirada                                        | Global ou restrita por parceiro/empresa/workspace; arquivar não quebra usos existentes. Bloqueio emergencial separado.                                                                  | DT2/DT6                                            |
+| D07 | Mídia e custo                                               | Escolher provedor na F5e; política comum do núcleo e backup de objetos.                                                                                                                 | DT3                                                |
+| D08 | Estado editorial versus entrega pública                     | Preservar snapshots já publicados em manutenção editorial; bloquear novas escritas/atribuições. Suspensão/disabled e incidente precisam matriz aprovada e integração formal ao runtime. | DT2/DT8                                            |
+| D09 | Quotas/comercial                                            | Definir no plano do consumidor, sem cobrar acesso a editor ausente; números pelo Comercial.                                                                                             | DT6/DT8                                            |
+| D10 | Retenção e tratamento de dados                              | Definir prazos para formulários, métricas, importação, auditoria, versões e arquivos; validar papéis LGPD pelo processo do produto.                                                     | DT8/DT9/DT10                                       |
+| D11 | Recursos legados perigosos ou sem execução                  | CSS restrito e eventos de conversão aprovados; sem JS livre. Alertar incompatibilidades e aprovar equivalentes.                                                                         | DT1/DT9/DT10                                       |
+| D12 | Dados reais a migrar e direitos de uso                      | Inventário/export autorizado e manifesto; sem presumir banco/objetos disponíveis.                                                                                                       | DT10                                               |
+| D13 | Base do construtor e motor smart opcional                   | Documento e renderer baseados no construtor NextCRM; avaliar motor smart separadamente, somente como gerador interno de paletas.                                                        | Antes da eventual integração; não bloqueia DT1/DT4 |
+| D14 | Contrato público e navegação do parceiro                    | Público via ADR/versionamento; parceiro usa integração específica existente, salvo decisão de generalizar.                                                                              | DT7/DT6                                            |
+| D15 | Operação do próprio perfil por attendant e perfis sem conta | Decidir rota e permissões próprias; não liberar áreas de workspace por consequência.                                                                                                    | DT8                                                |
 
 Essas decisões não impedem entregar a análise e a prova sintética. Não preencher regras comerciais ou de dados silenciosamente durante a implementação.
 
@@ -313,7 +324,7 @@ Essas decisões não impedem entregar a análise e a prova sintética. Não pree
 
 ### 7.1 Branch desta entrega
 
-`codex/digital-templates-platform-plan`, no repositório `smarthubaiagency/console-guidu-gemini`, criada da base `main` auditada. Entrega somente os documentos de `docs/modules/digital-templates/`. O checkout local do NextCRM e suas alterações não são trocados de branch ou incluídos no commit.
+`codex/digital-templates-platform-plan`, no repositório `smarthubaiagency/console-guidu-gemini`, criada da base `main` auditada. Entrega os documentos de `docs/modules/digital-templates/` e uma nota de enquadramento no plano anterior de Perfil digital. O checkout local do NextCRM e suas alterações não são trocados de branch ou incluídos no commit.
 
 ### 7.2 Implementação posterior
 
@@ -347,6 +358,7 @@ Monitorar publicação/validação/importação, falhas de renderer/binding, ass
 
 ## 10. Histórico
 
-| Versão | Data       | Mudança                                                                                    |
-| ------ | ---------- | ------------------------------------------------------------------------------------------ |
-| 0.1    | 20/10/2026 | Plano DT0–DT11, dependências do núcleo, paridade, riscos, aceite e estratégia de branches. |
+| Versão | Data       | Mudança                                                                                               |
+| ------ | ---------- | ----------------------------------------------------------------------------------------------------- |
+| 0.1    | 20/10/2026 | Plano DT0–DT11, dependências do núcleo, paridade, riscos, aceite e estratégia de branches.            |
+| 0.2    | 20/10/2026 | Construtor NextCRM como base; motor smart opcional; acrescentados AC29/AC30 de composição estrutural. |

@@ -1,6 +1,6 @@
 # Templates Digitais no GUIDU
 
-- **Versão:** 0.1, 20/10/2026.
+- **Versão:** 0.2, 20/10/2026.
 - **Estado:** proposta para revisão de produto e arquitetura; nenhuma implementação ou migration nesta entrega.
 - **Branch:** `codex/digital-templates-platform-plan`.
 - **Base auditada do GUIDU:** `29e47607410b360a7b9e594682ac185cabf30323`.
@@ -11,6 +11,8 @@
 É tecnicamente viável migrar o ecossistema de Templates Digitais como módulo do monólito modular GUIDU. A recomendação é concentrar a autoria de design em `/platform`, distribuir versões publicadas e imutáveis e deixar `/admin` e `/app` como consumidores. O preenchimento de dados não dá acesso à estrutura, ao tema ou ao editor.
 
 Essa política foi sugerida pelo solicitante em 20/10/2026 e é a hipótese avaliada aqui. Ela modifica decisões do planejamento atual de Perfil digital; não deve ser tratada como alteração já aprovada dos documentos anteriores.
+
+O solicitante esclareceu que `plano-perfil-digital.md` nasceu de outro projeto, com estrutura padrão e ajustes de cores/dados, sem editor de blocos ou templates. A base funcional de autoria deste novo módulo é o construtor do NextCRM: criar blocos e montar templates com estruturas diferentes. O plano antigo serve como referência de regras de negócio a revalidar; seu layout e seu motor de cores não limitam o novo construtor nem são pré-requisitos de extração.
 
 O código de origem oferece um editor extenso, mas ainda não entrega sozinho o ciclo completo de publicação e renderização pública. A migração é uma extração seletiva e uma conclusão de produto, não apenas uma movimentação de pastas.
 
@@ -23,6 +25,7 @@ O código de origem oferece um editor extenso, mas ainda não entrega sozinho o 
 ## Decisões recomendadas
 
 - Plataforma cria, edita, duplica e publica designs e blocos. Admin e app não têm operações de autoria, mesmo em modo gerenciado.
+- A plataforma monta estruturas diferentes por template: cria e combina blocos, altera hierarquia e ordem, configura elementos, campos e apresentação. Dois templates podem ter composições distintas, usando o mesmo renderer.
 - O catálogo e seu editor pertencem a `digital-templates`. Perfis, unidades, dados pessoais e endereços continuam em `digital-profile` e no núcleo competente.
 - Cada vínculo usa uma versão publicada específica. Uma versão nova não altera os usos existentes automaticamente.
 - O parceiro consulta o catálogo que lhe foi disponibilizado. Distribuir para seus clientes exige permissão própria e um caminho explícito de delegação, sem abrir os dados do workspace por consequência.
@@ -35,6 +38,7 @@ Leitura do código local e das referências do GUIDU, proposta documental em bra
 
 ## Histórico
 
-| Versão | Data       | Mudança                                                                           |
-| ------ | ---------- | --------------------------------------------------------------------------------- |
-| 0.1    | 20/10/2026 | Viabilidade e plano para autoria exclusiva da plataforma e consumo por admin/app. |
+| Versão | Data       | Mudança                                                                                                              |
+| ------ | ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| 0.1    | 20/10/2026 | Viabilidade e plano para autoria exclusiva da plataforma e consumo por admin/app.                                    |
+| 0.2    | 20/10/2026 | Esclarecida a origem de estrutura fixa do plano anterior; construtor NextCRM passa a ser a base funcional explícita. |
