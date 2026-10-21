@@ -1,6 +1,7 @@
 import { startFakeChatwoot } from "./fake-chatwoot";
 import { startFakeGoTrue } from "./fake-gotrue";
 import { startFakeResend } from "./fake-resend";
+import { startFakeTranslate } from "./fake-translate";
 import { RIG } from "./rig";
 import { startTestDatabase } from "./test-database";
 
@@ -32,8 +33,10 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   });
   const chatwoot = await startFakeChatwoot(RIG.chatwootPort);
   const resend = await startFakeResend(RIG.resendPort);
+  const translate = await startFakeTranslate(RIG.translatePort);
 
   return async () => {
+    await translate.close();
     await resend.close();
     await chatwoot.close();
     await auth.close();

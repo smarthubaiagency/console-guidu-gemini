@@ -27,10 +27,16 @@ import { mergeTimeline } from "../client/timeline";
 import type { MatrixPhase } from "../client/use-inbox-matrix";
 import { createNoteAction } from "../notes-actions";
 import type { InboxNoteView } from "../server/notes";
+import type { MessageTranslationDto } from "../server/translation";
 import type { ConversationSummary } from "../views";
 import type { ComposerMode } from "./composer";
 import { ComposerFrame } from "./composer-frame";
 import { ContactLocaleChip } from "./contact-locale";
+import {
+  TranslatedBody,
+  TranslationNoticeBar,
+  useMessageTranslations,
+} from "./message-translation";
 import { NoteBubble } from "./note-bubble";
 import type { InboxViewer } from "./types";
 
@@ -109,6 +115,13 @@ export function ConversationView({
     void revision;
     return timeline(room, me);
   }, [room, me, revision]);
+  // TR2: the translations of the messages in view.
+  const messageIds = useMemo(() => messages.map((m) => m.id), [messages]);
+  const translations = useMessageTranslations(
+    workspaceSlug,
+    roomId,
+    messageIds,
+  );
   const items = useMemo(
     () => mergeTimeline(messages, notes),
     [messages, notes],
@@ -274,6 +287,8 @@ export function ConversationView({
         ) : null}
       </header>
 
+      <TranslationNoticeBar notice={translations.notice} />
+
       <ScrollArea className="min-h-0 flex-1">
         {phase === "error" ? (
           <p className="text-12 text-danger-text p-4" role="alert">
@@ -297,7 +312,11 @@ export function ConversationView({
                   onChanged={onNotesChanged}
                 />
               ) : (
-                <MessageItem key={item.key} message={item.message} />
+                <MessageItem
+                  key={item.key}
+                  message={item.message}
+                  translation={translations.byEvent.get(item.message.id)}
+                />
               ),
             )}
             <div ref={bottom} />
@@ -329,8 +348,14 @@ export function ConversationView({
   );
 }
 
-/** A message of the room (IN4a). */
-function MessageItem({ message }: Readonly<{ message: TimelineMessage }>) {
+/** A message of the room (IN4a), with its translation (TR2). */
+function MessageItem({
+  message,
+  translation,
+}: Readonly<{
+  message: TimelineMessage;
+  translation: MessageTranslationDto | undefined;
+}>) {
   const t = useTranslations("inbox");
   const format = useFormatter();
   return (
@@ -354,7 +379,7 @@ function MessageItem({ message }: Readonly<{ message: TimelineMessage }>) {
             : "bg-surface-inset text-text",
         )}
       >
-        {message.body}
+        <TranslatedBody body={message.body} translation={translation} />
       </span>
     </li>
   );

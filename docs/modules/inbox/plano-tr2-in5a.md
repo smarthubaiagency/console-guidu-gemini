@@ -14,6 +14,8 @@
 
 ## TR2 — Tradução das mensagens que chegam
 
+**Situação (21/10/2026):** implementada no branch `claude/tr2-traducao`, aguardando o PR e a migration no dev. O que ficou e os desvios estão em [tradução, "Como ficou a TR2"](traducao.md#12-como-ficou-a-tr2).
+
 ### Contexto
 
 - O desenho está em [tradução do chat](traducao.md), seções 3, 5.1, 5.4, 6 e 8, com as decisões de 19/10/2026: chave do cliente, motor principal mais fallback, Google Translate Basic (v2, chave de API), um idioma por workspace, sem limite nosso.

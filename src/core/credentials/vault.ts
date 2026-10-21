@@ -154,8 +154,13 @@ export async function listWorkspaceCredentials(
 ): Promise<CredentialItem[]> {
   await requireWorkspacePermission(tx, ctx, Permissions.CREDENTIALS_READ);
 
+  // Only the AI keys: the Google Translate key of the chat (TR2) is kept in
+  // the same vault but shown and replaced in the Inbox settings.
   const records = await tx.credential.findMany({
-    where: { workspaceId: ctx.workspaceId },
+    where: {
+      workspaceId: ctx.workspaceId,
+      provider: { in: [...SUPPORTED_PROVIDERS] },
+    },
     orderBy: { createdAt: "desc" },
   });
 

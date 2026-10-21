@@ -27,6 +27,7 @@ import { ipBlockedJob } from "@/core/security/ip-blocked-job";
 import { backgroundAnalysesJob } from "@/modules/google-business/server/jobs";
 import { helloWorldJobs } from "@/modules/hello-world/jobs";
 import { guidsTurnJob } from "@/modules/inbox/server/guids-turn";
+import { translateMessageJob } from "@/modules/inbox/server/translate-job";
 
 import type { JobDefinition, JobSchedule } from "./definition";
 
@@ -68,6 +69,8 @@ const DEFINITIONS = [
   ...inboxJobs,
   // The GUIDS answering in the rooms of the Inbox (IN6).
   guidsTurnJob,
+  // Translation of the messages that arrive in the Inbox (TR2).
+  translateMessageJob,
   backgroundAnalysesJob,
   ...helloWorldJobs,
 ] as unknown as readonly JobDefinition<unknown>[];

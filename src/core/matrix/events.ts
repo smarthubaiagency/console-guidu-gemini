@@ -395,6 +395,18 @@ async function handleEvent(
             or contact_locale_confidence is distinct from ${confidence}::real)
       `;
     }
+    // TR2: a text of the contact or of the GUIDS in another language than
+    // the team's is translated for the team (job with the room and the
+    // event only; the database decides whether the translation is on).
+    if (
+      (side === "consumer" || side === "agent") &&
+      room.state === "active" &&
+      TEXT_TYPES.includes(String(content.msgtype))
+    ) {
+      await tx.$queryRaw`
+        select private.inbox_translation_enqueue(${event.roomId}, ${event.eventId}, ${locale}::text) as run
+      `;
+    }
     // IN6: the GUIDS's turn, and a resolved conversation back to pending.
     if (side === "consumer" && room.state === "active") {
       await onConsumerMessage(

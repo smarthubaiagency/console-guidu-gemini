@@ -37,6 +37,7 @@ import {
   signIn,
   uniqueEmail,
 } from "./support/identity";
+import { FAKE_GOOGLE_TRANSLATE_KEY } from "./support/fake-translate";
 import { matrixE2eEnv, MatrixConsumers } from "./support/matrix";
 import { statusBanner } from "./support/status";
 
@@ -428,4 +429,115 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await expect(
     page.getByTestId("inbox-context").getByRole("button", { name: "Reabrir" }),
   ).toBeVisible();
+});
+
+test('TR2: with the translation on, a message in Spanish shows in Portuguese with "Ver original"', async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(300_000);
+  const consumers = new MatrixConsumers(env!);
+  const stamp = Date.now().toString(36);
+  const owner = uniqueEmail("tr2-owner");
+  const wsSlug = `tr2-${stamp}`;
+  await createIdentity(request, owner);
+  await seedWorkspace(request, {
+    email: owner,
+    orgName: `TR2 ${stamp}`,
+    orgSlug: `tr2-org-${stamp}`,
+    wsName: `Pousada TR2 ${stamp}`,
+    wsSlug,
+    role: "owner",
+    orgRole: "owner",
+  });
+  await signIn(page, owner);
+  await page.goto(`/app/${wsSlug}/settings/modules`);
+  await page.getByRole("button", { name: "Habilitar Inbox" }).click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
+  ).toBeVisible();
+
+  // The block "Tradução": the switch stays off without an engine; the
+  // Google key goes to the vault (masked), passes the test and turns it on.
+  await page.goto(`/app/${wsSlug}/settings/modules/inbox`);
+  const block = page.getByTestId("inbox-translation");
+  await expect(block.getByTestId("inbox-translation-enabled")).toBeDisabled();
+  await expect(block).toContainText("Idioma da equipe: Português");
+  await block
+    .getByTestId("inbox-translation-google-key")
+    .fill(FAKE_GOOGLE_TRANSLATE_KEY);
+  await block.getByRole("button", { name: "Salvar chave" }).click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Chave do Google salva no cofre." }),
+  ).toBeVisible();
+  await expect(block).not.toContainText(FAKE_GOOGLE_TRANSLATE_KEY);
+  await block.getByTestId("inbox-translation-google-test").click();
+  await expect(
+    statusBanner(page).filter({ hasText: "O motor traduziu o teste." }),
+  ).toBeVisible();
+  await block
+    .getByTestId("inbox-translation-primary")
+    .selectOption({ value: "google" });
+  await block.getByTestId("inbox-translation-enabled").click();
+  await block
+    .getByRole("textbox", { name: "Glossário" })
+    .fill("Geribá\ncheck-in = entrada");
+  await block.getByTestId("inbox-translation-save").click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Tradução salva." }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("inbox-translation-enabled")).toHaveAttribute(
+    "data-state",
+    "checked",
+  );
+
+  // A consumer calls the store and writes in Spanish.
+  await page.goto(`/app/${wsSlug}/inbox`);
+  await jobs(page, request);
+  await page.goto(`/app/${wsSlug}/inbox`);
+  const address = (
+    await page.getByTestId("inbox-address").textContent()
+  )?.trim();
+  expect(address).toMatch(/^@_guidu_w_[a-z2-7]{16}:/);
+  const lucia = await consumers.create("Lucía Turista");
+  await consumers.callStore(lucia, address!);
+  await jobs(page, request);
+  let roomId = "";
+  await expect
+    .poll(
+      async () => {
+        roomId = (await consumers.invites(lucia))[0] ?? "";
+        if (!roomId) await jobs(page, request);
+        return roomId;
+      },
+      { timeout: 120_000, intervals: [1_000, 2_000, 3_000] },
+    )
+    .not.toBe("");
+  await consumers.join(lucia, roomId);
+  const original = "Hola, ¿tienen habitación para dos personas esta noche?";
+  await consumers.send(lucia, roomId, original);
+
+  // The worker processes the message and translates it (rig's double).
+  const conversation = page.getByTestId("inbox-conversation");
+  const translated = conversation.getByTestId("inbox-translated-text");
+  await expect(async () => {
+    await jobs(page, request);
+    await page.goto(
+      `/app/${wsSlug}/inbox?view=all&room=${encodeURIComponent(roomId)}`,
+    );
+    await expect(translated).toHaveText(
+      "Olá, vocês têm quarto para duas pessoas esta noite?",
+      { timeout: 15_000 },
+    );
+  }).toPass({ timeout: 180_000 });
+  await expect(conversation.getByTestId("inbox-translation-meta")).toHaveText(
+    "Traduzido de espanhol · Google Translate",
+  );
+  await conversation.getByRole("button", { name: "Ver original" }).click();
+  await expect(translated).toHaveText(original);
+  await conversation.getByRole("button", { name: "Ver tradução" }).click();
+  await expect(translated).toHaveText(
+    "Olá, vocês têm quarto para duas pessoas esta noite?",
+  );
 });

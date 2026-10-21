@@ -23,6 +23,8 @@ export const RIG = {
   databaseName: EXTERNAL_POSTGRES ? "guidu_e2e" : "postgres",
   chatwootPort: 54397 + OFFSET,
   resendPort: 54396 + OFFSET,
+  // Google Translate double (TR2).
+  translatePort: 54395 + OFFSET,
   appPort: APP_PORT,
   // `localhost` matches the host Next.js dev serves from, so its cross-origin
   // guard for dev resources stays quiet.

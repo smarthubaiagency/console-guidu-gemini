@@ -41,5 +41,70 @@
     "guidsNotActive": "Escolha um GUIDS ligado deste workspace.",
     "noGuids": "Nenhum GUIDS atende o Inbox deste workspace.",
     "alreadyWithGuids": "A conversa já está com o GUIDS."
+  },
+  "translation": {
+    "title": "Tradução",
+    "description": "Mensagens do contato e do GUIDS em outro idioma aparecem traduzidas para a equipe, com \"Ver original\". A tradução usa as chaves do workspace.",
+    "enabled": "Ativar tradução do chat em tempo real",
+    "enabledHint": "Mensagens em outro idioma chegam traduzidas no Inbox.",
+    "enabledNeedsEngine": "Escolha um motor com chave válida para ativar.",
+    "primary": "Motor principal",
+    "fallback": "Fallback",
+    "noFallback": "Nenhum",
+    "fallbackHint": "Usado quando o principal falha, recusa, fica sem cota ou demora mais de 4 s.",
+    "choose": "Escolha",
+    "engines": {
+      "ai": "Modelo de IA (sua chave)",
+      "google": "Google Translate"
+    },
+    "ai": {
+      "key": "Chave de IA",
+      "model": "Modelo",
+      "noKeys": "Nenhuma chave de IA no cofre.",
+      "keysLink": "Cadastrar em Chaves e credenciais",
+      "suggestion": "Sugestão: {model}, rápido e barato."
+    },
+    "google": {
+      "label": "Chave de API do Google Cloud Translation",
+      "placeholder": "Chave de API do Google Cloud Translation",
+      "current": "Chave cadastrada: {key}",
+      "none": "Nenhuma chave do Google cadastrada.",
+      "save": "Salvar chave",
+      "saved": "Chave do Google salva no cofre."
+    },
+    "test": {
+      "button": "Testar",
+      "ok": "O motor traduziu o teste.",
+      "failed": "O teste falhou"
+    },
+    "teamLanguage": "Idioma da equipe: {language}",
+    "teamLanguageHint": "É o idioma padrão do workspace.",
+    "teamLanguageLink": "Alterar em Geral e região",
+    "glossary": "Glossário",
+    "glossaryPlaceholder": "Geribá\nRua das Pedras\ncheck-in = entrada",
+    "glossaryHint": "Um termo por linha. \"termo\" não é traduzido; \"termo = tradução\" usa a tradução fixa. {count} de {max} linhas.",
+    "save": "Salvar tradução",
+    "saved": "Tradução salva.",
+    "viewOnly": "Só quem gerencia o Inbox altera a tradução.",
+    "notice": {
+      "failed": "A tradução do chat está falhando",
+      "fallback": "O motor principal está falhando; o fallback está traduzindo"
+    },
+    "errorCodes": {
+      "key": "A chave foi recusada pelo provedor. Confira a chave no cofre.",
+      "quota": "A cota da chave acabou no provedor.",
+      "timeout": "O motor demorou demais para responder.",
+      "refusal": "O motor não devolveu uma tradução.",
+      "error": "O motor de tradução falhou."
+    },
+    "errors": {
+      "invalid": "Confira os campos da tradução.",
+      "aiKey": "Escolha uma chave de IA ativa do cofre.",
+      "aiModel": "Escolha um modelo da lista.",
+      "aiNotReady": "Escolha a chave de IA e o modelo do motor de IA.",
+      "googleNotReady": "Cadastre a chave do Google Translate antes de usá-lo.",
+      "noEngine": "Escolha um motor válido antes de ativar a tradução.",
+      "googleKey": "Chave do Google inválida."
+    }
   }
 }

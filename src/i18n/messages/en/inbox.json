@@ -185,6 +185,35 @@
       "es": "ES"
     }
   },
+  "translation": {
+    "pending": "Translating…",
+    "unavailable": "Translation unavailable",
+    "translatedFrom": "Translated from {language} · {engine}",
+    "translated": "Translated · {engine}",
+    "languages": {
+      "pt-BR": "Portuguese",
+      "en": "English",
+      "es": "Spanish"
+    },
+    "fallback": "fallback",
+    "showOriginal": "See original",
+    "showTranslation": "See translation",
+    "engines": {
+      "ai": "AI model",
+      "google": "Google Translate"
+    },
+    "notice": {
+      "failed": "The chat translation is failing",
+      "fallback": "The main translation engine is failing; the fallback is translating"
+    },
+    "errorCodes": {
+      "key": "The provider refused the key. Check the key in the vault.",
+      "quota": "The key's quota ran out at the provider.",
+      "timeout": "The engine took too long to answer.",
+      "refusal": "The engine did not return a translation.",
+      "error": "The translation engine failed."
+    }
+  },
   "notes": {
     "tabsLabel": "Reply or write a note",
     "reply": "Reply",

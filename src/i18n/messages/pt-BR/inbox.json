@@ -185,6 +185,35 @@
       "es": "ES"
     }
   },
+  "translation": {
+    "pending": "Traduzindo…",
+    "unavailable": "Tradução indisponível",
+    "translatedFrom": "Traduzido de {language} · {engine}",
+    "translated": "Traduzido · {engine}",
+    "languages": {
+      "pt-BR": "português",
+      "en": "inglês",
+      "es": "espanhol"
+    },
+    "fallback": "fallback",
+    "showOriginal": "Ver original",
+    "showTranslation": "Ver tradução",
+    "engines": {
+      "ai": "Modelo de IA",
+      "google": "Google Translate"
+    },
+    "notice": {
+      "failed": "A tradução do chat está falhando",
+      "fallback": "O motor principal da tradução está falhando; o fallback está traduzindo"
+    },
+    "errorCodes": {
+      "key": "A chave foi recusada pelo provedor. Confira a chave no cofre.",
+      "quota": "A cota da chave acabou no provedor.",
+      "timeout": "O motor demorou demais para responder.",
+      "refusal": "O motor não devolveu uma tradução.",
+      "error": "O motor de tradução falhou."
+    }
+  },
   "notes": {
     "tabsLabel": "Responder ou escrever nota",
     "reply": "Responder",
