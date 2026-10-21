@@ -634,6 +634,14 @@ export async function startTestDatabase(
             RESEND_API_KEY: FAKE_RESEND_KEY,
             RESEND_API_BASE: `http://127.0.0.1:${RIG.resendPort}`,
             EMAIL_FROM_ADDRESS: "avisos@guidu.test",
+            // Translation of the chat (TR2): the key the web saved is read
+            // with the web's cipher, and Google is the rig's double.
+            ENCRYPTION_KEY:
+              process.env.ENCRYPTION_KEY ||
+              "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            ENCRYPTION_KEY_ID: process.env.ENCRYPTION_KEY_ID || "k1",
+            GUIDU_CHANNELS_ALLOW_PRIVATE: "true",
+            GOOGLE_TRANSLATE_API_BASE: `http://127.0.0.1:${RIG.translatePort}`,
           },
           // Kept in memory and printed only when jobs stay stuck, so a CI
           // failure shows what the worker said.

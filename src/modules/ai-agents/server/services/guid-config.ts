@@ -227,6 +227,8 @@ export async function updateGuid(
         workspaceId: ctx.workspaceId,
         status: "active",
         purpose: { in: ["chat", "all"] },
+        // The Google Translate key of the chat (TR2) is not an AI key.
+        provider: { not: "google_translate" },
       },
       select: { provider: true },
     });
@@ -668,6 +670,7 @@ async function checkVoiceAndEmbeddingKeys(
         workspaceId: ctx.workspaceId,
         status: "active",
         purpose: { in: ["embeddings", "all"] },
+        provider: { not: "google_translate" },
       },
       select: { id: true },
     });

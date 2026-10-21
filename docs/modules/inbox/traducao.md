@@ -1,6 +1,6 @@
 # Tradução do chat em tempo real
 
-- **Status:** Proposta para discussão. Nada aqui foi implementado.
+- **Status:** TR1 (idioma do contato) e TR2 (tradução das mensagens que chegam) implementadas; TR3 a TR6 são proposta. O que ficou da TR2 está na [seção 12](#12-como-ficou-a-tr2).
 - **Data:** 19/10/2026
 - **Origem:** conversa de Marcelo com o Claude em 19/10/2026, para o piloto de Búzios, focado em turismo.
 - **Decisões do Marcelo (19/10/2026):**
@@ -143,3 +143,42 @@ Com TR1 a TR3, o piloto de Búzios já funciona com texto.
 2. ~~Quais idiomas no piloto?~~ **Respondida (19/10/2026):** português, inglês e espanhol.
 3. ~~Limite diário de tradução?~~ **Respondida (19/10/2026):** sem limite nosso; vale o da chave do cliente.
 4. ~~Google Translate Basic ou Advanced?~~ **Respondida (19/10/2026):** Basic (v2, chave de API).
+
+## 12. Como ficou a TR2
+
+Implementada em 21/10/2026 ([plano](plano-tr2-in5a.md), migration `20261221090000_tr2_inbox_translation`).
+
+### Configuração
+
+- Bloco **Tradução** em Configurações › Módulos › Inbox, abaixo do GUIDS (`translation-settings-form.tsx`). Grava `inbox.manage` em `workspace_modules.config.translation`: `enabled`, `primary` e `fallback` (`ai` ou `google`), `ai.credential_id` e `ai.model`, e `glossary` (até 200 linhas). Nenhum segredo vai para a configuração.
+- **Motor de IA:** uma chave de IA ativa do cofre e o modelo do catálogo da plataforma (CF6a). A tela sugere o modelo rápido e barato do provedor (nano, flash-lite, haiku, mini).
+- **Google Translate:** a chave fica no cofre do workspace como `credentials.provider = 'google_translate'`, cifrada e mostrada mascarada. Uma chave nova revoga a anterior. **Testar** traduz uma frase curta com o motor escolhido.
+- O interruptor só liga com o motor principal pronto; o servidor confere de novo (chave ativa, modelo da lista, chave do Google cadastrada) e recusa um fallback que não está pronto.
+- **Idioma da equipe:** o padrão do workspace (`workspaces.default_locale`, reduzido a pt-BR, en ou es), só leitura, com o link para Geral e região.
+- **Glossário:** uma linha por termo. "Geribá" não é traduzido; "check-in = entrada" usa a tradução fixa.
+
+### Fluxo
+
+1. O processamento do evento (`src/core/matrix/events.ts`) chama `private.inbox_translation_enqueue(room_id, event_id, idioma detectado)` para cada texto do contato ou do GUIDS. A função decide no banco: Inbox ligado, tradução ligada, sala e workspace ativos, idioma da mensagem (o detectado pela TR1, senão o do contato) diferente do da equipe. Então grava a linha `pending` e o job `inbox.translate-message` com **só** `roomId` e `eventId`, como a pessoa que salvou as configurações do Inbox (como o turno do GUIDS, IN6).
+2. O job (`src/modules/inbox/server/translate-job.ts`, destacado, três tentativas, um por sala de cada vez) lê o evento no Synapse como o núcleo. Mensagem curta ("ok", emoji: menos de duas palavras ou seis letras), no idioma da equipe ou que não é do contato nem do GUIDS não é traduzida, e a linha `pending` sai.
+3. O motor de IA recebe as seis mensagens anteriores como contexto e o glossário nas instruções, com o texto delimitado como dado (seção 9.3). É uma chamada simples ao modelo pelo motor (`generateStructured`), sem agente e sem ferramentas. O Google Basic recebe o texto no formato HTML com os termos do glossário em `<span translate="no">`, pela guarda das chamadas externas (`providerJson`/`pinnedFetch`), com a chave no cabeçalho `x-goog-api-key`.
+4. Erro, recusa, cota (429), chave recusada (400/401/403) ou mais de 4 s levam ao fallback e gravam `fallback = true` e `primary_error`. Com os dois falhando, grava `failed` e o job tenta de novo (três tentativas).
+5. O resultado só entra por `private.inbox_translation_record`, que exige a execução `running` daquele evento, pedida pela pessoa do contexto: o web não grava tradução.
+
+### Dados
+
+- `inbox_message_translations`: `workspace_id`, `room_id`, `event_id`, `direction` (`inbound`; `outbound` fica para a TR3), `source_locale`, `target_locale`, `status` (`pending`, `done`, `failed`), `translated_text`, `engine`, `model`, `fallback`, `primary_error`, `attempts`, datas. Única por (`event_id`, `target_locale`).
+- RLS: lê quem tem nível no Inbox do workspace (`inbox_my_level()`); escreve só o worker. Apagar a sala ou o workspace apaga as traduções (cascata e a lista de purga da WS1).
+
+### No Inbox
+
+- A conversa pede as traduções das mensagens visíveis (`loadMessageTranslationsAction`) ao abrir, quando chega mensagem nova (e de novo depois de alguns segundos, enquanto o núcleo processa) e a cada 3 s enquanto alguma está `pending`.
+- Mensagem traduzida: o texto no idioma da equipe e, embaixo, "Traduzido de espanhol · Modelo de IA" (ou "Google Translate", com "fallback" quando foi o caso) e **Ver original**, que alterna no lugar. Enquanto traduz: o original com "Traduzindo…". Com falha (ou `pending` há mais de 3 minutos): o original com "Tradução indisponível".
+- **Avisos:** com a tradução ligada, se a tradução mais recente das últimas 24 horas falhou, ou o motor principal recusou a chave ou a cota, a tela de Configurações e a conversa no Inbox mostram o aviso com o motivo.
+
+### Desvios do plano
+
+- A tabela tem a situação `pending` além de `done` e `failed`, e a coluna `primary_error`: a tela distingue "Traduzindo…" de mensagem sem tradução, e os avisos saem dos próprios dados, sem estado novo.
+- O job roda como a pessoa que salvou as configurações do Inbox (`workspace_modules.updated_by`), pelo mesmo caminho do GUIDS; a gravação passa por uma função que exige a execução do job, o que mantém "só o worker grava".
+- Sem nenhum motor pronto (chaves revogadas depois de ligar), a mensagem fica `failed` com `primary_error = 'key'`.
+- e2e com o dublê do Google Translate do rig (`e2e/support/fake-translate.ts`, porta 54395 mais o deslocamento, `GOOGLE_TRANSLATE_API_BASE`).

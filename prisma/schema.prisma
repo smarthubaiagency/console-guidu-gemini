@@ -2111,6 +2111,35 @@ model InboxGuidsRoom {
   @@map("inbox_guids_rooms")
 }
 
+/// Translation of a message of the Inbox for the team (TR2), never in the
+/// room; written only by the job `inbox.translate-message`.
+model InboxMessageTranslation {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  roomId         String   @map("room_id")
+  eventId        String   @map("event_id")
+  /// inbound (TR2) or outbound (TR3).
+  direction      String   @default("inbound")
+  sourceLocale   String?  @map("source_locale")
+  targetLocale   String   @map("target_locale")
+  /// pending, done or failed.
+  status         String   @default("pending")
+  translatedText String?  @map("translated_text")
+  /// ai or google.
+  engine         String?
+  model          String?
+  fallback       Boolean  @default(false)
+  /// Why the main engine failed: key, quota, timeout, refusal or error.
+  primaryError   String?  @map("primary_error")
+  attempts       Int      @default(0)
+  createdAt      DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
+
+  @@unique([eventId, targetLocale])
+  @@map("inbox_message_translations")
+}
+
 /// Transactions pushed by Synapse to the Application Service (IN3).
 model MatrixAsTransaction {
   txnId      String   @id @map("txn_id")

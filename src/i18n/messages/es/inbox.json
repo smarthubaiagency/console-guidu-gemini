@@ -184,5 +184,34 @@
       "en": "EN",
       "es": "ES"
     }
+  },
+  "translation": {
+    "pending": "Traduciendo…",
+    "unavailable": "Traducción no disponible",
+    "translatedFrom": "Traducido del {language} · {engine}",
+    "translated": "Traducido · {engine}",
+    "languages": {
+      "pt-BR": "portugués",
+      "en": "inglés",
+      "es": "español"
+    },
+    "fallback": "respaldo",
+    "showOriginal": "Ver original",
+    "showTranslation": "Ver traducción",
+    "engines": {
+      "ai": "Modelo de IA",
+      "google": "Google Translate"
+    },
+    "notice": {
+      "failed": "La traducción del chat está fallando",
+      "fallback": "El motor principal de traducción está fallando; el respaldo está traduciendo"
+    },
+    "errorCodes": {
+      "key": "El proveedor rechazó la clave. Revise la clave en el almacén.",
+      "quota": "La cuota de la clave se agotó en el proveedor.",
+      "timeout": "El motor tardó demasiado en responder.",
+      "refusal": "El motor no devolvió una traducción.",
+      "error": "El motor de traducción falló."
+    }
   }
 }

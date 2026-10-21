@@ -77,6 +77,8 @@ export default defineConfig({
       // the ForwardAuth secret; Cloudflare stays off, so DNS alone decides.
       CUSTOM_DOMAIN_CNAME_TARGET: "proxy.guidu.test",
       DOMAINS_CHECK_SECRET: "e2e-domains-check-secret",
+      // Translation of the chat (TR2): Google Translate is the rig's double.
+      GOOGLE_TRANSLATE_API_BASE: `http://127.0.0.1:${RIG.translatePort}`,
       // E-mail (CF3a) goes to the Resend double of the rig.
       RESEND_API_KEY: FAKE_RESEND_KEY,
       RESEND_API_BASE: `http://127.0.0.1:${RIG.resendPort}`,

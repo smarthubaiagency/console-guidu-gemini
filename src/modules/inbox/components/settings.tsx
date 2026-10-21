@@ -8,8 +8,10 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { listHubGuids } from "@/modules/ai-agents/server";
 
+import { loadTranslationSettingsView } from "../server/translation";
 import { inboxConfigOf, resolveInboxService } from "../settings";
 import { InboxSettingsForm } from "./settings-form";
+import { TranslationSettingsForm } from "./translation-settings-form";
 
 /**
  * Inbox settings of a workspace (inbox.workspace-settings, IN6): which
@@ -28,26 +30,50 @@ export async function InboxWorkspaceSettings(
     identity.userId,
     props.workspaceSlug ?? "",
   );
-  const choices = await withContext(prisma, context, (tx) =>
-    listHubGuids(tx, context),
+  const [choices, translation] = await withContext(
+    prisma,
+    context,
+    async (tx) =>
+      [
+        await listHubGuids(tx, context),
+        // TR2: the block "Tradução".
+        await loadTranslationSettingsView(tx, context, props.config),
+      ] as const,
   );
   return (
-    <Card variant="surface" data-testid="inbox-settings">
-      <CardHeader>
-        <CardTitle className="text-14">{t("settings.title")}</CardTitle>
-        <p className="text-12 text-text-secondary">
-          {t("settings.description")}
-        </p>
-      </CardHeader>
-      <CardContent>
-        <InboxSettingsForm
-          workspaceSlug={props.workspaceSlug ?? ""}
-          canWrite={props.canWrite}
-          agentId={config.guids_agent_id}
-          choices={choices}
-          service={resolveInboxService(props.config)}
-        />
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Card variant="surface" data-testid="inbox-settings">
+        <CardHeader>
+          <CardTitle className="text-14">{t("settings.title")}</CardTitle>
+          <p className="text-12 text-text-secondary">
+            {t("settings.description")}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <InboxSettingsForm
+            workspaceSlug={props.workspaceSlug ?? ""}
+            canWrite={props.canWrite}
+            agentId={config.guids_agent_id}
+            choices={choices}
+            service={resolveInboxService(props.config)}
+          />
+        </CardContent>
+      </Card>
+      <Card variant="surface" data-testid="inbox-translation">
+        <CardHeader>
+          <CardTitle className="text-14">{t("translation.title")}</CardTitle>
+          <p className="text-12 text-text-secondary">
+            {t("translation.description")}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <TranslationSettingsForm
+            workspaceSlug={props.workspaceSlug ?? ""}
+            canWrite={props.canWrite}
+            view={translation}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -80,6 +80,11 @@ export async function purgeWorkspace(
     ["matrix_contacts", () => tx.matrixContact.deleteMany({ where })],
     // The GUIDS in the rooms (IN6): what it kept per room and its users.
     ["inbox_guids_rooms", () => tx.inboxGuidsRoom.deleteMany({ where })],
+    // Translations of the messages (TR2), before their rooms.
+    [
+      "inbox_message_translations",
+      () => tx.inboxMessageTranslation.deleteMany({ where }),
+    ],
     ["matrix_agent_users", () => tx.matrixAgentUser.deleteMany({ where })],
     ["matrix_room_members", () => tx.matrixRoomMember.deleteMany({ where })],
     ["matrix_rooms", () => tx.matrixRoom.deleteMany({ where })],

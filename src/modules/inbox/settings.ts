@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { SERVICE_DEFAULTS, ServiceSettings } from "@/core/channels/settings";
 
+import { TranslationSettings } from "./translation-settings";
+
 /**
  * Settings of the Inbox of a workspace (IN6), kept in the module's
  * workspace configuration (`workspace_modules.config`, ADR 0006): which
@@ -30,6 +32,9 @@ export const INBOX_SERVICE_FIELDS: readonly {
 export const InboxWorkspaceConfig = z.object({
   guids_agent_id: z.uuid().nullable().default(null),
   service: InboxServiceSettings.partial().default({}),
+  // TR2: the block "Tradução" (translation-settings.ts); a broken block
+  // never takes the rest of the settings with it.
+  translation: TranslationSettings.optional().catch(undefined),
 });
 export type InboxWorkspaceConfig = z.infer<typeof InboxWorkspaceConfig>;
 

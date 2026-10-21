@@ -22,6 +22,11 @@ import type { MatrixPhase } from "../client/use-inbox-matrix";
 import type { ConversationSummary } from "../views";
 import { Composer } from "./composer";
 import { ContactLocaleChip } from "./contact-locale";
+import {
+  TranslatedBody,
+  TranslationNoticeBar,
+  useMessageTranslations,
+} from "./message-translation";
 import type { InboxViewer } from "./types";
 
 /**
@@ -79,6 +84,13 @@ export function ConversationView({
     void revision;
     return timeline(room, me);
   }, [room, me, revision]);
+  // TR2: the translations of the messages in view.
+  const messageIds = useMemo(() => messages.map((m) => m.id), [messages]);
+  const translations = useMessageTranslations(
+    workspaceSlug,
+    roomId,
+    messageIds,
+  );
   const typing = useMemo(() => {
     void revision;
     return typingNames(room, me);
@@ -220,6 +232,8 @@ export function ConversationView({
         ) : null}
       </header>
 
+      <TranslationNoticeBar notice={translations.notice} />
+
       <ScrollArea className="min-h-0 flex-1">
         {phase === "error" ? (
           <p className="text-12 text-danger-text p-4" role="alert">
@@ -254,7 +268,10 @@ export function ConversationView({
                       : "bg-surface-inset text-text",
                   )}
                 >
-                  {message.body}
+                  <TranslatedBody
+                    body={message.body}
+                    translation={translations.byEvent.get(message.id)}
+                  />
                 </span>
               </li>
             ))}

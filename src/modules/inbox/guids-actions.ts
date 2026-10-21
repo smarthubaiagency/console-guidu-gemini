@@ -139,6 +139,8 @@ export async function saveInboxSettingsAction(
       await saveWorkspaceModuleConfig(tx, context, "inbox", {
         guids_agent_id: agentId,
         service: service.data,
+        // The block "Tradução" (TR2) is saved by its own form.
+        translation: current.translation,
       });
       // The agent's user joins the rooms (or leaves them), by the worker.
       await requestAgentSync(tx, context.workspaceId);

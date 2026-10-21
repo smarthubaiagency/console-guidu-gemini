@@ -41,5 +41,70 @@
     "guidsNotActive": "Choose a GUIDS of this workspace that is on.",
     "noGuids": "No GUIDS answers the Inbox of this workspace.",
     "alreadyWithGuids": "The conversation is already with the GUIDS."
+  },
+  "translation": {
+    "title": "Translation",
+    "description": "Messages from the contact and the GUIDS in another language appear translated for the team, with \"See original\". The translation uses the workspace's keys.",
+    "enabled": "Turn on real-time chat translation",
+    "enabledHint": "Messages in another language arrive translated in the Inbox.",
+    "enabledNeedsEngine": "Choose an engine with a valid key to turn it on.",
+    "primary": "Main engine",
+    "fallback": "Fallback",
+    "noFallback": "None",
+    "fallbackHint": "Used when the main one fails, refuses, runs out of quota or takes more than 4 s.",
+    "choose": "Choose",
+    "engines": {
+      "ai": "AI model (your key)",
+      "google": "Google Translate"
+    },
+    "ai": {
+      "key": "AI key",
+      "model": "Model",
+      "noKeys": "No AI key in the vault.",
+      "keysLink": "Add one in Keys and credentials",
+      "suggestion": "Suggestion: {model}, fast and cheap."
+    },
+    "google": {
+      "label": "Google Cloud Translation API key",
+      "placeholder": "Google Cloud Translation API key",
+      "current": "Saved key: {key}",
+      "none": "No Google key saved.",
+      "save": "Save key",
+      "saved": "Google key saved in the vault."
+    },
+    "test": {
+      "button": "Test",
+      "ok": "The engine translated the test.",
+      "failed": "The test failed"
+    },
+    "teamLanguage": "Team language: {language}",
+    "teamLanguageHint": "It is the workspace's default language.",
+    "teamLanguageLink": "Change it in General and region",
+    "glossary": "Glossary",
+    "glossaryPlaceholder": "Geribá\nRua das Pedras\ncheck-in = entrada",
+    "glossaryHint": "One term per line. \"term\" is not translated; \"term = translation\" uses the fixed translation. {count} of {max} lines.",
+    "save": "Save translation",
+    "saved": "Translation saved.",
+    "viewOnly": "Only who manages the Inbox changes the translation.",
+    "notice": {
+      "failed": "The chat translation is failing",
+      "fallback": "The main engine is failing; the fallback is translating"
+    },
+    "errorCodes": {
+      "key": "The provider refused the key. Check the key in the vault.",
+      "quota": "The key's quota ran out at the provider.",
+      "timeout": "The engine took too long to answer.",
+      "refusal": "The engine did not return a translation.",
+      "error": "The translation engine failed."
+    },
+    "errors": {
+      "invalid": "Check the translation fields.",
+      "aiKey": "Choose an active AI key of the vault.",
+      "aiModel": "Choose a model from the list.",
+      "aiNotReady": "Choose the AI key and the model of the AI engine.",
+      "googleNotReady": "Save the Google Translate key before using it.",
+      "noEngine": "Choose a valid engine before turning the translation on.",
+      "googleKey": "Invalid Google key."
+    }
   }
 }
