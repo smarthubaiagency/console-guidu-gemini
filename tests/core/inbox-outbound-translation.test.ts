@@ -69,7 +69,14 @@ const ctxOf = (userId: string) => ({ ...contextA, userId });
 const WRITTEN = "Temos quarto disponível para duas pessoas esta noite.";
 const SENT = "Tenemos una habitación disponible para dos personas esta noche.";
 
-type Event = { sender: string; body: string; msgtype?: string; type?: string };
+type Event = {
+  sender: string;
+  body: string;
+  msgtype?: string;
+  type?: string;
+  /** Milliseconds ago; a fresh event by default. */
+  ageMs?: number;
+};
 const EVENTS = new Map<string, Event>();
 const requests: string[] = [];
 
@@ -84,7 +91,7 @@ const client: SynapseClient = {
     return {
       type: event.type ?? "m.room.message",
       sender: event.sender,
-      origin_server_ts: 1_000,
+      origin_server_ts: Date.now() - (event.ageMs ?? 0),
       content: { msgtype: event.msgtype ?? "m.text", body: event.body },
     } as T;
   },
@@ -293,6 +300,11 @@ describeDatabase(
         msgtype: "m.notice",
       });
       EVENTS.set("$tr3-b", { sender: ANA_MXID, body: SENT });
+      EVENTS.set("$tr3-old", {
+        sender: ANA_MXID,
+        body: SENT,
+        ageMs: 10 * 60_000,
+      });
     });
 
     afterAll(async () => {
@@ -550,6 +562,10 @@ describeDatabase(
       ).rejects.toMatchObject({ code: "conflict" });
       await expect(
         record(ANA, { eventId: "$tr3-notice" }),
+      ).rejects.toMatchObject({ code: "conflict" });
+      // An old event of her own: not the sending being recorded.
+      await expect(
+        record(ANA, { eventId: "$tr3-old" }),
       ).rejects.toMatchObject({ code: "conflict" });
       // An event Synapse does not know.
       await expect(

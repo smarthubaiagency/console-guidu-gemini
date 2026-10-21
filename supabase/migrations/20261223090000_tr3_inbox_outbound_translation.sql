@@ -161,8 +161,11 @@ grant select (
   encrypted_payload
 ) on public.credentials to app_rls_helper;
 
--- `p_engine` 'ai' needs the id of the key chosen in the settings; 'google'
--- takes the latest active Google Translate key. No row when there is none.
+-- The function limits itself (the web never decides): the translation of the
+-- Inbox of the context workspace must be on, `p_engine` must be the main or
+-- the fallback engine of the settings and, for 'ai', the key must be the one
+-- chosen there (`p_credential_id` only counts when it is that one). 'google'
+-- takes the latest active Google Translate key. No row otherwise.
 create function private.inbox_translation_key(
   p_engine text,
   p_credential_id uuid
@@ -174,8 +177,12 @@ security definer
 set search_path = ''
 as $$
 declare
+  v_previous text := current_setting('app.inbox_translation', true);
+  v_previous_key text := current_setting('app.inbox_translation_key', true);
   v_workspace uuid := private.context_uuid('app.workspace_id');
   v_organization uuid := private.context_uuid('app.organization_id');
+  v_translation jsonb;
+  v_configured uuid;
 begin
   if p_engine is null or p_engine not in ('ai', 'google') then
     raise exception 'inbox_translation_key: invalid argument'
@@ -185,19 +192,41 @@ begin
      or private.inbox_my_level() is distinct from 'reply' then
     raise exception 'inbox_translation_key: not allowed' using errcode = 'insufficient_privilege';
   end if;
+  perform set_config('app.inbox_translation', 'on', true);
+  select module.config -> 'translation' into v_translation
+  from public.workspace_modules module
+  where module.workspace_id = v_workspace
+    and module.organization_id = v_organization
+    and module.module_key = 'inbox';
+  perform set_config('app.inbox_translation', coalesce(v_previous, ''), true);
+  if v_translation is null
+     or v_translation ->> 'enabled' is distinct from 'true'
+     or (v_translation ->> 'primary' is distinct from p_engine
+         and v_translation ->> 'fallback' is distinct from p_engine) then
+    return;
+  end if;
+  if p_engine = 'ai' then
+    v_configured := nullif(v_translation -> 'ai' ->> 'credential_id', '')::uuid;
+    if v_configured is null or p_credential_id is distinct from v_configured then
+      return;
+    end if;
+  end if;
   perform set_config('app.inbox_translation_key', 'on', true);
   return query
     select c.provider, c.encrypted_payload
     from public.credentials c
     where c.workspace_id = v_workspace
+      and c.organization_id = v_organization
       and c.status = 'active'
       and (
-        (p_engine = 'ai' and c.id = p_credential_id and c.provider <> 'google_translate')
+        (p_engine = 'ai' and c.id = v_configured
+           and c.provider in ('openai', 'anthropic', 'gemini', 'openrouter')
+           and c.purpose in ('chat', 'all'))
         or (p_engine = 'google' and c.provider = 'google_translate')
       )
     order by c.created_at desc
     limit 1;
-  perform set_config('app.inbox_translation_key', '', true);
+  perform set_config('app.inbox_translation_key', coalesce(v_previous_key, ''), true);
 end;
 $$;
 

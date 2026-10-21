@@ -49,6 +49,9 @@ import {
 /** Longest text translated or recorded in one answer. */
 export const OUTBOUND_MAX = 4_000;
 
+/** How old the event may be when its sending is recorded. */
+export const SENT_MAX_AGE_MS = 5 * 60_000;
+
 export type OutboundPreview =
   /** Nothing to translate: the window sends the text as it is. */
   | Readonly<{ kind: "direct"; reason: OutboundReason }>
@@ -249,6 +252,7 @@ async function readSent(
   roomId: string,
   eventId: string,
 ): Promise<{ sender: string; body: string } | null> {
+  const now = Date.now();
   const enc = encodeURIComponent;
   let event: Record<string, unknown>;
   try {
@@ -264,7 +268,10 @@ async function readSent(
     event.type !== "m.room.message" ||
     typeof event.sender !== "string" ||
     typeof content.body !== "string" ||
-    content.msgtype !== "m.text"
+    content.msgtype !== "m.text" ||
+    // A message just sent: an old event is not the sending being recorded.
+    typeof event.origin_server_ts !== "number" ||
+    now - event.origin_server_ts > SENT_MAX_AGE_MS
   ) {
     return null;
   }

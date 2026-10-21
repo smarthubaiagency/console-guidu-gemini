@@ -338,3 +338,254 @@ begin
   end if;
 end
 $$;
+
+-- ----------------------------------------------------------------------------
+-- Test 5: the key of the engine for who answers
+--   (private.inbox_translation_key + credentials_translation_helper_select)
+--   credentials: c1 = AI chosen in A, c2 = another AI of A, c3 = Google of A,
+--   c4 = AI of B, c5 = AI of A revoked
+-- ----------------------------------------------------------------------------
+create or replace function pg_temp.key_fixture(
+  p_enabled boolean, p_primary text, p_fallback text, p_ai uuid
+) returns void
+language sql as $$
+  insert into public.credentials
+    (id, organization_id, workspace_id, provider, purpose, label, masked_value, encrypted_payload, status)
+  values
+    ('3e300000-0000-4000-8000-0000000000c1', 'a0000000-0000-4000-8000-000000000010',
+     'a0000000-0000-4000-8000-000000000011', 'openai', 'all', 'TR3 IA escolhida', 'sk-...c1', 'sealed-ai', 'active'),
+    ('3e300000-0000-4000-8000-0000000000c2', 'a0000000-0000-4000-8000-000000000010',
+     'a0000000-0000-4000-8000-000000000011', 'anthropic', 'chat', 'TR3 outra IA', 'sk-...c2', 'sealed-other', 'active'),
+    ('3e300000-0000-4000-8000-0000000000c3', 'a0000000-0000-4000-8000-000000000010',
+     'a0000000-0000-4000-8000-000000000011', 'google_translate', 'all', 'TR3 Google', 'AIza...c3', 'sealed-google', 'active'),
+    ('3e300000-0000-4000-8000-0000000000c4', 'a0000000-0000-4000-8000-000000000020',
+     'a0000000-0000-4000-8000-000000000021', 'openai', 'all', 'TR3 IA de B', 'sk-...c4', 'sealed-b', 'active'),
+    ('3e300000-0000-4000-8000-0000000000c5', 'a0000000-0000-4000-8000-000000000010',
+     'a0000000-0000-4000-8000-000000000011', 'openai', 'all', 'TR3 IA revogada', 'sk-...c5', 'sealed-revoked', 'revoked');
+  update public.workspace_modules
+     set config = jsonb_build_object('translation', jsonb_build_object(
+           'enabled', p_enabled, 'primary', p_primary, 'fallback', p_fallback,
+           'ai', jsonb_build_object('credential_id', p_ai, 'model', 'gpt-5-nano'),
+           'glossary', '[]'::jsonb))
+   where workspace_id = 'a0000000-0000-4000-8000-000000000011' and module_key = 'inbox';
+$$;
+
+-- 5a: the Attendant of A gets the configured keys, and only them.
+begin;
+select pg_temp.fixture();
+select pg_temp.key_fixture(true, 'ai', 'google', '3e300000-0000-4000-8000-0000000000c1');
+set local role app_runtime;
+do $$
+declare
+  v_payload text;
+begin
+  perform pg_temp.ctx('3e300000-0000-4000-8000-0000000000e6', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  select encrypted_payload into v_payload
+  from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c1');
+  if v_payload is distinct from 'sealed-ai' then
+    raise exception 'tr3 key: the Attendant did not get the configured AI key (%)', v_payload;
+  end if;
+  select encrypted_payload into v_payload from private.inbox_translation_key('google', null);
+  if v_payload is distinct from 'sealed-google' then
+    raise exception 'tr3 key: the Attendant did not get the Google key (%)', v_payload;
+  end if;
+  -- Another AI key of A, the key of B, a revoked one, none: no row.
+  if exists (select 1 from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c2')) then
+    raise exception 'tr3 key: a key of A that is not the chosen one was returned';
+  end if;
+  if exists (select 1 from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c4')) then
+    raise exception 'tr3 key: the key of B was returned';
+  end if;
+  if exists (select 1 from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c5')) then
+    raise exception 'tr3 key: a revoked key was returned';
+  end if;
+  if exists (select 1 from private.inbox_translation_key('ai', null)) then
+    raise exception 'tr3 key: a key was returned without an id';
+  end if;
+  -- The flags do not outlive the call.
+  if coalesce(current_setting('app.inbox_translation_key', true), '') <> ''
+     or coalesce(current_setting('app.inbox_translation', true), '') <> '' then
+    raise exception 'tr3 key: a flag leaked after the call';
+  end if;
+  -- The Attendant still reads no credential by the table.
+  if exists (select 1 from public.credentials) then
+    raise exception 'tr3 key: the Attendant reads credentials directly';
+  end if;
+  -- Invalid engine.
+  begin
+    perform * from private.inbox_translation_key('deepl', null);
+    raise exception 'tr3 key: an unknown engine was accepted';
+  exception when invalid_parameter_value then null;
+  end;
+end
+$$;
+rollback;
+
+-- 5b: who has no level `reply`, or no context, is refused.
+begin;
+select pg_temp.fixture();
+select pg_temp.key_fixture(true, 'ai', 'google', '3e300000-0000-4000-8000-0000000000c1');
+set local role app_runtime;
+do $$
+begin
+  -- The owner of A only reads.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  begin
+    perform * from private.inbox_translation_key('google', null);
+    raise exception 'tr3 key: someone who only reads got the key';
+  exception when insufficient_privilege then null;
+  end;
+  -- The viewer of A has no level.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000033', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  begin
+    perform * from private.inbox_translation_key('google', null);
+    raise exception 'tr3 key: someone without a level got the key';
+  exception when insufficient_privilege then null;
+  end;
+  -- The owner of B, in B.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000032', 'a0000000-0000-4000-8000-000000000021',
+                      'a0000000-0000-4000-8000-000000000020');
+  begin
+    perform * from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c4');
+    raise exception 'tr3 key: the owner of B got a key';
+  exception when insufficient_privilege then null;
+  end;
+  -- The Attendant of A with the context of B.
+  perform pg_temp.ctx('3e300000-0000-4000-8000-0000000000e6', 'a0000000-0000-4000-8000-000000000021',
+                      'a0000000-0000-4000-8000-000000000020');
+  begin
+    perform * from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c4');
+    raise exception 'tr3 key: the Attendant of A got the key of B';
+  exception when insufficient_privilege then null;
+  end;
+  -- No context.
+  perform pg_temp.ctx(null, null, null);
+  begin
+    perform * from private.inbox_translation_key('google', null);
+    raise exception 'tr3 key: a key was returned without the app context';
+  exception when insufficient_privilege then null;
+  end;
+end
+$$;
+rollback;
+
+-- 5c: translation off, an engine out of the settings, a chosen key revoked or
+-- of another workspace: no row.
+begin;
+select pg_temp.fixture();
+select pg_temp.key_fixture(false, 'ai', 'google', '3e300000-0000-4000-8000-0000000000c1');
+set local role app_runtime;
+do $$
+begin
+  perform pg_temp.ctx('3e300000-0000-4000-8000-0000000000e6', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if exists (select 1 from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c1'))
+     or exists (select 1 from private.inbox_translation_key('google', null)) then
+    raise exception 'tr3 key: a key was returned with the translation off';
+  end if;
+end
+$$;
+rollback;
+
+begin;
+select pg_temp.fixture();
+-- Only Google is configured: the AI key is out even if it exists.
+select pg_temp.key_fixture(true, 'google', null, '3e300000-0000-4000-8000-0000000000c1');
+set local role app_runtime;
+do $$
+begin
+  perform pg_temp.ctx('3e300000-0000-4000-8000-0000000000e6', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if exists (select 1 from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c1')) then
+    raise exception 'tr3 key: an AI key was returned though the engine is not configured';
+  end if;
+  if not exists (select 1 from private.inbox_translation_key('google', null)) then
+    raise exception 'tr3 key: the configured Google key was not returned';
+  end if;
+end
+$$;
+rollback;
+
+begin;
+select pg_temp.fixture();
+-- The chosen key is revoked (c5), then the chosen key is one of B (c4).
+select pg_temp.key_fixture(true, 'ai', 'google', '3e300000-0000-4000-8000-0000000000c5');
+set local role app_runtime;
+do $$
+begin
+  perform pg_temp.ctx('3e300000-0000-4000-8000-0000000000e6', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if exists (select 1 from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c5')) then
+    raise exception 'tr3 key: the chosen but revoked key was returned';
+  end if;
+end
+$$;
+reset role;
+update public.workspace_modules
+   set config = jsonb_set(config, '{translation,ai,credential_id}', '"3e300000-0000-4000-8000-0000000000c4"')
+ where workspace_id = 'a0000000-0000-4000-8000-000000000011' and module_key = 'inbox';
+set local role app_runtime;
+do $$
+begin
+  perform pg_temp.ctx('3e300000-0000-4000-8000-0000000000e6', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if exists (select 1 from private.inbox_translation_key('ai', '3e300000-0000-4000-8000-0000000000c4')) then
+    raise exception 'tr3 key: a key of another workspace was returned';
+  end if;
+end
+$$;
+rollback;
+
+-- 5d: the flag alone opens nothing to the web role; grants of the function.
+begin;
+select pg_temp.fixture();
+select pg_temp.key_fixture(true, 'ai', 'google', '3e300000-0000-4000-8000-0000000000c1');
+set local role app_runtime;
+do $$
+declare
+  v_without integer;
+  v_with integer;
+begin
+  perform pg_temp.ctx('3e300000-0000-4000-8000-0000000000e6', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  perform set_config('app.inbox_translation_key', 'on', true);
+  perform set_config('app.inbox_translation', 'on', true);
+  if exists (select 1 from public.credentials) then
+    raise exception 'tr3 key: the flag opened credentials to the Attendant';
+  end if;
+  -- The owner of A reads what credentials_select lets: its own workspace only.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  perform set_config('app.inbox_translation_key', '', true);
+  select count(*) into v_without from public.credentials;
+  perform set_config('app.inbox_translation_key', 'on', true);
+  select count(*) into v_with from public.credentials;
+  if v_with <> v_without or exists (
+       select 1 from public.credentials where workspace_id <> 'a0000000-0000-4000-8000-000000000011') then
+    raise exception 'tr3 key: the flag changed what the web role reads in credentials';
+  end if;
+end
+$$;
+rollback;
+
+do $$
+declare
+  v_signature text := 'private.inbox_translation_key(text, uuid)';
+begin
+  if has_function_privilege('anon', v_signature, 'execute')
+     or has_function_privilege('authenticated', v_signature, 'execute')
+     or has_function_privilege('app_worker', v_signature, 'execute') then
+    raise exception 'tr3 key: the function is open to anon, authenticated or the worker';
+  end if;
+  if not has_function_privilege('app_runtime', v_signature, 'execute') then
+    raise exception 'tr3 key: the web cannot call the function';
+  end if;
+  if has_table_privilege('anon', 'public.credentials', 'select')
+     or has_table_privilege('authenticated', 'public.credentials', 'select') then
+    raise exception 'tr3 key: credentials open to anon or authenticated';
+  end if;
+end
+$$;
