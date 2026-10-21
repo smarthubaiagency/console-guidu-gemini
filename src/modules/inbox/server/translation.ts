@@ -156,6 +156,7 @@ export async function translationNotice(
   const latest = await tx.inboxMessageTranslation.findFirst({
     where: {
       workspaceId: ctx.workspaceId,
+      direction: "inbound",
       status: { in: ["done", "failed"] },
       updatedAt: { gte: new Date(now.getTime() - NOTICE_WINDOW_MS) },
     },
@@ -223,7 +224,52 @@ export type TranslatorDeps = Readonly<{
   googleBaseUrl?: string;
   /** Tests and the e2e double: an engine in place of the real adapter. */
   override?: Partial<Record<TranslationEngineId, Translator>>;
+  /**
+   * Reads the key through `private.inbox_translation_key` (the answer of the
+   * team, TR3): who answers is an Attendant, who does not read credentials.
+   */
+  keyViaFunction?: boolean;
 }>;
+
+/** The sealed key of an engine, as the role of the request may read it. */
+async function sealedKey(
+  tx: ContextTransaction,
+  ctx: RequestContext,
+  engine: TranslationEngineId,
+  credentialId: string | null,
+  deps: TranslatorDeps,
+): Promise<{ provider: string; encryptedPayload: string } | null> {
+  if (deps.keyViaFunction) {
+    const rows = await tx.$queryRaw<
+      { provider: string; encrypted_payload: string }[]
+    >`select provider, encrypted_payload
+        from private.inbox_translation_key(${engine}::text, ${credentialId}::uuid)`;
+    const row = rows[0];
+    return row
+      ? { provider: row.provider, encryptedPayload: row.encrypted_payload }
+      : null;
+  }
+  if (engine === "google") {
+    const row = await googleKeyRow(tx, ctx);
+    return row
+      ? {
+          provider: GOOGLE_TRANSLATE_PROVIDER,
+          encryptedPayload: row.encryptedPayload,
+        }
+      : null;
+  }
+  if (!credentialId) return null;
+  return tx.credential.findFirst({
+    where: {
+      id: credentialId,
+      workspaceId: ctx.workspaceId,
+      status: "active",
+      provider: { in: [...AI_PROVIDERS] },
+      purpose: { in: ["chat", "all"] },
+    },
+    select: { provider: true, encryptedPayload: true },
+  });
+}
 
 /**
  * The translator of an engine with the workspace's key, or null when the
@@ -240,16 +286,7 @@ export async function resolveTranslator(
   if (engine === "ai") {
     const { credential_id: credentialId, model } = settings.ai;
     if (!credentialId || !model) return null;
-    const credential = await tx.credential.findFirst({
-      where: {
-        id: credentialId,
-        workspaceId: ctx.workspaceId,
-        status: "active",
-        provider: { in: [...AI_PROVIDERS] },
-        purpose: { in: ["chat", "all"] },
-      },
-      select: { provider: true, encryptedPayload: true },
-    });
+    const credential = await sealedKey(tx, ctx, "ai", credentialId, deps);
     if (!credential) return null;
     if (deps.override?.ai) return deps.override.ai;
     const key = await withBaseUrl(tx, {
@@ -262,7 +299,7 @@ export async function resolveTranslator(
       deps.createModel ? { createModel: deps.createModel } : {},
     );
   }
-  const google = await googleKeyRow(tx, ctx);
+  const google = await sealedKey(tx, ctx, "google", null, deps);
   if (!google) return null;
   if (deps.override?.google) return deps.override.google;
   return createGoogleTranslator(decryptSecret(google.encryptedPayload), {
@@ -513,11 +550,23 @@ export type MessageTranslationStatus = "pending" | "done" | "failed";
 
 export type MessageTranslationDto = Readonly<{
   eventId: string;
+  /** `inbound`: the contact's message for the team (TR2); `outbound`: the team's answer (TR3). */
+  direction: "inbound" | "outbound";
   status: MessageTranslationStatus;
+  /**
+   * Inbound: the translation for the team. Outbound: the text that was sent
+   * to the contact (the message of the room itself).
+   */
   text: string | null;
+  /** Outbound only: what the attendant wrote, in the team's language. */
+  original: string | null;
   sourceLocale: ContactLocale | null;
+  /** Outbound only: the contact's language the text was sent in. */
+  targetLocale: ContactLocale | null;
   engine: TranslationEngineId | null;
   fallback: boolean;
+  /** Outbound only: the attendant changed the preview before sending. */
+  edited: boolean;
 }>;
 
 export const MAX_EVENTS_PER_READ = 200;
@@ -540,16 +589,23 @@ export async function loadMessageTranslations(
       workspaceId: ctx.workspaceId,
       roomId: input.roomId,
       eventId: { in: eventIds },
-      targetLocale: target,
-      direction: "inbound",
+      OR: [
+        { direction: "inbound", targetLocale: target },
+        // TR3: what the team sent, with the original it wrote.
+        { direction: "outbound" },
+      ],
     },
     select: {
       eventId: true,
+      direction: true,
       status: true,
       translatedText: true,
+      sourceText: true,
       sourceLocale: true,
+      targetLocale: true,
       engine: true,
       fallback: true,
+      edited: true,
       createdAt: true,
     },
   });
@@ -557,13 +613,20 @@ export async function loadMessageTranslations(
     const stale =
       row.status === "pending" &&
       now.getTime() - row.createdAt.getTime() > STALE_PENDING_MS;
+    const outbound = row.direction === "outbound";
     return {
       eventId: row.eventId,
+      direction: outbound ? "outbound" : "inbound",
       status: stale ? "failed" : (row.status as MessageTranslationStatus),
       text: row.status === "done" ? row.translatedText : null,
+      original: outbound ? row.sourceText : null,
       sourceLocale: (row.sourceLocale as ContactLocale | null) ?? null,
+      targetLocale: outbound
+        ? ((row.targetLocale as ContactLocale | null) ?? null)
+        : null,
       engine: (row.engine as TranslationEngineId | null) ?? null,
       fallback: row.fallback,
+      edited: outbound && row.edited,
     };
   });
 }

@@ -1,0 +1,236 @@
+-- ============================================================================
+-- Migration: 20261223090000_tr3_inbox_outbound_translation.sql
+-- Module: TR3 — the team's answer with a translated preview
+--         (docs/architecture/plano-tr3-gf2.md; docs/modules/inbox/traducao.md §5.2)
+--
+-- Maintenance Rationale:
+-- 1. The attendant writes in the team's language, sees the preview in the
+--    contact's language and sends it from the browser (matrix-js-sdk); the
+--    room gets only the sent text. The original stays here, tied to the
+--    `event_id` Synapse gave, and never goes to the room (ADR 0023, rule 6).
+-- 2. `inbox_message_translations` already has `direction = 'outbound'`. Two
+--    columns come: `source_text` (the team's original; only `outbound`
+--    rows have it) and `edited` (the attendant changed the preview before
+--    sending). For an `outbound` row `translated_text` is the text that was
+--    sent, `source_locale` the team's language and `target_locale` the
+--    contact's. The policies of the table do not change: who has a level in
+--    the Inbox reads; the web has no insert, update or delete on it.
+-- 3. The web records its own sending only through
+--    `private.inbox_translation_record_outbound`, which requires: level
+--    `reply` in the Inbox of the context workspace, an active room of that
+--    workspace and an `event_id` with no registration yet. The server checks
+--    before calling it, reading the event on Synapse as the core, that the
+--    sender is the Matrix account of the person and that the body is the
+--    text that was sent (src/modules/inbox/server/outbound-translation.ts).
+-- 4. The job of the TR2 only writes `inbound` rows: nothing changes there.
+-- Owner app_migrations, ENABLE + FORCE RLS already on the table, no grants
+-- to anon/authenticated.
+-- ============================================================================
+
+alter table public.inbox_message_translations
+  add column source_text text
+    check (source_text is null or length(source_text) between 1 and 8000),
+  add column edited boolean not null default false;
+
+-- Only a sent answer has the original of the team and the "edited" mark.
+alter table public.inbox_message_translations
+  add constraint inbox_message_translations_outbound_source
+    check ((direction = 'outbound') = (source_text is not null)),
+  add constraint inbox_message_translations_outbound_edited
+    check (not edited or direction = 'outbound');
+
+-- ----------------------------------------------------------------------------
+-- The web records its own sending (owner app_rls_helper)
+-- ----------------------------------------------------------------------------
+-- The room and the module tables are opened to the helper by the policies of
+-- the TR2 (`app.inbox_translation = 'on'`), set and restored here; the columns
+-- it reads were granted to the helper by the IN6 and the TR2.
+
+-- Returns true when the row was written, false when the event already has a
+-- registration. Raises insufficient_privilege without the level, the context
+-- or the room, and invalid_parameter_value for an invalid argument.
+create function private.inbox_translation_record_outbound(
+  p_room_id text,
+  p_event_id text,
+  p_source_text text,
+  p_sent_text text,
+  p_source_locale text,
+  p_target_locale text,
+  p_engine text,
+  p_model text,
+  p_fallback boolean,
+  p_edited boolean
+)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_previous text := current_setting('app.inbox_translation', true);
+  v_workspace uuid := private.context_uuid('app.workspace_id');
+  v_organization uuid := private.context_uuid('app.organization_id');
+  v_room record;
+  v_written integer;
+begin
+  if p_event_id is null or length(p_event_id) not between 2 and 255
+     or p_source_text is null or length(p_source_text) not between 1 and 8000
+     or p_sent_text is null or length(p_sent_text) not between 1 and 8000
+     or p_source_locale is null or p_source_locale not in ('pt-BR', 'en', 'es')
+     or p_target_locale is null or p_target_locale not in ('pt-BR', 'en', 'es')
+     or p_source_locale = p_target_locale
+     or p_engine is null or p_engine not in ('ai', 'google')
+     or (p_model is not null and length(p_model) not between 1 and 120) then
+    raise exception 'inbox_translation_record_outbound: invalid argument'
+      using errcode = 'invalid_parameter_value';
+  end if;
+  if v_workspace is null or v_organization is null
+     or private.inbox_my_level() is distinct from 'reply' then
+    raise exception 'inbox_translation_record_outbound: not allowed' using errcode = 'insufficient_privilege';
+  end if;
+  perform set_config('app.inbox_translation', 'on', true);
+  select room.workspace_id, room.organization_id into v_room
+  from public.matrix_rooms room
+  where room.room_id = p_room_id
+    and room.workspace_id = v_workspace
+    and room.organization_id = v_organization
+    and room.state = 'active';
+  if v_room.workspace_id is null then
+    perform set_config('app.inbox_translation', coalesce(v_previous, ''), true);
+    raise exception 'inbox_translation_record_outbound: not a room of this workspace'
+      using errcode = 'insufficient_privilege';
+  end if;
+  if exists (
+    select 1 from public.inbox_message_translations t where t.event_id = p_event_id
+  ) then
+    perform set_config('app.inbox_translation', coalesce(v_previous, ''), true);
+    return false;
+  end if;
+  insert into public.inbox_message_translations
+    (organization_id, workspace_id, room_id, event_id, direction, source_locale, target_locale,
+     status, translated_text, source_text, engine, model, fallback, edited)
+  values
+    (v_room.organization_id, v_room.workspace_id, p_room_id, p_event_id, 'outbound',
+     p_source_locale, p_target_locale, 'done', p_sent_text, p_source_text, p_engine, p_model,
+     coalesce(p_fallback, false), coalesce(p_edited, false))
+  on conflict (event_id, target_locale) do nothing;
+  get diagnostics v_written = row_count;
+  perform set_config('app.inbox_translation', coalesce(v_previous, ''), true);
+  return v_written > 0;
+end;
+$$;
+
+revoke execute on function private.inbox_translation_record_outbound(
+  text, text, text, text, text, text, text, text, boolean, boolean
+) from public, anon, authenticated;
+grant execute on function private.inbox_translation_record_outbound(
+  text, text, text, text, text, text, text, text, boolean, boolean
+) to app_runtime;
+alter function private.inbox_translation_record_outbound(
+  text, text, text, text, text, text, text, text, boolean, boolean
+) owner to app_rls_helper;
+
+-- ----------------------------------------------------------------------------
+-- The key of the translation engine for who answers (owner app_rls_helper)
+-- ----------------------------------------------------------------------------
+-- The preview translates with the workspace's key (the same of the TR2), but
+-- `credentials_select` does not admit the Attendant (AT1): no BYOK credential
+-- is readable by the web role of that level. This function is the only way:
+-- it requires level `reply` in the Inbox of the context workspace, returns
+-- only the sealed payload (decrypted by the server, as the job does) of the
+-- key of the engine and nothing else, and opens the table to its owner (the
+-- helper) through a flag set and restored here.
+
+create policy credentials_translation_helper_select on public.credentials
+  for select to app_rls_helper
+  using (
+    current_setting('app.inbox_translation_key', true) = 'on'
+    and workspace_id = private.context_uuid('app.workspace_id')
+    and organization_id = private.context_uuid('app.organization_id')
+    and status = 'active'
+    and (
+      (provider = 'google_translate')
+      or (provider in ('openai', 'anthropic', 'gemini', 'openrouter')
+          and purpose in ('chat', 'all'))
+    )
+  );
+
+grant select (
+  id, organization_id, workspace_id, provider, purpose, status, created_at,
+  encrypted_payload
+) on public.credentials to app_rls_helper;
+
+-- The function limits itself (the web never decides): the translation of the
+-- Inbox of the context workspace must be on, `p_engine` must be the main or
+-- the fallback engine of the settings and, for 'ai', the key must be the one
+-- chosen there (`p_credential_id` only counts when it is that one). 'google'
+-- takes the latest active Google Translate key. No row otherwise.
+create function private.inbox_translation_key(
+  p_engine text,
+  p_credential_id uuid
+)
+returns table(provider text, encrypted_payload text)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_previous text := current_setting('app.inbox_translation', true);
+  v_previous_key text := current_setting('app.inbox_translation_key', true);
+  v_workspace uuid := private.context_uuid('app.workspace_id');
+  v_organization uuid := private.context_uuid('app.organization_id');
+  v_translation jsonb;
+  v_configured uuid;
+begin
+  if p_engine is null or p_engine not in ('ai', 'google') then
+    raise exception 'inbox_translation_key: invalid argument'
+      using errcode = 'invalid_parameter_value';
+  end if;
+  if v_workspace is null or v_organization is null
+     or private.inbox_my_level() is distinct from 'reply' then
+    raise exception 'inbox_translation_key: not allowed' using errcode = 'insufficient_privilege';
+  end if;
+  perform set_config('app.inbox_translation', 'on', true);
+  select module.config -> 'translation' into v_translation
+  from public.workspace_modules module
+  where module.workspace_id = v_workspace
+    and module.organization_id = v_organization
+    and module.module_key = 'inbox';
+  perform set_config('app.inbox_translation', coalesce(v_previous, ''), true);
+  if v_translation is null
+     or v_translation ->> 'enabled' is distinct from 'true'
+     or (v_translation ->> 'primary' is distinct from p_engine
+         and v_translation ->> 'fallback' is distinct from p_engine) then
+    return;
+  end if;
+  if p_engine = 'ai' then
+    v_configured := nullif(v_translation -> 'ai' ->> 'credential_id', '')::uuid;
+    if v_configured is null or p_credential_id is distinct from v_configured then
+      return;
+    end if;
+  end if;
+  perform set_config('app.inbox_translation_key', 'on', true);
+  return query
+    select c.provider, c.encrypted_payload
+    from public.credentials c
+    where c.workspace_id = v_workspace
+      and c.organization_id = v_organization
+      and c.status = 'active'
+      and (
+        (p_engine = 'ai' and c.id = v_configured
+           and c.provider in ('openai', 'anthropic', 'gemini', 'openrouter')
+           and c.purpose in ('chat', 'all'))
+        or (p_engine = 'google' and c.provider = 'google_translate')
+      )
+    order by c.created_at desc
+    limit 1;
+  perform set_config('app.inbox_translation_key', coalesce(v_previous_key, ''), true);
+end;
+$$;
+
+revoke execute on function private.inbox_translation_key(text, uuid)
+  from public, anon, authenticated;
+grant execute on function private.inbox_translation_key(text, uuid) to app_runtime;
+alter function private.inbox_translation_key(text, uuid) owner to app_rls_helper;

@@ -9,6 +9,10 @@
  *   room, the Attendant takes the conversation, answers and resolves it,
  *   and the consumer gets the answer. The owner, not marked, reads only
  *   until the Team marks them as attendant (decision of 17/10/2026).
+ * - TR3: with the translation on and the contact in Spanish, the Attendant
+ *   writes in Portuguese, sees the preview in Spanish, edits it and sends;
+ *   the consumer gets Spanish, the team reads the Portuguese with "Ver
+ *   enviado", and "Enviar sem traduzir" sends the original.
  * - IN5a: the Attendant writes, edits and deletes private notes in the
  *   same box ("Responder | Nota privada"); the owner who only reads sees
  *   them and writes none; the consumer never gets them.
@@ -540,4 +544,186 @@ test('TR2: with the translation on, a message in Spanish shows in Portuguese wit
   await expect(translated).toHaveText(
     "Olá, vocês têm quarto para duas pessoas esta noite?",
   );
+});
+
+test('TR3: the Attendant writes in Portuguese, sees the preview in Spanish, edits and sends; "Enviar sem traduzir" sends the original', async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(300_000);
+  const consumers = new MatrixConsumers(env!);
+  const stamp = Date.now().toString(36);
+  const owner = uniqueEmail("tr3-owner");
+  const attendant = uniqueEmail("tr3-attendant");
+  const wsSlug = `tr3-${stamp}`;
+  const orgName = `TR3 ${stamp}`;
+  for (const email of [owner, attendant]) await createIdentity(request, email);
+  for (const [email, role, orgRole] of [
+    [owner, "owner", "owner"],
+    [attendant, "attendant", "member"],
+  ] as const) {
+    await seedWorkspace(request, {
+      email,
+      orgName,
+      orgSlug: `tr3-org-${stamp}`,
+      wsName: `Pousada TR3 ${stamp}`,
+      wsSlug,
+      role,
+      orgRole,
+    });
+  }
+
+  // The owner turns the Inbox on and the translation with Google (the
+  // rig's double), as in the TR2.
+  await signIn(page, owner);
+  await page.goto(`/app/${wsSlug}/settings/modules`);
+  await page.getByRole("button", { name: "Habilitar Inbox" }).click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Módulo habilitado." }),
+  ).toBeVisible();
+  await page.goto(`/app/${wsSlug}/settings/modules/inbox`);
+  const block = page.getByTestId("inbox-translation");
+  await block
+    .getByTestId("inbox-translation-google-key")
+    .fill(FAKE_GOOGLE_TRANSLATE_KEY);
+  await block.getByRole("button", { name: "Salvar chave" }).click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Chave do Google salva no cofre." }),
+  ).toBeVisible();
+  await block
+    .getByTestId("inbox-translation-primary")
+    .selectOption({ value: "google" });
+  await block.getByTestId("inbox-translation-enabled").click();
+  await block.getByTestId("inbox-translation-save").click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Tradução salva." }),
+  ).toBeVisible();
+
+  // A consumer calls the store and writes in Spanish; the worker detects
+  // the language of the contact.
+  await page.goto(`/app/${wsSlug}/inbox`);
+  await jobs(page, request);
+  await page.goto(`/app/${wsSlug}/inbox`);
+  const address = (
+    await page.getByTestId("inbox-address").textContent()
+  )?.trim();
+  expect(address).toMatch(/^@_guidu_w_[a-z2-7]{16}:/);
+  const lucia = await consumers.create("Lucía Turista");
+  await consumers.callStore(lucia, address!);
+  await jobs(page, request);
+  let roomId = "";
+  await expect
+    .poll(
+      async () => {
+        roomId = (await consumers.invites(lucia))[0] ?? "";
+        if (!roomId) await jobs(page, request);
+        return roomId;
+      },
+      { timeout: 120_000, intervals: [1_000, 2_000, 3_000] },
+    )
+    .not.toBe("");
+  await consumers.join(lucia, roomId);
+  await consumers.send(
+    lucia,
+    roomId,
+    "Hola, ¿tienen habitación para dos personas esta noche?",
+  );
+  await jobs(page, request);
+
+  // The Attendant takes the conversation and writes in Portuguese.
+  await page.context().clearCookies();
+  await signIn(page, attendant);
+  await page.goto(
+    `/app/${wsSlug}/inbox?view=all&room=${encodeURIComponent(roomId)}`,
+  );
+  const conversation = page.getByTestId("inbox-conversation");
+  await expect(
+    conversation.getByText(
+      "Hola, ¿tienen habitación para dos personas esta noche?",
+    ),
+  ).toBeVisible({ timeout: 30_000 });
+  // The language of the contact is detected by the worker: without it the
+  // window sends direct, so the page is reloaded until the chip knows it.
+  await expect(async () => {
+    await jobs(page, request);
+    await page.goto(
+      `/app/${wsSlug}/inbox?view=all&room=${encodeURIComponent(roomId)}`,
+    );
+    await expect(
+      conversation.getByTestId("inbox-contact-locale"),
+    ).toContainText("Espanhol", { timeout: 10_000 });
+  }).toPass({ timeout: 120_000 });
+  await page
+    .getByTestId("inbox-context")
+    .getByRole("button", { name: "Atribuir a mim" })
+    .click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Conversa assumida." }),
+  ).toBeVisible();
+  const box = conversation.getByRole("textbox", {
+    name: "Escreva uma mensagem",
+  });
+  await expect(box).toBeEnabled({ timeout: 30_000 });
+  const written = "Temos quarto para duas pessoas esta noite.";
+  await box.fill(written);
+  await box.press("Enter");
+
+  // The preview in Spanish: nothing went to the room yet.
+  const preview = conversation.getByTestId("inbox-outbound-preview");
+  await expect(preview).toBeVisible({ timeout: 30_000 });
+  await expect(preview).toContainText("Prévia em espanhol");
+  const text = conversation.getByTestId("inbox-outbound-text");
+  await expect(text).toHaveValue(
+    "Tenemos habitación para dos personas esta noche.",
+  );
+  await expect(conversation.getByTestId("inbox-outbound-meta")).toHaveText(
+    "Google Translate",
+  );
+  expect(await consumers.messages(lucia, roomId)).not.toContain(
+    "Tenemos habitación para dos personas esta noche.",
+  );
+  // "Voltar" keeps the draft; Enter asks for the preview again.
+  await conversation.getByTestId("inbox-outbound-back").click();
+  await expect(preview).toHaveCount(0);
+  await expect(box).toHaveValue(written);
+  await box.press("Enter");
+  await expect(text).toBeVisible({ timeout: 30_000 });
+
+  // Edits the preview and sends it in Spanish.
+  const edited =
+    "Tenemos habitación para dos personas esta noche. ¡Los esperamos!";
+  await text.fill(edited);
+  await conversation
+    .getByRole("button", { name: "Enviar em espanhol" })
+    .click();
+  await expect
+    .poll(() => consumers.messages(lucia, roomId), { timeout: 30_000 })
+    .toContain(edited);
+  expect(await consumers.messages(lucia, roomId)).not.toContain(written);
+
+  // The team reads the Portuguese, with how it was sent and "Ver enviado".
+  const sent = conversation.getByTestId("inbox-sent-text");
+  await expect(sent).toHaveText(written, { timeout: 30_000 });
+  await expect(conversation.getByTestId("inbox-sent-meta")).toHaveText(
+    "Enviado em espanhol · Google Translate · editada",
+  );
+  await conversation.getByTestId("inbox-sent-toggle").click();
+  await expect(sent).toHaveText(edited);
+  await conversation.getByTestId("inbox-sent-toggle").click();
+  await expect(sent).toHaveText(written);
+
+  // "Enviar sem traduzir" sends the original, with no record of a translation.
+  const plain = "Combinado, até já!";
+  await box.fill(plain);
+  await box.press("Enter");
+  await expect(text).toBeVisible({ timeout: 30_000 });
+  await conversation.getByTestId("inbox-outbound-send-original").click();
+  await expect
+    .poll(() => consumers.messages(lucia, roomId), { timeout: 30_000 })
+    .toContain(plain);
+  // The timeline only: the window's textarea still holds the text while it closes.
+  await expect(
+    conversation.getByTestId("inbox-timeline").getByText(plain),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(conversation.getByTestId("inbox-sent-meta")).toHaveCount(1);
 });

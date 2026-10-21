@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/empty";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { ContactLocale } from "@/core/matrix/locale";
+import { decideOutbound } from "@/core/translation/outbound";
 import { cn } from "@/lib/utils";
 
 import {
@@ -29,6 +31,10 @@ import type { MatrixPhase } from "../client/use-inbox-matrix";
 import { createNoteAction } from "../notes-actions";
 import type { InboxNoteView } from "../server/notes";
 import type { MessageTranslationDto } from "../server/translation";
+import {
+  previewOutboundTranslationAction,
+  recordOutboundTranslationAction,
+} from "../translation-actions";
 import type { ConversationSummary } from "../views";
 import type { ComposerMode } from "./composer";
 import { ComposerFrame } from "./composer-frame";
@@ -40,6 +46,7 @@ import {
   useMessageTranslations,
 } from "./message-translation";
 import { NoteBubble } from "./note-bubble";
+import { OutboundPreview, type OutboundPreviewState } from "./outbound-preview";
 import type { InboxViewer } from "./types";
 
 /**
@@ -52,10 +59,17 @@ import type { InboxViewer } from "./types";
  * box switches between "Responder" and "Nota privada" (the mode is kept by
  * the window: "Novo › Nova nota" opens it). A note goes to the database,
  * never to the room; each mode keeps its own draft.
+ * TR3: with the translation on and the contact in another language than the
+ * team's, "Enviar" shows the preview in the contact's language (editable)
+ * before anything goes to the room; the ✦ asks for the preview without
+ * sending. After Synapse accepts the message the server records the
+ * original of the team, tied to the event.
  */
 
 const PRESENCE_MS = 30_000;
 const TYPING_MS = 5_000;
+/** Pause before the second try to record the original of a sent answer. */
+const RECORD_RETRY_MS = 800;
 
 export function ConversationView({
   workspaceSlug,
@@ -75,6 +89,8 @@ export function ConversationView({
   mode,
   onMode,
   highlightedNote,
+  teamLocale,
+  translationEnabled,
 }: Readonly<{
   workspaceSlug: string;
   roomId: string | null;
@@ -95,6 +111,9 @@ export function ConversationView({
   mode: ComposerMode;
   onMode: (mode: ComposerMode) => void;
   highlightedNote: string | null;
+  /** TR3: the team's language and whether the translation is on. */
+  teamLocale: ContactLocale;
+  translationEnabled: boolean;
 }>) {
   const t = useTranslations("inbox");
   const { showStatus } = useStatus();
@@ -106,6 +125,13 @@ export function ConversationView({
     text: string;
   }>({ roomId: null, text: "" });
   const noteText = noteDraft.roomId === roomId ? noteDraft.text : "";
+  // TR3: the preview of the translation belongs to its conversation too.
+  const [outbound, setOutbound] = useState<{
+    roomId: string;
+    state: OutboundPreviewState;
+  } | null>(null);
+  const outboundState = outbound?.roomId === roomId ? outbound.state : null;
+  const previewAsked = useRef(0);
   const [presenceOf, setPresenceOf] = useState<{
     mxid: string;
     value: string | null;
@@ -186,6 +212,23 @@ export function ConversationView({
   }
 
   const canSend = viewer.level === "reply" && phase === "ready" && !!room;
+  // TR3: the answer is translated when the rule says so (the server asks
+  // again); the ✦ asks for the preview even for a draft already in the
+  // contact's language.
+  const contactLocale = summary?.contactLocale ?? null;
+  const outboundRule = {
+    enabled: translationEnabled,
+    mode,
+    teamLocale,
+    contactLocale,
+    text: draft.trim(),
+  } as const;
+  const toTranslate = decideOutbound(outboundRule).translate;
+  const canPreview =
+    canSend &&
+    !sending &&
+    outboundState === null &&
+    decideOutbound({ ...outboundRule, force: true }).translate;
   // A note does not need the chat: only the database.
   const canNote = viewer.level === "reply";
 
@@ -207,13 +250,22 @@ export function ConversationView({
     }
   };
 
-  const send = async () => {
-    const body = draft.trim();
+  /** Sends `body` to the room; `translated` records how it was made. */
+  const deliver = async (
+    body: string,
+    translated: Omit<
+      Parameters<typeof recordOutboundTranslationAction>[0],
+      "workspaceSlug" | "roomId" | "eventId" | "sentText"
+    > | null,
+  ) => {
     if (!client || !roomId || !body || sending) return;
     setSending(true);
+    let eventId: string | null = null;
     try {
-      await client.sendTextMessage(roomId, body);
+      const sent = await client.sendTextMessage(roomId, body);
+      eventId = sent.event_id;
       setDraft("");
+      setOutbound(null);
       typingSent.current = 0;
       client.sendTyping(roomId, false, 0).catch(() => undefined);
     } catch {
@@ -221,6 +273,122 @@ export function ConversationView({
     } finally {
       setSending(false);
     }
+    if (eventId && translated) {
+      void recordSent({
+        ...translated,
+        workspaceSlug,
+        roomId,
+        eventId,
+        sentText: body,
+      });
+    }
+  };
+
+  /** After Synapse accepted it: the server keeps the original (one retry). */
+  const recordSent = async (
+    input: Parameters<typeof recordOutboundTranslationAction>[0],
+  ) => {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      if (attempt > 0) {
+        await new Promise((resolve) =>
+          window.setTimeout(resolve, RECORD_RETRY_MS),
+        );
+      }
+      const result = await recordOutboundTranslationAction(input).catch(
+        () => null,
+      );
+      if (result && !("error" in result)) {
+        translations.refresh();
+        return;
+      }
+    }
+    showStatus({ type: "oops", title: t("translation.outbound.recordFailed") });
+  };
+
+  /** Asks the server for the preview; nothing goes to the room. */
+  const requestPreview = async (force: boolean) => {
+    const body = draft.trim();
+    if (!roomId || !body || !contactLocale) return;
+    const asked = ++previewAsked.current;
+    setOutbound({
+      roomId,
+      state: { phase: "loading", target: contactLocale },
+    });
+    const result = await previewOutboundTranslationAction({
+      workspaceSlug,
+      roomId,
+      text: body,
+      force,
+    }).catch(() => null);
+    // The attendant went back (or left) while it was translating.
+    if (asked !== previewAsked.current) return;
+    if (!result || "error" in result) {
+      setOutbound(null);
+      showStatus({ type: "down", title: result?.error ?? t("sendFailed") });
+      return;
+    }
+    const preview = result.preview;
+    if (preview.kind === "direct") {
+      setOutbound(null);
+      if (force) {
+        showStatus({
+          type: "oops",
+          title: t("translation.outbound.notNeeded"),
+        });
+      } else {
+        await deliver(body, null);
+      }
+      return;
+    }
+    if (preview.kind === "unavailable") {
+      setOutbound({
+        roomId,
+        state: { phase: "unavailable", target: preview.targetLocale },
+      });
+      return;
+    }
+    setOutbound({
+      roomId,
+      state: {
+        phase: "preview",
+        text: preview.text,
+        machineText: preview.text,
+        source: preview.sourceLocale,
+        target: preview.targetLocale,
+        engine: preview.engine,
+        model: preview.model,
+        fallback: preview.fallback,
+      },
+    });
+  };
+
+  const send = async () => {
+    const body = draft.trim();
+    if (!client || !roomId || !body || sending || outboundState) return;
+    if (toTranslate) {
+      await requestPreview(false);
+      return;
+    }
+    await deliver(body, null);
+  };
+
+  const sendTranslated = () => {
+    if (outboundState?.phase !== "preview") return;
+    const sentText = outboundState.text.trim();
+    void deliver(sentText, {
+      sourceText: draft.trim(),
+      sourceLocale: outboundState.source,
+      targetLocale: outboundState.target,
+      engine: outboundState.engine,
+      model: outboundState.model,
+      fallback: outboundState.fallback,
+      edited: sentText !== outboundState.machineText.trim(),
+    });
+  };
+
+  const closePreview = () => {
+    previewAsked.current += 1;
+    setOutbound(null);
   };
 
   const onDraft = (value: string) => {
@@ -340,6 +508,37 @@ export function ConversationView({
           onSend={() => void (mode === "note" ? addNote() : send())}
           disabled={mode === "note" ? !canNote : !canSend}
           sending={sending}
+          aiEnabled={canPreview}
+          aiBusy={outboundState?.phase === "loading"}
+          onAi={() => void requestPreview(true)}
+          aiLabel={
+            mode === "reply" && translationEnabled && contactLocale
+              ? contactLocale !== teamLocale
+                ? t("translation.outbound.previewButton", {
+                    language: t(`translation.languages.${contactLocale}`),
+                  })
+                : t("translation.outbound.previewOff")
+              : t("translation.outbound.previewOff")
+          }
+          preview={
+            mode === "reply" && outboundState ? (
+              <OutboundPreview
+                state={outboundState}
+                sending={sending}
+                onText={(text) =>
+                  setOutbound((current) =>
+                    current?.state.phase === "preview"
+                      ? { ...current, state: { ...current.state, text } }
+                      : current,
+                  )
+                }
+                onSendTranslated={sendTranslated}
+                onSendOriginal={() => void deliver(draft.trim(), null)}
+                onRetry={() => void requestPreview(true)}
+                onBack={closePreview}
+              />
+            ) : null
+          }
         />
       ) : (
         <p

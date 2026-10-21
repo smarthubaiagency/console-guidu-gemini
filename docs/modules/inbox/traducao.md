@@ -1,6 +1,6 @@
 # Tradução do chat em tempo real
 
-- **Status:** TR1 (idioma do contato) e TR2 (tradução das mensagens que chegam) implementadas; TR3 a TR6 são proposta. O que ficou da TR2 está na [seção 12](#12-como-ficou-a-tr2).
+- **Status:** TR1 (idioma do contato), TR2 (tradução das mensagens que chegam) e TR3 (resposta da equipe com prévia traduzida) implementadas; TR4 a TR6 são proposta. O que ficou da TR2 está na [seção 12](#12-como-ficou-a-tr2) e da TR3 na [seção 13](#13-como-ficou-a-tr3).
 - **Data:** 19/10/2026
 - **Origem:** conversa de Marcelo com o Claude em 19/10/2026, para o piloto de Búzios, focado em turismo.
 - **Decisões do Marcelo (19/10/2026):**
@@ -182,3 +182,39 @@ Implementada em 21/10/2026 ([plano](plano-tr2-in5a.md), migration `2026122109000
 - O job roda como a pessoa que salvou as configurações do Inbox (`workspace_modules.updated_by`), pelo mesmo caminho do GUIDS; a gravação passa por uma função que exige a execução do job, o que mantém "só o worker grava".
 - Sem nenhum motor pronto (chaves revogadas depois de ligar), a mensagem fica `failed` com `primary_error = 'key'`.
 - e2e com o dublê do Google Translate do rig (`e2e/support/fake-translate.ts`, porta 54395 mais o deslocamento, `GOOGLE_TRANSLATE_API_BASE`).
+
+## 13. Como ficou a TR3
+
+Implementada em 21/10/2026 ([plano](../../architecture/plano-tr3-gf2.md), migration `20261223090000_tr3_inbox_outbound_translation`).
+
+### Fluxo
+
+1. **Quando traduz** (`src/core/translation/outbound.ts`, `decideOutbound`, a mesma regra na janela e no servidor): tradução ligada, idioma do contato conhecido e diferente do da equipe, modo **Responder**. Nota privada nunca. Texto sem letras (emoji, número) não é traduzido. Rascunho que o detector da TR1 reconhece **com confiança** no idioma do contato segue direto, sem prévia; o ✦ pede a prévia mesmo assim.
+2. **Prévia:** ao clicar em Enviar (ou Enter), a caixa dá lugar à prévia no idioma do contato (`outbound-preview.tsx`), editável, com **Enviar em espanhol**, **Enviar sem traduzir** e **Voltar** (mantém o rascunho). O ✦ (agora ligado, com a dica "Ver a prévia em espanhol") gera a prévia sem enviar. Nada vai para a sala nesse momento.
+3. **Tradução no servidor** (`previewOutboundTranslationAction` → `previewOutboundTranslation`, `src/modules/inbox/server/outbound-translation.ts`): exige nível `reply` e Inbox operacional, lê a sala, as configurações e o glossário, e traduz fora da transação com os motores da TR2 (`translateOutbound` em `run.ts`: motor principal, 4 s, fallback, `fallback = true`). O texto da equipe entra delimitado como dado, com a mesma neutralização de `<` e `>` da TR2. Não grava nada, não envia nada e não lê o Synapse.
+4. **Os dois motores falham:** a prévia mostra "Tradução indisponível" com **Tentar de novo**, **Enviar sem traduzir** e **Voltar**; nada é enviado sozinho.
+5. **Registro da saída:** o envio continua pelo `matrix-js-sdk` no navegador. Com o `event_id` aceito pelo Synapse, o navegador chama `recordOutboundTranslationAction`. O servidor lê o evento no Synapse como o núcleo, confere que o remetente é a conta Matrix de quem chamou e que o corpo é exatamente o texto enviado (recusa com `conflict` se não for, ou se o evento não existir ou não for `m.text`), e só então chama `private.inbox_translation_record_outbound`, que exige nível `reply`, a sala ativa no contexto e o `event_id` ainda sem registro. A linha `outbound` guarda `source_text` (original), `translated_text` (o enviado), idiomas, motor, modelo, `fallback` e `edited`. Uma auditoria `inbox.translation.outbound` registra idiomas, motor e se foi editada, sem o texto. Se o registro falhar duas vezes, o aviso diz que a mensagem foi enviada mas o original não foi guardado.
+6. **Para a equipe** (`message-translation.tsx`): a mensagem mostra o original em português e, embaixo, "Enviado em espanhol · Modelo de IA" (ou "Google Translate", com "fallback" e "editada" quando for o caso) e **Ver enviado**, que alterna para o texto que o contato recebeu (e de volta com **Ver original**). `loadMessageTranslationsAction` passou a devolver também as linhas `outbound`. O consumidor só vê a mensagem no idioma dele.
+7. **Job da TR2:** não mudou; mensagens da equipe continuam fora da tradução de entrada, e o aviso de falha de motor só olha linhas `inbound`.
+
+### Dados
+
+- `inbox_message_translations`: colunas `source_text` (só `outbound`) e `edited`, com constraints (só `outbound` tem original; só `outbound` pode ser `edited`). Numa linha `outbound`, `source_locale` é o idioma da equipe e `target_locale` o do contato. As policies não mudaram: lê quem tem nível no Inbox; o web não tem insert, update nem delete direto, só a função acima.
+- Interface: a página do Inbox lê `translation.enabled` e passa `translationEnabled` à janela; o servidor repete a decisão a cada prévia, então uma configuração que mudou depois não vale.
+
+### Desvios do plano
+
+- **Glossário ao contrário:** as linhas do glossário são escritas para o idioma da equipe ("check-in = entrada"). Na saída o termo fixo é lido de trás para frente (`outboundGlossary`): o que a equipe escreve ("entrada") vira o termo do contato ("check-in"); os termos mantidos como estão ficam como estão. O plano não dizia; é a leitura que faz o glossário valer nos dois sentidos.
+- **Sem contexto na prévia:** o motor de IA recebe só o texto da equipe, sem as mensagens anteriores (a TR2 manda seis). Evita uma leitura do Synapse a cada prévia; pode entrar depois.
+- **Uso de IA:** a prévia conta como as traduções da TR2, isto é, usa a chave do cliente e o uso fica no provedor dele. Não há contador próprio no GUIDU para a tradução (a TR2 também não tem); nada novo foi criado.
+- **Metadados do registro (motor, modelo, `fallback`, `edited`) vêm do navegador:** o servidor confere remetente e corpo no Synapse, mas não consegue provar qual motor produziu o texto nem se foi editado. Quem grava é só quem tem nível `reply` e só na própria mensagem, e o motor é limitado a `ai` ou `google` por constraint. O servidor só aceita evento com até 5 minutos (`SENT_MAX_AGE_MS`, `origin_server_ts`), para que o registro seja o do envio que acabou de acontecer. **Pendência:** a prévia devolver um token HMAC de {sala, texto da equipe, texto da máquina, motor, modelo, `fallback`} e o registro calcular `edited` no servidor (assim nem o motor nem a edição viriam do navegador) ficou para uma etapa própria, porque muda o contrato da prévia, da ação de registro e da janela.
+- **A chave do motor para quem responde:** o Atendente não lê credencial (AT1), então a prévia pede a chave a `private.inbox_translation_key(engine, credential_id)` (`SECURITY DEFINER`, dono `app_rls_helper`, só `app_runtime` executa). A função se limita sozinha: exige nível `reply`, a tradução do Inbox ligada, o motor ser o principal ou o fallback das configurações e, para a IA, a chave ser exatamente a escolhida lá (`ai.credential_id`); devolve só o payload selado de uma credencial ativa do próprio workspace e da própria empresa, e o servidor decifra como o job. A policy `credentials_translation_helper_select` só vale para o helper com o flag local `app.inbox_translation_key`, que a função liga e restaura (e `app.inbox_translation`, que abre a leitura da configuração).
+- **Idioma "já no do contato":** só o detector com confiança (`detectContactLocale`, confiança mínima 0,6) dispensa a prévia; texto curto ou ambíguo é traduzido.
+- **Mensagem só de emoji ou número** segue direto, sem prévia.
+
+### Testes
+
+- Unitário (`src/core/translation/outbound.test.ts`): a regra de quando traduzir, a tradução direta com fallback, o tempo do motor principal, os dois motores falhando e o glossário ao contrário.
+- Integração (`tests/core/inbox-outbound-translation.test.ts`): a prévia não grava linha, job nem pedido ao Synapse; fallback e falha dupla; envio direto; quem só lê e outro workspace são recusados; o registro grava o original e recusa remetente, corpo, tipo e evento diferentes; segundo registro do mesmo evento não grava; RLS; apagar a sala apaga as linhas. SQL (`tests/core/inbox-outbound-translation-rls.sql`): a função (permitido e negado), as constraints e os privilégios.
+- e2e (`e2e/inbox.spec.ts`, dublê do Google Translate): contato em espanhol, atendente escreve em português, vê a prévia, volta, edita e envia; o consumidor recebe em espanhol; a equipe vê o português com "Ver enviado" e "editada"; "Enviar sem traduzir" manda o original.
+- Integração, SQL e e2e rodam no CI (esta máquina não tem Postgres, Redis nem Synapse).

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -22,6 +22,9 @@ import { loadMessageTranslationsAction } from "../translation-actions";
  * and the engine, with "Ver original" in place; while translating, the
  * original with "Traduzindo…"; on a failure, the original with "Tradução
  * indisponível".
+ * TR3: the team's own answer, sent translated, shows what the attendant
+ * wrote and "Enviado em espanhol · motor", with "Ver enviado" to see the
+ * text the contact received; an edited preview is marked.
  */
 
 const PENDING_POLL_MS = 3_000;
@@ -32,6 +35,8 @@ const MAX_IDS = 200;
 export type MessageTranslations = Readonly<{
   byEvent: ReadonlyMap<string, MessageTranslationDto>;
   notice: TranslationNotice | null;
+  /** Asks the server again now (after recording a sent answer). */
+  refresh: () => void;
 }>;
 
 export function useMessageTranslations(
@@ -39,9 +44,11 @@ export function useMessageTranslations(
   roomId: string | null,
   eventIds: readonly string[],
 ): MessageTranslations {
-  const [state, setState] = useState<
-    MessageTranslations & { roomId: string | null }
-  >({ byEvent: new Map(), notice: null, roomId: null });
+  const [state, setState] = useState<{
+    byEvent: ReadonlyMap<string, MessageTranslationDto>;
+    notice: TranslationNotice | null;
+    roomId: string | null;
+  }>({ byEvent: new Map(), notice: null, roomId: null });
   const ids = useMemo(
     () => eventIds.filter((id) => id.startsWith("$")).slice(-MAX_IDS),
     [eventIds],
@@ -88,7 +95,8 @@ export function useMessageTranslations(
     return () => window.clearTimeout(timer);
   }, [pending, tick]);
 
-  return { byEvent: current.byEvent, notice: current.notice };
+  const refresh = useCallback(() => setTick((n) => n + 1), []);
+  return { byEvent: current.byEvent, notice: current.notice, refresh };
 }
 
 /** The body of a message, translated when there is a translation. */
@@ -102,6 +110,9 @@ export function TranslatedBody({
   const t = useTranslations("inbox.translation");
   const [original, setOriginal] = useState(false);
   if (!translation) return <>{body}</>;
+  if (translation.direction === "outbound") {
+    return <SentBody body={body} translation={translation} />;
+  }
   if (translation.status !== "done" || !translation.text) {
     return (
       <>
@@ -165,5 +176,52 @@ export function TranslationNoticeBar({
       </AlertTitle>
       <AlertDescription>{t(`errorCodes.${notice.code}`)}</AlertDescription>
     </Alert>
+  );
+}
+
+/**
+ * The team's answer that went translated (TR3): the original in the team's
+ * language, then the language it was sent in and the engine, with "Ver
+ * enviado" to switch to the text the contact received.
+ */
+function SentBody({
+  body,
+  translation,
+}: Readonly<{
+  body: string;
+  translation: MessageTranslationDto;
+}>) {
+  const t = useTranslations("inbox.translation");
+  const [sent, setSent] = useState(false);
+  if (translation.status !== "done" || !translation.original)
+    return <>{body}</>;
+  const to = translation.targetLocale
+    ? t(`languages.${translation.targetLocale}`)
+    : null;
+  const engine = translation.engine ? t(`engines.${translation.engine}`) : "";
+  return (
+    <>
+      <span data-testid="inbox-sent-text">
+        {sent ? (translation.text ?? body) : translation.original}
+      </span>
+      <span className="text-11 mt-1 flex flex-wrap items-center gap-x-1 opacity-70">
+        <span data-testid="inbox-sent-meta">
+          {to ? t("sentIn", { language: to, engine }) : t("sent", { engine })}
+          {translation.fallback ? ` · ${t("fallback")}` : ""}
+          {translation.edited ? ` · ${t("edited")}` : ""}
+        </span>
+        <span aria-hidden="true">·</span>
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          className={cn("text-11 h-auto p-0 text-current underline")}
+          onClick={() => setSent((value) => !value)}
+          data-testid="inbox-sent-toggle"
+        >
+          {sent ? t("showWritten") : t("showSent")}
+        </Button>
+      </span>
+    </>
   );
 }

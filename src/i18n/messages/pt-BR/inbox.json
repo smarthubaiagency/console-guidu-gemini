@@ -213,13 +213,36 @@
       "timeout": "O motor demorou demais para responder.",
       "refusal": "O motor não devolveu uma tradução.",
       "error": "O motor de tradução falhou."
+    },
+    "sentIn": "Enviado em {language} · {engine}",
+    "sent": "Enviado · {engine}",
+    "edited": "editada",
+    "showSent": "Ver enviado",
+    "showWritten": "Ver original",
+    "outbound": {
+      "loading": "Traduzindo para {language}…",
+      "previewTitle": "Prévia em {language}",
+      "fieldLabel": "Prévia da tradução em {language}, editável",
+      "unavailableDescription": "Os dois motores de tradução falharam e nada foi enviado. Tente de novo, envie sem traduzir ou volte para editar o texto.",
+      "back": "Voltar",
+      "sendOriginal": "Enviar sem traduzir",
+      "retry": "Tentar de novo",
+      "sendIn": "Enviar em {language}",
+      "previewButton": "Ver a prévia em {language}",
+      "previewOff": "Prévia da tradução (precisa da tradução ligada e do idioma do contato diferente do seu)",
+      "notNeeded": "Não há o que traduzir: o texto já está no idioma do contato.",
+      "recordFailed": "A mensagem foi enviada, mas o original não foi guardado. A equipe verá só o texto enviado.",
+      "errors": {
+        "text": "O texto da resposta é inválido.",
+        "mismatch": "A mensagem enviada não confere com o registro."
+      }
     }
   },
   "notes": {
     "tabsLabel": "Responder ou escrever nota",
     "reply": "Responder",
     "note": "Nota privada",
-    "ai": "Assistente de IA (em breve)",
+    "ai": "Prévia da tradução",
     "hint": "Escreva uma nota para a equipe. O contato não vê.",
     "fieldLabel": "Escreva uma nota",
     "add": "Adicionar nota",
