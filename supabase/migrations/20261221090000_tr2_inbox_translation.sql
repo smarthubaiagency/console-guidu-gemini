@@ -217,6 +217,11 @@ begin
      left('translate:' || v_team || ':' || p_event_id, 200), 3)
   on conflict do nothing
   returning id into v_run;
+  if v_run is null then
+    -- The run already exists: the pending row would stay without a job.
+    delete from public.inbox_message_translations
+     where event_id = p_event_id and target_locale = v_team and status = 'pending';
+  end if;
   perform set_config('app.inbox_translation', coalesce(v_previous, ''), true);
   return v_run;
 end;

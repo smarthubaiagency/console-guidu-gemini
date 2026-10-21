@@ -48,11 +48,15 @@ export function formatGlossary(entries: readonly GlossaryEntry[]): string {
 
 /** The glossary in the prompt of the AI engine (data, one per line). */
 export function glossaryPrompt(entries: readonly GlossaryEntry[]): string {
+  // Each text is a JSON string (inner quotes and line breaks escaped) with
+  // no `<` or `>`, so it cannot leave its place in the line.
+  const quote = (text: string): string =>
+    JSON.stringify(text).replace(/</gu, "\\u003c").replace(/>/gu, "\\u003e");
   return entries
     .map((entry) =>
       entry.translation
-        ? `- "${entry.term}" → "${entry.translation}"`
-        : `- "${entry.term}" (keep as it is)`,
+        ? `- ${quote(entry.term)} → ${quote(entry.translation)}`
+        : `- ${quote(entry.term)} (keep as it is)`,
     )
     .join("\n");
 }

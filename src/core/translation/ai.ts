@@ -34,9 +34,17 @@ const MAX_CONTEXT_CHARS = 600;
 
 const AnswerSchema = z.object({ translation: z.string().max(8_000) });
 
-/** Tags of the prompt cannot be closed from inside the data. */
-function asData(text: string): string {
-  return text.replace(/<\/?\s*(message|context|line)\b[^>]*>/giu, "");
+/**
+ * No `<` or `>` goes from the data into the prompt, so no input can form
+ * (even nested) the tags that delimit it.
+ */
+export function asData(text: string): string {
+  return text.replace(/</gu, "&lt;").replace(/>/gu, "&gt;");
+}
+
+/** The model may answer with the two entities; the team reads the signs. */
+function fromData(text: string): string {
+  return text.replace(/&lt;/giu, "<").replace(/&gt;/giu, ">");
 }
 
 export function translationInstructions(input: TranslateInput): string {
@@ -68,7 +76,7 @@ export function translationPrompt(input: TranslateInput): string {
       "<context>",
       ...input.context.map(
         (line) =>
-          `<line from="${line.side}">${asData(line.text).slice(0, MAX_CONTEXT_CHARS)}</line>`,
+          `<line from="${line.side}">${asData(line.text.slice(0, MAX_CONTEXT_CHARS))}</line>`,
       ),
       "</context>",
     );
@@ -116,7 +124,9 @@ export function createAiTranslator(
         throw new TranslationError(aiErrorCode(error));
       }
       const parsed = AnswerSchema.safeParse(answer);
-      const text = parsed.success ? parsed.data.translation.trim() : "";
+      const text = parsed.success
+        ? fromData(parsed.data.translation).trim()
+        : "";
       if (!text) throw new TranslationError("refusal");
       return { text, engine: "ai", model: key.model };
     },

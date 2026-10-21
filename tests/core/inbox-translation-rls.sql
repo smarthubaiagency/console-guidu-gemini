@@ -320,6 +320,24 @@ end
 $$;
 rollback;
 
+-- Without the `app.*` context, the web reads no translation (AC02).
+begin;
+select pg_temp.fixture();
+insert into public.inbox_message_translations
+  (organization_id, workspace_id, room_id, event_id, direction, source_locale, target_locale, status)
+values ('a0000000-0000-4000-8000-000000000010', 'a0000000-0000-4000-8000-000000000011',
+        '!tr2-espanhol', '$tr2-semctx', 'inbound', 'es', 'pt-BR', 'pending');
+set local role app_runtime;
+do $$
+begin
+  perform pg_temp.ctx(null, null, null);
+  if (select count(*) from public.inbox_message_translations) <> 0 then
+    raise exception 'tr2: translations read without the app context';
+  end if;
+end
+$$;
+rollback;
+
 -- ----------------------------------------------------------------------------
 -- Test 4: no grants to anon and authenticated; RLS forced
 -- ----------------------------------------------------------------------------

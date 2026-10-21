@@ -162,6 +162,7 @@ async function load(
 type RecordInput = Readonly<{
   status: "done" | "failed" | "skipped";
   source?: ContactLocale | null;
+  target?: ContactLocale;
   text?: string | null;
   engine?: string | null;
   model?: string | null;
@@ -185,7 +186,11 @@ async function record(
     `;
     if (result.status !== "failed") return 0;
     const row = await tx.inboxMessageTranslation.findFirst({
-      where: { eventId: payload.eventId, roomId: payload.roomId },
+      where: {
+        eventId: payload.eventId,
+        roomId: payload.roomId,
+        ...(result.target ? { targetLocale: result.target } : {}),
+      },
       select: { attempts: true },
     });
     return row?.attempts ?? MAX_ATTEMPTS;
@@ -336,6 +341,7 @@ export async function runTranslateMessage(
   const attempts = await record(session, payload, {
     status: "failed",
     source,
+    target: loaded.target,
     primaryError: outcome.primaryError,
   });
   appLog.warn("inbox.translation.failed", {
