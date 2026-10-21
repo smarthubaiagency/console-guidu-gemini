@@ -642,6 +642,17 @@ test('TR3: the Attendant writes in Portuguese, sees the preview in Spanish, edit
       "Hola, ¿tienen habitación para dos personas esta noche?",
     ),
   ).toBeVisible({ timeout: 30_000 });
+  // The language of the contact is detected by the worker: without it the
+  // window sends direct, so the page is reloaded until the chip knows it.
+  await expect(async () => {
+    await jobs(page, request);
+    await page.goto(
+      `/app/${wsSlug}/inbox?view=all&room=${encodeURIComponent(roomId)}`,
+    );
+    await expect(
+      conversation.getByTestId("inbox-contact-locale"),
+    ).toContainText("Espanhol", { timeout: 10_000 });
+  }).toPass({ timeout: 120_000 });
   await page
     .getByTestId("inbox-context")
     .getByRole("button", { name: "Atribuir a mim" })
