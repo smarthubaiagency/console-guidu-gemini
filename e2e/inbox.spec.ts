@@ -710,6 +710,9 @@ test('TR3: the Attendant writes in Portuguese, sees the preview in Spanish, edit
   await expect
     .poll(() => consumers.messages(lucia, roomId), { timeout: 30_000 })
     .toContain(plain);
-  await expect(conversation.getByText(plain)).toBeVisible();
+  // The timeline only: the window's textarea still holds the text while it closes.
+  await expect(
+    conversation.getByTestId("inbox-timeline").getByText(plain),
+  ).toBeVisible({ timeout: 30_000 });
   await expect(conversation.getByTestId("inbox-sent-meta")).toHaveCount(1);
 });
