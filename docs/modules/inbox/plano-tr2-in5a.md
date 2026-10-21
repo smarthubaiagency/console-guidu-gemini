@@ -1,7 +1,8 @@
 # Plano da dupla TR2 e IN5a
 
-- **Estado:** proposta de 21/10/2026. Perguntas respondidas e "pode começar" do Marcelo em 21/10/2026.
-- **IN5a:** feita em 21/10/2026 na branch `claude/in5a-notas` (migration `20261222090000_in5a_inbox_notes`); o que ficou está em [contexto do Inbox, seção 4](contexto-inbox.md#4-notas-privadas-in5a).
+- **Estado:** TR2 e IN5a feitas e mescladas em 21/10/2026, com as migrations aplicadas no dev `console-guidu`. Perguntas respondidas e "pode começar" do Marcelo em 21/10/2026. As capturas do aceite foram dispensadas pelo Marcelo, que confere a interface pessoalmente.
+- **IN5a:** PR #129 (migration `20261222090000_in5a_inbox_notes`); o que ficou está em [contexto do Inbox, seção 4](contexto-inbox.md#4-notas-privadas-in5a).
+- **TR2:** PR #128 (migration `20261221090000_tr2_inbox_translation`, aplicada no dev depois da `20261222090000`, porque a IN5a entrou primeiro; as duas não compartilham objetos).
 - **Data:** 21/10/2026
 - **Origem:** [prioridades](../../architecture/prioridades-agentes-e-inbox.md), P1: a dupla depois de GF1 e TR1. Pedido do Marcelo de 21/10/2026: alternar entre **Responder** e **Nota privada** na mesma caixa de mensagem, como na referência enviada.
 - **Base:** `main` em `29e4760` (PR #126: GF1 e TR1).
@@ -14,7 +15,7 @@
 
 ## TR2 — Tradução das mensagens que chegam
 
-**Situação (21/10/2026):** implementada no branch `claude/tr2-traducao`, aguardando o PR e a migration no dev. O que ficou e os desvios estão em [tradução, "Como ficou a TR2"](traducao.md#12-como-ficou-a-tr2).
+**Situação (21/10/2026):** feita (PR #128) e aplicada no dev. A revisão encontrou e o PR corrigiu uma brecha de injeção no prompt do motor de IA (tags aninhadas no texto do contato); `<` e `>` do contato e do contexto agora são neutralizados. O que ficou e os desvios estão em [tradução, "Como ficou a TR2"](traducao.md#12-como-ficou-a-tr2).
 
 ### Contexto
 

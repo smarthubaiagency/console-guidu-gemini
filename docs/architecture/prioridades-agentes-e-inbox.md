@@ -1,6 +1,6 @@
 # Prioridades: Inbox, agentes e salas internas
 
-- **Status:** Prioridades definidas pelo Marcelo em 19/10/2026. As etapas ainda não começaram.
+- **Status:** Prioridades definidas pelo Marcelo em 19/10/2026. Feitas: IN4c (PR #124), GF1 e TR1 (PR #126), IN5a (PR #129) e TR2 (PR #128). Faltam SB1, GF2, TR3 e TR4; a próxima dupla fica a definir com o Marcelo.
 - **Origem:** conversa de Marcelo com o Claude em 18 e 19/10/2026.
 - **Documentos:** [agentes na Matrix e compra agêntica](agentes-na-matrix-e-compra-agentica.md), [sala de operação](sala-de-operacao.md), [tradução do chat](../modules/inbox/traducao.md).
 
@@ -22,9 +22,9 @@
 | **IN4c** | Novo layout da janela do Inbox: dois cabeçalhos de 60 px, seletores de tipo e canal na lista, abas Contato e Threads no painel, caixa de mensagem no padrão do agente de IA ([plano](../modules/inbox/plano-in4c-layout.md))                                                                       | —          |
 | **GF1**  | Modelos de fábrica dos quatro GUIDS (prompts, campos editáveis e travados) e criação automática no onboarding de cada workspace, desligados até haver chave e teste (A4b). Cota padrão `ai-agents.max` = 4                                                                                         | —          |
 | **TR1**  | Idioma do contato: detecção, gravação no contato e no espelho da sala, indicação no Inbox                                                                                                                                                                                                          | —          |
-| **TR2**  | Configuração da tradução no Inbox (interruptor, motor principal, fallback, credencial do Google Basic no cofre, glossário) e tradução das mensagens que chegam, com "ver original"                                                                                                                 | TR1        |
+| **TR2**  | Configuração da tradução no Inbox (interruptor, motor principal, fallback, credencial do Google Basic no cofre, glossário) e tradução das mensagens que chegam, com "ver original". **Feita em 21/10/2026** (PR #128; [como ficou](../modules/inbox/traducao.md#12-como-ficou-a-tr2))              | TR1        |
 | **TR3**  | Resposta da equipe com prévia traduzida e fallback                                                                                                                                                                                                                                                 | TR2        |
-| **IN5a** | Notas internas no Supabase por `room_id`, no painel de contexto (parte da IN5 já prevista). **Feita em 21/10/2026** (branch `claude/in5a-notas`; [como ficou](../modules/inbox/contexto-inbox.md#4-notas-privadas-in5a))                                                                           | —          |
+| **IN5a** | Notas internas no Supabase por `room_id`, no painel de contexto (parte da IN5 já prevista). **Feita em 21/10/2026** (PR #129; [como ficou](../modules/inbox/contexto-inbox.md#4-notas-privadas-in5a))                                                                                              | —          |
 | **SB1**  | Fundação das salas internas e sala de bastidor: tipo de sala no núcleo Matrix, regra do @, componente de thread e "Threads desta conversa" no Inbox, com o @ops e os GUIDS como membros. Inclui a menção a um colega (@Fulano) nas notas privadas da IN5a, com aviso no sino (Marcelo, 21/10/2026) | GF1        |
 | **GF2**  | Orquestrador encaminhando ao atendente e ao vendedor (delegação estruturada, uma persona)                                                                                                                                                                                                          | GF1        |
 | **TR4**  | Áudio: transcrição e tradução                                                                                                                                                                                                                                                                      | TR2        |
@@ -37,7 +37,7 @@
 4. TR3 e GF2;
 5. TR4.
 
-Como a GF1 ficou sem par, a dupla da vez é **GF1 e TR1**, e a IN5a passa a andar com a TR2.
+Como a GF1 ficou sem par, as duplas feitas foram **GF1 e TR1** (PR #126, 19/10/2026) e **TR2 e IN5a** (PRs #128 e #129, 21/10/2026). Faltam SB1, GF2, TR3 e TR4; a próxima dupla fica a definir com o Marcelo.
 
 TR1 a TR3 fecham a tradução de texto para o piloto de Búzios. Antes de começar, confirmar que a IN7 (WhatsApp da Meta) foi para a `main`, porque a TR1 detecta o idioma das mensagens do WhatsApp.
 
