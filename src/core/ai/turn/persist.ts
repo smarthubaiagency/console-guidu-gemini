@@ -69,9 +69,11 @@ function rows(record: TurnRecord, start: Date) {
   const base = {
     conversationId: record.conversationId,
     executionId: record.executionId,
-    // GF2: who wrote the row, and whether by a delegation.
-    authorAgentId: record.agentId,
-    viaDelegation: record.viaDelegation ?? false,
+    // GF2: who wrote the row, and whether by a delegation. Only the GUIDS
+    // turns say it (the Assistant's agent is not a GUIDS of a workspace).
+    ...(record.viaDelegation === undefined
+      ? {}
+      : { authorAgentId: record.agentId, viaDelegation: record.viaDelegation }),
   };
   for (const step of record.steps) {
     const calls = step.content.filter((p) => p.type === "tool-call");
@@ -292,8 +294,9 @@ export async function persistTurnError(
       errorCode: args.errorCode,
       provider: args.provider ?? null,
       model: args.model ?? null,
-      authorAgentId: args.agentId,
-      viaDelegation: args.viaDelegation ?? false,
+      ...(args.viaDelegation === undefined
+        ? {}
+        : { authorAgentId: args.agentId, viaDelegation: args.viaDelegation }),
     },
     select: { id: true },
   });

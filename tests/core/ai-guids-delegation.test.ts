@@ -447,6 +447,8 @@ describeDatabase("GF2: orchestrator delegation", requiredVars, () => {
     const set = models({
       "gpt-orc": [delegate("seller"), plan("Em que mais posso ajudar?")],
       "gpt-sel": [
+        // The first turn: the seller answers what the reception handed over.
+        plan("Temos três pacotes."),
         toolStep([
           {
             name: "return_to_reception",
