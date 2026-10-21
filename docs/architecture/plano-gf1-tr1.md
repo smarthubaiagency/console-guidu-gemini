@@ -1,6 +1,6 @@
 # Plano da dupla GF1 e TR1
 
-- **Estado:** GF1 e TR1 implementadas em 19/10/2026, no branch `ccr-ed3546ff-aihxh0`, esperando o PR. Os ajustes feitos na implementação estão em "Como ficou" de cada etapa.
+- **Estado:** GF1 e TR1 feitas em 19/10/2026 e mescladas na `main` pelo PR #126; migrations `20261219090000` e `20261220090000` aplicadas no dev. Os ajustes feitos na implementação estão em "Como ficou" de cada etapa.
 - **Data:** 19/10/2026
 - **Origem:** [prioridades](prioridades-agentes-e-inbox.md), P1: a dupla da vez.
 - **Trabalho em paralelo:** duas etapas, cada uma com branch, PR, banco local e portas próprios (`AGENTS.md`). As duas não mexem nos mesmos arquivos.
