@@ -51,6 +51,8 @@ const adminUrl = process.env.MIGRATION_DATABASE_URL ?? process.env.ADMIN_URL;
 const requiredVars = { DATABASE_URL: databaseUrl, ADMIN_URL: adminUrl };
 
 const GUID = "a5b00000-0000-4000-8000-0000000000a1";
+const SELLER = "a5b00000-0000-4000-8000-0000000000a2";
+const PLATFORM_OWNER = "d0000000-0000-4000-8000-000000000003";
 const BASE_URL = "https://203.0.113.10";
 const USER_TOKEN = "chatwoot-user-token-123";
 const APP_URL = "https://guidu.test";
@@ -246,6 +248,96 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
     await admin.$executeRawUnsafe(
       `delete from public.ai_conversations where workspace_id = '${ids.workspaceA}'`,
     );
+    // GF2: the seller, the orchestrator's role and the plan limit.
+    await admin.$executeRawUnsafe(
+      `delete from public.ai_agents where id = '${SELLER}'`,
+    );
+    await admin.$executeRawUnsafe(
+      `update public.ai_agents set factory_role = null where id = '${GUID}'`,
+    );
+    await admin.$executeRawUnsafe(
+      `delete from public.platform_modules where module_key = 'ai-agents'`,
+    );
+  }
+
+  /** GF2: the inbox's GUIDS is the orchestrator, with a seller that is on. */
+  async function withSeller() {
+    await admin.$executeRawUnsafe(
+      `insert into public.platform_modules (module_key, availability, config, updated_by)
+       values ('ai-agents', 'enabled', '{"quotaDefaults": {"ai-agents.max": 10}}', '${PLATFORM_OWNER}')`,
+    );
+    await admin.aiAgent.update({
+      where: { id: GUID },
+      data: {
+        factoryRole: "orchestrator",
+        config: {
+          ...guidConfig(credentialId),
+          integration: { tools: ["think", "handoff", "delegate"] },
+        },
+      },
+    });
+    await admin.aiAgent.create({
+      data: {
+        id: SELLER,
+        kind: "guid",
+        organizationId: ids.organizationA,
+        workspaceId: ids.workspaceA,
+        status: "active",
+        factoryRole: "seller",
+        config: {
+          ...guidConfig(credentialId),
+          overview: { agent_name: "Vendedor", language: "pt-BR", system_prompt: "Você é {{agent_name}}." },
+          integration: { tools: ["think", "return_to_reception"] },
+        },
+        configVersion: 1,
+        createdBy: ids.userA,
+      },
+    });
+  }
+
+  const delegateStep = () =>
+    toolStep("delegate", {
+      version: 1,
+      to: "seller",
+      reason: "Quer comprar",
+      summary: "Maria quer ver os pacotes",
+    });
+
+  /** Who wrote the last answer of the conversation, and who holds it. */
+  async function lastAnswer() {
+    const conversation = await admin.aiConversation.findFirstOrThrow({
+      where: { agentId: GUID, channel: "chatwoot" },
+    });
+    const answers = await admin.aiMessage.findMany({
+      where: {
+        conversationId: conversation.id,
+        role: "assistant",
+        errorCode: null,
+        content: { not: "" },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    });
+    // The text beside a tool call is the model thinking, not the answer.
+    const answer = answers.find(
+      (a) => Array.isArray(a.toolCalls) && a.toolCalls.length === 0,
+    )!;
+    return {
+      author: answer.authorAgentId,
+      via: answer.viaDelegation,
+      holder: conversation.delegatedAgentId,
+    };
+  }
+
+  async function nextRun() {
+    const run = (await pendingRuns()).find((r) => r.status === "pending")!;
+    return run;
+  }
+
+  async function finish(runId: string) {
+    await admin.jobRun.updateMany({
+      where: { id: runId },
+      data: { status: "succeeded" },
+    });
   }
 
   async function testedAgent(status: "active" | "paused" = "active") {
@@ -308,7 +400,7 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
     vi.unstubAllEnvs();
     await cleanup();
     await admin.$executeRawUnsafe(
-      `delete from public.ai_agents where id = '${GUID}'`,
+      `delete from public.ai_agents where id in ('${GUID}', '${SELLER}')`,
     );
     await admin.$executeRawUnsafe(
       `delete from public.credentials where label = '${LABEL}'`,
@@ -640,6 +732,93 @@ describeDatabase("A5b: GUIDS answering in Chatwoot", requiredVars, () => {
     });
     expect(conversations).toHaveLength(1);
     expect(conversations[0]!.status).toBe("active");
+  });
+
+  it("a resolved conversation gives back what a specialist held (GF2)", async () => {
+    const { fake, connectionId, token } = await connectAndBind();
+    await withSeller();
+    await webhook(connectionId, token, message(1, "Quero ver os pacotes"));
+    const first = await nextRun();
+    const handed = await dispatch(
+      first,
+      [delegateStep(), planStep(["Temos três pacotes."])],
+      fake,
+    );
+    expect(handed.result).toMatchObject({ status: "answered", sent: 1 });
+    expect(await lastAnswer()).toEqual({
+      author: SELLER,
+      via: true,
+      holder: SELLER,
+    });
+    await finish(first.id);
+
+    // Resolved in Chatwoot, then the contact writes again.
+    await webhook(connectionId, token, statusChanged("resolved", 1_760_000_000));
+    await webhook(connectionId, token, statusChanged("pending", 1_760_000_100));
+    await webhook(connectionId, token, message(2, "Oi de novo"));
+    const second = await nextRun();
+    const back = await dispatch(second, [planStep(["Bem-vinda de volta!"])], fake);
+    expect(back.result).toMatchObject({ status: "answered", sent: 1 });
+    expect(sentTo(fake).at(-1)).toBe("Bem-vinda de volta!");
+    // The orchestrator answers, and nobody holds the conversation.
+    expect(await lastAnswer()).toEqual({
+      author: GUID,
+      via: false,
+      holder: null,
+    });
+  });
+
+  it("a resolution before the last dispatch does not give the conversation back (GF2)", async () => {
+    const { fake, connectionId, token } = await connectAndBind();
+    await withSeller();
+    await webhook(connectionId, token, message(1, "Quero ver os pacotes"));
+    const first = await nextRun();
+    await dispatch(first, [delegateStep(), planStep(["Temos pacotes."])], fake);
+    await finish(first.id);
+
+    // Resolved, the contact writes: the orchestrator answers and hands over again.
+    await webhook(connectionId, token, statusChanged("resolved", 1_760_000_000));
+    await webhook(connectionId, token, statusChanged("pending", 1_760_000_100));
+    await webhook(connectionId, token, message(2, "Voltei"));
+    const second = await nextRun();
+    await dispatch(second, [delegateStep(), planStep(["Temos pacotes de novo."])], fake);
+    expect(await lastAnswer()).toMatchObject({ author: SELLER, holder: SELLER });
+    await finish(second.id);
+
+    // The resolution is older than the last dispatch: the seller keeps it.
+    await webhook(connectionId, token, message(3, "E o preço?"));
+    const third = await nextRun();
+    const kept = await dispatch(third, [planStep(["O preço é R$ 900."])], fake);
+    expect(kept.result).toMatchObject({ status: "answered", sent: 1 });
+    expect(sentTo(fake).at(-1)).toBe("O preço é R$ 900.");
+    expect(await lastAnswer()).toEqual({
+      author: SELLER,
+      via: true,
+      holder: SELLER,
+    });
+  });
+
+  it("without a hand-over, a resolution changes nothing (GF2)", async () => {
+    const { fake, connectionId, token } = await connectAndBind();
+    await withSeller();
+    await webhook(connectionId, token, message(1, "Qual o horário?"));
+    const first = await nextRun();
+    const answered = await dispatch(first, [planStep(["Das 9h às 18h."])], fake);
+    expect(answered.result).toMatchObject({ status: "answered", sent: 1 });
+    await finish(first.id);
+
+    await webhook(connectionId, token, statusChanged("resolved", 1_760_000_000));
+    await webhook(connectionId, token, statusChanged("pending", 1_760_000_100));
+    await webhook(connectionId, token, message(2, "E sábado?"));
+    const second = await nextRun();
+    const again = await dispatch(second, [planStep(["Sábado até 13h."])], fake);
+    expect(again.result).toMatchObject({ status: "answered", sent: 1 });
+    expect(sentTo(fake)).toEqual(["Das 9h às 18h.", "Sábado até 13h."]);
+    expect(await lastAnswer()).toEqual({
+      author: GUID,
+      via: false,
+      holder: null,
+    });
   });
 
   it("uses the inbox's own grouping window and skips a paused agent", async () => {

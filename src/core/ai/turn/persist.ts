@@ -454,14 +454,20 @@ export async function persistDelegation(
 export async function persistDelegationEnd(
   tx: ContextTransaction,
   turn: DelegationTurn,
-  end: Readonly<{ action: string; role: string; code?: string }>,
+  end: Readonly<{
+    action: string;
+    role: string;
+    code?: string;
+    /** A test conversation: the hand-over is told, not written (as the simulated `handoff`). */
+    keepStatus?: boolean;
+  }>,
 ): Promise<void> {
   await tx.aiConversation.updateMany({
     where: { id: turn.conversationId },
     data: { delegatedAgentId: null, delegatedUntil: null },
   });
   // A failed delegation goes to the team, as the `handoff` tool does.
-  if (end.code) {
+  if (end.code && !end.keepStatus) {
     await tx.aiConversation.updateMany({
       where: { id: turn.conversationId, status: "active" },
       data: { status: "handoff" },

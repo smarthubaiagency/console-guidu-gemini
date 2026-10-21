@@ -885,6 +885,34 @@ describeDatabase("GF2: orchestrator delegation", requiredVars, () => {
     });
   });
 
+  it("in a test, a specialist that fails is told as a handoff but the status is not written", async () => {
+    const set = models({
+      "gpt-orc": [delegate("seller", "Maria quer comprar")],
+      "gpt-sel": [textStep("isto não é JSON"), textStep("{ainda não}")],
+    });
+    const conv = await admin.aiConversation.create({
+      data: {
+        kind: "guid",
+        agentId: ORC,
+        organizationId: ids.organizationA,
+        workspaceId: ids.workspaceA,
+        userId: ids.userA,
+        channel: "test",
+      },
+    });
+    const out = await turn(conv.id, "Quero comprar", set);
+    expect(out.result).toMatchObject({
+      status: "handoff",
+      reason: "invalid_output",
+    });
+    expect(out.state?.handoff?.reason).toContain("vendedor");
+    const after = await admin.aiConversation.findUniqueOrThrow({
+      where: { id: conv.id },
+    });
+    // The test goes on, as with the simulated handoff tool.
+    expect(after).toMatchObject({ status: "active", delegatedAgentId: null });
+  });
+
   it("keeps the new columns inside the workspace", async () => {
     const conv = await conversation();
     // The author of a message must be a GUIDS of the conversation's workspace.

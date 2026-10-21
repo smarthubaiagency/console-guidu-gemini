@@ -711,6 +711,8 @@ async function handToTeam(
     code: string;
     summary: string;
     state: TurnState;
+    /** A test of the agent: the conversation's status is not written. */
+    test: boolean;
   }>,
 ): Promise<Finished> {
   const texts = promptTexts(promptLocale(args.language)).delegation;
@@ -724,7 +726,12 @@ async function handToTeam(
         executionId: args.executionId,
         audit: args.audit,
       },
-      { action: "ai_agents.guid.delegate", role: args.role, code: args.code },
+      {
+        action: "ai_agents.guid.delegate",
+        role: args.role,
+        code: args.code,
+        keepStatus: args.test,
+      },
     ),
   );
   args.state.status = "handoff";
@@ -843,6 +850,7 @@ export async function runGuidTurnWithState(
       code,
       summary: delegation.summary,
       state: onState,
+      test: loaded.test,
     });
   if (
     remainingMs(run.startedAt, TURN_LIMITS.delegationTotalMs, Date.now()) <
@@ -1158,6 +1166,7 @@ async function runLoaded(
           code,
           summary: loaded.handover?.summary ?? "—",
           state,
+          test: loaded.test,
         }),
       };
     }
