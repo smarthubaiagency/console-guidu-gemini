@@ -1,6 +1,6 @@
 # Plano da dupla TR3 e GF2
 
-- **Estado:** proposta de 21/10/2026, esperando as respostas do Marcelo (seção "Perguntas").
+- **Estado:** aprovado em 21/10/2026: o Marcelo respondeu "todas como sugerido" às perguntas (seção "Perguntas"). Implementação em andamento.
 - **Data:** 21/10/2026
 - **Origem:** [prioridades](prioridades-agentes-e-inbox.md), P1: o par 4 da ordem sugerida, escolhido pelo Marcelo em 21/10/2026.
 - **Base:** `main` em `faa17d1` (PR #128: TR2).
@@ -76,7 +76,7 @@ Quando o GUIDS da conversa é o orquestrador de fábrica, ele responde sozinho o
 1. **Ferramenta `delegate`** do orquestrador, com contrato Zod versionado: `{ version: 1, to: "attendant" | "seller", reason, summary }`. Só o orquestrador de fábrica a tem; atendente e vendedor não delegam (um nível, agentes §7.1.2).
 2. **Quem responde:** o especialista roda o turno com a própria configuração (prompt, ferramentas, modelo) sobre a mesma conversa, recebendo o `summary` do orquestrador como contexto, e a resposta sai **com o nome e a conta do orquestrador** (uma persona, agentes §2.2.6). Pergunta 2.
 3. **Especialista desligado** (sem chave, sem teste ou pausado): a ferramenta só oferece os especialistas ligados; sem nenhum ligado, o orquestrador segue como hoje (responde ou transfere para a equipe). Pergunta 4.
-4. **Mensagens seguintes:** pergunta 3 (o encaminhamento vale para a conversa até o especialista devolver, ou toda mensagem passa de novo pelo orquestrador).
+4. **Mensagens seguintes** (pergunta 3, respondida): depois de encaminhar, a conversa fica com o especialista até ele devolver à recepção (ferramenta `return_to_reception`, só do atendente e do vendedor), a conversa ser resolvida ou ficar 24 h sem mensagem do contato; aí a próxima mensagem volta ao orquestrador.
 5. **Orçamento por pedido:** no máximo um encaminhamento por mensagem do contato e um tempo total por turno; acima disso, ou com saída inválida depois de uma nova tentativa, transfere para a equipe (`handoff`) com o motivo.
 6. **Registro:** cada mensagem do GUIDS guarda qual agente a escreveu e se veio por encaminhamento; o encaminhamento entra na auditoria (`ai_agents.guid.delegate`, sem o texto da conversa) e no uso de IA de cada agente.
 7. **Para a equipe, no Inbox:** um selo discreto no balão, "Respondido pelo Vendedor", só na interface da equipe (nunca na sala). Pergunta 5.
@@ -105,7 +105,7 @@ Quando o GUIDS da conversa é o orquestrador de fábrica, ele responde sozinho o
 
 ## Perguntas
 
-Cada uma tem uma sugestão. Responder "todas como sugerido" vale.
+**Respondidas pelo Marcelo em 21/10/2026: todas como sugerido.** Valem as sugestões abaixo; as alternativas ficam só como registro.
 
 ### TR3
 
