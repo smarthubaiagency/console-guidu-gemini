@@ -184,5 +184,34 @@
       "en": "EN",
       "es": "ES"
     }
+  },
+  "notes": {
+    "tabsLabel": "Responder o escribir una nota",
+    "reply": "Responder",
+    "note": "Nota privada",
+    "ai": "Asistente de IA (próximamente)",
+    "hint": "Escribe una nota para el equipo. El contacto no la ve.",
+    "fieldLabel": "Escribe una nota",
+    "add": "Agregar nota",
+    "added": "Nota agregada.",
+    "private": "Nota privada",
+    "edited": "editada",
+    "deletedNote": "Nota eliminada",
+    "unknownAuthor": "Exmiembro del equipo",
+    "menu": "Opciones de la nota",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "editLabel": "Texto de la nota",
+    "updated": "Nota editada.",
+    "deleted": "Nota eliminada.",
+    "confirmDelete": "¿Eliminar esta nota? La conversación mostrará “Nota eliminada”.",
+    "title": "Notas",
+    "empty": "No hay notas en esta conversación.",
+    "show": "Ver en la conversación: nota de {author}",
+    "errors": {
+      "notFound": "Nota no encontrada."
+    }
   }
 }

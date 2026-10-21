@@ -70,6 +70,8 @@ export async function purgeWorkspace(
     ["channel_routes", () => tx.channelRoute.deleteMany({ where })],
     ["channel_connections", () => tx.channelConnection.deleteMany({ where })],
     // Inbox (IN4b): labels on rooms and the CRM links before the rooms.
+    // Private notes (IN5a) before the rooms.
+    ["inbox_notes", () => tx.inboxNote.deleteMany({ where })],
     ["inbox_room_labels", () => tx.inboxRoomLabel.deleteMany({ where })],
     ["inbox_conversations", () => tx.inboxConversation.deleteMany({ where })],
     ["inbox_labels", () => tx.inboxLabel.deleteMany({ where })],

@@ -1,6 +1,7 @@
 # Plano da dupla TR2 e IN5a
 
 - **Estado:** proposta de 21/10/2026. Perguntas respondidas e "pode começar" do Marcelo em 21/10/2026.
+- **IN5a:** feita em 21/10/2026 na branch `claude/in5a-notas` (migration `20261222090000_in5a_inbox_notes`); o que ficou está em [contexto do Inbox, seção 4](contexto-inbox.md#4-notas-privadas-in5a).
 - **Data:** 21/10/2026
 - **Origem:** [prioridades](../../architecture/prioridades-agentes-e-inbox.md), P1: a dupla depois de GF1 e TR1. Pedido do Marcelo de 21/10/2026: alternar entre **Responder** e **Nota privada** na mesma caixa de mensagem, como na referência enviada.
 - **Base:** `main` em `29e4760` (PR #126: GF1 e TR1).

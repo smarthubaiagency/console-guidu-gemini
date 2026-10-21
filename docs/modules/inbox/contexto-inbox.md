@@ -1,4 +1,4 @@
-# Inbox — contexto, etiquetas e avisos (IN4b)
+# Inbox — contexto, etiquetas e avisos (IN4b) e notas privadas (IN5a)
 
 - **Data:** 17/10/2026
 - **Branch:** `claude/optimistic-lamport-rjehmm`. Migration `20261214090000_in4b_inbox_context.sql`.
@@ -39,3 +39,44 @@ O `e2e/inbox.spec.ts` (job `e2e-inbox` do CI) cobre o contato criado no CRM, a e
 4. **O Atendente vê o cartão do contato, mas não busca nem liga a outro contato:** isso exige ler o CRM, que a função Atendente não tem (AT1).
 5. **Sem renomear etiqueta na tela** nesta etapa: quem gerencia cria e apaga (o serviço já aceita renomear).
 6. **"Sem resposta" olha só o último dia**, para que a primeira execução não avise conversas antigas.
+
+## 4. Notas privadas (IN5a)
+
+- **Data:** 21/10/2026
+- **Branch:** `claude/in5a-notas`. Migration `20261222090000_in5a_inbox_notes.sql`.
+- **Base:** [plano da dupla TR2 e IN5a](plano-tr2-in5a.md), seção IN5a, com as respostas do Marcelo de 21/10/2026 (só o atendente escreve; o autor edita e apaga, com auditoria; menção a colega fica para a SB1).
+
+### 4.1 Como ficou
+
+| Peça | Onde | O que faz |
+| --- | --- | --- |
+| Tabela | `inbox_notes` (migration) | `id`, `organization_id`, `workspace_id`, `room_id`, autor (`user_id`), texto (1 a 4.000 caracteres), `created_at`, `edited_at`, `deleted_at`; índice por (`room_id`, `created_at`). Apagar a sala ou o workspace apaga as notas (cascata e limpeza da WS1 em `src/core/privacy/maintenance.ts`). A nota apagada fica sem texto (o banco exige `body = ''`). |
+| Regras no banco (RLS) | políticas de `inbox_notes` | Leem todos com nível no Inbox do workspace (Atendente e Dono ou Admin só leitura). Escreve quem tem o nível `reply`, em nome próprio e numa sala do workspace. Só o autor, ainda atendente, edita ou apaga uma nota viva; o web não tem `delete` (apagar é suave). |
+| Nomes dos autores | `private.inbox_note_authors()` | Os perfis não são legíveis por outros membros; a função devolve o nome de quem escreveu nota no workspace, só para quem tem nível no Inbox. Quem saiu do workspace aparece como "Ex-membro da equipe". |
+| Serviço | `src/modules/inbox/server/notes.ts` | `listNotes`, `createNote`, `updateNote`, `deleteNote`, com a mesma checagem das políticas e o nível de quem chama (pronto para virar rota de API). Auditoria `inbox.note.create`, `inbox.note.update` e `inbox.note.delete`: quem, quando e qual nota (com a sala em `target`), nunca o texto. Nada vai ao Synapse. |
+| Ações | `src/modules/inbox/notes-actions.ts` | As quatro ações do servidor, que resolvem de novo o workspace, o módulo e o nível. |
+| Caixa de mensagem | `composer-frame.tsx`, `composer.tsx` | Moldura `surface-inset` com `rounded-card` (card-in-card), abas **Responder \| Nota privada** (`Tabs` na variante `line`) e o ✦ à direita, desligado com "em breve" (recebe a prévia da tradução na TR3). Dentro, a caixa da IN4c. No modo nota, a moldura fica em `surface-note` e o campo em `surface-note-subtle` (âmbar, claro e escuro, em `globals.css`), o texto de ajuda é "Escreva uma nota para a equipe. O contato não vê." e o botão é **Adicionar nota**. Enter envia e Shift+Enter quebra a linha. Cada modo tem o seu rascunho; o da nota pertence à conversa. O modo volta para Responder ao trocar de conversa. A nota não depende do chat: funciona mesmo com o Matrix fora. |
+| Novo › Nova nota | `inbox-header.tsx` | Ligada: abre a conversa aberta no modo Nota privada, com o cursor no campo. Desligada sem conversa aberta ou para quem só lê. |
+| Na conversa | `conversation-view.tsx`, `note-bubble.tsx`, `client/timeline.ts` | As notas entram na linha do tempo pela data (`mergeTimeline`; no mesmo instante, a mensagem vem antes). Balão âmbar do lado da equipe, com cadeado, "Nota privada", o autor, a hora e "editada"; a apagada mostra "Nota apagada". O menu (Editar, Apagar) só aparece para o autor que ainda responde. **Editar é no próprio balão** (campo com Salvar e Cancelar; Enter salva, Esc cancela), para não misturar com o rascunho da caixa. Apagar pede confirmação no `SmartStatusBanner`. |
+| Painel de contexto | `notes-section.tsx` | Seção **Notas** no acordeon da aba Contato, fechada de início, com a contagem e a lista (a mais nova em cima); clicar rola a conversa até a nota e a destaca por um instante (no celular, fecha a gaveta antes). |
+| Atualização | `client/use-room-notes.ts` | A lista vem ao abrir a conversa, depois de cada ação e a cada 8 s (notas dos colegas). |
+| Quem só lê | — | Vê as notas e a seção, sem menu; a caixa continua bloqueada como antes. |
+
+### 4.2 Como testar
+
+```sh
+export LOCAL_DB_NAME=guidu_in5a E2E_PORT_OFFSET=200 REDIS_URL=redis://127.0.0.1:6390/2
+LOCAL_DB_NAME=guidu_in5a AS_MIGRATIONS=1 bash scripts/local/rebuild-db.sh   # inclui tests/core/inbox-notes-rls.sql
+pnpm vitest run src/modules/inbox/client/timeline.test.ts                   # mistura por data
+pnpm vitest run --project integration tests/core/inbox-notes.test.ts        # com as URLs do banco local
+```
+
+O `e2e/inbox.spec.ts` cobre: alternar para Nota privada, adicionar (Enter), ver o balão e a seção Notas, editar no balão, "Novo › Nova nota", apagar com confirmação, voltar para Responder com o rascunho guardado, o consumidor sem nenhuma nota, e o Dono só leitura vendo as notas sem poder escrever.
+
+### 4.3 Decisões adotadas por padrão
+
+1. **Editar no balão**, não carregando a nota na caixa: a caixa continua só para escrever, e o rascunho de cada modo fica intacto.
+2. **Nome do autor pela função `inbox_note_authors`**, não copiado na nota: troca de nome aparece em todas as notas; quem saiu do workspace vira "Ex-membro da equipe".
+3. **Rascunho da nota por conversa**: trocar de conversa limpa o rascunho da nota (uma nota escrita para uma conversa não vai parar em outra). O rascunho da resposta segue como na IN4c.
+4. **Nota apagada sem texto** no banco, não só escondida: o texto some de vez; a auditoria guarda quem e quando.
+5. **Tokens novos:** `surface-note` (moldura), `surface-note-subtle` (campo e balão), `note-border` e `note-text`, em claro e escuro.
