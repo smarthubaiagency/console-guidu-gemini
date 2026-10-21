@@ -68,9 +68,9 @@ export function Composer({
     >
       <InputGroup
         className={cn(
-          "rounded-card",
+          "rounded-card border-0",
           note
-            ? "border-note-border bg-surface-note-subtle dark:bg-surface-note-subtle"
+            ? "bg-surface-note-subtle dark:bg-surface-note-subtle"
             : "bg-surface-card dark:bg-surface-card",
         )}
       >

@@ -41,7 +41,7 @@ export function ComposerFrame({
   const t = useTranslations("inbox.notes");
   const note = mode === "note";
   return (
-    <div className="border-border border-t p-3">
+    <div className="p-3">
       <Tabs
         value={mode}
         onValueChange={(value) => onMode(value === "note" ? "note" : "reply")}
@@ -58,10 +58,15 @@ export function ComposerFrame({
             aria-label={t("tabsLabel")}
             data-testid="inbox-composer-tabs"
           >
-            <TabsTrigger value="reply">{t("reply")}</TabsTrigger>
+            <TabsTrigger value="reply" className="after:hidden">
+              {t("reply")}
+            </TabsTrigger>
             <TabsTrigger
               value="note"
-              className={cn(note && "text-note-text dark:text-note-text")}
+              className={cn(
+                "after:hidden",
+                note && "text-note-text dark:text-note-text",
+              )}
             >
               <Lock />
               {t("note")}
