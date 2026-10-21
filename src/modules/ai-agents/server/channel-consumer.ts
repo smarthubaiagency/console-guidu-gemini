@@ -124,10 +124,17 @@ export type AnswerTurnInput = Readonly<{
   voiceReply: boolean;
   /** The contact's language, when the hub knows it (TR1). */
   contactLocale?: ContactLocale | null;
+  /**
+   * The conversation was resolved since the agent last answered (GF2): a
+   * specialist that held it gives it back to the orchestrator.
+   */
+  reopened?: boolean;
 }>;
 
 export type AnswerTurnOutput = Readonly<{
   messages: string[];
+  /** A specialist wrote the answer, with the orchestrator's name (GF2). */
+  answeredBy: "attendant" | "seller" | null;
   handoff: Readonly<{ reason: string; summary: string }> | null;
   handoffNote: string | null;
   voice: SpokenAnswer | null;
@@ -149,6 +156,7 @@ export async function answerTurn(
   if (!text && media.length === 0) {
     return {
       messages: [],
+      answeredBy: null,
       handoff: null,
       handoffNote: null,
       voice: null,
@@ -200,7 +208,17 @@ export async function answerTurn(
       // the agent's again (pending in Chatwoot or in the Inbox).
       await tx.aiConversation.update({
         where: { id: conversation.id },
-        data: { status: "active" },
+        data: {
+          status: "active",
+          delegatedAgentId: null,
+          delegatedUntil: null,
+        },
+      });
+    } else if (input.reopened) {
+      // Resolved and back: the reception answers again (GF2).
+      await tx.aiConversation.updateMany({
+        where: { id: conversation.id, delegatedAgentId: { not: null } },
+        data: { delegatedAgentId: null, delegatedUntil: null },
       });
     }
     // Explicit times keep the order: context first, then the message.
@@ -285,6 +303,7 @@ export async function answerTurn(
     messages: answers
       .filter((a) => !Array.isArray(a.toolCalls) || a.toolCalls.length === 0)
       .map((a) => a.content),
+    answeredBy: state?.answeredBy ?? null,
     handoff,
     handoffNote: state?.handoff
       ? handoffNote(prepared.language, prepared.agentName, state.handoff)

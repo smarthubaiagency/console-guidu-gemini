@@ -1,0 +1,33 @@
+# Como ficou a GF2: orquestrador encaminhando ao atendente e ao vendedor
+
+- **Estado:** implementada no branch `claude/gf2-encaminhamento`, em revisão. A migration `20261224090000_gf2_guids_delegation.sql` só é aplicada no dev `console-guidu` depois do merge do Marcelo.
+- **Plano:** [plano-tr3-gf2.md](plano-tr3-gf2.md), seção GF2 (perguntas respondidas "todas como sugerido" em 21/10/2026).
+- **Desenho:** [agentes na Matrix](agentes-na-matrix-e-compra-agentica.md), seções 2.2, 4.2 e 7.1.
+
+## O que o contato e a equipe veem
+
+O orquestrador de fábrica ("Recepção" por padrão) responde sozinho o simples e encaminha o que é do atendente ou do vendedor. Quem escreve a resposta é o especialista, com a própria configuração (prompt, ferramentas, modelo e chave), mas a mensagem sai com o nome e a conta do orquestrador: o contato vê sempre um só nome. A equipe vê, no balão do Inbox e na conversa de teste em Agentes de IA, o selo "Respondido pelo Vendedor" (ou "Atendente"). Na sala o selo não existe como texto.
+
+## Por requisito
+
+1. **Ferramenta `delegate`.** Contrato Zod versionado em `src/core/ai/delegation.ts` (`DelegateContract`: `version: 1`, `to: "attendant" | "seller"`, `reason`, `summary`), validado no servidor a cada chamada em `src/core/ai/tools/catalog.ts`: o esquema que o modelo vê é frouxo de propósito, para que toda chamada passe pelo contrato estrito e conte como inválida quando falha. Só o orquestrador de fábrica recebe a ferramenta, qualquer que seja a lista de ferramentas do agente (`agentAllowlist` filtra pelo papel de fábrica). Nenhum argumento escolhe o agente: o destino é só o papel, e quem responde por ele é o atendente ou o vendedor do mesmo workspace que está ligado. Atendente e vendedor não têm `delegate` (um nível).
+2. **Quem responde.** `runGuidTurnWithState` (`src/core/ai/turn/guid.ts`) roda o turno do orquestrador, que termina na chamada de `delegate` (condição de parada própria); grava as linhas desse turno; carrega o especialista na mesma conversa (`loadTurn` com `handover`) e roda o turno dele com o `summary` e o motivo nas instruções, marcados como dado do contato, nunca instrução (texto nos três idiomas em `aiAgents.json`). A resposta segue pelo mesmo caminho de envio do orquestrador (`sendAsAgent` no Inbox, a saída do canal no Chatwoot). Como os dois caminhos (Inbox e Chatwoot) passam por `answerTurn`, o encaminhamento vale nos dois.
+3. **Especialista desligado.** `pickSpecialists` oferece só atendente e vendedor de fábrica ligados (`status = active` e chave que não falhou). Sem nenhum ligado, a ferramenta nem aparece e o orquestrador segue como antes. A ferramenta lista no texto quem está disponível.
+4. **Mensagens seguintes.** A conversa guarda o especialista (`ai_conversations.delegated_agent_id`) e o prazo (`delegated_until`, empurrado 24 h a cada mensagem do contato). Enquanto vale, `loadTurn` entrega o turno direto ao especialista, sem passar pelo orquestrador. Volta ao orquestrador quando o especialista chama `return_to_reception` (só ele e só quando recebeu a conversa de uma recepção), a conversa é resolvida no Inbox (`pickTurnInput` informa `resolved` e o turno passa `reopened`), volta da equipe (handoff) ou passam 24 h sem mensagem do contato. Um especialista que deixou de estar ligado devolve a conversa.
+5. **Orçamento.** No máximo um encaminhamento por mensagem do contato (a segunda chamada é recusada, também em chamadas paralelas). Duas chamadas inválidas de `delegate` passam a conversa à equipe. O tempo do turno inteiro (`TURN_LIMITS.delegationTotalMs`, 150 s, abaixo da expiração do job) é dividido: o especialista só roda se sobrar ao menos 5 s e recebe o que resta. Saída inválida do especialista tem uma nova tentativa; depois dela, ou em estouro de tempo, ou com o especialista indisponível, a conversa vira `handoff` para a equipe com o motivo (texto nos três idiomas) e a auditoria `ai_agents.guid.delegate` com resultado de erro e o código.
+6. **Registro.** `ai_messages.author_agent_id` e `via_delegation` em toda linha escrita por um turno (usuário não). Um gatilho confere que o autor é um GUIDS do workspace da conversa. A auditoria `ai_agents.guid.delegate` (e `ai_agents.guid.return`) leva execução, agente, destino e papéis, nunca o texto. O uso de IA é gravado por agente: o orquestrador e o especialista cada um com o próprio `agent_id`, na mesma execução.
+7. **Selo.** O evento que o núcleo envia à sala leva a marca `io.guidu.answered_by` (`attendant` ou `seller`) quando um especialista escreveu; a janela da equipe só a honra se o remetente é um usuário de GUIDS (`@_guidu_a_…`), de modo que um contato que escreva a mesma chave não ganha selo. A marca não é texto, o Application Service reduz o evento sem ela e os canais enviam só o corpo. Em Agentes de IA a conversa de teste mostra o selo pela coluna.
+8. **Orquestradores existentes.** A migration acrescenta `delegate` aos orquestradores criados na GF1 e `return_to_reception` aos atendentes e vendedores, atualiza os modelos de fábrica (prompt e ferramentas) e troca o prompt dos orquestradores que ainda estão com o de fábrica; prompt que o cliente escreveu nunca é trocado. "Restaurar prompt de fábrica" traz o novo. As ferramentas do motor não aparecem no editor de ferramentas e são preservadas quando ele salva.
+
+## Decisões de implementação
+
+- **Teste do orquestrador.** "Testar agente" também encaminha de verdade: o especialista responde com as ferramentas simuladas, e o teste do orquestrador não conta como teste do especialista.
+- **Arquivos do contato.** Quem lê imagens, áudios e documentos é o orquestrador; o especialista recebe as notas e transcrições que ficam no histórico, não as imagens e PDFs em si.
+- **Marca no evento em vez de tabela.** O plano pedia só a coluna de autoria nas mensagens do GUIDS; o selo no Inbox precisa saber, por evento, quem escreveu, e o texto da sala não vai para o banco (ADR 0023). A marca no evento do Matrix evita uma tabela nova.
+
+## Testes
+
+- Unitários: `src/core/ai/delegation.test.ts` (contrato, escolha dos especialistas, prazo), `src/core/ai/tools/delegation-tools.test.ts` (ferramentas por papel e chamadas de `delegate`), `src/modules/inbox/client/answered-by.test.ts` e `src/modules/inbox/server/guids-turn.test.ts` (marca e `resolved`).
+- Integração com o modelo falso: `tests/core/ai-guids-delegation.test.ts`.
+- SQL: `tests/core/ai-guids-delegation-rls.sql`, registrado em `.github/workflows/ci.yml`.
+- e2e: `e2e/inbox-guids.spec.ts` (o selo para a equipe, sem selo para a recepção nem para a marca forjada por um contato). O rig não tem modelo: o encaminhamento em si é provado pela integração, e o e2e envia a resposta do vendedor à sala como o núcleo a envia.

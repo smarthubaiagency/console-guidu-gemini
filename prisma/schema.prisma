@@ -1065,6 +1065,10 @@ model AiConversation {
   channelConversationId String?   @map("channel_conversation_id") @db.Uuid
   /// Inbox (IN6): the Matrix room this one answers.
   matrixRoomId          String?   @map("matrix_room_id")
+  /// GF2: the specialist that holds the conversation until it returns it,
+  /// the conversation is resolved or the contact is silent for 24 h.
+  delegatedAgentId      String?   @map("delegated_agent_id") @db.Uuid
+  delegatedUntil        DateTime? @map("delegated_until") @db.Timestamptz()
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   /// Kept by the trigger: the engine updates only the columns it is granted.
   updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
@@ -1086,6 +1090,9 @@ model AiMessage {
   inputTokens    Int?     @map("input_tokens")
   outputTokens   Int?     @map("output_tokens")
   errorCode      String?  @map("error_code")
+  /// GF2: the GUIDS that wrote it, and whether by a delegation.
+  authorAgentId  String?  @map("author_agent_id") @db.Uuid
+  viaDelegation  Boolean  @default(false) @map("via_delegation")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   @@index([conversationId, createdAt, id])

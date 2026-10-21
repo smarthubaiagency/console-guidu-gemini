@@ -251,6 +251,14 @@
         "label": "Proponer una acción",
         "desc": "Sugiere una acción que la persona confirma."
       },
+      "delegate": {
+        "label": "Pasar a un especialista",
+        "desc": "La recepción pasa la conversación al asistente o al vendedor, que responde con su nombre."
+      },
+      "return_to_reception": {
+        "label": "Devolver a la recepción",
+        "desc": "El asistente o el vendedor devuelve la conversación a la recepción."
+      },
       "refer_contact": {
         "label": "Recomendar socio",
         "desc": "Recomienda al contacto una de las recomendaciones registradas y avisa al responsable."

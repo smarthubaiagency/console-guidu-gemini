@@ -251,6 +251,14 @@
         "label": "Propose an action",
         "desc": "Suggests an action the person confirms."
       },
+      "delegate": {
+        "label": "Hand over to a specialist",
+        "desc": "The reception hands the conversation to the attendant or the seller, who answers with its name."
+      },
+      "return_to_reception": {
+        "label": "Return to the reception",
+        "desc": "The attendant or the seller gives the conversation back to the reception."
+      },
       "refer_contact": {
         "label": "Refer a partner",
         "desc": "Refers the contact to one of the registered referrals and tells the person in charge."

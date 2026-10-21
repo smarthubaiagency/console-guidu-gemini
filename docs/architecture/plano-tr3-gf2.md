@@ -60,6 +60,8 @@ Com a tradução ligada e o contato num idioma diferente do da equipe, o atenden
 
 ## GF2 — Orquestrador encaminhando ao atendente e ao vendedor
 
+*Como ficou: [gf2-encaminhamento.md](gf2-encaminhamento.md).*
+
 ### Contexto
 
 - A GF1 criou os quatro GUIDS de fábrica (`ai_agents.factory_role`: `ops`, `orchestrator`, `attendant`, `seller`), desligados até haver chave e teste. O orquestrador (nome padrão "Recepção") tem `think`, `handoff`, `create_contact` e `search_knowledge`; o encaminhamento ficou para esta etapa.

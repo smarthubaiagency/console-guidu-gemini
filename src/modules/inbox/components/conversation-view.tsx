@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import type { MatrixClient, Room } from "matrix-js-sdk";
 
 import { useStatus } from "@/components/feedback/status-context";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -381,6 +382,16 @@ function MessageItem({
       >
         <TranslatedBody body={message.body} translation={translation} />
       </span>
+      {message.answeredBy ? (
+        // GF2: only the team's window; the contact never sees it.
+        <Badge
+          variant="neutral"
+          data-testid="inbox-answered-by"
+          data-role={message.answeredBy}
+        >
+          {t(`answeredBy.${message.answeredBy}`)}
+        </Badge>
+      ) : null}
     </li>
   );
 }

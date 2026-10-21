@@ -392,6 +392,14 @@ export async function recentMessages(
   return out.reverse();
 }
 
+/**
+ * Key of the event content that says which specialist wrote the answer the
+ * contact reads under the orchestrator's name (GF2). It is a mark for the
+ * team's window, never text: the Application Service reduces the event
+ * without it and the channels send only the body.
+ */
+export const ANSWERED_BY_KEY = "io.guidu.answered_by";
+
 /** Sends a text as the agent's user; the transaction id makes it once. */
 export async function sendAsAgent(
   client: SynapseClient,
@@ -399,11 +407,19 @@ export async function sendAsAgent(
   agentMxid: string,
   txnId: string,
   body: string,
+  answeredBy: "attendant" | "seller" | null = null,
 ): Promise<string | null> {
   const { event_id } = await client.request<{ event_id?: string }>(
     "PUT",
     `/_matrix/client/v3/rooms/${enc(roomId)}/send/m.room.message/${enc(txnId)}`,
-    { body: { msgtype: "m.text", body }, asUser: agentMxid },
+    {
+      body: {
+        msgtype: "m.text",
+        body,
+        ...(answeredBy ? { [ANSWERED_BY_KEY]: answeredBy } : {}),
+      },
+      asUser: agentMxid,
+    },
   );
   return typeof event_id === "string" ? event_id : null;
 }

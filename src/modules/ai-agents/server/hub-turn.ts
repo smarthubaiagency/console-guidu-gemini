@@ -43,11 +43,18 @@ export type HubTurnInput = Readonly<{
   limits: Readonly<{ maxMessages: number; maxChars: number }>;
   /** The contact's language, known by the room (TR1); null: unknown. */
   contactLocale?: ContactLocale | null;
+  /** The conversation was resolved since the agent last answered (GF2). */
+  reopened?: boolean;
 }>;
 
 export type HubTurnPlan = Readonly<{
   /** The answer, in order; empty sends nothing. */
   messages: readonly string[];
+  /**
+   * The role of the specialist that wrote the answer under the
+   * orchestrator's name (GF2); the team sees "Respondido pelo …".
+   */
+  answeredBy?: "attendant" | "seller" | null;
   /** The agent hands the conversation to the team, with its summary. */
   handoff: Readonly<{ reason: string; summary: string }> | null;
 }>;
@@ -78,10 +85,15 @@ export async function runTurn(
       limits: input.limits,
       voiceReply: false,
       contactLocale: input.contactLocale ?? null,
+      reopened: input.reopened ?? false,
     },
     deps,
   );
-  return { messages: answer.messages, handoff: answer.handoff };
+  return {
+    messages: answer.messages,
+    answeredBy: answer.answeredBy,
+    handoff: answer.handoff,
+  };
 }
 
 export type HubGuidChoice = Readonly<{

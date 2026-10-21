@@ -16,6 +16,14 @@ import { agentItemFiles } from "@/modules/portfolio/server/services/catalog";
 import { AppError } from "@/shared/errors";
 
 import type { AgentConfig } from "../config/schema";
+import {
+  DELEGATE_TARGETS,
+  DelegateContract,
+  mayDelegate,
+  mayReturn,
+  MAX_INVALID_DELEGATIONS,
+  ReturnContract,
+} from "../delegation";
 import { scoreLead } from "../config/scoring";
 import {
   recordLeadNotice,
@@ -33,6 +41,7 @@ import {
   MAX_CONVERSATION_VARIABLES,
   MAX_OUTBOX,
   type TurnDb,
+  type TurnDelegation,
   type TurnState,
 } from "../turn/types";
 import {
@@ -73,7 +82,14 @@ export type ToolEnv = Readonly<{
   state: TurnState;
   /** A test of the agent: effects are described, not written. */
   simulate?: boolean;
+  /** Role of a factory GUIDS (GF1); the engine tools of GF2 follow it. */
+  factoryRole?: string | null;
+  /** What the turn knows of the delegation, by the role (GF2). */
+  delegation?: TurnDelegation;
 }>;
+
+/** What decides the engine tools of a turn (GF2). */
+export type ToolScope = Pick<ToolEnv, "factoryRole" | "delegation">;
 
 /** Reads of the workspace the Assistant may use (MCP tools of risk read). */
 export const WORKSPACE_READ_TOOLS = [
@@ -159,6 +175,22 @@ export function referralMessage(
     referral: referral.name,
     phone: referral.phone ?? "-",
   });
+}
+
+/** The conversation goes to the team (the `handoff` tool and its safeguards). */
+async function handOver(
+  env: ToolEnv,
+  reason: string,
+  summary: string,
+): Promise<void> {
+  await env.db.transaction((tx) =>
+    tx.aiConversation.updateMany({
+      where: { id: env.conversationId, status: "active" },
+      data: { status: "handoff" },
+    }),
+  );
+  env.state.status = "handoff";
+  env.state.handoff = { reason, summary };
 }
 
 function definitions(env: ToolEnv): Record<AgentTool, Definition> {
@@ -352,6 +384,12 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
       }),
       run: async (input) => {
         requireWorkspace(env);
+        if (env.state.delegation) {
+          throw restricted(
+            "already_delegated",
+            "A conversa já foi encaminhada a um especialista neste turno.",
+          );
+        }
         if (env.simulate) {
           // The test goes on: the person keeps testing after a handoff.
           return {
@@ -360,18 +398,105 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
             simulated: true,
           };
         }
-        await env.db.transaction((tx) =>
-          tx.aiConversation.updateMany({
-            where: { id: conversationId, status: "active" },
-            data: { status: "handoff" },
-          }),
+        await handOver(
+          env,
+          String(input.reason).trim(),
+          String(input.summary).trim(),
         );
-        env.state.status = "handoff";
-        env.state.handoff = {
-          reason: String(input.reason).trim(),
-          summary: String(input.summary).trim(),
-        };
         return { handed_over: true };
+      },
+    },
+
+    delegate: {
+      description:
+        "Hand the conversation to a specialist of the house, who answers the contact with your name. " +
+        `Available now: ${Object.keys(env.delegation?.specialists ?? {}).join(", ") || "none"}. ` +
+        "Send version 1, to (the role), the reason and a summary for the specialist: who the contact is, what they want and what was already said. " +
+        "Only one hand-over per message of the contact; the specialist writes the answer, so do not answer the same request yourself.",
+      // Loose here, strict in run: every call is validated by the server.
+      input: z.object({
+        version: z.number(),
+        to: z.string().max(40),
+        reason: z.string().max(4000),
+        summary: z.string().max(8000),
+      }),
+      run: async (input) => {
+        requireWorkspace(env);
+        const parsed = DelegateContract.safeParse(input);
+        if (!parsed.success) {
+          const invalid = (env.state.invalidDelegations ?? 0) + 1;
+          env.state.invalidDelegations = invalid;
+          if (invalid >= MAX_INVALID_DELEGATIONS && !env.simulate) {
+            await handOver(
+              env,
+              texts.delegation.invalidReason,
+              texts.delegation.invalidSummary,
+            );
+            return { handed_over: true };
+          }
+          throw restricted(
+            "invalid_contract",
+            `Contrato inválido: use version 1, to (${DELEGATE_TARGETS.join(" ou ")}), reason e summary.`,
+          );
+        }
+        if (env.state.status === "handoff") {
+          throw restricted(
+            "handed_over",
+            "A conversa já foi passada para a equipe.",
+          );
+        }
+        if (env.state.delegation) {
+          throw restricted(
+            "already_delegated",
+            "Só um encaminhamento por mensagem do contato.",
+          );
+        }
+        const target = env.delegation?.specialists[parsed.data.to];
+        if (!target) {
+          throw restricted(
+            "specialist_off",
+            "Esse especialista não está disponível agora.",
+          );
+        }
+        env.state.delegation = {
+          to: parsed.data.to,
+          agentId: target.id,
+          reason: parsed.data.reason,
+          summary: parsed.data.summary,
+        };
+        return {
+          delegated: true,
+          to: parsed.data.to,
+          ...(env.simulate ? { simulated: true } : {}),
+        };
+      },
+    },
+
+    return_to_reception: {
+      description:
+        "Give the conversation back to the reception when the request is no longer yours (for example, the contact now needs something of the other specialist). " +
+        "Send version 1 and the reason. Your answer to this message still goes to the contact; the next message goes to the reception.",
+      input: z.object({ version: z.number(), reason: z.string().max(4000) }),
+      run: async (input) => {
+        requireWorkspace(env);
+        const parsed = ReturnContract.safeParse(input);
+        if (!parsed.success) {
+          throw restricted(
+            "invalid_contract",
+            "Contrato inválido: use version 1 e reason.",
+          );
+        }
+        if (!env.delegation?.returnTo) {
+          throw restricted(
+            "not_delegated",
+            "Esta conversa não veio da recepção.",
+          );
+        }
+        env.state.returned = { reason: parsed.data.reason };
+        return {
+          returned: true,
+          ...(env.simulate ? { simulated: true } : {}),
+        };
       },
     },
 
@@ -612,24 +737,45 @@ function definitions(env: ToolEnv): Record<AgentTool, Definition> {
 export function agentAllowlist(
   kind: AgentKind,
   config: AgentConfig,
+  scope: ToolScope = {},
 ): readonly string[] {
-  const allowlist = config.integration.tools ?? [];
-  if (
+  const listed = config.integration.tools ?? [];
+  const allowlist =
     kind === "guid" &&
     config.rules.out_of_scope_action === "escalate_team" &&
-    !allowlist.includes("handoff")
-  ) {
-    return [...allowlist, "handoff"];
-  }
-  return allowlist;
+    !listed.includes("handoff")
+      ? [...listed, "handoff"]
+      : listed;
+  // GF2: the engine tools follow the factory role, whatever the list says.
+  // `delegate` only for the orchestrator, and only with a specialist on;
+  // `return_to_reception` only for a specialist that holds a conversation
+  // the orchestrator handed over.
+  return allowlist.filter((tool) => {
+    if (tool === "delegate") {
+      return (
+        kind === "guid" &&
+        mayDelegate(scope.factoryRole ?? null) &&
+        Object.keys(scope.delegation?.specialists ?? {}).length > 0
+      );
+    }
+    if (tool === "return_to_reception") {
+      return (
+        kind === "guid" &&
+        mayReturn(scope.factoryRole ?? null) &&
+        !!scope.delegation?.returnTo
+      );
+    }
+    return true;
+  });
 }
 
 /** The tools offered to the model: the agent's allowlist for its kind. */
 export function offeredTools(
   kind: AgentKind,
   config: AgentConfig,
+  scope: ToolScope = {},
 ): AgentTool[] {
-  const allowlist = agentAllowlist(kind, config);
+  const allowlist = agentAllowlist(kind, config, scope);
   return AGENT_TOOL_IDS.filter(
     (id) => allowlist.includes(id) && toolAllowedFor(id, kind),
   );
@@ -637,10 +783,10 @@ export function offeredTools(
 
 export function buildTools(env: ToolEnv): ToolSet {
   const texts = promptTexts(env.locale);
-  const allowlist = agentAllowlist(env.kind, env.config);
+  const allowlist = agentAllowlist(env.kind, env.config, env);
   const all = definitions(env);
   const tools: ToolSet = {};
-  for (const id of offeredTools(env.kind, env.config)) {
+  for (const id of offeredTools(env.kind, env.config, env)) {
     const definition = all[id];
     tools[id] = tool({
       description: definition.description,
@@ -679,7 +825,10 @@ export function buildTools(env: ToolEnv): ToolSet {
  * effect): recorded as a denial of the guard.
  */
 export function recordRefusedCall(
-  env: Pick<ToolEnv, "kind" | "config" | "state">,
+  env: Pick<
+    ToolEnv,
+    "kind" | "config" | "state" | "factoryRole" | "delegation"
+  >,
   toolName: string,
   toolCallId: string,
   input: unknown,
@@ -687,7 +836,7 @@ export function recordRefusedCall(
   const decision = decideTool(
     toolName,
     env.kind,
-    agentAllowlist(env.kind, env.config),
+    agentAllowlist(env.kind, env.config, env),
   );
   env.state.records.push(
     callRecord(
