@@ -686,6 +686,7 @@ describeDatabase("IN6: the GUIDS in the room", requiredVars, () => {
     );
     expect(plan).toEqual({
       messages: ["Olá!", "Como posso ajudar?"],
+      answeredBy: null,
       handoff: null,
     });
     expect(

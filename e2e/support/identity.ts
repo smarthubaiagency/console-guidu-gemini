@@ -226,6 +226,18 @@ export async function seedCrmContact(
   return (await response.json()) as { id: string };
 }
 
+/** Records who wrote an answer of the GUIDS in a room (GF2). */
+export async function seedGuidsAnswer(
+  request: APIRequestContext,
+  params: { roomId: string; eventId: string; role: "attendant" | "seller" },
+): Promise<void> {
+  const response = await request.post(
+    `${AUTH_BASE_URL}/__control/seed-guids-answer`,
+    { data: params },
+  );
+  expect(response.status()).toBe(200);
+}
+
 /** A managed company with a pending proposal for the partner (H4). */
 export async function seedProposal(
   request: APIRequestContext,

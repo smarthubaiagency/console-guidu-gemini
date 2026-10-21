@@ -34,6 +34,7 @@ import {
 } from "@/core/ai/config/schema";
 import {
   AGENT_TOOL_IDS,
+  isSystemTool,
   type AgentKind,
   toolAllowedFor,
 } from "@/core/ai/config/tools";
@@ -693,8 +694,13 @@ export function AgentConfigEditor({
     const selected = new Set(
       (get("integration", "tools") as string[] | undefined) ?? [],
     );
-    const available = AGENT_TOOL_IDS.filter((tool) =>
-      toolAllowedFor(tool, agentKind),
+    // The engine's own tools (GF2) are never picked here: the factory
+    // GUIDS keep them, and the engine offers them by the factory role.
+    const available = AGENT_TOOL_IDS.filter(
+      (tool) => toolAllowedFor(tool, agentKind) && !isSystemTool(tool),
+    );
+    const kept = AGENT_TOOL_IDS.filter(
+      (tool) => isSystemTool(tool) && selected.has(tool),
     );
     return (
       <fieldset className="space-y-2" data-field="integration.tools">
@@ -707,11 +713,10 @@ export function AgentConfigEditor({
                 const next = new Set(selected);
                 if (checked === true) next.add(tool);
                 else next.delete(tool);
-                set(
-                  "integration",
-                  "tools",
-                  available.filter((id) => next.has(id)),
-                );
+                set("integration", "tools", [
+                  ...available.filter((id) => next.has(id)),
+                  ...kept,
+                ]);
               }}
             />
             <span>

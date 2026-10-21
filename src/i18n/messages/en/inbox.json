@@ -7,6 +7,7 @@
   "searchPlaceholder": "Search by name",
   "unknownContact": "Unnamed contact",
   "you": "You",
+  "answeredBy": { "attendant": "Answered by the Attendant", "seller": "Answered by the Seller" },
   "noMessages": "No messages yet",
   "assignedTo": "With {name}",
   "assigned": "With an attendant",

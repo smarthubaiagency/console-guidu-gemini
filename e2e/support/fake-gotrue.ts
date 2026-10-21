@@ -122,6 +122,12 @@ export type FakeGoTrueOptions = Readonly<{
     workspaceSlug: string;
     name: string;
   }) => Promise<{ id: string }>;
+  /** Records who wrote an answer of the GUIDS in a room (GF2). */
+  onSeedGuidsAnswer?: (params: {
+    roomId: string;
+    eventId: string;
+    role: string;
+  }) => Promise<void>;
   /** Seeds a managed company with a pending proposal (H4). */
   onSeedProposal?: (params: {
     workspaceSlug: string;
@@ -410,6 +416,18 @@ export async function startFakeGoTrue(
         organizationId: asString(body.organizationId) ?? undefined,
       });
       return json(response, 200, seeded);
+    }
+
+    if (path === "/__control/seed-guids-answer" && method === "POST") {
+      const body = await readBody(request);
+      const roomId = asString(body.roomId);
+      const eventId = asString(body.eventId);
+      const role = asString(body.role);
+      if (!roomId || !eventId || !role || !options.onSeedGuidsAnswer) {
+        return json(response, 400, { msg: "invalid parameters" });
+      }
+      await options.onSeedGuidsAnswer({ roomId, eventId, role });
+      return json(response, 200, {});
     }
 
     if (path === "/__control/seed-crm-contact" && method === "POST") {

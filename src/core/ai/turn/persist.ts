@@ -9,6 +9,7 @@ import type {
   RequestContext,
 } from "@/lib/prisma/with-context";
 
+import { delegationUntil } from "../delegation";
 import type { ToolCallRecord } from "../tools/guard";
 
 /**
@@ -49,6 +50,8 @@ export type TurnRecord = Readonly<{
   usage: Readonly<{ inputTokens: number; outputTokens: number }>;
   records: readonly ToolCallRecord[];
   owner: UsageOwner;
+  /** A specialist wrote it while the contact talks to the reception (GF2). */
+  viaDelegation?: boolean;
   audit: Readonly<{ ctx: RequestContext; origin: AuditOrigin }>;
 }>;
 
@@ -66,6 +69,11 @@ function rows(record: TurnRecord, start: Date) {
   const base = {
     conversationId: record.conversationId,
     executionId: record.executionId,
+    // GF2: who wrote the row, and whether by a delegation. Only the GUIDS
+    // turns say it (the Assistant's agent is not a GUIDS of a workspace).
+    ...(record.viaDelegation === undefined
+      ? {}
+      : { authorAgentId: record.agentId, viaDelegation: record.viaDelegation }),
   };
   for (const step of record.steps) {
     const calls = step.content.filter((p) => p.type === "tool-call");
@@ -264,6 +272,7 @@ export async function persistTurnError(
     model?: string | null;
     /** Whose key failed: with provider and model, the call goes to the usage. */
     owner?: UsageOwner;
+    viaDelegation?: boolean;
     records?: readonly ToolCallRecord[];
     audit: Readonly<{ ctx: RequestContext; origin: AuditOrigin }>;
   }>,
@@ -285,6 +294,9 @@ export async function persistTurnError(
       errorCode: args.errorCode,
       provider: args.provider ?? null,
       model: args.model ?? null,
+      ...(args.viaDelegation === undefined
+        ? {}
+        : { authorAgentId: args.agentId, viaDelegation: args.viaDelegation }),
     },
     select: { id: true },
   });
@@ -357,6 +369,7 @@ export async function persistAutoReply(
     content: string;
     /** The turn's time: the next turn compares it with the hours. */
     at: Date;
+    viaDelegation?: boolean;
     audit: Readonly<{ ctx: RequestContext; origin: AuditOrigin }>;
   }>,
 ): Promise<void> {
@@ -368,6 +381,8 @@ export async function persistAutoReply(
       role: "assistant",
       content: args.content,
       createdAt: now,
+      authorAgentId: args.agentId,
+      viaDelegation: args.viaDelegation ?? false,
     },
     select: { id: true },
   });
@@ -385,6 +400,91 @@ export async function persistAutoReply(
       executionId: args.executionId,
       agentId: args.agentId,
       autoReply: "after_hours",
+    },
+  });
+}
+
+type DelegationTurn = Readonly<{
+  conversationId: string;
+  /** The orchestrator, which asked for the delegation. */
+  agentId: string;
+  executionId: string;
+  audit: Readonly<{ ctx: RequestContext; origin: AuditOrigin }>;
+}>;
+
+/**
+ * The orchestrator handed the conversation to a specialist (GF2): the
+ * conversation is the specialist's until it returns it, the conversation is
+ * resolved or the contact is silent for 24 h, and the audit says who handed
+ * it to whom, never what was said.
+ */
+export async function persistDelegation(
+  tx: ContextTransaction,
+  turn: DelegationTurn,
+  to: Readonly<{ role: string; agentId: string }>,
+  now: Date,
+): Promise<void> {
+  await tx.aiConversation.updateMany({
+    where: { id: turn.conversationId },
+    data: {
+      delegatedAgentId: to.agentId,
+      delegatedUntil: delegationUntil(now),
+    },
+  });
+  await recordAudit(tx, turn.audit.ctx, {
+    action: "ai_agents.guid.delegate",
+    resourceType: "ai_conversation",
+    resourceId: turn.conversationId,
+    result: "success",
+    origin: turn.audit.origin,
+    metadata: {
+      executionId: turn.executionId,
+      agentId: turn.agentId,
+      target: to.agentId,
+      from: "orchestrator",
+      to: to.role,
+    },
+  });
+}
+
+/**
+ * The delegation ended (GF2): the specialist returned the conversation, or
+ * the conversation went to the team. `reason` is a code, never text.
+ */
+export async function persistDelegationEnd(
+  tx: ContextTransaction,
+  turn: DelegationTurn,
+  end: Readonly<{
+    action: string;
+    role: string;
+    code?: string;
+    /** A test conversation: the hand-over is told, not written (as the simulated `handoff`). */
+    keepStatus?: boolean;
+  }>,
+): Promise<void> {
+  await tx.aiConversation.updateMany({
+    where: { id: turn.conversationId },
+    data: { delegatedAgentId: null, delegatedUntil: null },
+  });
+  // A failed delegation goes to the team, as the `handoff` tool does.
+  if (end.code && !end.keepStatus) {
+    await tx.aiConversation.updateMany({
+      where: { id: turn.conversationId, status: "active" },
+      data: { status: "handoff" },
+    });
+  }
+  await recordAudit(tx, turn.audit.ctx, {
+    action: end.action,
+    resourceType: "ai_conversation",
+    resourceId: turn.conversationId,
+    result: end.code ? "error" : "success",
+    origin: turn.audit.origin,
+    metadata: {
+      executionId: turn.executionId,
+      agentId: turn.agentId,
+      from: end.role,
+      to: end.action === "ai_agents.guid.return" ? "orchestrator" : "team",
+      ...(end.code ? { reason: end.code } : {}),
     },
   });
 }

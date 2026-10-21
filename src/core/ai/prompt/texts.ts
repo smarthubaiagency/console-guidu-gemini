@@ -41,6 +41,19 @@ export type PromptTexts = Readonly<{
   teamMessage: string;
   /** The private note of a handoff to the team (A5c). */
   handoffNote: Readonly<{ title: string; reason: string }>;
+  /** Delegation between the factory GUIDS (GF2). */
+  delegation: Readonly<{
+    /** What the reception passed on, in the specialist's instructions. */
+    note: string;
+    /** The hand-over to the team after two invalid delegations. */
+    invalidReason: string;
+    invalidSummary: string;
+    /** The hand-over to the team when the specialist did not answer. */
+    failedReason: string;
+    failedSummary: string;
+    roles: Readonly<Record<string, string>>;
+    causes: Readonly<Record<string, string>>;
+  }>;
   /** The local time and whether the business is open (A6c). */
   hoursNow: Readonly<{
     now: string;

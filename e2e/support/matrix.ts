@@ -107,12 +107,17 @@ export class MatrixConsumers {
     );
   }
 
-  async send(consumer: Consumer, roomId: string, body: string): Promise<void> {
+  async send(
+    consumer: Consumer,
+    roomId: string,
+    body: string,
+    extra: Record<string, unknown> = {},
+  ): Promise<void> {
     await this.call(
       "PUT",
-      `/_matrix/client/v3/rooms/${enc(roomId)}/send/m.room.message/e2e${Date.now()}`,
+      `/_matrix/client/v3/rooms/${enc(roomId)}/send/m.room.message/e2e${Date.now()}${Math.random().toString(36).slice(2, 6)}`,
       consumer.token,
-      { msgtype: "m.text", body },
+      { msgtype: "m.text", body, ...extra },
     );
   }
 
@@ -139,4 +144,60 @@ export class MatrixConsumers {
       .map((event) => String(event.content?.body ?? ""))
       .reverse();
   }
+}
+
+/** Members of a room, by the admin API (the test rig's own token). */
+export async function roomMembers(
+  env: Record<string, string>,
+  roomId: string,
+): Promise<string[]> {
+  const response = await fetch(
+    `${env.MATRIX_HOMESERVER_URL}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/members`,
+    { headers: { authorization: `Bearer ${env.MATRIX_AS_TOKEN}` } },
+  );
+  if (!response.ok) throw new Error(`matrix ${response.status} on members`);
+  const json = (await response.json()) as { members?: string[] };
+  return json.members ?? [];
+}
+
+/**
+ * Sends a text event as a user of the Application Service namespace (what
+ * the core does for the GUIDS); returns the event id.
+ */
+export async function sendAsNamespaceUser(
+  env: Record<string, string>,
+  roomId: string,
+  mxid: string,
+  content: Record<string, unknown>,
+): Promise<string> {
+  const txn = `e2e-as-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const response = await fetch(
+    `${env.MATRIX_HOMESERVER_URL}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${txn}?user_id=${encodeURIComponent(mxid)}`,
+    {
+      method: "PUT",
+      headers: {
+        authorization: `Bearer ${env.MATRIX_AS_TOKEN}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ msgtype: "m.text", ...content }),
+    },
+  );
+  if (!response.ok) throw new Error(`matrix ${response.status} on send as`);
+  return ((await response.json()) as { event_id: string }).event_id;
+}
+
+/** The raw content of an event, as a member of the room reads it. */
+export async function eventContent(
+  env: Record<string, string>,
+  consumer: Consumer,
+  roomId: string,
+  eventId: string,
+): Promise<Record<string, unknown>> {
+  const response = await fetch(
+    `${env.MATRIX_HOMESERVER_URL}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/event/${encodeURIComponent(eventId)}`,
+    { headers: { authorization: `Bearer ${consumer.token}` } },
+  );
+  if (!response.ok) throw new Error(`matrix ${response.status} on event`);
+  return ((await response.json()) as { content: Record<string, unknown> })
+    .content;
 }

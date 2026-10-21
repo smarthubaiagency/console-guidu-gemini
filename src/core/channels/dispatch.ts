@@ -93,6 +93,8 @@ type Claimed = Readonly<{
   events: InboundEvent[];
   eventIds: string[];
   context: InboundEvent[];
+  /** The conversation was resolved since the last answer (GF2). */
+  resolved: boolean;
   config: ChatwootConfig;
   secrets: ChatwootSecrets;
 }>;
@@ -146,6 +148,24 @@ async function claim(
       },
       orderBy: [{ receivedAt: "desc" }, { id: "desc" }],
       take: MAX_CONTEXT_EVENTS * 2,
+    });
+    // GF2: a resolution since the last answer gives back a conversation
+    // that a specialist of the GUIDS held.
+    const statusEvents = await tx.channelInboundEvent.findMany({
+      where: {
+        conversationId: conversation.id,
+        kind: "conversation_status",
+        ...(lastDispatched
+          ? { receivedAt: { gt: lastDispatched.receivedAt } }
+          : {}),
+      },
+      orderBy: [{ receivedAt: "desc" }, { id: "desc" }],
+      take: MAX_CONTEXT_EVENTS,
+      select: { payload: true },
+    });
+    const resolved = statusEvents.some((row) => {
+      const parsed = InboundEvent.safeParse(row.payload);
+      return parsed.success && parsed.data.conversation.status === "resolved";
     });
     const triggers: { id: string; event: InboundEvent }[] = [];
     for (const row of events) {
@@ -224,6 +244,7 @@ async function claim(
         events: triggers.map((t) => t.event),
         eventIds: dispatch,
         context,
+        resolved,
         config: config.data,
         secrets: secrets.data,
       },
@@ -377,6 +398,7 @@ export async function runChannelDispatch(
       conversation: claimed.conversation,
       events: claimed.events,
       context: claimed.context,
+      resolved: claimed.resolved,
       loadAttachment: (attachment, maxBytes) =>
         providerDownload(attachment.url, claimed.config.base_url, {
           ...http,

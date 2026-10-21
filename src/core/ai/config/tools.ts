@@ -22,6 +22,11 @@ export const AGENT_TOOLS = {
   send_portfolio_media: ["guid"],
   // A referral of the business to the contact (A6b).
   refer_contact: ["guid"],
+  // GF2: the factory orchestrator hands the conversation to the attendant
+  // or the seller; they hand it back. Never picked in an editor: the engine
+  // offers them by the factory role (`../delegation.ts`).
+  delegate: ["guid"],
+  return_to_reception: ["guid"],
   // Reading of the workspace with the permissions of who asks (MCP tools).
   workspace_read: ["assistant"],
   propose_operation: ["assistant"],
@@ -36,4 +41,17 @@ export const AGENT_TOOL_IDS = Object.keys(AGENT_TOOLS) as [
 
 export function toolAllowedFor(tool: AgentTool, kind: AgentKind): boolean {
   return (AGENT_TOOLS[tool] as readonly AgentKind[]).includes(kind);
+}
+
+/**
+ * Tools of the engine itself (GF2): kept in the lists of the factory GUIDS
+ * and never offered in an editor.
+ */
+export const SYSTEM_TOOLS: readonly AgentTool[] = [
+  "delegate",
+  "return_to_reception",
+];
+
+export function isSystemTool(tool: AgentTool): boolean {
+  return SYSTEM_TOOLS.includes(tool);
 }

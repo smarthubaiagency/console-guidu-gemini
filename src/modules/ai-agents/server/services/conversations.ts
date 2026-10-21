@@ -148,6 +148,8 @@ export type GuidTestMessageDto = Readonly<{
   errorCode: string | null;
   /** The tools the agent called before this message. */
   tools: readonly GuidTestToolCall[];
+  /** A specialist wrote it under the orchestrator's name (GF2). */
+  answeredBy: "attendant" | "seller" | null;
   createdAt: string;
 }>;
 
@@ -157,6 +159,15 @@ export type GuidTestConversationDto = Readonly<{
   /** The last message of the person still waits for the agent. */
   waiting: boolean;
 }>;
+
+function answeredByRole(
+  via: boolean,
+  factoryRole: string | null | undefined,
+): "attendant" | "seller" | null {
+  return via && (factoryRole === "attendant" || factoryRole === "seller")
+    ? factoryRole
+    : null;
+}
 
 function parseOutput(content: string): unknown {
   try {
@@ -210,9 +221,28 @@ export async function getGuidTestConversation(
       toolCalls: true,
       toolCallId: true,
       errorCode: true,
+      authorAgentId: true,
+      viaDelegation: true,
       createdAt: true,
     },
   });
+  // GF2: the role of the specialists that wrote answers by a delegation.
+  const authorIds = [
+    ...new Set(
+      rows.flatMap((row) =>
+        row.viaDelegation && row.authorAgentId ? [row.authorAgentId] : [],
+      ),
+    ),
+  ];
+  const authors = new Map(
+    (authorIds.length > 0
+      ? await tx.aiAgent.findMany({
+          where: { id: { in: authorIds }, workspaceId: ctx.workspaceId },
+          select: { id: true, factoryRole: true },
+        })
+      : []
+    ).map((agent) => [agent.id, agent.factoryRole]),
+  );
   const outputs = new Map(
     rows
       .filter((row) => row.role === "tool" && row.toolCallId)
@@ -242,6 +272,10 @@ export async function getGuidTestConversation(
       content: row.content,
       errorCode: row.errorCode,
       tools: row.role === "assistant" ? pending : [],
+      answeredBy: answeredByRole(
+        row.viaDelegation,
+        authors.get(row.authorAgentId ?? ""),
+      ),
       createdAt: row.createdAt.toISOString(),
     });
     if (row.role === "assistant") pending = [];

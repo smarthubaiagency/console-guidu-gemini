@@ -182,6 +182,11 @@ export type TurnInput = Readonly<{
   /** The consumer's new messages, oldest first. */
   fresh: readonly RoomMessage[];
   context: readonly TurnContextLine[];
+  /**
+   * The conversation was resolved since the GUIDS last answered (GF2): a
+   * specialist that held it gives it back to the orchestrator.
+   */
+  resolved: boolean;
 }>;
 
 /**
@@ -203,6 +208,7 @@ export function pickTurnInput(
   }>,
 ): TurnInput {
   let status: string = "pending";
+  let resolved = false;
   const said: {
     message: RoomMessage;
     side: ReturnType<typeof messageSide>;
@@ -211,6 +217,12 @@ export function pickTurnInput(
   for (const m of messages) {
     if (m.status) {
       status = m.status;
+      if (
+        m.status === "resolved" &&
+        (input.lastAnsweredTs === null || m.ts > input.lastAnsweredTs)
+      ) {
+        resolved = true;
+      }
       continue;
     }
     if (
@@ -247,7 +259,7 @@ export function pickTurnInput(
       text: s.message.body,
     }))
     .slice(-MAX_CONTEXT);
-  return { fresh, context };
+  return { fresh, context, resolved };
 }
 
 function synapse(deps: GuidsTurnDeps): SynapseClient {
@@ -313,6 +325,7 @@ export async function runGuidsTurn(
           maxChars: loaded.service.max_chars,
         },
         contactLocale: loaded.contactLocale,
+        reopened: input.resolved,
       },
       deps.turnDeps,
     );
@@ -338,13 +351,30 @@ export async function runGuidsTurn(
         await pause(loaded.service.interval_ms);
       }
     }
-    await sendAsAgent(
+    const eventId = await sendAsAgent(
       client,
       roomId,
       agentMxid,
       `guids-${session.jobRunId}-${index}`,
       part,
     );
+    // GF2: the room has the body only; who wrote it, for the team's window,
+    // is kept in the database by event.
+    if (plan.answeredBy && eventId) {
+      const role = plan.answeredBy;
+      await session.transaction((tx) =>
+        tx.inboxGuidsAnswer.createMany({
+          data: {
+            roomId,
+            eventId,
+            workspaceId: ctx.workspaceId,
+            organizationId: ctx.organizationId,
+            role,
+          },
+          skipDuplicates: true,
+        }),
+      );
+    }
     sent += 1;
   }
   await setAgentTyping(client, roomId, agentMxid, false);

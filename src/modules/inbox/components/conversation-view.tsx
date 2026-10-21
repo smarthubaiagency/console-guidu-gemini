@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import type { MatrixClient, Room } from "matrix-js-sdk";
 
 import { useStatus } from "@/components/feedback/status-context";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -32,6 +33,7 @@ import type { ConversationSummary } from "../views";
 import type { ComposerMode } from "./composer";
 import { ComposerFrame } from "./composer-frame";
 import { ContactLocaleChip } from "./contact-locale";
+import { useAnsweredBy } from "./use-answered-by";
 import {
   TranslatedBody,
   TranslationNoticeBar,
@@ -122,6 +124,8 @@ export function ConversationView({
     roomId,
     messageIds,
   );
+  // GF2: who wrote the answers of the GUIDS (the team's window only).
+  const answeredBy = useAnsweredBy(workspaceSlug, roomId, messages);
   const items = useMemo(
     () => mergeTimeline(messages, notes),
     [messages, notes],
@@ -316,6 +320,7 @@ export function ConversationView({
                   key={item.key}
                   message={item.message}
                   translation={translations.byEvent.get(item.message.id)}
+                  answeredBy={answeredBy.get(item.message.id)}
                 />
               ),
             )}
@@ -352,9 +357,11 @@ export function ConversationView({
 function MessageItem({
   message,
   translation,
+  answeredBy,
 }: Readonly<{
   message: TimelineMessage;
   translation: MessageTranslationDto | undefined;
+  answeredBy: "attendant" | "seller" | undefined;
 }>) {
   const t = useTranslations("inbox");
   const format = useFormatter();
@@ -381,6 +388,16 @@ function MessageItem({
       >
         <TranslatedBody body={message.body} translation={translation} />
       </span>
+      {answeredBy ? (
+        // GF2: only the team's window; the contact never sees it.
+        <Badge
+          variant="neutral"
+          data-testid="inbox-answered-by"
+          data-role={answeredBy}
+        >
+          {t(`answeredBy.${answeredBy}`)}
+        </Badge>
+      ) : null}
     </li>
   );
 }

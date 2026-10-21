@@ -65,7 +65,12 @@ const said = (event_id: string, sender: string, ts: number, body: string) => ({
  * (newest first, as `dir=b`) and what the agent sends.
  */
 function fakeSynapse(input: { status: string[]; events: Event[] }) {
-  const sent: { txn: string; body: string; user: string | null }[] = [];
+  const sent: {
+    txn: string;
+    body: string;
+    user: string | null;
+    content: Record<string, unknown>;
+  }[] = [];
   const states: unknown[] = [];
   const typing: boolean[] = [];
   let reads = 0;
@@ -102,6 +107,7 @@ function fakeSynapse(input: { status: string[]; events: Event[] }) {
         txn: send[1]!,
         body: (body as { body: string }).body,
         user: url.searchParams.get("user_id"),
+        content: body as Record<string, unknown>,
       });
       return reply({ event_id: `$sent${sent.length}` });
     }
@@ -126,6 +132,7 @@ function fakeSession(cursor: { ts: number; id: string } | null = null) {
       ? { lastAnsweredTs: BigInt(cursor.ts), lastAnsweredEventId: cursor.id }
       : null,
     handoff: null as unknown,
+    answers: [] as Record<string, unknown>[],
   };
   const tx = {
     matrixRoom: {
@@ -153,6 +160,12 @@ function fakeSession(cursor: { ts: number; id: string } | null = null) {
       findUnique: async () => rows.cursor,
       update: async (args: { data: unknown }) => {
         rows.handoff = args.data;
+      },
+    },
+    inboxGuidsAnswer: {
+      createMany: async (args: { data: Record<string, unknown> }) => {
+        rows.answers.push(args.data);
+        return { count: 1 };
       },
     },
     // The claim of the turn (insert … on conflict, raw SQL).
@@ -249,9 +262,100 @@ describe("pickTurnInput", () => {
     );
     expect(picked.fresh).toEqual([]);
   });
+
+  it("tells that the conversation was resolved since the last answer (GF2)", () => {
+    const input = {
+      consumerMxid: CONSUMER,
+      lastAnsweredTs: 5,
+      lastAnsweredEventId: "$a",
+    };
+    const resolvedAfter = pickTurnInput(
+      client,
+      [
+        { eventId: "$a", sender: AGENT, ts: 5, body: "Olá" },
+        { eventId: "$s", sender: TEAM, ts: 6, body: "", status: "resolved" },
+        { eventId: "$1", sender: CONSUMER, ts: 7, body: "Oi de novo" },
+      ],
+      input,
+    );
+    expect(resolvedAfter.resolved).toBe(true);
+    expect(resolvedAfter.fresh.map((m) => m.body)).toEqual(["Oi de novo"]);
+    // A resolution before the last answer is old news.
+    const resolvedBefore = pickTurnInput(
+      client,
+      [
+        { eventId: "$s", sender: TEAM, ts: 3, body: "", status: "resolved" },
+        { eventId: "$a", sender: AGENT, ts: 5, body: "Olá" },
+        { eventId: "$1", sender: CONSUMER, ts: 7, body: "Oi" },
+      ],
+      input,
+    );
+    expect(resolvedBefore.resolved).toBe(false);
+  });
 });
 
 describe("runGuidsTurn (fake Synapse)", () => {
+  it("keeps who wrote the answer in the database, never in the room (GF2)", async () => {
+    const synapse = fakeSynapse({
+      status: ["pending"],
+      events: [said("$1", CONSUMER, 10, "Quero ver os pacotes")],
+    });
+    const { session, rows } = fakeSession();
+    const { turn, calls } = turnAnswering({
+      messages: ["Temos três pacotes."],
+      answeredBy: "seller",
+      handoff: null,
+    });
+    await runGuidsTurn(
+      session,
+      ctx,
+      { roomId: ROOM },
+      { client: synapse.client, turn: turn as never, sleep: async () => {} },
+    );
+    expect(synapse.sent).toHaveLength(1);
+    expect(synapse.sent[0]?.user).toBe(AGENT);
+    // The room has the body alone: one persona.
+    expect(synapse.sent[0]?.content).toEqual({
+      msgtype: "m.text",
+      body: "Temos três pacotes.",
+    });
+    expect(rows.answers).toEqual([
+      {
+        roomId: ROOM,
+        eventId: "$sent1",
+        workspaceId: ctx.workspaceId,
+        organizationId: ctx.organizationId,
+        role: "seller",
+      },
+    ]);
+    // The turn is told whether the conversation was resolved meanwhile.
+    expect(calls[0]).toMatchObject({ reopened: false });
+  });
+
+  it("records nothing when the orchestrator itself answers", async () => {
+    const synapse = fakeSynapse({
+      status: ["pending"],
+      events: [said("$1", CONSUMER, 10, "Qual o horário?")],
+    });
+    const { session, rows } = fakeSession();
+    const { turn } = turnAnswering({
+      messages: ["Das 9h às 18h."],
+      answeredBy: null,
+      handoff: null,
+    });
+    await runGuidsTurn(
+      session,
+      ctx,
+      { roomId: ROOM },
+      { client: synapse.client, turn: turn as never, sleep: async () => {} },
+    );
+    expect(synapse.sent[0]?.content).toEqual({
+      msgtype: "m.text",
+      body: "Das 9h às 18h.",
+    });
+    expect(rows.answers).toEqual([]);
+  });
+
   it("answers as the agent's user within the service rules, once", async () => {
     const synapse = fakeSynapse({
       status: ["pending"],

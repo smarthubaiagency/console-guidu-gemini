@@ -29,6 +29,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     onMaintenanceOff: () => database.maintenanceOff(),
     onSeedEvent: (params) => database.seedEvent(params),
     onSeedCrmContact: (params) => database.seedCrmContact(params),
+    onSeedGuidsAnswer: (params) => database.seedGuidsAnswer(params),
     onSeedProposal: (params) => database.seedProposal(params),
   });
   const chatwoot = await startFakeChatwoot(RIG.chatwootPort);

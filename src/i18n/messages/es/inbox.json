@@ -7,6 +7,7 @@
   "searchPlaceholder": "Buscar por nombre",
   "unknownContact": "Contacto sin nombre",
   "you": "Tú",
+  "answeredBy": { "attendant": "Respondido por el Asistente", "seller": "Respondido por el Vendedor" },
   "noMessages": "Aún sin mensajes",
   "assignedTo": "Con {name}",
   "assigned": "Con un agente",

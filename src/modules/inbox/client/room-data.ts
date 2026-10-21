@@ -18,6 +18,21 @@ export type TimelineMessage = Readonly<{
   mine: boolean;
 }>;
 
+/** Users of the GUIDS: `@_guidu_a_` and 16 base32 characters. */
+const AGENT_USER = /^@_guidu_a_[a-z2-7]{16}:/;
+
+/**
+ * GF2: only what a GUIDS sent can have been written by a specialist; the
+ * window asks the database about those events alone.
+ */
+export function agentEventIds(
+  messages: readonly Pick<TimelineMessage, "id" | "sender">[],
+): string[] {
+  return messages
+    .filter((m) => m.id.startsWith("$") && AGENT_USER.test(m.sender))
+    .map((m) => m.id);
+}
+
 /** Accounts of attendants: `@u_` and 24 base32 characters. */
 const ATTENDANT = /^@u_[a-z2-7]{24}:/;
 

@@ -1,5 +1,6 @@
 import type { ContextTransaction } from "@/lib/prisma/with-context";
 
+import type { DelegateTarget, Specialists } from "../delegation";
 import type { ToolCallRecord } from "../tools/guard";
 
 /**
@@ -16,6 +17,11 @@ export const TURN_LIMITS = {
   maxSteps: 6,
   maxOutputTokens: 2000,
   totalMs: 90_000,
+  /**
+   * Time of a whole turn that hands the conversation to a specialist (GF2):
+   * the orchestrator and the specialist together, under the job's expiry.
+   */
+  delegationTotalMs: 150_000,
   /** Messages of the conversation sent back to the model. */
   historyMessages: 30,
   /** Longest message of a person. */
@@ -47,4 +53,28 @@ export type TurnState = {
   handoff?: Readonly<{ reason: string; summary: string }>;
   /** Portfolio files to send after the answer, in order (A5d). */
   outbox?: OutboundMedia[];
+  /** The orchestrator asked to hand the conversation over (GF2). */
+  delegation?: Readonly<{
+    to: DelegateTarget;
+    agentId: string;
+    reason: string;
+    summary: string;
+  }>;
+  /** Invalid calls of `delegate` in this turn (GF2). */
+  invalidDelegations?: number;
+  /** The specialist gave the conversation back to the reception (GF2). */
+  returned?: Readonly<{ reason: string }>;
+  /**
+   * Set when a specialist wrote this turn's answer: its role, for the
+   * "Respondido pelo …" mark the team sees (GF2).
+   */
+  answeredBy?: DelegateTarget;
 };
+
+/** What a turn knows of the delegation (GF2), by the role of its GUIDS. */
+export type TurnDelegation = Readonly<{
+  /** Orchestrator: the specialists that are on. */
+  specialists: Specialists;
+  /** Specialist: the orchestrator the conversation goes back to. */
+  returnTo: string | null;
+}>;

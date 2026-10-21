@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { useActionStatus } from "@/components/feedback/use-action-status";
 import { WorkbenchPanel } from "@/components/layout/workbench";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -262,6 +263,11 @@ function ChatMessage({ message }: Readonly<{ message: GuidTestMessageDto }>) {
         >
           {text}
         </p>
+        {message.answeredBy ? (
+          <Badge variant="neutral" data-testid="guid-test-answered-by">
+            {t(`answeredBy.${message.answeredBy}`)}
+          </Badge>
+        ) : null}
       </div>
     </li>
   );
