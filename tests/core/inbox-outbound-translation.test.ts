@@ -424,15 +424,28 @@ describeDatabase(
           { override },
         ),
       ).toEqual({ kind: "direct", reason: "unknown_locale" });
-      // The translation is off in B.
-      expect(
-        await previewOutboundTranslation(
-          prisma,
-          contextB,
-          { roomId: ROOM_B, text: WRITTEN },
-          { override },
-        ),
-      ).toMatchObject({ kind: "direct" });
+      // The translation is off (B has no attendant: A's switch is turned off
+      // and back on, whatever else is in the settings).
+      const wsA = `workspace_id = '${ids.workspaceA}' and module_key = 'inbox'`;
+      const setEnabled = (on: boolean) =>
+        admin.$executeRawUnsafe(
+          `update public.workspace_modules
+             set config = jsonb_set(config, '{translation,enabled}', '${on}'::jsonb)
+           where ${wsA}`,
+        );
+      await setEnabled(false);
+      try {
+        expect(
+          await previewOutboundTranslation(
+            prisma,
+            ctxOf(ANA),
+            { roomId: ROOM_ES, text: WRITTEN },
+            { override },
+          ),
+        ).toMatchObject({ kind: "direct" });
+      } finally {
+        await setEnabled(true);
+      }
     });
 
     it("refuses the preview to who only reads and to another workspace", async () => {
