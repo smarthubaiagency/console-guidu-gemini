@@ -212,13 +212,36 @@
       "timeout": "The engine took too long to answer.",
       "refusal": "The engine did not return a translation.",
       "error": "The translation engine failed."
+    },
+    "sentIn": "Sent in {language} · {engine}",
+    "sent": "Sent · {engine}",
+    "edited": "edited",
+    "showSent": "View sent",
+    "showWritten": "View original",
+    "outbound": {
+      "loading": "Translating to {language}…",
+      "previewTitle": "Preview in {language}",
+      "fieldLabel": "Translation preview in {language}, editable",
+      "unavailableDescription": "Both translation engines failed and nothing was sent. Try again, send without translating or go back to edit the text.",
+      "back": "Back",
+      "sendOriginal": "Send without translating",
+      "retry": "Try again",
+      "sendIn": "Send in {language}",
+      "previewButton": "See the preview in {language}",
+      "previewOff": "Translation preview (needs the translation on and the contact in a language other than yours)",
+      "notNeeded": "Nothing to translate: the text is already in the contact's language.",
+      "recordFailed": "The message was sent, but the original was not saved. The team will see only the text that was sent.",
+      "errors": {
+        "text": "The text of the answer is invalid.",
+        "mismatch": "The message sent does not match the record."
+      }
     }
   },
   "notes": {
     "tabsLabel": "Reply or write a note",
     "reply": "Reply",
     "note": "Private note",
-    "ai": "AI assistant (coming soon)",
+    "ai": "Translation preview",
     "hint": "Write a note for the team. The contact does not see it.",
     "fieldLabel": "Write a note",
     "add": "Add note",

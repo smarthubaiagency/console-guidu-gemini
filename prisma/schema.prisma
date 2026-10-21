@@ -2151,6 +2151,10 @@ model InboxMessageTranslation {
   /// Why the main engine failed: key, quota, timeout, refusal or error.
   primaryError   String?  @map("primary_error")
   attempts       Int      @default(0)
+  /// TR3: the team's original of an outbound row (the text sent is `translatedText`).
+  sourceText     String?  @map("source_text")
+  /// TR3: the attendant changed the preview before sending.
+  edited         Boolean  @default(false)
   createdAt      DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime @default(dbgenerated("now()")) @map("updated_at") @db.Timestamptz()
 

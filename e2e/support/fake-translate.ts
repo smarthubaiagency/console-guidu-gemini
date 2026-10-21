@@ -17,6 +17,9 @@ const PHRASES: Record<string, string> = {
     "Olá, vocês têm quarto para duas pessoas esta noite?",
   "Hola, ¿tienen habitación para esta noche?":
     "Olá, vocês têm quarto para esta noite?",
+  // TR3: what the team writes goes the other way (Portuguese to Spanish).
+  "Temos quarto para duas pessoas esta noite.":
+    "Tenemos habitación para dos personas esta noche.",
 };
 
 export type FakeTranslate = Readonly<{ close: () => Promise<void> }>;

@@ -148,3 +148,20 @@ export function plainFromHtml(html: string): string {
       .replace(/<\/span>/giu, ""),
   ).trim();
 }
+
+/**
+ * The glossary for what the team writes (TR3). The lines are kept for the
+ * team's language: a term with a fixed translation reads "term (what the
+ * contact writes) = translation (in the team's language)", so going the
+ * other way the team's word is the one that is found and the contact's
+ * term is what goes out. A term kept as it is stays as it is.
+ */
+export function outboundGlossary(
+  entries: readonly GlossaryEntry[],
+): GlossaryEntry[] {
+  return entries.map((entry) =>
+    entry.translation
+      ? { term: entry.translation, translation: entry.term }
+      : entry,
+  );
+}

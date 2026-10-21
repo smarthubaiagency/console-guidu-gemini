@@ -212,13 +212,36 @@
       "timeout": "El motor tardó demasiado en responder.",
       "refusal": "El motor no devolvió una traducción.",
       "error": "El motor de traducción falló."
+    },
+    "sentIn": "Enviado en {language} · {engine}",
+    "sent": "Enviado · {engine}",
+    "edited": "editada",
+    "showSent": "Ver enviado",
+    "showWritten": "Ver original",
+    "outbound": {
+      "loading": "Traduciendo a {language}…",
+      "previewTitle": "Vista previa en {language}",
+      "fieldLabel": "Vista previa de la traducción en {language}, editable",
+      "unavailableDescription": "Los dos motores de traducción fallaron y no se envió nada. Inténtalo de nuevo, envía sin traducir o vuelve para editar el texto.",
+      "back": "Volver",
+      "sendOriginal": "Enviar sin traducir",
+      "retry": "Intentar de nuevo",
+      "sendIn": "Enviar en {language}",
+      "previewButton": "Ver la vista previa en {language}",
+      "previewOff": "Vista previa de la traducción (necesita la traducción activada y el contacto en un idioma distinto del tuyo)",
+      "notNeeded": "No hay nada que traducir: el texto ya está en el idioma del contacto.",
+      "recordFailed": "El mensaje se envió, pero no se guardó el original. El equipo verá solo el texto enviado.",
+      "errors": {
+        "text": "El texto de la respuesta no es válido.",
+        "mismatch": "El mensaje enviado no coincide con el registro."
+      }
     }
   },
   "notes": {
     "tabsLabel": "Responder o escribir una nota",
     "reply": "Responder",
     "note": "Nota privada",
-    "ai": "Asistente de IA (próximamente)",
+    "ai": "Vista previa de la traducción",
     "hint": "Escribe una nota para el equipo. El contacto no la ve.",
     "fieldLabel": "Escribe una nota",
     "add": "Agregar nota",

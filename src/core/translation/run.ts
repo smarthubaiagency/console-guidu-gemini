@@ -1,3 +1,4 @@
+import { outboundGlossary } from "./glossary";
 import {
   type TranslateInput,
   TranslationError,
@@ -89,4 +90,33 @@ export async function translateWithFallback(
   } catch (error) {
     return { ok: false, primaryError, fallbackError: codeOf(error) };
   }
+}
+
+/**
+ * What the team writes, translated at once, with no job (TR3): the same
+ * engines, the same 4 s of the main one, the glossary read the other way
+ * round and no context (the text of the team is the only input). Nothing
+ * is written anywhere; the caller shows the preview.
+ */
+export async function translateOutbound(
+  engines: Readonly<{ primary: Translator; fallback: Translator | null }>,
+  input: Readonly<{
+    text: string;
+    source: TranslateInput["source"];
+    target: TranslateInput["target"];
+    glossary: TranslateInput["glossary"];
+  }>,
+  timeouts: Readonly<{ primaryMs?: number; fallbackMs?: number }> = {},
+): Promise<TranslationOutcome> {
+  return translateWithFallback(
+    engines,
+    {
+      text: input.text,
+      source: input.source,
+      target: input.target,
+      glossary: outboundGlossary(input.glossary),
+      context: [],
+    },
+    timeouts,
+  );
 }

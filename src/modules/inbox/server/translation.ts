@@ -156,6 +156,7 @@ export async function translationNotice(
   const latest = await tx.inboxMessageTranslation.findFirst({
     where: {
       workspaceId: ctx.workspaceId,
+      direction: "inbound",
       status: { in: ["done", "failed"] },
       updatedAt: { gte: new Date(now.getTime() - NOTICE_WINDOW_MS) },
     },
@@ -513,11 +514,23 @@ export type MessageTranslationStatus = "pending" | "done" | "failed";
 
 export type MessageTranslationDto = Readonly<{
   eventId: string;
+  /** `inbound`: the contact's message for the team (TR2); `outbound`: the team's answer (TR3). */
+  direction: "inbound" | "outbound";
   status: MessageTranslationStatus;
+  /**
+   * Inbound: the translation for the team. Outbound: the text that was sent
+   * to the contact (the message of the room itself).
+   */
   text: string | null;
+  /** Outbound only: what the attendant wrote, in the team's language. */
+  original: string | null;
   sourceLocale: ContactLocale | null;
+  /** Outbound only: the contact's language the text was sent in. */
+  targetLocale: ContactLocale | null;
   engine: TranslationEngineId | null;
   fallback: boolean;
+  /** Outbound only: the attendant changed the preview before sending. */
+  edited: boolean;
 }>;
 
 export const MAX_EVENTS_PER_READ = 200;
@@ -540,16 +553,23 @@ export async function loadMessageTranslations(
       workspaceId: ctx.workspaceId,
       roomId: input.roomId,
       eventId: { in: eventIds },
-      targetLocale: target,
-      direction: "inbound",
+      OR: [
+        { direction: "inbound", targetLocale: target },
+        // TR3: what the team sent, with the original it wrote.
+        { direction: "outbound" },
+      ],
     },
     select: {
       eventId: true,
+      direction: true,
       status: true,
       translatedText: true,
+      sourceText: true,
       sourceLocale: true,
+      targetLocale: true,
       engine: true,
       fallback: true,
+      edited: true,
       createdAt: true,
     },
   });
@@ -557,13 +577,20 @@ export async function loadMessageTranslations(
     const stale =
       row.status === "pending" &&
       now.getTime() - row.createdAt.getTime() > STALE_PENDING_MS;
+    const outbound = row.direction === "outbound";
     return {
       eventId: row.eventId,
+      direction: outbound ? "outbound" : "inbound",
       status: stale ? "failed" : (row.status as MessageTranslationStatus),
       text: row.status === "done" ? row.translatedText : null,
+      original: outbound ? row.sourceText : null,
       sourceLocale: (row.sourceLocale as ContactLocale | null) ?? null,
+      targetLocale: outbound
+        ? ((row.targetLocale as ContactLocale | null) ?? null)
+        : null,
       engine: (row.engine as TranslationEngineId | null) ?? null,
       fallback: row.fallback,
+      edited: outbound && row.edited,
     };
   });
 }

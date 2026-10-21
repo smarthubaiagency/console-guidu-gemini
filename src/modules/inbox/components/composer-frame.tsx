@@ -1,6 +1,7 @@
 "use client";
 
-import { Lock, Sparkles } from "lucide-react";
+import { Loader2, Lock, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,10 @@ import { Composer, type ComposerMode } from "./composer";
  * The frame of the message box (IN5a), as in Marcelo's reference: a grey
  * `surface-inset` frame (card-in-card, `rounded-card`) with the tabs
  * "Responder | Nota privada" on its top strip and the AI mark (✦) on the
- * right, off until the translation preview of the TR3; inside, the box of
- * the IN4c. In note mode the frame turns amber (`surface-note`).
+ * right: with the translation on (TR3) it asks for the preview of the answer in
+ * the contact's language without sending, otherwise it stays off; inside,
+ * the box of the IN4c, or the preview in its place. In note mode the frame
+ * turns amber (`surface-note`).
  */
 export function ComposerFrame({
   mode,
@@ -29,6 +32,11 @@ export function ComposerFrame({
   onSend,
   disabled,
   sending,
+  preview = null,
+  aiLabel,
+  aiEnabled = false,
+  aiBusy = false,
+  onAi,
 }: Readonly<{
   mode: ComposerMode;
   onMode: (mode: ComposerMode) => void;
@@ -37,6 +45,13 @@ export function ComposerFrame({
   onSend: () => void;
   disabled: boolean;
   sending: boolean;
+  /** TR3: the preview of the translation, shown in place of the box. */
+  preview?: ReactNode;
+  /** TR3: the label of the ✦; on when the answer would be translated. */
+  aiLabel?: string;
+  aiEnabled?: boolean;
+  aiBusy?: boolean;
+  onAi?: () => void;
 }>) {
   const t = useTranslations("inbox.notes");
   const note = mode === "note";
@@ -73,26 +88,34 @@ export function ComposerFrame({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="text-text-secondary ml-auto cursor-not-allowed opacity-50"
-                aria-label={t("ai")}
-                aria-disabled="true"
-                onClick={(event) => event.preventDefault()}
+                className={cn(
+                  "text-text-secondary ml-auto",
+                  !aiEnabled && "cursor-not-allowed opacity-50",
+                )}
+                aria-label={aiLabel ?? t("ai")}
+                aria-disabled={aiEnabled && !aiBusy ? undefined : "true"}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (aiEnabled && !aiBusy) onAi?.();
+                }}
                 data-testid="inbox-composer-ai"
               >
-                <Sparkles />
+                {aiBusy ? <Loader2 className="animate-spin" /> : <Sparkles />}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{t("ai")}</TooltipContent>
+            <TooltipContent>{aiLabel ?? t("ai")}</TooltipContent>
           </Tooltip>
         </div>
-        <Composer
-          mode={mode}
-          value={value}
-          onChange={onChange}
-          onSend={onSend}
-          disabled={disabled}
-          sending={sending}
-        />
+        {preview ?? (
+          <Composer
+            mode={mode}
+            value={value}
+            onChange={onChange}
+            onSend={onSend}
+            disabled={disabled}
+            sending={sending}
+          />
+        )}
       </Tabs>
     </div>
   );

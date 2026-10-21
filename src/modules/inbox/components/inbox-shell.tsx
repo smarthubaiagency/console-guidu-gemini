@@ -63,6 +63,8 @@ export type InboxShellProps = Readonly<{
   workspaceName: string;
   /** The workspace's language (TR1): the list marks a contact in another. */
   workspaceLocale: ContactLocale;
+  /** TR3: the translation of the chat is on (the answer gets a preview). */
+  translationEnabled: boolean;
   viewer: InboxViewer;
   address: string | null;
   defaultOpen: boolean;
@@ -96,6 +98,7 @@ function InboxWindow({
   workspaceSlug,
   workspaceName,
   workspaceLocale,
+  translationEnabled,
   viewer,
   address,
   initialView,
@@ -341,6 +344,8 @@ function InboxWindow({
       mode={composerMode}
       onMode={setComposerMode}
       highlightedNote={highlightedNote}
+      teamLocale={workspaceLocale}
+      translationEnabled={translationEnabled}
     />
   );
   const context = (

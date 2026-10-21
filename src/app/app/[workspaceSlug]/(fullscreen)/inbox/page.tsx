@@ -25,6 +25,7 @@ import { prisma } from "@/lib/prisma/client";
 import { withContext } from "@/lib/prisma/with-context";
 import { InboxShell } from "@/modules/inbox/components/inbox-shell";
 import { loadInboxViewer } from "@/modules/inbox/server/access";
+import { translationSettingsOf } from "@/modules/inbox/translation-settings";
 import {
   INBOX_SIDEBAR_COOKIE,
   isContextTab,
@@ -70,7 +71,7 @@ export default async function InboxPage({
     const viewer = await loadInboxViewer(tx, context.userId);
     if (viewer.level === null) return null;
     if (access.kind !== "ok") return { blocked: access.kind } as const;
-    const [workspace, address] = await Promise.all([
+    const [workspace, address, inboxModule] = await Promise.all([
       tx.workspace.findUnique({
         where: { id: context.workspaceId },
         select: { name: true, defaultLocale: true },
@@ -79,7 +80,12 @@ export default async function InboxPage({
         where: { workspaceId: context.workspaceId },
         select: { mxid: true, state: true },
       }),
+      tx.workspaceModule.findFirst({
+        where: { workspaceId: context.workspaceId, moduleKey: "inbox" },
+        select: { config: true },
+      }),
     ]);
+    const translation = translationSettingsOf(inboxModule?.config);
     // The address of the store on the chat is made by the worker.
     if (address?.state !== "active") {
       await requestWorkspaceSync(tx, context.workspaceId);
@@ -89,6 +95,7 @@ export default async function InboxPage({
       viewer: { ...viewer, level: viewer.level },
       workspaceName: workspace?.name ?? workspaceSlug,
       workspaceLocale: contactLocaleOf(workspace?.defaultLocale),
+      translationEnabled: translation.enabled && translation.primary !== null,
       address: address?.state === "active" ? address.mxid : null,
     } as const;
   });
@@ -144,6 +151,7 @@ export default async function InboxPage({
       workspaceSlug={workspaceSlug}
       workspaceName={data.workspaceName}
       workspaceLocale={data.workspaceLocale}
+      translationEnabled={data.translationEnabled}
       viewer={data.viewer}
       address={data.address}
       defaultOpen={cookieStore.get(INBOX_SIDEBAR_COOKIE)?.value !== "false"}
