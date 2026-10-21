@@ -184,5 +184,34 @@
       "en": "EN",
       "es": "ES"
     }
+  },
+  "notes": {
+    "tabsLabel": "Reply or write a note",
+    "reply": "Reply",
+    "note": "Private note",
+    "ai": "AI assistant (coming soon)",
+    "hint": "Write a note for the team. The contact does not see it.",
+    "fieldLabel": "Write a note",
+    "add": "Add note",
+    "added": "Note added.",
+    "private": "Private note",
+    "edited": "edited",
+    "deletedNote": "Note deleted",
+    "unknownAuthor": "Former team member",
+    "menu": "Note options",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "editLabel": "Note text",
+    "updated": "Note edited.",
+    "deleted": "Note deleted.",
+    "confirmDelete": "Delete this note? The conversation will show “Note deleted”.",
+    "title": "Notes",
+    "empty": "No notes in this conversation.",
+    "show": "Show in the conversation: note by {author}",
+    "errors": {
+      "notFound": "Note not found."
+    }
   }
 }

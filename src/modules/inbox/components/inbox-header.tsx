@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
 import {
   Bot,
   CreditCard,
@@ -68,12 +69,17 @@ export function InboxTopBar({
   sections,
   bell,
   user,
+  onNewNote,
 }: Readonly<{
   sections: readonly NavSection[];
   bell: NotificationBellData;
   user: ShellUser;
+  /** "Nova nota" (IN5a); null without an open conversation or for who reads. */
+  onNewNote: (() => void) | null;
 }>) {
   const t = useTranslations("inbox.header");
+  // "Nova nota" focuses the box: the menu must not take the focus back.
+  const keepFocus = useRef(false);
   return (
     <header
       data-testid="inbox-top-bar"
@@ -102,7 +108,27 @@ export function InboxTopBar({
               {t("new")}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-48">
+          <DropdownMenuContent
+            align="end"
+            className="min-w-48"
+            onCloseAutoFocus={(event) => {
+              if (keepFocus.current) event.preventDefault();
+              keepFocus.current = false;
+            }}
+          >
+            <DropdownMenuItem
+              disabled={!onNewNote}
+              onSelect={() => {
+                if (!onNewNote) return;
+                keepFocus.current = true;
+                onNewNote();
+              }}
+              data-testid="inbox-new-note"
+            >
+              <StickyNote />
+              {t("newNote")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
               {t("soon")}
             </DropdownMenuLabel>
@@ -113,10 +139,6 @@ export function InboxTopBar({
             <DropdownMenuItem disabled>
               <MessagesSquare />
               {t("newThread")}
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled>
-              <StickyNote />
-              {t("newNote")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -17,18 +17,28 @@ export function PanelSection({
   title,
   testId,
   className,
+  badge,
   children,
 }: Readonly<{
   value: string;
   title: string;
   testId: string;
+  /** Next to the title, such as a count (IN5a). */
+  badge?: React.ReactNode;
   className?: string;
   children: React.ReactNode;
 }>) {
   return (
     <AccordionItem value={value} data-testid={testId}>
       <AccordionTrigger className="text-14 font-semibold">
-        {title}
+        {badge ? (
+          <span className="flex items-center gap-2">
+            {title}
+            {badge}
+          </span>
+        ) : (
+          title
+        )}
       </AccordionTrigger>
       <AccordionContent className={cn("space-y-3", className)}>
         {children}

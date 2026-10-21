@@ -30,12 +30,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { changeConversationAction, listConversationsAction } from "../actions";
 import { getRoom, unreadCount } from "../client/room-data";
 import { useInboxMatrix } from "../client/use-inbox-matrix";
+import { useRoomNotes } from "../client/use-room-notes";
 import {
   type ContextTab,
   type ConversationPage,
   INBOX_SIDEBAR_COOKIE,
   type InboxView,
 } from "../views";
+import type { ComposerMode } from "./composer";
 import { ContextPanel } from "./context-panel";
 import { ConversationList } from "./conversation-list";
 import { ConversationView } from "./conversation-view";
@@ -122,6 +124,11 @@ function InboxWindow({
     "actions",
   ]);
   const [busy, setBusy] = useState(false);
+  // IN5a: the mode of the message box (back to "Responder" in another
+  // conversation), the notes of the open one and the note just shown.
+  const [composerMode, setComposerMode] = useState<ComposerMode>("reply");
+  const [highlightedNote, setHighlightedNote] = useState<string | null>(null);
+  const roomNotes = useRoomNotes(workspaceSlug, selected);
   const matrix = useInboxMatrix(viewer.mxid);
   const listPanel = useRef<PanelImperativeHandle | null>(null);
   const contextPanel = useRef<PanelImperativeHandle | null>(null);
@@ -232,8 +239,44 @@ function InboxWindow({
 
   // A new conversation opens on "Contato".
   const select = (roomId: string | null) => {
-    if (roomId !== selected) setTab("contact");
+    if (roomId !== selected) {
+      setTab("contact");
+      setComposerMode("reply");
+      setHighlightedNote(null);
+    }
     setSelected(roomId);
+  };
+
+  // "Novo › Nova nota" (IN5a): the open conversation, in note mode.
+  const newNote = () => {
+    setComposerMode("note");
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLTextAreaElement>(
+          '[data-testid="inbox-composer"] textarea',
+        )
+        ?.focus();
+    }, 50);
+  };
+
+  // A note of the "Notas" section, in the conversation (IN5a).
+  const highlightTimer = useRef<number | null>(null);
+  const showNote = (noteId: string) => {
+    if (isMobile) setContextOpen(false);
+    setHighlightedNote(noteId);
+    window.setTimeout(
+      () => {
+        document
+          .getElementById(`inbox-note-${noteId}`)
+          ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      },
+      isMobile ? 300 : 0,
+    );
+    if (highlightTimer.current) window.clearTimeout(highlightTimer.current);
+    highlightTimer.current = window.setTimeout(
+      () => setHighlightedNote(null),
+      2_500,
+    );
   };
 
   const toggleContext = () => {
@@ -293,6 +336,11 @@ function InboxWindow({
       onBack={isMobile ? () => select(null) : null}
       onShowContext={isMobile ? () => setContextOpen(true) : null}
       onChanged={refresh}
+      notes={roomNotes.notes}
+      onNotesChanged={roomNotes.refresh}
+      mode={composerMode}
+      onMode={setComposerMode}
+      highlightedNote={highlightedNote}
     />
   );
   const context = (
@@ -312,6 +360,8 @@ function InboxWindow({
       onTab={setTab}
       sections={openSections}
       onSections={setOpenSections}
+      notes={roomNotes.notes}
+      onShowNote={showNote}
     />
   );
 
@@ -320,7 +370,14 @@ function InboxWindow({
       className="bg-background flex min-w-0 flex-1 flex-col"
       aria-label={t("windowLabel", { workspace: workspaceName })}
     >
-      <InboxTopBar sections={sections} bell={bell} user={user} />
+      <InboxTopBar
+        sections={sections}
+        bell={bell}
+        user={user}
+        onNewNote={
+          selected !== null && viewer.level === "reply" ? newNote : null
+        }
+      />
       <InboxTitleBar
         workspaceSlug={workspaceSlug}
         workspaceName={workspaceName}

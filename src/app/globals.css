@@ -29,6 +29,12 @@
   /* U4 (ADR 0021): grey canvas behind cards and the inset panel inside them */
   --color-surface-canvas: oklch(97.6% 0 0);
   --color-surface-inset: oklch(96.5% 0 0);
+  /* IN5a: private notes of the Inbox (amber): the frame of the message box
+     in note mode, the field and the bubble of a note, their border and text */
+  --color-surface-note: oklch(96.2% 0.059 95.617);
+  --color-surface-note-subtle: oklch(98.7% 0.022 95.277);
+  --color-note-border: oklch(92.4% 0.12 95.746);
+  --color-note-text: oklch(47.3% 0.137 46.201);
   --color-text: oklch(14.5% 0 0);
   --color-text-secondary: oklch(55.6% 0 0);
   --color-text-tertiary: oklch(70.8% 0 0);
@@ -173,6 +179,10 @@
   --color-surface-input: #252525;
   --color-surface-canvas: #141414;
   --color-surface-inset: #1e1e1e;
+  --color-surface-note: #3b3122;
+  --color-surface-note-subtle: #2d271d;
+  --color-note-border: #564328;
+  --color-note-text: #ffcf70;
   --color-text: #d4d4d4;
   --color-text-secondary: #9b9b9b;
   --color-text-tertiary: #7f7f7f;
