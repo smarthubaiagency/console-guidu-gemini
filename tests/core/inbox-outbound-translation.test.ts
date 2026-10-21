@@ -557,7 +557,7 @@ describeDatabase(
       expect(await row("$tr3-b")).toBeNull();
       // Someone with no Matrix account has no event to own.
       await admin.$executeRawUnsafe(
-        `update public.matrix_accounts set status = 'deactivated' where profile_id = '${BIA}'`,
+        `update public.matrix_accounts set status = 'deactivated', deactivated_at = now() where profile_id = '${BIA}'`,
       );
       await expect(
         record(BIA, { eventId: "$tr3-other" }),
@@ -565,7 +565,7 @@ describeDatabase(
         code: "forbidden",
       });
       await admin.$executeRawUnsafe(
-        `update public.matrix_accounts set status = 'active' where profile_id = '${BIA}'`,
+        `update public.matrix_accounts set status = 'active', deactivated_at = null where profile_id = '${BIA}'`,
       );
     });
 

@@ -237,7 +237,7 @@ export async function previewOutboundTranslationAction(
 const RecordInput = z.object({
   workspaceSlug: slug,
   roomId,
-  eventId: z.string().regex(/^$[^s]{1,254}$/),
+  eventId: z.string().regex(/^\$[^\s]{1,254}$/),
   sourceText: z.string().min(1).max(OUTBOUND_MAX),
   sentText: z.string().min(1).max(OUTBOUND_MAX),
   sourceLocale: locale,

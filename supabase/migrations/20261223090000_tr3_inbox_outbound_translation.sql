@@ -130,3 +130,78 @@ grant execute on function private.inbox_translation_record_outbound(
 alter function private.inbox_translation_record_outbound(
   text, text, text, text, text, text, text, text, boolean, boolean
 ) owner to app_rls_helper;
+
+-- ----------------------------------------------------------------------------
+-- The key of the translation engine for who answers (owner app_rls_helper)
+-- ----------------------------------------------------------------------------
+-- The preview translates with the workspace's key (the same of the TR2), but
+-- `credentials_select` does not admit the Attendant (AT1): no BYOK credential
+-- is readable by the web role of that level. This function is the only way:
+-- it requires level `reply` in the Inbox of the context workspace, returns
+-- only the sealed payload (decrypted by the server, as the job does) of the
+-- key of the engine and nothing else, and opens the table to its owner (the
+-- helper) through a flag set and restored here.
+
+create policy credentials_translation_helper_select on public.credentials
+  for select to app_rls_helper
+  using (
+    current_setting('app.inbox_translation_key', true) = 'on'
+    and workspace_id = private.context_uuid('app.workspace_id')
+    and organization_id = private.context_uuid('app.organization_id')
+    and status = 'active'
+    and (
+      (provider = 'google_translate')
+      or (provider in ('openai', 'anthropic', 'gemini', 'openrouter')
+          and purpose in ('chat', 'all'))
+    )
+  );
+
+grant select (
+  id, organization_id, workspace_id, provider, purpose, status, created_at,
+  encrypted_payload
+) on public.credentials to app_rls_helper;
+
+-- `p_engine` 'ai' needs the id of the key chosen in the settings; 'google'
+-- takes the latest active Google Translate key. No row when there is none.
+create function private.inbox_translation_key(
+  p_engine text,
+  p_credential_id uuid
+)
+returns table(provider text, encrypted_payload text)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_workspace uuid := private.context_uuid('app.workspace_id');
+  v_organization uuid := private.context_uuid('app.organization_id');
+begin
+  if p_engine is null or p_engine not in ('ai', 'google') then
+    raise exception 'inbox_translation_key: invalid argument'
+      using errcode = 'invalid_parameter_value';
+  end if;
+  if v_workspace is null or v_organization is null
+     or private.inbox_my_level() is distinct from 'reply' then
+    raise exception 'inbox_translation_key: not allowed' using errcode = 'insufficient_privilege';
+  end if;
+  perform set_config('app.inbox_translation_key', 'on', true);
+  return query
+    select c.provider, c.encrypted_payload
+    from public.credentials c
+    where c.workspace_id = v_workspace
+      and c.status = 'active'
+      and (
+        (p_engine = 'ai' and c.id = p_credential_id and c.provider <> 'google_translate')
+        or (p_engine = 'google' and c.provider = 'google_translate')
+      )
+    order by c.created_at desc
+    limit 1;
+  perform set_config('app.inbox_translation_key', '', true);
+end;
+$$;
+
+revoke execute on function private.inbox_translation_key(text, uuid)
+  from public, anon, authenticated;
+grant execute on function private.inbox_translation_key(text, uuid) to app_runtime;
+alter function private.inbox_translation_key(text, uuid) owner to app_rls_helper;

@@ -120,6 +120,8 @@ export async function previewOutboundTranslation(
       messageKey: "inbox.translation.outbound.errors.text",
     });
   }
+  // Who answers does not read credentials: the key comes by the function.
+  const keyDeps = { ...deps, keyViaFunction: true };
   // Reads inside the transaction; the engines are called outside it.
   const prepared = await withContext(prisma, ctx, async (tx) => {
     await assertModuleOperational(tx, ctx, "inbox", "write");
@@ -155,10 +157,16 @@ export async function previewOutboundTranslation(
         ctx,
         settings,
         settings.primary,
-        deps,
+        keyDeps,
       ),
       fallback: settings.fallback
-        ? await resolveTranslator(tx, ctx, settings, settings.fallback, deps)
+        ? await resolveTranslator(
+            tx,
+            ctx,
+            settings,
+            settings.fallback,
+            keyDeps,
+          )
         : null,
       glossary: settings.glossary,
     } as const;
