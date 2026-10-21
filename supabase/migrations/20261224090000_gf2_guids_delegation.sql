@@ -214,3 +214,63 @@ where factory_role in ('attendant', 'seller')
 
 alter table public.ai_agents force row level security;
 alter table public.ai_agent_templates force row level security;
+
+-- ----------------------------------------------------------------------------
+-- 4. Who wrote an answer in the room, for the team's window only
+-- ----------------------------------------------------------------------------
+-- The room carries only the body (ADR 0023, rule 6; one persona, the
+-- orchestrator's). The link `event_id` -> the specialist's role lives here,
+-- per room, written by the turn right after it sends the answer and read by
+-- the team's window ("Respondido pelo Vendedor"). It follows the room and
+-- the workspace (cascades), so the purge of the WS1 takes it too.
+create table public.inbox_guids_answers (
+  room_id         text not null references public.matrix_rooms(room_id) on delete cascade,
+  event_id        text not null check (length(event_id) between 2 and 255),
+  workspace_id    uuid not null,
+  organization_id uuid not null,
+  role            text not null check (role in ('attendant', 'seller')),
+  created_at      timestamptz not null default now(),
+  primary key (room_id, event_id),
+  constraint fk_inbox_guids_answers_workspace
+    foreign key (workspace_id, organization_id)
+    references public.workspaces(id, organization_id) on delete cascade
+);
+
+create index inbox_guids_answers_workspace_idx on public.inbox_guids_answers (workspace_id);
+
+alter table public.inbox_guids_answers owner to app_migrations;
+revoke all on public.inbox_guids_answers from public, anon, authenticated;
+alter table public.inbox_guids_answers enable row level security;
+alter table public.inbox_guids_answers force row level security;
+
+create policy inbox_guids_answers_worker on public.inbox_guids_answers
+  for all to app_worker using (true) with check (true);
+grant select, insert, update, delete on public.inbox_guids_answers to app_worker;
+
+-- Whoever has a level in the Inbox of the context workspace reads.
+create policy inbox_guids_answers_select on public.inbox_guids_answers
+  for select to app_runtime
+  using (
+    workspace_id = private.context_uuid('app.workspace_id')
+    and organization_id = private.context_uuid('app.organization_id')
+    and (select private.inbox_my_level()) is not null
+  );
+
+-- The turn runs as the person who chose the GUIDS (a manager of the Inbox),
+-- for a room of the context workspace.
+create policy inbox_guids_answers_insert on public.inbox_guids_answers
+  for insert to app_runtime
+  with check (
+    workspace_id = private.context_uuid('app.workspace_id')
+    and organization_id = private.context_uuid('app.organization_id')
+    and private.inbox_my_manages()
+    and exists (
+      select 1 from public.matrix_rooms room
+      where room.room_id = inbox_guids_answers.room_id
+        and room.workspace_id = inbox_guids_answers.workspace_id
+    )
+  );
+
+grant select on public.inbox_guids_answers to app_runtime;
+grant insert (room_id, event_id, workspace_id, organization_id, role)
+  on public.inbox_guids_answers to app_runtime;

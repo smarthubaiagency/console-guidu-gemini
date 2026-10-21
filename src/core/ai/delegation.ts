@@ -52,6 +52,21 @@ export const MAX_INVALID_DELEGATIONS = 2;
 /** Least time left in the turn for the specialist to still be worth running. */
 export const MIN_SPECIALIST_MS = 5_000;
 
+/**
+ * What the orchestrator passed on, as data for the specialist's
+ * instructions (GF2): one line of JSON, so a line break cannot imitate a
+ * section of the rules, with `<`, `>` and the line separators escaped so
+ * no tag or delimiter can be written inside it. The text comes from the
+ * contact, by the orchestrator's pen: information, never an instruction.
+ */
+export function handoverData(reason: string, summary: string): string {
+  return JSON.stringify({ reason, summary })
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 /** The state of an agent, as the choice of specialists reads it. */
 export type SpecialistRow = Readonly<{
   id: string;

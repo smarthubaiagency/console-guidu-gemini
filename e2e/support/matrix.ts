@@ -161,16 +161,15 @@ export async function roomMembers(
 }
 
 /**
- * Sends a text event as a user of the Application Service's namespace (what
- * the core does for the GUIDS), with extra keys in the content (GF2: the
- * mark of the specialist that wrote it).
+ * Sends a text event as a user of the Application Service namespace (what
+ * the core does for the GUIDS); returns the event id.
  */
 export async function sendAsNamespaceUser(
   env: Record<string, string>,
   roomId: string,
   mxid: string,
   content: Record<string, unknown>,
-): Promise<void> {
+): Promise<string> {
   const txn = `e2e-as-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const response = await fetch(
     `${env.MATRIX_HOMESERVER_URL}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${txn}?user_id=${encodeURIComponent(mxid)}`,
@@ -184,4 +183,21 @@ export async function sendAsNamespaceUser(
     },
   );
   if (!response.ok) throw new Error(`matrix ${response.status} on send as`);
+  return ((await response.json()) as { event_id: string }).event_id;
+}
+
+/** The raw content of an event, as a member of the room reads it. */
+export async function eventContent(
+  env: Record<string, string>,
+  consumer: Consumer,
+  roomId: string,
+  eventId: string,
+): Promise<Record<string, unknown>> {
+  const response = await fetch(
+    `${env.MATRIX_HOMESERVER_URL}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/event/${encodeURIComponent(eventId)}`,
+    { headers: { authorization: `Bearer ${consumer.token}` } },
+  );
+  if (!response.ok) throw new Error(`matrix ${response.status} on event`);
+  return ((await response.json()) as { content: Record<string, unknown> })
+    .content;
 }

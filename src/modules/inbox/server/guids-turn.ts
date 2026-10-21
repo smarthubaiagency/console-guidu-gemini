@@ -351,14 +351,30 @@ export async function runGuidsTurn(
         await pause(loaded.service.interval_ms);
       }
     }
-    await sendAsAgent(
+    const eventId = await sendAsAgent(
       client,
       roomId,
       agentMxid,
       `guids-${session.jobRunId}-${index}`,
       part,
-      plan.answeredBy ?? null,
     );
+    // GF2: the room has the body only; who wrote it, for the team's window,
+    // is kept in the database by event.
+    if (plan.answeredBy && eventId) {
+      const role = plan.answeredBy;
+      await session.transaction((tx) =>
+        tx.inboxGuidsAnswer.createMany({
+          data: {
+            roomId,
+            eventId,
+            workspaceId: ctx.workspaceId,
+            organizationId: ctx.organizationId,
+            role,
+          },
+          skipDuplicates: true,
+        }),
+      );
+    }
     sent += 1;
   }
   await setAgentTyping(client, roomId, agentMxid, false);

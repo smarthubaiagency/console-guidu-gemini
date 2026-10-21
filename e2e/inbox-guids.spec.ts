@@ -18,9 +18,9 @@
  *   answers, the row is written as the seller's) is covered by
  *   tests/core/ai-guids-delegation.test.ts. Here the answer of the seller is
  *   sent to the room the way the core sends it, as the orchestrator's user
- *   with the mark of the specialist: the contact reads the orchestrator's
- *   name and the body only; the team sees "Respondido pelo Vendedor", and a
- *   consumer who writes the same mark gets no badge.
+ *   with the body alone, and the turn's record (event -> role) is seeded in
+ *   the database: the event of the room has no mark of the specialist (one
+ *   persona); the team sees "Respondido pelo Vendedor" from the database.
  * ============================================================================
  */
 
@@ -36,11 +36,13 @@ import {
   createIdentity,
   runJobs,
   seedGuid,
+  seedGuidsAnswer,
   seedWorkspace,
   signIn,
   uniqueEmail,
 } from "./support/identity";
 import {
+  eventContent,
   matrixE2eEnv,
   MatrixConsumers,
   roomMembers,
@@ -244,7 +246,7 @@ test("the team sees who answered under the orchestrator's name, the contact does
   await jobs(page, request);
 
   // The orchestrator's user is in the room (the worker put it there); the
-  // seller's answer goes out as it does, with the mark of the specialist.
+  // seller's answer goes out as it does, with the body alone.
   let agentMxid = "";
   await expect
     .poll(
@@ -259,16 +261,26 @@ test("the team sees who answered under the orchestrator's name, the contact does
       { timeout: 120_000, intervals: [1_000, 2_000, 3_000] },
     )
     .not.toBe("");
-  await sendAsNamespaceUser(env!, roomId, agentMxid, {
+  const sellerEvent = await sendAsNamespaceUser(env!, roomId, agentMxid, {
     body: "Temos três pacotes de hospedagem.",
-    "io.guidu.answered_by": "seller",
+  });
+  await seedGuidsAnswer(request, {
+    roomId,
+    eventId: sellerEvent,
+    role: "seller",
   });
   await sendAsNamespaceUser(env!, roomId, agentMxid, {
     body: "A recepção responde o simples.",
   });
-  // A consumer who writes the same mark gets no badge.
+  // A consumer who writes a mark of its own gets no badge.
   await consumers.send(maria, roomId, "Eu também sei escrever a marca", {
     "io.guidu.answered_by": "seller",
+  });
+
+  // The event of the room is the body alone: nothing says who wrote it.
+  expect(await eventContent(env!, maria, roomId, sellerEvent)).toEqual({
+    msgtype: "m.text",
+    body: "Temos três pacotes de hospedagem.",
   });
 
   // The contact reads the bodies only, under the orchestrator's name.

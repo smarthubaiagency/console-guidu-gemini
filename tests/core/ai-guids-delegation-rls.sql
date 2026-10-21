@@ -258,3 +258,92 @@ begin
     raise exception 'templates: ops has an engine tool';
   end if;
 end $$;
+
+-- ----------------------------------------------------------------------------
+-- Test 6: who wrote an answer in a room (team's window only), per workspace
+-- ----------------------------------------------------------------------------
+begin;
+insert into public.matrix_rooms (id, organization_id, workspace_id, room_id, origin, state, status) values
+  ('9f200000-0000-4000-8000-0000000002b1', 'a0000000-0000-4000-8000-000000000010',
+   'a0000000-0000-4000-8000-000000000011', '!gf2-sala-a', 'matrix', 'active', 'pending'),
+  ('9f200000-0000-4000-8000-0000000002b3', 'a0000000-0000-4000-8000-000000000020',
+   'a0000000-0000-4000-8000-000000000021', '!gf2-sala-b', 'matrix', 'active', 'pending');
+set local role app_runtime;
+do $$
+begin
+  -- The turn runs as a manager of the Inbox: it records the author.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000031', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  insert into public.inbox_guids_answers (room_id, event_id, workspace_id, organization_id, role)
+  values ('!gf2-sala-a', '$evento-1', 'a0000000-0000-4000-8000-000000000011',
+          'a0000000-0000-4000-8000-000000000010', 'seller');
+  if (select role from public.inbox_guids_answers where event_id = '$evento-1') is distinct from 'seller' then
+    raise exception 'answers: the owner does not read what the turn kept';
+  end if;
+  -- Only the two specialists.
+  begin
+    insert into public.inbox_guids_answers (room_id, event_id, workspace_id, organization_id, role)
+    values ('!gf2-sala-a', '$evento-2', 'a0000000-0000-4000-8000-000000000011',
+            'a0000000-0000-4000-8000-000000000010', 'ops');
+    raise exception 'answers: a role that is not a specialist';
+  exception when check_violation then null;
+  end;
+  -- Not for a room of another workspace.
+  begin
+    insert into public.inbox_guids_answers (room_id, event_id, workspace_id, organization_id, role)
+    values ('!gf2-sala-b', '$evento-3', 'a0000000-0000-4000-8000-000000000011',
+            'a0000000-0000-4000-8000-000000000010', 'seller');
+    raise exception 'answers: a record for a room of another workspace';
+  exception when insufficient_privilege then null;
+  end;
+  -- A record is never rewritten by the engine.
+  begin
+    update public.inbox_guids_answers set role = 'attendant';
+    raise exception 'answers: updated';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- The viewer has no level in the Inbox: nothing.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000033', 'a0000000-0000-4000-8000-000000000011',
+                      'a0000000-0000-4000-8000-000000000010');
+  if exists (select 1 from public.inbox_guids_answers) then
+    raise exception 'answers: the viewer reads them';
+  end if;
+  -- The owner of B sees nothing of A, and writes nothing in A.
+  perform pg_temp.ctx('a0000000-0000-4000-8000-000000000032', 'a0000000-0000-4000-8000-000000000021',
+                      'a0000000-0000-4000-8000-000000000020');
+  if exists (select 1 from public.inbox_guids_answers) then
+    raise exception 'answers: B reads A';
+  end if;
+  begin
+    insert into public.inbox_guids_answers (room_id, event_id, workspace_id, organization_id, role)
+    values ('!gf2-sala-a', '$evento-4', 'a0000000-0000-4000-8000-000000000011',
+            'a0000000-0000-4000-8000-000000000010', 'seller');
+    raise exception 'answers: B wrote in A';
+  exception when insufficient_privilege then null;
+  end;
+  -- Without context nothing is seen.
+  perform pg_temp.ctx(null, null, null);
+  if exists (select 1 from public.inbox_guids_answers) then
+    raise exception 'answers: without context';
+  end if;
+end $$;
+rollback;
+
+-- The table is closed to anon and authenticated, and forced.
+do $$
+begin
+  if has_table_privilege('anon', 'public.inbox_guids_answers', 'select')
+     or has_table_privilege('authenticated', 'public.inbox_guids_answers', 'select')
+     or has_table_privilege('authenticated', 'public.inbox_guids_answers', 'insert') then
+    raise exception 'answers: anon or authenticated reach the table';
+  end if;
+  if not (select relrowsecurity and relforcerowsecurity from pg_class
+          where oid = 'public.inbox_guids_answers'::regclass) then
+    raise exception 'answers: RLS is not forced';
+  end if;
+  if has_table_privilege('app_runtime', 'public.inbox_guids_answers', 'update')
+     or has_table_privilege('app_runtime', 'public.inbox_guids_answers', 'delete') then
+    raise exception 'answers: app_runtime can rewrite or delete';
+  end if;
+end $$;

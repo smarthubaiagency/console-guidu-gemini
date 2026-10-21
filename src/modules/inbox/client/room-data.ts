@@ -16,31 +16,21 @@ export type TimelineMessage = Readonly<{
   body: string;
   ts: number;
   mine: boolean;
-  /**
-   * GF2: the specialist that wrote this answer under the orchestrator's name
-   * (a mark of the event, honoured only when a GUIDS sent it).
-   */
-  answeredBy?: "attendant" | "seller";
 }>;
 
 /** Users of the GUIDS: `@_guidu_a_` and 16 base32 characters. */
 const AGENT_USER = /^@_guidu_a_[a-z2-7]{16}:/;
 
-/** Key of the mark in the event content (`core/matrix/agent.ts`). */
-const ANSWERED_BY = "io.guidu.answered_by";
-
 /**
- * Who answered, from the mark of an event: only when the sender is a GUIDS
- * (a contact could write the same key) and the value is a known role.
+ * GF2: only what a GUIDS sent can have been written by a specialist; the
+ * window asks the database about those events alone.
  */
-export function answeredByOf(
-  sender: string,
-  content: Record<string, unknown>,
-): "attendant" | "seller" | undefined {
-  const value = content[ANSWERED_BY];
-  return AGENT_USER.test(sender) && (value === "attendant" || value === "seller")
-    ? value
-    : undefined;
+export function agentEventIds(
+  messages: readonly Pick<TimelineMessage, "id" | "sender">[],
+): string[] {
+  return messages
+    .filter((m) => m.id.startsWith("$") && AGENT_USER.test(m.sender))
+    .map((m) => m.id);
 }
 
 /** Accounts of attendants: `@u_` and 24 base32 characters. */
@@ -70,7 +60,6 @@ export function timeline(
     .filter((event) => isText(event.getType(), event.getContent()))
     .map((event) => {
       const sender = event.getSender() ?? "";
-      const answeredBy = answeredByOf(sender, event.getContent());
       return {
         id: event.getId() ?? `${sender}-${event.getTs()}`,
         sender,
@@ -78,7 +67,6 @@ export function timeline(
         body: String(event.getContent().body ?? ""),
         ts: event.getTs(),
         mine: sender === me,
-        ...(answeredBy ? { answeredBy } : {}),
       };
     });
 }

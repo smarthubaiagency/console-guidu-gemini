@@ -43,6 +43,7 @@ import {
   type DelegateTarget,
   delegationActive,
   delegationUntil,
+  handoverData,
   isOn,
   mayDelegate,
   MIN_SPECIALIST_MS,
@@ -176,6 +177,8 @@ type Blocked = Readonly<{
   message: string;
   conversationId: string;
   agentId: string;
+  /** A specialist that held the conversation could not run (GF2). */
+  held?: boolean;
 }>;
 
 type TurnKey = ChatModelKey & Readonly<{ source: "customer" | "backup" }>;
@@ -329,12 +332,6 @@ async function loadTurn(
     if (candidate && isOn(candidate)) {
       agent = candidate;
       returnTo = conversation.agentId;
-      if (!handover) {
-        await tx.aiConversation.updateMany({
-          where: { id: conversation.id },
-          data: { delegatedUntil: delegationUntil(now) },
-        });
-      }
     } else if (handover) {
       return blocked(
         "specialist_unavailable",
@@ -353,13 +350,22 @@ async function loadTurn(
   agent ??= await agentOf(conversation.agentId);
   if (!agent) throw new SkipJobError("Agente não encontrado.");
   const agentIds = { conversationId: conversation.id, agentId: agent.id };
+  // A specialist that holds the conversation but cannot run (no key, no
+  // model, no prompt...) gives it back; the turn then runs as the
+  // orchestrator (GF2). The deadline is pushed forward only after the
+  // specialist answered.
+  const held = returnTo !== null && !handover;
+  const blockedHere = (code: string, message: string): Blocked => ({
+    ...blocked(code, message, agentIds),
+    held,
+  });
   const test = conversation.channel === "test";
   // A paused agent is tested before it is turned on again.
   if (agent.status === "paused" && !test) {
-    return blocked("agent_paused", "O agente está pausado.", agentIds);
+    return blockedHere("agent_paused", "O agente está pausado.");
   }
   if (agent.keyState === "failed") {
-    return blocked("key_failed", "A chave do agente falhou.", agentIds);
+    return blockedHere("key_failed", "A chave do agente falhou.");
   }
   if (
     agent.keyState === "backup" &&
@@ -367,30 +373,18 @@ async function loadTurn(
       !backupServes(conversation.createdAt, agent.backupStartedAt, now))
   ) {
     // The backup only finishes conversations already open (§9.2).
-    return blocked(
-      "key_failed",
-      "A chave do agente falhou; o backup só termina conversas já abertas.",
-      agentIds,
-    );
+    return blockedHere("key_failed", "A chave do agente falhou; o backup só termina conversas já abertas.");
   }
   const [count, quota] = await Promise.all([
     tx.aiAgent.count({ where: { workspaceId: ctx.workspaceId, kind: "guid" } }),
     resolveQuota(tx, ctx.organizationId, "ai-agents.max"),
   ]);
   if (quota.limit !== null && count > quota.limit) {
-    return blocked(
-      "plan_limit",
-      "O workspace tem mais agentes do que o plano permite.",
-      agentIds,
-    );
+    return blockedHere("plan_limit", "O workspace tem mais agentes do que o plano permite.");
   }
   const parsed = parseAgentConfig("guid", agent.configVersion, agent.config);
   if (!parsed.success) {
-    return blocked(
-      "invalid_config",
-      "A configuração do agente é inválida.",
-      agentIds,
-    );
+    return blockedHere("invalid_config", "A configuração do agente é inválida.");
   }
   const config = await withRegionTimeZone(tx, parsed.data);
   const timeZone = turnTimeZone(config);
@@ -432,22 +426,14 @@ async function loadTurn(
   if (agent.keyState === "backup") {
     const backup = await loadBackupKey(tx, agent.id);
     if (!backup) {
-      return blocked(
-        "key_failed",
-        "A chave do agente falhou e não há chave de backup.",
-        agentIds,
-      );
+      return blockedHere("key_failed", "A chave do agente falhou e não há chave de backup.");
     }
     key = { ...backup, source: "backup" };
   } else {
     const credentialId = config.model.credential_id;
     const modelName = config.model.model_name;
     if (!credentialId || !modelName) {
-      return blocked(
-        "no_model",
-        "O agente não tem chave e modelo escolhidos.",
-        agentIds,
-      );
+      return blockedHere("no_model", "O agente não tem chave e modelo escolhidos.");
     }
     const credential = await tx.credential.findFirst({
       where: {
@@ -459,11 +445,7 @@ async function loadTurn(
       select: { provider: true, encryptedPayload: true },
     });
     if (!credential) {
-      return blocked(
-        "no_key",
-        "A chave do agente não está ativa.",
-        agentIds,
-      );
+      return blockedHere("no_key", "A chave do agente não está ativa.");
     }
     key = {
       provider: credential.provider as AIProvider,
@@ -570,7 +552,7 @@ async function loadTurn(
     }),
   });
   if (!systemPrompt) {
-    return blocked("no_prompt", "O agente não tem prompt.", agentIds);
+    return blockedHere("no_prompt", "O agente não tem prompt.");
   }
   const referrals = offeredTools("guid", config).includes("refer_contact")
     ? await tx.aiAgentReferral.findMany({
@@ -784,9 +766,27 @@ export async function runGuidTurnWithState(
   const now = deps.now ?? (() => new Date());
   const audit: Audit = { ctx, origin: "worker" };
   const run: TurnRun = { executionId, now, audit, startedAt: Date.now() };
-  const loaded = await session.transaction((tx) =>
+  let loaded = await session.transaction((tx) =>
     loadTurn(tx, ctx, payload, executionId, now(), null),
   );
+  if (loaded.kind === "blocked" && loaded.held) {
+    // The specialist that held the conversation cannot answer: the
+    // conversation goes back to the orchestrator, which answers now.
+    const stuck = loaded;
+    appLog.warn("ai.turn.specialist_released", {
+      executionId,
+      code: stuck.code,
+    });
+    await session.transaction((tx) =>
+      tx.aiConversation.updateMany({
+        where: { id: stuck.conversationId },
+        data: { delegatedAgentId: null, delegatedUntil: null },
+      }),
+    );
+    loaded = await session.transaction((tx) =>
+      loadTurn(tx, ctx, payload, executionId, now(), null),
+    );
+  }
   if (loaded.kind === "done") {
     return { result: { status: "already_answered" }, state: null };
   }
@@ -1006,8 +1006,10 @@ async function runLoaded(
     ...(loaded.handover
       ? [
           format(promptTexts(env.locale).delegation.note, {
-            reason: loaded.handover.reason,
-            summary: loaded.handover.summary,
+            data: handoverData(
+              loaded.handover.reason,
+              loaded.handover.summary,
+            ),
           }),
         ]
       : []),
@@ -1134,8 +1136,16 @@ async function runLoaded(
       specialist &&
       loaded.delegation.returnTo &&
       loaded.specialistRole &&
-      (errorCode === "invalid_output" || errorCode === "timeout")
+      (errorCode === "invalid_output" ||
+        errorCode === "timeout" ||
+        // Any other failure of the specialist in the turn of the hand-over
+        // would leave the contact without an answer: the team takes it.
+        loaded.handover !== null)
     ) {
+      const code =
+        errorCode === "invalid_output" || errorCode === "timeout"
+          ? errorCode
+          : "unavailable";
       return {
         kind: "finished",
         value: await handToTeam(session, {
@@ -1145,7 +1155,7 @@ async function runLoaded(
           agentId: loaded.delegation.returnTo,
           role: loaded.specialistRole,
           language: config.overview.language,
-          code: errorCode,
+          code,
           summary: loaded.handover?.summary ?? "—",
           state,
         }),
@@ -1239,6 +1249,12 @@ async function runLoaded(
         await tx.aiConversation.updateMany({
           where: { id: loaded.conversationId },
           data: { delegatedAgentId: null, delegatedUntil: null },
+        });
+      } else if (!loaded.handover) {
+        // Confirmed: the contact's message moves the deadline 24 h on.
+        await tx.aiConversation.updateMany({
+          where: { id: loaded.conversationId, delegatedAgentId: { not: null } },
+          data: { delegatedUntil: delegationUntil(now()) },
         });
       }
     }

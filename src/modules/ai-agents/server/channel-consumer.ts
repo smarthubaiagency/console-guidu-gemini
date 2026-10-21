@@ -344,6 +344,7 @@ export async function answerOnChannel(
       contactEvents: input.events,
       limits: input.limits,
       voiceReply: input.voiceReply,
+      reopened: input.resolved ?? false,
     },
     deps,
   );

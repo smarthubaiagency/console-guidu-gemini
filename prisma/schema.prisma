@@ -2136,6 +2136,20 @@ model InboxGuidsRoom {
   @@map("inbox_guids_rooms")
 }
 
+/// GF2: the specialist that wrote an answer of the GUIDS in a room, by event,
+/// for the team's window only (the room carries the body alone).
+model InboxGuidsAnswer {
+  roomId         String   @map("room_id")
+  eventId        String   @map("event_id")
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  role           String
+  createdAt      DateTime @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+
+  @@id([roomId, eventId])
+  @@map("inbox_guids_answers")
+}
+
 /// Translation of a message of the Inbox for the team (TR2), never in the
 /// room; written only by the job `inbox.translate-message`.
 model InboxMessageTranslation {

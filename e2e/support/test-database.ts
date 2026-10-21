@@ -98,6 +98,12 @@ export type TestDatabase = Readonly<{
   maintenanceOff: () => Promise<void>;
   /** A sealed event of the Event Hub in a workspace, with one delivery (H1). */
   seedEvent: (params: SeedEventParams) => Promise<{ id: string }>;
+  /** Who wrote an answer of the GUIDS in a room, as the turn records it (GF2). */
+  seedGuidsAnswer: (params: {
+    roomId: string;
+    eventId: string;
+    role: string;
+  }) => Promise<void>;
   /** A CRM contact in a workspace, as its owner would add it (GB1c). */
   seedCrmContact: (params: {
     workspaceSlug: string;
@@ -405,6 +411,15 @@ export async function startTestDatabase(
         );
       }
       return { partnerId };
+    },
+    seedGuidsAnswer: async (params) => {
+      const result = await pool.query(
+        `insert into public.inbox_guids_answers (room_id, event_id, workspace_id, organization_id, role)
+         select r.room_id, $2, r.workspace_id, r.organization_id, $3
+         from public.matrix_rooms r where r.room_id = $1`,
+        [params.roomId, params.eventId, params.role],
+      );
+      if (result.rowCount !== 1) throw new Error("Room not found");
     },
     seedCrmContact: async (params) => {
       const result = await pool.query<{ id: string }>(

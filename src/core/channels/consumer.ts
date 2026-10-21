@@ -50,6 +50,8 @@ export type ChannelTurnInput = Readonly<{
    * `voice_reply`): the consumer may return its answer as `voice`.
    */
   voiceReply: boolean;
+  /** The conversation was resolved since the consumer last answered (GF2). */
+  resolved?: boolean;
 }>;
 
 /** A public file the consumer sends after its answer (A5d). */
