@@ -2032,6 +2032,24 @@ model InboxRoomLabel {
   @@map("inbox_room_labels")
 }
 
+/// A private note of a conversation (IN5a): only the team sees it, never
+/// the room. Deleting is soft (`deletedAt`, without the text).
+model InboxNote {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  workspaceId    String    @map("workspace_id") @db.Uuid
+  roomId         String    @map("room_id")
+  userId         String?   @map("user_id") @db.Uuid
+  body           String
+  createdAt      DateTime  @default(dbgenerated("now()")) @map("created_at") @db.Timestamptz()
+  editedAt       DateTime? @map("edited_at") @db.Timestamptz()
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz()
+
+  @@index([roomId, createdAt], map: "inbox_notes_room_created_idx")
+  @@index([workspaceId], map: "inbox_notes_workspace_idx")
+  @@map("inbox_notes")
+}
+
 /// The CRM contact of a conversation (IN4b).
 model InboxConversation {
   roomId         String   @id @map("room_id")

@@ -17,16 +17,27 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-import { memberName, timeline, typingNames } from "../client/room-data";
+import {
+  memberName,
+  timeline,
+  type TimelineMessage,
+  typingNames,
+} from "../client/room-data";
+import { mergeTimeline } from "../client/timeline";
 import type { MatrixPhase } from "../client/use-inbox-matrix";
+import { createNoteAction } from "../notes-actions";
+import type { InboxNoteView } from "../server/notes";
+import type { MessageTranslationDto } from "../server/translation";
 import type { ConversationSummary } from "../views";
-import { Composer } from "./composer";
+import type { ComposerMode } from "./composer";
+import { ComposerFrame } from "./composer-frame";
 import { ContactLocaleChip } from "./contact-locale";
 import {
   TranslatedBody,
   TranslationNoticeBar,
   useMessageTranslations,
 } from "./message-translation";
+import { NoteBubble } from "./note-bubble";
 import type { InboxViewer } from "./types";
 
 /**
@@ -35,6 +46,10 @@ import type { InboxViewer } from "./types";
  * AI agent chats). Who only reads (an owner
  * or admin who is not an attendant) sees no box: the room does not let
  * them send either (power 0).
+ * IN5a: the private notes of the team enter the timeline by date, and the
+ * box switches between "Responder" and "Nota privada" (the mode is kept by
+ * the window: "Novo › Nova nota" opens it). A note goes to the database,
+ * never to the room; each mode keeps its own draft.
  */
 
 const PRESENCE_MS = 30_000;
@@ -53,6 +68,11 @@ export function ConversationView({
   onBack,
   onShowContext,
   onChanged,
+  notes,
+  onNotesChanged,
+  mode,
+  onMode,
+  highlightedNote,
 }: Readonly<{
   workspaceSlug: string;
   roomId: string | null;
@@ -67,12 +87,23 @@ export function ConversationView({
   onShowContext: (() => void) | null;
   /** The contact's language changed (TR1): refresh the list. */
   onChanged: () => Promise<void>;
+  /** IN5a: the private notes of the conversation and their refresh. */
+  notes: readonly InboxNoteView[];
+  onNotesChanged: () => Promise<void>;
+  mode: ComposerMode;
+  onMode: (mode: ComposerMode) => void;
+  highlightedNote: string | null;
 }>) {
   const t = useTranslations("inbox");
-  const format = useFormatter();
   const { showStatus } = useStatus();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  // The note draft belongs to its conversation (IN5a).
+  const [noteDraft, setNoteDraft] = useState<{
+    roomId: string | null;
+    text: string;
+  }>({ roomId: null, text: "" });
+  const noteText = noteDraft.roomId === roomId ? noteDraft.text : "";
   const [presenceOf, setPresenceOf] = useState<{
     mxid: string;
     value: string | null;
@@ -91,6 +122,10 @@ export function ConversationView({
     roomId,
     messageIds,
   );
+  const items = useMemo(
+    () => mergeTimeline(messages, notes),
+    [messages, notes],
+  );
   const typing = useMemo(() => {
     void revision;
     return typingNames(room, me);
@@ -103,7 +138,7 @@ export function ConversationView({
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, roomId]);
+  }, [items.length, roomId]);
 
   // The consumer's presence, asked from time to time (Sliding Sync has no
   // presence extension).
@@ -147,6 +182,26 @@ export function ConversationView({
   }
 
   const canSend = viewer.level === "reply" && phase === "ready" && !!room;
+  // A note does not need the chat: only the database.
+  const canNote = viewer.level === "reply";
+
+  const addNote = async () => {
+    const body = noteText.trim();
+    if (!roomId || !body || sending) return;
+    setSending(true);
+    try {
+      const result = await createNoteAction({ workspaceSlug, roomId, body });
+      if ("error" in result) {
+        showStatus({ type: "down", title: result.error });
+        return;
+      }
+      setNoteDraft({ roomId, text: "" });
+      showStatus({ type: "up", title: t("notes.added") });
+      await onNotesChanged();
+    } finally {
+      setSending(false);
+    }
+  };
 
   const send = async () => {
     const body = draft.trim();
@@ -246,46 +301,39 @@ export function ConversationView({
           </div>
         ) : (
           <ol className="flex flex-col gap-2 p-4" data-testid="inbox-timeline">
-            {messages.map((message) => (
-              <li
-                key={message.id}
-                className={cn(
-                  "flex max-w-4/5 flex-col gap-0.5",
-                  message.mine ? "items-end self-end" : "items-start",
-                )}
-              >
-                <span className="text-11 text-text-tertiary">
-                  {message.mine ? t("you") : message.senderName} ·{" "}
-                  {format.dateTime(new Date(message.ts), {
-                    timeStyle: "short",
-                  })}
-                </span>
-                <span
-                  className={cn(
-                    "rounded-inner text-14 px-3 py-2 break-words whitespace-pre-wrap",
-                    message.mine
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-surface-inset text-text",
-                  )}
-                >
-                  <TranslatedBody
-                    body={message.body}
-                    translation={translations.byEvent.get(message.id)}
-                  />
-                </span>
-              </li>
-            ))}
+            {items.map((item) =>
+              item.kind === "note" ? (
+                <NoteBubble
+                  key={item.key}
+                  workspaceSlug={workspaceSlug}
+                  note={item.note}
+                  canWrite={canNote}
+                  highlighted={highlightedNote === item.note.id}
+                  onChanged={onNotesChanged}
+                />
+              ) : (
+                <MessageItem
+                  key={item.key}
+                  message={item.message}
+                  translation={translations.byEvent.get(item.message.id)}
+                />
+              ),
+            )}
             <div ref={bottom} />
           </ol>
         )}
       </ScrollArea>
 
       {viewer.level === "reply" ? (
-        <Composer
-          value={draft}
-          onChange={onDraft}
-          onSend={() => void send()}
-          disabled={!canSend}
+        <ComposerFrame
+          mode={mode}
+          onMode={onMode}
+          value={mode === "note" ? noteText : draft}
+          onChange={
+            mode === "note" ? (text) => setNoteDraft({ roomId, text }) : onDraft
+          }
+          onSend={() => void (mode === "note" ? addNote() : send())}
+          disabled={mode === "note" ? !canNote : !canSend}
           sending={sending}
         />
       ) : (
@@ -297,5 +345,42 @@ export function ConversationView({
         </p>
       )}
     </section>
+  );
+}
+
+/** A message of the room (IN4a), with its translation (TR2). */
+function MessageItem({
+  message,
+  translation,
+}: Readonly<{
+  message: TimelineMessage;
+  translation: MessageTranslationDto | undefined;
+}>) {
+  const t = useTranslations("inbox");
+  const format = useFormatter();
+  return (
+    <li
+      className={cn(
+        "flex max-w-4/5 flex-col gap-0.5",
+        message.mine ? "items-end self-end" : "items-start",
+      )}
+    >
+      <span className="text-11 text-text-tertiary">
+        {message.mine ? t("you") : message.senderName} ·{" "}
+        {format.dateTime(new Date(message.ts), {
+          timeStyle: "short",
+        })}
+      </span>
+      <span
+        className={cn(
+          "rounded-inner text-14 px-3 py-2 break-words whitespace-pre-wrap",
+          message.mine
+            ? "bg-primary text-primary-foreground"
+            : "bg-surface-inset text-text",
+        )}
+      >
+        <TranslatedBody body={message.body} translation={translation} />
+      </span>
+    </li>
   );
 }

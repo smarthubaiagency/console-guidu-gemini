@@ -24,6 +24,8 @@ import { ActionsSection } from "./actions-section";
 import { ContactCard } from "./contact-card";
 import { GuidsCard } from "./guids-card";
 import { LabelsCard } from "./labels-card";
+import { NotesSection } from "./notes-section";
+import type { InboxNoteView } from "../server/notes";
 import type { ConversationCommand, InboxViewer } from "./types";
 
 /**
@@ -36,6 +38,7 @@ import type { ConversationCommand, InboxViewer } from "./types";
  * and "Threads", empty until the backstage threads (SB1). "Contato" is the
  * `cards` accordion of the model components: Contato and Ações da
  * conversa (the old "Atendimento") start open; GUIDS and Etiquetas closed.
+ * IN5a: "Notas" (closed at first) lists the private notes of the team.
  */
 export function ContextPanel({
   workspaceSlug,
@@ -53,6 +56,8 @@ export function ContextPanel({
   onTab,
   sections,
   onSections,
+  notes,
+  onShowNote,
 }: Readonly<{
   workspaceSlug: string;
   roomId: string | null;
@@ -71,6 +76,8 @@ export function ContextPanel({
   /** The open sections of "Contato" (kept by the window). */
   sections: readonly string[];
   onSections: (sections: string[]) => void;
+  notes: readonly InboxNoteView[];
+  onShowNote: (noteId: string) => void;
 }>) {
   const t = useTranslations("inbox");
   const state = useMemo(() => {
@@ -183,6 +190,7 @@ export function ContextPanel({
             active={summary?.labelIds ?? []}
             onChanged={onChanged}
           />
+          <NotesSection notes={notes} onShow={onShowNote} />
         </Accordion>
       </div>
     </ScrollArea>,

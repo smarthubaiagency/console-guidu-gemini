@@ -27,7 +27,7 @@ Deixar a janela com a estrutura em que as features do P1 vão entrar: as abas Co
 - **Esquerda:** botão que recolhe e abre a lista de conversas. Hoje isso é feito pelo `SidebarTrigger` e pelo Ctrl/⌘+B, com o cookie `inbox_sidebar_state`, e continua assim.
 - **Centro:** a busca global do painel (`ShellSearch`), a mesma do `AppShell`.
 - **Direita, nesta ordem:**
-  - **+ Novo:** menu com "Nova conversa", "Nova thread" e "Nova nota", os três desligados com "em breve";
+  - **+ Novo:** menu com "Nova conversa", "Nova thread" e "Nova nota", os três desligados com "em breve" (desde a IN5a, "Nova nota" está ligada: abre a conversa aberta no modo Nota privada);
   - **modo de cor:** o mesmo alternador do `ShellMain`;
   - **notificações:** o `NotificationBell`, com os dados de `loadNotificationBell`;
   - **quem atende:** avatar, nome e e-mail, com o menu do `NavUser` (perfil, idioma, sair).

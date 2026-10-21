@@ -9,6 +9,9 @@
  *   room, the Attendant takes the conversation, answers and resolves it,
  *   and the consumer gets the answer. The owner, not marked, reads only
  *   until the Team marks them as attendant (decision of 17/10/2026).
+ * - IN5a: the Attendant writes, edits and deletes private notes in the
+ *   same box ("Responder | Nota privada"); the owner who only reads sees
+ *   them and writes none; the consumer never gets them.
  * - The window has its own two headers (IN4c): the primary one folds the
  *   list and has the search, "Novo", colour mode, notices and the account;
  *   the secondary one folds the context panel and has the options menu
@@ -238,6 +241,75 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
     .poll(() => consumers.messages(maria, roomId), { timeout: 30_000 })
     .toContain("Bom dia, Maria! Já te mando o orçamento.");
 
+  // IN5a: a private note. The box switches to "Nota privada" (amber) and
+  // back keeping each draft; the note enters the conversation and the
+  // "Notas" section, is edited and deleted by its author, and never
+  // reaches the consumer.
+  const frame = page.getByTestId("inbox-composer-frame");
+  await expect(frame).toHaveAttribute("data-mode", "reply");
+  await box.fill("Rascunho da resposta");
+  await frame.getByRole("tab", { name: "Nota privada" }).click();
+  await expect(frame).toHaveAttribute("data-mode", "note");
+  const noteBox = conversation.getByRole("textbox", {
+    name: "Escreva uma nota",
+  });
+  await expect(noteBox).toHaveAttribute(
+    "placeholder",
+    "Escreva uma nota para a equipe. O contato não vê.",
+  );
+  await expect(noteBox).toHaveValue("");
+  await noteBox.fill("Cliente prefere contato à tarde.");
+  await noteBox.press("Enter");
+  await expect(
+    statusBanner(page).filter({ hasText: "Nota adicionada." }),
+  ).toBeVisible();
+  const notes = conversation.getByTestId("inbox-note");
+  await expect(notes).toHaveCount(1);
+  await expect(notes.first()).toContainText("Nota privada");
+  await expect(notes.first()).toContainText("Cliente prefere contato à tarde.");
+  const notesSection = page.getByTestId("inbox-notes");
+  await expect(notesSection.getByTestId("inbox-notes-count")).toHaveText("1");
+  await openSection(notesSection);
+  await expect(notesSection).toContainText("Cliente prefere contato à tarde.");
+  // The author edits it in place.
+  await notes.first().getByTestId("inbox-note-menu").click();
+  await page.getByRole("menuitem", { name: "Editar" }).click();
+  const editBox = conversation.getByRole("textbox", { name: "Texto da nota" });
+  await editBox.fill("Cliente prefere contato à tarde, depois das 14h.");
+  await editBox.press("Enter");
+  await expect(
+    statusBanner(page).filter({ hasText: "Nota editada." }),
+  ).toBeVisible();
+  await expect(notes.first()).toContainText("depois das 14h");
+  await expect(notes.first().getByTestId("inbox-note-edited")).toBeVisible();
+  // A second note, from "Novo › Nova nota", deleted by its author.
+  await frame.getByRole("tab", { name: "Responder" }).click();
+  await expect(box).toHaveValue("Rascunho da resposta");
+  await page.getByTestId("inbox-new").click();
+  await page.getByTestId("inbox-new-note").click();
+  await expect(frame).toHaveAttribute("data-mode", "note");
+  await expect(noteBox).toBeFocused();
+  await noteBox.fill("Nota para apagar");
+  await conversation.getByRole("button", { name: "Adicionar nota" }).click();
+  await expect(notes).toHaveCount(2);
+  await expect(notesSection.getByTestId("inbox-notes-count")).toHaveText("2");
+  await notes.nth(1).getByTestId("inbox-note-menu").click();
+  await page.getByRole("menuitem", { name: "Apagar" }).click();
+  await page.getByTestId("smart-status-action").click();
+  await expect(
+    statusBanner(page).filter({ hasText: "Nota apagada." }),
+  ).toBeVisible();
+  await expect(notes.nth(1)).toHaveAttribute("data-deleted", "true");
+  await expect(notes.nth(1)).toContainText("Nota apagada");
+  await expect(notes.nth(1).getByTestId("inbox-note-menu")).toHaveCount(0);
+  // Back to "Responder", the draft is there; the consumer saw no note.
+  await frame.getByRole("tab", { name: "Responder" }).click();
+  await expect(box).toHaveValue("Rascunho da resposta");
+  await box.fill("");
+  const seen = await consumers.messages(maria, roomId);
+  expect(seen.join("\n")).not.toContain("prefere contato");
+  expect(seen.join("\n")).not.toContain("Nota para apagar");
+
   // TR1: the consumer writes in Spanish; the conversation knows it (a mark
   // in the list, the chip in the header) and the Attendant corrects it.
   await consumers.send(
@@ -324,9 +396,26 @@ test("a consumer calls the store; the Attendant takes, answers and resolves; the
   await expect(list).toBeVisible();
   await page.setViewportSize({ width: 1280, height: 800 });
 
-  // The owner marks themselves as attendant in the Team and gets the box.
+  // The owner, who only reads, sees the notes and writes none (IN5a).
   await page.context().clearCookies();
   await signIn(page, owner);
+  await page.goto(`/app/${wsSlug}/inbox?view=resolved`);
+  await list.getByRole("button", { name: /Maria Cliente/ }).click();
+  await expect(notes.first()).toContainText("depois das 14h", {
+    timeout: 30_000,
+  });
+  await expect(notes.nth(1)).toContainText("Nota apagada");
+  await expect(page.getByTestId("inbox-read-only")).toBeVisible();
+  await expect(page.getByTestId("inbox-composer-frame")).toHaveCount(0);
+  await expect(conversation.getByTestId("inbox-note-menu")).toHaveCount(0);
+  await page.getByTestId("inbox-new").click();
+  await expect(page.getByTestId("inbox-new-note")).toHaveAttribute(
+    "data-disabled",
+    "",
+  );
+  await page.keyboard.press("Escape");
+
+  // The owner marks themselves as attendant in the Team and gets the box.
   await page.goto(`/app/${wsSlug}/settings/team`);
   const me = page.getByRole("row").filter({ hasText: "Você" });
   await me.getByRole("switch").click();

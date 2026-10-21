@@ -213,5 +213,34 @@
       "refusal": "O motor não devolveu uma tradução.",
       "error": "O motor de tradução falhou."
     }
+  },
+  "notes": {
+    "tabsLabel": "Responder ou escrever nota",
+    "reply": "Responder",
+    "note": "Nota privada",
+    "ai": "Assistente de IA (em breve)",
+    "hint": "Escreva uma nota para a equipe. O contato não vê.",
+    "fieldLabel": "Escreva uma nota",
+    "add": "Adicionar nota",
+    "added": "Nota adicionada.",
+    "private": "Nota privada",
+    "edited": "editada",
+    "deletedNote": "Nota apagada",
+    "unknownAuthor": "Ex-membro da equipe",
+    "menu": "Opções da nota",
+    "edit": "Editar",
+    "delete": "Apagar",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "editLabel": "Texto da nota",
+    "updated": "Nota editada.",
+    "deleted": "Nota apagada.",
+    "confirmDelete": "Apagar esta nota? A conversa passa a mostrar “Nota apagada”.",
+    "title": "Notas",
+    "empty": "Nenhuma nota nesta conversa.",
+    "show": "Ver na conversa: nota de {author}",
+    "errors": {
+      "notFound": "Nota não encontrada."
+    }
   }
 }
