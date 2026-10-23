@@ -52,3 +52,5 @@ L1, L2 e L5 são as de maior prioridade: expõem funções administrativas. L3 e
 1. Plano curto para L1, L2, L5 e L6 (configuração e uma mudança pequena de código em L2), com aprovação do Marcelo no PR, porque mexe em infraestrutura.
 2. L3, L4 e L7 junto com a decisão de borda da ADR de produção (F6c), em que se define se fica com Traefik e Cloudflare ou entra um API Gateway ([análise do Kong](../architecture/analise-kong-2026-10-23.md)).
 3. L8 na F6d.
+
+**Atualização de 23/10/2026:** a [ADR 0026](../adr/0026-gateways-apisix-e-agentgateway.md) leva L1, L3 e L7 para o APISIX e L2 para o agentgateway ([plano dos gateways](../architecture/gateways.md), etapas GW2 e GW4).

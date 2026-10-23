@@ -1,6 +1,6 @@
 # Kong no GUIDU: análise para o piloto de Búzios
 
-- **Status:** análise para discussão. Nada aqui foi decidido.
+- **Status:** análise para discussão. **Decisão de 23/10/2026:** o Marcelo escolheu o APISIX na borda dos apps e o agentgateway na borda dos agentes ([ADR 0026](../adr/0026-gateways-apisix-e-agentgateway.md), [plano](gateways.md)).
 - **Data:** 23/10/2026
 - **Base:** [análise da proposta de infraestrutura](analise-proposta-infra-2026-10-22.md), guias de operação (`docs/operacao/`), código da `main` e pesquisa pública sobre o Kong (fontes na seção 9).
 
