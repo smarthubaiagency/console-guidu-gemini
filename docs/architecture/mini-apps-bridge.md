@@ -20,14 +20,14 @@ O `guiduchat-ui` (fork do `@maxhub/max-ui` 0.7.0) é só o kit visual e não dep
 
 ## 2. Peças
 
-| Peça                      | O que é                                                                                                                                                   | Onde vive                                                          |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| **Registro de mini-apps** | Templates da plataforma e instâncias publicadas por loja: `workspace_id`, id, slug, template, versão publicada, capacidades, política de origem, situação | GUIDU (tabelas novas), gerido pelo módulo **Mini Apps** do console |
-| **Pontos de entrada**     | QR, NFC, link e chat, cada um com loja, item opcional e `sourceType`                                                                                      | GUIDU; o QR é gerado no console                                    |
-| **Runtime**               | Site público e responsivo que renderiza os templates com os dados publicados, em Next.js com o `@guidu/ui`                                                | Host próprio (pergunta 1), servido pelo console no começo          |
-| **Bridge API**            | Emite sessões curtas, autoriza as ações e coordena conversa, solicitação e checkout                                                                       | GUIDU (`/bridge/...`), atrás do APISIX                             |
-| **Bridge SDK**            | `@guidu/miniapp-sdk`: métodos das duas camadas, envelope e validação (Zod)                                                                                | Pacote próprio, ao lado do `guiduchat-ui` (pergunta 2)             |
-| **Adaptadores do app**    | Expo (WebView com origem conferida e rotas para telas nativas) e web (iframe com `postMessage`, ou chamada direta na mesma origem)                        | Repositórios do guidu.chat                                         |
+| Peça                      | O que é                                                                                                                                                   | Onde vive                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Registro de mini-apps** | Templates da plataforma e instâncias publicadas por loja: `workspace_id`, id, slug, template, versão publicada, capacidades, política de origem, situação | GUIDU (tabelas novas), gerido pelo módulo **Mini Apps** do console             |
+| **Pontos de entrada**     | QR, NFC, link e chat, cada um com loja, item opcional e `sourceType`                                                                                      | GUIDU; o QR é gerado no console                                                |
+| **Runtime**               | Site público e responsivo que renderiza os templates com os dados publicados, em Next.js com o `@guidu/ui`                                                | `apps.guidu.chat`, servido pelo container web do GUIDU (decisão de 23/10/2026) |
+| **Bridge API**            | Emite sessões curtas, autoriza as ações e coordena conversa, solicitação e checkout                                                                       | GUIDU (`/bridge/...`), atrás do APISIX                                         |
+| **Bridge SDK**            | `@guidu/miniapp-sdk`: métodos das duas camadas, envelope e validação (Zod)                                                                                | Pacote próprio, ao lado do `guiduchat-ui` (pergunta 2)                         |
+| **Adaptadores do app**    | Expo (WebView com origem conferida e rotas para telas nativas) e web (iframe com `postMessage`, ou chamada direta na mesma origem)                        | Repositórios do guidu.chat                                                     |
 
 **Templates são da plataforma; instâncias são do comerciante.** O comerciante escolhe um template, preenche o conteúdo (itens do Portfólio, coleções, textos) e publica. Ninguém sobe código próprio, e a origem do runtime é fixa.
 
@@ -103,7 +103,7 @@ O `AGENTS.md` manda usar shadcn/ui em toda tela do console. O runtime dos mini-a
 
 ## 10. Perguntas para o Marcelo
 
-1. **Host dos mini-apps:** um host próprio (por exemplo, `apps.guidu.chat` ou `m.guidu.chat`) servido pelo console no começo? É a recomendação, porque separa cookies, moldura e permissões do painel.
+1. ~~**Host dos mini-apps.**~~ **Decidido em 23/10/2026:** `apps.guidu.chat`, servido pelo container web do GUIDU (opção A da seção 11.5). A opção B (mesma imagem num segundo serviço) fica para antes da alta temporada.
 2. **SDK:** pacote `@guidu/miniapp-sdk` separado, com os contratos Zod, ou dentro do `guiduchat-ui`?
 3. **Objeto global:** só o import do SDK, ou também um `window.WebApp` com a camada de aparelho no formato do MAX?
 4. **Templates do piloto:** os do documento de visão para boutique, restaurante e pousada (detalhe do item, cardápio da mesa, concierge do quarto)?
@@ -121,10 +121,10 @@ O `AGENTS.md` manda usar shadcn/ui em toda tela do console. O runtime dos mini-a
 
 E duas peças ao lado, que não são a ponte mas trabalham com ela:
 
-| Peça                                                          | Roda em                                                                   | Container                                               |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
-| **Runtime dos mini-apps** (as páginas)                        | Next.js, rotas públicas num host próprio (`apps.guidu.chat`, a confirmar) | **No começo, o mesmo container web do GUIDU**; ver 11.5 |
-| **Avisos ao turista** (solicitação confirmada, pedido pronto) | Worker do GUIDU (pg-boss), postando na sala Matrix                        | O container do worker que já existe                     |
+| Peça                                                          | Roda em                                                                              | Container                                               |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| **Runtime dos mini-apps** (as páginas)                        | Next.js, rotas públicas num host próprio (`apps.guidu.chat`, decidido em 23/10/2026) | **No começo, o mesmo container web do GUIDU**; ver 11.5 |
+| **Avisos ao turista** (solicitação confirmada, pedido pronto) | Worker do GUIDU (pg-boss), postando na sala Matrix                                   | O container do worker que já existe                     |
 
 ### 11.2 Por que a Bridge API mora no GUIDU
 
@@ -171,7 +171,7 @@ Há dois tipos de ação, e o SDK esconde a diferença:
 
 | Opção                                                          | Como                                                                                                                                                   | A favor                                                                                                | Contra                                                                           |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| **A. Rotas no GUIDU, host próprio** (recomendada para começar) | `apps.guidu.chat` aponta para o container web do GUIDU; o `proxy.ts` separa por host, como já faz com os domínios públicos (`resolvePublicHost`, CF2c) | Nada novo para operar; usa direto o Portfólio e a Bridge API                                           | O tráfego de turista e o do painel disputam o mesmo container                    |
+| **A. Rotas no GUIDU, host próprio** (escolhida em 23/10/2026)  | `apps.guidu.chat` aponta para o container web do GUIDU; o `proxy.ts` separa por host, como já faz com os domínios públicos (`resolvePublicHost`, CF2c) | Nada novo para operar; usa direto o Portfólio e a Bridge API                                           | O tráfego de turista e o do painel disputam o mesmo container                    |
 | **B. Mesma imagem, serviço separado** (para o pico de Búzios)  | O mesmo código sobe como um segundo serviço no EasyPanel (`guidu-apps`), e o APISIX manda o host `apps.*` só para ele                                  | Escala o lado do turista sem mexer no painel; um pico de QR não derruba o console; sem duplicar código | Mais um serviço para monitorar (mesma imagem, então pouco trabalho)              |
 | **C. App Next.js separado** (o monorepo do documento de visão) | Repositório ou pacote próprio, com API de leitura do GUIDU                                                                                             | Ciclo de deploy independente                                                                           | Duplica autenticação, acesso a dados e build; só faz sentido com equipe separada |
 
