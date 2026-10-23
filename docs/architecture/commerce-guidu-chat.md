@@ -122,15 +122,17 @@ O botmercado e o GUIDS vendedor (compra agêntica, seção 3) usam ferramentas d
 
 ## 11. Etapas sugeridas
 
-| Etapa   | Entrega                                                                                                               | Depende de                           |
-| ------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| **VC0** | ADR 0027 com as respostas da seção 9                                                                                  | Marcelo                              |
-| **VC1** | Vendure no local e no dev (server, worker e banco próprio), canal marketplace e AuthenticationStrategy com o Supabase | VC0, ADR 0026 (GW1/GW2)              |
-| **VC2** | Ligar a loja à venda (vendedor e canal), tabela workspace ↔ vendedor, sincronização Portfólio → Vendure e conciliação | VC1                                  |
-| **VC3** | Checkout no guidu.chat sobre a Shop API: uma loja, preço fixo, retirada                                               | VC2, app guidu.chat, pagamento (CA0) |
-| **VC4** | Tela Pedidos no console e evento na sala da loja                                                                      | VC3                                  |
-| **VC5** | Várias lojas, divisão do pedido e repasse                                                                             | VC4 e decisão 3                      |
-| **VC6** | Ferramentas do motor para o comércio agêntico (botmercado e vendedor)                                                 | VC5, CA3 e CA4                       |
+Decisão do Marcelo de 23/10/2026: o **Vendure entra na V1** do guidu.chat, com pedido enviado à loja e pagamento por link da própria loja ([guidu-chat: v1-navegacao-e-pedido.md](https://github.com/smarthubaiagency/guidu-chat/blob/claude/produto-v1/docs/produto/v1-navegacao-e-pedido.md)). O pagamento pela plataforma (CA0) fica para depois.
+
+| Etapa   | Entrega                                                                                                                                                                                                        | Depende de              |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **VC0** | ADR 0027 com as respostas da seção 9                                                                                                                                                                           | Marcelo                 |
+| **VC1** | Vendure no local e no dev (server, worker e banco próprio), canal marketplace e AuthenticationStrategy com o Supabase                                                                                          | VC0, ADR 0026 (GW1/GW2) |
+| **VC2** | Ligar a loja à venda (vendedor e canal), tabela workspace ↔ vendedor, sincronização Portfólio → Vendure e conciliação                                                                                          | VC1                     |
+| **VC3** | Checkout no guidu.chat sobre a Shop API com **Enviar pedido** (sem pagamento pela plataforma): processo de pedido com situações próprias, meio de pagamento "combinado com a loja", cadastro ou login no envio | VC2, app guidu.chat     |
+| **VC4** | Espaço Pedidos no Inbox: aceitar, recusar, gerar link de pagamento a partir do pedido, confirmar recebimento, pronto, enviado, concluído; cartões na sala e histórico no Cliente Hub                           | VC3                     |
+| **VC5** | Várias lojas, divisão do pedido e repasse                                                                                                                                                                      | VC4 e decisão 3         |
+| **VC6** | Ferramentas do motor para o comércio agêntico (botmercado e vendedor)                                                                                                                                          | VC5, CA3 e CA4          |
 
 ## 12. Fontes
 
