@@ -49,14 +49,14 @@ O Marcelo pode vetar qualquer uma. Sem veto, elas valem como padrão dos planos.
 
 ## 5. Decisões que só o Marcelo pode tomar
 
-| #   | Pergunta                                                                  | Recomendação                                                                                                                                                          | Trava                            |
-| --- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| N1  | **Data do piloto** e se ele precisa estar no ar no réveillon              | Definir já: tudo depende dela                                                                                                                                         | Ordem das etapas                 |
-| N2  | **Lojas do piloto**                                                       | Uma boutique, um restaurante e uma pousada, como na visão v1.0                                                                                                        | Templates de mini-app e conteúdo |
-| N3  | **Como as lojas recebem**                                                 | Cada loja recebe direto na própria conta do provedor de pagamento, e a plataforma cobra comissão só se o contrato prever. Precisa de conversa com jurídico e contador | Pagamento (CA0), Vendure VC3     |
-| N4  | **Conta do turista** no mesmo projeto Supabase do console ou num separado | Separado: o login do turista (telefone, alto volume) não se mistura com o do comerciante                                                                              | Identidade do guidu.chat         |
-| N5  | **Quem pode vender pelo guidu.chat**                                      | Opt-in da loja, incluído no plano                                                                                                                                     | Comercial                        |
-| N6  | **Nota fiscal**                                                           | A loja emite; definir com o contador como o pedido chega ao emissor dela                                                                                              | Pagamento real                   |
+| #   | Pergunta                                                                  | Recomendação                                                                                                                                                                                                  | Trava                            |
+| --- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| N1  | **Data do piloto** e se ele precisa estar no ar no réveillon              | **Recomendação (23/10):** janeiro de 2027 com WhatsApp + mini-apps no navegador + solicitação confirmada à mão; app, Vendure e pagamento depois da temporada ([capacidade](../operacao/capacidade-buzios.md)) | Ordem das etapas                 |
+| N2  | **Lojas do piloto**                                                       | Uma boutique, um restaurante e uma pousada, como na visão v1.0                                                                                                                                                | Templates de mini-app e conteúdo |
+| N3  | **Como as lojas recebem**                                                 | Cada loja recebe direto na própria conta do provedor de pagamento, e a plataforma cobra comissão só se o contrato prever. Precisa de conversa com jurídico e contador                                         | Pagamento (CA0), Vendure VC3     |
+| N4  | **Conta do turista** no mesmo projeto Supabase do console ou num separado | Separado: o login do turista (telefone, alto volume) não se mistura com o do comerciante                                                                                                                      | Identidade do guidu.chat         |
+| N5  | **Quem pode vender pelo guidu.chat**                                      | Opt-in da loja, incluído no plano                                                                                                                                                                             | Comercial                        |
+| N6  | **Nota fiscal**                                                           | A loja emite; definir com o contador como o pedido chega ao emissor dela                                                                                                                                      | Pagamento real                   |
 
 ## 6. Próximas duas semanas (proposta)
 
@@ -73,13 +73,14 @@ Em paralelo, sem código: o Marcelo responde N1 a N6, e o jurídico e o contador
 
 ## 7. Riscos que acompanho
 
-| Risco                                      | Impacto                                      | O que fazer                                                 |
-| ------------------------------------------ | -------------------------------------------- | ----------------------------------------------------------- |
-| Data do piloto indefinida                  | Ordem errada de entregas                     | Responder N1                                                |
-| Pagamento entre lojas (jurídico, provedor) | Atrasa o checkout                            | Piloto começa com solicitação confirmada à mão (T9)         |
-| Servidor único do EasyPanel                | Uma falha derruba tudo no pico               | ADR de produção com dois servidores antes da alta temporada |
-| Matrix no app nativo                       | O SDK pode não funcionar bem no React Native | Prova técnica antes de começar o app                        |
-| Muitas frentes ao mesmo tempo              | Nada termina                                 | Duas etapas por vez; este painel decide a ordem             |
+| Risco                                                   | Impacto                                         | O que fazer                                                                                                             |
+| ------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Data do piloto indefinida                               | Ordem errada de entregas                        | Responder N1                                                                                                            |
+| IA da plataforma no pico (BotCompara com a nossa chave) | Limite do provedor e custo travam o atendimento | Plano alto, mais de um provedor, modelo rápido, teto de gasto ([capacidade](../operacao/capacidade-buzios.md), seção 4) |
+| Pagamento entre lojas (jurídico, provedor)              | Atrasa o checkout                               | Piloto começa com solicitação confirmada à mão (T9)                                                                     |
+| Servidor único do EasyPanel                             | Uma falha derruba tudo no pico                  | ADR de produção com dois servidores antes da alta temporada                                                             |
+| Matrix no app nativo                                    | O SDK pode não funcionar bem no React Native    | Prova técnica antes de começar o app                                                                                    |
+| Muitas frentes ao mesmo tempo                           | Nada termina                                    | Duas etapas por vez; este painel decide a ordem                                                                         |
 
 ## 8. Como trabalhamos
 
