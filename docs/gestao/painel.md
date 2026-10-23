@@ -29,6 +29,8 @@ Piloto em Búzios: o turista descobre as lojas por QR e pelo guidu.chat, convers
 5. O documento de visão do Guidu.chat é referência; as decisões são tomadas neste repositório.
 6. O app guidu.chat é feito em **React Native + Expo** ([app guidu.chat](../architecture/guidu-chat-app.md)).
 
+- **ADR 0027 (proposta, 23/10/2026):** guidu.chat V1 e a fronteira console ↔ bridge ↔ guidu.chat, com duas equipes ([ADR](../adr/0027-guidu-chat-v1-console-bridge.md), [divisão de tarefas](equipes-guidu-chat-v1.md)).
+
 ## 4. Decisões técnicas do gerente de projeto
 
 O Marcelo pode vetar qualquer uma. Sem veto, elas valem como padrão dos planos.

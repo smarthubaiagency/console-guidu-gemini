@@ -2,6 +2,7 @@
 
 - **Status:** proposta para fechar com o Marcelo. Vira ADR (número sugerido: 0028) depois das respostas da seção 10. O funcionamento por dentro e onde cada peça mora estão na seção 11. O documento de visão e o MAX Bridge são referências, não decisões.
 - **Data:** 23/10/2026
+- **Decisão oficial:** [ADR 0027](../adr/0027-guidu-chat-v1-console-bridge.md). Onde este documento divergir dela (dono de cada lado da ponte, `addToCart`, QR em `guidu.chat/q/<código>`), vale a ADR.
 - **Fontes:** [visão do Guidu.chat v1.0](../spec/guidu-chat-visao-produto-v1.0.md), seção 7 (desenho de domínio), e o MAX Bridge (desenho de capacidades do aparelho). Comparação em [analise-visao-guidu-chat.md](analise-visao-guidu-chat.md).
 - **Relaciona-se com:** [commerce do guidu.chat](commerce-guidu-chat.md), [ADR 0023](../adr/0023-chat-interno-como-cliente-matrix.md) (Matrix e JWT), [ADR 0026](../adr/0026-gateways-apisix-e-agentgateway.md) (gateways), [guiduchat-ui](https://github.com/smarthubaiagency/guiduchat-ui) (kit de UI).
 

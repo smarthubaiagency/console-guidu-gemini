@@ -3,6 +3,7 @@
 - **Status:** proposta do gerente de projeto, 23/10/2026, a partir da decisão do Marcelo de ter **pedido com Vendure em janeiro**.
 - **Produto:** [guidu-chat: v1-navegacao-e-pedido.md](https://github.com/smarthubaiagency/guidu-chat/blob/claude/produto-v1/docs/produto/v1-navegacao-e-pedido.md)
 - **Painel:** [painel.md](painel.md)
+- **Divisão entre as equipes console e guidu.chat:** [equipes-guidu-chat-v1.md](equipes-guidu-chat-v1.md), conforme a [ADR 0027](../adr/0027-guidu-chat-v1-console-bridge.md)
 
 ## 1. O que vai ao ar em janeiro
 
@@ -21,17 +22,17 @@
 
 As etapas andam em pares (`AGENTS.md`); cada uma com PR, testes e aprovação do Marcelo. Infraestrutura e produção exigem aprovação registrada no PR.
 
-| Semana | Datas         | Entregas                                                                                                                      |
-| ------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 1      | 27/10 a 02/11 | Aprovação das ADRs 0026 (gateways), 0027 (Vendure) e 0028 (Mini App Bridge); segurança L1, L2 e L5; Vendure no ambiente local |
-| 2      | 03/11 a 09/11 | Vendure no dev (server, worker, banco), canal por loja, sincronização Portfólio → Vendure; APISIX no ambiente local           |
-| 3      | 10/11 a 16/11 | `apps.guidu.chat`: página do QR, Local e produto, carrinho por loja; login do turista por telefone                            |
-| 4      | 17/11 a 23/11 | **Enviar pedido**; espaço Pedidos no Inbox (lista e detalhe); cartão do pedido na conversa                                    |
-| 5      | 24/11 a 30/11 | Proposta versionada (plugin `guidu-proposals`), aceite do turista, Cliente Hub (minhas compras e histórico)                   |
-| 6      | 01/12 a 07/12 | Link de pagamento (1 provedor por API + manual), confirmação de recebimento, telas de retirada e envio                        |
-| 7      | 08/12 a 14/12 | Gateways no dev; backup do Synapse e do Vendure; teste de carga na faixa-alvo com folga de 2×; revisão de segurança           |
-| 8      | 15/12 a 21/12 | Produção (F6c) com aprovação; cadastro das lojas do piloto, conteúdo e QR impressos; treino das equipes                       |
-| 9      | 22/12 a 31/12 | Congelamento: só correções; plantão no réveillon                                                                              |
+| Semana | Datas         | Entregas                                                                                                                                                                                |
+| ------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1      | 27/10 a 02/11 | Aprovação das ADRs 0026 (gateways) e 0027 (guidu.chat V1: Vendure, Mini App Bridge, API e divisão das equipes); contrato v1 publicado; segurança L1, L2 e L5; Vendure no ambiente local |
+| 2      | 03/11 a 09/11 | Vendure no dev (server, worker, banco), canal por loja, sincronização Portfólio → Vendure; APISIX no ambiente local                                                                     |
+| 3      | 10/11 a 16/11 | `apps.guidu.chat`: página do QR, Local e produto, carrinho por loja; login do turista por telefone                                                                                      |
+| 4      | 17/11 a 23/11 | **Enviar pedido**; espaço Pedidos no Inbox (lista e detalhe); cartão do pedido na conversa                                                                                              |
+| 5      | 24/11 a 30/11 | Proposta versionada (plugin `guidu-proposals`), aceite do turista, Cliente Hub (minhas compras e histórico)                                                                             |
+| 6      | 01/12 a 07/12 | Link de pagamento (1 provedor por API + manual), confirmação de recebimento, telas de retirada e envio                                                                                  |
+| 7      | 08/12 a 14/12 | Gateways no dev; backup do Synapse e do Vendure; teste de carga na faixa-alvo com folga de 2×; revisão de segurança                                                                     |
+| 8      | 15/12 a 21/12 | Produção (F6c) com aprovação; cadastro das lojas do piloto, conteúdo e QR impressos; treino das equipes                                                                                 |
+| 9      | 22/12 a 31/12 | Congelamento: só correções; plantão no réveillon                                                                                                                                        |
 
 ## 3. Cortes para caber no prazo
 
