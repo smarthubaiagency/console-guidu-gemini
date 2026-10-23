@@ -84,3 +84,24 @@ O que é novo no núcleo: um tipo de agente da plataforma voltado ao consumidor 
 3. Link universal: QR abre o app instalado e a página sem o app.
 4. Teste rápido do caminho A (`@unomed/react-native-matrix-sdk` num build de desenvolvimento) só para registrar se ele é viável no futuro.
 5. Medição: quantas conexões em tempo real um container web aguenta, para dimensionar o pico.
+
+## 7. A janela de conversa do app e o Inbox
+
+As duas não conversam entre si: são **as duas pontas da mesma sala**. A sala Matrix é a conversa; o Inbox é a janela da loja e o guidu.chat é a janela do turista.
+
+|                      | Inbox (console)                                                            | Conversa no guidu.chat                                                            |
+| -------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Quem usa             | Equipe da loja                                                             | Turista                                                                           |
+| O que lista          | Todas as conversas da loja, com visões Minhas, Não atribuídas e Resolvidas | As conversas do turista: uma por loja e a do guidu (BotCompara)                   |
+| Idioma               | Português, com "ver original"                                              | O idioma do turista; a sala já recebe a resposta traduzida (traducao.md, 5.2)     |
+| O que só um lado vê  | Notas internas, etiquetas, responsável, sala de bastidor, resumo do GUIDS  | Cartões de produto, botões que abrem mini-apps, status da solicitação e do pedido |
+| Como fala com a sala | Cliente Matrix no navegador do atendente (ADR 0023)                        | Pelo GUIDU, como usuário virtual (caminho B, seção 2)                             |
+
+Uma mensagem de ida e volta:
+
+1. O turista escreve em espanhol no app. O GUIDU grava na sala da loja em nome dele.
+2. O GUIDS da loja responde, ou o Inbox mostra a mensagem em português a quem atende.
+3. O atendente responde em português; a sala recebe a versão em espanhol.
+4. O GUIDU entrega essa mensagem ao app (tempo real ou push).
+
+**Modo loja (GC1, depois):** o mesmo app pode ter uma janela que funciona **como o Inbox**, para o comerciante atender pelo celular. É outra tela do app, com permissões de equipe, sobre as mesmas salas.
