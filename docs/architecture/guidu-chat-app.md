@@ -127,4 +127,23 @@ Uma mensagem de ida e volta:
 3. Synapse com workers aguentando o número de turistas simultâneos do pico, medido.
 4. Bindings com atualização recente e versão compatível com o Synapse em uso.
 
+### 8.1 Quanto o Synapse aguenta
+
+Não existe número oficial e independente de usuários conectados por Synapse; depende do servidor, dos workers e de quanto cada pessoa conversa. O que há (23/10/2026):
+
+- **Um processo só (monolito):** o Synapse é Python e cada processo usa no máximo um núcleo de CPU. Guias da comunidade recomendam workers a partir de algumas centenas de usuários ativos.
+- **Com workers** (processos separados de sync, leitura e mídia): o matrix.org relatou servidores com mais de 50 mil usuários simultâneos em 2020, com bastante infraestrutura.
+- **Acima disso:** a Element vende o Synapse Pro (partes em Rust, pago) para milhões de usuários. Há servidores alternativos em Rust (Tuwunel, Continuwuity), com compatibilidade a conferir (Application Service, Sliding Sync, API admin).
+- **Nossa medição (IN1):** com 300 salas, o Sliding Sync entregou as 20 primeiras em 31 ms ([prova de conceito](../modules/inbox/prova-de-conceito.md)). O turista tem poucas salas (uma por loja e a do guidu), então cada conexão dele é leve.
+
+Estimativa de ponto de partida, a confirmar no teste de carga:
+
+| Turistas com o app aberto ao mesmo tempo | Caminho A (Synapse)                                                        | Caminho B (GUIDU)                                             |
+| ---------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Até ~500                                 | Monolito bem dimensionado                                                  | Synapse sem mudança; GUIDU com 1 a 2 réplicas                 |
+| ~500 a ~5.000                            | Workers de sync e leitura, Postgres próprio dimensionado                   | Synapse com poucos workers; GUIDU com mais réplicas           |
+| Acima de ~5.000                          | Muitos workers e Redis entre eles; avaliar Synapse Pro ou servidor em Rust | Synapse processa só as mensagens; o GUIDU escala por réplicas |
+
+No caminho B, o Synapse não segura uma conexão por turista: ele só recebe e entrega as mensagens ao GUIDU pelo Application Service. Por isso o B aguenta mais com o mesmo Synapse. O número real sai do teste de carga da prova técnica (seção 6, item 5), com o perfil de Búzios.
+
 Se os quatro passarem, o app pode trocar o `ChatProvider` do caminho B pelo A sem refazer as telas. O modo loja (GC1) ganha mais com o caminho A, porque a equipe já tem conta Matrix.
