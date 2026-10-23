@@ -1,0 +1,86 @@
+# Painel do projeto
+
+- **Atualizado em:** 23/10/2026
+- **Quem mantém:** o agente, no papel de gerente de projeto (`AGENTS.md`, "Gestão do projeto"). O Marcelo decide; o agente recomenda, organiza e cobra.
+- **Para que serve:** ver em uma página onde o projeto está, o que foi decidido, o que espera decisão e o que vem a seguir. Os detalhes técnicos ficam nos documentos ligados.
+
+## 1. Objetivo
+
+Piloto em Búzios: o turista descobre as lojas por QR e pelo guidu.chat, conversa no idioma dele, é atendido por agentes e pela equipe da loja e, depois, paga num checkout único da cidade. O comerciante cuida de tudo pelo console. A estrutura precisa aguentar os picos de turismo e ser segura.
+
+## 2. Onde estamos
+
+| Frente                                                                                            | Situação                                                                                                 | Próximo passo                                                                                                 |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Console do comerciante** (Portfólio, CRM, agentes, Inbox no Matrix, WhatsApp da Meta, tradução) | Pronto em dev. Últimas entregas: GF2 (PR #135) e TR3 (PR #134)                                           | SB1 (salas internas) e TR4 (áudio), da [lista de prioridades](../architecture/prioridades-agentes-e-inbox.md) |
+| **Segurança de borda**                                                                            | 8 lacunas registradas ([auditoria](../auditoria/2026-10-23-seguranca-de-borda.md)); 3 de prioridade alta | Fechar L1, L2 e L5 antes de qualquer cliente real                                                             |
+| **Gateways** (APISIX nos apps, agentgateway nos agentes)                                          | Decidido em 23/10; [ADR 0026](../adr/0026-gateways-apisix-e-agentgateway.md) proposta                    | Aprovação da ADR e etapas GW1 e GW3                                                                           |
+| **Comércio** (Vendure como motor do guidu.chat)                                                   | Ideia organizada ([commerce](../architecture/commerce-guidu-chat.md))                                    | Decisão de pagamento (CA0) e ADR 0027                                                                         |
+| **Mini-apps e Bridge**                                                                            | Desenho fechado; host `apps.guidu.chat` decidido ([ponte](../architecture/mini-apps-bridge.md))          | ADR 0028 e etapa MA1                                                                                          |
+| **App guidu.chat** (turista)                                                                      | Não começou. Referência: [visão v1.0](../spec/guidu-chat-visao-produto-v1.0.md)                          | Prova técnica do Matrix no React Native                                                                       |
+| **Produção**                                                                                      | Não existe (F6c)                                                                                         | ADR de produção: hospedagem, gateways, backup, teste de carga                                                 |
+
+## 3. Decisões tomadas em 23/10/2026
+
+1. As ADRs são referência, não regra imutável (`AGENTS.md`).
+2. Kong fora. **APISIX** na borda dos apps e **agentgateway** na borda dos agentes (ADR 0026).
+3. **Vendure** como motor de comércio do guidu.chat; o comerciante continua no Portfólio do console; o turista é cliente do guidu.chat.
+4. Mini-apps e Bridge API em **`apps.guidu.chat`**, servidos pelo container do GUIDU.
+5. O documento de visão do Guidu.chat é referência; as decisões são tomadas neste repositório.
+
+## 4. Decisões técnicas do gerente de projeto
+
+O Marcelo pode vetar qualquer uma. Sem veto, elas valem como padrão dos planos.
+
+| #   | Assunto                        | Decisão                                                                                              | Por quê                                                      |
+| --- | ------------------------------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| T1  | Host do agentgateway           | `mcp.guidu.co`; o `/mcp/workspace` atual continua no console até a GW4 terminar                      | Não quebra quem já está conectado                            |
+| T2  | Domínios de parceiro no APISIX | Primeiro só os hosts da plataforma; domínios de parceiro numa segunda etapa                          | Menos risco de derrubar um parceiro na primeira configuração |
+| T3  | Saída de LLM pelo agentgateway | Começa só pela chave da plataforma; chaves de cliente depois que a passagem da chave estiver provada | As chaves dos clientes são o dado mais sensível dessa rota   |
+| T4  | Redis do APISIX                | O mesmo Redis do GUIDU, com índice próprio, no dev; separado em produção                             | Simples agora, isolado quando importar                       |
+| T5  | Estoque com a venda ligada     | O Vendure manda no estoque; o Portfólio mostra e edita gravando no Vendure                           | Evita duas fontes brigando no pico                           |
+| T6  | Busca dos agentes no comércio  | Preço e estoque do Vendure; texto, fotos e regras de IA do Portfólio                                 | Cada dado vem de quem é dono dele                            |
+| T7  | SDK dos mini-apps              | Pacote `@guidu/miniapp-sdk` separado do kit de UI; sem objeto global no começo                       | O contrato evolui sem mexer no kit visual                    |
+| T8  | Mini-apps de parceiros         | Só templates nossos no piloto                                                                        | Segurança: ninguém publica código de fora                    |
+| T9  | Primeiro recorte de venda      | Solicitação confirmada à mão (reserva, orçamento) antes de pagamento                                 | Dá para pilotar sem esperar o pagamento                      |
+
+## 5. Decisões que só o Marcelo pode tomar
+
+| #   | Pergunta                                                                  | Recomendação                                                                                                                                                          | Trava                            |
+| --- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| N1  | **Data do piloto** e se ele precisa estar no ar no réveillon              | Definir já: tudo depende dela                                                                                                                                         | Ordem das etapas                 |
+| N2  | **Lojas do piloto**                                                       | Uma boutique, um restaurante e uma pousada, como na visão v1.0                                                                                                        | Templates de mini-app e conteúdo |
+| N3  | **Como as lojas recebem**                                                 | Cada loja recebe direto na própria conta do provedor de pagamento, e a plataforma cobra comissão só se o contrato prever. Precisa de conversa com jurídico e contador | Pagamento (CA0), Vendure VC3     |
+| N4  | **Conta do turista** no mesmo projeto Supabase do console ou num separado | Separado: o login do turista (telefone, alto volume) não se mistura com o do comerciante                                                                              | Identidade do guidu.chat         |
+| N5  | **Quem pode vender pelo guidu.chat**                                      | Opt-in da loja, incluído no plano                                                                                                                                     | Comercial                        |
+| N6  | **Nota fiscal**                                                           | A loja emite; definir com o contador como o pedido chega ao emissor dela                                                                                              | Pagamento real                   |
+
+## 6. Próximas duas semanas (proposta)
+
+As etapas andam em pares, como manda o `AGENTS.md`. Toda mudança de infraestrutura passa pela aprovação do Marcelo no PR.
+
+| Ordem | Par                                                                    | Por que agora                                                            |
+| ----- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 1     | **Segurança L1, L2 e L5** + **SB1**                                    | As lacunas expõem funções de administrador; a SB1 é a próxima do console |
+| 2     | **GW1 (APISIX local)** + **GW3 (agentgateway local)**                  | Prova que nada quebra com os gateways antes de ir ao dev                 |
+| 3     | **MA1 (registro de mini-apps, QR e página pública)** + **TR4 (áudio)** | Primeira coisa que o turista vê; independe de pagamento                  |
+| 4     | **GW2 + GW4 (gateways no dev)**                                        | Fecha L3 e L7 e coloca a borda nova no ar                                |
+
+Em paralelo, sem código: o Marcelo responde N1 a N6, e o jurídico e o contador olham o pagamento.
+
+## 7. Riscos que acompanho
+
+| Risco                                      | Impacto                                      | O que fazer                                                 |
+| ------------------------------------------ | -------------------------------------------- | ----------------------------------------------------------- |
+| Data do piloto indefinida                  | Ordem errada de entregas                     | Responder N1                                                |
+| Pagamento entre lojas (jurídico, provedor) | Atrasa o checkout                            | Piloto começa com solicitação confirmada à mão (T9)         |
+| Servidor único do EasyPanel                | Uma falha derruba tudo no pico               | ADR de produção com dois servidores antes da alta temporada |
+| Matrix no app nativo                       | O SDK pode não funcionar bem no React Native | Prova técnica antes de começar o app                        |
+| Muitas frentes ao mesmo tempo              | Nada termina                                 | Duas etapas por vez; este painel decide a ordem             |
+
+## 8. Como trabalhamos
+
+- O agente traz **recomendação, não lista de opções**, em linguagem simples e com o porquê.
+- Só sobe para o Marcelo o que é negócio, dinheiro, jurídico, risco alto ou infraestrutura de produção. O técnico, o agente decide e registra (seção 4), e o Marcelo pode vetar.
+- Toda decisão fica registrada neste painel e no documento técnico correspondente.
+- Cada entrega segue o fluxo do `AGENTS.md` (Contexto → Objetivo → Requisitos → Lógica → Plano → Testes → Aceite) e chega com evidência de teste.
