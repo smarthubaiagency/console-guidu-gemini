@@ -27,22 +27,25 @@ Piloto em Búzios: o turista descobre as lojas por QR e pelo guidu.chat, convers
 3. **Vendure** como motor de comércio do guidu.chat; o comerciante continua no Portfólio do console; o turista é cliente do guidu.chat.
 4. Mini-apps e Bridge API em **`apps.guidu.chat`**, servidos pelo container do GUIDU.
 5. O documento de visão do Guidu.chat é referência; as decisões são tomadas neste repositório.
+6. O app guidu.chat é feito em **React Native + Expo** ([app guidu.chat](../architecture/guidu-chat-app.md)).
 
 ## 4. Decisões técnicas do gerente de projeto
 
 O Marcelo pode vetar qualquer uma. Sem veto, elas valem como padrão dos planos.
 
-| #   | Assunto                        | Decisão                                                                                              | Por quê                                                      |
-| --- | ------------------------------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| T1  | Host do agentgateway           | `mcp.guidu.co`; o `/mcp/workspace` atual continua no console até a GW4 terminar                      | Não quebra quem já está conectado                            |
-| T2  | Domínios de parceiro no APISIX | Primeiro só os hosts da plataforma; domínios de parceiro numa segunda etapa                          | Menos risco de derrubar um parceiro na primeira configuração |
-| T3  | Saída de LLM pelo agentgateway | Começa só pela chave da plataforma; chaves de cliente depois que a passagem da chave estiver provada | As chaves dos clientes são o dado mais sensível dessa rota   |
-| T4  | Redis do APISIX                | O mesmo Redis do GUIDU, com índice próprio, no dev; separado em produção                             | Simples agora, isolado quando importar                       |
-| T5  | Estoque com a venda ligada     | O Vendure manda no estoque; o Portfólio mostra e edita gravando no Vendure                           | Evita duas fontes brigando no pico                           |
-| T6  | Busca dos agentes no comércio  | Preço e estoque do Vendure; texto, fotos e regras de IA do Portfólio                                 | Cada dado vem de quem é dono dele                            |
-| T7  | SDK dos mini-apps              | Pacote `@guidu/miniapp-sdk` separado do kit de UI; sem objeto global no começo                       | O contrato evolui sem mexer no kit visual                    |
-| T8  | Mini-apps de parceiros         | Só templates nossos no piloto                                                                        | Segurança: ninguém publica código de fora                    |
-| T9  | Primeiro recorte de venda      | Solicitação confirmada à mão (reserva, orçamento) antes de pagamento                                 | Dá para pilotar sem esperar o pagamento                      |
+| #   | Assunto                        | Decisão                                                                                                                                                     | Por quê                                                                                                              |
+| --- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| T1  | Host do agentgateway           | `mcp.guidu.co`; o `/mcp/workspace` atual continua no console até a GW4 terminar                                                                             | Não quebra quem já está conectado                                                                                    |
+| T2  | Domínios de parceiro no APISIX | Primeiro só os hosts da plataforma; domínios de parceiro numa segunda etapa                                                                                 | Menos risco de derrubar um parceiro na primeira configuração                                                         |
+| T3  | Saída de LLM pelo agentgateway | Começa só pela chave da plataforma; chaves de cliente depois que a passagem da chave estiver provada                                                        | As chaves dos clientes são o dado mais sensível dessa rota                                                           |
+| T4  | Redis do APISIX                | O mesmo Redis do GUIDU, com índice próprio, no dev; separado em produção                                                                                    | Simples agora, isolado quando importar                                                                               |
+| T5  | Estoque com a venda ligada     | O Vendure manda no estoque; o Portfólio mostra e edita gravando no Vendure                                                                                  | Evita duas fontes brigando no pico                                                                                   |
+| T6  | Busca dos agentes no comércio  | Preço e estoque do Vendure; texto, fotos e regras de IA do Portfólio                                                                                        | Cada dado vem de quem é dono dele                                                                                    |
+| T7  | SDK dos mini-apps              | Pacote `@guidu/miniapp-sdk` separado do kit de UI; sem objeto global no começo                                                                              | O contrato evolui sem mexer no kit visual                                                                            |
+| T8  | Mini-apps de parceiros         | Só templates nossos no piloto                                                                                                                               | Segurança: ninguém publica código de fora                                                                            |
+| T9  | Primeiro recorte de venda      | Solicitação confirmada à mão (reserva, orçamento) antes de pagamento                                                                                        | Dá para pilotar sem esperar o pagamento                                                                              |
+| T10 | Conversa do app com o Matrix   | No piloto, o app fala só com o GUIDU, e o turista é um usuário virtual nas salas, como o contato do WhatsApp; cliente Matrix direto no app fica para depois | Reaproveita o que já funciona, nenhuma credencial Matrix no aparelho e o pico fica no GUIDU, que escala por réplicas |
+| T11 | BotCompara e BotShop           | Ficam no motor de IA do GUIDU, como agentes da plataforma com a nossa chave, configurados no `/platform`                                                    | O motor, as salas e as ferramentas já estão no GUIDU                                                                 |
 
 ## 5. Decisões que só o Marcelo pode tomar
 
