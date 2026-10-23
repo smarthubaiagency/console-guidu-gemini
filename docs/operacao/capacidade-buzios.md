@@ -61,6 +61,31 @@ Os turnos do GUIDS usam a chave de cada loja: cerca de 16 por hora por loja no p
 - O **BotCompara e o BotShop usam a nossa chave**. Em 1.000 lojas, são cerca de 7 mil turnos por hora no pico e perto de 200 milhões de tokens por dia numa conta só. Os limites do provedor e o custo viram o problema principal.
 - Medidas: plano alto no provedor; mais de um provedor com troca automática (agentgateway); modelo rápido e barato para o BotCompara; respostas prontas para perguntas repetidas (horário, endereço); teto de gasto por dia; o custo por turno calculado com o modelo escolhido antes de abrir o BotCompara para a cidade.
 
+### 5.1 Custo estimado do BotCompara e do BotShop
+
+Preços da API da Anthropic consultados em 23/10/2026 (por milhão de tokens, em dólar): Claude Haiku 5.5, US$ 0,10 de entrada e US$ 0,50 de saída; Claude Sonnet 5.5, US$ 2 e US$ 10; Claude Opus 5.5, US$ 4 e US$ 20. Leitura de cache: US$ 0,20 no Sonnet 5.5 e no Opus 5.5. OpenAI, Google e OpenRouter, que o motor também aceita, ficam para comparar com a mesma conta.
+
+Premissas por turno: ~4 mil tokens (2 mil de prompt fixo em cache, 1,5 mil de conversa e resultados de ferramenta, 500 de resposta). Turnos por dia: 48 por loja (seção 2).
+
+| Modelo     | Custo por turno | Custo por conversa (8 turnos) |
+| ---------- | --------------- | ----------------------------- |
+| Haiku 5.5  | ~US$ 0,0004     | ~US$ 0,003                    |
+| Sonnet 5.5 | ~US$ 0,008      | ~US$ 0,07                     |
+| Opus 5.5   | ~US$ 0,016      | ~US$ 0,13                     |
+
+| Lojas | Turnos por dia | Haiku 5.5 (dia / mês de pico) | Mistura 90% Haiku + 10% Sonnet (dia / mês) | Sonnet 5.5 (dia / mês) | Opus 5.5 (dia / mês) |
+| ----- | -------------- | ----------------------------- | ------------------------------------------ | ---------------------- | -------------------- |
+| 100   | 4.800          | US$ 2 / 60                    | US$ 6 / 175                                | US$ 40 / 1.210         | US$ 79 / 2.360       |
+| 200   | 9.600          | US$ 4 / 120                   | US$ 12 / 350                               | US$ 81 / 2.420         | US$ 157 / 4.720      |
+| 300   | 14.400         | US$ 6 / 180                   | US$ 18 / 525                               | US$ 121 / 3.630        | US$ 236 / 7.080      |
+| 500   | 24.000         | US$ 10 / 300                  | US$ 29 / 880                               | US$ 202 / 6.050        | US$ 394 / 11.810     |
+| 1.000 | 48.000         | US$ 20 / 600                  | US$ 59 / 1.760                             | US$ 403 / 12.100       | US$ 787 / 23.620     |
+| 2.000 | 96.000         | US$ 40 / 1.210                | US$ 117 / 3.510                            | US$ 806 / 24.190       | US$ 1.574 / 47.230   |
+
+O mês de pico considera 30 dias no ritmo de janeiro; fora da temporada o volume cai. Se os resultados de busca (cartões de produto) fizerem o turno ter 10 mil tokens em vez de 4 mil, os valores sobem cerca de 2,5×.
+
+**Recomendação:** BotCompara e BotShop no **Haiku 5.5** com esforço baixo. O ranking é feito por código e o modelo só conversa e resume ([compra agêntica](../architecture/agentes-na-matrix-e-compra-agentica.md), 3.2). O **Sonnet 5.5** entra só nos casos difíceis (pedido ambíguo, negociação). Cache do prompt fixo sempre ligado. Antes de abrir para a cidade, uma avaliação com conversas reais confirma se o Haiku mantém a qualidade.
+
 ## 6. Recomendação para janeiro de 2027
 
 Faltam cerca de 10 semanas. App nativo, publicação nas lojas da Apple e do Google, Vendure e pagamento **não ficam prontos com segurança até lá**. Para aproveitar a temporada:
