@@ -1,6 +1,6 @@
 # Mini-apps do guidu.chat e a Mini App Bridge
 
-- **Status:** proposta para fechar com o Marcelo. Vira ADR (número sugerido: 0028) depois das respostas da seção 10.
+- **Status:** proposta para fechar com o Marcelo. Vira ADR (número sugerido: 0028) depois das respostas da seção 10. O funcionamento por dentro e onde cada peça mora estão na seção 11. O documento de visão e o MAX Bridge são referências, não decisões.
 - **Data:** 23/10/2026
 - **Fontes:** [visão do Guidu.chat v1.0](../spec/guidu-chat-visao-produto-v1.0.md), seção 7 (desenho de domínio), e o MAX Bridge (desenho de capacidades do aparelho). Comparação em [analise-visao-guidu-chat.md](analise-visao-guidu-chat.md).
 - **Relaciona-se com:** [commerce do guidu.chat](commerce-guidu-chat.md), [ADR 0023](../adr/0023-chat-interno-como-cliente-matrix.md) (Matrix e JWT), [ADR 0026](../adr/0026-gateways-apisix-e-agentgateway.md) (gateways), [guiduchat-ui](https://github.com/smarthubaiagency/guiduchat-ui) (kit de UI).
@@ -108,3 +108,88 @@ O `AGENTS.md` manda usar shadcn/ui em toda tela do console. O runtime dos mini-a
 3. **Objeto global:** só o import do SDK, ou também um `window.WebApp` com a camada de aparelho no formato do MAX?
 4. **Templates do piloto:** os do documento de visão para boutique, restaurante e pousada (detalhe do item, cardápio da mesa, concierge do quarto)?
 5. **Mini-apps de parceiros:** só templates nossos no início?
+
+## 11. Como funciona por dentro e onde mora
+
+### 11.1 A ponte não é um serviço: são três pedaços em três lugares
+
+| Pedaço                         | O que faz                                                                                                                                                    | Roda em                                                                      | Container                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | -------------------------------------------- |
+| **SDK** (`@guidu/miniapp-sdk`) | Biblioteca JavaScript dentro da página do mini-app. Descobre onde está rodando, faz o aperto de mão, manda e recebe as mensagens do envelope, valida com Zod | Navegador ou WebView do turista                                              | **Nenhum.** Vai empacotado no runtime        |
+| **Adaptador do app**           | Recebe as mensagens do SDK, confere a origem, executa a ação (abrir a conversa, fechar, abrir o pagamento) e responde                                        | Dentro do guidu.chat: no app Expo (código React Native) ou no guidu.chat web | **Nenhum próprio.** Faz parte do app         |
+| **Bridge API**                 | Emite e troca a sessão curta, guarda o contexto comercial, executa as ações do lado do servidor (achar ou criar a sala, criar a solicitação)                 | Servidor do GUIDU                                                            | **O mesmo container web do GUIDU** (`guidu`) |
+
+E duas peças ao lado, que não são a ponte mas trabalham com ela:
+
+| Peça                                                          | Roda em                                                                   | Container                                               |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **Runtime dos mini-apps** (as páginas)                        | Next.js, rotas públicas num host próprio (`apps.guidu.chat`, a confirmar) | **No começo, o mesmo container web do GUIDU**; ver 11.5 |
+| **Avisos ao turista** (solicitação confirmada, pedido pronto) | Worker do GUIDU (pg-boss), postando na sala Matrix                        | O container do worker que já existe                     |
+
+### 11.2 Por que a Bridge API mora no GUIDU
+
+Tudo o que ela faz já está no GUIDU: as salas Matrix e o Application Service (`src/core/matrix`), o Portfólio, o Inbox, o CRM, o `withContext` com RLS, a auditoria e a Central de Eventos. Um serviço separado teria de repetir identidade, permissões e acesso ao banco: o mesmo motivo pelo qual o MCP em Go foi descartado ([AVALIACAO.md](../mcp/AVALIACAO.md)). Ela entra como um subsistema do núcleo (`src/core/bridge/`) com rotas em `src/app/bridge/`, atrás do APISIX (ADR 0026).
+
+### 11.3 O caminho das mensagens
+
+O SDK decide o transporte na abertura:
+
+| Onde o mini-app está                                             | Como fala com o app                                                                                                                                    | Conferência de origem                                                                                                                                                           |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **WebView do app Expo**                                          | Mini-app → app: `window.ReactNativeWebView.postMessage(texto)`. App → mini-app: `webview.postMessage(texto)`, que chega como evento `message`          | O app só carrega URLs do host dos mini-apps (`originWhitelist` e bloqueio de navegação com `onShouldStartLoadWithRequest`) e confere a URL de cada mensagem (`nativeEvent.url`) |
+| **iframe do guidu.chat web**                                     | `window.postMessage` com a origem exata nos dois sentidos. Depois do aperto de mão, um `MessageChannel` próprio, para nenhuma outra janela escutar     | `event.origin` e `event.source` conferidos nos dois lados, nunca `*`                                                                                                            |
+| **Navegador comum** (QR lido com a câmera do celular, sem o app) | Não há ponte. O SDK entra em modo visitante: mostra os dados publicados e, nas ações que pedem login, oferece abrir no app ou entrar no guidu.chat web | —                                                                                                                                                                               |
+
+### 11.4 Uma abertura do começo ao fim
+
+```
+Turista          App guidu.chat               Mini-app (SDK + runtime)        GUIDU (Bridge API)
+   │ toca no item    │                                 │                               │
+   │────────────────▶│ POST /bridge/sessions ───────────────────────────────────────────▶│ confere o token do turista,
+   │                 │ (token do turista, mini-app, ponto de entrada, nonce)            │ o mini-app publicado e o ponto;
+   │                 │◀───────────────────────────────────────────── código (5 min, 1 uso) grava a sessão pendente
+   │                 │ abre a WebView no host dos mini-apps (sem código na URL)          │
+   │                 │────────────────────────────────▶│ carrega a página pública      │
+   │                 │◀──── guidu.hello {v, capacidades pedidas}                        │
+   │                 │──── guidu.welcome {v, código, plataforma, tema, capacidades} ───▶│
+   │                 │                                 │ POST /bridge/sessions/exchange ▶│ marca o código como usado,
+   │                 │                                 │◀──────── sessão do mini-app ───│ grava o contexto comercial
+   │ "Quero reservar"│                                 │ createRequest → servidor ─────▶│ cria a solicitação, avisa a loja
+   │                 │                                 │                               │ no Inbox, posta na sala pelo worker
+   │ "Conversar"     │◀──── guidu.openChat {itemId} ───│                               │
+   │                 │ POST /conversations/open (token do turista) ─────────────────────▶│ acha ou cria a sala da pessoa
+   │                 │◀─────────────────────────────────────────────────── room_id       │ com a loja, com o item no contexto
+   │                 │ fecha a WebView e abre a conversa na tela nativa                  │
+```
+
+Há dois tipos de ação, e o SDK esconde a diferença:
+
+- **Ações do servidor** (`getContext`, `createRequest`): o runtime chama a Bridge API com a sessão do mini-app. O app não participa.
+- **Ações do app** (`openChat`, `close`, `openCheckout`, botão voltar, vibração): o SDK manda o envelope ao app, que executa com o token do próprio turista e responde `guidu.result`. Assim a página do mini-app nunca recebe o token do turista.
+
+### 11.5 O runtime dos mini-apps: mesmo container ou separado?
+
+| Opção                                                          | Como                                                                                                                                                   | A favor                                                                                                | Contra                                                                           |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| **A. Rotas no GUIDU, host próprio** (recomendada para começar) | `apps.guidu.chat` aponta para o container web do GUIDU; o `proxy.ts` separa por host, como já faz com os domínios públicos (`resolvePublicHost`, CF2c) | Nada novo para operar; usa direto o Portfólio e a Bridge API                                           | O tráfego de turista e o do painel disputam o mesmo container                    |
+| **B. Mesma imagem, serviço separado** (para o pico de Búzios)  | O mesmo código sobe como um segundo serviço no EasyPanel (`guidu-apps`), e o APISIX manda o host `apps.*` só para ele                                  | Escala o lado do turista sem mexer no painel; um pico de QR não derruba o console; sem duplicar código | Mais um serviço para monitorar (mesma imagem, então pouco trabalho)              |
+| **C. App Next.js separado** (o monorepo do documento de visão) | Repositório ou pacote próprio, com API de leitura do GUIDU                                                                                             | Ciclo de deploy independente                                                                           | Duplica autenticação, acesso a dados e build; só faz sentido com equipe separada |
+
+Recomendação: **A no desenvolvimento e no começo do piloto, B antes da alta temporada.** A passagem de A para B é só configuração de deploy e de rota, sem mudar código. Em todos os casos, as páginas públicas ficam em cache no Cloudflare e no APISIX, porque o QR gera muitas leituras do mesmo item.
+
+### 11.6 Sessão no iframe: por que o host deve ficar sob `guidu.chat`
+
+No guidu.chat web, o mini-app abre num iframe. Os navegadores bloqueiam cookies de terceiros em iframes de **outro site**. Se o runtime ficar em `apps.guidu.chat`, ele é do **mesmo site** que o `guidu.chat`, e o cookie da sessão do mini-app funciona com `SameSite=Lax`. Num domínio do console (`*.guidu.co`), o cookie seria de terceiros e falharia no Safari. A alternativa é guardar a sessão do mini-app só na memória da página e mandá-la num cabeçalho, sem cookie. No app Expo, a WebView abre a página como principal e a questão não existe.
+
+### 11.7 O que é gravado no GUIDU
+
+| Tabela (nomes provisórios) | Para quê                                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `miniapp_templates`        | Templates da plataforma: id, versão, capacidades que podem pedir                         |
+| `miniapps`                 | Instância por loja: `workspace_id`, template, slug, conteúdo publicado, versão, situação |
+| `miniapp_entry_points`     | QR, NFC e links: loja, item opcional, `source_type`, slug curto do QR                    |
+| `bridge_sessions`          | Código (só o hash), turista, mini-app, ponto de entrada, validade, usado ou não          |
+| `commerce_contexts`        | Contexto comercial: origem, loja, item, variante, idioma, conversa, sala                 |
+| `commercial_requests`      | Solicitações (reserva, orçamento, disponibilidade), situação, sala ligada                |
+
+Todas com `workspace_id` e RLS, como o resto do núcleo. As migrations saem na etapa MA1 e passam pela aprovação do PR.

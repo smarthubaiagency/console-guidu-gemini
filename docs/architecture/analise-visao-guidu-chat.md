@@ -1,6 +1,6 @@
 # Análise do documento de visão do Guidu.chat
 
-- **Status:** análise para discussão.
+- **Status:** análise para discussão. O documento de visão é **referência, não decisão** (Marcelo, 23/10/2026): as decisões são tomadas neste repositório, juntando as referências.
 - **Data:** 23/10/2026
 - **Documento analisado:** [Guidu.chat: visão de produto, arquitetura e casos de uso v1.0](../spec/guidu-chat-visao-produto-v1.0.md) (21/10/2026)
 - **Comparado com:** ADRs, [commerce do guidu.chat](commerce-guidu-chat.md), [ponte dos mini-apps](mini-apps-bridge.md), [gateways](gateways.md) e o código da `main`.
