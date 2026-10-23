@@ -2,7 +2,7 @@
 
 ## Antes de começar
 
-Leia `docs/context.md`, o handoff mais recente em `docs/handoff/` (estado das fases, armadilhas e como validar), a especificação, o adendo, os ADRs e `docs/pendencias.md`. ADR aceito prevalece.
+Leia `docs/context.md`, o handoff mais recente em `docs/handoff/` (estado das fases, armadilhas e como validar), a especificação, o adendo, os ADRs e `docs/pendencias.md`. ADR aceito prevalece sobre os documentos anteriores e é a referência para o trabalho do dia a dia, mas não é imutável: o projeto está em desenvolvimento e, por ajuste estratégico decidido pelo Marcelo, componentes podem entrar ou sair. Uma proposta que contraria uma ADR não é descartada por isso; ela aponta qual ADR muda e por quê, e a mudança entra revisando ou substituindo a ADR.
 
 ## Fluxo
 
