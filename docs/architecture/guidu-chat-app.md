@@ -105,3 +105,26 @@ Uma mensagem de ida e volta:
 4. O GUIDU entrega essa mensagem ao app (tempo real ou push).
 
 **Modo loja (GC1, depois):** o mesmo app pode ter uma janela que funciona **como o Inbox**, para o comerciante atender pelo celular. É outra tela do app, com permissões de equipe, sobre as mesmas salas.
+
+## 8. Caminho A (cliente Matrix no app, como o Element): o que seria preciso
+
+É viável. O Element X usa o `matrix-rust-sdk` por bindings nativos (`matrix-sdk-ffi`); no React Native, os bindings de comunidade (`@unomed/react-native-matrix-sdk`) embrulham a mesma base. O que muda em relação ao caminho B:
+
+| Peça                | O que fazer                                                                                                                                                                                                                |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Conta do turista    | Conta Matrix real por turista, criada pelo núcleo; login por JWT do console (ADR 0023, regra 9), que hoje só assina atendentes e passaria a assinar turistas                                                               |
+| SDK no app          | `matrix-rust-sdk` por bindings, em build próprio do Expo (não roda no Expo Go)                                                                                                                                             |
+| Sincronização       | Sliding Sync, nativo do Synapse, o mesmo do Inbox                                                                                                                                                                          |
+| Push                | Gateway de push (Sygnal, como o Element) ligado a APNs e FCM, e cadastro de pusher por aparelho                                                                                                                            |
+| Sessão no aparelho  | Token com refresh no `expo-secure-store`; "sair de todos os aparelhos"                                                                                                                                                     |
+| Synapse no pico     | Workers de sync e de leitura, banco dimensionado; teste de carga com o perfil de Búzios                                                                                                                                    |
+| Segurança das salas | Nível de poder 0 para o turista; o núcleo ignora tipos de evento que não conhece e nunca confia em evento do turista para estado, preço ou pedido. No caminho B, essa checagem acontece antes de a mensagem entrar na sala |
+
+**Critérios para adotar o caminho A** (prova técnica, seção 6, item 4):
+
+1. Login, histórico, envio, mídia e Sliding Sync funcionando no iOS e no Android com os bindings.
+2. Push com o app fechado nos dois sistemas.
+3. Synapse com workers aguentando o número de turistas simultâneos do pico, medido.
+4. Bindings com atualização recente e versão compatível com o Synapse em uso.
+
+Se os quatro passarem, o app pode trocar o `ChatProvider` do caminho B pelo A sem refazer as telas. O modo loja (GC1) ganha mais com o caminho A, porque a equipe já tem conta Matrix.
