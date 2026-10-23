@@ -17,12 +17,12 @@ Búzios é pequena e recebe muito turista. O volume sobe muito em réveillon, ca
 
 ## 3. Perfil de carga em Búzios
 
-| Público | Volume | Como chega | Sensível a |
-| --- | --- | --- | --- |
-| Turistas | Alto e com picos fortes, previsíveis pelo calendário | WhatsApp (webhook da Meta) e, depois, guidu.chat e mini-apps | Tempo de resposta do agente, disponibilidade do checkout |
-| Comerciantes e equipes | Baixo a médio (dezenas a centenas de lojas) | Console (console.guidu.co e domínios de parceiro), Inbox no Matrix | Inbox em tempo real, aprovação de propostas |
-| Agentes e integrações | Baixo hoje | MCP (`/mcp/workspace`) e API com chaves `gdu_live_` | Limites por chave |
-| Páginas públicas | Médio, com picos junto do turismo | Perfil digital e sites (`*.mobio.pro`, `*.mobio.page`) | Cache e CDN |
+| Público                | Volume                                               | Como chega                                                         | Sensível a                                               |
+| ---------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------- |
+| Turistas               | Alto e com picos fortes, previsíveis pelo calendário | WhatsApp (webhook da Meta) e, depois, guidu.chat e mini-apps       | Tempo de resposta do agente, disponibilidade do checkout |
+| Comerciantes e equipes | Baixo a médio (dezenas a centenas de lojas)          | Console (console.guidu.co e domínios de parceiro), Inbox no Matrix | Inbox em tempo real, aprovação de propostas              |
+| Agentes e integrações  | Baixo hoje                                           | MCP (`/mcp/workspace`) e API com chaves `gdu_live_`                | Limites por chave                                        |
+| Páginas públicas       | Médio, com picos junto do turismo                    | Perfil digital e sites (`*.mobio.pro`, `*.mobio.page`)             | Cache e CDN                                              |
 
 Duas consequências:
 
@@ -33,35 +33,35 @@ Duas consequências:
 
 Ordem estimada de risco, do mais provável ao menos provável:
 
-| # | Ponto | Por que quebra | Gateway resolve? | O que resolve |
-| --- | --- | --- | --- | --- |
-| 1 | **Servidor único do EasyPanel** | Synapse, web, worker e Redis no mesmo host: uma falha de disco, rede ou memória derruba tudo | Não. O gateway roda no mesmo host e vira mais um ponto único | Dois ou mais hosts, ou serviços críticos fora do host (banco gerenciado, Synapse separado) |
-| 2 | **Conexões e CPU do Postgres (Supabase)** | Cada instância web e cada worker abre conexões pelo Supavisor; turnos de IA abrem transações longas (pendência "Synapse dentro da transação") | Não | Tamanho de compute do Supabase para o pico, pool dimensionado, transações curtas |
-| 3 | **Synapse** | Processo Python único por padrão; Sliding Sync e mídia pesam; tem Postgres próprio | Não | Workers do Synapse (sync, client reader, media), banco próprio dimensionado, plano de escala já previsto na ADR 0023 |
-| 4 | **Worker (pg-boss) e motor de IA** | Concorrência 1 por conversa (ADR 0011), latência do modelo de segundos; fila cresce no pico | Não | Mais instâncias do worker (a trava por workspace já foi provada com dois workers, F3a), alertas de fila (observabilidade) |
-| 5 | **Limites dos provedores de IA** | Chaves dos clientes (BYOK) com cota baixa recebem 429 no pico | Pouco. Um gateway de IA pode distribuir chamadas, mas a chave é do cliente | Chave reserva (já existe), modelo mais barato no orquestrador, aviso de chave (já existe no Painel de IA) |
-| 6 | **Webhook da Meta** | Rajada de mensagens | Pouco | Já tratado: o webhook só confere, grava e enfileira (ADR 0011) |
-| 7 | **Instâncias web (Next.js)** | SSR e streaming do Assistente | Em parte: balanceia entre réplicas | O Traefik já balanceia e faz health check; basta ter réplicas e usar `/api/health/ready` |
-| 8 | **Ataque ou abuso** | Robôs, varredura, DDoS | Em parte: limite por IP e por rota | Cloudflare na frente (DDoS volumétrico, WAF, bot management); rate limit da aplicação |
+| #   | Ponto                                     | Por que quebra                                                                                                                                | Gateway resolve?                                                           | O que resolve                                                                                                             |
+| --- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Servidor único do EasyPanel**           | Synapse, web, worker e Redis no mesmo host: uma falha de disco, rede ou memória derruba tudo                                                  | Não. O gateway roda no mesmo host e vira mais um ponto único               | Dois ou mais hosts, ou serviços críticos fora do host (banco gerenciado, Synapse separado)                                |
+| 2   | **Conexões e CPU do Postgres (Supabase)** | Cada instância web e cada worker abre conexões pelo Supavisor; turnos de IA abrem transações longas (pendência "Synapse dentro da transação") | Não                                                                        | Tamanho de compute do Supabase para o pico, pool dimensionado, transações curtas                                          |
+| 3   | **Synapse**                               | Processo Python único por padrão; Sliding Sync e mídia pesam; tem Postgres próprio                                                            | Não                                                                        | Workers do Synapse (sync, client reader, media), banco próprio dimensionado, plano de escala já previsto na ADR 0023      |
+| 4   | **Worker (pg-boss) e motor de IA**        | Concorrência 1 por conversa (ADR 0011), latência do modelo de segundos; fila cresce no pico                                                   | Não                                                                        | Mais instâncias do worker (a trava por workspace já foi provada com dois workers, F3a), alertas de fila (observabilidade) |
+| 5   | **Limites dos provedores de IA**          | Chaves dos clientes (BYOK) com cota baixa recebem 429 no pico                                                                                 | Pouco. Um gateway de IA pode distribuir chamadas, mas a chave é do cliente | Chave reserva (já existe), modelo mais barato no orquestrador, aviso de chave (já existe no Painel de IA)                 |
+| 6   | **Webhook da Meta**                       | Rajada de mensagens                                                                                                                           | Pouco                                                                      | Já tratado: o webhook só confere, grava e enfileira (ADR 0011)                                                            |
+| 7   | **Instâncias web (Next.js)**              | SSR e streaming do Assistente                                                                                                                 | Em parte: balanceia entre réplicas                                         | O Traefik já balanceia e faz health check; basta ter réplicas e usar `/api/health/ready`                                  |
+| 8   | **Ataque ou abuso**                       | Robôs, varredura, DDoS                                                                                                                        | Em parte: limite por IP e por rota                                         | Cloudflare na frente (DDoS volumétrico, WAF, bot management); rate limit da aplicação                                     |
 
 ## 5. O que o Kong OSS entrega e o que já temos
 
-| Capacidade | Kong OSS (até 3.9) | O que o GUIDU já tem ou pode usar |
-| --- | --- | --- |
-| Roteamento e TLS | Sim | Traefik do EasyPanel; TLS curinga por DNS-01 e Cloudflare for SaaS para domínios de parceiro (CF2b, CF2c) |
-| Balanceamento e health check | Sim (ativo e passivo) | Traefik com réplicas e health check; probes `/api/health/live` e `/api/health/ready` (F3d) |
-| Rate limit | Sim, janela fixa, contadores em Redis para vários nós. Janela deslizante é do `rate-limiting-advanced`, Enterprise | Rate limit por chave, usuário e workspace, com limites do plano e Postgres como reserva se o Redis falhar (`src/core/api/rate-limit.ts`). Regras de limite do Cloudflare por IP e rota |
-| Proteção DDoS e WAF | Não (limite por IP não segura ataque volumétrico) | Cloudflare |
-| Cache | `proxy-cache` em memória por nó | Cloudflare CDN para assets e páginas públicas |
-| Validação de JWT | Plugin `jwt` com chave cadastrada no consumer, sem buscar JWKS; JWKS e OIDC completos são Enterprise | O console autentica pela sessão SSR do Supabase; API e MCP por chave `gdu_live_`; a autorização fica no app de qualquer forma (princípio 1 da proposta) |
-| Métricas e tracing | Plugins Prometheus e OpenTelemetry | Logs estruturados com `requestId` (F3d); métricas da fila; falta exportação para um coletor (F6c) |
-| Portal do desenvolvedor, monetização, analytics de API | Enterprise / Konnect | Não há necessidade no piloto |
+| Capacidade                                             | Kong OSS (até 3.9)                                                                                                 | O que o GUIDU já tem ou pode usar                                                                                                                                                      |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Roteamento e TLS                                       | Sim                                                                                                                | Traefik do EasyPanel; TLS curinga por DNS-01 e Cloudflare for SaaS para domínios de parceiro (CF2b, CF2c)                                                                              |
+| Balanceamento e health check                           | Sim (ativo e passivo)                                                                                              | Traefik com réplicas e health check; probes `/api/health/live` e `/api/health/ready` (F3d)                                                                                             |
+| Rate limit                                             | Sim, janela fixa, contadores em Redis para vários nós. Janela deslizante é do `rate-limiting-advanced`, Enterprise | Rate limit por chave, usuário e workspace, com limites do plano e Postgres como reserva se o Redis falhar (`src/core/api/rate-limit.ts`). Regras de limite do Cloudflare por IP e rota |
+| Proteção DDoS e WAF                                    | Não (limite por IP não segura ataque volumétrico)                                                                  | Cloudflare                                                                                                                                                                             |
+| Cache                                                  | `proxy-cache` em memória por nó                                                                                    | Cloudflare CDN para assets e páginas públicas                                                                                                                                          |
+| Validação de JWT                                       | Plugin `jwt` com chave cadastrada no consumer, sem buscar JWKS; JWKS e OIDC completos são Enterprise               | O console autentica pela sessão SSR do Supabase; API e MCP por chave `gdu_live_`; a autorização fica no app de qualquer forma (princípio 1 da proposta)                                |
+| Métricas e tracing                                     | Plugins Prometheus e OpenTelemetry                                                                                 | Logs estruturados com `requestId` (F3d); métricas da fila; falta exportação para um coletor (F6c)                                                                                      |
+| Portal do desenvolvedor, monetização, analytics de API | Enterprise / Konnect                                                                                               | Não há necessidade no piloto                                                                                                                                                           |
 
 O ganho real do Kong OSS sobre o que existe seria a **métrica de borda unificada** (latência e erros por rota) e o **limite por IP antes do Next.js**. As duas coisas também se conseguem com o Traefik (métricas Prometheus nativas) e com o Cloudflare.
 
 ## 6. Custos e riscos de colocar o Kong agora
 
-1. **Licença e manutenção.** A linha OSS parou na 3.9.x. Da 3.10 em diante, sem licença, o Kong se comporta como Enterprise expirado, e as imagens OSS não foram mais publicadas. Ficar na 3.9 é aceitar uma borda pública sem atualizações. Isso contraria a regra do projeto de dependências fixadas e auditadas (F6a).
+1. **Licença e manutenção.** A linha OSS parou na 3.9.x. Da 3.10 em diante, sem licença, o Kong se comporta como Enterprise expirado, e as imagens OSS não foram mais publicadas. A 3.9.x ainda recebe correções pontuais (há registro de uma 3.9.3 em 2026), mas sem funcionalidades novas e sem prazo público de suporte. Para uma borda pública, isso é um risco de segurança: o gateway é o componente mais exposto, e a regra do projeto pede dependências fixadas e auditadas (F6a).
 2. **O Supabase saiu do Kong.** O self-hosted do Supabase trocou o Kong pelo Envoy como gateway padrão (aviso de 17/07/2026, troca na semana de 09/08/2026), citando a falta de manutenção da linha OSS. A proposta original pensava em Supabase self-hosted com Auth e Kong; esse caminho já não usa o Kong.
 3. **Ponto único a mais.** Para não piorar a disponibilidade, o Kong precisa de pelo menos dois nós e de um balanceador ou DNS na frente. Num servidor só, ele só acrescenta um processo que pode cair.
 4. **Dois proxies em série.** O EasyPanel já usa o Traefik. O Kong ficaria atrás do Traefik (dois saltos, duas configurações de TLS e timeout) ou no lugar dele. Neste caso seria preciso refazer certificados curinga, Cloudflare for SaaS e o ForwardAuth dos domínios de parceiro.
@@ -85,27 +85,44 @@ Em ordem de impacto:
 
 Um gateway entra quando pelo menos um destes critérios for verdadeiro:
 
-| Critério | Exemplo no roadmap |
-| --- | --- |
-| Muitos consumidores externos de API, com chaves, cotas e planos próprios | `/commerce` aberto a agentes externos (UCP), API para parceiros |
-| Vários serviços de backend atrás do mesmo domínio | Vendure, Synapse e GUIDU expostos juntos (proposta de 22/10) |
-| OAuth e OIDC padronizados na borda para vários serviços | Claude Cowork e outros conectores, depois da revisão da ADR 0009 |
-| Necessidade de portal do desenvolvedor e analytics por consumidor | Ecossistema de parceiros integrando por API |
-| Tráfego de agentes em grande volume, com política de saída | Agentes do comerciante chamando MCP externos |
+| Critério                                                                 | Exemplo no roadmap                                               |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Muitos consumidores externos de API, com chaves, cotas e planos próprios | `/commerce` aberto a agentes externos (UCP), API para parceiros  |
+| Vários serviços de backend atrás do mesmo domínio                        | Vendure, Synapse e GUIDU expostos juntos (proposta de 22/10)     |
+| OAuth e OIDC padronizados na borda para vários serviços                  | Claude Cowork e outros conectores, depois da revisão da ADR 0009 |
+| Necessidade de portal do desenvolvedor e analytics por consumidor        | Ecossistema de parceiros integrando por API                      |
+| Tráfego de agentes em grande volume, com política de saída               | Agentes do comerciante chamando MCP externos                     |
 
 Nessa hora, comparar:
 
-| Opção | Licença | Pontos a favor | Pontos contra |
-| --- | --- | --- | --- |
-| **Kong Enterprise / Konnect** | Comercial | Produto maduro, OIDC, rate limit avançado, portal, plugins de IA | Custo de licença; dependência do fornecedor |
-| **Kong OSS 3.9** | Apache-2.0, congelado | Gratuito, conhecido | Sem atualizações; a 3.10+ exige licença |
-| **Apache APISIX** | Apache-2.0, ativo | Plugins de OIDC e rate limit com Redis na versão aberta; configuração dinâmica | Comunidade menor no Brasil; outro sistema para aprender |
-| **Envoy Gateway** | Apache-2.0, ativo (CNCF) | Escolha do Supabase self-hosted; padrão Gateway API | Pensado para Kubernetes; mais complexo fora dele |
-| **Traefik (já usado)** | MIT | Já está no EasyPanel; middlewares de limite, ForwardAuth e métricas | Gestão de API completa só no Traefik Hub, pago |
+| Opção                         | Licença                  | Pontos a favor                                                                 | Pontos contra                                           |
+| ----------------------------- | ------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| **Kong Enterprise / Konnect** | Comercial                | Produto maduro, OIDC, rate limit avançado, portal, plugins de IA               | Custo de licença; dependência do fornecedor             |
+| **Kong OSS 3.9**              | Apache-2.0, congelado    | Gratuito, conhecido                                                            | Sem atualizações; a 3.10+ exige licença                 |
+| **Apache APISIX**             | Apache-2.0, ativo        | Plugins de OIDC e rate limit com Redis na versão aberta; configuração dinâmica | Comunidade menor no Brasil; outro sistema para aprender |
+| **Envoy Gateway**             | Apache-2.0, ativo (CNCF) | Escolha do Supabase self-hosted; padrão Gateway API                            | Pensado para Kubernetes; mais complexo fora dele        |
+| **Traefik (já usado)**        | MIT                      | Já está no EasyPanel; middlewares de limite, ForwardAuth e métricas            | Gestão de API completa só no Traefik Hub, pago          |
 
 Antes de escolher, confirmar nas fontes oficiais de cada projeto a lista de recursos abertos da versão vigente.
 
-## 9. Fontes
+## 9. Segurança e alternativas open source
+
+Um gateway tem impacto real na segurança: reduz a superfície exposta, barra requisições antes do app, centraliza limites, restrição de IP, tamanho de corpo e TLS, e padroniza o registro de acessos. Ele não substitui a autorização do app e passa a ser o componente mais exposto. Por isso **só vale com atualizações de segurança ativas**. O estado atual e as lacunas de borda do GUIDU estão em [auditoria/2026-10-23-seguranca-de-borda.md](../auditoria/2026-10-23-seguranca-de-borda.md). As de maior prioridade se fecham no Traefik e no código, sem gateway novo.
+
+Alternativas open source ao Kong, para quando o gateway entrar:
+
+| Projeto                      | Licença e governança                   | Base                                            | O que tem aberto                                                                                                                                                                                       | Atenção                                                                                                                                                                                                           |
+| ---------------------------- | -------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Apache APISIX**            | Apache-2.0, Apache Software Foundation | Nginx/OpenResty com Lua, o mesmo modelo do Kong | `openid-connect` (OIDC e JWKS), `jwt-auth`, `limit-count` com Redis compartilhado entre nós e várias regras por rota (3.16, abril de 2026), `ip-restriction`, Prometheus, OpenTelemetry, plugins de IA | Configuração em etcd por padrão (existe modo standalone em YAML, sem etcd). Ritmo de CVEs exige processo de atualização: em 01/10/2026 saiu a CVE-2026-94276 no `openid-connect` (3.12 a 3.18, corrigida na 3.19) |
+| **KrakenD CE**               | Apache-2.0                             | Go, sem estado, configuração declarativa        | Validação de JWT com JWKS, agregação de chamadas, limites por nó                                                                                                                                       | Limite compartilhado entre nós e outros recursos são Enterprise; orientado a montar respostas de vários backends                                                                                                  |
+| **Tyk OSS**                  | MPL-2.0                                | Go                                              | Gateway completo com autenticação e limites                                                                                                                                                            | Exige Redis; o painel e o portal são comerciais                                                                                                                                                                   |
+| **Envoy Gateway**            | Apache-2.0, CNCF                       | Envoy com Gateway API                           | Autenticação por JWT e OIDC, limites, escolha do Supabase self-hosted                                                                                                                                  | Pensado para Kubernetes; o EasyPanel não é                                                                                                                                                                        |
+| **Traefik Proxy (já usado)** | MIT                                    | Go                                              | Roteamento, TLS, `rateLimit` por IP, `ipAllowList`, ForwardAuth, `buffering`, métricas                                                                                                                 | Não é gestão de API completa (consumidores, cotas por cliente, portal); JWT só por plugin de terceiros ou ForwardAuth                                                                                             |
+| **agentgateway**             | Apache-2.0, Linux Foundation           | Rust                                            | MCP, A2A e chamadas de LLM com política e autenticação                                                                                                                                                 | Feito para tráfego de agentes, não para a borda dos apps. É o Agentgateway da proposta de 22/10                                                                                                                   |
+
+Sugestão: para substituir o Kong com o mesmo modelo de plugins e OIDC aberto, o candidato mais direto é o **Apache APISIX** em modo standalone, com versão fixada e rotina de atualização de segurança. Até o critério da seção 8 ser atingido, a borda fica no **Traefik + Cloudflare**, com as lacunas da auditoria fechadas.
+
+## 10. Fontes
 
 - Supabase, changelog: [Self-hosted Supabase: Envoy becomes the default API gateway (breaking change)](https://supabase.com/changelog/48048-self-hosted-supabase-envoy-becomes-the-default-api-gateway-b)
 - Kong, discussão no GitHub sobre a imagem OSS da 3.10: [Kong/kong#14405](https://github.com/Kong/kong/discussions/14405)
@@ -114,5 +131,9 @@ Antes de escolher, confirmar nas fontes oficiais de cada projeto a lista de recu
 - Kong, breaking changes da 3.10: [docs.konghq.com/gateway/3.10.x/breaking-changes](https://docs.konghq.com/gateway/3.10.x/breaking-changes)
 - Docker Hardened Images, versões do Kong depois da 3.9: [catalog#591](https://github.com/docker-hardened-images/catalog/issues/591)
 - Kong, rate limiting com Redis: [docs.konghq.com — redis rate limiting](https://docs.konghq.com/kubernetes-ingress-controller/2.8.x/guides/redis-rate-limiting)
+- Apache APISIX: [release 3.16.0](https://apisix.apache.org/blog/2026/04/07/release-apache-apisix-3.16.0/), [relatório de janeiro de 2026](https://apisix.apache.org/blog/2026/01/31/2026-jan-monthly-report/), [relatório de fevereiro de 2026](https://apisix.apache.org/blog/2026/02/28/2026-feb-monthly-report/), [aviso de segurança de 01/10/2026](https://openwall.com/lists/oss-security/2026/10/01/8)
+- KrakenD CE: [repositório](https://github.com/krakend/krakend-ce) e [anúncio da edição aberta](https://www.krakend.io/blog/open-sourcing-enterprise-features/)
+- Tyk OSS: [documentação](https://tyk.io/docs/5.7/tyk-open-source/)
+- Panorama de 2026: [Moesif — Open Source API Gateways](https://www.moesif.com/blog/api-engineering/api-gateways/Open-Source-API-Gateway-Roundup/)
 
 Os pontos sobre a 3.10 (fim do modo gratuito e das imagens OSS) vêm do changelog do Supabase e de discussões da comunidade. A página oficial de breaking changes do Kong não pôde ser aberta neste ambiente e deve ser conferida antes da decisão.
