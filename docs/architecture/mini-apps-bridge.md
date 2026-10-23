@@ -1,109 +1,110 @@
-# Mini-apps do guidu.chat e a ponte com o console
+# Mini-apps do guidu.chat e a Mini App Bridge
 
-- **Status:** proposta para fechar com o Marcelo. Vira ADR (número sugerido: 0028) depois das respostas da seção 9.
+- **Status:** proposta para fechar com o Marcelo. Vira ADR (número sugerido: 0028) depois das respostas da seção 10.
 - **Data:** 23/10/2026
+- **Fontes:** [visão do Guidu.chat v1.0](../spec/guidu-chat-visao-produto-v1.0.md), seção 7 (desenho de domínio), e o MAX Bridge (desenho de capacidades do aparelho). Comparação em [analise-visao-guidu-chat.md](analise-visao-guidu-chat.md).
 - **Relaciona-se com:** [commerce do guidu.chat](commerce-guidu-chat.md), [ADR 0023](../adr/0023-chat-interno-como-cliente-matrix.md) (Matrix e JWT), [ADR 0026](../adr/0026-gateways-apisix-e-agentgateway.md) (gateways), [guiduchat-ui](https://github.com/smarthubaiagency/guiduchat-ui) (kit de UI).
 
-## 1. Referência: o MAX Bridge
+## 1. Duas referências, uma ponte
 
-O `guiduchat-ui` é o fork do `@maxhub/max-ui` 0.7.0 (MIT). O kit é **só de componentes visuais** e não depende da ponte: ele detecta plataforma e tema pelo navegador, sem ler o app hospedeiro. No MAX, a ponte é outra peça, o **MAX Bridge**. Antes de 23/10/2026, isso não estava registrado em nenhum dos dois repositórios.
+"Bridge" aqui é o protocolo entre o mini-app web e o app hospedeiro, não a ponte Matrix ↔ WhatsApp.
 
-A referência está na organização [max-messenger](https://github.com/max-messenger), no repositório [`max-agents-skill`](https://github.com/max-messenger/max-agents-skill) (Apache-2.0), arquivo `references/mini-apps-bridge.md`, conferido com [dev.max.ru/docs/webapps/bridge](https://dev.max.ru/docs/webapps/bridge) em 21/09/2026. Em resumo:
+| Referência                                         | O que traz                                                                                                                                                                                                                                                                        | Onde está                                                                                                                                                                                                         |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Visão do Guidu.chat v1.0** (21/10/2026), seção 7 | Desenho **de domínio**: registro de mini-apps, runtime, Bridge API com sessão curta, métodos `getContext`, `openChat`, `createRequest`, `close`, `subscribe` e, depois, `openCheckout` e `getPaymentStatus`; envelope versionado com resposta; pagamento numa tela do próprio app | [docs/spec](../spec/guidu-chat-visao-produto-v1.0.md)                                                                                                                                                             |
+| **MAX Bridge**                                     | Desenho **de aparelho**: `window.WebApp` com `initData`, `BackButton`, `openLink`, `requestContact`, `openCodeReader`, `HapticFeedback`, confirmação ao fechar, links `?startapp=`                                                                                                | Organização [max-messenger](https://github.com/max-messenger), [`max-agents-skill`](https://github.com/max-messenger/max-agents-skill), `references/mini-apps-bridge.md` (conferido com dev.max.ru em 21/09/2026) |
 
-- O mini-app é uma página web estática que roda **dentro de um bot do MAX**. Ele carrega `https://st.max.ru/js/max-web-app.js`, e o objeto `window.WebApp` aparece pronto, sem chamada de `init()` ou `ready()`.
-- **`initData`**: texto assinado com `query_id`, `auth_date`, `user`, `chat` (onde foi aberto) e `start_param` (o `?startapp=` do link). O servidor do mini-app confere o `hash` por HMAC-SHA256 em duas etapas (chave derivada de `"WebAppData"` e do token do bot), com validade recomendada de 1 hora. O `initDataUnsafe` é a mesma coisa sem verificação e nunca serve para autenticar.
-- **Métodos:** `BackButton`, `openLink` (só depois de um toque do usuário), `openMaxLink`, `requestContact` (telefone com `hash` próprio), `openCodeReader` (leitor de QR), `HapticFeedback`, `enableClosingConfirmation`, `getViewportSize`, `getLaunchContext`, `shareContent`, `shareMaxContent`, `downloadFile`, `DeviceStorage`, `SecureStorage` (até 10 chaves), `BiometricManager`, `NfcManager`, `ScreenCapture` e brilho máximo da tela.
-- **Não existe** API de tema nem barramento de eventos: só o `BackButton.onClick`. O tema vem do kit de UI.
-- O mini-app é cadastrado no bot (uma URL https) e aberto por um botão `open_app` no teclado do bot ou por link `https://max.ru/<bot>?startapp=<payload>` (até 512 caracteres, `A-Za-z0-9_-`).
+O `guiduchat-ui` (fork do `@maxhub/max-ui` 0.7.0) é só o kit visual e não depende da ponte. O MAX Bridge também não depende dele.
 
-**Decisão proposta:** a ponte do guidu.chat **copia o formato do MAX Bridge**, com os mesmos nomes e formas, para que a documentação do MAX, o `guiduchat-ui` e os mini-apps feitos no modelo do MAX sirvam de referência direta. As diferenças ficam marcadas como extensões Guidu.
+**Decisão proposta:** a ponte do guidu.chat tem **duas camadas**. A camada de domínio vem do documento de visão e é o coração do contrato. A camada de aparelho segue os nomes e as formas do MAX Bridge.
 
 ## 2. Peças
 
-| Peça                         | No MAX                                            | No guidu.chat                                                                                                                             |
-| ---------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hospedeiro**               | App do MAX                                        | guidu.chat (PWA e app nativo)                                                                                                             |
-| **Quem abre o mini-app**     | Um bot, por botão `open_app` ou link `?startapp=` | Uma sala Matrix (botão num evento do agente ou da loja) ou um QR com link `?startapp=`                                                    |
-| **Mini-app**                 | Página estática em qualquer host https            | Página servida pelo console, com o `@guidu/ui` (pergunta 1)                                                                               |
-| **Ponte**                    | `max-web-app.js` → `window.WebApp`                | `@guidu/bridge` → `window.WebApp` com a mesma forma (pergunta 2). No PWA por iframe com `postMessage`; no app nativo, injetada na WebView |
-| **Assinatura do `initData`** | HMAC com o token do bot                           | Assinada pelo servidor do guidu.chat (seção 3)                                                                                            |
-| **Cadastro**                 | URL no bot, em business.max.ru                    | Catálogo de mini-apps da plataforma                                                                                                       |
+| Peça                      | O que é                                                                                                                                                   | Onde vive                                                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Registro de mini-apps** | Templates da plataforma e instâncias publicadas por loja: `workspace_id`, id, slug, template, versão publicada, capacidades, política de origem, situação | GUIDU (tabelas novas), gerido pelo módulo **Mini Apps** do console |
+| **Pontos de entrada**     | QR, NFC, link e chat, cada um com loja, item opcional e `sourceType`                                                                                      | GUIDU; o QR é gerado no console                                    |
+| **Runtime**               | Site público e responsivo que renderiza os templates com os dados publicados, em Next.js com o `@guidu/ui`                                                | Host próprio (pergunta 1), servido pelo console no começo          |
+| **Bridge API**            | Emite sessões curtas, autoriza as ações e coordena conversa, solicitação e checkout                                                                       | GUIDU (`/bridge/...`), atrás do APISIX                             |
+| **Bridge SDK**            | `@guidu/miniapp-sdk`: métodos das duas camadas, envelope e validação (Zod)                                                                                | Pacote próprio, ao lado do `guiduchat-ui` (pergunta 2)             |
+| **Adaptadores do app**    | Expo (WebView com origem conferida e rotas para telas nativas) e web (iframe com `postMessage`, ou chamada direta na mesma origem)                        | Repositórios do guidu.chat                                         |
+
+**Templates são da plataforma; instâncias são do comerciante.** O comerciante escolhe um template, preenche o conteúdo (itens do Portfólio, coleções, textos) e publica. Ninguém sobe código próprio, e a origem do runtime é fixa.
 
 ## 3. Abertura e sessão
 
-1. O turista toca no botão de um evento na sala (por exemplo, "Pagar" depois do `checkout.ready`) ou lê o QR da loja (`https://guidu.chat/<loja>?startapp=<payload>`).
-2. O guidu.chat pede ao próprio servidor o **`initData`**, no formato do MAX: `query_id` (uso único), `auth_date`, `user` (o `sub` do turista, nome, idioma, foto), `chat` (o `room_id` e o tipo da sala) e `start_param` (loja, pedido ou QR).
-3. **Diferença do MAX na assinatura:** em vez do HMAC com um segredo compartilhado, o servidor do guidu.chat assina com chave assimétrica (Ed25519 ou ES256), num campo `signature`. O console guarda só a chave pública. Um vazamento no console não permite forjar aberturas.
-4. O mini-app manda o `initData` cru ao servidor do console, que confere a assinatura, um `auth_date` de no máximo 5 minutos (o MAX recomenda 1 hora; o nosso é mais curto porque serve só para abrir a sessão) e o `query_id` ainda não usado. Em seguida, troca por uma **sessão própria do mini-app** (cookie `HttpOnly`, só naquele host ou caminho, curta).
-5. A partir daí, o mini-app chama o servidor do console, que fala com o GUIDU e com o Vendure. O navegador nunca recebe a sessão do Supabase do turista nem um token da Admin API. O `initDataUnsafe` serve só para mostrar nome e foto, nunca para autenticar.
+1. **Visitante sem login.** O QR (`https://<host dos mini-apps>/<loja>/<item>`) abre o runtime direto no navegador, sem o app instalado. O runtime lê só dados publicados (`GET /public/miniapps/:slug`, `GET /public/portfolio/:itemId`). Se o guidu.chat estiver instalado, o link universal abre o app.
+2. **No app, com login.** O app pede à Bridge API uma **`bridgeSession`** (`POST /bridge/sessions`) com o token do turista, o mini-app, o ponto de entrada e um nonce de uso único. A resposta é um código curto (até 5 minutos, uso único), que **nunca vai na URL**.
+3. **Aperto de mão.** A WebView abre a origem permitida (https). O SDK pede o código ao app pela ponte, e o runtime troca o código por uma sessão própria do mini-app no servidor (cookie `HttpOnly`, só no host dos mini-apps, curta). O aperto de mão inclui a versão do contrato e as capacidades disponíveis naquele app.
+4. **Cada ação** (`openChat`, `createRequest`, `openCheckout`) é revalidada no servidor: turista, loja e objeto. O servidor nunca confia em `workspace_id`, preço ou URL vindos da página.
+5. **Expiração, logout, revogação e erro de rede** devolvem um estado seguro e permitem tentar de novo.
 
-É o mesmo princípio do login Matrix da ADR 0023, regra 9: chave privada só no servidor, validade curta, nada de credencial longa no navegador.
+Equivalência com o MAX: a `bridgeSession` faz o papel do `initData`. A diferença é que quem emite é a Bridge API do GUIDU, e não um segredo compartilhado com o bot. Isso responde a pergunta "quem assina": o GUIDU, que já assina o JWT do Matrix pelo mesmo princípio (ADR 0023, regra 9).
 
-## 4. Contrato da ponte (v1)
+## 4. Contrato: camada de domínio (documento de visão)
 
-| Membro do MAX Bridge                                                                | Guidu v1                                             | Uso no guidu.chat                                                                  |
-| ----------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `initData`, `initDataUnsafe`                                                        | **Adota** (assinatura própria, seção 3)              | Identidade e contexto da abertura                                                  |
-| `platform`, `version`, `deviceName`                                                 | **Adota**                                            | `platform` alimenta o `GuiduUI`                                                    |
-| `BackButton` (`show`, `hide`, `onClick`, `offClick`)                                | **Adota**                                            | Navegação dentro do mini-app                                                       |
-| `openLink(url)`                                                                     | **Adota**, com a mesma exigência de toque do usuário | Links externos, só https                                                           |
-| `openMaxLink(url)`                                                                  | **Adapta** como `openGuiduLink(url)`                 | Abrir outra sala, loja ou mini-app do guidu.chat                                   |
-| `requestContact()`                                                                  | **Adota**, com `hash` assinado pelo servidor         | Telefone verificado do turista (commerce, seção 7)                                 |
-| `openCodeReader(fileSelect?)`                                                       | **Adota**                                            | QR da loja, da mesa ou do produto                                                  |
-| `HapticFeedback`                                                                    | **Adota** (só no app nativo)                         | Confirmação de pagamento e de leitura de QR                                        |
-| `enableClosingConfirmation()`, `disableClosingConfirmation()`                       | **Adota**                                            | Evitar fechar no meio do checkout                                                  |
-| `getViewportSize()`, `getLaunchContext()`                                           | **Adota**                                            | Layout e origem da abertura                                                        |
-| `shareContent`, `shareMaxContent`                                                   | **Depois** (como `shareGuiduContent`)                | Compartilhar loja ou produto numa conversa                                         |
-| `requestScreenMaxBrightness`, `restoreScreenBrightness`                             | **Depois**                                           | Mostrar ingresso ou comprovante em QR                                              |
-| `downloadFile`                                                                      | **Depois**                                           | Comprovante ou nota                                                                |
-| `DeviceStorage`, `SecureStorage`, `BiometricManager`, `NfcManager`, `ScreenCapture` | **Fora da v1**                                       | —                                                                                  |
-| _(não existe no MAX)_ `close(result?)`                                              | **Extensão Guidu**                                   | Fechar e devolver um resultado à sala (por exemplo, `{ status: "paid", orderId }`) |
-| _(não existe no MAX)_ `colorScheme`                                                 | **Extensão Guidu**                                   | O tema que o turista escolheu no guidu.chat, passado ao `GuiduUI`                  |
+| Método                                | Fase   | Comportamento                                                                                                                                                                  |
+| ------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `getContext()`                        | v1     | Loja, item publicado, idioma, ponto de entrada e capacidades                                                                                                                   |
+| `openChat(itemId, intent)`            | v1     | O servidor valida o item e acha ou cria a sala da pessoa com a loja (a mesma regra da IN7a), com o item como contexto; o app abre a conversa                                   |
+| `createRequest(itemId, qty, details)` | v1     | Cria uma **solicitação comercial** pendente (reserva, orçamento, disponibilidade), confirmada à mão pelo comerciante no Inbox                                                  |
+| `close(result?)`                      | v1     | Volta ao app e preserva o estado anterior                                                                                                                                      |
+| `subscribe(event, cb)`                | v1     | Avisos do app: tema, voltar, visibilidade, mudança de estado da solicitação                                                                                                    |
+| `openCheckout(orderId)`               | Futuro | O app abre a **tela de pagamento própria** (nativa ou em contexto seguro), que busca preço e loja no servidor (Vendure). O mini-app nunca mostra nem coleta dados de pagamento |
+| `getPaymentStatus(paymentId)`         | Futuro | Situação confirmada pelo servidor, a partir do retorno do PSP                                                                                                                  |
 
-**Regras do contrato:**
+**Envelope:** `{ v: 1, id, type: "guidu.openChat", sessionId, payload }`. A resposta é `{ v: 1, id, type: "guidu.result", ok, payload | error }`. Cada pedido tem timeout, lista de métodos permitidos, validação Zod nos dois lados e proteção contra repetição (id único por sessão). O lado que não conhece um `type` responde erro de método desconhecido.
 
-- A ponte segue o formato do MAX: propriedades prontas na abertura, promessas que falham com `{ error: { code } }` e só o `BackButton` com assinatura de evento. Não há `ready()`.
-- As mensagens internas (`postMessage` ou WebView) têm `version` e `type`. O lado que não conhece um `type` ignora (mesmo princípio do `channelContractVersion` da ADR 0011).
-- Nenhuma decisão de dinheiro ou de permissão passa pela ponte. "Pago" só vale quando o servidor confirma o pagamento pelo retorno do provedor (Vendure). O `close({ status: "paid" })` serve só para a interface.
-- Os eventos da conversa (pedido criado, pagamento confirmado) são postados na sala Matrix **pelo servidor**, nunca pelo mini-app.
-- O botão que abre um mini-app numa sala é um evento próprio (por exemplo, `chat.guidu.open_app`, com o id do mini-app e o `start_param`), o equivalente ao botão `open_app` do MAX. Só o núcleo e os agentes publicam esse evento.
+## 5. Contrato: camada de aparelho (formato do MAX Bridge)
 
-## 5. Segurança
+| Membro                                                        | v1         | Observação                                                              |
+| ------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------- |
+| `platform`, `version`                                         | Sim        | `platform` alimenta o `GuiduUI`                                         |
+| `colorScheme`                                                 | Sim        | Extensão Guidu (o MAX não tem API de tema)                              |
+| `BackButton` (`show`, `hide`, `onClick`, `offClick`)          | Sim        | Igual ao MAX                                                            |
+| `openLink(url)`                                               | Sim        | Só https e só depois de um toque do usuário, como no MAX                |
+| `HapticFeedback`                                              | Sim        | Só no app nativo                                                        |
+| `enableClosingConfirmation()`, `disableClosingConfirmation()` | Sim        | Formulário de solicitação pela metade                                   |
+| `requestContact()`                                            | Depois     | Telefone verificado do turista, se o login não trouxer                  |
+| `openCodeReader()`                                            | Não        | O leitor de QR fica no shell nativo (documento de visão, 5.1)           |
+| `shareContent`, brilho máximo, `downloadFile`                 | Depois     | Compartilhar loja, mostrar comprovante em QR                            |
+| Armazenamento no aparelho, biometria, NFC, captura de tela    | Fora da v1 | Biometria e passkeys ficam na tela de pagamento do app, não no mini-app |
 
-1. **Quem pode ser aberto.** O guidu.chat só abre mini-apps de um catálogo da plataforma (id, URL, permissões), e o console só serve mini-apps desse catálogo. Origem conferida nos dois lados do `postMessage`, sem `*`.
-2. **Moldura (iframe).** Hoje o console responde `frame-ancestors 'none'` e `X-Frame-Options: DENY` em tudo (`src/core/security/headers.ts`). As rotas de mini-app precisam de exceção só para as origens do guidu.chat. O resto do console continua sem moldura.
-3. **`initData` de uso único**, com o `query_id` gravado até expirar, para que uma abertura copiada não gere outra sessão.
-4. **Sessão do mini-app separada** da sessão do console: caminho, cookie e duração próprios. Um mini-app nunca acessa o `/app` do comerciante.
-5. **Permissões do navegador** (câmera para o `openCodeReader` no PWA, localização) liberadas só nas rotas de mini-app e só quando o mini-app declarou no catálogo. Hoje o `Permissions-Policy` do console desliga todas.
-6. **Pelo APISIX** (ADR 0026): limite por IP e tamanho de corpo também nas rotas de mini-app.
+## 6. Regras
 
-## 6. Interface dos mini-apps
+- Nenhuma decisão de dinheiro ou de permissão passa pela ponte. Preço, loja e situação de pagamento vêm sempre do servidor.
+- Os eventos da conversa (solicitação criada, pedido pago) são postados na sala Matrix **pelo servidor**, nunca pelo mini-app. A sala leva o id do registro, não os dados.
+- O contexto comercial (`sourceType`, loja, item, variante, idioma, conversa, sala) fica gravado no servidor. Quando a conversa começa, o agente consulta o item atual, não uma cópia de quando o QR foi lido.
+- Uma ação repetida por rede instável não duplica sala, solicitação, pedido nem cobrança (idempotência por id do envelope e chave de domínio).
 
-O `AGENTS.md` manda usar shadcn/ui em toda tela do console. Os mini-apps são a exceção: usam o `@guidu/ui`, para ter a cara do guidu.chat, como diz o README do kit. A exceção precisa entrar no `AGENTS.md` junto com a ADR, valendo só para as rotas de mini-app. As cores de marca dos dois kits ficam alinhadas.
+## 7. Segurança
 
-## 7. Primeiro mini-app: checkout
+1. **Origem fixa.** O app só abre o host dos mini-apps; a WebView bloqueia navegação para fora da lista; o `postMessage` confere a origem nos dois lados, sem `*`.
+2. **Moldura.** Hoje o console responde `frame-ancestors 'none'` e `X-Frame-Options: DENY` (`src/core/security/headers.ts`). O host dos mini-apps libera só as origens do guidu.chat web. O painel continua sem moldura.
+3. **Sessão do mini-app separada** do console e do Supabase do turista: host, cookie e duração próprios. Nada de segredo no JavaScript.
+4. **Permissões do navegador** liberadas só no host dos mini-apps e só para as capacidades declaradas pelo template. Hoje o `Permissions-Policy` do console desliga todas.
+5. **Pelo APISIX** (ADR 0026): limite por IP e tamanho de corpo nas rotas públicas, na Bridge API e no runtime.
+6. **Isolamento entre lojas:** o id global do turista não dá a uma loja acesso a dados de outra; cada consulta da Bridge API passa pelo `withContext` da loja.
 
-Liga este documento ao [commerce do guidu.chat](commerce-guidu-chat.md):
+## 8. Interface
 
-1. O carrinho fica pronto: o agente publica `checkout.ready` na sala, ou o turista lê o QR da loja.
-2. O guidu.chat abre o mini-app de checkout com o `initData` assinado (`start_param` com a loja e o pedido do Vendure).
-3. O mini-app mostra o pedido (Shop API do Vendure, pelo servidor do console) e o pagamento. O pagamento é a aprovação humana.
-4. O retorno do provedor confirma no Vendure. O servidor posta o evento na sala da loja, e o mini-app chama `close({ status: "paid", orderId })`.
+O `AGENTS.md` manda usar shadcn/ui em toda tela do console. O runtime dos mini-apps é a exceção: usa o `@guidu/ui`, para ter a cara do guidu.chat. A exceção entra no `AGENTS.md` com a ADR, valendo só para o host dos mini-apps. O shell nativo do app (React Native + Expo) não usa o `@guidu/ui`, que é React DOM: os tokens de marca precisam ser compartilhados entre os dois.
 
-## 8. Etapas sugeridas
+## 9. Etapas sugeridas
 
-| Etapa   | Entrega                                                                                                                                                                                                             | Depende de               |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| **MA0** | ADR 0028 com as respostas da seção 9 e a exceção de interface no `AGENTS.md`                                                                                                                                        | Marcelo                  |
-| **MA1** | `@guidu/bridge` v1 (PWA com `postMessage`), catálogo de mini-apps, `initData` assinado e troca por sessão no console, exceção de moldura e permissões só nas rotas de mini-app; mini-app de teste com o `@guidu/ui` | MA0                      |
-| **MA2** | Mini-app de checkout sobre o Vendure                                                                                                                                                                                | MA1, VC3 do commerce     |
-| **MA3** | Ponte no app nativo (WebView) com o mesmo contrato                                                                                                                                                                  | App nativo do guidu.chat |
+| Etapa   | Entrega                                                                                                                                                        | Depende de         |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **MA0** | ADR 0028 com as respostas da seção 10 e a exceção de interface no `AGENTS.md`                                                                                  | Marcelo            |
+| **MA1** | Registro de mini-apps, pontos de entrada e QR por item no console (módulo Mini Apps); runtime público com o template de detalhe do item, sem login             | MA0                |
+| **MA2** | Bridge API (`/bridge/sessions`), SDK v1 (camada de domínio com `getContext`, `openChat` e `close`, mais a camada de aparelho básica), adaptador web por iframe | MA1                |
+| **MA3** | `createRequest` e a solicitação comercial no Inbox, com confirmação à mão e aviso ao turista no idioma dele                                                    | MA2                |
+| **MA4** | Adaptador Expo (WebView), depois da prova do Matrix no React Native (documento de visão, 6.2)                                                                  | App nativo         |
+| **MA5** | `openCheckout` e `getPaymentStatus` sobre o Vendure e o PSP escolhido                                                                                          | Commerce VC3 e CA0 |
 
-## 9. Perguntas para o Marcelo
+## 10. Perguntas para o Marcelo
 
-1. **Endereço dos mini-apps:** um caminho no console (`console.guidu.co/m/...`) ou um host próprio (`apps.guidu.chat`) apontando para o mesmo serviço? O host próprio separa cookies e regras de moldura do painel do comerciante (recomendado).
-2. **Onde fica a ponte:** pacote separado (`@guidu/bridge`) ou dentro do `guiduchat-ui`?
-3. **Servidor do guidu.chat:** quem assina o `initData`? Um backend próprio do guidu.chat ou rotas do próprio GUIDU? Isso depende de onde ficam as contas dos turistas (commerce, seção 9, pergunta 4).
-4. **App nativo:** com qual tecnologia (React Native, Capacitor, outra), para definir a injeção da ponte na WebView?
-5. **Mini-apps de terceiros:** só nossos no início, ou parceiros também poderão publicar?
-6. **Nome do objeto global:** manter `window.WebApp`, igual ao MAX (mini-apps do modelo MAX rodam sem ajuste), ou usar `window.Guidu` com a mesma forma?
+1. **Host dos mini-apps:** um host próprio (por exemplo, `apps.guidu.chat` ou `m.guidu.chat`) servido pelo console no começo? É a recomendação, porque separa cookies, moldura e permissões do painel.
+2. **SDK:** pacote `@guidu/miniapp-sdk` separado, com os contratos Zod, ou dentro do `guiduchat-ui`?
+3. **Objeto global:** só o import do SDK, ou também um `window.WebApp` com a camada de aparelho no formato do MAX?
+4. **Templates do piloto:** os do documento de visão para boutique, restaurante e pousada (detalhe do item, cardápio da mesa, concierge do quarto)?
+5. **Mini-apps de parceiros:** só templates nossos no início?
