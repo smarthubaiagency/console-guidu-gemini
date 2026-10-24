@@ -31,6 +31,8 @@ Piloto em Búzios: o turista descobre as lojas por QR e pelo guidu.chat, convers
 
 - **ADR 0027 (proposta, 23/10/2026):** guidu.chat V1 e a fronteira console ↔ bridge ↔ guidu.chat, com duas equipes ([ADR](../adr/0027-guidu-chat-v1-console-bridge.md), [divisão de tarefas](equipes-guidu-chat-v1.md)).
 
+**Decidido pelo Marcelo em 24/10/2026 (Cliente Hub):** o guidu.chat e o Hub são simples e em poucas etapas. Dois toques do Hub até qualquer pedido; uma página por pedido com andamento (enviado, aprovado, pago, retirada ou entrega), a próxima ação e retirada ou envio na mesma página; o resto (ajuste, cancelamento, comprovante, problema) segue pelo atendimento da loja, com o GUIDS ou a equipe ([guidu-chat: cliente-hub.md, seção 8.1](https://github.com/smarthubaiagency/guidu-chat/blob/claude/fervent-hopper-k4tnnv/docs/produto/cliente-hub.md)).
+
 ## 4. Decisões técnicas do gerente de projeto
 
 O Marcelo pode vetar qualquer uma. Sem veto, elas valem como padrão dos planos.
@@ -69,7 +71,7 @@ O Marcelo pode vetar qualquer uma. Sem veto, elas valem como padrão dos planos.
 | N11 | **Os cinco blocos de janeiro**                                                     | **Manter os cinco**; "Conversar" abre o WhatsApp da loja em janeiro (N9)                                                                                                                                                                  | Template da área (semana de 10/11)      |
 | N12 | **Idiomas da tradução no piloto**                                                  | **Inglês e espanhol**; outro idioma depois é só cadastrar e revisar                                                                                                                                                                       | Textos padrão (semana de 10/11)         |
 | N13 | **Como atendentes aparecem no chat**                                               | **Cada pessoa escolhe**; padrão primeiro nome e iniciais, sem foto; sobrenome nunca. Vale quando o chat das lojas no app chegar (em janeiro é WhatsApp)                                                                                   | Chat no app (depois de janeiro)         |
-| N14 | **Contrato v1.1 no Cliente Hub**                                                   | Tela **"Com quem você está comprando"** já em janeiro (texto do aviso com o jurídico); avaliação na V1.1; **"Problema com o pedido"** em janeiro como conversa com a loja                                                                 | Contrato v1 (semana de 27/10); jurídico |
+| N14 | **Contrato v1.1 no Cliente Hub**                                                   | Tela **"Com quem você está comprando"** já em janeiro (texto do aviso com o jurídico); avaliação na V1.1; **"Problema com o pedido"** em janeiro pelo **Falar com a loja**                                                                | Contrato v1 (semana de 27/10); jurídico |
 
 ## 6. Próximas duas semanas (proposta)
 

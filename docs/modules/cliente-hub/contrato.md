@@ -15,7 +15,7 @@
 | H5  | Perguntas frequentes dentro do H1                                        | Junto com o H1               | Runtime                      |
 | H6  | Ponte: `requestLogin`, `openOrder`, evento `auth.changed`, `setFavorite` | Contrato na semana 1         | Runtime e adaptador          |
 | H7  | "Com quem você está comprando": dados da empresa e do provedor           | Contrato na semana 1         | guidu.chat                   |
-| H8  | Conversas em janeiro pelo WhatsApp e "problema com o pedido"             | Contrato na semana 1         | guidu.chat                   |
+| H8  | Conversas em janeiro pelo WhatsApp e "Falar com a loja" sobre um pedido  | Contrato na semana 1         | guidu.chat                   |
 | H9  | Lista de pedidos para Minhas compras                                     | Já previsto; fixar o esquema | guidu.chat                   |
 | H10 | Perfil: endereços, tipo de usuário, notificações                         | Contrato na semana 1         | guidu.chat                   |
 | H11 | Resumo do cabeçalho do Hub                                               | Pode vir na semana 5         | guidu.chat                   |
@@ -147,7 +147,7 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 | `setFavorite({ target, on })` | Ação do app   | O guidu.chat chama o H3 com o token do turista (o mini-app nunca recebe o token). Sem login, o app pede login antes e completa a ação depois. Resultado `{ favorited: boolean }`                                                                                         |
 | `subscribe("auth.changed")`   | Evento do app | `{ signedIn: boolean }`                                                                                                                                                                                                                                                  |
 
-`openChat` (já previsto) passa a aceitar `{ storeSlug, itemId?, intent: "question" | "order_problem", orderId? }`.
+`openChat` (já previsto) passa a aceitar `{ storeSlug, itemId?, intent: "question" | "order", orderId? }`.
 
 ## H7 — "Com quem você está comprando"
 
@@ -157,7 +157,7 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 
 ## H8 — Conversas em janeiro (N9)
 
-- `POST /conversations/open` com `{ target: "store", store_slug, item_id?, intent?, order_id? }` devolve, em janeiro, `{ channel: "whatsapp", whatsapp_url, origin_code }`: o link `wa.me` da loja com a mensagem inicial já no idioma do turista e o código da origem, que o Inbox liga ao contexto comercial. `intent: "order_problem"` exige `order_id` do próprio turista e põe o código do pedido e o motivo na mensagem.
+- `POST /conversations/open` com `{ target: "store", store_slug, item_id?, intent?, order_id? }` devolve, em janeiro, `{ channel: "whatsapp", whatsapp_url, origin_code }`: o link `wa.me` da loja com a mensagem inicial já no idioma do turista e o código da origem, que o Inbox liga ao contexto comercial. `intent: "order"` exige `order_id` do próprio turista e põe o código do pedido na mensagem; é a única porta do app para ajuste, cancelamento, comprovante e problema com o pedido (princípio de poucas etapas, guidu-chat `docs/produto/cliente-hub.md`, seção 8.1).
 - `GET /conversations` lista as conversas com `channel: "whatsapp" | "app"`, a loja (nome, logo, cor), a última atividade conhecida e, para o WhatsApp, `whatsapp_url`. A conversa com o guidu (C1 do BotCompara) vem com `kind: "guidu"`.
 - Quando o chat das lojas no app chegar, as mesmas rotas passam a devolver `channel: "app"`, sem `v2`.
 
@@ -167,6 +167,8 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 - Cada pedido: `id`, `code` (curto, para o balcão), `store` (slug, nome, logo, cor), `situation`, `total`, `fulfillment: "pickup" | "delivery"`, `created_at`, `updated_at`, `next_action` (`accept_proposal`, `pay`, `pickup`, `none`).
 - `OrderSituation`: `sent`, `proposal`, `accepted`, `awaiting_payment`, `paid`, `ready_for_pickup`, `shipped`, `completed`, `refused`, `cancelled` (as situações da ADR 0027, seção 6).
 - `active` = qualquer situação antes de `completed`, `refused` e `cancelled`.
+- **`GET /orders/{id}` traz a página inteira numa chamada:** `progress: { steps: [{ key: "sent" | "approved" | "paid" | "fulfilled", done_at | null }], current: <key>, your_turn: boolean, last_update_at }` calculado pelo servidor (o app não deduz o passo da situação), `proposal` atual (com `previous_count`), `payment` (o mesmo objeto do `GET /orders/{id}/payment`, com `merchant` e `processor` do H7), `fulfillment` (retirada ou envio) e `summary` (itens e totais). As rotas separadas continuam para atualização parcial.
+- SSE `order.updated` com o mesmo objeto, para a página se atualizar sem recarregar.
 
 ## H10 — Perfil
 
