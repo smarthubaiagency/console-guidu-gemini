@@ -98,6 +98,6 @@ Em paralelo, sem código: o Marcelo responde N1 a N6, e o jurídico e o contador
 
 ## Handoffs de 24/10/2026
 
-1. [BotCompara V1](https://github.com/smarthubaiagency/botcompara/blob/claude/documentacao-inicial/docs/handoff/2026-10-24-handoff-botcompara-v1.md) (repositório `botcompara`).
+1. [BotCompara V1](https://github.com/smarthubaiagency/botcompara/blob/main/docs/handoff/2026-10-24-handoff-botcompara-v1.md) (repositório `botcompara`).
 2. [Cliente Hub V1](../handoff/2026-10-24-handoff-cliente-hub-v1.md).
 3. [O que cada equipe produz](../handoff/2026-10-24-handoff-equipes.md), depois das duas primeiras.
