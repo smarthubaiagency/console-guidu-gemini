@@ -95,3 +95,9 @@ Em paralelo, sem código: o Marcelo responde N1 a N6, e o jurídico e o contador
 - Só sobe para o Marcelo o que é negócio, dinheiro, jurídico, risco alto ou infraestrutura de produção. O técnico, o agente decide e registra (seção 4), e o Marcelo pode vetar.
 - Toda decisão fica registrada neste painel e no documento técnico correspondente.
 - Cada entrega segue o fluxo do `AGENTS.md` (Contexto → Objetivo → Requisitos → Lógica → Plano → Testes → Aceite) e chega com evidência de teste.
+
+## Handoffs de 24/10/2026
+
+1. [BotCompara V1](https://github.com/smarthubaiagency/botcompara/blob/claude/documentacao-inicial/docs/handoff/2026-10-24-handoff-botcompara-v1.md) (repositório `botcompara`).
+2. [Cliente Hub V1](../handoff/2026-10-24-handoff-cliente-hub-v1.md).
+3. [O que cada equipe produz](../handoff/2026-10-24-handoff-equipes.md), depois das duas primeiras.
