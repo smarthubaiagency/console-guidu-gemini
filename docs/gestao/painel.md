@@ -31,6 +31,11 @@ Piloto em Búzios: o turista descobre as lojas por QR e pelo guidu.chat, convers
 
 - **ADR 0027 (proposta, 23/10/2026):** guidu.chat V1 e a fronteira console ↔ bridge ↔ guidu.chat, com duas equipes ([ADR](../adr/0027-guidu-chat-v1-console-bridge.md), [divisão de tarefas](equipes-guidu-chat-v1.md)).
 
+### Decisões de 24/10/2026
+
+- **Exceção de segurança à regra de duas semanas** (ADR 0017), aprovada pelo Marcelo: `next` 16.4.1 (duas execuções remotas de código, críticas), `zod` 4.6.6 e, por overrides, `body-parser` 2.4.0, `undici` 7.30.1, `fast-uri` 3.1.9 e `ip-address` 10.7.4. Integrada pelo PR #137; registrada no `minimumReleaseAgeExclude` do `pnpm-workspace.yaml`. Regra para os próximos casos: alerta crítico ou alto em dependência de produção pode furar a regra de duas semanas com aprovação do Marcelo, só na versão exata corrigida.
+- **N2, N4, N8 e N9** decididas (seção 5); **BotCompara V1** fechado, com a especificação no repositório `botcompara` ([`docs/v1/`](https://github.com/smarthubaiagency/botcompara/blob/main/docs/v1/README.md)).
+
 ## 4. Decisões técnicas do gerente de projeto
 
 O Marcelo pode vetar qualquer uma. Sem veto, elas valem como padrão dos planos.
