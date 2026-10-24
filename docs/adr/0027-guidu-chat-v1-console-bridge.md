@@ -82,17 +82,17 @@ O contrato da [ponte](../architecture/mini-apps-bridge.md) vale com estas fixaç
 
 - **Vendure** com canal por loja, customers do guidu.chat ligados ao `sub` do turista, processo de pedido próprio e meio de pagamento "combinado com a loja".
 - **Proposta da loja versionada** (itens, frete, prazo, validade) por plugin próprio (`guidu-proposals`); só a versão aceita pelo turista define o valor.
-- **Link de pagamento** gerado a partir do pedido selecionado no Inbox: um provedor por API (N8) e os demais no modo manual; credencial da loja cifrada no cofre do GUIDU.
+- **Link de pagamento** gerado a partir do pedido selecionado no Inbox: Mercado Pago, Pagar.me e Asaas por API, com uma interface comum (N8, decidido em 24/10/2026), e os demais no modo manual; credencial da loja cifrada no cofre do GUIDU.
 - **"Pago" só com a confirmação da loja**; o aviso do provedor só sinaliza.
 - Situações: `enviado` → `proposta da loja` → `aceito pelo turista` → `aguardando pagamento` → `pago` → `pronto para retirada` / `enviado` → `concluído`; `recusado` e `cancelado` antes de `pago`.
 
 ### 7. Conversa na V1
 
-O turista conversa pelo GUIDU (caminho B de [guidu-chat-app.md](../architecture/guidu-chat-app.md)): usuário virtual no Synapse, rotas de conversa da API e tempo real por SSE. Se o Marcelo escolher o WhatsApp para janeiro (N9), a aba Chat abre o WhatsApp da loja com o código da origem, e as rotas de conversa entram depois, sem mudar o resto do contrato.
+O turista conversa pelo GUIDU (caminho B de [guidu-chat-app.md](../architecture/guidu-chat-app.md)): usuário virtual no Synapse, rotas de conversa da API e tempo real por SSE. Em janeiro, a conversa com as lojas é pelo WhatsApp (N9, decidido em 24/10/2026): a aba Chat abre o WhatsApp da loja com o código da origem, e as rotas de conversa com as lojas entram depois, sem mudar o resto do contrato. A conversa com o guidu (BotCompara) usa as rotas de conversa desde a V1, guardada no motor de IA e fora do Matrix.
 
 ### 8. Identidade do turista
 
-Supabase Auth com telefone e código, num projeto próprio do guidu.chat (recomendação N4, a confirmar). O GUIDU confere o token pelas chaves públicas desse projeto e liga o `sub` ao customer do Vendure, ao usuário virtual do Matrix e aos pedidos. O console nunca usa esse token para acessar o painel do comerciante.
+Supabase Auth com telefone e código, num projeto próprio do guidu.chat (N4, decidido em 24/10/2026). O turista é customer, e o customer é do guidu.chat; o comerciante só recebe os dados necessários para finalizar a compra. O GUIDU confere o token pelas chaves públicas desse projeto e liga o `sub` ao customer do Vendure, ao usuário virtual do Matrix e aos pedidos. O console nunca usa esse token para acessar o painel do comerciante.
 
 ### 9. Como as equipes trabalham juntas
 
