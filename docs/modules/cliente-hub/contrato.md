@@ -1,7 +1,7 @@
 # Cliente Hub: pedidos de contrato (`@guidu/contracts`)
 
 - **Status:** pedidos da conversa do Cliente Hub V1 à equipe console, 24/10/2026, para entrar no **contrato v1** publicado na semana de 27/10 (ADR 0027, seção 9). A equipe guidu.chat revisa no PR do contrato.
-- **Especificações:** [módulo no console](especificacao.md) e [Hub do turista no guidu-chat](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/cliente-hub.md).
+- **Especificações:** [módulo no console](especificacao.md) e [Cliente Hub no guidu-chat](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/cliente-hub.md).
 - **Convenções:** base `https://api.guidu.chat/v1`; erros com `code` estável e `message` segura; escritas com `Idempotency-Key`; datas ISO 8601 em UTC; dinheiro em centavos (`amount`) com `currency`; textos que a loja escreveu chegam já no idioma pedido (`?locale=` ou `Accept-Language`), com o idioma usado em `locale`. Situações e códigos são estáveis e o **app traduz** os rótulos dele.
 
 ## Resumo
@@ -16,7 +16,7 @@
 | H6  | Ponte: `requestLogin`, `openOrder`, `openOrders`, `setFavorite`, evento `auth.changed` | Contrato na semana 1         | Runtime e adaptador          |
 | H7  | "Com quem você está comprando": dados da empresa e do provedor                         | Contrato na semana 1         | guidu.chat                   |
 | H8  | Conversas em janeiro pelo WhatsApp e "Falar com a loja" sobre um pedido                | Contrato na semana 1         | guidu.chat                   |
-| H9  | Lista de pedidos para Minhas compras                                                   | Já previsto; fixar o esquema | guidu.chat                   |
+| H9  | Lista de pedidos para a aba Pedidos                                                    | Já previsto; fixar o esquema | guidu.chat                   |
 | H10 | Perfil: endereços, tipo de usuário, notificações                                       | Contrato na semana 1         | guidu.chat                   |
 | H11 | Resumo do cabeçalho do Hub                                                             | Pode vir na semana 5         | guidu.chat                   |
 | H12 | Erros novos                                                                            | Junto com os demais          | Todos                        |
@@ -143,8 +143,8 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 | Método / evento               | Lado          | Comportamento                                                                                                                                                                                                                                                            |
 | ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `requestLogin({ reason })`    | Ação do app   | O guidu.chat abre a entrada da plataforma (telefone com código) e volta para onde estava. `reason`: `my_orders`, `favorites`, `chat`. Resultado `{ signedIn: boolean }`; com login, o app emite `auth.changed` e o runtime refaz a sessão do mini-app pelo aperto de mão |
-| `openOrder({ orderId })`      | Ação do app   | O guidu.chat abre o pedido em Minhas compras. O app confere no servidor que o pedido é do turista                                                                                                                                                                        |
-| `openOrders({ storeSlug })`   | Ação do app   | "Ver todos" do bloco Meus pedidos: o guidu.chat abre Minhas compras filtrado pela loja (`GET /orders?store=`, H9). Sem login, pede login antes                                                                                                                           |
+| `openOrder({ orderId })`      | Ação do app   | O guidu.chat abre o pedido em Pedidos (Cliente Hub). O app confere no servidor que o pedido é do turista                                                                                                                                                                 |
+| `openOrders({ storeSlug })`   | Ação do app   | "Ver todos" do bloco Meus pedidos: o guidu.chat abre Pedidos (Cliente Hub) filtrado pela loja (`GET /orders?store=`, H9). Sem login, pede login antes                                                                                                                    |
 | `setFavorite({ target, on })` | Ação do app   | O guidu.chat chama o H3 com o token do turista (o mini-app nunca recebe o token). Sem login, o app pede login antes e completa a ação depois. Resultado `{ favorited: boolean }`                                                                                         |
 | `subscribe("auth.changed")`   | Evento do app | `{ signedIn: boolean }`                                                                                                                                                                                                                                                  |
 
@@ -175,7 +175,7 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 
 - `GET /me` ganha `user_type: "visitor" | "resident" | "worker" | null` (o mesmo campo do C12 do BotCompara; `PATCH /me/profile`).
 - **Endereços de entrega** (não estão na ADR 0027): `GET/POST /me/addresses`, `PATCH/DELETE /me/addresses/{id}`, com `label`, `street`, `number`, `complement`, `neighborhood`, `city`, `state`, `postal_code`, `reference`, `is_default`. Até 10 por conta. Endereço usado em pedido continua no pedido mesmo se apagado da lista.
-- `PATCH /me` com `notifications: { order_updates_push: boolean }`. Avisos de pedido por push podem ser desligados; o pedido continua aparecendo em Minhas compras.
+- `PATCH /me` com `notifications: { order_updates_push: boolean }`. Avisos de pedido por push podem ser desligados; o pedido continua aparecendo em Pedidos (Cliente Hub).
 - Consentimentos e "O que o guidu sabe de você": rotas C5 e C12 do BotCompara, sem mudança.
 
 ## H11 — Resumo do cabeçalho do Hub

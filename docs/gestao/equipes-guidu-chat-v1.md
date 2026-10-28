@@ -6,17 +6,17 @@
 
 ## 1. O que cada equipe entrega
 
-| Equipe console                                                                                                                 | Equipe guidu.chat                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| Contrato: OpenAPI da API do guidu.chat, esquemas da ponte, catálogo de eventos e servidor simulado (`@guidu/contracts`)        | Revisão do contrato; guidu.chat web em Next.js no host `guidu.chat`                              |
-| Segurança (L1, L2, L5), APISIX e agentgateway, produção                                                                        | Container `guidu-chat-web` e esteira de build                                                    |
-| Vendure: canal por loja, sincronização do Portfólio, processo de pedido, meio "combinado com a loja", plugin `guidu-proposals` | Home, Local (banner, favoritos, últimos vistos), carrinho por loja, checkout com "Enviar pedido" |
-| API do guidu.chat: entrada, lojas, itens, conta, carrinho, pedido, proposta, pagamento, entrega, conversas, eventos, push      | Login do turista (telefone com código) e sessão; Cliente Hub (minhas compras e histórico)        |
-| Bridge API e SDK do mini-app                                                                                                   | Adaptador da ponte (iframe no web, WebView depois)                                               |
-| Mini-apps em `apps.guidu.chat`: perfil, produto ou oferta, catálogo                                                            | Telas de proposta e aceite, "Pagar à loja", retirada e envio                                     |
-| Inbox: espaço Pedidos, proposta versionada, gerar link de pagamento, confirmar recebimento                                     | Chat: "Conversar" abre o WhatsApp da loja (N9)                                                   |
-| Link de pagamento: Mercado Pago, Pagar.me e Asaas por API (N8) e modo manual                                                   | Testes de ponta a ponta do lado do turista                                                       |
-| Turista no Matrix (usuário virtual), avisos e push                                                                             | Acessibilidade, idiomas da interface, desempenho em rede ruim                                    |
+| Equipe console                                                                                                                 | Equipe guidu.chat                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Contrato: OpenAPI da API do guidu.chat, esquemas da ponte, catálogo de eventos e servidor simulado (`@guidu/contracts`)        | Revisão do contrato; guidu.chat web em Next.js no host `guidu.chat`                                                             |
+| Segurança (L1, L2, L5), APISIX e agentgateway, produção                                                                        | Container `guidu-chat-web` e esteira de build                                                                                   |
+| Vendure: canal por loja, sincronização do Portfólio, processo de pedido, meio "combinado com a loja", plugin `guidu-proposals` | Descubra, Locais (banner e item de origem; favoritos e vistos na área da loja), carrinho por loja, checkout com "Enviar pedido" |
+| API do guidu.chat: entrada, lojas, itens, conta, carrinho, pedido, proposta, pagamento, entrega, conversas, eventos, push      | Login do turista (telefone com código) e sessão; Cliente Hub (minhas compras e histórico)                                       |
+| Bridge API e SDK do mini-app                                                                                                   | Adaptador da ponte (iframe no web, WebView depois)                                                                              |
+| Mini-apps em `apps.guidu.chat`: perfil, produto ou oferta, catálogo                                                            | Telas de proposta e aceite, "Pagar à loja", retirada e envio                                                                    |
+| Inbox: espaço Pedidos, proposta versionada, gerar link de pagamento, confirmar recebimento                                     | Chat: "Conversar" abre o WhatsApp da loja (N9)                                                                                  |
+| Link de pagamento: Mercado Pago, Pagar.me e Asaas por API (N8) e modo manual                                                   | Testes de ponta a ponta do lado do turista                                                                                      |
+| Turista no Matrix (usuário virtual), avisos e push                                                                             | Acessibilidade, idiomas da interface, desempenho em rede ruim                                                                   |
 
 ## 2. Semanas
 

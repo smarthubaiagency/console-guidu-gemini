@@ -7,16 +7,16 @@
 
 ## 1. O que vai ao ar em janeiro
 
-| Entra                                                                                         | Fica para depois da temporada                                   |
-| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| guidu.chat V1 **no navegador** (`apps.guidu.chat`): Home, Local, Chat, Conta, aberto pelo QR  | App nativo (React Native + Expo) nas lojas da Apple e do Google |
-| Vendure com canal por loja, sincronizado com o Portfólio                                      | Pagamento pela plataforma, split, credencial reutilizável       |
-| Carrinho por loja, **Enviar pedido** com cadastro ou login                                    | Carrinho com várias lojas num checkout só                       |
-| Proposta da loja versionada (itens, frete, prazo) e aceite do turista                         | BotCompara e BotShop abertos para a cidade                      |
-| Link de pagamento: **Mercado Pago, Pagar.me e Asaas por API** (N8) e os demais no modo manual | Integração com os outros provedores                             |
-| Confirmação de recebimento pela loja, Cliente Hub, telas de retirada e envio                  | Modo loja no app                                                |
-| Espaço Pedidos no Inbox                                                                       | —                                                               |
-| Segurança (L1, L2, L5), gateways, produção e teste de carga                                   | —                                                               |
+| Entra                                                                                                                 | Fica para depois da temporada                                   |
+| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| guidu.chat V1 **no navegador** (`apps.guidu.chat`): Descubra, Locais, Conversas e Conta (Cliente Hub), aberto pelo QR | App nativo (React Native + Expo) nas lojas da Apple e do Google |
+| Vendure com canal por loja, sincronizado com o Portfólio                                                              | Pagamento pela plataforma, split, credencial reutilizável       |
+| Carrinho por loja, **Enviar pedido** com cadastro ou login                                                            | Carrinho com várias lojas num checkout só                       |
+| Proposta da loja versionada (itens, frete, prazo) e aceite do turista                                                 | BotCompara e BotShop abertos para a cidade                      |
+| Link de pagamento: **Mercado Pago, Pagar.me e Asaas por API** (N8) e os demais no modo manual                         | Integração com os outros provedores                             |
+| Confirmação de recebimento pela loja, Cliente Hub, telas de retirada e envio                                          | Modo loja no app                                                |
+| Espaço Pedidos no Inbox                                                                                               | —                                                               |
+| Segurança (L1, L2, L5), gateways, produção e teste de carga                                                           | —                                                               |
 
 ## 2. Semanas
 

@@ -9,7 +9,7 @@
 
 ## Contexto
 
-O guidu.chat é o app do turista; o console (GUIDU) é a plataforma do comerciante e o servidor de tudo. Duas equipes vão trabalhar em paralelo até janeiro de 2027: uma no console e outra no guidu.chat. Para que a equipe do guidu.chat não precise mexer no console, nem refazer o que ele já faz, a fronteira entre os dois precisa ser um **contrato escrito**, entregue antes do código.
+O guidu.chat é o canal de chat dos comerciantes da cidade com turistas e moradores, no app e no navegador do celular, e tem como objetivo final o checkout dentro do chat (futuro). O **Cliente Hub** mora dentro dele, no menu Conta (ajuste de nomes do Marcelo, 28/10/2026). O console (GUIDU) é a plataforma do comerciante e o servidor de tudo. Duas equipes vão trabalhar em paralelo até janeiro de 2027: uma no console e outra no guidu.chat. Para que a equipe do guidu.chat não precise mexer no console, nem refazer o que ele já faz, a fronteira entre os dois precisa ser um **contrato escrito**, entregue antes do código.
 
 ## Decisão
 
@@ -37,14 +37,14 @@ Os quatro hosts são do mesmo site (`guidu.chat`), o que mantém cookies e ifram
 
 ### 3. Quem faz cada tela da V1
 
-| Tela ou função                                                                                                                                    | Onde roda                                                                 | Dono                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------- |
-| Home, Chat, Conta e Cliente Hub, carrinho, checkout ("Enviar pedido"), proposta e aceite, cartão "Pagar à loja", telas de retirada e envio, login | guidu.chat (telas do app)                                                 | guidu.chat                                               |
-| Leitura do QR: `guidu.chat/q/<código>` resolve o ponto de entrada pela API e abre o Local                                                         | guidu.chat                                                                | guidu.chat                                               |
-| Local: banner (favoritar a loja, Ver local) e item de origem. Favoritos e últimos vistos da loja ficam na área da loja (CH11, 24/10/2026)         | guidu.chat                                                                | guidu.chat                                               |
-| Conteúdo da loja dentro do Local: perfil completo, produto ou oferta, catálogo, cardápio (templates)                                              | Mini-apps em `apps.guidu.chat`, abertos por iframe (web) ou WebView (app) | console                                                  |
-| Área da loja (blocos e cores escolhidos pela loja no módulo Cliente Hub do console), no Local e no Cliente Hub                                    | Mini-app em `apps.guidu.chat`, lendo `GET /stores/{slug}/hub`             | console ([proposta](../modules/cliente-hub/proposta.md)) |
-| Espaço Pedidos no Inbox, proposta versionada, gerar link de pagamento, confirmar recebimento, pronto, enviado, concluído                          | Console                                                                   | console                                                  |
+| Tela ou função                                                                                                                                                                         | Onde roda                                                                 | Dono                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Menus Descubra, Locais, Conversas e Conta (com o Cliente Hub dentro), carrinho, checkout ("Enviar pedido"), proposta e aceite, cartão "Pagar à loja", telas de retirada e envio, login | guidu.chat (telas do app)                                                 | guidu.chat                                               |
+| Leitura do QR: `guidu.chat/q/<código>` resolve o ponto de entrada pela API e abre Locais                                                                                               | guidu.chat                                                                | guidu.chat                                               |
+| Locais: banner (favoritar a loja, Ver local) e item de origem. Favoritos e últimos vistos da loja ficam na área da loja (CH11, 24/10/2026)                                             | guidu.chat                                                                | guidu.chat                                               |
+| Conteúdo da loja dentro de Locais: perfil completo, produto ou oferta, catálogo, cardápio (templates)                                                                                  | Mini-apps em `apps.guidu.chat`, abertos por iframe (web) ou WebView (app) | console                                                  |
+| Área da loja (blocos e cores escolhidos pela loja no módulo Cliente Hub do console), em Locais e no Cliente Hub                                                                        | Mini-app em `apps.guidu.chat`, lendo `GET /stores/{slug}/hub`             | console ([proposta](../modules/cliente-hub/proposta.md)) |
+| Espaço Pedidos no Inbox, proposta versionada, gerar link de pagamento, confirmar recebimento, pronto, enviado, concluído                                                               | Console                                                                   | console                                                  |
 
 ### 4. API do guidu.chat (v1)
 

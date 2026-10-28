@@ -24,7 +24,7 @@ Passagem de bastão da conversa de arquitetura e produto (23 e 24/10/2026) para 
 ## 2. Já decidido
 
 1. **Duas partes:** o **Hub do turista** (conta, perfil, consentimentos, todas as compras, conversas, carteira) é da plataforma e não se personaliza; a **área da loja** (o que o turista vê daquela loja, no Local e no Hub) é personalizada pela loja no módulo do console (T13).
-2. **Abas do Hub:** Para você · Minhas compras · Conversas · Perfil; Carteira na V2.
+2. **Abas do Hub:** Para você · Minhas compras · Conversas · Perfil; Carteira na V2. _Alterado pelo Marcelo em 28/10/2026: **Para você · Pedidos · Chat · Perfil** (configurações), dentro do menu Conta; rodapé do guidu.chat com Descubra, Locais, Conversas e Conta (ver painel)._
 3. **Editor do módulo** no modelo do Klaviyo: três painéis, blocos da loja (ligar, desligar, ordenar) e partes fixas (só texto), prévia pelo próprio mini-app com token curto, traduzir, rascunho e publicação com versões, **sem CSS ou HTML livre**, contraste conferido, cascata plataforma → parceiro → loja.
 4. **Área da loja** é um mini-app em `apps.guidu.chat`, feito pela **equipe console**, lendo `GET /stores/{slug}/hub`; a equipe guidu.chat só abre o mini-app no Local e no Hub (ADR 0027).
 5. **Escopo por versão** da proposta (janeiro: logo, capa, cor; blocos Meus pedidos nesta loja, Favoritar, Últimos vistos, Conversar, Perguntas frequentes).
