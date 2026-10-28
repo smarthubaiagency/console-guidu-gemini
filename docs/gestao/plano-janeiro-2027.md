@@ -1,7 +1,7 @@
 # Plano até janeiro de 2027
 
 - **Status:** proposta do gerente de projeto, 23/10/2026, a partir da decisão do Marcelo de ter **pedido com Vendure em janeiro**.
-- **Produto:** [guidu-chat: v1-navegacao-e-pedido.md](https://github.com/smarthubaiagency/guidu-chat/blob/claude/produto-v1/docs/produto/v1-navegacao-e-pedido.md)
+- **Produto:** [guidu-chat: v1-navegacao-e-pedido.md](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/v1-navegacao-e-pedido.md)
 - **Painel:** [painel.md](painel.md)
 - **Divisão entre as equipes console e guidu.chat:** [equipes-guidu-chat-v1.md](equipes-guidu-chat-v1.md), conforme a [ADR 0027](../adr/0027-guidu-chat-v1-console-bridge.md)
 

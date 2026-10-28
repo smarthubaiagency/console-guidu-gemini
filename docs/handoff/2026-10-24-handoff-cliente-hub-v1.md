@@ -1,6 +1,8 @@
 # Handoff 24/10/2026 — Cliente Hub V1
 
 > **Fechado em 24/10/2026.** Entregas: [especificação do módulo](../modules/cliente-hub/especificacao.md), [dados](../modules/cliente-hub/dados.md), [contrato](../modules/cliente-hub/contrato.md) e, no guidu-chat, `docs/produto/cliente-hub.md` (seção 8). Perguntas da seção 4 com recomendação no [painel](../gestao/painel.md), N10 a N14.
+>
+> **Revisado e entregue em 28/10/2026.** A conversa de 24/10 parou antes dos PRs; a de 28/10 trouxe o trabalho para a `main` atual, corrigiu o isolamento do H2 (a loja vem da sessão do mini-app), acrescentou `openOrders` à ponte para o "Ver todos" de Meus pedidos e apontou os links para a `main`. As perguntas N10 a N14 continuam com o Marcelo.
 
 Passagem de bastão da conversa de arquitetura e produto (23 e 24/10/2026) para uma conversa só sobre a **V1 do Cliente Hub**: o Hub do turista no guidu.chat e o módulo do console em que a loja personaliza a sua área.
 

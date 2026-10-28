@@ -1,25 +1,25 @@
 # Cliente Hub: pedidos de contrato (`@guidu/contracts`)
 
 - **Status:** pedidos da conversa do Cliente Hub V1 à equipe console, 24/10/2026, para entrar no **contrato v1** publicado na semana de 27/10 (ADR 0027, seção 9). A equipe guidu.chat revisa no PR do contrato.
-- **Especificações:** [módulo no console](especificacao.md) e [Hub do turista no guidu-chat](https://github.com/smarthubaiagency/guidu-chat/blob/claude/fervent-hopper-k4tnnv/docs/produto/cliente-hub.md).
+- **Especificações:** [módulo no console](especificacao.md) e [Hub do turista no guidu-chat](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/cliente-hub.md).
 - **Convenções:** base `https://api.guidu.chat/v1`; erros com `code` estável e `message` segura; escritas com `Idempotency-Key`; datas ISO 8601 em UTC; dinheiro em centavos (`amount`) com `currency`; textos que a loja escreveu chegam já no idioma pedido (`?locale=` ou `Accept-Language`), com o idioma usado em `locale`. Situações e códigos são estáveis e o **app traduz** os rótulos dele.
 
 ## Resumo
 
-| #   | Pedido                                                                   | Prioridade                   | Quem usa                     |
-| --- | ------------------------------------------------------------------------ | ---------------------------- | ---------------------------- |
-| H1  | `GET /stores/{slug}/hub`: a área publicada                               | Contrato na semana 1         | Runtime e guidu.chat         |
-| H2  | `GET /bridge/stores/{slug}/hub/me`: dados do turista naquela loja        | Contrato na semana 1         | Runtime (sessão do mini-app) |
-| H3  | Favoritos: esquema e filtro por loja                                     | Contrato na semana 1         | guidu.chat e runtime         |
-| H4  | Últimos vistos: filtro por loja e `POST /me/recent`                      | Contrato na semana 1         | guidu.chat e runtime         |
-| H5  | Perguntas frequentes dentro do H1                                        | Junto com o H1               | Runtime                      |
-| H6  | Ponte: `requestLogin`, `openOrder`, evento `auth.changed`, `setFavorite` | Contrato na semana 1         | Runtime e adaptador          |
-| H7  | "Com quem você está comprando": dados da empresa e do provedor           | Contrato na semana 1         | guidu.chat                   |
-| H8  | Conversas em janeiro pelo WhatsApp e "Falar com a loja" sobre um pedido  | Contrato na semana 1         | guidu.chat                   |
-| H9  | Lista de pedidos para Minhas compras                                     | Já previsto; fixar o esquema | guidu.chat                   |
-| H10 | Perfil: endereços, tipo de usuário, notificações                         | Contrato na semana 1         | guidu.chat                   |
-| H11 | Resumo do cabeçalho do Hub                                               | Pode vir na semana 5         | guidu.chat                   |
-| H12 | Erros novos                                                              | Junto com os demais          | Todos                        |
+| #   | Pedido                                                                                 | Prioridade                   | Quem usa                     |
+| --- | -------------------------------------------------------------------------------------- | ---------------------------- | ---------------------------- |
+| H1  | `GET /stores/{slug}/hub`: a área publicada                                             | Contrato na semana 1         | Runtime e guidu.chat         |
+| H2  | `GET /bridge/stores/{slug}/hub/me`: dados do turista naquela loja                      | Contrato na semana 1         | Runtime (sessão do mini-app) |
+| H3  | Favoritos: esquema e filtro por loja                                                   | Contrato na semana 1         | guidu.chat e runtime         |
+| H4  | Últimos vistos: filtro por loja e `POST /me/recent`                                    | Contrato na semana 1         | guidu.chat e runtime         |
+| H5  | Perguntas frequentes dentro do H1                                                      | Junto com o H1               | Runtime                      |
+| H6  | Ponte: `requestLogin`, `openOrder`, `openOrders`, `setFavorite`, evento `auth.changed` | Contrato na semana 1         | Runtime e adaptador          |
+| H7  | "Com quem você está comprando": dados da empresa e do provedor                         | Contrato na semana 1         | guidu.chat                   |
+| H8  | Conversas em janeiro pelo WhatsApp e "Falar com a loja" sobre um pedido                | Contrato na semana 1         | guidu.chat                   |
+| H9  | Lista de pedidos para Minhas compras                                                   | Já previsto; fixar o esquema | guidu.chat                   |
+| H10 | Perfil: endereços, tipo de usuário, notificações                                       | Contrato na semana 1         | guidu.chat                   |
+| H11 | Resumo do cabeçalho do Hub                                                             | Pode vir na semana 5         | guidu.chat                   |
+| H12 | Erros novos                                                                            | Junto com os demais          | Todos                        |
 
 ## H1 — `GET /stores/{slug}/hub`
 
@@ -117,7 +117,7 @@ type StoreHubMe = {
 };
 ```
 
-`OrderSituation` é o mesmo enum do H9. Sem sessão: `401 bridge_session_required`.
+`OrderSituation` é o mesmo enum do H9. Sem sessão: `401 bridge_session_required`. A sessão do mini-app é presa a uma loja: o servidor usa a loja **da sessão**, e um `{slug}` diferente dela devolve `404 store_not_found` (o slug na rota é só conferência, nunca a fonte do filtro). Os dados vêm das bases do guidu.chat (Supabase do turista e Vendure, N4), filtrados pela loja.
 
 ## H3 — Favoritos
 
@@ -144,6 +144,7 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 | ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `requestLogin({ reason })`    | Ação do app   | O guidu.chat abre a entrada da plataforma (telefone com código) e volta para onde estava. `reason`: `my_orders`, `favorites`, `chat`. Resultado `{ signedIn: boolean }`; com login, o app emite `auth.changed` e o runtime refaz a sessão do mini-app pelo aperto de mão |
 | `openOrder({ orderId })`      | Ação do app   | O guidu.chat abre o pedido em Minhas compras. O app confere no servidor que o pedido é do turista                                                                                                                                                                        |
+| `openOrders({ storeSlug })`   | Ação do app   | "Ver todos" do bloco Meus pedidos: o guidu.chat abre Minhas compras filtrado pela loja (`GET /orders?store=`, H9). Sem login, pede login antes                                                                                                                           |
 | `setFavorite({ target, on })` | Ação do app   | O guidu.chat chama o H3 com o token do turista (o mini-app nunca recebe o token). Sem login, o app pede login antes e completa a ação depois. Resultado `{ favorited: boolean }`                                                                                         |
 | `subscribe("auth.changed")`   | Evento do app | `{ signedIn: boolean }`                                                                                                                                                                                                                                                  |
 

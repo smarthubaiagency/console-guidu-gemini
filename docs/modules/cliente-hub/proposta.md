@@ -2,7 +2,7 @@
 
 - **Status:** proposta do gerente de projeto, 24/10/2026, a partir da ideia do Marcelo e das telas do editor do Klaviyo Customer Hub. Para aprovar.
 - **Fechada em 24/10/2026** pela [especificação da V1](especificacao.md), que prevalece onde divergir (em especial a seção 5: o catálogo de blocos foi para o código, ver [dados](dados.md)).
-- **Relaciona-se com:** [ADR 0006](../../adr/0006-manifesto-de-modulos.md) (manifesto), [ADR 0013](../../adr/0013-idiomas-do-painel.md) (idiomas), [ADR 0014](../../adr/0014-shell-padrao-sidebar-08.md) (shell e a exceção de tela cheia), [ADR 0018](../../adr/0018-configuracoes-em-cascata.md) (cascata), [ADR 0027](../../adr/0027-guidu-chat-v1-console-bridge.md) (guidu.chat V1), [ponte dos mini-apps](../../architecture/mini-apps-bridge.md), [Cliente Hub no guidu-chat](https://github.com/smarthubaiagency/guidu-chat/blob/claude/produto-v1/docs/produto/cliente-hub.md).
+- **Relaciona-se com:** [ADR 0006](../../adr/0006-manifesto-de-modulos.md) (manifesto), [ADR 0013](../../adr/0013-idiomas-do-painel.md) (idiomas), [ADR 0014](../../adr/0014-shell-padrao-sidebar-08.md) (shell e a exceção de tela cheia), [ADR 0018](../../adr/0018-configuracoes-em-cascata.md) (cascata), [ADR 0027](../../adr/0027-guidu-chat-v1-console-bridge.md) (guidu.chat V1), [ponte dos mini-apps](../../architecture/mini-apps-bridge.md), [Cliente Hub no guidu-chat](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/cliente-hub.md).
 
 ## 1. A ideia
 

@@ -122,7 +122,7 @@ O botmercado e o GUIDS vendedor (compra agêntica, seção 3) usam ferramentas d
 
 ## 11. Etapas sugeridas
 
-Decisão do Marcelo de 23/10/2026: o **Vendure entra na V1** do guidu.chat, com pedido enviado à loja e pagamento por link da própria loja ([guidu-chat: v1-navegacao-e-pedido.md](https://github.com/smarthubaiagency/guidu-chat/blob/claude/produto-v1/docs/produto/v1-navegacao-e-pedido.md)). O pagamento pela plataforma (CA0) fica para depois.
+Decisão do Marcelo de 23/10/2026: o **Vendure entra na V1** do guidu.chat, com pedido enviado à loja e pagamento por link da própria loja ([guidu-chat: v1-navegacao-e-pedido.md](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/v1-navegacao-e-pedido.md)). O pagamento pela plataforma (CA0) fica para depois.
 
 | Etapa   | Entrega                                                                                                                                                                                                        | Depende de              |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
