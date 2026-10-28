@@ -1,5 +1,7 @@
 # Handoff 24/10/2026 — Cliente Hub V1
 
+> **Fechado em 24/10/2026.** Entregas: [especificação do módulo](../modules/cliente-hub/especificacao.md), [dados](../modules/cliente-hub/dados.md), [contrato](../modules/cliente-hub/contrato.md) e, no guidu-chat, `docs/produto/cliente-hub.md` (seção 8). Perguntas da seção 4 com recomendação no [painel](../gestao/painel.md), N10 a N14.
+
 Passagem de bastão da conversa de arquitetura e produto (23 e 24/10/2026) para uma conversa só sobre a **V1 do Cliente Hub**: o Hub do turista no guidu.chat e o módulo do console em que a loja personaliza a sua área.
 
 ## Mensagem de abertura (colar no chat novo)

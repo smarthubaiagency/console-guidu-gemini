@@ -113,3 +113,14 @@ Marcelo pediu um novo layout da janela do Inbox antes das features do P1 ([plano
 4. **Painel de contexto com abas** segmentadas Contato e Threads (ADR 0021), com a aba na URL (`?tab=threads`).
 5. **Caixa de mensagem no padrão dos chats de agente de IA** (`InputGroup`).
 6. Uma coluna recolhida não renderiza o conteúdo, para o teclado não alcançar o que está fora da vista.
+
+## Revisão proposta de 24/10/2026 — editor do Cliente Hub em tela cheia
+
+- **Status:** proposta do gerente de projeto (decisão técnica CH3 da [especificação do Cliente Hub](../modules/cliente-hub/especificacao.md)); vira aceita com a aprovação do Marcelo no PR.
+
+O editor da área da loja tem três painéis com a prévia de celular no centro, como o editor do Klaviyo. Com a sidebar-08 aberta, não cabe em telas de 1280 px. Como o item 1 da revisão de 16/10/2026 diz que outro shell exige nova ADR, esta revisão abre a **segunda exceção**:
+
+1. A rota `/app/[workspaceSlug]/cliente-hub` fica no grupo `(fullscreen)/`, ao lado do Inbox, sem a sidebar-08.
+2. **Não nasce um shell novo**: o editor reaproveita as peças do cabeçalho primário do Inbox (60 px com borda inferior, `ShellSearch` não entra, `ThemeToggle` e `HeaderUserMenu` entram) e um botão **Dashboard** à esquerda. Os três painéis usam `Resizable`, como o Inbox.
+3. Abaixo de 1024 px o editor mostra o estado "Abra no computador para editar" (CH13).
+4. Qualquer outra tela cheia continua exigindo revisão desta ADR.
