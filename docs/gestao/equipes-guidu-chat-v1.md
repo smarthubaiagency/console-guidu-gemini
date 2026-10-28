@@ -14,23 +14,23 @@
 | API do guidu.chat: entrada, lojas, itens, conta, carrinho, pedido, proposta, pagamento, entrega, conversas, eventos, push      | Login do turista (telefone com código) e sessão; Cliente Hub (minhas compras e histórico)                                       |
 | Bridge API e SDK do mini-app                                                                                                   | Adaptador da ponte (iframe no web, WebView depois)                                                                              |
 | Mini-apps em `apps.guidu.chat`: perfil, produto ou oferta, catálogo                                                            | Telas de proposta e aceite, "Pagar à loja", retirada e envio                                                                    |
-| Inbox: espaço Pedidos, proposta versionada, gerar link de pagamento, confirmar recebimento                                     | Chat: "Conversar" abre o WhatsApp da loja (N9)                                                                                  |
+| Inbox: espaço Pedidos, proposta versionada, gerar link de pagamento, confirmar recebimento                                     | Chat com as lojas no guidu.chat e opção de WhatsApp (N9 revista em 28/10/2026)                                                  |
 | Link de pagamento: Mercado Pago, Pagar.me e Asaas por API (N8) e modo manual                                                   | Testes de ponta a ponta do lado do turista                                                                                      |
 | Turista no Matrix (usuário virtual), avisos e push                                                                             | Acessibilidade, idiomas da interface, desempenho em rede ruim                                                                   |
 
 ## 2. Semanas
 
-| Semana | Equipe console                                                                                                  | Equipe guidu.chat                                                                                     |
-| ------ | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 27/10  | **Contrato v1 e servidor simulado**; ADRs; segurança L1, L2, L5; Vendure local                                  | Revisar o contrato; esqueleto do guidu.chat web com o `@guidu/ui`; navegação Home, Local, Chat, Conta |
-| 03/11  | Vendure no dev, sincronização do Portfólio; identidade do turista (projeto Supabase separado, N4)               | Leitura do QR (`/q/<código>`), Local, carrinho contra o simulado                                      |
-| 10/11  | API: entrada, lojas, itens, carrinho, conta; mini-app de produto e perfil                                       | Login do turista; adaptador da ponte no iframe; `addToCart` pela ponte                                |
-| 17/11  | API: Enviar pedido; Inbox Pedidos (lista e detalhe)                                                             | Checkout e "Enviar pedido"; trocar o simulado pela API real do dev                                    |
-| 24/11  | Plugin `guidu-proposals`; API de proposta e eventos (SSE)                                                       | Telas de proposta, aceite e histórico; Cliente Hub                                                    |
-| 01/12  | Link de pagamento (Mercado Pago + manual; Pagar.me e Asaas até a semana 7); confirmação de recebimento; entrega | "Pagar à loja", telas de retirada e envio; Chat (N9)                                                  |
-| 08/12  | Gateways no dev; backup; teste de carga; revisão de segurança                                                   | Testes de ponta a ponta; rede ruim; idiomas; correções                                                |
-| 15/12  | Produção; cadastro das lojas e QR impressos                                                                     | Deploy do `guidu-chat-web` em produção; teste com as lojas                                            |
-| 22/12  | Congelamento e plantão                                                                                          | Congelamento e plantão                                                                                |
+| Semana | Equipe console                                                                                                  | Equipe guidu.chat                                                                                                                   |
+| ------ | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 27/10  | **Contrato v1 e servidor simulado**; ADRs; segurança L1, L2, L5; Vendure local                                  | Revisar o contrato; esqueleto do guidu.chat web com o `@guidu/ui`; navegação Home, Local, Chat, Conta                               |
+| 03/11  | Vendure no dev, sincronização do Portfólio; identidade do turista (projeto Supabase separado, N4)               | Leitura do QR (`/q/<código>`), Local, carrinho contra o simulado                                                                    |
+| 10/11  | API: entrada, lojas, itens, carrinho, conta; mini-app de produto e perfil                                       | Login do turista; adaptador da ponte no iframe; `addToCart` pela ponte                                                              |
+| 17/11  | API: Enviar pedido; Inbox Pedidos (lista e detalhe)                                                             | Checkout e "Enviar pedido"; trocar o simulado pela API real do dev                                                                  |
+| 24/11  | Plugin `guidu-proposals`; API de proposta e eventos (SSE)                                                       | Telas de proposta, aceite e histórico; Cliente Hub                                                                                  |
+| 01/12  | Link de pagamento (Mercado Pago + manual; Pagar.me e Asaas até a semana 7); confirmação de recebimento; entrega | "Pagar à loja", telas de retirada e envio; chat com as lojas no app e opção de WhatsApp (N9 revista; semana a confirmar no backlog) |
+| 08/12  | Gateways no dev; backup; teste de carga; revisão de segurança                                                   | Testes de ponta a ponta; rede ruim; idiomas; correções                                                                              |
+| 15/12  | Produção; cadastro das lojas e QR impressos                                                                     | Deploy do `guidu-chat-web` em produção; teste com as lojas                                                                          |
+| 22/12  | Congelamento e plantão                                                                                          | Congelamento e plantão                                                                                                              |
 
 ## 3. Pontos de encontro entre as equipes
 
@@ -44,4 +44,4 @@
 
 ## 4. Decisões que as equipes esperam do Marcelo
 
-N7 (quantas lojas; planejar com 300 e folga de 2×) e a aprovação das ADRs 0026 e 0027 ([painel](painel.md)). N2, N4, N8 e N9 foram decididas em 24/10/2026.
+N7 (quantas lojas; planejar com 300 e folga de 2×) e a aprovação das ADRs 0026 e 0027 ([painel](painel.md)). N2, N4, N8 e N9 foram decididas em 24/10/2026; a N9 foi revista em 28/10/2026 (chat no app junto com o WhatsApp em janeiro).

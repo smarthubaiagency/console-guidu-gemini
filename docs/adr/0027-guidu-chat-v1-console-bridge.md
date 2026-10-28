@@ -88,7 +88,7 @@ O contrato da [ponte](../architecture/mini-apps-bridge.md) vale com estas fixaç
 
 ### 7. Conversa na V1
 
-O turista conversa pelo GUIDU (caminho B de [guidu-chat-app.md](../architecture/guidu-chat-app.md)): usuário virtual no Synapse, rotas de conversa da API e tempo real por SSE. Em janeiro, a conversa com as lojas é pelo WhatsApp (N9, decidido em 24/10/2026): a aba Chat abre o WhatsApp da loja com o código da origem, e as rotas de conversa com as lojas entram depois, sem mudar o resto do contrato. A conversa com o guidu (BotCompara) usa as rotas de conversa desde a V1, guardada no motor de IA e fora do Matrix.
+O turista conversa pelo GUIDU (caminho B de [guidu-chat-app.md](../architecture/guidu-chat-app.md)): usuário virtual no Synapse, rotas de conversa da API e tempo real por SSE. Em janeiro, **o chat com as lojas no guidu.chat entra junto com o WhatsApp** (N9, revista pelo Marcelo em 28/10/2026): o chat no app é o padrão e o WhatsApp da loja é a alternativa, com as duas conversas no Inbox (regras no [contrato do Cliente Hub](../modules/cliente-hub/contrato.md), H8). A conversa com o guidu (BotCompara) usa as rotas de conversa desde a V1, guardada no motor de IA e fora do Matrix.
 
 ### 8. Identidade do turista
 

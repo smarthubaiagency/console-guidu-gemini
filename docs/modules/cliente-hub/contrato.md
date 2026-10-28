@@ -15,7 +15,7 @@
 | H5  | Perguntas frequentes dentro do H1                                                      | Junto com o H1               | Runtime                      |
 | H6  | Ponte: `requestLogin`, `openOrder`, `openOrders`, `setFavorite`, evento `auth.changed` | Contrato na semana 1         | Runtime e adaptador          |
 | H7  | "Com quem você está comprando": dados da empresa e do provedor                         | Contrato na semana 1         | guidu.chat                   |
-| H8  | Conversas em janeiro pelo WhatsApp e "Falar com a loja" sobre um pedido                | Contrato na semana 1         | guidu.chat                   |
+| H8  | Conversas em janeiro: chat no app e WhatsApp; "Falar com a loja" sobre um pedido       | Contrato na semana 1         | guidu.chat                   |
 | H9  | Lista de pedidos para a aba Pedidos                                                    | Já previsto; fixar o esquema | guidu.chat                   |
 | H10 | Perfil: endereços, tipo de usuário, notificações                                       | Contrato na semana 1         | guidu.chat                   |
 | H11 | Resumo do cabeçalho do Hub                                                             | Pode vir na semana 5         | guidu.chat                   |
@@ -159,11 +159,16 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 - `GET /orders/{id}/payment` ganha `merchant` (o mesmo objeto, copiado no momento do link) e `processor: { name, domain, known: boolean }` (`known` = domínio da lista de provedores conhecidos: Mercado Pago, Pagar.me, Asaas). No modo manual, `processor.name` é "Pix" ou o domínio do link.
 - O texto do aviso é do app (i18n), revisado pelo jurídico.
 
-## H8 — Conversas em janeiro (N9)
+## H8 — Conversas em janeiro: chat no app e WhatsApp (N9 revista em 28/10/2026)
 
-- `POST /conversations/open` com `{ target: "store", store_slug, item_id?, intent?, order_id? }` devolve, em janeiro, `{ channel: "whatsapp", whatsapp_url, origin_code }`: o link `wa.me` da loja com a mensagem inicial já no idioma do turista e o código da origem, que o Inbox liga ao contexto comercial. `intent: "order"` exige `order_id` do próprio turista e põe o código do pedido na mensagem; é a única porta do app para ajuste, cancelamento, comprovante e problema com o pedido (princípio de poucas etapas, guidu-chat `docs/produto/cliente-hub.md`, seção 8.1).
-- `GET /conversations` lista as conversas com `channel: "whatsapp" | "app"`, a loja (nome, logo, cor), a última atividade conhecida e, para o WhatsApp, `whatsapp_url`. A conversa com o guidu (C1 do BotCompara) vem com `kind: "guidu"`.
-- Quando o chat das lojas no app chegar, as mesmas rotas passam a devolver `channel: "app"`, sem `v2`.
+Em janeiro o chat com as lojas no guidu.chat entra junto com o WhatsApp. As rotas de conversa da ADR 0027 (`GET /conversations/{id}/messages`, `POST /conversations/{id}/messages`, SSE) passam a valer para as lojas desde a semana 1 do contrato; o turista é usuário virtual nas salas (T10) e a tradução é a do Inbox.
+
+- `POST /conversations/open` com `{ target: "store", store_slug, item_id?, intent?, order_id?, channel?: "app" | "whatsapp" }`. **Padrão `app`**: devolve `{ channel: "app", conversation_id }`, reaproveitando a conversa aberta com a loja; a origem e o pedido entram no contexto comercial da sala. Com `channel: "whatsapp"`: `{ channel: "whatsapp", whatsapp_url, origin_code }`, o link `wa.me` da loja com a mensagem inicial no idioma do turista e o código da origem ou do pedido. `intent: "order"` exige `order_id` do próprio turista; é a porta do app para ajuste, cancelamento, comprovante e problema com o pedido (princípio de poucas etapas, guidu-chat `docs/produto/cliente-hub.md`, seção 8.1).
+- `GET /conversations`: cada conversa com `channel: "app" | "whatsapp"`, a loja (nome, logo, cor), a última atividade, e, no `app`, `last_message`, `unread_count` e quem fala agora; no `whatsapp`, `whatsapp_url`. A conversa com o guidu (C1 do BotCompara) vem com `kind: "guidu"`.
+- `POST /conversations/{id}/read` (novo): marca como lida até a última mensagem, para o contador de não lidas.
+- `GET /stores/{slug}` ganha `messaging: { app: boolean, whatsapp: boolean }` para o app saber se oferece o WhatsApp.
+- `POST /conversations/{id}/handoff-whatsapp` (novo): devolve o `whatsapp_url` com o código da conversa e grava na sala do app o aviso "Conversa continuada no WhatsApp", para a equipe ver no Inbox.
+- **Avisos com o navegador fechado:** `POST /me/devices` aceita a inscrição de Web Push (`{ kind: "webpush", endpoint, keys }`) além do push do app; o servidor manda o aviso de nova mensagem e de mudança no pedido. Sem inscrição, o app oferece o WhatsApp.
 
 ## H9 — Lista de pedidos
 
@@ -187,7 +192,7 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 
 ## H12 — Erros novos
 
-`bridge_session_required`, `favorites_full`, `address_limit`, `order_not_found` (também para pedido de outro turista: mesma resposta, sem revelar que existe), `store_not_found`, `whatsapp_unavailable` (loja sem WhatsApp conectado; o app mostra "Esta loja ainda não atende por mensagem").
+`bridge_session_required`, `favorites_full`, `address_limit`, `order_not_found` (também para pedido de outro turista: mesma resposta, sem revelar que existe), `store_not_found`, `whatsapp_unavailable` (pediu WhatsApp e a loja não tem WhatsApp conectado; o app continua no chat do guidu.chat).
 
 ## H13 — Locais: lista e busca (`GET /stores`)
 
@@ -218,7 +223,7 @@ type StoreCard = {
 };
 ```
 
-- **Em janeiro (N9), `last_message` e `unread_count` vêm `null`**: a conversa é no WhatsApp e o servidor não sabe o que a pessoa leu, e não cruzamos o número da conta com as conversas do Inbox para mostrar trechos no app. O cartão usa `short_description` e `status`. Quando o chat das lojas chegar ao app, os dois campos passam a vir, sem `v2`.
+- `last_message` e `unread_count` vêm só quando a conversa é no `app`. Conversa só no WhatsApp: os dois `null`, porque o servidor não sabe o que a pessoa leu, e não cruzamos o número da conta com as conversas do Inbox para mostrar trechos no app; o cartão usa `short_description` e `status`.
 - Cache público de 60 s para a lista sem login e sem `near`.
 
 ## H14 — Locais: recomendados (`GET /stores/recommended`)
