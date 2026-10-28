@@ -40,6 +40,7 @@ Piloto em Búzios: o turista descobre as lojas por QR e pelo guidu.chat, convers
 ### Decisões de 28/10/2026
 
 - **guidu.chat e Cliente Hub, nomes e responsabilidades (Marcelo, 28/10/2026):** o guidu.chat é o canal de chat dos comerciantes da cidade com turistas e moradores (app e navegador do celular); o objetivo final é o checkout dentro do chat (futuro). Rodapé com quatro menus: **Descubra** (início), **Locais**, **Conversas** e **Conta**. O **Cliente Hub** mora dentro de Conta, com as abas **Para você · Pedidos · Chat · Perfil** (configurações); o guidu.chat não é o Cliente Hub. A aba Chat do Hub reaproveita a lista do menu Conversas (um componente, duas portas).
+- **Locais (Marcelo, 28/10/2026):** a página onde a pessoa guarda os seus locais favoritos; sem favoritos, mostra recomendações. Abas Favoritos · Todos · Recomendados, busca com filtros e cartão do local com **Ver mensagens** e **salvar** ([guidu-chat: v1-navegacao-e-pedido.md, seção 1.1](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/v1-navegacao-e-pedido.md)). Decisão técnica junto: em janeiro, com a conversa no WhatsApp, o cartão mostra a descrição da loja em vez da última mensagem e não tem contador de não lidas. Contrato H13 e H14.
 
 ## 4. Decisões técnicas do gerente de projeto
 

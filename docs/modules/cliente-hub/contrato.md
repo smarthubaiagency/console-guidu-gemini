@@ -20,6 +20,8 @@
 | H10 | Perfil: endereços, tipo de usuário, notificações                                       | Contrato na semana 1         | guidu.chat                   |
 | H11 | Resumo do cabeçalho do Hub                                                             | Pode vir na semana 5         | guidu.chat                   |
 | H12 | Erros novos                                                                            | Junto com os demais          | Todos                        |
+| H13 | Locais: lista e busca de lojas (`GET /stores`) e cartão do local                       | Contrato na semana 1         | guidu.chat                   |
+| H14 | Locais: recomendados (`GET /stores/recommended`)                                       | Contrato na semana 1         | guidu.chat                   |
 
 ## H1 — `GET /stores/{slug}/hub`
 
@@ -127,6 +129,7 @@ As rotas `GET/POST/DELETE /me/favorites` já estão na ADR 0027. Fixar:
 - `DELETE /me/favorites/{id}` e `DELETE /me/favorites?target=...` (desfavoritar pelo alvo, sem precisar do id).
 - `GET /me/favorites?kind=store|item&store=<slug>&cursor=`: cada item com loja (`slug`, `name`, `logo`, `accent`), título, imagem, preço atual e `available`. Item que saiu do catálogo volta com `available: false`, sem preço.
 - Limite: 500 favoritos por conta (`favorites_full`).
+- `GET /me/favorites?kind=store` devolve cada loja no formato **`StoreCard`** (H13) e ordena pela última atividade da pessoa com a loja (conversa, pedido ou visita). É a aba Favoritos de Locais.
 
 ## H4 — Últimos vistos
 
@@ -185,3 +188,51 @@ Vêm dentro do H1 (`type: "faq"`). Sem rota própria na V1. O GUIDS da loja pass
 ## H12 — Erros novos
 
 `bridge_session_required`, `favorites_full`, `address_limit`, `order_not_found` (também para pedido de outro turista: mesma resposta, sem revelar que existe), `store_not_found`, `whatsapp_unavailable` (loja sem WhatsApp conectado; o app mostra "Esta loja ainda não atende por mensagem").
+
+## H13 — Locais: lista e busca (`GET /stores`)
+
+Página Locais do guidu.chat (abas Favoritos, Todos e Recomendados; guidu-chat `docs/produto/v1-navegacao-e-pedido.md`, seção 1.1). Público, sem login; com login, cada cartão diz se a loja está salva.
+
+- `GET /stores?q=&category=&open_now=true&near=<lat>,<lng>&cursor=`: 20 por vez. `q` busca no nome, na categoria e nos itens publicados. `near` só quando a pessoa deu a localização; o servidor não guarda a posição.
+- Cada loja no formato **`StoreCard`**, o mesmo do H3 e do H14:
+
+```ts
+type StoreCard = {
+  slug: string; // mostrado como @slug
+  name: string;
+  logo: Image | null;
+  accent: string;
+  category: { key: string; label: string }; // taxonomia da cidade (P1 do BotCompara), no idioma pedido
+  short_description: string | null; // do perfil no Portfólio, no idioma pedido
+  status: {
+    open_now: boolean;
+    opens_at: string | null;
+    closes_at: string | null;
+  };
+  saved: boolean | null; // null sem login
+  conversation: {
+    channel: "whatsapp" | "app";
+    last_message: { text: string; at: string } | null; // só "app"
+    unread_count: number | null; // só "app"
+  } | null; // null se a pessoa nunca falou com a loja
+};
+```
+
+- **Em janeiro (N9), `last_message` e `unread_count` vêm `null`**: a conversa é no WhatsApp e o servidor não sabe o que a pessoa leu, e não cruzamos o número da conta com as conversas do Inbox para mostrar trechos no app. O cartão usa `short_description` e `status`. Quando o chat das lojas chegar ao app, os dois campos passam a vir, sem `v2`.
+- Cache público de 60 s para a lista sem login e sem `near`.
+
+## H14 — Locais: recomendados (`GET /stores/recommended`)
+
+Funciona com e sem login: com o token da pessoa, pode personalizar; sem token, só a parte não pessoal.
+
+```ts
+type RecommendedStores = {
+  personalized: boolean; // false = "Em destaque em Búzios"
+  items: { store: StoreCard; reason: string }[]; // até 10; reason no idioma pedido
+};
+```
+
+- **Personalizado** só com o consentimento `personalization` ligado e só com o que a pessoa declarou ou fez no app (buscas, favoritos, pedidos), como manda a seção 2, item 7, do handoff do Cliente Hub. Cada item diz o porquê em `reason` ("Porque você buscou moda praia").
+- **Sem consentimento ou sem histórico**: `personalized: false` e destaques da cidade (abertos agora, perto se houver `near`, curadoria da plataforma), com `reason` neutro ("Aberto agora", "Perto de você").
+- Lojas já salvas ficam de fora. Nunca vazio enquanto houver loja publicada.
+- Na V1 nenhuma loja paga para aparecer. Se isso mudar (decisão comercial do Marcelo), o item ganha `sponsored: true` e o app mostra o selo "Patrocinado".
