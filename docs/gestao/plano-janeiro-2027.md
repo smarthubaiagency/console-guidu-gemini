@@ -1,22 +1,22 @@
 # Plano até janeiro de 2027
 
 - **Status:** proposta do gerente de projeto, 23/10/2026, a partir da decisão do Marcelo de ter **pedido com Vendure em janeiro**.
-- **Produto:** [guidu-chat: v1-navegacao-e-pedido.md](https://github.com/smarthubaiagency/guidu-chat/blob/claude/produto-v1/docs/produto/v1-navegacao-e-pedido.md)
+- **Produto:** [guidu-chat: v1-navegacao-e-pedido.md](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/v1-navegacao-e-pedido.md)
 - **Painel:** [painel.md](painel.md)
 - **Divisão entre as equipes console e guidu.chat:** [equipes-guidu-chat-v1.md](equipes-guidu-chat-v1.md), conforme a [ADR 0027](../adr/0027-guidu-chat-v1-console-bridge.md)
 
 ## 1. O que vai ao ar em janeiro
 
-| Entra                                                                                         | Fica para depois da temporada                                   |
-| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| guidu.chat V1 **no navegador** (`apps.guidu.chat`): Home, Local, Chat, Conta, aberto pelo QR  | App nativo (React Native + Expo) nas lojas da Apple e do Google |
-| Vendure com canal por loja, sincronizado com o Portfólio                                      | Pagamento pela plataforma, split, credencial reutilizável       |
-| Carrinho por loja, **Enviar pedido** com cadastro ou login                                    | Carrinho com várias lojas num checkout só                       |
-| Proposta da loja versionada (itens, frete, prazo) e aceite do turista                         | BotCompara e BotShop abertos para a cidade                      |
-| Link de pagamento: **Mercado Pago, Pagar.me e Asaas por API** (N8) e os demais no modo manual | Integração com os outros provedores                             |
-| Confirmação de recebimento pela loja, Cliente Hub, telas de retirada e envio                  | Modo loja no app                                                |
-| Espaço Pedidos no Inbox                                                                       | —                                                               |
-| Segurança (L1, L2, L5), gateways, produção e teste de carga                                   | —                                                               |
+| Entra                                                                                                                 | Fica para depois da temporada                                   |
+| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| guidu.chat V1 **no navegador** (`apps.guidu.chat`): Descubra, Locais, Conversas e Conta (Cliente Hub), aberto pelo QR | App nativo (React Native + Expo) nas lojas da Apple e do Google |
+| Vendure com canal por loja, sincronizado com o Portfólio                                                              | Pagamento pela plataforma, split, credencial reutilizável       |
+| Carrinho por loja, **Enviar pedido** com cadastro ou login                                                            | Carrinho com várias lojas num checkout só                       |
+| Proposta da loja versionada (itens, frete, prazo) e aceite do turista                                                 | BotCompara e BotShop abertos para a cidade                      |
+| Link de pagamento: **Mercado Pago, Pagar.me e Asaas por API** (N8) e os demais no modo manual                         | Integração com os outros provedores                             |
+| Confirmação de recebimento pela loja, Cliente Hub, telas de retirada e envio                                          | Modo loja no app                                                |
+| Espaço Pedidos no Inbox                                                                                               | —                                                               |
+| Segurança (L1, L2, L5), gateways, produção e teste de carga                                                           | —                                                               |
 
 ## 2. Semanas
 
@@ -38,7 +38,7 @@ As etapas andam em pares (`AGENTS.md`); cada uma com PR, testes e aprovação do
 
 1. **Navegador primeiro:** sem esperar aprovação das lojas de aplicativo.
 2. **Três provedores por API, em sequência (N8):** Mercado Pago na semana 6, Pagar.me e Asaas até a semana 7; qualquer atraso fica coberto pelo modo manual (colar link ou Pix).
-3. **Chat (N9, decidido):** "Conversar" abre o WhatsApp da loja, que já cai no Inbox; a conversa no navegador fica para depois.
+3. **Chat (N9, revista em 28/10/2026):** o chat com as lojas no guidu.chat entra em janeiro, **junto com o WhatsApp** da loja, os dois caindo no Inbox. Encaixe das semanas na conversa do [handoff de equipes](../handoff/2026-10-24-handoff-equipes.md).
 4. **BotCompara restrito:** só em teste interno; a cidade toda depois da temporada, com o custo medido.
 
 ## 4. Riscos
@@ -54,10 +54,10 @@ As etapas andam em pares (`AGENTS.md`); cada uma com PR, testes e aprovação do
 
 ## 5. Decisões que destravam o plano
 
-| #   | Pergunta                                                             | Até                                  |
-| --- | -------------------------------------------------------------------- | ------------------------------------ |
-| N2  | Lojas do piloto                                                      | Decidido em 24/10                    |
-| N7  | Quantas lojas em janeiro (em aberto; planejar com 300 e folga de 2×) | 07/11                                |
-| N8  | Provedores de pagamento por API                                      | Decidido em 24/10                    |
-| N9  | Chat em janeiro                                                      | Decidido em 24/10 (WhatsApp da loja) |
-| —   | Aprovar as ADRs 0026, 0027 e 0028                                    | 31/10                                |
+| #   | Pergunta                                                             | Até                                       |
+| --- | -------------------------------------------------------------------- | ----------------------------------------- |
+| N2  | Lojas do piloto                                                      | Decidido em 24/10                         |
+| N7  | Quantas lojas em janeiro (em aberto; planejar com 300 e folga de 2×) | 07/11                                     |
+| N8  | Provedores de pagamento por API                                      | Decidido em 24/10                         |
+| N9  | Chat em janeiro                                                      | Revista em 28/10 (chat no app e WhatsApp) |
+| —   | Aprovar as ADRs 0026, 0027 e 0028                                    | 31/10                                     |
