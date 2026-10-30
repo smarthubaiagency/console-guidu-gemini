@@ -3,6 +3,7 @@
 - **Status:** Proposto; vira aceito com a aprovação do Marcelo no PR
 - **Data:** 23/10/2026
 - **Aprovador:** Marcelo
+- **Ajustada por:** [ADR 0028](0028-qr-mini-app-publico-e-telas-nativas.md) (QR, perfil da loja e telas nativas)
 - **Decisão de origem:** decisões do Marcelo de 23/10/2026 (Vendure na V1, pedido enviado à loja com pagamento pela loja, proposta com histórico, janeiro de 2027, duas equipes)
 - **Relaciona-se com:** [ADR 0011](0011-camada-de-canais-no-nucleo.md) (canais), [ADR 0017](0017-sdk-dos-agentes-de-ia.md) (motor), [ADR 0023](0023-chat-interno-como-cliente-matrix.md) (Matrix), [ADR 0026](0026-gateways-apisix-e-agentgateway.md) (gateways). Os números 0024 e 0025 seguem reservados (salas de agentes e compra agêntica).
 - **Substitui como fonte de decisão:** as propostas em [mini-apps-bridge.md](../architecture/mini-apps-bridge.md), [guidu-chat-app.md](../architecture/guidu-chat-app.md), [commerce-guidu-chat.md](../architecture/commerce-guidu-chat.md) e no [documento de produto V1](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/v1-navegacao-e-pedido.md), naquilo em que divergirem desta ADR.
