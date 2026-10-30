@@ -30,10 +30,10 @@ Decidido pelo Marcelo em 30/10/2026.
 
 1. **O código do QR não muda.** O impresso continua `guidu.chat/q/<código>`, para o QR não depender do endereço de cada mini-app. Só muda o que acontece depois da leitura:
 
-   | Quem lê o QR | O que abre |
-   | ------------ | ---------- |
-   | Tem o app instalado | O app, pelo link universal, no produto ou na oferta |
-   | Não tem o app | Redirecionamento para a rota pública do mini-app (`apps.guidu.chat/<loja>/<item>`), no navegador, sem instalar nada |
+   | Quem lê o QR        | O que abre                                                                                                          |
+   | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+   | Tem o app instalado | O app, pelo link universal, no produto ou na oferta                                                                 |
+   | Não tem o app       | Redirecionamento para a rota pública do mini-app (`apps.guidu.chat/<loja>/<item>`), no navegador, sem instalar nada |
 
 2. **Produto ou oferta continua mini-app** da equipe console, como na ADR 0027. No app, abre em WebView. No navegador, abre direto pela rota pública. Dentro do guidu.chat web, pelo iframe.
 3. **Quem tem o app vê o perfil da loja em tela nativa**, sem WebView.
