@@ -241,3 +241,7 @@ type RecommendedStores = {
 - **Sem consentimento ou sem histórico**: `personalized: false` e destaques da cidade (abertos agora, perto se houver `near`, curadoria da plataforma), com `reason` neutro ("Aberto agora", "Perto de você").
 - Lojas já salvas ficam de fora. Nunca vazio enquanto houver loja publicada.
 - Na V1 nenhuma loja paga para aparecer. Se isso mudar (decisão comercial do Marcelo), o item ganha `sponsored: true` e o app mostra o selo "Patrocinado".
+
+## H9a — Pagamento na entrega, confirmação pelo cliente e campos do detalhe do pedido
+
+Decidido na [ADR 0030](../../adr/0030-pagamento-na-entrega-e-confirmacao-pelo-cliente.md) (proposta): `payment.method` (`link` ou `on_delivery`), `POST /orders/{id}/accept-proposal` e `POST /orders/{id}/confirm-delivery` (`409 invalid_situation` fora da situação certa), e os campos `first_item`, `state`, `q`, `estimated_at`, `reason`, `contact`, `fulfillment.note`, `fulfillment.courier` e `fulfillment.timeline` em `GET /orders` e `GET /orders/{id}`.
