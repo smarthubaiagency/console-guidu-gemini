@@ -16,7 +16,7 @@ A ADR 0027 define dois pontos que este documento revê:
 
 Com isso, quem lê um QR precisa carregar o guidu.chat antes de ver o produto, e quem tem o app veria o perfil da loja em WebView. O [mini-apps-bridge.md](../architecture/mini-apps-bridge.md) já descrevia outro caminho: o QR abre o runtime direto no navegador, sem o app instalado, e o link universal abre o app se ele estiver instalado. A ADR 0027 prevaleceu sobre esse trecho.
 
-Em 30/10/2026 o Marcelo aprovou o modelo do perfil da loja, que no guidu.chat web virou a tela `/locais/{slug}`, feita com os componentes do `@guiduchat/ui` 0.7.0. Ao discutir a página de produto, definiu como cada pessoa deve chegar a essas telas.
+Em 30/10/2026 o Marcelo aprovou o modelo do perfil da loja, que no guidu.chat web virou a tela `/places/{slug}`, feita com os componentes do `@guiduchat/ui` 0.7.0. Ao discutir a página de produto, definiu como cada pessoa deve chegar a essas telas.
 
 **Alternativas que caíram:**
 
@@ -37,7 +37,7 @@ Decidido pelo Marcelo em 30/10/2026.
 
 2. **Produto ou oferta continua mini-app** da equipe console, como na ADR 0027. No app, abre em WebView. No navegador, abre direto pela rota pública. Dentro do guidu.chat web, pelo iframe.
 3. **Quem tem o app vê o perfil da loja em tela nativa**, sem WebView.
-4. **O perfil da loja existe em três lugares, com os mesmos dados:** tela nativa no app, tela `/locais/{slug}` no guidu.chat web e mini-app de perfil na rota pública. Web e mini-app usam os componentes do `@guiduchat/ui`; o app usa os mesmos tokens e ícones.
+4. **O perfil da loja existe em três lugares, com os mesmos dados:** tela nativa no app, tela `/places/{slug}` no guidu.chat web e mini-app de perfil na rota pública. Web e mini-app usam os componentes do `@guiduchat/ui`; o app usa os mesmos tokens e ícones.
 5. **Na rota pública não há ponte nem login:** o mini-app fica em modo visitante, só com dados publicados, como já prevê o [mini-apps-bridge.md](../architecture/mini-apps-bridge.md).
 6. **Chat, carrinho, salvar e pedido ficam só no app e no guidu.chat web**, que têm a sessão da pessoa. Na rota pública, essas ações levam ao app ou ao guidu.chat web, mantendo loja, item e origem no contexto comercial do servidor. O token do turista continua fora do mini-app.
 7. **O restante dos mini-apps não muda:** catálogo, cardápio e área da loja continuam como na ADR 0027.
