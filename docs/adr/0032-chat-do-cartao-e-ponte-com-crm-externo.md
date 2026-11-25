@@ -1,6 +1,6 @@
 # ADR 0032 — Chat do cartão Mobio pelo Matrix, com o DeskcommCRM como canal da sala
 
-- **Status:** Proposto; vira aceito com a aprovação do Marcelo no PR. As seis decisões da seção 1 já foram tomadas pelo Marcelo; a seção 2 traz as decisões técnicas do gerente de projeto, que ele pode vetar.
+- **Status:** Aceito (merge do PR #143, 25/11/2026). A seção 3 (ponte provisória) foi acrescentada no mesmo dia, por decisão do Marcelo.
 - **Data:** 25/11/2026
 - **Aprovador:** Marcelo
 - **Decisão de origem:** conversa do Marcelo com o Claude Code em 25/11/2026, na sessão do repositório `mobio`, que fechou o plano do chat do cartão. O plano ficou no arquivo de planos da sessão, fora do repositório; esta ADR é o registro dele aqui.
@@ -123,6 +123,40 @@ O caminho B entrega o mesmo resultado (tempo real, histórico e reabrir em outro
    - o aceite que o cartão já coleta vai na visita e fica gravado no Supabase, ligado ao `room_id`. Ele não vai para a sala (ADR 0023, regra 6);
    - o número de respostas da IA para o visitante que ainda não deixou contato é configurável por conexão (proposta: 20).
 
+### 3. Ponte provisória até o console ir para produção (Marcelo, 25/11/2026)
+
+O console ainda não tem ambiente de produção (F6c, [plano da F6](../operacao/plano-f6.md)). Por isso, o Marcelo decidiu em 25/11/2026: a parte da ponte que dependia do console roda antes num **serviço à parte**, no Coolify da Hostinger, com endereço provisório. As palavras dele: "essa bridge (o que depende do console) não poderia ser um serviço a parte por enquanto? hospedados no coolify com um endereço provisorio?", e depois "vamos usar como dominio bridge.guidu.chat e o repositorio guidu-bridge".
+
+1. **Onde fica:**
+   - o código fica no repositório `smarthubaiagency/guidu-bridge`;
+   - o serviço roda no Coolify da Hostinger, na mesma VPS do `neo`;
+   - o endereço é `https://bridge.guidu.chat`.
+2. **O que a ponte faz:**
+   - registra-se no `neo` como Application Service, com os namespaces do visitante (`@_guidu_v_.*`) e do CRM (`@_guidu_d_.*`);
+   - atende a API pública do chat do cartão com **o mesmo contrato** da seção 2, item 3 (`/v1/visitas`, `/v1/mensagens`, `/v1/eventos`), com a mesma checagem e as mesmas proteções (itens 4 e 8);
+   - faz o adaptador `deskcomm` da seção 2, item 6.
+3. **O que ela não faz:** a ponte só tem a rota `deskcomm`. A rota `inbox`, o GUIDS, a tradução e o despacho da saída por tipo de canal (seção 2, item 7) ficam para o console.
+4. **Dados:** a ponte tem um Postgres pequeno no próprio serviço, com quatro grupos de dados:
+   - a empresa: a chave pública do cartão, as origens permitidas e a chave do CRM, cifrada;
+   - os visitantes, guardando só o hash do token;
+   - a sessão do CRM de cada sala;
+   - o aceite LGPD.
+
+   As conversas ficam no `neo` (ADR 0023, regra 1).
+
+5. **Isolamento entre empresas:**
+   - a empresa sai **só** da chave pública;
+   - toda consulta filtra pela empresa;
+   - o CI testa uma "outra empresa" tentando abrir a sala, o histórico e os eventos de uma conversa alheia, e a tentativa tem de ser recusada.
+6. **Segredos:** o `as_token` e o `hs_token` do Application Service e a chave de cifra ficam nas variáveis de ambiente do Coolify, nunca no repositório.
+7. **Migração para o console, na F6c:**
+   - o console assume o registro do Application Service (o namespace `@_guidu_.*` dele cobre os dois da ponte);
+   - as tabelas da ponte são copiadas para as do console, ganhando o `workspace_id` da empresa;
+   - o Mobio troca só a URL da API;
+   - a ponte é desligada.
+
+   As salas, os usuários virtuais e o histórico continuam no `neo`, sem migração.
+
 ## Consequências
 
 - **Banco:** migration nova, sem tocar nas já aplicadas. Ela inclui:
@@ -146,7 +180,7 @@ O caminho B entrega o mesmo resultado (tempo real, histórico e reabrir em outro
   - **provedor `guidu` no MobioChat:** chave `wck_` por empresa, conferida ao salvar, e a URL da API definida pelo superadmin;
   - **a janela `ChatSheet`:** um cliente HTTP com SSE, sem SDK do Matrix;
   - **depois, um PR que tira o Chatwoot do cartão.**
-- **Produção:** o Synapse de produção já está no ar desde 25/11/2026, em `neo.guidu.chat`, no Coolify da Hostinger (revisão de 25/11/2026 da [ADR 0023](0023-chat-interno-como-cliente-matrix.md)). Falta o console em produção, com uma URL pública: sem ela, o Synapse não entrega as mensagens ao Application Service. O desenvolvimento e os testes automáticos continuam no Synapse local do CI.
+- **Produção:** o Synapse de produção já está no ar desde 25/11/2026, em `neo.guidu.chat`, no Coolify da Hostinger (revisão de 25/11/2026 da [ADR 0023](0023-chat-interno-como-cliente-matrix.md)). Até o console ter produção, quem recebe as mensagens do Synapse é a ponte provisória em `bridge.guidu.chat` (seção 3). O desenvolvimento e os testes automáticos continuam no Synapse local do CI.
 - **Reversível:** sim.
   - Desligar o canal `webchat` devolve o cartão ao provedor anterior.
   - Trocar a rota move o atendimento entre o Inbox e o CRM sem perder a sala.
@@ -154,6 +188,6 @@ O caminho B entrega o mesmo resultado (tempo real, histórico e reabrir em outro
 
 ## ⚠️ Pontos de atenção (decisão do Marcelo)
 
-1. **O `neo.guidu.chat` é produção e já está exposto.** Na conferência de 25/11/2026, a API admin (`/_synapse/admin`) respondia ao público (lacuna L1 da ADR 0026), a federação respondia e o login por senha estava ligado. Sugestão: antes do primeiro cartão real, fechar `/_synapse/admin` no Traefik do Coolify, deixar só o listener `client`, aplicar a seção 7 do [guia do Synapse](../operacao/synapse-easypanel.md) e ligar o backup do Postgres do serviço. O console em produção com URL pública continua no caminho crítico (F6c).
+1. **O `neo.guidu.chat` é produção e já está exposto.** Na conferência de 25/11/2026, a API admin (`/_synapse/admin`) respondia ao público (lacuna L1 da ADR 0026), a federação respondia e o login por senha estava ligado. Sugestão: antes do primeiro cartão real, fechar `/_synapse/admin` no Traefik do Coolify, deixar só o listener `client`, registrar a ponte (`bridge.guidu.chat`) como Application Service e ligar o backup do Postgres do serviço.
 2. **Domínio `mobio.pro`.** O console também serve páginas públicas de perfil num domínio configurável (`PUBLIC_DOMAIN_PROFILE`, `src/core/domains/public-hosts.ts`), e os cartões Laravel do Mobio respondem em `mobio.pro`. Sugestão: decidir, antes do deploy, qual sistema responde em `mobio.pro`. A API do chat do cartão pode ficar num host da plataforma (por exemplo `api.guidu.chat`), porque o token do visitante não depende de cookie.
 3. **Visitante anônimo e custo.** O limite de 20 respostas sem contato e a validade de 30 dias do token são propostas. Sugestão: começar com esses números no piloto do Cartão PRO e ajustar com o uso real.
