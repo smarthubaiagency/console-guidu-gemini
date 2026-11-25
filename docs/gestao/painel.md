@@ -1,6 +1,6 @@
 # Painel do projeto
 
-- **Atualizado em:** 28/10/2026
+- **Atualizado em:** 25/11/2026
 - **Quem mantém:** o agente, no papel de gerente de projeto (`AGENTS.md`, "Gestão do projeto"). O Marcelo decide; o agente recomenda, organiza e cobra.
 - **Para que serve:** ver em uma página onde o projeto está, o que foi decidido, o que espera decisão e o que vem a seguir. Os detalhes técnicos ficam nos documentos ligados.
 
@@ -43,6 +43,10 @@ Piloto em Búzios: o turista descobre as lojas por QR e pelo guidu.chat, convers
 - **Locais (Marcelo, 28/10/2026):** a página onde a pessoa guarda os seus locais favoritos; sem favoritos, mostra recomendações. Abas Favoritos · Todos · Recomendados, busca com filtros e cartão do local com **Ver mensagens** e **salvar** ([guidu-chat: v1-navegacao-e-pedido.md, seção 1.1](https://github.com/smarthubaiagency/guidu-chat/blob/main/docs/produto/v1-navegacao-e-pedido.md)). Decisão técnica junto: conversa no app mostra a última mensagem e as não lidas; conversa só no WhatsApp mostra a descrição da loja, sem contador. Contrato H13 e H14.
 
 - **Chat em janeiro (N9 revista pelo Marcelo, 28/10/2026):** o chat com as lojas no guidu.chat entra na primeira rodada, junto com o WhatsApp. Regras do gerente de projeto: o chat no app é o padrão (é nele que entram pedido e "Pagar à loja", caminho do checkout no chat); o WhatsApp é a alternativa, oferecida também quando a pessoa não aceita avisos do navegador (no iPhone, o navegador só avisa com o guidu.chat na tela de início); uma conversa por canal, as duas no Inbox; contrato H8 revisto (Web Push, não lidas, passagem para o WhatsApp).
+
+### Decisões de 25/11/2026
+
+- **Chat do cartão Mobio pelo Matrix, com o DeskcommCRM (Marcelo, 25/11/2026):** a janela de chat do cartão é própria do Mobio (padrão Mobio Pro) e substitui o Chatwoot. A conversa é uma sala no Synapse do GUIDU, e o DeskcommCRM é um canal dela, com uma organização do CRM por empresa e nenhum código nosso dentro do CRM. O freio de custo da IA tem três camadas: teto por resposta, orçamento mensal da organização e limite na ponte. Decisão técnica junto: o visitante segue o caminho B, como o turista do guidu.chat, sem credencial Matrix no navegador. Registro na [ADR 0032](../adr/0032-chat-do-cartao-e-ponte-com-crm-externo.md) (proposta).
 
 ## 4. Decisões técnicas do gerente de projeto
 
