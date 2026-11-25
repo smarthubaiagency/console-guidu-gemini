@@ -146,7 +146,7 @@ O caminho B entrega o mesmo resultado (tempo real, histórico e reabrir em outro
   - **provedor `guidu` no MobioChat:** chave `wck_` por empresa, conferida ao salvar, e a URL da API definida pelo superadmin;
   - **a janela `ChatSheet`:** um cliente HTTP com SSE, sem SDK do Matrix;
   - **depois, um PR que tira o Chatwoot do cartão.**
-- **Produção:** tudo depende do Synapse e do console em produção (F6c). Até lá, o desenvolvimento e os testes rodam no Synapse do CI e no de testes.
+- **Produção:** o Synapse de produção já está no ar desde 25/11/2026, em `neo.guidu.chat`, no Coolify da Hostinger (revisão de 25/11/2026 da [ADR 0023](0023-chat-interno-como-cliente-matrix.md)). Falta o console em produção, com uma URL pública: sem ela, o Synapse não entrega as mensagens ao Application Service. O desenvolvimento e os testes automáticos continuam no Synapse local do CI.
 - **Reversível:** sim.
   - Desligar o canal `webchat` devolve o cartão ao provedor anterior.
   - Trocar a rota move o atendimento entre o Inbox e o CRM sem perder a sala.
@@ -154,6 +154,6 @@ O caminho B entrega o mesmo resultado (tempo real, histórico e reabrir em outro
 
 ## ⚠️ Pontos de atenção (decisão do Marcelo)
 
-1. **Produção (F6c) é o caminho crítico.** Sugestão: subir o Synapse de produção primeiro; a API do chat do cartão pode ir ao ar junto com a primeira etapa deste canal.
+1. **O `neo.guidu.chat` é produção e já está exposto.** Na conferência de 25/11/2026, a API admin (`/_synapse/admin`) respondia ao público (lacuna L1 da ADR 0026), a federação respondia e o login por senha estava ligado. Sugestão: antes do primeiro cartão real, fechar `/_synapse/admin` no Traefik do Coolify, deixar só o listener `client`, aplicar a seção 7 do [guia do Synapse](../operacao/synapse-easypanel.md) e ligar o backup do Postgres do serviço. O console em produção com URL pública continua no caminho crítico (F6c).
 2. **Domínio `mobio.pro`.** O console também serve páginas públicas de perfil num domínio configurável (`PUBLIC_DOMAIN_PROFILE`, `src/core/domains/public-hosts.ts`), e os cartões Laravel do Mobio respondem em `mobio.pro`. Sugestão: decidir, antes do deploy, qual sistema responde em `mobio.pro`. A API do chat do cartão pode ficar num host da plataforma (por exemplo `api.guidu.chat`), porque o token do visitante não depende de cookie.
 3. **Visitante anônimo e custo.** O limite de 20 respostas sem contato e a validade de 30 dias do token são propostas. Sugestão: começar com esses números no piloto do Cartão PRO e ajustar com o uso real.

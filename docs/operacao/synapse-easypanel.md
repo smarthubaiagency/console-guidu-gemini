@@ -7,7 +7,7 @@ Guia para o Marcelo instalar o Synapse de **dev** do Inbox ([ADR 0023](../adr/00
 O `server_name` é o domínio que aparece no endereço de cada usuário (`@ana:dominio`). **Ele não pode ser trocado depois:** mudar o domínio exige apagar o banco e recomeçar.
 
 - **Dev, recomendado:** `dev.guidu.chat`, servido no mesmo endereço (`https://dev.guidu.chat`). Assim não precisa de `.well-known`.
-- **Produção, depois:** `guidu.chat` (domínio já reservado), com o servidor em `matrix.guidu.chat` e os arquivos `.well-known/matrix/client` e `.well-known/matrix/server` na raiz de `guidu.chat` apontando para ele.
+- **Produção:** `guidu.chat`, com o servidor em **`neo.guidu.chat`**, no Coolify da Hostinger, instalado em 25/11/2026 (revisão de 25/11/2026 da [ADR 0023](../adr/0023-chat-interno-como-cliente-matrix.md)). Os arquivos `.well-known/matrix/client` e `.well-known/matrix/server` ficam na raiz de `guidu.chat` e apontam para ele, quando o site existir. Os ajustes deste guia valem para ele (seções 3 e 7, com `--server-name guidu.chat --homeserver-url https://neo.guidu.chat`).
 
 ## 2. Instalação pelo template
 

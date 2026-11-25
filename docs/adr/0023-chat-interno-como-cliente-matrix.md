@@ -4,6 +4,7 @@
 - **Data:** 16/10/2026
 - **Aprovador:** Marcelo
 - **Decisão de origem:** decisão de Marcelo em 16/10/2026, com as respostas da mesma data registradas no [plano do Inbox](../modules/inbox/plano.md) §0. O rascunho do Marcelo tinha o número 0022, que ficou com a Central de Eventos (etapa H1).
+- **Revisada em:** 25/11/2026: servidor de produção em `neo.guidu.chat`, no Coolify da Hostinger (seção "Revisão de 25/11/2026")
 - **Relaciona-se com:** [ADR 0002](0002-jobs-e-hospedagem.md), [ADR 0006](0006-manifesto-de-modulos.md), [ADR 0011](0011-camada-de-canais-no-nucleo.md), [ADR 0014](0014-shell-padrao-sidebar-08.md) (revisão de 16/10/2026: Inbox em tela cheia), [ADR 0020](0020-modo-de-servico-gerenciado.md); [ADR 0022](0022-central-de-eventos.md) (Central de Eventos, H1); [canais.md](../modules/ai-agents/canais.md) §1 e §3; [especificação do Inbox](../modules/inbox/especificacao.md).
 
 ## Contexto
@@ -32,6 +33,24 @@ A arquitetura do ecossistema já define o Matrix como espinha dorsal de eventos,
 ## Esclarecimento sobre a ADR 0011
 
 A regra 2 da ADR 0011 diz que um módulo nunca chama o provedor diretamente. O navegador do atendente falando com o Synapse pelo `matrix-js-sdk` não viola essa regra: quem fala é o cliente do próprio usuário humano, com a credencial dele, e não o módulo em nome do workspace. Continuam com o núcleo: o registro do Application Service, o provisionamento de contas, a emissão do JWT, a rota da sala, o envio em nome do agente, o adaptador Meta e a auditoria.
+
+## Revisão de 25/11/2026: o servidor de produção é `neo.guidu.chat`
+
+**Decisão do Marcelo, 25/11/2026:** o Synapse instalado no Coolify da Hostinger em `neo.guidu.chat` é o servidor de produção do `guidu.chat`. É ele que serve a integração do chat do cartão Mobio com o DeskcommCRM ([ADR 0032](0032-chat-do-cartao-e-ponte-com-crm-externo.md)).
+
+O que muda na regra 2:
+
+- **Endereço:** o `server_name` de produção continua `guidu.chat`, mas o servidor fica em **`neo.guidu.chat`**, e não em `matrix.guidu.chat`. Onde as ADRs 0026 e 0027 e o [plano dos gateways](../architecture/gateways.md) falam em `matrix.guidu.chat`, vale `neo.guidu.chat`.
+- **Hospedagem:** o servidor roda no **Coolify da Hostinger**, a mesma VPS do Mobio, com o Postgres no próprio serviço. Antes, a hospedagem prevista era o EasyPanel.
+- **Delegação:** os arquivos `.well-known/matrix/server` (`{"m.server": "neo.guidu.chat:443"}`) e `.well-known/matrix/client` (`{"m.homeserver": {"base_url": "https://neo.guidu.chat"}}`) ficam na raiz de `guidu.chat`. Eles entram quando o site existir; até lá, os clientes informam `https://neo.guidu.chat` à mão.
+- **Borda:** enquanto o APISIX (ADR 0026) não existe, quem fica na frente é o Traefik do Coolify. As regras de borda da ADR 0026 valem desde já, aplicadas nele:
+  - `/_synapse/admin` fechado ao público (L1);
+  - só o listener de clientes, sem federação.
+
+O que não muda:
+
+- o servidor de dev continua `dev.guidu.chat`, e o CI continua com o Synapse local;
+- o restante desta ADR vale como está.
 
 ## Consequências
 
